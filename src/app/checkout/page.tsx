@@ -194,9 +194,9 @@ export default function CheckoutPage() {
       setIsCheckingPromo(true);
       const res = await PromosApi.validate(code, getTotalAmount(), targetEmail.trim() || undefined);
 
-      if (!res.valid) {
+      if (!res || !res.valid) {
         setAppliedPromo(null);
-        showPromoFeedback('error', res.error || 'Kode promo tidak valid atau syarat tidak terpenuhi.');
+        showPromoFeedback('error', res?.error || 'Kode promo tidak valid atau syarat tidak terpenuhi.');
         return;
       }
 
@@ -208,10 +208,17 @@ export default function CheckoutPage() {
       showPromoFeedback('success', res.message || `Kode voucher ${res.code || code} berhasil digunakan!`);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Gagal memeriksa kode promo. Periksa koneksi Anda.';
+      setAppliedPromo(null);
       showPromoFeedback('error', msg);
     } finally {
       setIsCheckingPromo(false);
     }
+  };
+
+  const handleRemovePromo = () => {
+    setAppliedPromo(null);
+    setPromoCode('');
+    showPromoFeedback('success', 'Penggunaan voucher dibatalkan.');
   };
 
   const subtotal = getTotalAmount();
@@ -409,6 +416,7 @@ export default function CheckoutPage() {
                     promoCode={promoCode}
                     onPromoCodeChange={setPromoCode}
                     onApplyPromo={handleApplyPromo}
+                    onRemovePromo={handleRemovePromo}
                     isCheckingPromo={isCheckingPromo}
                     promoFeedback={promoFeedback}
                   />

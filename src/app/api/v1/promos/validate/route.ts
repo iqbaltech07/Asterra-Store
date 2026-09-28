@@ -10,7 +10,7 @@ import { headers } from 'next/headers';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { code, subtotal, email } = body;
+    const { code, subtotal, email, user_email } = body;
 
     if (!code || typeof code !== 'string' || !code.trim()) {
       return NextResponse.json(
@@ -22,7 +22,8 @@ export async function POST(request: NextRequest) {
     const numericSubtotal = Math.max(0, Number(subtotal) || 0);
 
     // Resolve user email from body or active session
-    let targetEmail = (email && typeof email === 'string' ? email.trim() : '') || null;
+    const rawEmail = email || user_email;
+    let targetEmail = (rawEmail && typeof rawEmail === 'string' ? rawEmail.trim() : '') || null;
     if (!targetEmail) {
       try {
         const session = await auth.api.getSession({

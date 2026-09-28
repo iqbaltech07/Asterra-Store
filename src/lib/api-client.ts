@@ -180,14 +180,16 @@ export const OrdersApi = {
  */
 export const PromosApi = {
   async validate(code: string, subtotal: number, userEmail?: string): Promise<PromoValidationResponse> {
-    return requestJson<PromoValidationResponse>('/api/v1/promos/validate', {
+    const json = await requestJson<{ success: boolean; data: PromoValidationResponse }>('/api/v1/promos/validate', {
       method: 'POST',
       body: JSON.stringify({
         code,
         subtotal,
+        email: userEmail,
         user_email: userEmail,
       }),
     });
+    return json.data;
   },
 };
 

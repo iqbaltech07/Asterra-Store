@@ -30,6 +30,7 @@ interface CheckoutCartSummaryProps {
   promoCode: string;
   onPromoCodeChange: (val: string) => void;
   onApplyPromo: () => void;
+  onRemovePromo?: () => void;
   isCheckingPromo: boolean;
   promoFeedback: {
     type: 'success' | 'error';
@@ -50,6 +51,7 @@ export function CheckoutCartSummary({
   promoCode,
   onPromoCodeChange,
   onApplyPromo,
+  onRemovePromo,
   isCheckingPromo,
   promoFeedback,
 }: CheckoutCartSummaryProps) {
@@ -87,6 +89,8 @@ export function CheckoutCartSummary({
         promoCode={promoCode}
         onPromoCodeChange={onPromoCodeChange}
         onApplyPromo={onApplyPromo}
+        onRemovePromo={onRemovePromo}
+        appliedPromo={appliedPromo}
         isCheckingPromo={isCheckingPromo}
         promoFeedback={promoFeedback}
       />
