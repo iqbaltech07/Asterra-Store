@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { PaymentConfig } from '@/lib/services/payment-config.service';
+import { getAppBaseUrl } from '@/lib/utils/url';
 
 interface AdminPaymentSettingsTabProps {
   onNotify: (msg: string) => void;
@@ -30,6 +31,7 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [currentBaseUrl, setCurrentBaseUrl] = useState('');
 
   // Form states
   const [mode, setMode] = useState<'gateway' | 'manual'>('gateway');
@@ -80,6 +82,7 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
 
   useEffect(() => {
     fetchSettings();
+    setCurrentBaseUrl(getAppBaseUrl());
   }, [fetchSettings]);
 
   const handleCopy = (text: string, key: string) => {
@@ -613,6 +616,76 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
               <span>
                 Perubahan pada halaman ini berdampak langsung saat pelanggan mengakses halaman checkout.
               </span>
+            </div>
+          </div>
+
+          {/* Card: Dynamic Tripay Webhook & Callback Info */}
+          <div className="bg-surface border border-border rounded-xl p-5 space-y-3.5">
+            <div className="flex items-center justify-between pb-2.5 border-b border-border">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-status-success" />
+                <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
+                  Integrasi & Callback Tripay
+                </h4>
+              </div>
+              <Badge variant="outline" className="text-[10px] text-status-success border-status-success/30 font-mono">
+                Auto-Dynamic
+              </Badge>
+            </div>
+
+            <p className="text-[11px] text-foreground-muted leading-relaxed">
+              Sistem telah dikonfigurasi secara otomatis mengirimkan <strong>Callback URL</strong> &amp; <strong>Return URL</strong> dinamis pada setiap pembuatan tagihan Tripay sesuai domain aktif Anda ({currentBaseUrl || 'https://asterrastore.vercel.app'}).
+            </p>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <span className="text-[10px] text-foreground-muted block font-medium mb-1">
+                  URL Webhook Callback Tripay (POST):
+                </span>
+                <div className="relative">
+                  <Input
+                    readOnly
+                    value={`${currentBaseUrl || 'https://asterrastore.vercel.app'}/api/v1/webhooks/tripay`}
+                    className="text-[11px] bg-surface-raised border-border font-mono pr-16 select-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleCopy(
+                        `${currentBaseUrl || 'https://asterrastore.vercel.app'}/api/v1/webhooks/tripay`,
+                        'webhook'
+                      )
+                    }
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-primary hover:underline px-1 py-0.5 flex items-center gap-1"
+                  >
+                    {copiedKey === 'webhook' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                    <span>{copiedKey === 'webhook' ? 'Tersalin' : 'Salin'}</span>
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <span className="text-[10px] text-foreground-muted block font-medium mb-1">
+                  URL Return Pengalihan Pelanggan (GET):
+                </span>
+                <div className="relative">
+                  <Input
+                    readOnly
+                    value={`${currentBaseUrl || 'https://asterrastore.vercel.app'}/orders`}
+                    className="text-[11px] bg-surface-raised border-border font-mono pr-16 select-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleCopy(`${currentBaseUrl || 'https://asterrastore.vercel.app'}/orders`, 'return')
+                    }
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-primary hover:underline px-1 py-0.5 flex items-center gap-1"
+                  >
+                    {copiedKey === 'return' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                    <span>{copiedKey === 'return' ? 'Tersalin' : 'Salin'}</span>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

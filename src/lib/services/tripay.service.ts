@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import { getAppBaseUrl } from '@/lib/utils/url';
 
 export interface TripayCallbackPayload {
   reference: string;
@@ -34,6 +35,8 @@ export interface TripayCreateTransactionParams {
   customerEmail: string;
   customerPhone?: string;
   orderItems: TripayOrderItem[];
+  origin?: string;
+  callbackUrl?: string;
   returnUrl?: string;
   expiredTime?: number;
 }
@@ -133,9 +136,9 @@ export class TripayService {
     const baseUrl = this.getBaseUrl();
     const apiKey = this.getApiKey();
 
-    const returnUrl =
-      params.returnUrl ||
-      `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/orders`;
+    const appOrigin = params.origin || getAppBaseUrl();
+    const returnUrl = params.returnUrl || `${appOrigin}/orders`;
+    const callbackUrl = params.callbackUrl || `${appOrigin}/api/v1/webhooks/tripay`;
 
     const expiredTime =
       params.expiredTime ||
@@ -171,6 +174,7 @@ export class TripayService {
       customer_email: params.customerEmail?.trim() || 'customer@asterra.store',
       customer_phone: params.customerPhone?.trim() || '081234567890',
       order_items: items,
+      callback_url: callbackUrl,
       return_url: returnUrl,
       expired_time: expiredTime,
       signature: signature,

@@ -2,11 +2,13 @@
  * Type-Safe Environment Variables Configuration for Asterra Store
  */
 
+import { getAppBaseUrl } from './utils/url';
+
 export const env = {
   NODE_ENV: process.env.NODE_ENV || 'development',
   isProduction: process.env.NODE_ENV === 'production',
   PORT: parseInt(process.env.PORT || '3000', 10),
-  APP_URL: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+  APP_URL: getAppBaseUrl(),
 
   // Database
   DATABASE_URL:
@@ -17,7 +19,7 @@ export const env = {
   JWT_SECRET: process.env.JWT_SECRET || 'asterra_jwt_secret_dev_change_in_production_min32chars',
   NEXTAUTH_SECRET:
     process.env.NEXTAUTH_SECRET || 'asterra_nextauth_secret_dev_change_in_production',
-  NEXTAUTH_URL: process.env.NEXTAUTH_URL || 'http://localhost:3000',
+  NEXTAUTH_URL: process.env.NEXTAUTH_URL || getAppBaseUrl(),
 
   // Payment Gateway (Tripay)
   TRIPAY_API_KEY: process.env.TRIPAY_API_KEY || 'DEV-tripay-api-key-asterra',

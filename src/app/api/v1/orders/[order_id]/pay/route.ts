@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getGlobalOrders, addGlobalOrder, Order } from '@/lib/orders-data';
 import { prisma } from '@/lib/prisma';
 import { TripayService } from '@/lib/services/tripay.service';
+import { getAppBaseUrl } from '@/lib/utils/url';
 
 export async function POST(
   request: NextRequest,
@@ -120,7 +121,9 @@ export async function POST(
 
   const tripayMethod = mapToTripayMethod(paymentMethod);
 
-  // Call official Tripay API
+  const requestOrigin = getAppBaseUrl(request);
+
+  // Call official Tripay API with dynamically detected production domain
   const tripayRes = await TripayService.createTransaction({
     method: tripayMethod,
     merchantRef: order.id,
@@ -128,6 +131,9 @@ export async function POST(
     customerName: order.customer_name || 'Pelanggan Asterra',
     customerEmail: order.customer_email || 'customer@asterra.store',
     customerPhone: order.customer_whatsapp || '081234567890',
+    origin: requestOrigin,
+    returnUrl: `${requestOrigin}/orders`,
+    callbackUrl: `${requestOrigin}/api/v1/webhooks/tripay`,
     orderItems: (order.items || []).map((i) => ({
       sku: i.product_id,
       name: i.product_name,
