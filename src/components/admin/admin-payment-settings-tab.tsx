@@ -316,12 +316,27 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
                 <label className="text-[11px] font-medium text-foreground-muted block mb-1">
                   URL Gambar Barcode QRIS
                 </label>
-                <Input
-                  value={qrisImageUrl}
-                  onChange={(e) => setQrisImageUrl(e.target.value)}
-                  placeholder="https://... atau /images/qris-toko.png"
-                  className="text-xs bg-surface-raised border-border font-mono"
-                />
+                <div className="flex gap-2">
+                  <Input
+                    value={qrisImageUrl}
+                    onChange={(e) => setQrisImageUrl(e.target.value)}
+                    placeholder="https://... atau /images/qris-toko.png"
+                    className="text-xs bg-surface-raised border-border font-mono flex-1"
+                  />
+                  {qrisImageUrl && (
+                    <div className="w-9 h-9 rounded bg-white p-0.5 border border-border shrink-0 flex items-center justify-center overflow-hidden">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={qrisImageUrl}
+                        alt="Preview QRIS"
+                        className="w-full h-full object-contain"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLElement).style.display = 'none';
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
                 <span className="text-[10px] text-foreground-muted mt-1 block">
                   Bisa menggunakan file gambar di public folder atau link Cloudinary/Imgur.
                 </span>

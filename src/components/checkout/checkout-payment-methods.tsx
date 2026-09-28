@@ -1,10 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Badge } from '@/components/ui/badge';
 import {
-  AlertTriangle,
-  Check,
   QrCode,
   Wallet,
   Building2,
@@ -26,7 +23,6 @@ interface CheckoutPaymentMethodsProps {
 }
 
 export function CheckoutPaymentMethods({
-  isManualMode,
   paymentMethods,
   selectedMethod,
   onSelectMethod,
@@ -40,33 +36,7 @@ export function CheckoutPaymentMethods({
           </div>
           <h2 className="text-base font-bold text-foreground">Pilih Metode Pembayaran</h2>
         </div>
-
-        {isManualMode ? (
-          <Badge className="bg-status-warning/15 text-status-warning border-status-warning/30 text-[10px] font-mono gap-1">
-            <AlertTriangle className="w-3 h-3" />
-            <span>Mode Transfer Toko</span>
-          </Badge>
-        ) : (
-          <Badge className="bg-status-success/15 text-status-success border-status-success/30 text-[10px] font-mono gap-1">
-            <Check className="w-3 h-3" />
-            <span>Gateway Otomatis</span>
-          </Badge>
-        )}
       </div>
-
-      {/* Notice for Manual Mode */}
-      {isManualMode && (
-        <div className="p-3.5 rounded-lg bg-status-warning/10 border border-status-warning/30 space-y-1">
-          <div className="flex items-center gap-2 text-status-warning font-semibold text-xs">
-            <AlertTriangle className="w-4 h-4 shrink-0" />
-            <span>Pembayaran Transfer Manual Toko Aktif</span>
-          </div>
-          <p className="text-[11px] text-foreground-muted leading-relaxed">
-            Silakan pilih metode transfer langsung di bawah ini. Anda akan mendapatkan detail rekening dan
-            tombol konfirmasi instan ke WhatsApp admin setelah pesanan dibuat.
-          </p>
-        </div>
-      )}
 
       <div className="space-y-2.5 pt-1">
         {paymentMethods.map((method) => {
@@ -99,15 +69,6 @@ export function CheckoutPaymentMethods({
               </div>
 
               <div className="flex items-center gap-2">
-                {isManualMode ? (
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-status-warning/15 text-status-warning font-medium">
-                    Manual
-                  </span>
-                ) : method.category === 'qris' ? (
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-status-success/10 text-status-success font-medium">
-                    Otomatis
-                  </span>
-                ) : null}
                 <span
                   className={`w-4 h-4 rounded-full flex items-center justify-center ${
                     isSelected ? 'bg-primary text-white' : 'bg-surface-hover'

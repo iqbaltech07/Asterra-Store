@@ -3,7 +3,7 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CreditCard, ShieldCheck, Sparkles } from 'lucide-react';
+import { CreditCard, ShieldCheck } from 'lucide-react';
 import { CheckoutVoucherSection } from './checkout-voucher-section';
 
 export interface CartItemSummary {
@@ -25,7 +25,6 @@ interface CheckoutCartSummaryProps {
   discountAmount: number;
   finalTotal: number;
   isManualMode: boolean;
-  enableUniqueCode?: boolean;
   isSubmitting: boolean;
   promoCode: string;
   onPromoCodeChange: (val: string) => void;
@@ -46,7 +45,6 @@ export function CheckoutCartSummary({
   discountAmount,
   finalTotal,
   isManualMode,
-  enableUniqueCode,
   isSubmitting,
   promoCode,
   onPromoCodeChange,
@@ -106,16 +104,6 @@ export function CheckoutCartSummary({
           <div className="flex justify-between text-status-success">
             <span>Diskon Voucher ({appliedPromo.code})</span>
             <span className="font-mono">- Rp {discountAmount.toLocaleString('id-ID')}</span>
-          </div>
-        )}
-
-        {isManualMode && enableUniqueCode && (
-          <div className="flex justify-between text-primary font-mono text-[11px] pt-1">
-            <span className="flex items-center gap-1">
-              <Sparkles className="w-3 h-3" />
-              <span>Kode Verifikasi Mutasi</span>
-            </span>
-            <span>Dihitung otomatis</span>
           </div>
         )}
 

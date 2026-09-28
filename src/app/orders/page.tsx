@@ -34,6 +34,51 @@ const STATUS_FILTERS = [
   { value: 'completed', label: 'Selesai' },
 ];
 
+function OrderCountdownBadge({ expiresAt }: { expiresAt?: string }) {
+  const [timeLeft, setTimeLeft] = useState('');
+  const [isExpired, setIsExpired] = useState(false);
+
+  useEffect(() => {
+    if (!expiresAt) return;
+    const target = new Date(expiresAt).getTime();
+
+    const update = () => {
+      const diff = target - Date.now();
+      if (diff <= 0) {
+        setTimeLeft('Waktu Habis');
+        setIsExpired(true);
+        return;
+      }
+      const totalSec = Math.floor(diff / 1000);
+      const h = Math.floor(totalSec / 3600);
+      const m = Math.floor((totalSec % 3600) / 60);
+      const s = totalSec % 60;
+      setTimeLeft(`${h}j ${m}m ${s}d`);
+      setIsExpired(false);
+    };
+
+    update();
+    const timer = setInterval(update, 1000);
+    return () => clearInterval(timer);
+  }, [expiresAt]);
+
+  if (!expiresAt || !timeLeft) return null;
+
+  return (
+    <span
+      className={`text-[10px] font-mono px-2 py-0.5 rounded border inline-flex items-center gap-1 ${
+        isExpired
+          ? 'bg-status-error/10 text-status-error border-status-error/30'
+          : 'bg-status-warning/10 text-status-warning border-status-warning/30'
+      }`}
+      title="Batas Waktu Pembayaran 24 Jam"
+    >
+      <Clock className="w-3 h-3" />
+      <span>{timeLeft}</span>
+    </span>
+  );
+}
+
 export default function OrdersPage() {
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -395,7 +440,10 @@ export default function OrdersPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between sm:justify-end gap-3">
+                    <div className="flex items-center justify-between sm:justify-end gap-2">
+                      {order.order_status === 'pending' && (
+                        <OrderCountdownBadge expiresAt={order.expires_at} />
+                      )}
                       {getStatusBadge(order.order_status)}
                       <span className="text-sm font-bold text-foreground">
                         Rp {order.total_amount.toLocaleString('id-ID')}

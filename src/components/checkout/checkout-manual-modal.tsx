@@ -1,7 +1,6 @@
 'use client';
 
-import React from 'react';
-import { Badge } from '@/components/ui/badge';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { PublicPaymentConfig } from '@/lib/services/payment-config.service';
 import {
@@ -44,6 +43,55 @@ export function CheckoutManualModal({
   copiedKey,
   getMethodName,
 }: CheckoutManualModalProps) {
+  const [timeLeft, setTimeLeft] = useState<{
+    hours: number;
+    minutes: number;
+    seconds: number;
+    isExpired: boolean;
+  }>({
+    hours: paymentConfig?.order_expiry_hours || 24,
+    minutes: 0,
+    seconds: 0,
+    isExpired: false,
+  });
+
+  // Live real-time countdown timer & auto-cancellation
+  useEffect(() => {
+    if (!data) return;
+
+    const targetTime = data.expiresAt
+      ? new Date(data.expiresAt).getTime()
+      : Date.now() + (paymentConfig?.order_expiry_hours || 24) * 3600 * 1000;
+
+    let hasTriggeredCancel = false;
+
+    const updateCountdown = () => {
+      const diff = targetTime - Date.now();
+
+      if (diff <= 0) {
+        setTimeLeft({ hours: 0, minutes: 0, seconds: 0, isExpired: true });
+        if (!hasTriggeredCancel) {
+          hasTriggeredCancel = true;
+          // Notify backend that order expired and cancel it
+          fetch(`/api/v1/orders/${data.orderId}/cancel`, { method: 'POST' }).catch(() => {});
+        }
+        return;
+      }
+
+      const totalSeconds = Math.floor(diff / 1000);
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
+
+      setTimeLeft({ hours, minutes, seconds, isExpired: false });
+    };
+
+    updateCountdown();
+    const timer = setInterval(updateCountdown, 1000);
+
+    return () => clearInterval(timer);
+  }, [data, paymentConfig?.order_expiry_hours]);
+
   if (!data) return null;
 
   return (
@@ -56,15 +104,10 @@ export function CheckoutManualModal({
       <div className="relative w-full max-w-lg bg-surface border border-border rounded-xl shadow-2xl p-6 sm:p-8 z-10 space-y-5 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
         <div className="flex items-start justify-between">
           <div>
-            <div className="flex items-center gap-2">
-              <Badge className="text-[10px] bg-status-warning text-black font-semibold">
-                Transfer Manual Toko
-              </Badge>
-              <span className="text-xs font-mono text-foreground-muted">
-                ID: {data.orderId}
-              </span>
-            </div>
-            <h3 className="text-xl font-bold text-foreground mt-2">
+            <span className="text-xs font-mono text-foreground-muted block">
+              ID Pesanan: {data.orderId}
+            </span>
+            <h3 className="text-xl font-bold text-foreground mt-1">
               Instruksi Pembayaran Manual
             </h3>
           </div>
@@ -77,18 +120,45 @@ export function CheckoutManualModal({
           </button>
         </div>
 
-        {/* Expiry Warning Box */}
-        <div className="bg-surface-raised rounded-lg p-3 flex items-center justify-between text-xs border border-border">
+        {/* Live Expiry Countdown Box */}
+        <div
+          className={`rounded-lg p-3 flex items-center justify-between text-xs border ${
+            timeLeft.isExpired
+              ? 'bg-status-error/10 border-status-error/30 text-status-error'
+              : 'bg-surface-raised border-border text-foreground'
+          }`}
+        >
           <div className="flex items-center gap-2 text-foreground-muted">
-            <Clock className="w-4 h-4 text-status-warning" />
+            <Clock
+              className={`w-4 h-4 ${
+                timeLeft.isExpired ? 'text-status-error' : 'text-status-warning'
+              }`}
+            />
             <span>Batas Waktu Pembayaran</span>
           </div>
-          <span className="font-mono font-bold text-status-warning">
-            {paymentConfig?.order_expiry_hours || 24} Jam ke depan
-          </span>
+
+          {timeLeft.isExpired ? (
+            <span className="font-mono font-bold text-status-error animate-pulse">
+              Waktu Habis (Pesanan Dibatalkan)
+            </span>
+          ) : (
+            <div className="flex items-center gap-1 font-mono font-bold text-status-warning text-xs sm:text-sm">
+              <span className="px-1.5 py-0.5 rounded bg-surface border border-border">
+                {String(timeLeft.hours).padStart(2, '0')}
+              </span>
+              <span>:</span>
+              <span className="px-1.5 py-0.5 rounded bg-surface border border-border">
+                {String(timeLeft.minutes).padStart(2, '0')}
+              </span>
+              <span>:</span>
+              <span className="px-1.5 py-0.5 rounded bg-surface border border-border">
+                {String(timeLeft.seconds).padStart(2, '0')}
+              </span>
+            </div>
+          )}
         </div>
 
-        {/* Highlighted Amount to Transfer with Unique Code */}
+        {/* Highlighted Amount to Transfer */}
         <div className="p-4 bg-primary/10 border border-primary/30 rounded-xl text-center space-y-2">
           <span className="text-xs text-foreground-muted block font-medium">
             Total Nominal Wajib Ditransfer:
@@ -107,16 +177,6 @@ export function CheckoutManualModal({
               <span>{copiedKey === 'amount' ? 'Tersalin' : 'Salin'}</span>
             </button>
           </div>
-
-          {data.uniqueCode && (
-            <p className="text-[11px] text-foreground-muted font-medium">
-              Termasuk 3 digit kode verifikasi mutasi{' '}
-              <span className="text-primary font-mono font-bold">
-                (+Rp {data.uniqueCode})
-              </span>
-              . Mohon transfer tepat hingga digit terakhir agar verifikasi otomatis cepat!
-            </p>
-          )}
         </div>
 
         {/* Method Details: Bank BCA / QRIS / DANA */}
@@ -156,21 +216,50 @@ export function CheckoutManualModal({
 
         {data.method === 'manual_qris' && (
           <div className="p-4 bg-surface-raised rounded-xl border border-border text-center space-y-3">
-            <div className="w-40 h-40 bg-white p-2 rounded-xl mx-auto flex items-center justify-center border border-border">
-              <div className="w-full h-full border-2 border-zinc-900 border-dashed rounded-lg flex flex-col items-center justify-center p-2 text-zinc-900">
+            <div className="w-56 h-56 bg-white p-3 rounded-xl mx-auto flex items-center justify-center border border-border shadow-sm overflow-hidden relative">
+              {paymentConfig?.qris?.image_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={paymentConfig.qris.image_url}
+                  alt={paymentConfig.qris.merchant_name || 'ASTERRA STORE QRIS'}
+                  className="w-full h-full object-contain rounded-lg"
+                  onError={(e) => {
+                    const target = e.currentTarget;
+                    target.style.display = 'none';
+                    const fallback = target.nextElementSibling as HTMLElement;
+                    if (fallback) fallback.style.display = 'flex';
+                  }}
+                />
+              ) : null}
+              <div
+                className={`w-full h-full border-2 border-zinc-900 border-dashed rounded-lg flex flex-col items-center justify-center p-2 text-zinc-900 ${
+                  paymentConfig?.qris?.image_url ? 'hidden' : 'flex'
+                }`}
+              >
                 <QrCode className="w-14 h-14 mb-1" />
                 <span className="text-[8px] font-bold uppercase tracking-wider text-zinc-900">
                   {paymentConfig?.qris?.merchant_name || 'ASTERRA STORE QRIS'}
                 </span>
               </div>
             </div>
-            <div className="space-y-0.5">
+            <div className="space-y-1">
               <span className="text-xs font-bold text-foreground block">
                 {paymentConfig?.qris?.merchant_name || 'ASTERRA STORE QRIS'}
               </span>
               <p className="text-[11px] text-foreground-muted max-w-xs mx-auto">
                 Scan barcode di atas menggunakan GoPay, OVO, Dana, ShopeePay, atau BCA Mobile.
               </p>
+              {paymentConfig?.qris?.image_url && (
+                <a
+                  href={paymentConfig.qris.image_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-[11px] text-primary hover:underline font-medium pt-1"
+                >
+                  <ExternalLink className="w-3 h-3" />
+                  <span>Buka Gambar QRIS Penuh</span>
+                </a>
+              )}
             </div>
           </div>
         )}
@@ -235,7 +324,7 @@ export function CheckoutManualModal({
             className="w-full text-xs text-foreground-muted border-border hover:bg-surface-raised h-10"
             onClick={onClose}
           >
-            Saya Sudah Transfer & Lihat Status Pesanan
+            Lihat Status Pesanan
           </Button>
         </div>
       </div>

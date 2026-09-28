@@ -27,7 +27,7 @@ const GATEWAY_PAYMENT_METHODS: PaymentMethodOption[] = [
   {
     id: 'qris',
     name: 'QRIS (Semua Pembayaran)',
-    description: 'Scan instan via BCA, Mandiri, BRI, SeaBank, BNI, GoPay, OVO, ShopeePay, DANA',
+    description: 'Scan instan via BCA, Mandiri, BRI, BNI, GoPay, OVO, ShopeePay, DANA',
     category: 'qris',
   },
   {
@@ -40,12 +40,6 @@ const GATEWAY_PAYMENT_METHODS: PaymentMethodOption[] = [
     id: 'bni_va',
     name: 'BNI Virtual Account',
     description: 'Transfer otomatis via BNI Mobile Banking, Internet Banking, atau ATM BNI',
-    category: 'va',
-  },
-  {
-    id: 'seabank_va',
-    name: 'SeaBank Virtual Account',
-    description: 'Transfer otomatis via aplikasi SeaBank atau jaringan Bank Lainnya',
     category: 'va',
   },
   {

@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { TripayService } from '@/lib/services/tripay.service';
 import { getAppBaseUrl } from '@/lib/utils/url';
 import { mapDbOrderToOrder, RawDbOrder } from '@/lib/utils/order-mapper';
+import { OrderAdminService } from '@/lib/services/order-admin.service';
 
 export async function POST(
   request: NextRequest,
@@ -59,8 +60,14 @@ export async function POST(
   }
 
   if (order.expires_at && new Date(order.expires_at) < new Date()) {
+    await OrderAdminService.updateStatus(
+      order.id,
+      'cancelled',
+      'system',
+      'Pesanan dibatalkan otomatis oleh sistem karena melewati batas waktu pembayaran 24 jam.'
+    );
     return NextResponse.json(
-      { success: false, error: 'Batas waktu pembayaran untuk pesanan ini telah habis. Silakan buat pesanan baru.' },
+      { success: false, error: 'Batas waktu pembayaran untuk pesanan ini telah habis. Pesanan telah dibatalkan oleh sistem.' },
       { status: 400 }
     );
   }

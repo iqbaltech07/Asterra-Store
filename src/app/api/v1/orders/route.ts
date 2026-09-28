@@ -10,6 +10,7 @@ import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
 import { PromoService } from '@/lib/services/promo.service';
 import { mapDbOrderToOrder, RawDbOrder } from '@/lib/utils/order-mapper';
+import { OrderAdminService } from '@/lib/services/order-admin.service';
 
 // GET /api/v1/orders
 export async function GET(request: NextRequest) {
@@ -17,6 +18,11 @@ export async function GET(request: NextRequest) {
   const status = searchParams.get('status');
   const page = parseInt(searchParams.get('page') || '1', 10);
   const limit = parseInt(searchParams.get('limit') || '10', 10);
+
+  // Auto-cancel any expired pending orders before returning lists
+  await OrderAdminService.autoCancelExpiredOrders().catch((e) =>
+    console.warn('[OrdersAPI] Auto-cancel runner error:', e)
+  );
 
   let orders = getGlobalOrders();
 

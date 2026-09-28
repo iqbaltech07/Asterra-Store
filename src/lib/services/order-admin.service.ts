@@ -36,6 +36,11 @@ export class OrderAdminService {
     const status = params.status;
     const search = params.search?.trim().toLowerCase();
 
+    // Auto-cancel any expired pending orders before returning lists
+    await this.autoCancelExpiredOrders().catch((e) =>
+      console.warn('[OrderAdminService] Auto-cancel runner error:', e)
+    );
+
     try {
       // 1. Try querying Supabase PostgreSQL database via Prisma
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -290,6 +295,61 @@ export class OrderAdminService {
     });
 
     return updatedOrder;
+  }
+
+  /**
+   * Automatically detect and cancel all pending orders that have exceeded their expiresAt deadline.
+   */
+  static async autoCancelExpiredOrders(): Promise<number> {
+    const now = new Date();
+    let cancelledCount = 0;
+
+    try {
+      // 1. Check in Prisma DB
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const prismaClient = prisma as any;
+      if (prismaClient?.order) {
+        const expiredDbOrders = await prismaClient.order.findMany({
+          where: {
+            status: 'pending',
+            expiresAt: {
+              lt: now,
+            },
+          },
+          select: { id: true },
+        });
+
+        for (const o of expiredDbOrders) {
+          await this.updateStatus(
+            o.id,
+            'cancelled',
+            'system',
+            'Pesanan dibatalkan otomatis oleh sistem karena telah melewati batas waktu pembayaran 24 jam.'
+          );
+          cancelledCount++;
+        }
+      }
+    } catch (err) {
+      console.warn('[OrderAdminService] autoCancelExpiredOrders DB error:', err);
+    }
+
+    // 2. Also check in-memory store
+    const memOrders = getGlobalOrders();
+    for (const o of memOrders) {
+      if (o.order_status === 'pending' && o.expires_at) {
+        if (new Date(o.expires_at).getTime() < now.getTime()) {
+          updateGlobalOrderStatus(
+            o.id,
+            'cancelled',
+            'system',
+            'Pesanan dibatalkan otomatis oleh sistem karena telah melewati batas waktu pembayaran 24 jam.'
+          );
+          cancelledCount++;
+        }
+      }
+    }
+
+    return cancelledCount;
   }
 
   /**
