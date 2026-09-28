@@ -634,7 +634,7 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
             </div>
 
             <p className="text-[11px] text-foreground-muted leading-relaxed">
-              Sistem telah dikonfigurasi secara otomatis mengirimkan <strong>Callback URL</strong> &amp; <strong>Return URL</strong> dinamis pada setiap pembuatan tagihan Tripay sesuai domain aktif Anda ({currentBaseUrl || 'https://asterrastore.vercel.app'}).
+              Sistem telah dikonfigurasi secara otomatis mengirimkan <strong>Callback URL</strong> &amp; <strong>Return URL</strong> dinamis pada setiap pembuatan tagihan Tripay sesuai domain aktif Anda ({currentBaseUrl || 'https://asterrastore.biz.id'}).
             </p>
 
             <div className="space-y-3 text-xs">
@@ -645,14 +645,14 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
                 <div className="relative">
                   <Input
                     readOnly
-                    value={`${currentBaseUrl || 'https://asterrastore.vercel.app'}/api/v1/webhooks/tripay`}
+                    value={`${currentBaseUrl || 'https://asterrastore.biz.id'}/api/v1/webhooks/tripay`}
                     className="text-[11px] bg-surface-raised border-border font-mono pr-16 select-all"
                   />
                   <button
                     type="button"
                     onClick={() =>
                       handleCopy(
-                        `${currentBaseUrl || 'https://asterrastore.vercel.app'}/api/v1/webhooks/tripay`,
+                        `${currentBaseUrl || 'https://asterrastore.biz.id'}/api/v1/webhooks/tripay`,
                         'webhook'
                       )
                     }
@@ -671,13 +671,13 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
                 <div className="relative">
                   <Input
                     readOnly
-                    value={`${currentBaseUrl || 'https://asterrastore.vercel.app'}/orders`}
+                    value={`${currentBaseUrl || 'https://asterrastore.biz.id'}/orders`}
                     className="text-[11px] bg-surface-raised border-border font-mono pr-16 select-all"
                   />
                   <button
                     type="button"
                     onClick={() =>
-                      handleCopy(`${currentBaseUrl || 'https://asterrastore.vercel.app'}/orders`, 'return')
+                      handleCopy(`${currentBaseUrl || 'https://asterrastore.biz.id'}/orders`, 'return')
                     }
                     className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-primary hover:underline px-1 py-0.5 flex items-center gap-1"
                   >

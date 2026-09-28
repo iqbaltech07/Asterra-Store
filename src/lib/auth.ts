@@ -22,6 +22,8 @@ export const auth = betterAuth({
   baseURL: getAppBaseUrl(),
   trustedOrigins: async (request) => {
     const list: string[] = [
+      'https://asterrastore.biz.id',
+      'https://*.asterrastore.biz.id',
       'https://asterrastore.vercel.app',
       'https://*.vercel.app',
       'http://localhost:3000',

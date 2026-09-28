@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     'Asterra Store',
   ],
   authors: [{ name: 'Asterra Store Team' }],
-  metadataBase: new URL('https://asterra.store'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://asterrastore.biz.id'),
 };
 
 export default function RootLayout({

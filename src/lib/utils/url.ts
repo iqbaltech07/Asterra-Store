@@ -63,7 +63,7 @@ export function getAppBaseUrl(
     return `https://${process.env.VERCEL_URL}`.replace(/\/+$/, '');
   }
   if (isVercel) {
-    return 'https://asterrastore.vercel.app';
+    return 'https://asterrastore.biz.id';
   }
 
   // 5. Explicit localhost from env if in local development
