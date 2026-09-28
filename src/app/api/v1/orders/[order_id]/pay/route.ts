@@ -3,6 +3,7 @@ import { getGlobalOrders, addGlobalOrder, Order } from '@/lib/orders-data';
 import { prisma } from '@/lib/prisma';
 import { TripayService } from '@/lib/services/tripay.service';
 import { getAppBaseUrl } from '@/lib/utils/url';
+import { mapDbOrderToOrder, RawDbOrder } from '@/lib/utils/order-mapper';
 
 export async function POST(
   request: NextRequest,
@@ -22,56 +23,7 @@ export async function POST(
       });
 
       if (dbOrder) {
-        order = {
-          id: dbOrder.id,
-          user_id: 'user-001',
-          customer_email: dbOrder.customerEmail,
-          customer_name: dbOrder.customerName || undefined,
-          customer_whatsapp: dbOrder.customerWhatsapp || undefined,
-          total_amount: dbOrder.totalAmount,
-          raw_amount: dbOrder.rawAmount || undefined,
-          unique_code: dbOrder.uniqueCode || undefined,
-          payment_mode: (dbOrder.paymentMode as 'gateway' | 'manual') || 'gateway',
-          order_status: (dbOrder.status as Order['order_status']) || 'pending',
-          order_date: dbOrder.createdAt ? new Date(dbOrder.createdAt).toISOString() : new Date().toISOString(),
-          expires_at: dbOrder.expiresAt ? new Date(dbOrder.expiresAt).toISOString() : undefined,
-          customer_notes: dbOrder.customerNotes || '',
-          items: Array.isArray(dbOrder.items) && dbOrder.items.length > 0
-            ? (dbOrder.items as Array<{
-                id: string;
-                productId: string;
-                productName: string;
-                price: number;
-                quantity: number;
-                targetEmail?: string | null;
-                targetPhone?: string | null;
-                duration?: string | null;
-              }>).map((i) => ({
-                id: i.id,
-                product_id: i.productId,
-                product_name: i.productName,
-                unit_price: i.price,
-                quantity: i.quantity,
-                purchased_details: {
-                  target_email: i.targetEmail || dbOrder.customerEmail,
-                  phone: i.targetPhone || '',
-                  duration: i.duration || undefined,
-                },
-              }))
-            : [
-                {
-                  id: `item-${dbOrder.id}-1`,
-                  product_id: 'prod-digital',
-                  product_name: 'Lisensi Layanan Digital',
-                  unit_price: dbOrder.totalAmount,
-                  quantity: 1,
-                  purchased_details: {
-                    target_email: dbOrder.customerEmail,
-                    phone: dbOrder.customerWhatsapp || '',
-                  },
-                },
-              ],
-        };
+        order = mapDbOrderToOrder(dbOrder as unknown as RawDbOrder);
         addGlobalOrder(order);
       }
     }

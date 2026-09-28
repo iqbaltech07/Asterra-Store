@@ -9,6 +9,7 @@ import { broadcastOrderEvent } from '@/lib/services/event-bus';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
 import { PromoService } from '@/lib/services/promo.service';
+import { mapDbOrderToOrder, RawDbOrder } from '@/lib/utils/order-mapper';
 
 // GET /api/v1/orders
 export async function GET(request: NextRequest) {
@@ -36,73 +37,7 @@ export async function GET(request: NextRequest) {
     const existingIds = new Set(orders.map((o) => o.id));
     for (const d of dbOrders) {
       if (!existingIds.has(d.id)) {
-        const mappedItems =
-          d.items && d.items.length > 0
-            ? d.items.map((it) => ({
-                id: it.id,
-                product_id: it.productId,
-                product_name: it.productName,
-                unit_price: it.price,
-                quantity: it.quantity,
-                purchased_details: {
-                  target_email: it.targetEmail || d.customerEmail,
-                  phone: it.targetPhone || d.customerWhatsapp || '',
-                  duration: it.duration || 'standard',
-                },
-              }))
-            : [
-                {
-                  id: `item-${d.id}-1`,
-                  product_id: 'prod-digital',
-                  product_name: 'Lisensi Layanan Digital',
-                  unit_price: d.totalAmount,
-                  quantity: 1,
-                  purchased_details: {
-                    target_email: d.customerEmail,
-                    phone: d.customerWhatsapp || '',
-                  },
-                },
-              ];
-
-        const rawOrderObj = d as unknown as Record<string, unknown>;
-        const logsList = Array.isArray(d.logs) ? (d.logs as unknown as Array<Record<string, unknown>>) : [];
-        const promoLog = logsList.find(
-          (l) => l.action === 'promo_applied' || !!(l.metadata as Record<string, unknown> | undefined)?.promo_code
-        );
-        const promoLogMeta = promoLog?.metadata as Record<string, unknown> | undefined;
-        const promoLogNotes = typeof promoLog?.notes === 'string' ? promoLog.notes : '';
-        const promoCode =
-          (typeof rawOrderObj.promoCode === 'string' ? rawOrderObj.promoCode : undefined) ||
-          (typeof promoLogMeta?.promo_code === 'string' ? promoLogMeta.promo_code : undefined) ||
-          promoLogNotes.match(/voucher\s+["']?([A-Z0-9_-]+)/i)?.[1] ||
-          undefined;
-        const discountAmount =
-          typeof rawOrderObj.discountAmount === 'number'
-            ? rawOrderObj.discountAmount
-            : typeof promoLogMeta?.discount_amount === 'number'
-            ? promoLogMeta.discount_amount
-            : d.rawAmount && d.totalAmount && d.rawAmount > d.totalAmount
-            ? d.rawAmount - (d.totalAmount - (d.uniqueCode || 0))
-            : undefined;
-
-        orders.push({
-          id: d.id,
-          user_id: 'user-001',
-          customer_email: d.customerEmail,
-          customer_name: d.customerName || undefined,
-          customer_whatsapp: d.customerWhatsapp || undefined,
-          total_amount: d.totalAmount,
-          raw_amount: d.rawAmount || undefined,
-          unique_code: d.uniqueCode || undefined,
-          promo_code: promoCode,
-          discount_amount: discountAmount,
-          payment_mode: (d.paymentMode as 'gateway' | 'manual') || 'gateway',
-          order_status: (d.status as Order['order_status']) || 'pending',
-          order_date: d.createdAt ? new Date(d.createdAt).toISOString() : new Date().toISOString(),
-          expires_at: d.expiresAt ? new Date(d.expiresAt).toISOString() : undefined,
-          customer_notes: d.customerNotes || '',
-          items: mappedItems,
-        });
+        orders.push(mapDbOrderToOrder(d as unknown as RawDbOrder));
       }
     }
   } catch (err) {
