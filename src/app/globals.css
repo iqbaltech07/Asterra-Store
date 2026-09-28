@@ -1,0 +1,73 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Moryn Authentic Color Tokens */
+  --color-bg: #f7f5f0;
+  --color-surface: #fcfbf8;
+  --color-surface-raised: #ffffff;
+  --color-ink: #171a18;
+  --color-ink-soft: #303633;
+  --color-muted: #707874;
+  --color-border: #d9ddd8;
+  --color-border-strong: #b9bfbb;
+  --color-accent: #c66543;
+  --color-accent-dark: #a94f32;
+  --color-accent-soft: #f1dfd7;
+
+  /* Semantic colors */
+  --color-success: #2f6b4f;
+  --color-warning: #a56a21;
+  --color-danger: #b4433a;
+  --color-info: #486875;
+
+  /* Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+
+  /* Aliases for Tailwind CSS variables */
+  --background: #f7f5f0;
+  --surface: #fcfbf8;
+  --surface-raised: #ffffff;
+  --border: #d9ddd8;
+  --primary: #c66543;
+  --foreground: #171a18;
+  --foreground-muted: #707874;
+}
+
+body {
+  background-color: #f7f5f0;
+  color: #171a18;
+  font-family:
+    var(--font-inter),
+    Inter,
+    system-ui,
+    -apple-system,
+    sans-serif;
+  min-height: 100dvh;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom Editorial Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f7f5f0;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d9ddd8;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #b9bfbb;
+}
