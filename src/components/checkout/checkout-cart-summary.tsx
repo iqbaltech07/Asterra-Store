@@ -25,6 +25,7 @@ interface CheckoutCartSummaryProps {
   discountAmount: number;
   finalTotal: number;
   isManualMode: boolean;
+  enableUniqueCode?: boolean;
   isSubmitting: boolean;
   promoCode: string;
   onPromoCodeChange: (val: string) => void;

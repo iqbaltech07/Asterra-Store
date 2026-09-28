@@ -405,7 +405,6 @@ export default function CheckoutPage() {
                     discountAmount={discountAmount}
                     finalTotal={finalTotal}
                     isManualMode={isManualMode}
-                    enableUniqueCode={paymentConfig?.enable_unique_code}
                     isSubmitting={isSubmitting}
                     promoCode={promoCode}
                     onPromoCodeChange={setPromoCode}
