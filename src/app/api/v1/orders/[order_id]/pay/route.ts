@@ -9,82 +9,107 @@ export async function POST(
   { params }: { params: Promise<{ order_id: string }> }
 ) {
   const { order_id } = await params;
-  let order = getGlobalOrders().find((o) => o.id === order_id);
+  let order: Order | null = null;
 
-  // If not found in memory, query PostgreSQL via Prisma
-  if (!order) {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const prismaClient = prisma as any;
-      if (prismaClient?.order) {
-        const dbOrder = await prismaClient.order.findUnique({
-          where: { id: order_id },
-          include: { items: true },
-        });
+  // 1. Primary Source of Truth: Query PostgreSQL via Prisma
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const prismaClient = prisma as any;
+    if (prismaClient?.order) {
+      const dbOrder = await prismaClient.order.findUnique({
+        where: { id: order_id },
+        include: { items: true },
+      });
 
-        if (dbOrder) {
-          order = {
-            id: dbOrder.id,
-            user_id: 'user-001',
-            customer_email: dbOrder.customerEmail,
-            customer_name: dbOrder.customerName || undefined,
-            customer_whatsapp: dbOrder.customerWhatsapp || undefined,
-            total_amount: dbOrder.totalAmount,
-            raw_amount: dbOrder.rawAmount || undefined,
-            unique_code: dbOrder.uniqueCode || undefined,
-            payment_mode: (dbOrder.paymentMode as 'gateway' | 'manual') || 'gateway',
-            order_status: (dbOrder.status as Order['order_status']) || 'pending',
-            order_date: dbOrder.createdAt ? new Date(dbOrder.createdAt).toISOString() : new Date().toISOString(),
-            expires_at: dbOrder.expiresAt ? new Date(dbOrder.expiresAt).toISOString() : undefined,
-            customer_notes: dbOrder.customerNotes || '',
-            items: Array.isArray(dbOrder.items) && dbOrder.items.length > 0
-              ? (dbOrder.items as Array<{
-                  id: string;
-                  productId: string;
-                  productName: string;
-                  price: number;
-                  quantity: number;
-                  targetEmail?: string | null;
-                  targetPhone?: string | null;
-                  duration?: string | null;
-                }>).map((i) => ({
-                  id: i.id,
-                  product_id: i.productId,
-                  product_name: i.productName,
-                  unit_price: i.price,
-                  quantity: i.quantity,
+      if (dbOrder) {
+        order = {
+          id: dbOrder.id,
+          user_id: 'user-001',
+          customer_email: dbOrder.customerEmail,
+          customer_name: dbOrder.customerName || undefined,
+          customer_whatsapp: dbOrder.customerWhatsapp || undefined,
+          total_amount: dbOrder.totalAmount,
+          raw_amount: dbOrder.rawAmount || undefined,
+          unique_code: dbOrder.uniqueCode || undefined,
+          payment_mode: (dbOrder.paymentMode as 'gateway' | 'manual') || 'gateway',
+          order_status: (dbOrder.status as Order['order_status']) || 'pending',
+          order_date: dbOrder.createdAt ? new Date(dbOrder.createdAt).toISOString() : new Date().toISOString(),
+          expires_at: dbOrder.expiresAt ? new Date(dbOrder.expiresAt).toISOString() : undefined,
+          customer_notes: dbOrder.customerNotes || '',
+          items: Array.isArray(dbOrder.items) && dbOrder.items.length > 0
+            ? (dbOrder.items as Array<{
+                id: string;
+                productId: string;
+                productName: string;
+                price: number;
+                quantity: number;
+                targetEmail?: string | null;
+                targetPhone?: string | null;
+                duration?: string | null;
+              }>).map((i) => ({
+                id: i.id,
+                product_id: i.productId,
+                product_name: i.productName,
+                unit_price: i.price,
+                quantity: i.quantity,
+                purchased_details: {
+                  target_email: i.targetEmail || dbOrder.customerEmail,
+                  phone: i.targetPhone || '',
+                  duration: i.duration || undefined,
+                },
+              }))
+            : [
+                {
+                  id: `item-${dbOrder.id}-1`,
+                  product_id: 'prod-digital',
+                  product_name: 'Lisensi Layanan Digital',
+                  unit_price: dbOrder.totalAmount,
+                  quantity: 1,
                   purchased_details: {
-                    target_email: i.targetEmail || dbOrder.customerEmail,
-                    phone: i.targetPhone || '',
-                    duration: i.duration || undefined,
+                    target_email: dbOrder.customerEmail,
+                    phone: dbOrder.customerWhatsapp || '',
                   },
-                }))
-              : [
-                  {
-                    id: `item-${dbOrder.id}-1`,
-                    product_id: 'prod-digital',
-                    product_name: 'Lisensi Layanan Digital',
-                    unit_price: dbOrder.totalAmount,
-                    quantity: 1,
-                    purchased_details: {
-                      target_email: dbOrder.customerEmail,
-                      phone: dbOrder.customerWhatsapp || '',
-                    },
-                  },
-                ],
-          };
-          addGlobalOrder(order);
-        }
+                },
+              ],
+        };
+        addGlobalOrder(order);
       }
-    } catch (err) {
-      console.warn('[OrdersPayAPI] Prisma lookup error:', err);
     }
+  } catch (err) {
+    console.warn('[OrdersPayAPI] Prisma lookup error:', err);
+  }
+
+  // 2. Secondary fallback to memory
+  if (!order) {
+    order = getGlobalOrders().find((o) => o.id === order_id) || null;
   }
 
   if (!order) {
     return NextResponse.json(
       { success: false, error: 'Pesanan tidak ditemukan' },
       { status: 404 }
+    );
+  }
+
+  // Payment Status Guards: Prevent double payment or paying for dead orders
+  if (order.order_status === 'completed' || order.order_status === 'processing') {
+    return NextResponse.json(
+      { success: false, error: 'Pesanan ini sudah berhasil diverifikasi dan sedang diproses atau telah selesai.' },
+      { status: 400 }
+    );
+  }
+
+  if (order.order_status === 'cancelled') {
+    return NextResponse.json(
+      { success: false, error: 'Pesanan ini telah dibatalkan atau kedaluwarsa. Silakan lakukan pemesanan baru.' },
+      { status: 400 }
+    );
+  }
+
+  if (order.expires_at && new Date(order.expires_at) < new Date()) {
+    return NextResponse.json(
+      { success: false, error: 'Batas waktu pembayaran untuk pesanan ini telah habis. Silakan buat pesanan baru.' },
+      { status: 400 }
     );
   }
 

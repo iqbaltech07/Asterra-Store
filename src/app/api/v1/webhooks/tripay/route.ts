@@ -46,6 +46,14 @@ export async function POST(request: NextRequest) {
 
     // 2. Handle Payment Status Transition
     if (payload.status === 'PAID') {
+      // Idempotency guard: If order is already verified as paid, safely acknowledge duplicate callback
+      if (existingOrder.order_status === 'processing' || existingOrder.order_status === 'completed') {
+        return NextResponse.json({
+          success: true,
+          message: `Order ${orderId} is already ${existingOrder.order_status}. Duplicate callback ignored safely.`,
+        });
+      }
+
       // Underpayment validation guard: verify paid amount matches or covers expected order total
       if (typeof payload.total_amount === 'number' && payload.total_amount < existingOrder.total_amount) {
         console.warn(

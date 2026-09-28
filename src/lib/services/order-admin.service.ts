@@ -361,16 +361,29 @@ export class OrderAdminService {
     notes?: string,
     metadata?: Record<string, unknown>
   ): Promise<Order | null> {
-    // 1. Update in-memory state
-    const currentMemoryOrder = getGlobalOrders().find((o) => o.id === orderId);
-    const previousStatus = currentMemoryOrder?.order_status || 'pending';
+    // 1. Fetch current status from DB or memory for accurate audit trail
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const prismaClient = prisma as any;
+    let previousStatus: string = 'pending';
+    try {
+      if (prismaClient?.order) {
+        const existing = await prismaClient.order.findUnique({
+          where: { id: orderId },
+          select: { status: true },
+        });
+        if (existing?.status) {
+          previousStatus = existing.status;
+        }
+      }
+    } catch {
+      const currentMemoryOrder = getGlobalOrders().find((o) => o.id === orderId);
+      previousStatus = currentMemoryOrder?.order_status || 'pending';
+    }
 
     updateGlobalOrderStatus(orderId, newStatus, actor, notes);
 
     // 2. Persist update and create audit log in Prisma database
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const prismaClient = prisma as any;
       if (prismaClient?.order) {
         const isPaid = newStatus === 'completed' || newStatus === 'processing';
 

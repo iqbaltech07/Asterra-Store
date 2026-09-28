@@ -145,25 +145,61 @@ export class TripayService {
       params.expiredTime ||
       Math.floor(Date.now() / 1000) + 24 * 3600;
 
-    // Ensure order_items sum matches amount exactly
-    const items = params.orderItems.map((item, idx) => ({
+    const targetAmount = Math.round(params.amount);
+    let items = params.orderItems.map((item, idx) => ({
       sku: item.sku || `ITEM-${idx + 1}`,
       name: item.name,
-      price: Math.round(item.price),
-      quantity: item.quantity,
-      subtotal: Math.round(item.price * item.quantity),
+      price: Math.max(1, Math.round(item.price)),
+      quantity: Math.max(1, item.quantity),
+      subtotal: Math.max(1, Math.round(item.price)) * Math.max(1, item.quantity),
     }));
 
     const itemsTotal = items.reduce((acc, curr) => acc + curr.subtotal, 0);
-    const amountDifference = Math.round(params.amount) - itemsTotal;
 
-    if (amountDifference !== 0) {
+    if (targetAmount < itemsTotal) {
+      // Order has a discount (voucher). Tripay requires price >= 1 and rejects negative price items.
+      // Proportionally scale item prices down so that every item remains valid and positive.
+      let allocated = 0;
+      items = items.map((item, idx) => {
+        if (idx === items.length - 1) {
+          const remaining = Math.max(item.quantity, targetAmount - allocated);
+          const unitPrice = Math.max(1, Math.floor(remaining / item.quantity));
+          return {
+            ...item,
+            price: unitPrice,
+            subtotal: unitPrice * item.quantity,
+          };
+        }
+        const proportionalSubtotal = Math.max(
+          item.quantity,
+          Math.floor((item.subtotal / itemsTotal) * targetAmount)
+        );
+        const unitPrice = Math.max(1, Math.floor(proportionalSubtotal / item.quantity));
+        const actualSubtotal = unitPrice * item.quantity;
+        allocated += actualSubtotal;
+        return {
+          ...item,
+          price: unitPrice,
+          subtotal: actualSubtotal,
+        };
+      });
+
+      // Adjust last item by exact remainder if integer division produced slight discrepancy
+      const newTotal = items.reduce((acc, curr) => acc + curr.subtotal, 0);
+      const diff = targetAmount - newTotal;
+      if (diff !== 0 && items.length > 0) {
+        items[items.length - 1].price = Math.max(1, items[items.length - 1].price + diff);
+        items[items.length - 1].subtotal = items[items.length - 1].price * items[items.length - 1].quantity;
+      }
+    } else if (targetAmount > itemsTotal) {
+      // Order has extra fee or unique code. Diff > 0 is positive, so Tripay allows ADJUSTMENT item.
+      const diff = targetAmount - itemsTotal;
       items.push({
-        sku: 'ADJUSTMENT',
-        name: amountDifference > 0 ? 'Biaya Penyesuaian' : 'Diskon Pesanan',
-        price: amountDifference,
+        sku: 'BIAYA-TAMBAHAN',
+        name: 'Kode Unik / Penyesuaian Transaksi',
+        price: diff,
         quantity: 1,
-        subtotal: amountDifference,
+        subtotal: diff,
       });
     }
 
