@@ -29,6 +29,7 @@ import {
   Volume2,
   VolumeX,
   Bell,
+  Ticket,
 } from 'lucide-react';
 
 interface OrdersApiResponse {
@@ -208,11 +209,24 @@ export function AdminOrdersTab() {
   const handleCopyValidation = (order: Order) => {
     const targetEmail = order.items[0]?.purchased_details?.target_email || order.customer_email || '-';
     const duration = order.items[0]?.purchased_details?.duration || 'Standard';
+    const voucherInfo =
+      order.promo_code || (order.discount_amount && order.discount_amount > 0)
+        ? `\nVoucher: ${order.promo_code || 'PROMO'} (-Rp ${(order.discount_amount || 0).toLocaleString('id-ID')})`
+        : `\nVoucher: Tanpa Voucher (Rp 0)`;
+
+    const rawSubtotal = order.raw_amount
+      ? `\nSubtotal: Rp ${order.raw_amount.toLocaleString('id-ID')}`
+      : '';
+
+    const uniqueCodeText = order.unique_code
+      ? `\nKode Unik: +Rp ${order.unique_code.toLocaleString('id-ID')}`
+      : '';
+
     const summary = `[ASTERRA STORE — VALIDASI PESANAN]\nID Pesanan: ${order.id}\nTanggal: ${new Date(
       order.order_date
     ).toLocaleString('id-ID')}\nNama Customer: ${order.customer_name || 'Pelanggan'}\nEmail Pemesan: ${
       order.customer_email || '-'
-    }\nTarget Akun: ${targetEmail} (${duration})\nNo WhatsApp: ${order.customer_whatsapp || '-'}\nTotal: Rp ${order.total_amount.toLocaleString(
+    }\nTarget Akun: ${targetEmail} (${duration})\nNo WhatsApp: ${order.customer_whatsapp || '-'}${rawSubtotal}${voucherInfo}${uniqueCodeText}\nTotal Tagihan: Rp ${order.total_amount.toLocaleString(
       'id-ID'
     )}\nStatus: ${order.order_status.toUpperCase()}\nMetode Bayar: ${order.payment?.payment_method?.toUpperCase() || 'QRIS'}`;
 
@@ -646,7 +660,7 @@ export function AdminOrdersTab() {
                         )}
                       </td>
 
-                      {/* Total & Payment Method */}
+                      {/* Total & Payment Method & Voucher Information */}
                       <td className="py-3.5 px-4 align-top">
                         <div className="font-bold text-foreground font-mono text-xs flex items-center gap-1">
                           <span>Rp {order.total_amount.toLocaleString('id-ID')}</span>
@@ -656,6 +670,25 @@ export function AdminOrdersTab() {
                             </span>
                           )}
                         </div>
+
+                        {/* Transparent Voucher Badge */}
+                        <div className="mt-1">
+                          {order.promo_code || (order.discount_amount && order.discount_amount > 0) ? (
+                            <div
+                              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-[10px] font-mono font-medium"
+                              title={`Voucher: ${order.promo_code || 'Promo'} - Potongan: Rp ${(order.discount_amount || 0).toLocaleString('id-ID')}`}
+                            >
+                              <Ticket className="w-2.5 h-2.5 shrink-0" />
+                              <span>{order.promo_code || 'PROMO'}</span>
+                              <span>(-Rp {(order.discount_amount || 0).toLocaleString('id-ID')})</span>
+                            </div>
+                          ) : (
+                            <span className="text-[10px] text-foreground-muted block font-mono">
+                              Tanpa Voucher
+                            </span>
+                          )}
+                        </div>
+
                         <div className="mt-1 flex flex-wrap items-center gap-1">
                           <Badge
                             variant="outline"
@@ -856,11 +889,50 @@ export function AdminOrdersTab() {
                       </div>
                     </div>
                   ))}
-                  <div className="pt-2 flex justify-between items-center text-sm font-bold text-foreground border-t border-border mt-3">
-                    <span>Total Pembayaran</span>
-                    <span className="text-primary font-mono">
-                      Rp {selectedOrder.total_amount.toLocaleString('id-ID')}
-                    </span>
+                  {/* Financial Breakdown & Transparent Voucher */}
+                  <div className="mt-3 pt-3 border-t border-border space-y-2 text-xs">
+                    <div className="flex justify-between items-center text-foreground-muted">
+                      <span>Subtotal Produk</span>
+                      <span className="font-mono font-medium text-foreground">
+                        Rp {(
+                          selectedOrder.raw_amount ||
+                          selectedOrder.items.reduce((acc, curr) => acc + curr.unit_price * curr.quantity, 0)
+                        ).toLocaleString('id-ID')}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between items-center">
+                      <span className="flex items-center gap-1.5 text-foreground-muted">
+                        <Ticket className="w-3.5 h-3.5 text-emerald-500" />
+                        <span>Kupon / Voucher</span>
+                      </span>
+                      {selectedOrder.promo_code || (selectedOrder.discount_amount && selectedOrder.discount_amount > 0) ? (
+                        <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-mono font-bold">
+                          <span>{selectedOrder.promo_code || 'PROMO'}</span>
+                          <span>(-Rp {(selectedOrder.discount_amount || 0).toLocaleString('id-ID')})</span>
+                        </div>
+                      ) : (
+                        <span className="font-mono text-foreground-muted italic">
+                          Tanpa Voucher (Rp 0)
+                        </span>
+                      )}
+                    </div>
+
+                    {!!selectedOrder.unique_code && (
+                      <div className="flex justify-between items-center text-foreground-muted">
+                        <span>Kode Unik Verifikasi</span>
+                        <span className="font-mono font-medium text-primary">
+                          +Rp {selectedOrder.unique_code.toLocaleString('id-ID')}
+                        </span>
+                      </div>
+                    )}
+
+                    <div className="pt-2.5 flex justify-between items-center text-sm font-bold text-foreground border-t border-border mt-2">
+                      <span>Total Tagihan Akhir</span>
+                      <span className="text-primary font-mono text-base">
+                        Rp {selectedOrder.total_amount.toLocaleString('id-ID')}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>

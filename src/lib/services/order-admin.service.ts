@@ -97,21 +97,45 @@ export class OrderAdminService {
           });
 
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const mappedOrders: Order[] = dbOrders.map((o: any) => ({
-            id: o.id,
-            user_id: 'user-001',
-            customer_email: o.customerEmail,
-            customer_whatsapp: o.customerWhatsapp || undefined,
-            customer_name: o.customerName || undefined,
-            total_amount: o.totalAmount,
-            raw_amount: o.rawAmount || undefined,
-            unique_code: o.uniqueCode || undefined,
-            payment_mode: (o.paymentMode as 'gateway' | 'manual') || 'gateway',
-            order_status: o.status,
-            order_date: o.createdAt.toISOString(),
-            paid_at: o.paidAt?.toISOString(),
-            expires_at: o.expiresAt?.toISOString(),
-            customer_notes: o.customerNotes || undefined,
+          const mappedOrders: Order[] = dbOrders.map((o: any) => {
+            const rawO = o as unknown as Record<string, unknown>;
+            const logsList = Array.isArray(o.logs) ? (o.logs as unknown as Array<Record<string, unknown>>) : [];
+            const promoLog = logsList.find(
+              (l) => l.action === 'promo_applied' || !!(l.metadata as Record<string, unknown> | undefined)?.promo_code
+            );
+            const promoLogMeta = promoLog?.metadata as Record<string, unknown> | undefined;
+            const promoLogNotes = typeof promoLog?.notes === 'string' ? promoLog.notes : '';
+            const promoCode =
+              (typeof rawO.promoCode === 'string' ? rawO.promoCode : undefined) ||
+              (typeof promoLogMeta?.promo_code === 'string' ? promoLogMeta.promo_code : undefined) ||
+              promoLogNotes.match(/voucher\s+["']?([A-Z0-9_-]+)/i)?.[1] ||
+              undefined;
+            const discountAmount =
+              typeof rawO.discountAmount === 'number'
+                ? rawO.discountAmount
+                : typeof promoLogMeta?.discount_amount === 'number'
+                ? promoLogMeta.discount_amount
+                : o.rawAmount && o.totalAmount && o.rawAmount > o.totalAmount
+                ? o.rawAmount - (o.totalAmount - (o.uniqueCode || 0))
+                : undefined;
+
+            return {
+              id: o.id,
+              user_id: 'user-001',
+              customer_email: o.customerEmail,
+              customer_whatsapp: o.customerWhatsapp || undefined,
+              customer_name: o.customerName || undefined,
+              total_amount: o.totalAmount,
+              raw_amount: o.rawAmount || undefined,
+              unique_code: o.uniqueCode || undefined,
+              promo_code: promoCode,
+              discount_amount: discountAmount,
+              payment_mode: (o.paymentMode as 'gateway' | 'manual') || 'gateway',
+              order_status: o.status,
+              order_date: o.createdAt.toISOString(),
+              paid_at: o.paidAt?.toISOString(),
+              expires_at: o.expiresAt?.toISOString(),
+              customer_notes: o.customerNotes || undefined,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             items: o.items.map((i: any) => ({
               id: i.id,
@@ -144,7 +168,8 @@ export class OrderAdminService {
               payment_status: o.status === 'completed' || o.status === 'processing' ? 'success' : 'pending',
               amount: o.totalAmount,
             },
-          }));
+          };
+        });
 
           return {
             orders: mappedOrders,
@@ -244,6 +269,27 @@ export class OrderAdminService {
         });
 
         if (o) {
+          const rawO = o as unknown as Record<string, unknown>;
+          const logsList = Array.isArray(o.logs) ? (o.logs as unknown as Array<Record<string, unknown>>) : [];
+          const promoLog = logsList.find(
+            (l) => l.action === 'promo_applied' || !!(l.metadata as Record<string, unknown> | undefined)?.promo_code
+          );
+          const promoLogMeta = promoLog?.metadata as Record<string, unknown> | undefined;
+          const promoLogNotes = typeof promoLog?.notes === 'string' ? promoLog.notes : '';
+          const promoCode =
+            (typeof rawO.promoCode === 'string' ? rawO.promoCode : undefined) ||
+            (typeof promoLogMeta?.promo_code === 'string' ? promoLogMeta.promo_code : undefined) ||
+            promoLogNotes.match(/voucher\s+["']?([A-Z0-9_-]+)/i)?.[1] ||
+            undefined;
+          const discountAmount =
+            typeof rawO.discountAmount === 'number'
+              ? rawO.discountAmount
+              : typeof promoLogMeta?.discount_amount === 'number'
+              ? promoLogMeta.discount_amount
+              : o.rawAmount && o.totalAmount && o.rawAmount > o.totalAmount
+              ? o.rawAmount - (o.totalAmount - (o.uniqueCode || 0))
+              : undefined;
+
           return {
             id: o.id,
             user_id: 'user-001',
@@ -253,6 +299,8 @@ export class OrderAdminService {
             total_amount: o.totalAmount,
             raw_amount: o.rawAmount || undefined,
             unique_code: o.uniqueCode || undefined,
+            promo_code: promoCode,
+            discount_amount: discountAmount,
             payment_mode: (o.paymentMode as 'gateway' | 'manual') || 'gateway',
             order_status: o.status,
             order_date: o.createdAt.toISOString(),

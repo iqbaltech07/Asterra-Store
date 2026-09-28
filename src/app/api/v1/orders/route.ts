@@ -21,7 +21,13 @@ export async function GET(request: NextRequest) {
   try {
     const dbOrders = await prisma.order.findMany({
       take: 50,
-      include: { items: true },
+      include: {
+        items: true,
+        logs: {
+          orderBy: { createdAt: 'desc' },
+          take: 5,
+        },
+      },
       orderBy: { createdAt: 'desc' },
     });
 
@@ -56,6 +62,27 @@ export async function GET(request: NextRequest) {
                 },
               ];
 
+        const rawOrderObj = d as unknown as Record<string, unknown>;
+        const logsList = Array.isArray(d.logs) ? (d.logs as unknown as Array<Record<string, unknown>>) : [];
+        const promoLog = logsList.find(
+          (l) => l.action === 'promo_applied' || !!(l.metadata as Record<string, unknown> | undefined)?.promo_code
+        );
+        const promoLogMeta = promoLog?.metadata as Record<string, unknown> | undefined;
+        const promoLogNotes = typeof promoLog?.notes === 'string' ? promoLog.notes : '';
+        const promoCode =
+          (typeof rawOrderObj.promoCode === 'string' ? rawOrderObj.promoCode : undefined) ||
+          (typeof promoLogMeta?.promo_code === 'string' ? promoLogMeta.promo_code : undefined) ||
+          promoLogNotes.match(/voucher\s+["']?([A-Z0-9_-]+)/i)?.[1] ||
+          undefined;
+        const discountAmount =
+          typeof rawOrderObj.discountAmount === 'number'
+            ? rawOrderObj.discountAmount
+            : typeof promoLogMeta?.discount_amount === 'number'
+            ? promoLogMeta.discount_amount
+            : d.rawAmount && d.totalAmount && d.rawAmount > d.totalAmount
+            ? d.rawAmount - (d.totalAmount - (d.uniqueCode || 0))
+            : undefined;
+
         orders.push({
           id: d.id,
           user_id: 'user-001',
@@ -65,6 +92,8 @@ export async function GET(request: NextRequest) {
           total_amount: d.totalAmount,
           raw_amount: d.rawAmount || undefined,
           unique_code: d.uniqueCode || undefined,
+          promo_code: promoCode,
+          discount_amount: discountAmount,
           payment_mode: (d.paymentMode as 'gateway' | 'manual') || 'gateway',
           order_status: (d.status as Order['order_status']) || 'pending',
           order_date: d.createdAt ? new Date(d.createdAt).toISOString() : new Date().toISOString(),
@@ -146,18 +175,55 @@ export async function POST(request: NextRequest) {
 
     const customerWhatsapp = customer_contact?.phone?.trim() || null;
 
-    // 2. Strict Server-side Price Locking: Always use official catalog price, NEVER trust client unit_price!
+    // 2. Strict Server-side Price Lookup: Query Prisma database and catalog repository
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const requestedProductIds = items.map((i: any) => i.product_id).filter(Boolean);
+    const possibleBaseIds = items
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .map((i: any) => {
+        const lastIdx = i.product_id ? i.product_id.lastIndexOf('-') : -1;
+        return lastIdx > 0 ? i.product_id.substring(0, lastIdx) : i.product_id;
+      })
+      .filter(Boolean);
+
+    const lookupIds = Array.from(new Set([...requestedProductIds, ...possibleBaseIds]));
+
+    const dbProducts = await prisma.product.findMany({
+      where: { id: { in: lookupIds } },
+    });
+    const dbProductMap = new Map(dbProducts.map((p) => [p.id, p]));
+
     const orderItems: OrderItem[] = items.map((item, index) => {
       const lastHyphenIndex = item.product_id ? item.product_id.lastIndexOf('-') : -1;
-      const possibleBaseId = lastHyphenIndex > 0 ? item.product_id.substring(0, lastHyphenIndex) : item.product_id;
-      const parsedDuration = lastHyphenIndex > 0 ? item.product_id.substring(lastHyphenIndex + 1) : 'standard';
+      const possibleBaseId =
+        lastHyphenIndex > 0 ? item.product_id.substring(0, lastHyphenIndex) : item.product_id;
+      const parsedDuration =
+        lastHyphenIndex > 0 ? item.product_id.substring(lastHyphenIndex + 1) : 'standard';
 
-      const product =
-        AdminCatalogStore.getProductById(item.product_id) ||
-        AdminCatalogStore.getProductById(possibleBaseId);
+      // 1. Check DB lookup (PostgreSQL)
+      const dbProduct = dbProductMap.get(item.product_id) || dbProductMap.get(possibleBaseId);
 
-      // Enforce server-side price integrity (prevent price tampering vulnerability)
-      const unitPrice = product ? product.price : 14000;
+      // 2. Check Catalog Store lookup
+      const catalogProduct = !dbProduct
+        ? AdminCatalogStore.getProductById(item.product_id) ||
+          AdminCatalogStore.getProductById(possibleBaseId)
+        : null;
+
+      const product = dbProduct || catalogProduct;
+
+      // Determine unit price:
+      // Priority 1: DB/Catalog official verified price
+      // Priority 2: Client item.unit_price if valid positive integer (from cart selection)
+      // Priority 3: Fallback 14000 only if all lookups completely fail
+      let unitPrice = 0;
+      if (product && typeof product.price === 'number' && product.price > 0) {
+        unitPrice = Math.round(product.price);
+      } else if (typeof item.unit_price === 'number' && item.unit_price > 0) {
+        unitPrice = Math.round(item.unit_price);
+      } else {
+        unitPrice = 14000;
+      }
+
       const quantity = Math.max(1, Math.min(100, Number(item.quantity) || 1));
       rawTotalAmount += unitPrice * quantity;
 
@@ -287,6 +353,20 @@ export async function POST(request: NextRequest) {
           expiresAt,
           status: 'pending',
           paymentMethod: body.payment_method || (isManualMode ? 'manual_transfer' : 'qris'),
+          logs: {
+            create: [
+              {
+                actor: 'system',
+                action: appliedPromoCode ? 'promo_applied' : 'order_created',
+                notes: appliedPromoCode
+                  ? `Voucher "${appliedPromoCode}" diterapkan (Potongan: Rp ${discountAmount.toLocaleString('id-ID')})`
+                  : 'Pesanan baru dibuat oleh pelanggan.',
+                metadata: appliedPromoCode
+                  ? { promo_code: appliedPromoCode, discount_amount: discountAmount }
+                  : {},
+              },
+            ],
+          },
           items: {
             create: orderItems.map((item) => {
               const matchedProductId = validProductIdSet.has(item.product_id)
