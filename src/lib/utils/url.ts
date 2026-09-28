@@ -42,7 +42,10 @@ export function getAppBaseUrl(
   }
 
   // 3. User-configured custom base URL from environment variable
-  const envUrl = process.env.NEXT_PUBLIC_APP_URL?.trim() || process.env.APP_URL?.trim();
+  const envUrl =
+    process.env.BETTER_AUTH_URL?.trim() ||
+    process.env.NEXT_PUBLIC_APP_URL?.trim() ||
+    process.env.APP_URL?.trim();
   const isVercel = Boolean(process.env.VERCEL || process.env.VERCEL_URL);
 
   // If deployed on Vercel, prioritize custom domains or Vercel system URLs over accidental localhost in .env
@@ -52,12 +55,15 @@ export function getAppBaseUrl(
     }
   }
 
-  // 4. Vercel automatically injected system environment variables
+  // 4. Vercel automatically injected system environment variables or known project production domain
   if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
     return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`.replace(/\/+$/, '');
   }
   if (process.env.VERCEL_URL) {
     return `https://${process.env.VERCEL_URL}`.replace(/\/+$/, '');
+  }
+  if (isVercel) {
+    return 'https://asterrastore.vercel.app';
   }
 
   // 5. Explicit localhost from env if in local development
