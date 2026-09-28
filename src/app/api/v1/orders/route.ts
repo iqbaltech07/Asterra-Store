@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import fs from 'fs';
+import path from 'path';
 import { getGlobalOrders, addGlobalOrder, Order, OrderItem } from '@/lib/orders-data';
 import { AdminCatalogStore } from '@/lib/services/admin-catalog-store';
 import { PaymentConfigService } from '@/lib/services/payment-config.service';
@@ -193,6 +195,30 @@ export async function POST(request: NextRequest) {
     });
     const dbProductMap = new Map(dbProducts.map((p) => [p.id, p]));
 
+    // Disk fallback catalog reader for cold-start serverless environments
+    let diskCatalogMap: Map<string, { id: string; name: string; price: number }> | null = null;
+    const getDiskCatalog = () => {
+      if (!diskCatalogMap) {
+        diskCatalogMap = new Map();
+        try {
+          const activeCatalogPath = path.resolve(process.cwd(), 'data/active-catalog.json');
+          if (fs.existsSync(activeCatalogPath)) {
+            const rawCatalog = JSON.parse(fs.readFileSync(activeCatalogPath, 'utf-8'));
+            if (Array.isArray(rawCatalog)) {
+              for (const p of rawCatalog) {
+                if (p && p.id && typeof p.price === 'number') {
+                  diskCatalogMap.set(p.id, { id: p.id, name: p.name, price: p.price });
+                }
+              }
+            }
+          }
+        } catch {
+          // ignore disk read errors
+        }
+      }
+      return diskCatalogMap;
+    };
+
     const orderItems: OrderItem[] = items.map((item, index) => {
       const lastHyphenIndex = item.product_id ? item.product_id.lastIndexOf('-') : -1;
       const possibleBaseId =
@@ -203,34 +229,36 @@ export async function POST(request: NextRequest) {
       // 1. Check DB lookup (PostgreSQL)
       const dbProduct = dbProductMap.get(item.product_id) || dbProductMap.get(possibleBaseId);
 
-      // 2. Check Catalog Store lookup
+      // 2. Check Catalog Store lookup (In-Memory)
       const catalogProduct = !dbProduct
         ? AdminCatalogStore.getProductById(item.product_id) ||
           AdminCatalogStore.getProductById(possibleBaseId)
         : null;
 
-      const product = dbProduct || catalogProduct;
+      // 3. Check Disk Fallback (active-catalog.json)
+      const diskMap = (!dbProduct && !catalogProduct) ? getDiskCatalog() : null;
+      const diskProduct = diskMap
+        ? diskMap.get(item.product_id) || diskMap.get(possibleBaseId)
+        : null;
 
-      // Determine unit price:
-      // Priority 1: DB/Catalog official verified price
-      // Priority 2: Client item.unit_price if valid positive integer (from cart selection)
-      // Priority 3: Fallback 14000 only if all lookups completely fail
-      let unitPrice = 0;
-      if (product && typeof product.price === 'number' && product.price > 0) {
-        unitPrice = Math.round(product.price);
-      } else if (typeof item.unit_price === 'number' && item.unit_price > 0) {
-        unitPrice = Math.round(item.unit_price);
-      } else {
-        unitPrice = 14000;
+      const product = dbProduct || catalogProduct || diskProduct;
+
+      // STRICT ZERO-TRUST SECURITY: Product must exist in verified catalog. Never allow arbitrary client injection.
+      if (!product || typeof product.price !== 'number' || product.price <= 0) {
+        throw new Error(
+          `Produk "${item.product_name || item.product_id}" tidak valid atau tidak terdaftar di katalog resmi Asterra Store.`
+        );
       }
 
+      // STRICT SERVER-SIDE PRICE LOCKING: Price is ALWAYS determined by server catalog/DB, NEVER by client payload.
+      const unitPrice = Math.round(product.price);
       const quantity = Math.max(1, Math.min(100, Number(item.quantity) || 1));
       rawTotalAmount += unitPrice * quantity;
 
       return {
         id: `item-${orderId}-${index + 1}`,
         product_id: item.product_id,
-        product_name: product?.name || item.product_name || 'Lisensi Digital Premium',
+        product_name: product.name || item.product_name || 'Lisensi Digital Premium',
         unit_price: unitPrice,
         quantity,
         purchased_details: {
@@ -411,9 +439,11 @@ export async function POST(request: NextRequest) {
       },
       { status: 201 }
     );
-  } catch {
+  } catch (err: unknown) {
+    const errorMsg =
+      err instanceof Error ? err.message : 'Terjadi kesalahan format data pesanan.';
     return NextResponse.json(
-      { success: false, error: 'Terjadi kesalahan format data pesanan.' },
+      { success: false, error: errorMsg },
       { status: 400 }
     );
   }

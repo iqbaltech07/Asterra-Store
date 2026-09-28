@@ -46,6 +46,17 @@ export async function POST(request: NextRequest) {
 
     // 2. Handle Payment Status Transition
     if (payload.status === 'PAID') {
+      // Underpayment validation guard: verify paid amount matches or covers expected order total
+      if (typeof payload.total_amount === 'number' && payload.total_amount < existingOrder.total_amount) {
+        console.warn(
+          `[TripayWebhook] Underpayment attempt detected for ${orderId}: received Rp ${payload.total_amount}, required Rp ${existingOrder.total_amount}`
+        );
+        return NextResponse.json(
+          { success: false, message: 'Underpaid amount detected' },
+          { status: 400 }
+        );
+      }
+
       const updated = await OrderAdminService.updateStatus(
         orderId,
         'processing', // Advances to "Di Proses" after payment is verified

@@ -104,10 +104,11 @@ export class TripayService {
       hmac.update(rawBody);
       const computedSignature = hmac.digest('hex');
 
-      return crypto.timingSafeEqual(
-        Buffer.from(computedSignature, 'utf-8'),
-        Buffer.from(signatureFromHeader, 'utf-8')
-      );
+      const bufA = Buffer.from(computedSignature, 'utf-8');
+      const bufB = Buffer.from(signatureFromHeader, 'utf-8');
+      if (bufA.length !== bufB.length) return false;
+
+      return crypto.timingSafeEqual(bufA, bufB);
     } catch (err) {
       console.warn('[TripayService] Signature verification exception:', err);
       return false;
