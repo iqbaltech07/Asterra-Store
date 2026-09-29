@@ -25,16 +25,30 @@ import {
   ChevronDown,
   ChevronUp,
   X,
+  CreditCard,
 } from 'lucide-react';
+import {
+  CheckoutManualModal,
+  ManualPaymentModalData,
+} from '@/components/checkout/checkout-manual-modal';
+import { PaymentConfigApi, OrdersApi } from '@/lib/api-client';
+import { PublicPaymentConfig } from '@/lib/services/payment-config.service';
 
 const STATUS_FILTERS = [
   { value: 'all', label: 'Semua Status' },
   { value: 'pending', label: 'Menunggu Pembayaran' },
   { value: 'processing', label: 'Sedang Diproses' },
   { value: 'completed', label: 'Selesai' },
+  { value: 'cancelled', label: 'Dibatalkan' },
 ];
 
-function OrderCountdownBadge({ expiresAt }: { expiresAt?: string }) {
+function OrderCountdownBadge({
+  expiresAt,
+  onExpired,
+}: {
+  expiresAt?: string;
+  onExpired?: () => void;
+}) {
   const [timeLeft, setTimeLeft] = useState('');
   const [isExpired, setIsExpired] = useState(false);
 
@@ -42,11 +56,17 @@ function OrderCountdownBadge({ expiresAt }: { expiresAt?: string }) {
     if (!expiresAt) return;
     const target = new Date(expiresAt).getTime();
 
+    let hasNotified = false;
+
     const update = () => {
       const diff = target - Date.now();
       if (diff <= 0) {
         setTimeLeft('Waktu Habis');
         setIsExpired(true);
+        if (!hasNotified) {
+          hasNotified = true;
+          onExpired?.();
+        }
         return;
       }
       const totalSec = Math.floor(diff / 1000);
@@ -60,7 +80,7 @@ function OrderCountdownBadge({ expiresAt }: { expiresAt?: string }) {
     update();
     const timer = setInterval(update, 1000);
     return () => clearInterval(timer);
-  }, [expiresAt]);
+  }, [expiresAt, onExpired]);
 
   if (!expiresAt || !timeLeft) return null;
 
@@ -85,7 +105,22 @@ export default function OrdersPage() {
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
   const [notification, setNotification] = useState<string | null>(null);
 
+  // Manual payment modal states
+  const [paymentConfig, setPaymentConfig] = useState<PublicPaymentConfig | null>(null);
+  const [activeManualModal, setActiveManualModal] = useState<ManualPaymentModalData | null>(null);
+  const [selectedOrderForModal, setSelectedOrderForModal] = useState<Order | null>(null);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
   const { addItem } = useCartStore();
+
+  // Load payment config on mount for manual modal
+  useEffect(() => {
+    PaymentConfigApi.getPublicConfig()
+      .then((res) => {
+        if (res.success && res.data) setPaymentConfig(res.data);
+      })
+      .catch(() => {});
+  }, []);
 
   const { data, isLoading, error, refetch } = useQuery<{ success: boolean; data: Order[] }>({
     queryKey: ['orders', selectedStatus],
@@ -131,9 +166,22 @@ export default function OrdersPage() {
     };
   }, [refetch]);
 
-  const orders = data?.data || [];
+  const rawOrders = data?.data || [];
+
+  // Strictly sort orders by order_date descending (newest first)
+  const orders = [...rawOrders].sort((a, b) => {
+    return new Date(b.order_date).getTime() - new Date(a.order_date).getTime();
+  });
 
   const filteredOrders = orders.filter((order) => {
+    const isExpired = isOrderExpired(order);
+    const effectiveStatus =
+      order.order_status === 'pending' && isExpired ? 'cancelled' : order.order_status;
+
+    if (selectedStatus !== 'all' && effectiveStatus !== selectedStatus) {
+      return false;
+    }
+
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase();
     return (
@@ -174,6 +222,72 @@ export default function OrdersPage() {
       });
     });
     showNotification(`Item dari pesanan ${order.id} telah ditambahkan ke keranjang.`);
+  };
+
+  const handleModalCopy = (text: string, key: string, label: string) => {
+    if (typeof window !== 'undefined') {
+      navigator.clipboard?.writeText(text);
+      setCopiedKey(key);
+      showNotification(`${label} berhasil disalin!`);
+      setTimeout(() => setCopiedKey(null), 2500);
+    }
+  };
+
+  const getMethodName = (methodId: string) => {
+    if (methodId === 'manual_bca') return paymentConfig?.bank?.name || 'Bank Central Asia (BCA)';
+    if (methodId === 'manual_qris') return 'QRIS Statis Toko';
+    if (methodId === 'manual_dana') return 'Transfer E-Wallet DANA';
+    if (methodId === 'qris') return 'QRIS (Semua Pembayaran)';
+    if (methodId === 'bca_va') return 'BCA Virtual Account';
+    if (methodId === 'bni_va') return 'BNI Virtual Account';
+    if (methodId === 'dana') return 'DANA E-Wallet';
+    return 'Metode Pembayaran';
+  };
+
+  const isOrderExpired = (order: Order) => {
+    if (order.order_status === 'cancelled') return true;
+    if (order.order_status === 'pending' && order.expires_at) {
+      return new Date(order.expires_at).getTime() < Date.now();
+    }
+    return false;
+  };
+
+  const handlePayOrder = async (order: Order) => {
+    if (isOrderExpired(order)) {
+      showNotification('Batas waktu pembayaran 24 jam telah habis. Pesanan dibatalkan.');
+      fetch(`/api/v1/orders/${order.id}/cancel`, { method: 'POST' }).finally(() => refetch());
+      return;
+    }
+
+    const isManual =
+      order.payment_mode === 'manual' ||
+      order.payment?.payment_method?.startsWith('manual_');
+
+    if (isManual) {
+      setActiveManualModal({
+        orderId: order.id,
+        amount: order.total_amount,
+        rawAmount: order.raw_amount,
+        uniqueCode: order.unique_code,
+        method: order.payment?.payment_method || 'manual_bca',
+        expiresAt: order.expires_at,
+      });
+      setSelectedOrderForModal(order);
+    } else {
+      try {
+        showNotification('Memuat tagihan pembayaran Tripay...');
+        const res = await OrdersApi.pay(order.id, order.payment?.payment_method || 'qris');
+        const checkoutUrl = res.payment?.checkout_url || res.payment?.redirect_url;
+        if (checkoutUrl) {
+          window.location.href = checkoutUrl;
+        } else {
+          showNotification('Gagal memuat link pembayaran Tripay.');
+        }
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : 'Gagal memproses pembayaran.';
+        showNotification(msg);
+      }
+    }
   };
 
   const getStatusBadge = (status: Order['order_status']) => {
@@ -399,8 +513,11 @@ export default function OrdersPage() {
           <div className="space-y-6">
             {filteredOrders.map((order) => {
               const isExpanded = expandedOrderId === order.id;
-              const step = getTimelineStep(order);
-              const isCancelled = order.order_status === 'cancelled';
+              const isExpired = isOrderExpired(order);
+              const effectiveStatus: Order['order_status'] =
+                order.order_status === 'pending' && isExpired ? 'cancelled' : order.order_status;
+              const step = getTimelineStep({ ...order, order_status: effectiveStatus });
+              const isCancelled = effectiveStatus === 'cancelled';
 
               return (
                 <div
@@ -441,10 +558,15 @@ export default function OrdersPage() {
                     </div>
 
                     <div className="flex items-center justify-between sm:justify-end gap-2">
-                      {order.order_status === 'pending' && (
-                        <OrderCountdownBadge expiresAt={order.expires_at} />
+                      {effectiveStatus === 'pending' && (
+                        <OrderCountdownBadge
+                          expiresAt={order.expires_at}
+                          onExpired={() => {
+                            fetch(`/api/v1/orders/${order.id}/cancel`, { method: 'POST' }).finally(() => refetch());
+                          }}
+                        />
                       )}
-                      {getStatusBadge(order.order_status)}
+                      {getStatusBadge(effectiveStatus)}
                       <span className="text-sm font-bold text-foreground">
                         Rp {order.total_amount.toLocaleString('id-ID')}
                       </span>
@@ -632,18 +754,33 @@ export default function OrdersPage() {
                         <span>Salin Bukti</span>
                       </Button>
 
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleReorder(order)}
-                        className="text-xs gap-1.5 border-border h-8"
-                      >
-                        <ShoppingCart className="w-3 h-3 text-primary" />
-                        <span>Beli Lagi</span>
-                      </Button>
+                      {effectiveStatus === 'pending' && (
+                        <Button
+                          size="sm"
+                          onClick={() => handlePayOrder(order)}
+                          className="text-xs gap-1.5 h-8 font-semibold bg-primary hover:bg-primary/90 text-white shadow-sm"
+                        >
+                          <CreditCard className="w-3.5 h-3.5" />
+                          <span>Bayar</span>
+                        </Button>
+                      )}
+
+                      {(effectiveStatus === 'completed' || effectiveStatus === 'cancelled') && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleReorder(order)}
+                          className="text-xs gap-1.5 border-border h-8 font-medium"
+                        >
+                          <ShoppingCart className="w-3 h-3 text-primary" />
+                          <span>Beli Lagi</span>
+                        </Button>
+                      )}
 
                       <a
-                        href={`https://wa.me/6281234567890?text=Halo%20CS%20Asterra%20Store%2C%20saya%20ingin%20menanyakan%20status%20pesanan%20${order.id}`}
+                        href={`https://wa.me/6281234567890?text=${encodeURIComponent(
+                          `Halo CS Asterra Store, saya ingin menanyakan status pesanan ${order.id}`
+                        )}`}
                         target="_blank"
                         rel="noreferrer"
                       >
@@ -660,6 +797,24 @@ export default function OrdersPage() {
           </div>
         )}
       </main>
+
+      {/* Manual Payment Instructions Modal from Orders Page */}
+      {activeManualModal && (
+        <CheckoutManualModal
+          data={activeManualModal}
+          paymentConfig={paymentConfig}
+          customerName={selectedOrderForModal?.customer_name || 'Pelanggan'}
+          targetEmail={selectedOrderForModal?.customer_email || ''}
+          onClose={() => {
+            setActiveManualModal(null);
+            setSelectedOrderForModal(null);
+            refetch();
+          }}
+          onCopy={handleModalCopy}
+          copiedKey={copiedKey}
+          getMethodName={getMethodName}
+        />
+      )}
 
       <Footer />
     </div>

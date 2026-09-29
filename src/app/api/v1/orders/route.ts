@@ -50,6 +50,9 @@ export async function GET(request: NextRequest) {
     console.warn('[OrdersAPI] Prisma sync warning on GET:', err);
   }
 
+  // Sort strictly by order_date descending (newest first)
+  orders.sort((a, b) => new Date(b.order_date).getTime() - new Date(a.order_date).getTime());
+
   if (status && status !== 'all') {
     orders = orders.filter((o) => o.order_status === status);
   }
