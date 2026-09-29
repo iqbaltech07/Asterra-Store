@@ -9139,5 +9139,22 @@
   },
   "vip-visionpremprivate1bln-s2": {
     "status": "archived"
+  },
+  "vip-canva1bln-s1": {
+    "name": "Canvaa Pro [ 1 Bulan ]",
+    "price": 12000,
+    "priceFormatted": "Rp 12 Rb",
+    "status": "active",
+    "description": "Canvaa Pro [ 1 Bulan ] - Layanan digital resmi terverifikasi dengan aktivasi instan.",
+    "imageUrl": "/api/v1/media/products/canva-pro-1790681634749-dstgTfzHEgTz1vMwWLLEvKhdrLKGaS.png",
+    "features": [
+      "Brand: Digital",
+      "Kode Layanan: CANVA1BLN-S1",
+      "Ketersediaan Supplier: Kosong",
+      "Proses aktivasi cepat & otomatis"
+    ],
+    "popular": false,
+    "profitMargin": 7000,
+    "profitPercentage": 140
   }
 }

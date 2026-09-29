@@ -313,6 +313,7 @@ export class PrismaCatalogRepository {
       if (patch.features !== undefined) data.features = patch.features;
       if (patch.status !== undefined) data.status = patch.status;
       if (patch.popular !== undefined) data.popular = patch.popular;
+      if (patch.imageUrl !== undefined) data.imageUrl = patch.imageUrl;
 
       // Always calculate and persist updated profit margin & percentage when price or cost changes
       const { profitMargin, profitPercentage } = computeProductMargins(

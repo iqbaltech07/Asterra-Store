@@ -164,7 +164,10 @@ export class AdminAuthService {
    * Cookie configuration for setting the admin session cookie
    */
   public static getCookieOptions() {
-    const isProduction = process.env.NODE_ENV === 'production';
+    const isHttps =
+      process.env.NEXT_PUBLIC_APP_URL?.startsWith('https://') &&
+      !process.env.NEXT_PUBLIC_APP_URL?.includes('localhost');
+    const isProduction = process.env.NODE_ENV === 'production' && isHttps;
     return {
       name: ADMIN_COOKIE_NAME,
       httpOnly: true,

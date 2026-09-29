@@ -36,6 +36,7 @@ import { AdminOrdersTab } from '@/components/admin/admin-orders-tab';
 import { AdminLogsTab } from '@/components/admin/admin-logs-tab';
 import { AdminPaymentSettingsTab } from '@/components/admin/admin-payment-settings-tab';
 import { AdminPromosTab } from '@/components/admin/admin-promos-tab';
+import { ImageUploadDropzone } from '@/components/admin/image-upload-dropzone';
 
 interface AdminProductsResponse {
   success: boolean;
@@ -1503,16 +1504,13 @@ export default function AdminPage() {
                 />
               </div>
 
-              <div>
-                <label className="font-semibold text-foreground block mb-1">URL Gambar Produk</label>
-                <Input
-                  type="url"
-                  value={formImageUrl}
-                  onChange={(e) => setFormImageUrl(e.target.value)}
-                  className="bg-surface-raised border-border text-xs"
-                  placeholder="https://..."
-                />
-              </div>
+              <ImageUploadDropzone
+                value={formImageUrl}
+                onChange={setFormImageUrl}
+                folder="products"
+                label="Banner / Gambar Produk"
+                description="Tarik & lepas gambar banner produk ke sini, atau klik untuk memilih file."
+              />
 
               <div className="flex items-center gap-2 pt-2">
                 <input
