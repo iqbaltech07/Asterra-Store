@@ -99,6 +99,74 @@ function OrderCountdownBadge({
   );
 }
 
+// --- Order Pure Helper Functions (declared at module level to avoid TDZ ReferenceError) ---
+function isOrderExpired(order: Order): boolean {
+  if (order.order_status === 'cancelled') return true;
+  if (order.order_status === 'pending' && order.expires_at) {
+    return new Date(order.expires_at).getTime() < Date.now();
+  }
+  return false;
+}
+
+function getStatusBadge(status: Order['order_status']) {
+  switch (status) {
+    case 'completed':
+      return (
+        <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-status-success/15 text-status-success font-medium inline-flex items-center gap-1">
+          <CheckCircle2 className="w-3 h-3" />
+          <span>Selesai</span>
+        </span>
+      );
+    case 'processing':
+      return (
+        <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-status-info/15 text-status-info font-medium inline-flex items-center gap-1">
+          <Clock className="w-3 h-3" />
+          <span>Di Proses</span>
+        </span>
+      );
+    case 'pending':
+      return (
+        <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-status-warning/15 text-status-warning font-medium inline-flex items-center gap-1">
+          <AlertCircle className="w-3 h-3" />
+          <span>Menunggu Pembayaran</span>
+        </span>
+      );
+    case 'cancelled':
+      return (
+        <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-status-error/15 text-status-error font-medium inline-flex items-center gap-1">
+          <AlertCircle className="w-3 h-3" />
+          <span>Dibatalkan</span>
+        </span>
+      );
+    default:
+      return (
+        <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-surface-raised text-foreground-muted font-medium">
+          {status}
+        </span>
+      );
+  }
+}
+
+function getTimelineStep(order: Order): number {
+  if (order.order_status === 'cancelled') {
+    return 1;
+  }
+  if (order.order_status === 'completed') {
+    return 4;
+  }
+  if (order.order_status === 'processing') {
+    return 3;
+  }
+  if (
+    order.paid_at ||
+    order.payment?.payment_status === 'success' ||
+    order.payment?.payment_status === 'settlement'
+  ) {
+    return 2;
+  }
+  return 1;
+}
+
 export default function OrdersPage() {
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -244,14 +312,6 @@ export default function OrdersPage() {
     return 'Metode Pembayaran';
   };
 
-  const isOrderExpired = (order: Order) => {
-    if (order.order_status === 'cancelled') return true;
-    if (order.order_status === 'pending' && order.expires_at) {
-      return new Date(order.expires_at).getTime() < Date.now();
-    }
-    return false;
-  };
-
   const handlePayOrder = async (order: Order) => {
     if (isOrderExpired(order)) {
       showNotification('Batas waktu pembayaran 24 jam telah habis. Pesanan dibatalkan.');
@@ -288,65 +348,6 @@ export default function OrdersPage() {
         showNotification(msg);
       }
     }
-  };
-
-  const getStatusBadge = (status: Order['order_status']) => {
-    switch (status) {
-      case 'completed':
-        return (
-          <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-status-success/15 text-status-success font-medium inline-flex items-center gap-1">
-            <CheckCircle2 className="w-3 h-3" />
-            <span>Selesai</span>
-          </span>
-        );
-      case 'processing':
-        return (
-          <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-status-info/15 text-status-info font-medium inline-flex items-center gap-1">
-            <Clock className="w-3 h-3" />
-            <span>Di Proses</span>
-          </span>
-        );
-      case 'pending':
-        return (
-          <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-status-warning/15 text-status-warning font-medium inline-flex items-center gap-1">
-            <AlertCircle className="w-3 h-3" />
-            <span>Menunggu Pembayaran</span>
-          </span>
-        );
-      case 'cancelled':
-        return (
-          <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-status-error/15 text-status-error font-medium inline-flex items-center gap-1">
-            <AlertCircle className="w-3 h-3" />
-            <span>Dibatalkan</span>
-          </span>
-        );
-      default:
-        return (
-          <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-surface-raised text-foreground-muted font-medium">
-            {status}
-          </span>
-        );
-    }
-  };
-
-  const getTimelineStep = (order: Order) => {
-    if (order.order_status === 'cancelled') {
-      return 1;
-    }
-    if (order.order_status === 'completed') {
-      return 4;
-    }
-    if (order.order_status === 'processing') {
-      return 3;
-    }
-    if (
-      order.paid_at ||
-      order.payment?.payment_status === 'success' ||
-      order.payment?.payment_status === 'settlement'
-    ) {
-      return 2;
-    }
-    return 1;
   };
 
   return (
