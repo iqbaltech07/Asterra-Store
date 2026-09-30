@@ -228,8 +228,17 @@ export default function CheckoutPage() {
     }
   };
 
+  const hasOutOfStockItems = items.some(
+    (item) => item.isOutOfStock || (item.stock !== undefined && item.stock <= 0)
+  );
+
   const handleSubmitOrder = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (hasOutOfStockItems) {
+      showNotification('Terdapat produk dengan stok habis di pesanan Anda. Hapus item tersebut sebelum melanjutkan.');
+      return;
+    }
 
     if (!customerName.trim()) {
       showNotification('Mohon lengkapi nama lengkap pemesan.');
@@ -406,6 +415,7 @@ export default function CheckoutPage() {
                     finalTotal={finalTotal}
                     isManualMode={isManualMode}
                     isSubmitting={isSubmitting}
+                    hasOutOfStockItems={hasOutOfStockItems}
                     promoCode={promoCode}
                     onPromoCodeChange={setPromoCode}
                     onApplyPromo={handleApplyPromo}

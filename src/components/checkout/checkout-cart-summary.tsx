@@ -11,6 +11,8 @@ export interface CartItemSummary {
   name: string;
   priceNumeric: number;
   quantity: number;
+  stock?: number;
+  isOutOfStock?: boolean;
 }
 
 interface CheckoutCartSummaryProps {
@@ -27,6 +29,7 @@ interface CheckoutCartSummaryProps {
   isManualMode: boolean;
   enableUniqueCode?: boolean;
   isSubmitting: boolean;
+  hasOutOfStockItems?: boolean;
   promoCode: string;
   onPromoCodeChange: (val: string) => void;
   onApplyPromo: () => void;
@@ -47,6 +50,7 @@ export function CheckoutCartSummary({
   finalTotal,
   isManualMode,
   isSubmitting,
+  hasOutOfStockItems,
   promoCode,
   onPromoCodeChange,
   onApplyPromo,
@@ -65,23 +69,45 @@ export function CheckoutCartSummary({
 
       {/* Items List */}
       <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
-        {items.map((item) => (
-          <div
-            key={item.id}
-            className="flex items-center justify-between text-xs py-1.5 border-b border-border/40 last:border-0"
-          >
-            <div className="space-y-0.5">
-              <span className="font-semibold text-foreground block">{item.name}</span>
-              <span className="text-foreground-muted text-[11px]">
-                {item.quantity}x @ Rp {item.priceNumeric.toLocaleString('id-ID')}
+        {items.map((item) => {
+          const itemOutOfStock =
+            item.isOutOfStock || (item.stock !== undefined && item.stock <= 0);
+
+          return (
+            <div
+              key={item.id}
+              className={`flex items-center justify-between text-xs py-2 px-2.5 rounded-lg border-b border-border/40 last:border-0 ${
+                itemOutOfStock ? 'bg-status-error/10 border-status-error/30' : ''
+              }`}
+            >
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="font-semibold text-foreground">{item.name}</span>
+                  {itemOutOfStock && (
+                    <Badge variant="destructive" className="text-[9px] px-1.5 py-0 bg-status-error text-white font-semibold">
+                      Stok Habis
+                    </Badge>
+                  )}
+                </div>
+                <span className="text-foreground-muted text-[11px] block">
+                  {item.quantity}x @ Rp {item.priceNumeric.toLocaleString('id-ID')}
+                </span>
+              </div>
+              <span className="font-mono font-bold text-foreground">
+                Rp {(item.priceNumeric * item.quantity).toLocaleString('id-ID')}
               </span>
             </div>
-            <span className="font-mono font-bold text-foreground">
-              Rp {(item.priceNumeric * item.quantity).toLocaleString('id-ID')}
-            </span>
-          </div>
-        ))}
+          );
+        })}
       </div>
+
+      {/* Out of stock warning banner */}
+      {hasOutOfStockItems && (
+        <div className="p-3 bg-status-error/15 border border-status-error/30 rounded-lg text-xs text-status-error font-medium flex items-center gap-2">
+          <span>⚠️</span>
+          <span>Ada item dengan stok habis. Hapus item tersebut sebelum melanjutkan checkout.</span>
+        </div>
+      )}
 
       {/* Promo Code Input & Feedback */}
       <CheckoutVoucherSection
@@ -122,11 +148,17 @@ export function CheckoutCartSummary({
       {/* Submit Button */}
       <Button
         type="submit"
-        disabled={isSubmitting}
-        className="w-full gap-2 text-sm font-bold h-12 shadow-lg shadow-primary/20"
+        disabled={isSubmitting || hasOutOfStockItems}
+        className={`w-full gap-2 text-sm font-bold h-12 shadow-lg shadow-primary/20 ${
+          hasOutOfStockItems
+            ? 'opacity-60 cursor-not-allowed bg-muted text-muted-foreground shadow-none'
+            : ''
+        }`}
       >
         {isSubmitting ? (
           <span>Memproses Pesanan...</span>
+        ) : hasOutOfStockItems ? (
+          <span>Stok Habis (Hapus Item)</span>
         ) : (
           <>
             <CreditCard className="w-4 h-4" />

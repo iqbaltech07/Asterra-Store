@@ -22,6 +22,7 @@ import {
   RotateCcw,
   Zap,
   Check,
+  AlertTriangle,
 } from 'lucide-react';
 
 const DEFAULT_CATEGORIES = ['Semua'];
@@ -110,12 +111,24 @@ export default function ProductsPage() {
   };
 
   const handleAddToCart = (product: ProductItem) => {
+    const isOutOfStock =
+      (product.stock !== undefined && product.stock <= 0) ||
+      product.providerStatus === 'empty' ||
+      product.status === 'out_of_stock';
+
+    if (isOutOfStock) {
+      showNotification(`Maaf, stok ${product.name} sedang habis.`);
+      return;
+    }
+
     addItem({
       id: product.id,
       name: product.name,
       category: product.category.name,
       priceFormatted: product.priceFormatted,
       priceNumeric: product.price,
+      stock: product.stock,
+      isOutOfStock: false,
     });
     showNotification(`Berhasil menambahkan ${product.name} ke keranjang pesanan.`);
   };
@@ -339,148 +352,200 @@ export default function ProductsPage() {
         {/* Products Listing Grid */}
         {!isLoading && !error && products.length > 0 && viewMode === 'grid' && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {products.map((product) => (
-              <Card
-                key={product.id}
-                className="bg-surface border-border flex flex-col justify-between hover:border-primary/50 transition-all duration-200 group overflow-hidden"
-              >
-                <div>
-                  {/* Image & Badges */}
-                  <div className="relative h-44 w-full bg-surface-raised overflow-hidden border-b border-border">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={product.imageUrl}
-                      alt={product.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                    <div className="absolute top-3 left-3 flex gap-2">
-                      <Badge variant="secondary" className="text-[10px] bg-background/80 backdrop-blur-sm border-border">
-                        {product.category.name}
-                      </Badge>
-                      {product.popular && (
-                        <Badge variant="default" className="text-[10px] bg-primary text-white">
-                          Paling Laris
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
+            {products.map((product, idx) => {
+              const isOutOfStock =
+                (product.stock !== undefined && product.stock <= 0) ||
+                product.providerStatus === 'empty' ||
+                product.status === 'out_of_stock';
 
-                  <CardHeader className="pb-3 pt-5">
-                    <CardTitle className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">
-                      {product.name}
-                    </CardTitle>
-                    <CardDescription className="text-xs text-foreground-muted line-clamp-2 mt-1">
-                      {product.description}
-                    </CardDescription>
-                  </CardHeader>
-
-                  <CardContent className="space-y-3 pb-4">
-                    <div className="space-y-2">
-                      <span className="text-[11px] font-semibold uppercase tracking-wider text-foreground-muted">
-                        Fitur Unggulan:
-                      </span>
-                      <ul className="space-y-1.5">
-                        {product.features.slice(0, 3).map((feat, idx) => (
-                          <li key={idx} className="flex items-start gap-2 text-xs text-foreground-muted">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
-                            <span className="line-clamp-1">{feat}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </CardContent>
-                </div>
-
-                <CardFooter className="pt-3 border-t border-border flex items-center justify-between gap-3 bg-surface-raised/40">
+              return (
+                <Card
+                  key={product.id}
+                  className="bg-surface border-border flex flex-col justify-between hover:border-primary/50 transition-all duration-200 group overflow-hidden"
+                >
                   <div>
-                    <span className="text-[10px] text-foreground-muted block">Mulai dari</span>
-                    <span className="text-base font-bold text-foreground">
-                      {product.priceFormatted}
-                    </span>
-                    <span className="text-[10px] text-foreground-muted block">/ bulan</span>
+                    {/* Image & Badges */}
+                    <div className="relative h-44 w-full bg-surface-raised overflow-hidden border-b border-border">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={product.imageUrl}
+                        alt={product.name}
+                        loading={idx < 3 ? 'eager' : 'lazy'}
+                        fetchPriority={idx < 3 ? 'high' : 'auto'}
+                        decoding="async"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                      <div className="absolute top-3 left-3 flex gap-1.5 flex-wrap">
+                        <Badge variant="secondary" className="text-[10px] bg-background/80 backdrop-blur-sm border-border">
+                          {product.category.name}
+                        </Badge>
+                        {product.popular && (
+                          <Badge variant="default" className="text-[10px] bg-primary text-white">
+                            Paling Laris
+                          </Badge>
+                        )}
+                        {isOutOfStock && (
+                          <Badge variant="destructive" className="text-[10px] bg-status-error text-white font-semibold shadow-xs">
+                            Stok Habis
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+
+                    <CardHeader className="pb-3 pt-5">
+                      <CardTitle className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">
+                        {product.name}
+                      </CardTitle>
+                      <CardDescription className="text-xs text-foreground-muted line-clamp-2 mt-1">
+                        {product.description}
+                      </CardDescription>
+                    </CardHeader>
+
+                    <CardContent className="space-y-3 pb-4">
+                      <div className="space-y-2">
+                        <span className="text-[11px] font-semibold uppercase tracking-wider text-foreground-muted">
+                          Fitur Unggulan:
+                        </span>
+                        <ul className="space-y-1.5">
+                          {product.features.slice(0, 3).map((feat, fIdx) => (
+                            <li key={fIdx} className="flex items-start gap-2 text-xs text-foreground-muted">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
+                              <span className="line-clamp-1">{feat}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </CardContent>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleAddToCart(product)}
-                      className="border-border hover:border-primary/50 text-xs px-2.5"
-                      title="Tambah ke Keranjang"
-                    >
-                      <ShoppingCart className="w-3.5 h-3.5" />
-                    </Button>
-                    <Link href={`/products/${product.id}`}>
-                      <Button size="sm" className="text-xs gap-1.5">
-                        <span>Detail</span>
-                        <ArrowRight className="w-3.5 h-3.5" />
+                  <CardFooter className="pt-3 border-t border-border flex items-center justify-between gap-3 bg-surface-raised/40">
+                    <div>
+                      <span className="text-[10px] text-foreground-muted block">Mulai dari</span>
+                      <span className="text-base font-bold text-foreground">
+                        {product.priceFormatted}
+                      </span>
+                      <span className="text-[10px] text-foreground-muted block">/ bulan</span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={isOutOfStock}
+                        onClick={() => handleAddToCart(product)}
+                        className={`border-border text-xs px-2.5 ${
+                          isOutOfStock
+                            ? 'opacity-50 cursor-not-allowed border-status-error/30 text-status-error hover:bg-transparent'
+                            : 'hover:border-primary/50'
+                        }`}
+                        title={isOutOfStock ? 'Stok produk habis' : 'Tambah ke Keranjang'}
+                      >
+                        {isOutOfStock ? (
+                          <AlertTriangle className="w-3.5 h-3.5 text-status-error" />
+                        ) : (
+                          <ShoppingCart className="w-3.5 h-3.5" />
+                        )}
                       </Button>
-                    </Link>
-                  </div>
-                </CardFooter>
-              </Card>
-            ))}
+                      <Link href={`/products/${product.id}`}>
+                        <Button size="sm" className="text-xs gap-1.5">
+                          <span>Detail</span>
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </Button>
+                      </Link>
+                    </div>
+                  </CardFooter>
+                </Card>
+              );
+            })}
           </div>
         )}
 
         {/* Products Listing List View */}
         {!isLoading && !error && products.length > 0 && viewMode === 'list' && (
           <div className="space-y-4">
-            {products.map((product) => (
-              <div
-                key={product.id}
-                className="bg-surface border border-border rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 hover:border-primary/50 transition-all duration-200"
-              >
-                <div className="flex items-start sm:items-center gap-4">
-                  <div className="w-20 h-20 rounded-lg overflow-hidden bg-surface-raised shrink-0 border border-border">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={product.imageUrl}
-                      alt={product.name}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-semibold text-primary">{product.category.name}</span>
-                      {product.popular && (
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/20 text-primary font-medium">
-                          Paling Laris
-                        </span>
-                      )}
-                    </div>
-                    <h3 className="text-base font-bold text-foreground">{product.name}</h3>
-                    <p className="text-xs text-foreground-muted max-w-xl line-clamp-2">
-                      {product.description}
-                    </p>
-                  </div>
-                </div>
+            {products.map((product, idx) => {
+              const isOutOfStock =
+                (product.stock !== undefined && product.stock <= 0) ||
+                product.providerStatus === 'empty' ||
+                product.status === 'out_of_stock';
 
-                <div className="flex sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto gap-3 pt-3 sm:pt-0 border-t sm:border-t-0 border-border">
-                  <div className="text-left sm:text-right">
-                    <span className="text-base font-bold text-foreground">{product.priceFormatted}</span>
-                    <span className="text-[11px] text-foreground-muted block">/ bulan</span>
+              return (
+                <div
+                  key={product.id}
+                  className="bg-surface border border-border rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 hover:border-primary/50 transition-all duration-200"
+                >
+                  <div className="flex items-start sm:items-center gap-4">
+                    <div className="w-20 h-20 rounded-lg overflow-hidden bg-surface-raised shrink-0 border border-border">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={product.imageUrl}
+                        alt={product.name}
+                        loading={idx < 3 ? 'eager' : 'lazy'}
+                        fetchPriority={idx < 3 ? 'high' : 'auto'}
+                        decoding="async"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs font-semibold text-primary">{product.category.name}</span>
+                        {product.popular && (
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/20 text-primary font-medium">
+                            Paling Laris
+                          </span>
+                        )}
+                        {isOutOfStock && (
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-status-error/15 text-status-error font-semibold">
+                            Stok Habis
+                          </span>
+                        )}
+                      </div>
+                      <h3 className="text-base font-bold text-foreground">{product.name}</h3>
+                      <p className="text-xs text-foreground-muted max-w-xl line-clamp-2">
+                        {product.description}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleAddToCart(product)}
-                      className="text-xs"
-                    >
-                      <ShoppingCart className="w-3.5 h-3.5 mr-1" />
-                      <span>Keranjang</span>
-                    </Button>
-                    <Link href={`/products/${product.id}`}>
-                      <Button size="sm" className="text-xs gap-1">
-                        <span>Detail</span>
-                        <ArrowRight className="w-3.5 h-3.5" />
+
+                  <div className="flex sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto gap-3 pt-3 sm:pt-0 border-t sm:border-t-0 border-border">
+                    <div className="text-left sm:text-right">
+                      <span className="text-base font-bold text-foreground">{product.priceFormatted}</span>
+                      <span className="text-[11px] text-foreground-muted block">/ bulan</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={isOutOfStock}
+                        onClick={() => handleAddToCart(product)}
+                        className={`text-xs ${
+                          isOutOfStock ? 'opacity-50 cursor-not-allowed text-status-error' : ''
+                        }`}
+                        title={isOutOfStock ? 'Stok produk habis' : 'Tambah ke Keranjang'}
+                      >
+                        {isOutOfStock ? (
+                          <>
+                            <AlertTriangle className="w-3.5 h-3.5 mr-1 text-status-error" />
+                            <span>Stok Habis</span>
+                          </>
+                        ) : (
+                          <>
+                            <ShoppingCart className="w-3.5 h-3.5 mr-1" />
+                            <span>Keranjang</span>
+                          </>
+                        )}
                       </Button>
-                    </Link>
+                      <Link href={`/products/${product.id}`}>
+                        <Button size="sm" className="text-xs gap-1">
+                          <span>Detail</span>
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </Button>
+                      </Link>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 

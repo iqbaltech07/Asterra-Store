@@ -100,6 +100,7 @@ export class PrismaCatalogRepository {
           description: p.description || '',
           features: p.features,
           status: p.status as 'active' | 'archived',
+          stock: p.stock ?? 100,
           imageUrl: p.imageUrl || getProductImageUrl(p.brand, p.categoryName),
           popular: p.popular,
           provider: (p.provider as 'native' | 'vip-reseller') || 'vip-reseller',
@@ -169,6 +170,7 @@ export class PrismaCatalogRepository {
         description: p.description || '',
         features: p.features,
         status: p.status as 'active' | 'archived',
+        stock: p.stock ?? 100,
         imageUrl: p.imageUrl || getProductImageUrl(p.brand, p.categoryName),
         popular: p.popular,
         provider: (p.provider as 'native' | 'vip-reseller') || 'vip-reseller',
@@ -192,6 +194,7 @@ export class PrismaCatalogRepository {
    */
   static async getAllProductsAdmin(params?: {
     status?: 'all' | 'active' | 'archived';
+    category?: string;
     search?: string;
     limit?: number;
     offset?: number;
@@ -201,13 +204,25 @@ export class PrismaCatalogRepository {
       if (params?.status && params.status !== 'all') {
         where.status = params.status;
       }
+      if (params?.category && params.category !== 'all' && params.category !== 'cat-all') {
+        where.OR = [
+          { categoryId: params.category },
+          { categoryName: { equals: params.category, mode: 'insensitive' } },
+        ];
+      }
       if (params?.search) {
         const query = params.search.trim();
-        where.OR = [
-          { name: { contains: query, mode: 'insensitive' } },
-          { brand: { contains: query, mode: 'insensitive' } },
-          { providerCode: { contains: query, mode: 'insensitive' } },
+        const searchConditions = [
+          { name: { contains: query, mode: 'insensitive' as const } },
+          { brand: { contains: query, mode: 'insensitive' as const } },
+          { providerCode: { contains: query, mode: 'insensitive' as const } },
         ];
+        if (where.OR) {
+          where.AND = [{ OR: where.OR }, { OR: searchConditions }];
+          delete where.OR;
+        } else {
+          where.OR = searchConditions;
+        }
       }
 
       const [dbProducts, total, activeCount, archivedCount, warningCount] = await Promise.all([
@@ -223,7 +238,7 @@ export class PrismaCatalogRepository {
         prisma.product.count({
           where: {
             status: 'active',
-            providerStatus: 'empty',
+            OR: [{ providerStatus: 'empty' }, { stock: 0 }],
           },
         }),
       ]);
@@ -248,6 +263,7 @@ export class PrismaCatalogRepository {
           description: p.description || '',
           features: p.features,
           status: p.status as 'active' | 'archived',
+          stock: p.stock ?? 100,
           imageUrl: p.imageUrl || getProductImageUrl(p.brand, p.categoryName),
           popular: p.popular,
           provider: (p.provider as 'native' | 'vip-reseller') || 'vip-reseller',
@@ -309,6 +325,12 @@ export class PrismaCatalogRepository {
       if (patch.providerPrice !== undefined) {
         data.providerPrice = patch.providerPrice;
       }
+      if (patch.providerStatus !== undefined) {
+        data.providerStatus = patch.providerStatus;
+      }
+      if (patch.stock !== undefined) {
+        data.stock = Number(patch.stock);
+      }
       if (patch.description !== undefined) data.description = patch.description;
       if (patch.features !== undefined) data.features = patch.features;
       if (patch.status !== undefined) data.status = patch.status;
@@ -351,6 +373,7 @@ export class PrismaCatalogRepository {
         description: updated.description || '',
         features: updated.features,
         status: updated.status as 'active' | 'archived',
+        stock: updated.stock ?? 100,
         imageUrl: updated.imageUrl || getProductImageUrl(updated.brand, updated.categoryName),
         popular: updated.popular,
         provider: (updated.provider as 'native' | 'vip-reseller') || 'vip-reseller',
@@ -407,6 +430,37 @@ export class PrismaCatalogRepository {
       console.warn('[PrismaCatalogRepository] Database error on bulkUpdateStatus, using store fallback:', err);
       const count = AdminCatalogStore.bulkUpdateStatus(ids, status);
       return { count };
+    }
+  }
+
+  /**
+   * Permanently delete product from database and in-memory store
+   */
+  static async deleteProduct(id: string): Promise<boolean> {
+    try {
+      await prisma.product.delete({ where: { id } });
+      AdminCatalogStore.deleteProduct(id);
+      return true;
+    } catch (err) {
+      console.error('[PrismaCatalogRepository] Failed to delete product:', err);
+      throw err;
+    }
+  }
+
+  /**
+   * Bulk delete products from database and in-memory store
+   */
+  static async bulkDeleteProducts(ids: string[]): Promise<{ count: number }> {
+    if (!ids || ids.length === 0) return { count: 0 };
+    try {
+      const result = await prisma.product.deleteMany({
+        where: { id: { in: ids } },
+      });
+      ids.forEach((id) => AdminCatalogStore.deleteProduct(id));
+      return { count: result.count };
+    } catch (err) {
+      console.error('[PrismaCatalogRepository] Failed to bulk delete products:', err);
+      throw err;
     }
   }
 }

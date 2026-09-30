@@ -49,12 +49,31 @@ export function calculateSellingPrice(
  */
 export function mapCategory(
   type?: string,
-  brand?: string
+  brand?: string,
+  serviceName?: string
 ): { id: string; name: string } {
   const normalizedType = (type || '').toLowerCase();
   const normalizedBrand = (brand || '').toUpperCase();
+  const normalizedName = (serviceName || '').toUpperCase();
 
-  // 1. Apps & Streaming (Exact category from VIP Reseller)
+  // 1. AI Tools (ChatGPT, Gemini, OpenAI, Claude, Midjourney, etc.)
+  if (
+    normalizedBrand.includes('GEMINI') ||
+    normalizedBrand.includes('CHATGPT') ||
+    normalizedBrand.includes('OPENAI') ||
+    normalizedBrand.includes('CLAUDE') ||
+    normalizedBrand.includes('MIDJOURNEY') ||
+    normalizedName.includes('GEMINI') ||
+    normalizedName.includes('CHATGPT') ||
+    normalizedName.includes('CHAT GPT') ||
+    normalizedName.includes('OPENAI') ||
+    normalizedName.includes('CLAUDE') ||
+    normalizedType.includes('ai')
+  ) {
+    return { id: 'cat-ai-tools', name: 'AI Tools' };
+  }
+
+  // 2. Apps & Streaming (Sisanya)
   if (
     normalizedType.includes('streaming') ||
     normalizedType.includes('app') ||
@@ -64,9 +83,6 @@ export function mapCategory(
     normalizedBrand.includes('BSTATION') ||
     normalizedBrand.includes('CANVA') ||
     normalizedBrand.includes('CAPCUT') ||
-    normalizedBrand.includes('GEMINI') ||
-    normalizedBrand.includes('CHATGPT') ||
-    normalizedBrand.includes('OPENAI') ||
     normalizedBrand.includes('IQIYI') ||
     normalizedBrand.includes('SPOTIFY') ||
     normalizedBrand.includes('VIDIO') ||

@@ -16,6 +16,10 @@ export function CartDrawer({ isOpen, onClose, onCheckout }: CartDrawerProps) {
 
   if (!isOpen) return null;
 
+  const hasOutOfStockItems = items.some(
+    (item) => item.isOutOfStock || (item.stock !== undefined && item.stock <= 0)
+  );
+
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
       {/* Backdrop */}
@@ -60,57 +64,81 @@ export function CartDrawer({ isOpen, onClose, onCheckout }: CartDrawerProps) {
               </Button>
             </div>
           ) : (
-            items.map((item) => (
-              <div
-                key={item.id}
-                className="bg-surface-raised border border-border rounded-card p-4 flex flex-col justify-between gap-3"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <span className="text-[11px] text-primary font-medium">{item.category}</span>
-                    <h4 className="font-semibold text-sm text-foreground">{item.name}</h4>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => removeItem(item.id)}
-                    className="text-foreground-muted hover:text-status-error transition-colors p-1"
-                    title="Hapus item"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
+            items.map((item) => {
+              const itemOutOfStock =
+                item.isOutOfStock || (item.stock !== undefined && item.stock <= 0);
 
-                <div className="flex items-center justify-between pt-2 border-t border-border/60">
-                  <span className="font-bold text-sm text-foreground">
-                    Rp {(item.priceNumeric * item.quantity).toLocaleString('id-ID')}
-                  </span>
-
-                  <div className="flex items-center gap-2 bg-surface border border-border rounded-md px-2 py-0.5">
+              return (
+                <div
+                  key={item.id}
+                  className={`bg-surface-raised border rounded-card p-4 flex flex-col justify-between gap-3 ${
+                    itemOutOfStock ? 'border-status-error/40 bg-status-error/5' : 'border-border'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] text-primary font-medium">{item.category}</span>
+                        {itemOutOfStock && (
+                          <span className="text-[10px] px-2 py-0.2 rounded-full bg-status-error text-white font-semibold shadow-xs">
+                            Stok Habis
+                          </span>
+                        )}
+                      </div>
+                      <h4 className="font-semibold text-sm text-foreground mt-0.5">{item.name}</h4>
+                    </div>
                     <button
                       type="button"
-                      onClick={() => updateQuantity(item.id, -1)}
-                      className="text-foreground-muted hover:text-foreground text-xs"
+                      onClick={() => removeItem(item.id)}
+                      className="text-foreground-muted hover:text-status-error transition-colors p-1"
+                      title="Hapus item"
                     >
-                      <Minus className="w-3 h-3" />
-                    </button>
-                    <span className="text-xs font-semibold px-1">{item.quantity}</span>
-                    <button
-                      type="button"
-                      onClick={() => updateQuantity(item.id, 1)}
-                      className="text-foreground-muted hover:text-foreground text-xs"
-                    >
-                      <Plus className="w-3 h-3" />
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
+
+                  <div className="flex items-center justify-between pt-2 border-t border-border/60">
+                    <span className="font-bold text-sm text-foreground">
+                      Rp {(item.priceNumeric * item.quantity).toLocaleString('id-ID')}
+                    </span>
+
+                    <div className="flex items-center gap-2 bg-surface border border-border rounded-md px-2 py-0.5">
+                      <button
+                        type="button"
+                        onClick={() => updateQuantity(item.id, -1)}
+                        className="text-foreground-muted hover:text-foreground text-xs"
+                      >
+                        <Minus className="w-3 h-3" />
+                      </button>
+                      <span className="text-xs font-semibold px-1">{item.quantity}</span>
+                      <button
+                        type="button"
+                        onClick={() => updateQuantity(item.id, 1)}
+                        className="text-foreground-muted hover:text-foreground text-xs"
+                        disabled={itemOutOfStock}
+                      >
+                        <Plus className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
 
         {/* Footer Checkout Summary */}
         {items.length > 0 && (
           <div className="p-5 border-t border-border bg-surface-raised space-y-4">
+            {hasOutOfStockItems && (
+              <div className="text-[11px] text-status-error bg-status-error/10 border border-status-error/25 p-2.5 rounded-lg flex items-center gap-2">
+                <span>⚠️</span>
+                <span>
+                  Terdapat item dengan <strong>stok habis</strong>. Silakan hapus item tersebut untuk melanjutkan checkout.
+                </span>
+              </div>
+            )}
+
             <div className="space-y-1.5 text-xs">
               <div className="flex justify-between text-foreground-muted">
                 <span>Subtotal ({getTotalItems()} item)</span>
@@ -137,8 +165,17 @@ export function CartDrawer({ isOpen, onClose, onCheckout }: CartDrawerProps) {
               >
                 Kosongkan
               </Button>
-              <Button className="flex-1 gap-2" onClick={onCheckout}>
-                <span>Lanjut Checkout</span>
+              <Button
+                className={`flex-1 gap-2 ${
+                  hasOutOfStockItems
+                    ? 'opacity-50 cursor-not-allowed bg-muted text-muted-foreground'
+                    : ''
+                }`}
+                disabled={hasOutOfStockItems}
+                onClick={onCheckout}
+                title={hasOutOfStockItems ? 'Hapus item stok habis terlebih dahulu' : undefined}
+              >
+                <span>{hasOutOfStockItems ? 'Stok Habis' : 'Lanjut Checkout'}</span>
                 <ArrowRight className="w-4 h-4" />
               </Button>
             </div>

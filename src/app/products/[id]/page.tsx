@@ -25,6 +25,7 @@ import {
   Heart,
   Plus,
   Minus,
+  AlertTriangle,
 } from 'lucide-react';
 
 interface DurationOption {
@@ -51,6 +52,8 @@ interface RelatedProduct {
   price: number;
   priceFormatted: string;
   imageUrl: string;
+  stock?: number;
+  providerStatus?: string;
 }
 
 interface ProductDetailResponse {
@@ -62,6 +65,8 @@ interface ProductDetailResponse {
   description: string;
   features: string[];
   status: 'active' | 'out_of_stock';
+  providerStatus?: 'available' | 'empty';
+  stock?: number;
   imageUrl: string;
   popular?: boolean;
   durations: DurationOption[];
@@ -113,8 +118,17 @@ export default function ProductDetailPage({
 
   const totalPrice = (currentDuration.price || 0) * quantity;
 
+  const isOutOfStock =
+    !product ||
+    (product.stock !== undefined && product.stock <= 0) ||
+    product.providerStatus === 'empty' ||
+    product.status === 'out_of_stock';
+
   const handleAddToCart = () => {
-    if (!product) return;
+    if (!product || isOutOfStock) {
+      showNotification(`Maaf, stok produk ${product?.name || ''} saat ini habis.`);
+      return;
+    }
     for (let i = 0; i < quantity; i++) {
       addItem({
         id: `${product.id}-${currentDuration.id}`,
@@ -122,13 +136,18 @@ export default function ProductDetailPage({
         category: product.category.name,
         priceFormatted: `Rp ${(currentDuration.price).toLocaleString('id-ID')}`,
         priceNumeric: currentDuration.price,
+        stock: product.stock,
+        isOutOfStock: false,
       });
     }
     showNotification(`Berhasil menambahkan ${quantity}x ${product.name} ke keranjang.`);
   };
 
   const handleBuyNow = () => {
-    if (!product) return;
+    if (!product || isOutOfStock) {
+      showNotification(`Maaf, stok produk ${product?.name || ''} saat ini habis.`);
+      return;
+    }
     handleAddToCart();
     router.push('/checkout');
   };
@@ -205,17 +224,25 @@ export default function ProductDetailPage({
                     <img
                       src={product.imageUrl}
                       alt={product.name}
+                      loading="eager"
+                      fetchPriority="high"
+                      decoding="async"
                       className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-300"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent" />
 
-                    <div className="absolute top-4 left-4 flex gap-2">
+                    <div className="absolute top-4 left-4 flex gap-2 flex-wrap">
                       <Badge variant="secondary" className="bg-background/80 backdrop-blur-sm border-border text-xs">
                         {product.category.name}
                       </Badge>
                       {product.popular && (
                         <Badge className="bg-primary text-white text-xs">
                           Paling Populer
+                        </Badge>
+                      )}
+                      {isOutOfStock && (
+                        <Badge variant="destructive" className="bg-status-error text-white text-xs font-semibold shadow-xs">
+                          Stok Habis
                         </Badge>
                       )}
                     </div>
@@ -342,9 +369,16 @@ export default function ProductDetailPage({
                       <span className="text-xs font-semibold text-primary uppercase tracking-wide">
                         Pilihan Paket Berlangganan
                       </span>
-                      <span className="text-xs px-2.5 py-0.5 rounded-full bg-status-success/10 text-status-success font-medium border border-status-success/20">
-                        Stok Tersedia
-                      </span>
+                      {isOutOfStock ? (
+                        <span className="text-xs px-2.5 py-0.5 rounded-full bg-status-error/15 text-status-error font-semibold border border-status-error/30 flex items-center gap-1 shadow-xs">
+                          <AlertTriangle className="w-3 h-3 text-status-error" />
+                          <span>Stok Habis</span>
+                        </span>
+                      ) : (
+                        <span className="text-xs px-2.5 py-0.5 rounded-full bg-status-success/10 text-status-success font-medium border border-status-success/20">
+                          Stok Tersedia ({product.stock ?? 100})
+                        </span>
+                      )}
                     </div>
                     <CardTitle className="text-2xl font-bold text-foreground mt-2">
                       Rp {totalPrice.toLocaleString('id-ID')}
@@ -355,6 +389,16 @@ export default function ProductDetailPage({
                   </CardHeader>
 
                   <CardContent className="space-y-6">
+                    {/* Out of Stock Warning Banner */}
+                    {isOutOfStock && (
+                      <div className="p-3 bg-status-error/10 border border-status-error/30 rounded-lg flex items-center gap-2.5 text-xs text-status-error">
+                        <AlertTriangle className="w-4 h-4 shrink-0" />
+                        <span>
+                          <strong>Perhatian:</strong> Stok lisensi produk ini saat ini sedang habis. Pemesanan sementara tidak dapat diproses.
+                        </span>
+                      </div>
+                    )}
+
                     {/* Duration Selection Radios / Single Package Display */}
                     <div className="space-y-2">
                       <span className="text-xs font-medium text-foreground-muted block">
@@ -409,7 +453,7 @@ export default function ProductDetailPage({
                           type="button"
                           onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                           className="w-7 h-7 rounded-md bg-surface flex items-center justify-center text-foreground-muted hover:text-foreground text-xs"
-                          disabled={quantity <= 1}
+                          disabled={quantity <= 1 || isOutOfStock}
                         >
                           <Minus className="w-3 h-3" />
                         </button>
@@ -418,6 +462,7 @@ export default function ProductDetailPage({
                           type="button"
                           onClick={() => setQuantity((q) => q + 1)}
                           className="w-7 h-7 rounded-md bg-surface flex items-center justify-center text-foreground-muted hover:text-foreground text-xs"
+                          disabled={isOutOfStock}
                         >
                           <Plus className="w-3 h-3" />
                         </button>
@@ -445,20 +490,50 @@ export default function ProductDetailPage({
                     {/* Action Buttons */}
                     <div className="space-y-2.5">
                       <Button
-                        className="w-full gap-2 text-sm font-semibold h-11"
+                        className={`w-full gap-2 text-sm font-semibold h-11 ${
+                          isOutOfStock
+                            ? 'bg-surface-raised text-status-error border border-status-error/30 cursor-not-allowed opacity-80 hover:bg-surface-raised'
+                            : ''
+                        }`}
+                        disabled={isOutOfStock}
                         onClick={handleBuyNow}
+                        title={isOutOfStock ? 'Stok produk saat ini habis' : undefined}
                       >
-                        <Zap className="w-4 h-4" />
-                        <span>Beli Sekarang (Instan)</span>
+                        {isOutOfStock ? (
+                          <>
+                            <AlertTriangle className="w-4 h-4 text-status-error" />
+                            <span>Stok Habis (Tidak Tersedia)</span>
+                          </>
+                        ) : (
+                          <>
+                            <Zap className="w-4 h-4" />
+                            <span>Beli Sekarang (Instan)</span>
+                          </>
+                        )}
                       </Button>
 
                       <Button
                         variant="outline"
-                        className="w-full gap-2 text-xs border-border hover:border-primary/50 h-10"
+                        className={`w-full gap-2 text-xs border-border h-10 ${
+                          isOutOfStock
+                            ? 'opacity-60 cursor-not-allowed text-status-error border-status-error/20'
+                            : 'hover:border-primary/50'
+                        }`}
+                        disabled={isOutOfStock}
                         onClick={handleAddToCart}
+                        title={isOutOfStock ? 'Stok produk saat ini habis' : undefined}
                       >
-                        <ShoppingCart className="w-4 h-4 text-primary" />
-                        <span>Tambah ke Keranjang</span>
+                        {isOutOfStock ? (
+                          <>
+                            <AlertTriangle className="w-4 h-4 text-status-error" />
+                            <span>Stok Habis</span>
+                          </>
+                        ) : (
+                          <>
+                            <ShoppingCart className="w-4 h-4 text-primary" />
+                            <span>Tambah ke Keranjang</span>
+                          </>
+                        )}
                       </Button>
                     </div>
 
@@ -531,13 +606,20 @@ export default function ProductDetailPage({
                       className="bg-surface border border-border rounded-xl p-4 flex flex-col justify-between hover:border-primary/50 transition-all duration-200"
                     >
                       <div className="space-y-3">
-                        <div className="h-32 rounded-lg bg-surface-raised overflow-hidden border border-border">
+                        <div className="h-32 rounded-lg bg-surface-raised overflow-hidden border border-border relative">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={rel.imageUrl}
                             alt={rel.name}
+                            loading="lazy"
+                            decoding="async"
                             className="w-full h-full object-cover"
                           />
+                          {(rel.stock !== undefined && rel.stock <= 0) || rel.providerStatus === 'empty' ? (
+                            <span className="absolute top-2 left-2 text-[10px] px-2 py-0.5 rounded-full bg-status-error text-white font-semibold shadow-xs">
+                              Stok Habis
+                            </span>
+                          ) : null}
                         </div>
                         <div>
                           <span className="text-[11px] text-primary font-medium">{rel.category.name}</span>

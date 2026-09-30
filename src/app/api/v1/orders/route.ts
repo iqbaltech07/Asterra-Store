@@ -194,6 +194,17 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      // Check stock availability
+      if (
+        dbProduct &&
+        ((dbProduct.stock !== undefined && dbProduct.stock <= 0) ||
+          dbProduct.providerStatus === 'empty')
+      ) {
+        throw new Error(
+          `Produk "${product.name || item.product_name}" saat ini sedang habis (stok kosong). Silakan pilih produk lain.`
+        );
+      }
+
       // STRICT SERVER-SIDE PRICE LOCKING: Price is ALWAYS determined by server catalog/DB, NEVER by client payload.
       const unitPrice = Math.round(product.price);
       const quantity = Math.max(1, Math.min(100, Number(item.quantity) || 1));
@@ -357,6 +368,19 @@ export async function POST(request: NextRequest) {
           },
         },
       });
+
+      // Deduct stock for ordered products in PostgreSQL
+      for (const item of orderItems) {
+        const dbP = dbProductMap.get(item.product_id);
+        if (dbP && dbP.stock !== undefined && dbP.stock > 0) {
+          await prisma.product
+            .update({
+              where: { id: dbP.id },
+              data: { stock: Math.max(0, dbP.stock - item.quantity) },
+            })
+            .catch((e) => console.warn('[OrdersAPI] Stock decrement warning:', e));
+        }
+      }
     } catch (dbErr) {
       console.warn('[OrdersAPI] Prisma order & items persistence error:', dbErr);
     }

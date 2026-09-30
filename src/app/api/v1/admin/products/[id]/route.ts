@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaCatalogRepository } from '@/lib/services/prisma-catalog.repository';
 import { AdminAuthService } from '@/lib/services/admin-auth.service';
-import { prisma } from '@/lib/prisma';
 
 /**
  * GET /api/v1/admin/products/:id
@@ -82,6 +81,21 @@ export async function PATCH(
       }
       updates.status = body.status;
     }
+    if (body.providerPrice !== undefined) {
+      const pp = Number(body.providerPrice);
+      if (!isNaN(pp) && pp >= 0) {
+        updates.providerPrice = pp;
+      }
+    }
+    if (body.stock !== undefined) {
+      const s = Number(body.stock);
+      if (!isNaN(s) && s >= 0) {
+        updates.stock = s;
+      }
+    }
+    if (body.providerStatus !== undefined) {
+      updates.providerStatus = body.providerStatus;
+    }
     if (body.description !== undefined) updates.description = String(body.description);
     if (body.imageUrl !== undefined) updates.imageUrl = String(body.imageUrl);
     if (body.features !== undefined) updates.features = body.features;
@@ -120,16 +134,17 @@ export async function DELETE(
 
   const { id } = await params;
   try {
-    await prisma.product.delete({ where: { id } });
+    await PrismaCatalogRepository.deleteProduct(id);
 
     return NextResponse.json({
       success: true,
-      message: 'Produk berhasil dihapus dari sistem.',
+      message: 'Produk berhasil dihapus dari sistem Asterra Store.',
     });
-  } catch {
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
     return NextResponse.json(
-      { success: false, message: 'Produk tidak ditemukan atau gagal dihapus.' },
-      { status: 404 }
+      { success: false, message: `Gagal menghapus produk: ${msg}` },
+      { status: 500 }
     );
   }
 }

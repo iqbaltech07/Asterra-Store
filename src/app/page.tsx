@@ -25,6 +25,7 @@ import {
   Headphones,
   ArrowRight,
   Package,
+  AlertTriangle,
 } from 'lucide-react';
 import { useCartStore } from '@/store/use-cart-store';
 import { Header } from '@/components/layout/header';
@@ -93,6 +94,16 @@ export default function HomePage() {
   }, [allProducts, selectedCategory, searchQuery]);
 
   const handleAddToCart = (product: ProductItem) => {
+    const isOutOfStock =
+      (product.stock !== undefined && product.stock <= 0) ||
+      product.providerStatus === 'empty' ||
+      product.status === 'out_of_stock';
+
+    if (isOutOfStock) {
+      showNotification(`Maaf, stok ${product.name} sedang habis.`);
+      return;
+    }
+
     const isAlreadyInCart = cartItems.some((item) => item.id === product.id);
     if (isAlreadyInCart) {
       removeItem(product.id);
@@ -104,6 +115,8 @@ export default function HomePage() {
         category: product.category.name,
         priceFormatted: product.priceFormatted,
         priceNumeric: product.price,
+        stock: product.stock,
+        isOutOfStock: false,
       });
       showNotification(`${product.name} berhasil ditambahkan ke keranjang pesanan!`);
     }
@@ -223,18 +236,61 @@ export default function HomePage() {
           </div>
         ) : filteredProducts.length > 0 ? (
           <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredProducts.map((product) => {
+            {filteredProducts.map((product, idx) => {
               const isSelected = cartItems.some((item) => item.id === product.id);
+              const isOutOfStock =
+                (product.stock !== undefined && product.stock <= 0) ||
+                product.providerStatus === 'empty' ||
+                product.status === 'out_of_stock';
+
               return (
                 <Card
                   key={product.id}
-                  className="flex flex-col justify-between hover:border-primary/40 transition-colors"
+                  className="flex flex-col justify-between hover:border-primary/40 transition-colors overflow-hidden group"
                 >
-                  <CardHeader>
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <Badge variant="secondary">{product.category.name}</Badge>
-                      {product.popular && <Badge variant="success">Terpopuler</Badge>}
+                  {product.imageUrl ? (
+                    <div className="relative h-44 w-full bg-surface-raised overflow-hidden border-b border-border">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={product.imageUrl}
+                        alt={product.name}
+                        loading={idx < 3 ? 'eager' : 'lazy'}
+                        fetchPriority={idx < 3 ? 'high' : 'auto'}
+                        decoding="async"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                      <div className="absolute top-3 left-3 flex gap-1.5 flex-wrap">
+                        <Badge variant="secondary" className="text-[10px] bg-background/85 backdrop-blur-sm border-border">
+                          {product.category.name}
+                        </Badge>
+                        {product.popular && (
+                          <Badge variant="success" className="text-[10px]">
+                            Terpopuler
+                          </Badge>
+                        )}
+                        {isOutOfStock && (
+                          <Badge variant="destructive" className="text-[10px] bg-status-error text-white font-semibold">
+                            Stok Habis
+                          </Badge>
+                        )}
+                      </div>
                     </div>
+                  ) : null}
+
+                  <CardHeader className={product.imageUrl ? 'pt-4' : ''}>
+                    {!product.imageUrl && (
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <Badge variant="secondary">{product.category.name}</Badge>
+                        <div className="flex items-center gap-1.5">
+                          {product.popular && <Badge variant="success">Terpopuler</Badge>}
+                          {isOutOfStock && (
+                            <Badge variant="destructive" className="bg-status-error text-white text-[10px] font-semibold">
+                              Stok Habis
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    )}
                     <CardTitle className="text-xl">
                       <Link
                         href={`/products/${product.id}`}
@@ -257,9 +313,9 @@ export default function HomePage() {
                     </div>
 
                     <ul className="space-y-2 pt-2 border-t border-border">
-                      {product.features.slice(0, 3).map((feature, idx) => (
+                      {product.features.slice(0, 3).map((feature, fIdx) => (
                         <li
-                          key={idx}
+                          key={fIdx}
                           className="flex items-center gap-2 text-xs text-foreground-muted"
                         >
                           <Check className="w-3.5 h-3.5 text-status-success shrink-0" />
@@ -271,11 +327,22 @@ export default function HomePage() {
 
                   <CardFooter className="pt-2 flex gap-2">
                     <Button
-                      variant={isSelected ? 'secondary' : 'default'}
-                      className="flex-1 gap-2"
-                      onClick={() => handleAddToCart(product)}
+                      variant={isOutOfStock ? 'outline' : isSelected ? 'secondary' : 'default'}
+                      className={`flex-1 gap-2 ${
+                        isOutOfStock
+                          ? 'border-status-error/30 text-status-error bg-status-error/5 cursor-not-allowed opacity-80'
+                          : ''
+                      }`}
+                      disabled={isOutOfStock}
+                      onClick={() => !isOutOfStock && handleAddToCart(product)}
+                      title={isOutOfStock ? 'Stok produk saat ini habis' : undefined}
                     >
-                      {isSelected ? (
+                      {isOutOfStock ? (
+                        <>
+                          <AlertTriangle className="w-4 h-4 text-status-error" />
+                          <span>Stok Habis</span>
+                        </>
+                      ) : isSelected ? (
                         <>
                           <Check className="w-4 h-4 text-status-success" />
                           <span>Sudah Dipilih</span>

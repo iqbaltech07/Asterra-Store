@@ -9,6 +9,8 @@ export interface CartItem {
   priceFormatted: string;
   priceNumeric: number;
   quantity: number;
+  stock?: number;
+  isOutOfStock?: boolean;
 }
 
 interface CartState {

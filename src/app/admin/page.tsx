@@ -31,6 +31,7 @@ import {
   Activity,
   CreditCard,
   Tag,
+  Trash2,
 } from 'lucide-react';
 import { AdminOrdersTab } from '@/components/admin/admin-orders-tab';
 import { AdminLogsTab } from '@/components/admin/admin-logs-tab';
@@ -128,11 +129,18 @@ export default function AdminPage() {
   const [formName, setFormName] = useState('');
   const [formCategory, setFormCategory] = useState('AI Tools');
   const [formPrice, setFormPrice] = useState<number>(0);
+  const [formProviderPrice, setFormProviderPrice] = useState<number>(0);
+  const [formStock, setFormStock] = useState<number>(100);
   const [formStatus, setFormStatus] = useState<'active' | 'archived'>('active');
   const [formDescription, setFormDescription] = useState('');
   const [formFeatures, setFormFeatures] = useState('');
   const [formImageUrl, setFormImageUrl] = useState('');
   const [formPopular, setFormPopular] = useState(false);
+
+  // Delete product states
+  const [deletingProductId, setDeletingProductId] = useState<string | null>(null);
+  const [deletingProductName, setDeletingProductName] = useState<string>('');
+  const [isBulkDeleteModalOpen, setIsBulkDeleteModalOpen] = useState(false);
 
   // Toast feedback
   const showNotification = (msg: string) => {
@@ -267,6 +275,8 @@ export default function AdminPage() {
           name: formCategory,
         },
         price: formPrice,
+        providerPrice: formProviderPrice,
+        stock: formStock,
         status: formStatus,
         description: formDescription,
         features: formFeatures
@@ -314,6 +324,8 @@ export default function AdminPage() {
           code: importingService.code,
           name: formName,
           price: formPrice,
+          providerPrice: formProviderPrice,
+          stock: formStock,
           categoryName: formCategory,
           description: formDescription,
           status: formStatus,
@@ -331,12 +343,59 @@ export default function AdminPage() {
     },
   });
 
+  // Delete Single Product Mutation
+  const deleteProductMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch(`/api/v1/admin/products/${id}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Gagal menghapus produk');
+      return data;
+    },
+    onSuccess: (data) => {
+      showNotification(data.message);
+      setDeletingProductId(null);
+      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-vip-services'] });
+    },
+    onError: (err: Error) => {
+      showNotification(`Gagal: ${err.message}`);
+    },
+  });
+
+  // Bulk Delete Products Mutation
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const res = await fetch('/api/v1/admin/products/bulk-delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Gagal menghapus produk terpilih');
+      return data;
+    },
+    onSuccess: (data) => {
+      showNotification(data.message);
+      setSelectedIds([]);
+      setIsBulkDeleteModalOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-vip-services'] });
+    },
+    onError: (err: Error) => {
+      showNotification(`Gagal: ${err.message}`);
+    },
+  });
+
   // Open Edit Modal
   const handleOpenEdit = (p: ManagedProductItem) => {
     setEditingProduct(p);
     setFormName(p.name);
     setFormCategory(p.category.name);
     setFormPrice(p.price);
+    setFormProviderPrice(p.providerPrice || 0);
+    setFormStock(p.stock !== undefined ? p.stock : p.providerStatus === 'empty' ? 0 : 100);
     setFormStatus(p.status);
     setFormDescription(p.description);
     setFormFeatures(p.features.join('\n'));
@@ -350,6 +409,8 @@ export default function AdminPage() {
     setFormName('');
     setFormCategory('AI Tools');
     setFormPrice(50000);
+    setFormProviderPrice(0);
+    setFormStock(100);
     setFormStatus('active');
     setFormDescription('');
     setFormFeatures('Akses resmi bergaransi\nProses aktivasi cepat 1-5 menit');
@@ -373,7 +434,22 @@ export default function AdminPage() {
     // Default suggested selling price: base + 10% rounded to 1000
     const suggestedPrice = Math.ceil((base * 1.1 + 2500) / 1000) * 1000;
     setFormPrice(suggestedPrice);
-    setFormCategory(service.type || 'Layanan Digital');
+    setFormProviderPrice(base);
+    setFormStock(service.status === 'available' ? 100 : 0);
+
+    // AI Tools vs Apps & Streaming mapping
+    const b = (service.brand || '').toUpperCase();
+    const n = (service.name || '').toUpperCase();
+    const isAi =
+      b.includes('GEMINI') ||
+      b.includes('CHATGPT') ||
+      b.includes('OPENAI') ||
+      b.includes('CLAUDE') ||
+      n.includes('GEMINI') ||
+      n.includes('CHATGPT') ||
+      n.includes('OPENAI');
+    setFormCategory(isAi ? 'AI Tools' : service.type ? service.type : 'Apps & Streaming');
+
     setFormStatus('archived'); // Default to archived so admin reviews before publishing
     setFormDescription(service.note && service.note !== '-' ? `${service.name}. ${service.note}` : service.name);
     setFormImageUrl('');
@@ -381,6 +457,24 @@ export default function AdminPage() {
 
   const metrics = productsData?.metrics;
   const allProducts = useMemo(() => productsData?.data || [], [productsData?.data]);
+
+  // Extract unique categories dynamically from products in database [T4 Fix]
+  const availableCategories = useMemo(() => {
+    const cats = new Map<string, { id: string; name: string; count: number }>();
+    allProducts.forEach((p) => {
+      if (p.category?.name) {
+        const id = p.category.id || p.category.name;
+        const name = p.category.name;
+        const existing = cats.get(id);
+        if (existing) {
+          existing.count++;
+        } else {
+          cats.set(id, { id, name, count: 1 });
+        }
+      }
+    });
+    return Array.from(cats.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [allProducts]);
 
   // Client-Side In-Memory Filtering for Managed Products (0 API request on search/filter)
   const filteredProducts = useMemo(() => {
@@ -390,8 +484,7 @@ export default function AdminPage() {
         list = list.filter(
           (p) =>
             p.status === 'active' &&
-            p.provider === 'vip-reseller' &&
-            p.providerStatus === 'empty'
+            (p.providerStatus === 'empty' || p.stock === 0)
         );
       } else {
         list = list.filter((p) => p.status === statusFilter);
@@ -788,13 +881,12 @@ export default function AdminPage() {
                   className="text-xs bg-surface-raised border border-border rounded-md px-2.5 py-2 text-foreground focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
                   title="Filter Kategori Produk"
                 >
-                  <option value="all">Semua Kategori</option>
-                  <option value="AI Tools">AI Tools</option>
-                  <option value="Streaming & Entertainment">Streaming & Entertainment</option>
-                  <option value="Developer Tools">Developer Tools</option>
-                  <option value="Kreativitas & Desain">Kreativitas & Desain</option>
-                  <option value="Produktivitas">Produktivitas</option>
-                  <option value="Layanan Digital">Layanan Digital</option>
+                  <option value="all">Semua Kategori ({allProducts.length})</option>
+                  {availableCategories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name} ({cat.count})
+                    </option>
+                  ))}
                 </select>
 
                 <div className="relative min-w-[240px]">
@@ -824,39 +916,51 @@ export default function AdminPage() {
                   </div>
                   <span className="text-foreground-muted text-xs hidden sm:inline">•</span>
                   <span className="text-xs text-foreground-muted hidden sm:inline">
-                    Pilih aksi status di samping untuk menerapkan sekaligus ke seluruh item terpilih dalam 1 request.
+                    Pilih aksi status atau hapus sekaligus ke seluruh item terpilih dalam 1 request.
                   </span>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <Button
                     size="sm"
                     onClick={() => bulkStatusMutation.mutate({ ids: selectedIds, status: 'active' })}
-                    disabled={bulkStatusMutation.isPending}
+                    disabled={bulkStatusMutation.isPending || bulkDeleteMutation.isPending}
                     className="h-8 gap-1.5 bg-status-success hover:bg-status-success/90 text-white text-xs font-medium"
                     title="Ubah semua produk terpilih menjadi Aktif (Tampil di Toko)"
                   >
                     <Eye className="w-3.5 h-3.5" />
-                    <span>Aktifkan Semua ({selectedIds.length})</span>
+                    <span>Aktifkan ({selectedIds.length})</span>
                   </Button>
 
                   <Button
                     size="sm"
                     variant="outline"
                     onClick={() => bulkStatusMutation.mutate({ ids: selectedIds, status: 'archived' })}
-                    disabled={bulkStatusMutation.isPending}
+                    disabled={bulkStatusMutation.isPending || bulkDeleteMutation.isPending}
                     className="h-8 gap-1.5 border-border hover:bg-surface-hover text-xs font-medium"
                     title="Ubah semua produk terpilih menjadi Diarsipkan (Sembunyikan dari Toko)"
                   >
                     <EyeOff className="w-3.5 h-3.5 text-foreground-muted" />
-                    <span>Arsipkan Semua ({selectedIds.length})</span>
+                    <span>Arsipkan ({selectedIds.length})</span>
+                  </Button>
+
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => setIsBulkDeleteModalOpen(true)}
+                    disabled={bulkStatusMutation.isPending || bulkDeleteMutation.isPending}
+                    className="h-8 gap-1.5 bg-status-error/15 hover:bg-status-error text-status-error hover:text-white border border-status-error/30 text-xs font-medium"
+                    title="Hapus permanen produk terpilih"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Hapus ({selectedIds.length})</span>
                   </Button>
 
                   <Button
                     size="sm"
                     variant="ghost"
                     onClick={() => setSelectedIds([])}
-                    disabled={bulkStatusMutation.isPending}
+                    disabled={bulkStatusMutation.isPending || bulkDeleteMutation.isPending}
                     className="h-8 text-foreground-muted hover:text-foreground text-xs"
                   >
                     <X className="w-3.5 h-3.5 mr-1" />
@@ -936,6 +1040,8 @@ export default function AdminPage() {
                                 <img
                                   src={p.imageUrl}
                                   alt={p.name}
+                                  loading="lazy"
+                                  decoding="async"
                                   className="w-10 h-10 rounded-lg object-cover bg-surface-raised border border-border shrink-0"
                                 />
                                 <div>
@@ -1021,19 +1127,29 @@ export default function AdminPage() {
                                 p.providerStatus === 'available' ? (
                                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-status-success/15 text-status-success">
                                     <CheckCircle2 className="w-3 h-3" />
-                                    <span>Tersedia</span>
+                                    <span>Tersedia ({p.stock ?? 100})</span>
                                   </span>
                                 ) : (
                                   <span
                                     className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-status-warning/15 text-status-warning"
-                                    title="Stok supplier kosong! Disarankan untuk mengarsipkan produk ini."
+                                    title="Stok supplier kosong!"
                                   >
                                     <AlertTriangle className="w-3 h-3" />
-                                    <span>Kosong di VIP</span>
+                                    <span>Kosong</span>
                                   </span>
                                 )
                               ) : (
-                                <span className="text-foreground-muted text-[11px]">Stok Mandiri</span>
+                                (p.stock !== undefined && p.stock <= 0) ? (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-status-warning/15 text-status-warning">
+                                    <AlertTriangle className="w-3 h-3" />
+                                    <span>Kosong (0)</span>
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-status-success/15 text-status-success">
+                                    <CheckCircle2 className="w-3 h-3" />
+                                    <span>Tersedia ({p.stock ?? 100})</span>
+                                  </span>
+                                )
                               )}
                             </td>
 
@@ -1074,6 +1190,19 @@ export default function AdminPage() {
                                 >
                                   <Edit className="w-3.5 h-3.5 text-primary" />
                                   <span className="hidden sm:inline ml-1">Edit</span>
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    setDeletingProductId(p.id);
+                                    setDeletingProductName(p.name);
+                                  }}
+                                  className="h-8 px-2.5 text-xs border-border hover:border-status-error/50 hover:bg-status-error/10 text-status-error"
+                                  title="Hapus produk permanen"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                  <span className="hidden sm:inline ml-1">Hapus</span>
                                 </Button>
                               </div>
                             </td>
@@ -1251,7 +1380,7 @@ export default function AdminPage() {
                                 : 'bg-status-warning/15 text-status-warning'
                             }`}
                           >
-                            {service.status === 'available' ? 'Tersedia' : 'Kosong di VIP'}
+                            {service.status === 'available' ? 'Tersedia' : 'Kosong'}
                           </span>
                         </div>
 
@@ -1381,19 +1510,19 @@ export default function AdminPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="font-semibold text-foreground block mb-1">Kategori Toko</label>
-                  <Input
-                    type="text"
-                    required
-                    value={formCategory}
-                    onChange={(e) => setFormCategory(e.target.value)}
-                    className="bg-surface-raised border-border text-xs"
-                    placeholder="AI Tools, Desain, Streaming..."
-                  />
-                </div>
+              <div>
+                <label className="font-semibold text-foreground block mb-1">Kategori Toko</label>
+                <Input
+                  type="text"
+                  required
+                  value={formCategory}
+                  onChange={(e) => setFormCategory(e.target.value)}
+                  className="bg-surface-raised border-border text-xs"
+                  placeholder="AI Tools, Desain, Streaming..."
+                />
+              </div>
 
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="font-semibold text-foreground block mb-1">
                     Harga Jual Retail (Rp) <span className="text-primary">*Ditentukan Admin</span>
@@ -1406,40 +1535,113 @@ export default function AdminPage() {
                     value={formPrice}
                     onChange={(e) => setFormPrice(Number(e.target.value))}
                     className="bg-surface-raised border-border text-xs font-mono font-bold"
+                    placeholder="Contoh: 50000"
                   />
+                </div>
+
+                <div>
+                  <label className="font-semibold text-foreground block mb-1">
+                    Harga Supplier / Modal (Rp) <span className="text-foreground-muted text-[10px]">(Bisa diubah)</span>
+                  </label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="500"
+                    value={formProviderPrice}
+                    onChange={(e) => setFormProviderPrice(Number(e.target.value))}
+                    className="bg-surface-raised border-border text-xs font-mono font-bold"
+                    placeholder="Harga supply / modal dasar"
+                  />
+                  <span className="text-[10px] text-foreground-muted block mt-1">
+                    {editingProduct?.provider === 'vip-reseller'
+                      ? 'Terisi otomatis dari VIP Reseller (dapat diubah).'
+                      : 'Harga modal untuk produk mandiri.'}
+                  </span>
                 </div>
               </div>
 
-              {editingProduct?.providerPrice && (
-                <div className="p-3 bg-surface-raised rounded-lg flex items-center justify-between text-xs">
-                  <div>
-                    <span className="text-foreground-muted block">Harga Modal VIP Reseller:</span>
-                    <span className="font-bold text-foreground font-mono">
-                      Rp {editingProduct.providerPrice.toLocaleString('id-ID')}
+              {/* Real-time Profit Margin Calculation */}
+              <div className="p-3 bg-surface-raised rounded-lg flex items-center justify-between text-xs border border-border">
+                <div>
+                  <span className="text-foreground-muted block">Harga Modal:</span>
+                  <span className="font-bold text-foreground font-mono">
+                    Rp {formProviderPrice.toLocaleString('id-ID')}
+                  </span>
+                </div>
+                <div className="text-right">
+                  <span className="text-foreground-muted block">Estimasi Keuntungan:</span>
+                  {formPrice - formProviderPrice > 0 ? (
+                    <span className="font-bold text-status-success font-mono">
+                      +Rp {(formPrice - formProviderPrice).toLocaleString('id-ID')} (
+                      {formProviderPrice > 0
+                        ? Math.round(((formPrice - formProviderPrice) / formProviderPrice) * 100)
+                        : 100}
+                      %)
                     </span>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-foreground-muted block">Estimasi Keuntungan:</span>
-                    {formPrice - editingProduct.providerPrice > 0 ? (
-                      <span className="font-bold text-status-success font-mono">
-                        +Rp {(formPrice - editingProduct.providerPrice).toLocaleString('id-ID')} (
-                        {Math.round(((formPrice - editingProduct.providerPrice) / editingProduct.providerPrice) * 100)}
-                        %)
-                      </span>
-                    ) : formPrice - editingProduct.providerPrice < 0 ? (
-                      <span className="font-bold text-status-error font-mono">
-                        -Rp {Math.abs(formPrice - editingProduct.providerPrice).toLocaleString('id-ID')} (
-                        {Math.round(((formPrice - editingProduct.providerPrice) / editingProduct.providerPrice) * 100)}
-                        %)
-                      </span>
-                    ) : (
-                      <span className="font-bold text-foreground-muted font-mono">
-                        Rp 0 (0%)
-                      </span>
-                    )}
+                  ) : formPrice - formProviderPrice < 0 ? (
+                    <span className="font-bold text-status-error font-mono">
+                      -Rp {Math.abs(formPrice - formProviderPrice).toLocaleString('id-ID')} (
+                      {formProviderPrice > 0
+                        ? Math.round(((formPrice - formProviderPrice) / formProviderPrice) * 100)
+                        : 0}
+                      %)
+                    </span>
+                  ) : (
+                    <span className="font-bold text-foreground-muted font-mono">
+                      Rp 0 (0%)
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Pengaturan Stok Produk */}
+              <div>
+                <label className="font-semibold text-foreground block mb-1">
+                  Pengaturan Stok Produk (Unit)
+                </label>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                  <Input
+                    type="number"
+                    min="0"
+                    value={formStock}
+                    onChange={(e) => setFormStock(Math.max(0, parseInt(e.target.value || '0', 10)))}
+                    className="bg-surface-raised border-border text-xs font-mono font-bold flex-1"
+                    placeholder="Jumlah stok (0 = Habis)"
+                  />
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setFormStock(100)}
+                      className="text-xs h-9 border-border"
+                    >
+                      Tersedia (100)
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setFormStock(0)}
+                      className="text-xs h-9 border-status-error/40 text-status-error hover:bg-status-error/10"
+                    >
+                      Set Habis (0)
+                    </Button>
                   </div>
                 </div>
-              )}
+                <div className="flex items-center gap-2 mt-1.5">
+                  <span className="text-[11px] text-foreground-muted">Status Ketersediaan:</span>
+                  {formStock > 0 ? (
+                    <span className="text-[11px] font-semibold text-status-success">
+                      ✓ Stok Tersedia ({formStock} unit)
+                    </span>
+                  ) : (
+                    <span className="text-[11px] font-semibold text-status-error">
+                      ⚠ Stok Habis (Button checkout & keranjang akan nonaktif di sisi user)
+                    </span>
+                  )}
+                </div>
+              </div>
 
               <div>
                 <label className="font-semibold text-foreground block mb-1">
@@ -1549,7 +1751,7 @@ export default function AdminPage() {
       {/* MODAL 2: IMPORT FROM VIP RESELLER */}
       {importingService && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-surface border border-border rounded-xl w-full max-w-lg shadow-2xl p-6 space-y-4">
+          <div className="bg-surface border border-border rounded-xl w-full max-w-lg shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-border pb-3">
               <div>
                 <h3 className="font-bold text-base text-foreground">
@@ -1587,7 +1789,7 @@ export default function AdminPage() {
                 <div className="flex justify-between">
                   <span className="text-foreground-muted">Ketersediaan Supplier:</span>
                   <span className={importingService.status === 'available' ? 'text-status-success font-semibold' : 'text-status-warning font-semibold'}>
-                    {importingService.status === 'available' ? 'Tersedia' : 'Kosong di VIP'}
+                    {importingService.status === 'available' ? 'Tersedia' : 'Kosong'}
                   </span>
                 </div>
               </div>
@@ -1603,18 +1805,18 @@ export default function AdminPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="font-semibold text-foreground block mb-1">Kategori Asterra</label>
-                  <Input
-                    type="text"
-                    required
-                    value={formCategory}
-                    onChange={(e) => setFormCategory(e.target.value)}
-                    className="bg-surface-raised border-border text-xs"
-                  />
-                </div>
+              <div>
+                <label className="font-semibold text-foreground block mb-1">Kategori Asterra</label>
+                <Input
+                  type="text"
+                  required
+                  value={formCategory}
+                  onChange={(e) => setFormCategory(e.target.value)}
+                  className="bg-surface-raised border-border text-xs"
+                />
+              </div>
 
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="font-semibold text-foreground block mb-1">
                     Harga Jual Retail (Rp) <span className="text-primary">*Ditentukan Anda</span>
@@ -1628,6 +1830,54 @@ export default function AdminPage() {
                     onChange={(e) => setFormPrice(Number(e.target.value))}
                     className="bg-surface-raised border-border text-xs font-mono font-bold"
                   />
+                </div>
+
+                <div>
+                  <label className="font-semibold text-foreground block mb-1">
+                    Harga Modal Supplier (Rp) <span className="text-foreground-muted text-[10px]">(Bisa diubah)</span>
+                  </label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="500"
+                    value={formProviderPrice}
+                    onChange={(e) => setFormProviderPrice(Number(e.target.value))}
+                    className="bg-surface-raised border-border text-xs font-mono font-bold"
+                  />
+                </div>
+              </div>
+
+              {/* Pengaturan Stok Produk */}
+              <div>
+                <label className="font-semibold text-foreground block mb-1">
+                  Pengaturan Stok Produk (Unit)
+                </label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    min="0"
+                    value={formStock}
+                    onChange={(e) => setFormStock(Math.max(0, parseInt(e.target.value || '0', 10)))}
+                    className="bg-surface-raised border-border text-xs font-mono font-bold flex-1"
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setFormStock(100)}
+                    className="text-xs h-9 border-border"
+                  >
+                    Tersedia (100)
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setFormStock(0)}
+                    className="text-xs h-9 border-status-error/40 text-status-error hover:bg-status-error/10"
+                  >
+                    Habis (0)
+                  </Button>
                 </div>
               </div>
 
@@ -1734,14 +1984,112 @@ export default function AdminPage() {
               </Button>
 
               <Button
+                size="sm"
+                variant="destructive"
+                onClick={() => setIsBulkDeleteModalOpen(true)}
+                disabled={bulkStatusMutation.isPending || bulkDeleteMutation.isPending}
+                className="h-8 gap-1.5 text-xs font-semibold px-3"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Hapus ({selectedIds.length})</span>
+              </Button>
+
+              <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setSelectedIds([])}
-                disabled={bulkStatusMutation.isPending}
+                disabled={bulkStatusMutation.isPending || bulkDeleteMutation.isPending}
                 className="h-8 text-foreground-muted hover:text-foreground text-xs"
               >
                 <X className="w-3.5 h-3.5 mr-1" />
                 <span className="hidden sm:inline">Batal</span>
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Single Product Delete Confirmation Modal [T7] */}
+      {deletingProductId && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-surface border border-border rounded-xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center gap-3 text-status-error">
+              <div className="w-10 h-10 rounded-full bg-status-error/10 border border-status-error/20 flex items-center justify-center">
+                <Trash2 className="w-5 h-5 text-status-error" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-foreground">Hapus Produk?</h3>
+                <p className="text-xs text-foreground-muted">Tindakan ini tidak dapat dibatalkan.</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-foreground bg-surface-raised border border-border p-3 rounded-lg leading-relaxed">
+              Apakah Anda yakin ingin menghapus produk <strong className="text-status-error">{deletingProductName}</strong> dari database Asterra Store?
+            </p>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setDeletingProductId(null);
+                  setDeletingProductName('');
+                }}
+                disabled={deleteProductMutation.isPending}
+              >
+                Batal
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                onClick={() => deleteProductMutation.mutate(deletingProductId)}
+                disabled={deleteProductMutation.isPending}
+              >
+                {deleteProductMutation.isPending ? 'Menghapus...' : 'Ya, Hapus Produk'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Delete Confirmation Modal [T7] */}
+      {isBulkDeleteModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-surface border border-border rounded-xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center gap-3 text-status-error">
+              <div className="w-10 h-10 rounded-full bg-status-error/10 border border-status-error/20 flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-status-error" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-foreground">Hapus {selectedIds.length} Produk Sekaligus?</h3>
+                <p className="text-xs text-foreground-muted">Tindakan penghapusan massal permanen.</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-foreground bg-surface-raised border border-border p-3 rounded-lg leading-relaxed">
+              Anda akan menghapus <strong className="text-status-error">{selectedIds.length} produk</strong> sekaligus dari database. Produk yang telah dihapus tidak akan dapat dipulihkan kembali.
+            </p>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setIsBulkDeleteModalOpen(false)}
+                disabled={bulkDeleteMutation.isPending}
+              >
+                Batal
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                onClick={() => bulkDeleteMutation.mutate(selectedIds)}
+                disabled={bulkDeleteMutation.isPending}
+              >
+                {bulkDeleteMutation.isPending ? 'Menghapus Massal...' : `Hapus ${selectedIds.length} Produk`}
               </Button>
             </div>
           </div>

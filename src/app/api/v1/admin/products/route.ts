@@ -25,6 +25,7 @@ export async function GET(req: NextRequest) {
       | 'active'
       | 'archived'
       | undefined;
+    const category = searchParams.get('category') || undefined;
     const search = searchParams.get('search') || undefined;
     const limitParam = searchParams.get('limit');
     const offsetParam = searchParams.get('offset');
@@ -34,6 +35,7 @@ export async function GET(req: NextRequest) {
     const { products: filteredProducts, total, metrics } =
       await PrismaCatalogRepository.getAllProductsAdmin({
         status: statusParam || 'all',
+        category,
         search,
         limit,
         offset,
@@ -130,6 +132,7 @@ export async function POST(req: NextRequest) {
           ? body.features
           : [body.features || 'Aktivasi cepat & garansi resmi'],
         status: body.status || 'active',
+        stock: body.stock !== undefined ? Math.max(0, Number(body.stock)) : 100,
         imageUrl:
           body.imageUrl ||
           'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80',

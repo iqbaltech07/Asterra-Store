@@ -10,6 +10,8 @@ export interface ProductItem {
   description: string;
   features: string[];
   status: 'active' | 'out_of_stock' | 'archived';
+  stock?: number;
+  providerStatus?: 'available' | 'empty' | string;
   imageUrl: string;
   popular?: boolean;
 }

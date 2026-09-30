@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { vipResellerService } from '@/lib/services/vip-reseller.service';
 import { AdminCatalogStore } from '@/lib/services/admin-catalog-store';
 import { AdminAuthService } from '@/lib/services/admin-auth.service';
+import { prisma } from '@/lib/prisma';
+import { mapCategory, getProductImageUrl } from '@/lib/services/product-mapper';
 
 /**
  * GET /api/v1/admin/vip-services
@@ -63,21 +65,42 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Check which items are already imported in Asterra Store
-    const allStoreProducts = AdminCatalogStore.getAllProducts();
-    const importedCodes = new Set(
-      allStoreProducts
-        .filter((p) => p.providerCode)
-        .map((p) => p.providerCode?.toUpperCase())
-    );
+    // Check which items are already imported in Asterra DB (prisma.product)
+    let importedCodes = new Set<string>();
+    const importedIdMap = new Map<string, string>();
 
-    const enrichedItems = items.slice(0, limit).map((s) => ({
-      ...s,
-      isImported: importedCodes.has(s.code.toUpperCase()),
-      importedProductId: allStoreProducts.find(
-        (p) => p.providerCode?.toUpperCase() === s.code.toUpperCase()
-      )?.id,
-    }));
+    try {
+      const dbProducts = await prisma.product.findMany({
+        select: { id: true, providerCode: true },
+      });
+      for (const p of dbProducts) {
+        if (p.providerCode) {
+          const codeUpper = p.providerCode.toUpperCase();
+          importedCodes.add(codeUpper);
+          importedIdMap.set(codeUpper, p.id);
+        }
+        importedCodes.add(p.id.toUpperCase());
+      }
+    } catch {
+      // Fallback to in-memory store if DB error
+      const allStoreProducts = AdminCatalogStore.getAllProducts();
+      importedCodes = new Set(
+        allStoreProducts
+          .filter((p) => p.providerCode)
+          .map((p) => p.providerCode?.toUpperCase() as string)
+      );
+    }
+
+    const enrichedItems = items.slice(0, limit).map((s) => {
+      const codeUpper = s.code.toUpperCase();
+      const generatedId = `vip-${s.code.toLowerCase().replace(/[^a-z0-9_-]/g, '-')}`.toUpperCase();
+      const isImported = importedCodes.has(codeUpper) || importedCodes.has(generatedId);
+      return {
+        ...s,
+        isImported,
+        importedProductId: importedIdMap.get(codeUpper) || undefined,
+      };
+    });
 
     // Available types and brands for filter dropdowns
     const availableTypes = [...new Set(response.data.map((d) => d.type).filter(Boolean))];
@@ -168,21 +191,126 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const importedProduct = AdminCatalogStore.importFromVipReseller(rawService, {
-      name: body.name || rawService.name,
+    const id = `vip-${rawService.code.toLowerCase().replace(/[^a-z0-9_-]/g, '-')}`;
+
+    let basePrice = 0;
+    if (typeof rawService.price === 'object' && rawService.price !== null) {
+      basePrice = rawService.price.basic || rawService.price.premium || 0;
+    } else if (typeof rawService.price === 'number') {
+      basePrice = rawService.price;
+    }
+
+    const providerPrice =
+      body.providerPrice !== undefined ? Number(body.providerPrice) : basePrice;
+
+    const defaultCat = mapCategory(rawService.type, rawService.brand, rawService.name);
+    const category = {
+      id: body.categoryId || defaultCat.id,
+      name: body.categoryName || defaultCat.name,
+    };
+
+    const name = body.name || rawService.name;
+    const status = (body.status as 'active' | 'archived') || 'archived';
+    const providerStatus = rawService.status === 'available' ? 'available' : 'empty';
+    const stock =
+      body.stock !== undefined
+        ? Number(body.stock)
+        : providerStatus === 'available'
+          ? 100
+          : 0;
+
+    let profitMargin: number | null = null;
+    let profitPercentage: number | null = null;
+    if (providerPrice > 0) {
+      profitMargin = price - providerPrice;
+      profitPercentage = Math.round((profitMargin / providerPrice) * 100);
+    }
+
+    const brand = rawService.brand || 'Digital';
+    const features =
+      body.features || [
+        `Brand: ${brand}`,
+        `Kode Provider: ${rawService.code}`,
+        `Ketersediaan Supplier: ${providerStatus === 'available' ? 'Tersedia' : 'Kosong'}`,
+        rawService.note && rawService.note !== '-'
+          ? `Catatan: ${rawService.note}`
+          : 'Proses aktivasi cepat & bergaransi',
+      ];
+
+    const description =
+      body.description ||
+      (rawService.note && rawService.note !== '-'
+        ? `${name}. ${rawService.note}`
+        : `${name} - Layanan digital resmi terverifikasi.`);
+
+    const imageUrl =
+      body.imageUrl || getProductImageUrl(rawService.brand, rawService.type);
+
+    // Save directly to Asterra Database
+    const dbProduct = await prisma.product.upsert({
+      where: { id },
+      update: {
+        name,
+        categoryId: category.id,
+        categoryName: category.name,
+        brand,
+        price,
+        priceFormatted: `Rp ${Math.round(price / 1000)} Rb`,
+        description,
+        features,
+        status,
+        stock,
+        imageUrl,
+        provider: 'vip-reseller',
+        providerCode: rawService.code,
+        providerName: rawService.name,
+        providerPrice,
+        providerStatus,
+        lastProviderCheck: new Date(),
+        profitMargin,
+        profitPercentage,
+      },
+      create: {
+        id,
+        name,
+        categoryId: category.id,
+        categoryName: category.name,
+        brand,
+        price,
+        priceFormatted: `Rp ${Math.round(price / 1000)} Rb`,
+        description,
+        features,
+        status,
+        stock,
+        imageUrl,
+        popular: false,
+        provider: 'vip-reseller',
+        providerCode: rawService.code,
+        providerName: rawService.name,
+        providerPrice,
+        providerStatus,
+        lastProviderCheck: new Date(),
+        profitMargin,
+        profitPercentage,
+      },
+    });
+
+    // Synchronize in-memory catalog store
+    AdminCatalogStore.importFromVipReseller(rawService, {
+      name,
       price,
-      categoryId: body.categoryId,
-      categoryName: body.categoryName,
-      description: body.description,
-      features: body.features,
-      status: body.status || 'archived',
-      imageUrl: body.imageUrl,
+      categoryId: category.id,
+      categoryName: category.name,
+      description,
+      features,
+      status,
+      imageUrl,
     });
 
     return NextResponse.json({
       success: true,
-      message: `Produk "${importedProduct.name}" berhasil diimpor ke katalog Asterra Store dengan status ${importedProduct.status.toUpperCase()}.`,
-      data: importedProduct,
+      message: `Produk "${dbProduct.name}" berhasil diimpor ke katalog Asterra Store dengan status ${dbProduct.status.toUpperCase()}.`,
+      data: dbProduct,
     });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
