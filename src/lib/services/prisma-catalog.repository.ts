@@ -111,6 +111,12 @@ export class PrismaCatalogRepository {
           lastProviderCheck: p.lastProviderCheck ? p.lastProviderCheck.toISOString() : undefined,
           profitMargin,
           profitPercentage,
+          guaranteeTitle: p.guaranteeTitle || 'Garansi Penuh',
+          guaranteeDesc: p.guaranteeDesc || 'Jaminan ganti akun 100%',
+          processTitle: p.processTitle || 'Proses Instan',
+          processDesc: p.processDesc || '1 - 15 menit selesai',
+          privacyTitle: p.privacyTitle || 'Akun Private',
+          privacyDesc: p.privacyDesc || 'Ruang kerja aman & personal',
         };
       });
 
@@ -181,6 +187,12 @@ export class PrismaCatalogRepository {
         lastProviderCheck: p.lastProviderCheck ? p.lastProviderCheck.toISOString() : undefined,
         profitMargin,
         profitPercentage,
+        guaranteeTitle: p.guaranteeTitle || 'Garansi Penuh',
+        guaranteeDesc: p.guaranteeDesc || 'Jaminan ganti akun 100%',
+        processTitle: p.processTitle || 'Proses Instan',
+        processDesc: p.processDesc || '1 - 15 menit selesai',
+        privacyTitle: p.privacyTitle || 'Akun Private',
+        privacyDesc: p.privacyDesc || 'Ruang kerja aman & personal',
       };
     } catch (err) {
       console.warn('[PrismaCatalogRepository] Database error on getProductById, using local fallback:', err);
@@ -274,6 +286,12 @@ export class PrismaCatalogRepository {
           lastProviderCheck: p.lastProviderCheck ? p.lastProviderCheck.toISOString() : undefined,
           profitMargin,
           profitPercentage,
+          guaranteeTitle: p.guaranteeTitle || 'Garansi Penuh',
+          guaranteeDesc: p.guaranteeDesc || 'Jaminan ganti akun 100%',
+          processTitle: p.processTitle || 'Proses Instan',
+          processDesc: p.processDesc || '1 - 15 menit selesai',
+          privacyTitle: p.privacyTitle || 'Akun Private',
+          privacyDesc: p.privacyDesc || 'Ruang kerja aman & personal',
         };
       });
 
@@ -333,6 +351,12 @@ export class PrismaCatalogRepository {
       }
       if (patch.description !== undefined) data.description = patch.description;
       if (patch.features !== undefined) data.features = patch.features;
+      if (patch.guaranteeTitle !== undefined) data.guaranteeTitle = patch.guaranteeTitle;
+      if (patch.guaranteeDesc !== undefined) data.guaranteeDesc = patch.guaranteeDesc;
+      if (patch.processTitle !== undefined) data.processTitle = patch.processTitle;
+      if (patch.processDesc !== undefined) data.processDesc = patch.processDesc;
+      if (patch.privacyTitle !== undefined) data.privacyTitle = patch.privacyTitle;
+      if (patch.privacyDesc !== undefined) data.privacyDesc = patch.privacyDesc;
       if (patch.status !== undefined) data.status = patch.status;
       if (patch.popular !== undefined) data.popular = patch.popular;
       if (patch.imageUrl !== undefined) data.imageUrl = patch.imageUrl;

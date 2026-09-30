@@ -33,6 +33,15 @@ model Product {
   lastProviderCheck  DateTime?    @map("last_provider_check")
   profitMargin       Int?         @map("profit_margin")
   profitPercentage   Int?         @map("profit_percentage")
+
+  // Fitur Highlight Produk (Bisa diubah admin)
+  guaranteeTitle     String?      @default("Garansi Penuh") @map("guarantee_title")
+  guaranteeDesc      String?      @default("Jaminan ganti akun 100%") @map("guarantee_desc")
+  processTitle       String?      @default("Proses Instan") @map("process_title")
+  processDesc        String?      @default("1 - 15 menit selesai") @map("process_desc")
+  privacyTitle       String?      @default("Akun Private") @map("privacy_title")
+  privacyDesc        String?      @default("Ruang kerja aman & personal") @map("privacy_desc")
+
   createdAt          DateTime     @default(now()) @map("created_at")
   updatedAt          DateTime     @updatedAt @map("updated_at")
 
@@ -95,6 +104,10 @@ model PaymentSetting {
   // WhatsApp Admin untuk Konfirmasi
   confirmationWhatsapp  String?  @default("081234567890") @map("confirmation_whatsapp")
   instructions          String?  @db.Text
+
+  // CS Kontak & Dukungan
+  csEmail               String?  @default("support@asterra.store") @map("cs_email")
+  csWhatsappNumbers     String[] @default(["081234567890"]) @map("cs_whatsapp_numbers")
 
   // Fitur Keamanan Anti-Fraud
   enableUniqueCode      Boolean  @default(true) @map("enable_unique_code")
@@ -216,4 +229,39 @@ model AdminUser {
   updatedAt    DateTime @updatedAt @map("updated_at")
 
   @@map("admin_users")
+}
+
+model PromoCode {
+  id              String       @id
+  code            String       @unique
+  description     String?
+  discountType    String       @default("percentage") @map("discount_type")
+  discountValue   Int          @map("discount_value")
+  maxDiscount     Int?         @map("max_discount")
+  minOrderAmount  Int          @default(0) @map("min_order_amount")
+  usageLimit      Int?         @map("usage_limit")
+  usedCount       Int          @default(0) @map("used_count")
+  perUserLimit    Int          @default(1) @map("per_user_limit")
+  startDate       DateTime?    @default(now()) @map("start_date")
+  expiresAt       DateTime?    @map("expires_at")
+  isActive        Boolean      @default(true) @map("is_active")
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @default(now()) @updatedAt @map("updated_at")
+
+  @@index([code])
+  @@index([isActive])
+  @@map("promo_codes")
+}
+
+model PromoUsage {
+  id              String       @id
+  promoCodeId     String       @map("promo_code_id")
+  orderId         String?      @map("order_id")
+  userEmail       String       @map("user_email")
+  discountApplied Int          @map("discount_applied")
+  createdAt       DateTime     @default(now()) @map("created_at")
+
+  @@index([userEmail])
+  @@index([promoCodeId, userEmail])
+  @@map("promo_usages")
 }

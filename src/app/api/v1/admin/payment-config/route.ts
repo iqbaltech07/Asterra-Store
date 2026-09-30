@@ -73,11 +73,33 @@ function validatePaymentConfigInput(data: unknown): {
     else sanitized.danaAccountName = val;
   }
 
-  // 5. WhatsApp Confirmation
+  // 5. WhatsApp Confirmation & Customer Support
   if (payload.confirmationWhatsapp !== undefined) {
     const val = String(payload.confirmationWhatsapp).trim();
     if (!/^[0-9+ ]{8,25}$/.test(val)) errors.push('Nomor WhatsApp konfirmasi harus berupa nomor telepon yang valid.');
     else sanitized.confirmationWhatsapp = val;
+  }
+
+  if (payload.csEmail !== undefined) {
+    const val = String(payload.csEmail).trim();
+    if (val && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) {
+      errors.push('Alamat Email Customer Service tidak valid.');
+    } else {
+      sanitized.csEmail = val || 'support@asterra.store';
+    }
+  }
+
+  if (payload.csWhatsappNumbers !== undefined) {
+    if (Array.isArray(payload.csWhatsappNumbers)) {
+      const cleaned = payload.csWhatsappNumbers
+        .map((num: unknown) => String(num || '').trim())
+        .filter((num: string) => /^[0-9+ ]{8,25}$/.test(num));
+      if (cleaned.length === 0) {
+        errors.push('Minimal harus ada 1 nomor WhatsApp CS yang valid.');
+      } else {
+        sanitized.csWhatsappNumbers = cleaned;
+      }
+    }
   }
 
   // 6. Anti-Fraud Settings

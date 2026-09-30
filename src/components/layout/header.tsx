@@ -115,69 +115,71 @@ export function Header({ onNotify }: HeaderProps) {
               )}
             </Button>
 
-            {/* Auth Actions: [T12a] User Badge with dropdown menu */}
+            {/* Auth Actions: [T12a] User Badge with dropdown menu (Desktop only, mobile moved to hamburger) */}
             {currentUser ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button
-                    type="button"
-                    className="flex items-center gap-1.5 p-1 sm:px-2.5 sm:py-1 rounded-full border border-border bg-surface-raised hover:border-primary/40 hover:bg-surface-hover transition-all text-xs font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
-                    aria-label="Menu Akun Pengguna"
-                  >
-                    {userImage ? (
-                      <img
-                        src={userImage}
-                        alt={currentUser.name || 'Profil'}
-                        className="w-7 h-7 rounded-full object-cover ring-1 ring-border"
-                        referrerPolicy="no-referrer"
-                      />
-                    ) : (
-                      <div className="w-7 h-7 rounded-full bg-primary/10 border border-primary/20 text-primary flex items-center justify-center font-bold text-xs">
-                        {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U'}
+              <div className="hidden md:block">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      className="flex items-center gap-1.5 p-1 sm:px-2.5 sm:py-1 rounded-full border border-border bg-surface-raised hover:border-primary/40 hover:bg-surface-hover transition-all text-xs font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
+                      aria-label="Menu Akun Pengguna"
+                    >
+                      {userImage ? (
+                        <img
+                          src={userImage}
+                          alt={currentUser.name || 'Profil'}
+                          className="w-7 h-7 rounded-full object-cover ring-1 ring-border"
+                          referrerPolicy="no-referrer"
+                        />
+                      ) : (
+                        <div className="w-7 h-7 rounded-full bg-primary/10 border border-primary/20 text-primary flex items-center justify-center font-bold text-xs">
+                          {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U'}
+                        </div>
+                      )}
+                      <span className="inline-block max-w-[85px] truncate text-foreground text-xs font-medium">
+                        {currentUser.name?.split(' ')[0] || 'Profil'}
+                      </span>
+                      <ChevronDown className="w-3.5 h-3.5 text-foreground-muted inline-block" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuLabel className="font-normal py-2.5 px-3">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-xs font-semibold leading-none text-foreground truncate">
+                          {currentUser.name || 'Pengguna Asterra'}
+                        </p>
+                        <p className="text-[11px] leading-none text-foreground-muted truncate">
+                          {currentUser.email || 'Akun Aktif'}
+                        </p>
                       </div>
-                    )}
-                    <span className="hidden md:inline-block max-w-[85px] truncate text-foreground text-xs font-medium">
-                      {currentUser.name?.split(' ')[0] || 'Profil'}
-                    </span>
-                    <ChevronDown className="w-3.5 h-3.5 text-foreground-muted hidden md:inline-block" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel className="font-normal py-2.5 px-3">
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-xs font-semibold leading-none text-foreground truncate">
-                        {currentUser.name || 'Pengguna Asterra'}
-                      </p>
-                      <p className="text-[11px] leading-none text-foreground-muted truncate">
-                        {currentUser.email || 'Akun Aktif'}
-                      </p>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href="/profile" className="flex items-center gap-2 cursor-pointer w-full">
-                      <User className="w-4 h-4 text-primary" />
-                      <span>Profil Saya</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/orders" className="flex items-center gap-2 cursor-pointer w-full">
-                      <Package className="w-4 h-4 text-primary" />
-                      <span>Pesanan Saya</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={handleLogout}
-                    className="flex items-center gap-2 text-status-error focus:text-status-error focus:bg-status-error/10 cursor-pointer"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    <span>Keluar Akun</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link href="/profile" className="flex items-center gap-2 cursor-pointer w-full">
+                        <User className="w-4 h-4 text-primary" />
+                        <span>Profil Saya</span>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/orders" className="flex items-center gap-2 cursor-pointer w-full">
+                        <Package className="w-4 h-4 text-primary" />
+                        <span>Pesanan Saya</span>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={handleLogout}
+                      className="flex items-center gap-2 text-status-error focus:text-status-error focus:bg-status-error/10 cursor-pointer"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span>Keluar Akun</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             ) : (
-              <div className="flex items-center gap-1.5">
+              <div className="hidden md:flex items-center gap-1.5">
                 <Link href="/login">
                   <Button size="sm" className="text-xs font-medium h-9 px-3">
                     Masuk
@@ -222,7 +224,7 @@ export function Header({ onNotify }: HeaderProps) {
                   )}
                   <div className="truncate">
                     <p className="font-semibold text-xs text-foreground group-hover:text-primary transition-colors truncate">
-                      {currentUser.name || 'Profil Pelanggan'}
+                      {currentUser.name || 'Profil Pengguna'}
                     </p>
                     <p className="text-[11px] text-foreground-muted truncate">
                       {currentUser.email || 'Lihat Akun & Pesanan'}
@@ -271,21 +273,19 @@ export function Header({ onNotify }: HeaderProps) {
               >
                 Pesanan Saya
               </Link>
-              {currentUser && (
-                <Link
-                  href="/profile"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="py-1 text-foreground-muted hover:text-foreground"
-                >
-                  Profil Pengguna
-                </Link>
-              )}
+              <Link
+                href={currentUser ? "/profile" : "/login"}
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="py-1 text-foreground-muted hover:text-foreground"
+              >
+                Profil Saya
+              </Link>
               <Link
                 href="/#keunggulan"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="py-1 text-foreground-muted hover:text-foreground"
               >
-                Keunggulan Layanan
+                Keunggulan
               </Link>
               <Link
                 href="/#panduan"

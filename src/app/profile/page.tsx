@@ -331,12 +331,12 @@ export default function ProfilePage() {
             {/* Top Bar / Breadcrumb & Actions */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2 border-b border-border/60">
               <div>
-                <div className="flex items-center gap-2 text-xs text-foreground-muted mb-1">
-                  <Link href="/" className="hover:text-foreground transition-colors">
+                <div className="flex items-center gap-2 text-xs text-foreground-muted mb-1 flex-wrap sm:flex-nowrap overflow-hidden">
+                  <Link href="/" className="hover:text-foreground transition-colors shrink-0">
                     Beranda
                   </Link>
-                  <span>/</span>
-                  <span className="text-foreground font-medium">Profil Pengguna</span>
+                  <span className="shrink-0">/</span>
+                  <span className="text-foreground font-medium truncate max-w-[160px] sm:max-w-none">Profil Saya</span>
                 </div>
                 <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
                   Profil Pelanggan
@@ -639,12 +639,12 @@ export default function ProfilePage() {
 
                 {/* Orders History & Subscriptions Card */}
                 <Card className="border-border bg-surface shadow-xs">
-                  <CardHeader className="flex flex-row items-center justify-between pb-3">
-                    <div>
-                      <CardTitle className="text-base font-semibold flex items-center gap-2">
+                  <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3">
+                    <div className="space-y-1">
+                      <CardTitle className="text-sm sm:text-base font-semibold flex flex-wrap items-center gap-2">
                         <span>Riwayat Transaksi & Lisensi</span>
                         {profile?.orders && profile.orders.length > 0 && (
-                          <Badge variant="outline" className="text-[10px] font-mono py-0 px-2 text-foreground-muted border-border">
+                          <Badge variant="outline" className="text-[10px] font-mono py-0.5 px-2 text-foreground-muted border-border shrink-0 whitespace-nowrap">
                             {profile.orders.length} Transaksi
                           </Badge>
                         )}
@@ -654,11 +654,11 @@ export default function ProfilePage() {
                       </CardDescription>
                     </div>
 
-                    <Link href="/products">
+                    <Link href="/products" className="self-start sm:self-auto shrink-0">
                       <Button
                         variant="outline"
                         size="sm"
-                        className="text-xs gap-1 border-border hover:border-primary/40"
+                        className="text-xs h-8 px-2.5 gap-1 border-border hover:border-primary/40 shrink-0"
                       >
                         <span>Belanja Lagi</span>
                         <ArrowRight className="w-3 h-3" />
@@ -731,7 +731,7 @@ export default function ProfilePage() {
                             </div>
 
                             {/* Footer with Total and CS Support */}
-                            <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-border/50 text-xs">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-border/50 text-xs">
                               <div className="flex items-center gap-1.5">
                                 <span className="text-foreground-muted">Total Pembayaran:</span>
                                 <span className="font-bold text-primary text-sm">
@@ -743,10 +743,10 @@ export default function ProfilePage() {
                                 href={`https://wa.me/6281234567890?text=Halo%20CS%20Asterra%20Store%2C%20saya%20ingin%20konfirmasi%20pesanan%20%23${order.id.toUpperCase()}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1 text-[11px] text-primary hover:underline font-medium"
+                                className="inline-flex items-center gap-1 text-[11px] text-primary hover:underline font-medium break-all sm:break-normal"
                               >
-                                <span>Bantuan Pesanan #{order.id.slice(0, 6)}</span>
-                                <ExternalLink className="w-3 h-3" />
+                                <span>Bantuan Pesanan #{order.id.slice(0, 8).toUpperCase()}</span>
+                                <ExternalLink className="w-3 h-3 shrink-0" />
                               </a>
                             </div>
                           </div>

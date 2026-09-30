@@ -232,7 +232,7 @@ export default function ProductsPage() {
               </Select>
 
               {/* View Toggle */}
-              <div className="hidden sm:flex items-center bg-surface-raised border border-border rounded-lg p-1">
+              <div className="flex items-center bg-surface-raised border border-border rounded-lg p-1 shrink-0">
                 <button
                   type="button"
                   onClick={() => setViewMode('grid')}
@@ -311,11 +311,11 @@ export default function ProductsPage() {
 
         {/* Loading Skeletons */}
         {isLoading && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <div
                 key={i}
-                className="bg-surface border border-border rounded-xl p-6 space-y-4 animate-pulse"
+                className="bg-surface border border-border rounded-xl p-3 sm:p-6 space-y-3 sm:space-y-4 animate-pulse"
               >
                 <div className="w-full h-40 bg-surface-raised rounded-lg" />
                 <div className="w-24 h-4 bg-surface-raised rounded" />
@@ -359,7 +359,7 @@ export default function ProductsPage() {
 
         {/* Products Listing Grid */}
         {!isLoading && !error && products.length > 0 && viewMode === 'grid' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
             {products.map((product, idx) => {
               const isOutOfStock =
                 (product.stock !== undefined && product.stock <= 0) ||
@@ -373,7 +373,7 @@ export default function ProductsPage() {
                 >
                   <div>
                     {/* Image & Badges */}
-                    <div className="relative h-44 w-full bg-surface-raised overflow-hidden border-b border-border">
+                    <div className="relative h-28 sm:h-44 w-full bg-surface-raised overflow-hidden border-b border-border">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={product.imageUrl}
@@ -383,33 +383,33 @@ export default function ProductsPage() {
                         decoding="async"
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
-                      <div className="absolute top-3 left-3 flex gap-1.5 flex-wrap">
-                        <Badge variant="secondary" className="text-[10px] bg-background/80 backdrop-blur-sm border-border">
+                      <div className="absolute top-2 left-2 sm:top-3 sm:left-3 flex gap-1 sm:gap-1.5 flex-wrap">
+                        <Badge variant="secondary" className="text-[9px] sm:text-[10px] bg-background/90 backdrop-blur-sm border-border py-0 px-1.5 sm:px-2">
                           {product.category.name}
                         </Badge>
                         {product.popular && (
-                          <Badge variant="default" className="text-[10px] bg-primary text-white">
-                            Paling Laris
+                          <Badge variant="default" className="text-[9px] sm:text-[10px] bg-primary text-white py-0 px-1.5 sm:px-2">
+                            Laris
                           </Badge>
                         )}
                         {isOutOfStock && (
-                          <Badge variant="destructive" className="text-[10px] bg-status-error text-white font-semibold shadow-xs">
-                            Stok Habis
+                          <Badge variant="destructive" className="text-[9px] sm:text-[10px] bg-status-error text-white font-semibold shadow-xs py-0 px-1.5 sm:px-2">
+                            Habis
                           </Badge>
                         )}
                       </div>
                     </div>
 
-                    <CardHeader className="pb-3 pt-5">
-                      <CardTitle className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">
+                    <CardHeader className="p-2.5 sm:p-5 pb-1 sm:pb-3 pt-2.5 sm:pt-5">
+                      <CardTitle className="text-xs sm:text-lg font-bold text-foreground group-hover:text-primary transition-colors line-clamp-2">
                         {product.name}
                       </CardTitle>
-                      <CardDescription className="text-xs text-foreground-muted line-clamp-2 mt-1">
+                      <CardDescription className="text-[10px] sm:text-xs text-foreground-muted line-clamp-1 sm:line-clamp-2 mt-1">
                         {product.description}
                       </CardDescription>
                     </CardHeader>
 
-                    <CardContent className="space-y-3 pb-4">
+                    <CardContent className="p-2.5 sm:p-5 pt-0 sm:pt-0 pb-2 sm:pb-4 hidden sm:block">
                       <div className="space-y-2">
                         <span className="text-[11px] font-semibold uppercase tracking-wider text-foreground-muted">
                           Fitur Unggulan:
@@ -426,22 +426,21 @@ export default function ProductsPage() {
                     </CardContent>
                   </div>
 
-                  <CardFooter className="pt-3 border-t border-border flex items-center justify-between gap-3 bg-surface-raised/40">
+                  <CardFooter className="p-2.5 sm:p-5 pt-2 sm:pt-3 border-t border-border flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-3 bg-surface-raised/40">
                     <div>
-                      <span className="text-[10px] text-foreground-muted block">Mulai dari</span>
-                      <span className="text-base font-bold text-foreground">
+                      <span className="text-[9px] sm:text-[10px] text-foreground-muted block">Mulai dari</span>
+                      <span className="text-xs sm:text-base font-bold text-foreground">
                         {product.priceFormatted}
                       </span>
-                      <span className="text-[10px] text-foreground-muted block">/ bulan</span>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5 sm:gap-2">
                       <Button
                         size="sm"
                         variant="outline"
                         disabled={isOutOfStock}
                         onClick={() => handleAddToCart(product)}
-                        className={`border-border text-xs px-2.5 ${
+                        className={`border-border h-7 sm:h-9 text-xs px-2 sm:px-2.5 ${
                           isOutOfStock
                             ? 'opacity-50 cursor-not-allowed border-status-error/30 text-status-error hover:bg-transparent'
                             : 'hover:border-primary/50'
@@ -454,10 +453,10 @@ export default function ProductsPage() {
                           <ShoppingCart className="w-3.5 h-3.5" />
                         )}
                       </Button>
-                      <Link href={`/products/${product.id}`}>
-                        <Button size="sm" className="text-xs gap-1.5">
+                      <Link href={`/products/${product.id}`} className="flex-1 sm:flex-initial">
+                        <Button size="sm" className="w-full sm:w-auto h-7 sm:h-9 text-[11px] sm:text-xs px-2 sm:px-3 gap-1">
                           <span>Detail</span>
-                          <ArrowRight className="w-3.5 h-3.5" />
+                          <ArrowRight className="w-3 h-3" />
                         </Button>
                       </Link>
                     </div>

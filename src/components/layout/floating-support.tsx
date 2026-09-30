@@ -7,21 +7,29 @@ import { Headphones, Mail, MessageCircle, X, ExternalLink } from 'lucide-react';
 export function FloatingSupport() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
-  const [whatsappNumber, setWhatsappNumber] = useState('6281234567890');
+  const [whatsappNumbers, setWhatsappNumbers] = useState<string[]>(['6281234567890']);
+  const [supportEmail, setSupportEmail] = useState('support@asterra.store');
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   // Do not show on admin pages
   const isAdmin = pathname?.startsWith('/admin');
 
-  // Load configured WhatsApp number from backend
+  // Load configured WhatsApp numbers and email from backend
   useEffect(() => {
     if (isAdmin) return;
 
     fetch('/api/v1/payment-config')
       .then((res) => res.json())
       .then((json) => {
-        if (json.success && json.data?.confirmation_whatsapp) {
-          setWhatsappNumber(json.data.confirmation_whatsapp);
+        if (json.success && json.data) {
+          if (Array.isArray(json.data.cs_whatsapp_numbers) && json.data.cs_whatsapp_numbers.length > 0) {
+            setWhatsappNumbers(json.data.cs_whatsapp_numbers);
+          } else if (json.data.confirmation_whatsapp) {
+            setWhatsappNumbers([json.data.confirmation_whatsapp]);
+          }
+          if (json.data.cs_email) {
+            setSupportEmail(json.data.cs_email);
+          }
         }
       })
       .catch(() => {
@@ -46,16 +54,18 @@ export function FloatingSupport() {
 
   if (isAdmin) return null;
 
-  const cleanWa = whatsappNumber.replace(/\D/g, '');
-  const formattedWa = cleanWa.startsWith('62')
-    ? `+62 ${cleanWa.slice(2, 5)}-${cleanWa.slice(5, 9)}-${cleanWa.slice(9)}`
-    : cleanWa.startsWith('0')
-    ? `0${cleanWa.slice(1, 4)}-${cleanWa.slice(4, 8)}-${cleanWa.slice(8)}`
-    : `+${cleanWa}`;
-
-  const supportEmail = 'support@asterrastore.com';
-  const waUrl = `https://wa.me/${cleanWa}?text=Halo%20Admin%20Asterra%20Store%2C%20saya%20butuh%20bantuan%20pesanan.`;
   const mailUrl = `mailto:${supportEmail}?subject=Bantuan%20Asterra%20Store`;
+
+  const formatPhoneNumber = (num: string) => {
+    const clean = num.replace(/\D/g, '');
+    if (clean.startsWith('62')) {
+      return `+62 ${clean.slice(2, 5)}-${clean.slice(5, 9)}-${clean.slice(9)}`;
+    }
+    if (clean.startsWith('0')) {
+      return `0${clean.slice(1, 4)}-${clean.slice(4, 8)}-${clean.slice(8)}`;
+    }
+    return `+${clean}`;
+  };
 
   return (
     <div
@@ -85,27 +95,36 @@ export function FloatingSupport() {
             </button>
           </div>
 
-          <div className="space-y-2">
-            {/* WhatsApp Contact Item */}
-            <a
-              href={waUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-between p-2.5 rounded-lg bg-surface-raised hover:bg-surface-hover border border-border hover:border-primary/40 transition-all group"
-            >
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-8 h-8 rounded-lg bg-status-success/15 text-status-success flex items-center justify-center shrink-0">
-                  <MessageCircle className="w-4 h-4" />
-                </div>
-                <div className="min-w-0">
-                  <span className="text-[11px] font-semibold text-foreground block">WhatsApp CS</span>
-                  <span className="text-xs font-mono text-foreground-muted group-hover:text-primary transition-colors block truncate">
-                    {formattedWa}
-                  </span>
-                </div>
-              </div>
-              <ExternalLink className="w-3.5 h-3.5 text-foreground-muted group-hover:text-foreground shrink-0 ml-2" />
-            </a>
+          <div className="space-y-2 max-h-64 overflow-y-auto pr-0.5">
+            {/* WhatsApp Contact Items */}
+            {whatsappNumbers.map((rawNum, idx) => {
+              const cleanWa = rawNum.replace(/\D/g, '');
+              const waUrl = `https://wa.me/${cleanWa}?text=Halo%20CS%20Asterra%20Store%2C%20saya%20butuh%20bantuan%20layanan.`;
+              const label = whatsappNumbers.length > 1 ? `WhatsApp CS ${idx + 1}` : 'WhatsApp CS';
+
+              return (
+                <a
+                  key={idx}
+                  href={waUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between p-2.5 rounded-lg bg-surface-raised hover:bg-surface-hover border border-border hover:border-primary/40 transition-all group"
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-8 h-8 rounded-lg bg-status-success/15 text-status-success flex items-center justify-center shrink-0">
+                      <MessageCircle className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-[11px] font-semibold text-foreground block">{label}</span>
+                      <span className="text-xs font-mono text-foreground-muted group-hover:text-primary transition-colors block truncate">
+                        {formatPhoneNumber(rawNum)}
+                      </span>
+                    </div>
+                  </div>
+                  <ExternalLink className="w-3.5 h-3.5 text-foreground-muted group-hover:text-foreground shrink-0 ml-2" />
+                </a>
+              );
+            })}
 
             {/* Email Contact Item */}
             <a
@@ -113,11 +132,11 @@ export function FloatingSupport() {
               className="flex items-center justify-between p-2.5 rounded-lg bg-surface-raised hover:bg-surface-hover border border-border hover:border-primary/40 transition-all group"
             >
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-8 h-8 rounded-lg bg-primary/15 text-primary flex items-center justify-center shrink-0">
+                <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
                   <Mail className="w-4 h-4" />
                 </div>
                 <div className="min-w-0">
-                  <span className="text-[11px] font-semibold text-foreground block">Email Support</span>
+                  <span className="text-[11px] font-semibold text-foreground block">Email Dukungan</span>
                   <span className="text-xs font-mono text-foreground-muted group-hover:text-primary transition-colors block truncate">
                     {supportEmail}
                   </span>

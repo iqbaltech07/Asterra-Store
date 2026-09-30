@@ -15,6 +15,10 @@ import {
   Clock,
   Sparkles,
   Info,
+  Plus,
+  Trash2,
+  Mail,
+  MessageCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -44,6 +48,8 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
   const [danaNumber, setDanaNumber] = useState('081234567890');
   const [danaAccountName, setDanaAccountName] = useState('Asterra Store');
   const [confirmationWhatsapp, setConfirmationWhatsapp] = useState('6281234567890');
+  const [csEmail, setCsEmail] = useState('support@asterra.store');
+  const [csWhatsappNumbers, setCsWhatsappNumbers] = useState<string[]>(['6281234567890']);
   const [enableUniqueCode, setEnableUniqueCode] = useState(true);
   const [orderExpiryHours, setOrderExpiryHours] = useState(24);
   const [instructions, setInstructions] = useState(
@@ -69,6 +75,12 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
         setDanaNumber(d.danaNumber || '081234567890');
         setDanaAccountName(d.danaAccountName || 'Asterra Store');
         setConfirmationWhatsapp(d.confirmationWhatsapp || '6281234567890');
+        setCsEmail(d.csEmail || 'support@asterra.store');
+        setCsWhatsappNumbers(
+          Array.isArray(d.csWhatsappNumbers) && d.csWhatsappNumbers.length > 0
+            ? d.csWhatsappNumbers
+            : [d.confirmationWhatsapp || '6281234567890']
+        );
         setEnableUniqueCode(typeof d.enableUniqueCode === 'boolean' ? d.enableUniqueCode : true);
         setOrderExpiryHours(d.orderExpiryHours || 24);
         setInstructions(d.instructions || '');
@@ -106,6 +118,8 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
         danaNumber,
         danaAccountName,
         confirmationWhatsapp,
+        csEmail,
+        csWhatsappNumbers,
         enableUniqueCode,
         orderExpiryHours,
         instructions,
@@ -470,6 +484,94 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
                   />
                   <span className="text-[10px] text-foreground-muted mt-1 block">
                     Gunakan awalan 62. Tombol di checkout akan membuka chat WA ke nomor ini.
+                  </span>
+                </div>
+              </div>
+
+              {/* [T22] Kontak Customer Service & WhatsApp CS Tambahan */}
+              <div className="pt-4 border-t border-border space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                      <MessageCircle className="w-3.5 h-3.5 text-primary" />
+                      <span>Kontak Layanan Pelanggan (Customer Service)</span>
+                    </h4>
+                    <p className="text-[11px] text-foreground-muted">
+                      Atur Email CS dan daftar nomor WhatsApp CS. Jika terdapat 2 atau lebih nomor WA, di sisi pengguna akan tampil sebagai WhatsApp CS 1, WhatsApp CS 2, dst.
+                    </p>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-medium text-foreground-muted block mb-1">
+                    Email Customer Service
+                  </label>
+                  <div className="relative">
+                    <Mail className="w-3.5 h-3.5 text-foreground-muted absolute left-3 top-1/2 -translate-y-1/2" />
+                    <Input
+                      type="email"
+                      value={csEmail}
+                      onChange={(e) => setCsEmail(e.target.value)}
+                      placeholder="support@asterra.store"
+                      className="pl-9 text-xs bg-surface-raised border-border font-mono"
+                    />
+                  </div>
+                  <span className="text-[10px] text-foreground-muted mt-1 block">
+                    Email resmi untuk layanan komplain, garansi, dan invoice digital.
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[11px] font-medium text-foreground-muted block">
+                      Daftar Nomor WhatsApp CS (Dapat Ditambah)
+                    </label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCsWhatsappNumbers([...csWhatsappNumbers, '628'])}
+                      className="text-[10px] h-7 px-2.5 gap-1 border-border hover:border-primary/40"
+                    >
+                      <Plus className="w-3 h-3 text-primary" />
+                      <span>Tambah Nomor WA CS</span>
+                    </Button>
+                  </div>
+
+                  {csWhatsappNumbers.map((num, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <span className="text-xs font-semibold text-foreground w-28 shrink-0 font-mono">
+                        {csWhatsappNumbers.length > 1 ? `WhatsApp CS ${idx + 1}` : 'WhatsApp CS'}
+                      </span>
+                      <Input
+                        value={num}
+                        onChange={(e) => {
+                          const updated = [...csWhatsappNumbers];
+                          updated[idx] = e.target.value;
+                          setCsWhatsappNumbers(updated);
+                        }}
+                        placeholder="Contoh: 6281234567890"
+                        className="text-xs bg-surface-raised border-border font-mono flex-1"
+                      />
+                      {csWhatsappNumbers.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            const updated = csWhatsappNumbers.filter((_, i) => i !== idx);
+                            setCsWhatsappNumbers(updated);
+                          }}
+                          className="h-8 w-8 p-0 text-status-error hover:bg-status-error/10 shrink-0"
+                          title="Hapus nomor ini"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                  <span className="text-[10px] text-foreground-muted block">
+                    Format nomor: 628... atau 08... User akan dapat memilih menghubungi CS 1, CS 2, dst.
                   </span>
                 </div>
               </div>

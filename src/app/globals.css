@@ -36,6 +36,11 @@
   --primary: #c66543;
   --foreground: #171a18;
   --foreground-muted: #707874;
+  --popover: #fcfbf8;
+  --popover-foreground: #171a18;
+  --input: #d9ddd8;
+  --card: #fcfbf8;
+  --card-foreground: #171a18;
 }
 
 body {

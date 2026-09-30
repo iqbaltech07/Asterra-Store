@@ -145,6 +145,12 @@ export default function AdminPage() {
   const [formFeatures, setFormFeatures] = useState('');
   const [formImageUrl, setFormImageUrl] = useState('');
   const [formPopular, setFormPopular] = useState(false);
+  const [formGuaranteeTitle, setFormGuaranteeTitle] = useState('Garansi Penuh');
+  const [formGuaranteeDesc, setFormGuaranteeDesc] = useState('Jaminan ganti akun 100%');
+  const [formProcessTitle, setFormProcessTitle] = useState('Proses Instan');
+  const [formProcessDesc, setFormProcessDesc] = useState('1 - 15 menit selesai');
+  const [formPrivacyTitle, setFormPrivacyTitle] = useState('Akun Private');
+  const [formPrivacyDesc, setFormPrivacyDesc] = useState('Ruang kerja aman & personal');
 
   // Delete product states
   const [deletingProductId, setDeletingProductId] = useState<string | null>(null);
@@ -294,6 +300,12 @@ export default function AdminPage() {
           .filter(Boolean),
         imageUrl: formImageUrl || undefined,
         popular: formPopular,
+        guaranteeTitle: formGuaranteeTitle,
+        guaranteeDesc: formGuaranteeDesc,
+        processTitle: formProcessTitle,
+        processDesc: formProcessDesc,
+        privacyTitle: formPrivacyTitle,
+        privacyDesc: formPrivacyDesc,
       };
 
       if (editingProduct) {
@@ -410,6 +422,12 @@ export default function AdminPage() {
     setFormFeatures(p.features.join('\n'));
     setFormImageUrl(p.imageUrl);
     setFormPopular(Boolean(p.popular));
+    setFormGuaranteeTitle(p.guaranteeTitle || 'Garansi Penuh');
+    setFormGuaranteeDesc(p.guaranteeDesc || 'Jaminan ganti akun 100%');
+    setFormProcessTitle(p.processTitle || 'Proses Instan');
+    setFormProcessDesc(p.processDesc || '1 - 15 menit selesai');
+    setFormPrivacyTitle(p.privacyTitle || 'Akun Private');
+    setFormPrivacyDesc(p.privacyDesc || 'Ruang kerja aman & personal');
   };
 
   // Open Create Modal
@@ -425,6 +443,12 @@ export default function AdminPage() {
     setFormFeatures('Akses resmi bergaransi\nProses aktivasi cepat 1-5 menit');
     setFormImageUrl('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80');
     setFormPopular(false);
+    setFormGuaranteeTitle('Garansi Penuh');
+    setFormGuaranteeDesc('Jaminan ganti akun 100%');
+    setFormProcessTitle('Proses Instan');
+    setFormProcessDesc('1 - 15 menit selesai');
+    setFormPrivacyTitle('Akun Private');
+    setFormPrivacyDesc('Ruang kerja aman & personal');
     setIsCreateModalOpen(true);
   };
 
@@ -462,6 +486,12 @@ export default function AdminPage() {
     setFormStatus('archived'); // Default to archived so admin reviews before publishing
     setFormDescription(service.note && service.note !== '-' ? `${service.name}. ${service.note}` : service.name);
     setFormImageUrl('');
+    setFormGuaranteeTitle('Garansi Penuh');
+    setFormGuaranteeDesc('Jaminan ganti akun 100%');
+    setFormProcessTitle('Proses Instan');
+    setFormProcessDesc('1 - 15 menit selesai');
+    setFormPrivacyTitle('Akun Private');
+    setFormPrivacyDesc('Ruang kerja aman & personal');
   };
 
   const metrics = productsData?.metrics;
@@ -1717,6 +1747,105 @@ export default function AdminPage() {
                       <span className="text-[10px] text-foreground-muted">Sembunyikan dari toko</span>
                     </div>
                   </button>
+                </div>
+              </div>
+
+              {/* Highlight Guarantees / Keunggulan (3 Kartu Atas) */}
+              <div className="p-3 bg-surface-raised/60 border border-border rounded-xl space-y-3">
+                <div>
+                  <h4 className="font-semibold text-xs text-foreground flex items-center gap-1.5">
+                    <ShieldCheck className="w-4 h-4 text-primary" />
+                    <span>3 Badge Keunggulan Layanan (Muncul di Halaman Detail)</span>
+                  </h4>
+                  <p className="text-[11px] text-foreground-muted">
+                    Sesuaikan judul dan keterangan 3 kartu garansi / fitur utama di atas deskripsi produk.
+                  </p>
+                </div>
+
+                <div className="space-y-2.5">
+                  {/* Chip 1 */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-surface p-2.5 rounded-lg border border-border/80">
+                    <div>
+                      <label className="text-[10px] font-semibold text-foreground block mb-0.5">
+                        Badge 1 - Judul (Garansi)
+                      </label>
+                      <Input
+                        type="text"
+                        value={formGuaranteeTitle}
+                        onChange={(e) => setFormGuaranteeTitle(e.target.value)}
+                        placeholder="Garansi Penuh"
+                        className="h-8 text-xs bg-surface-raised"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-semibold text-foreground block mb-0.5">
+                        Badge 1 - Keterangan
+                      </label>
+                      <Input
+                        type="text"
+                        value={formGuaranteeDesc}
+                        onChange={(e) => setFormGuaranteeDesc(e.target.value)}
+                        placeholder="Jaminan ganti akun 100%"
+                        className="h-8 text-xs bg-surface-raised"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Chip 2 */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-surface p-2.5 rounded-lg border border-border/80">
+                    <div>
+                      <label className="text-[10px] font-semibold text-foreground block mb-0.5">
+                        Badge 2 - Judul (Proses)
+                      </label>
+                      <Input
+                        type="text"
+                        value={formProcessTitle}
+                        onChange={(e) => setFormProcessTitle(e.target.value)}
+                        placeholder="Proses Instan"
+                        className="h-8 text-xs bg-surface-raised"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-semibold text-foreground block mb-0.5">
+                        Badge 2 - Keterangan
+                      </label>
+                      <Input
+                        type="text"
+                        value={formProcessDesc}
+                        onChange={(e) => setFormProcessDesc(e.target.value)}
+                        placeholder="1 - 15 menit selesai"
+                        className="h-8 text-xs bg-surface-raised"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Chip 3 */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-surface p-2.5 rounded-lg border border-border/80">
+                    <div>
+                      <label className="text-[10px] font-semibold text-foreground block mb-0.5">
+                        Badge 3 - Judul (Tipe Akun)
+                      </label>
+                      <Input
+                        type="text"
+                        value={formPrivacyTitle}
+                        onChange={(e) => setFormPrivacyTitle(e.target.value)}
+                        placeholder="Akun Private"
+                        className="h-8 text-xs bg-surface-raised"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-semibold text-foreground block mb-0.5">
+                        Badge 3 - Keterangan
+                      </label>
+                      <Input
+                        type="text"
+                        value={formPrivacyDesc}
+                        onChange={(e) => setFormPrivacyDesc(e.target.value)}
+                        placeholder="Ruang kerja aman & personal"
+                        className="h-8 text-xs bg-surface-raised"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
 

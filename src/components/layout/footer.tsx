@@ -1,6 +1,5 @@
-'use client';
-
-import { ShieldCheck, Lock } from 'lucide-react';
+import Link from 'next/link';
+import { ShieldCheck, Lock, Headphones, ExternalLink } from 'lucide-react';
 
 interface FooterProps {
   onNotify?: (message: string) => void;
@@ -17,14 +16,14 @@ export function Footer({ onNotify }: FooterProps) {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10 pb-12 border-b border-border/70">
           {/* Brand Col */}
           <div className="space-y-4 md:col-span-1">
-            <div className="flex items-center gap-2.5">
+            <Link href="/" className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center text-white font-bold text-sm shadow-sm">
                 A
               </div>
               <span className="font-semibold text-lg text-foreground tracking-tight">
                 Asterra Store
               </span>
-            </div>
+            </Link>
             <p className="text-xs text-foreground-muted leading-relaxed">
               Platform penyedia produk dan layanan digital premium terpercaya di Indonesia dengan
               konfirmasi pembayaran instan dan garansi resmi.
@@ -48,29 +47,29 @@ export function Footer({ onNotify }: FooterProps) {
             </h4>
             <ul className="space-y-2 text-xs text-foreground-muted">
               <li>
-                <a href="#katalog" className="hover:text-foreground transition-colors">
+                <Link href="/products?search=Canva" className="hover:text-foreground transition-colors">
                   Canva Pro (Desain Grafis)
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#katalog" className="hover:text-foreground transition-colors">
+                <Link href="/products?search=ChatGPT" className="hover:text-foreground transition-colors">
                   ChatGPT Plus (AI Tools)
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#katalog" className="hover:text-foreground transition-colors">
+                <Link href="/products?search=Gemini" className="hover:text-foreground transition-colors">
                   Gemini Pro (Google AI)
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#katalog" className="hover:text-foreground transition-colors">
+                <Link href="/products?search=Capcut" className="hover:text-foreground transition-colors">
                   Capcut Pro (Video Editing)
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#katalog" className="hover:text-foreground transition-colors">
-                  Alight Motion Pro (Motion Design)
-                </a>
+                <Link href="/products" className="hover:text-foreground transition-colors font-medium text-primary">
+                  Lihat Seluruh Katalog Produk →
+                </Link>
               </li>
             </ul>
           </div>
@@ -82,40 +81,36 @@ export function Footer({ onNotify }: FooterProps) {
             </h4>
             <ul className="space-y-2 text-xs text-foreground-muted">
               <li>
-                <button
-                  type="button"
-                  onClick={() => handleAction('Layanan Bantuan Pelanggan 24 Jam via WhatsApp')}
-                  className="hover:text-foreground transition-colors"
+                <a
+                  href="https://wa.me/6281234567890?text=Halo%20Customer%20Service%20Asterra%20Store%2C%20saya%20memerlukan%20bantuan%20layanan."
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-foreground transition-colors inline-flex items-center gap-1.5"
                 >
-                  Hubungi Customer Service
-                </button>
+                  <Headphones className="w-3.5 h-3.5 text-primary" />
+                  <span>Hubungi Customer Service (WA)</span>
+                  <ExternalLink className="w-3 h-3 text-foreground-muted" />
+                </a>
               </li>
               <li>
-                <button
-                  type="button"
-                  onClick={() => handleAction('Panduan Cara Aktivasi & Klaim Garansi Akun')}
-                  className="hover:text-foreground transition-colors"
-                >
-                  Panduan Aktivasi & Garansi
-                </button>
+                <Link href="/#panduan" className="hover:text-foreground transition-colors">
+                  Cara Pemesanan & Aktivasi
+                </Link>
               </li>
               <li>
-                <button
-                  type="button"
-                  onClick={() => handleAction('Cek Status & Pelacakan Pesanan Anda')}
-                  className="hover:text-foreground transition-colors"
-                >
+                <Link href="/orders" className="hover:text-foreground transition-colors">
                   Pelacakan Status Pesanan
-                </button>
+                </Link>
               </li>
               <li>
-                <button
-                  type="button"
-                  onClick={() => handleAction('FAQ: Pertanyaan yang Sering Diajukan')}
-                  className="hover:text-foreground transition-colors"
-                >
-                  FAQ & Kendala Pembayaran
-                </button>
+                <Link href="/#keunggulan" className="hover:text-foreground transition-colors">
+                  Keunggulan Layanan & Garansi
+                </Link>
+              </li>
+              <li>
+                <Link href="/profile" className="hover:text-foreground transition-colors">
+                  Profil Pelanggan Saya
+                </Link>
               </li>
             </ul>
           </div>

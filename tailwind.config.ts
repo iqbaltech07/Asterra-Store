@@ -41,6 +41,15 @@ const config: Config = {
           dark: '#A94F32',
           soft: '#F1DFD7',
         },
+        popover: {
+          DEFAULT: '#FCFBF8',
+          foreground: '#171A18',
+        },
+        input: '#D9DDD8',
+        card: {
+          DEFAULT: '#FCFBF8',
+          foreground: '#171A18',
+        },
         status: {
           success: '#2F6B4F',
           warning: '#A56A21',

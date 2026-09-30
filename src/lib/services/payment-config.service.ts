@@ -11,6 +11,8 @@ export interface PaymentConfig {
   danaNumber: string;
   danaAccountName: string;
   confirmationWhatsapp: string;
+  csEmail: string;
+  csWhatsappNumbers: string[];
   instructions: string;
   enableUniqueCode: boolean;
   orderExpiryHours: number;
@@ -33,6 +35,8 @@ export interface PublicPaymentConfig {
     account_name: string;
   };
   confirmation_whatsapp: string;
+  cs_email: string;
+  cs_whatsapp_numbers: string[];
   instructions: string;
   enable_unique_code: boolean;
   order_expiry_hours: number;
@@ -50,6 +54,8 @@ let memoryConfig: PaymentConfig = {
   danaNumber: '081234567890',
   danaAccountName: 'Asterra Store',
   confirmationWhatsapp: '6281234567890',
+  csEmail: 'support@asterra.store',
+  csWhatsappNumbers: ['6281234567890'],
   instructions: 'Transfer sesuai nominal tepat hingga 3 digit kode unik terakhir untuk verifikasi instan mutasi.',
   enableUniqueCode: true,
   orderExpiryHours: 24,
@@ -81,6 +87,10 @@ export class PaymentConfigService {
             danaNumber: record.danaNumber || memoryConfig.danaNumber,
             danaAccountName: record.danaAccountName || memoryConfig.danaAccountName,
             confirmationWhatsapp: record.confirmationWhatsapp || memoryConfig.confirmationWhatsapp,
+            csEmail: record.csEmail || memoryConfig.csEmail,
+            csWhatsappNumbers: (Array.isArray(record.csWhatsappNumbers) && record.csWhatsappNumbers.length > 0)
+              ? record.csWhatsappNumbers
+              : memoryConfig.csWhatsappNumbers,
             instructions: record.instructions || memoryConfig.instructions,
             enableUniqueCode: typeof record.enableUniqueCode === 'boolean' ? record.enableUniqueCode : true,
             orderExpiryHours: record.orderExpiryHours || 24,
@@ -103,6 +113,8 @@ export class PaymentConfigService {
               danaNumber: memoryConfig.danaNumber,
               danaAccountName: memoryConfig.danaAccountName,
               confirmationWhatsapp: memoryConfig.confirmationWhatsapp,
+              csEmail: memoryConfig.csEmail,
+              csWhatsappNumbers: memoryConfig.csWhatsappNumbers,
               instructions: memoryConfig.instructions,
               enableUniqueCode: memoryConfig.enableUniqueCode,
               orderExpiryHours: memoryConfig.orderExpiryHours,
@@ -137,6 +149,15 @@ export class PaymentConfigService {
       cleanWa = '62' + cleanWa;
     }
 
+    const cleanNumbers = (config.csWhatsappNumbers && config.csWhatsappNumbers.length > 0)
+      ? config.csWhatsappNumbers.map((num) => {
+          let c = num.replace(/\D/g, '');
+          if (c.startsWith('0')) c = '62' + c.substring(1);
+          else if (!c.startsWith('62')) c = '62' + c;
+          return c;
+        })
+      : [cleanWa];
+
     return {
       mode: config.mode,
       bank: {
@@ -153,6 +174,8 @@ export class PaymentConfigService {
         account_name: config.danaAccountName,
       },
       confirmation_whatsapp: cleanWa,
+      cs_email: config.csEmail || 'support@asterra.store',
+      cs_whatsapp_numbers: cleanNumbers,
       instructions: config.instructions,
       enable_unique_code: config.enableUniqueCode,
       order_expiry_hours: config.orderExpiryHours,
@@ -186,6 +209,8 @@ export class PaymentConfigService {
             danaNumber: memoryConfig.danaNumber,
             danaAccountName: memoryConfig.danaAccountName,
             confirmationWhatsapp: memoryConfig.confirmationWhatsapp,
+            csEmail: memoryConfig.csEmail,
+            csWhatsappNumbers: memoryConfig.csWhatsappNumbers,
             instructions: memoryConfig.instructions,
             enableUniqueCode: memoryConfig.enableUniqueCode,
             orderExpiryHours: memoryConfig.orderExpiryHours,
@@ -200,6 +225,8 @@ export class PaymentConfigService {
             danaNumber: memoryConfig.danaNumber,
             danaAccountName: memoryConfig.danaAccountName,
             confirmationWhatsapp: memoryConfig.confirmationWhatsapp,
+            csEmail: memoryConfig.csEmail,
+            csWhatsappNumbers: memoryConfig.csWhatsappNumbers,
             instructions: memoryConfig.instructions,
             enableUniqueCode: memoryConfig.enableUniqueCode,
             orderExpiryHours: memoryConfig.orderExpiryHours,

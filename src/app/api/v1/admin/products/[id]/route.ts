@@ -107,6 +107,12 @@ export async function PATCH(
     if (body.imageUrl !== undefined) updates.imageUrl = String(body.imageUrl);
     if (body.features !== undefined) updates.features = body.features;
     if (body.popular !== undefined) updates.popular = Boolean(body.popular);
+    if (body.guaranteeTitle !== undefined) updates.guaranteeTitle = String(body.guaranteeTitle).trim();
+    if (body.guaranteeDesc !== undefined) updates.guaranteeDesc = String(body.guaranteeDesc).trim();
+    if (body.processTitle !== undefined) updates.processTitle = String(body.processTitle).trim();
+    if (body.processDesc !== undefined) updates.processDesc = String(body.processDesc).trim();
+    if (body.privacyTitle !== undefined) updates.privacyTitle = String(body.privacyTitle).trim();
+    if (body.privacyDesc !== undefined) updates.privacyDesc = String(body.privacyDesc).trim();
 
     const updated = await PrismaCatalogRepository.updateProduct(id, updates);
 

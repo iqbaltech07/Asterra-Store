@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaCatalogRepository } from '@/lib/services/prisma-catalog.repository';
 import { parseProductDurations } from '@/lib/services/product-duration';
+import { findRelevantProducts } from '@/lib/services/product-relevance';
 
 export async function GET(
   _request: NextRequest,
@@ -21,16 +22,14 @@ export async function GET(
     );
   }
 
-  // Active products for related recommendations
-  const { products: activeProducts } = await PrismaCatalogRepository.getActiveProducts({ limit: 8 });
+  // Active products for related recommendations (fetch up to 100 for maximum relevance accuracy)
+  const { products: activeProducts } = await PrismaCatalogRepository.getActiveProducts({ limit: 100 });
 
   // Extract accurate duration and warranty from product metadata
   const { durations, primaryDurationLabel, warranty } = parseProductDurations(product);
 
-  // Prioritize related products in the same category
-  const relatedProducts = activeProducts
-    .filter((p) => p.id !== product.id && p.category?.id === product.category?.id)
-    .slice(0, 3);
+  // Smart relevance algorithm: brand match, ecosystem, duration, token overlap [T23]
+  const relatedProducts = findRelevantProducts(product, activeProducts, 3);
 
   // Extended product detail schema matching PRD specs
   const responseData = {
@@ -65,7 +64,7 @@ export async function GET(
           'Ya, seluruh produk dilindungi garansi 100% penggantian jika mengalami kendala teknis atau akses sebelum masa aktif berakhir.',
       },
     ],
-    relatedProducts: relatedProducts.length > 0 ? relatedProducts : activeProducts.filter((p) => p.id !== product.id).slice(0, 3),
+    relatedProducts,
   };
 
   return NextResponse.json({

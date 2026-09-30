@@ -14,6 +14,13 @@ export interface ProductItem {
   providerStatus?: 'available' | 'empty' | string;
   imageUrl: string;
   popular?: boolean;
+  brand?: string;
+  guaranteeTitle?: string;
+  guaranteeDesc?: string;
+  processTitle?: string;
+  processDesc?: string;
+  privacyTitle?: string;
+  privacyDesc?: string;
 }
 
 export const PRODUCTS_CATALOG: ProductItem[] = [];

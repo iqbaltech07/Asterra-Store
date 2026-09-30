@@ -142,6 +142,12 @@ export async function POST(req: NextRequest) {
         providerPrice,
         profitMargin,
         profitPercentage,
+        guaranteeTitle: body.guaranteeTitle !== undefined ? body.guaranteeTitle : null,
+        guaranteeDesc: body.guaranteeDesc !== undefined ? body.guaranteeDesc : null,
+        processTitle: body.processTitle !== undefined ? body.processTitle : null,
+        processDesc: body.processDesc !== undefined ? body.processDesc : null,
+        privacyTitle: body.privacyTitle !== undefined ? body.privacyTitle : null,
+        privacyDesc: body.privacyDesc !== undefined ? body.privacyDesc : null,
       },
     });
 

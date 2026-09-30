@@ -56,15 +56,62 @@ export default function CheckoutPage() {
   const { data: session } = useSession();
   const { user: legacyUser } = useAuthStore();
 
-  // Payment configuration from server
-  const [paymentConfig, setPaymentConfig] = useState<PublicPaymentConfig | null>(null);
+  // Default fallback ensuring zero-delay rendering for users
+  const DEFAULT_PUBLIC_CONFIG: PublicPaymentConfig = {
+    mode: 'manual',
+    bank: {
+      name: 'Bank Central Asia (BCA)',
+      account_number: '8965123456',
+      account_name: 'Asterra Store Official',
+    },
+    qris: {
+      image_url: '/images/qris-toko.png',
+      merchant_name: 'ASTERRA STORE QRIS',
+    },
+    dana: {
+      number: '081234567890',
+      account_name: 'Asterra Store',
+    },
+    confirmation_whatsapp: '6281234567890',
+    instructions: 'Transfer sesuai nominal tepat hingga 3 digit kode unik terakhir untuk verifikasi instan mutasi.',
+    enable_unique_code: true,
+    order_expiry_hours: 24,
+    cs_email: 'cs@asterra.store',
+    cs_whatsapp_numbers: ['6281234567890'],
+  };
+
+  // Payment configuration from server (cached in localStorage to prevent gateway-to-manual visual delay)
+  const [paymentConfig, setPaymentConfig] = useState<PublicPaymentConfig>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('asterra_payment_config');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed && parsed.mode) return parsed;
+        }
+      } catch {}
+    }
+    return DEFAULT_PUBLIC_CONFIG;
+  });
 
   // Form states
   const [customerName, setCustomerName] = useState('');
   const [targetEmail, setTargetEmail] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [customerNotes, setCustomerNotes] = useState('');
-  const [selectedMethod, setSelectedMethod] = useState('qris');
+  const [selectedMethod, setSelectedMethod] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem('asterra_payment_config');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed.mode === 'gateway') return 'qris';
+          return 'manual_bca';
+        }
+      } catch {}
+    }
+    return 'manual_bca';
+  });
 
   // Auto-fill from active Better Auth session or legacy auth store
   useEffect(() => {
@@ -134,9 +181,12 @@ export default function CheckoutPage() {
         const json = await PaymentConfigApi.getPublicConfig();
         if (json.success && json.data) {
           setPaymentConfig(json.data);
-          if (json.data.mode === 'manual') {
+          try {
+            localStorage.setItem('asterra_payment_config', JSON.stringify(json.data));
+          } catch {}
+          if (json.data.mode === 'manual' && !selectedMethod.startsWith('manual_')) {
             setSelectedMethod('manual_bca');
-          } else {
+          } else if (json.data.mode === 'gateway' && selectedMethod.startsWith('manual_')) {
             setSelectedMethod('qris');
           }
         }
@@ -351,16 +401,16 @@ export default function CheckoutPage() {
         ) : (
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10 w-full">
             {/* Breadcrumb */}
-            <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-foreground-muted mb-6 sm:mb-8">
-              <Link href="/" className="hover:text-foreground transition-colors">
+            <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-foreground-muted mb-6 sm:mb-8 flex-wrap sm:flex-nowrap overflow-hidden">
+              <Link href="/" className="hover:text-foreground transition-colors shrink-0">
                 Beranda
               </Link>
-              <span>/</span>
-              <Link href="/products" className="hover:text-foreground transition-colors">
+              <span className="shrink-0">/</span>
+              <Link href="/products" className="hover:text-foreground transition-colors shrink-0">
                 Katalog
               </Link>
-              <span>/</span>
-              <span className="text-foreground font-medium">Checkout Instan</span>
+              <span className="shrink-0">/</span>
+              <span className="text-foreground font-medium truncate max-w-[160px] sm:max-w-none">Checkout Instan</span>
             </nav>
 
             {/* Checkout Main Content */}
