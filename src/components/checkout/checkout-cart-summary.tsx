@@ -40,6 +40,8 @@ interface CheckoutCartSummaryProps {
     type: 'success' | 'error';
     text: string;
   } | null;
+  onValidateBeforeCheckout?: () => boolean;
+  onConfirmOrder?: () => void;
 }
 
 export function CheckoutCartSummary({
@@ -58,7 +60,26 @@ export function CheckoutCartSummary({
   onRemovePromo,
   isCheckingPromo,
   promoFeedback,
+  onValidateBeforeCheckout,
+  onConfirmOrder,
 }: CheckoutCartSummaryProps) {
+  const [isConfirmOpen, setIsConfirmOpen] = React.useState(false);
+
+  const handleTriggerClick = () => {
+    if (hasOutOfStockItems) return;
+    if (onValidateBeforeCheckout) {
+      const isValid = onValidateBeforeCheckout();
+      if (!isValid) return;
+    }
+    setIsConfirmOpen(true);
+  };
+
+  const handleConfirmPayment = () => {
+    setIsConfirmOpen(false);
+    if (onConfirmOrder) {
+      onConfirmOrder();
+    }
+  };
   return (
     <div className="bg-surface border border-border rounded-xl p-6 shadow-xl space-y-6">
       <div className="flex items-center justify-between pb-3 border-b border-border">
@@ -158,11 +179,12 @@ export function CheckoutCartSummary({
           <span>Stok Habis (Hapus Item)</span>
         </Button>
       ) : (
-        <AlertDialog>
+        <AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
           <Button
             type="button"
             disabled={isSubmitting}
-            className="w-full gap-2 text-sm font-bold h-12 shadow-lg shadow-primary/20 bg-primary text-white hover:bg-primary/90 transition-all"
+            onClick={handleTriggerClick}
+            className="w-full gap-2 text-sm font-bold h-12 shadow-lg shadow-primary/20 bg-primary text-white hover:bg-primary/90 transition-all cursor-pointer"
           >
             {isSubmitting ? (
               <span>Memproses Pesanan...</span>
@@ -221,19 +243,19 @@ export function CheckoutCartSummary({
 
                 <AlertDialog.Footer className="flex items-center justify-end gap-2.5 pt-3 border-t border-border">
                   <Button
-                    slot="close"
                     type="button"
                     variant="outline"
                     size="sm"
+                    onClick={() => setIsConfirmOpen(false)}
                     className="text-xs border-border h-9 px-4"
                   >
                     Batal
                   </Button>
                   <Button
-                    slot="close"
-                    type="submit"
+                    type="button"
                     disabled={isSubmitting}
-                    className="text-xs font-bold h-9 px-4 gap-2 bg-primary text-white hover:bg-primary/90 shadow-md"
+                    onClick={handleConfirmPayment}
+                    className="text-xs font-bold h-9 px-4 gap-2 bg-primary text-white hover:bg-primary/90 shadow-md cursor-pointer"
                   >
                     <CreditCard className="w-3.5 h-3.5" />
                     <span>{isSubmitting ? 'Memproses...' : 'Konfirmasi & Bayar'}</span>

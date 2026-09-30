@@ -211,15 +211,25 @@ export class AdminAuthService {
   /**
    * Cookie configuration for setting the admin session cookie
    */
-  public static getCookieOptions() {
-    const isHttps =
-      process.env.NEXT_PUBLIC_APP_URL?.startsWith('https://') &&
-      !process.env.NEXT_PUBLIC_APP_URL?.includes('localhost');
-    const isProduction = process.env.NODE_ENV === 'production' && isHttps;
+  public static getCookieOptions(req?: NextRequest | Request) {
+    let isSecure = false;
+    if (req) {
+      const proto = req.headers.get('x-forwarded-proto');
+      const host = req.headers.get('host') || '';
+      const isLocal = host.includes('localhost') || host.includes('127.0.0.1');
+      isSecure = !isLocal && (proto === 'https' || (req as NextRequest).nextUrl?.protocol === 'https:');
+    } else {
+      const isLocal = process.env.NEXT_PUBLIC_APP_URL?.includes('localhost');
+      isSecure =
+        process.env.NODE_ENV === 'production' &&
+        !isLocal &&
+        (process.env.NEXT_PUBLIC_APP_URL?.startsWith('https://') ?? false);
+    }
+
     return {
       name: ADMIN_COOKIE_NAME,
       httpOnly: true,
-      secure: isProduction,
+      secure: isSecure,
       sameSite: 'lax' as const,
       path: '/',
       maxAge: ADMIN_SESSION_DURATION_SEC,

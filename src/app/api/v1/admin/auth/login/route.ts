@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
       name: admin.name || undefined,
       role: admin.role,
     });
-    const cookieOptions = AdminAuthService.getCookieOptions();
+    const cookieOptions = AdminAuthService.getCookieOptions(req);
 
     const response = NextResponse.json({
       success: true,

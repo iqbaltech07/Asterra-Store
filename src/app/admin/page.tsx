@@ -82,7 +82,12 @@ export default function AdminPage() {
   useEffect(() => {
     async function verifyAuth() {
       try {
-        const res = await fetch('/api/v1/admin/auth/me');
+        const token = typeof window !== 'undefined' ? localStorage.getItem('asterra_admin_token') : null;
+        const headers: Record<string, string> = {};
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+        const res = await fetch('/api/v1/admin/auth/me', { headers });
         if (!res.ok) {
           router.replace('/admin/login');
           return;
@@ -104,6 +109,9 @@ export default function AdminPage() {
 
   const handleLogout = async () => {
     try {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('asterra_admin_token');
+      }
       await fetch('/api/v1/admin/auth/logout', { method: 'POST' });
     } catch {
       // ignore

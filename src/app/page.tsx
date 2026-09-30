@@ -250,16 +250,18 @@ export default function HomePage() {
                 >
                   {product.imageUrl ? (
                     <div className="relative h-28 sm:h-44 w-full bg-surface-raised overflow-hidden border-b border-border">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={product.imageUrl}
-                        alt={product.name}
-                        loading={idx < 3 ? 'eager' : 'lazy'}
-                        fetchPriority={idx < 3 ? 'high' : 'auto'}
-                        decoding="async"
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                      <div className="absolute top-2 left-2 sm:top-3 sm:left-3 flex gap-1 sm:gap-1.5 flex-wrap">
+                      <Link href={`/products/${product.id}`} prefetch={true} className="block w-full h-full">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={product.imageUrl}
+                          alt={product.name}
+                          loading={idx < 3 ? 'eager' : 'lazy'}
+                          fetchPriority={idx < 3 ? 'high' : 'auto'}
+                          decoding="async"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      </Link>
+                      <div className="absolute top-2 left-2 sm:top-3 sm:left-3 flex gap-1 sm:gap-1.5 flex-wrap pointer-events-none">
                         <Badge variant="secondary" className="text-[9px] sm:text-[10px] bg-background/85 backdrop-blur-sm border-border py-0 px-1.5 sm:px-2">
                           {product.category.name}
                         </Badge>
@@ -281,6 +283,7 @@ export default function HomePage() {
                     <CardTitle className="text-xs sm:text-xl line-clamp-2">
                       <Link
                         href={`/products/${product.id}`}
+                        prefetch={true}
                         className="hover:text-primary transition-colors"
                       >
                         {product.name}
@@ -341,7 +344,7 @@ export default function HomePage() {
                         </>
                       )}
                     </Button>
-                    <Link href={`/products/${product.id}`} className="w-full sm:w-auto">
+                    <Link href={`/products/${product.id}`} prefetch={true} className="w-full sm:w-auto">
                       <Button variant="outline" size="sm" className="w-full sm:w-auto h-7 sm:h-9 px-2 sm:px-3 text-[11px] sm:text-xs" title="Detail Produk">
                         <span className="sm:hidden">Lihat Detail</span>
                         <ArrowRight className="w-3.5 h-3.5" />

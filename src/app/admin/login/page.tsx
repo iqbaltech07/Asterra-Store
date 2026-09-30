@@ -85,12 +85,16 @@ export default function AdminLoginPage() {
         );
       }
 
+      if (data.token && typeof window !== 'undefined') {
+        localStorage.setItem('asterra_admin_token', data.token);
+      }
+
       setSuccessMessage('Otorisasi admin berhasil. Mengalihkan ke panel kontrol...');
 
       // Redirect immediately to /admin
       setTimeout(() => {
         window.location.href = '/admin';
-      }, 500);
+      }, 300);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Terjadi kesalahan autentikasi.';
       setErrorMessage(message);

@@ -50,7 +50,7 @@ async function verifyAdminToken(token: string | undefined | null): Promise<boole
     const jsonStr = atob(payloadBase64.replace(/-/g, '+').replace(/_/g, '/'));
     const payload = JSON.parse(jsonStr);
 
-    if (payload.role !== 'admin') return false;
+    if (payload.role !== 'admin' && payload.role !== 'superadmin') return false;
     if (typeof payload.expiresAt === 'number' && Date.now() > payload.expiresAt) return false;
 
     return true;

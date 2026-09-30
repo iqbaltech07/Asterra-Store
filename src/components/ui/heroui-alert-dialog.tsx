@@ -18,8 +18,27 @@ function useAlertDialog() {
   return ctx;
 }
 
-export function AlertDialogRoot({ children }: { children: React.ReactNode }) {
-  const [isOpen, setIsOpen] = useState(false);
+export function AlertDialogRoot({
+  children,
+  open,
+  onOpenChange,
+}: {
+  children: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = open !== undefined;
+  const isOpen = isControlled ? open : internalOpen;
+
+  const setIsOpen = (val: boolean) => {
+    if (!isControlled) {
+      setInternalOpen(val);
+    }
+    if (onOpenChange) {
+      onOpenChange(val);
+    }
+  };
 
   return (
     <AlertDialogContext.Provider value={{ isOpen, setIsOpen }}>
@@ -32,7 +51,9 @@ export function AlertDialogRoot({ children }: { children: React.ReactNode }) {
         return React.cloneElement(child as React.ReactElement<{ onClick?: (e: React.MouseEvent) => void }>, {
           onClick: (e: React.MouseEvent) => {
             if (originalOnClick) originalOnClick(e);
-            setIsOpen(true);
+            if (!isControlled) {
+              setIsOpen(true);
+            }
           },
         });
       })}

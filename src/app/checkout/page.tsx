@@ -286,26 +286,42 @@ export default function CheckoutPage() {
     (item) => item.isOutOfStock || (item.stock !== undefined && item.stock <= 0)
   );
 
-  const handleSubmitOrder = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const handleValidateBeforeCheckout = (): boolean => {
     if (hasOutOfStockItems) {
       showNotification('Terdapat produk dengan stok habis di pesanan Anda. Hapus item tersebut sebelum melanjutkan.');
-      return;
+      return false;
     }
 
     if (!customerName.trim()) {
       showNotification('Mohon lengkapi nama lengkap pemesan.');
-      return;
+      return false;
     }
 
     if (!targetEmail.trim()) {
       showNotification('Mohon lengkapi email tujuan aktivasi akun.');
-      return;
+      return false;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(targetEmail.trim())) {
+      showNotification('Format email aktivasi tidak valid.');
+      return false;
     }
 
     if (items.length === 0) {
       showNotification('Keranjang pesanan masih kosong.');
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleSubmitOrder = async (e?: React.FormEvent) => {
+    if (e) {
+      e.preventDefault();
+    }
+
+    if (!handleValidateBeforeCheckout()) {
       return;
     }
 
@@ -476,6 +492,8 @@ export default function CheckoutPage() {
                     onRemovePromo={handleRemovePromo}
                     isCheckingPromo={isCheckingPromo}
                     promoFeedback={promoFeedback}
+                    onValidateBeforeCheckout={handleValidateBeforeCheckout}
+                    onConfirmOrder={() => handleSubmitOrder()}
                   />
                 </div>
               </div>
