@@ -611,7 +611,7 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
 
         {/* Right Column: Live Simulator / Preview (5 Cols) */}
         <div className="lg:col-span-5 space-y-4">
-          <div className="bg-surface border border-border rounded-xl p-5 sticky top-24 space-y-4">
+          <div className="bg-surface border border-border rounded-xl p-5 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-border">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-primary" />

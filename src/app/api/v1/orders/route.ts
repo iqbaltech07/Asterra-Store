@@ -12,24 +12,74 @@ import { PromoService } from '@/lib/services/promo.service';
 import { mapDbOrderToOrder, RawDbOrder } from '@/lib/utils/order-mapper';
 import { OrderAdminService } from '@/lib/services/order-admin.service';
 
-// GET /api/v1/orders
+// GET /api/v1/orders - User-isolated order history
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const status = searchParams.get('status');
   const page = parseInt(searchParams.get('page') || '1', 10);
   const limit = parseInt(searchParams.get('limit') || '10', 10);
+  const emailParam = searchParams.get('email')?.trim();
+  const orderIdParam = searchParams.get('order_id')?.trim();
 
   // Auto-cancel any expired pending orders before returning lists
   await OrderAdminService.autoCancelExpiredOrders().catch((e) =>
     console.warn('[OrdersAPI] Auto-cancel runner error:', e)
   );
 
-  let orders = getGlobalOrders();
-
-  // Synchronize orders from PostgreSQL via Prisma
+  // Check if user is authenticated via Better Auth session
+  let sessionUserEmail: string | null = null;
   try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+    if (session?.user?.email) {
+      sessionUserEmail = session.user.email.toLowerCase().trim();
+    }
+  } catch (sessionErr) {
+    console.warn('[OrdersAPI] Session check skipped in GET:', sessionErr);
+  }
+
+  // Determine effective target email (Session takes precedence for security)
+  const targetEmail = sessionUserEmail || (emailParam ? emailParam.toLowerCase().trim() : null);
+
+  // If unauthenticated and neither email nor order_id is provided, do NOT leak global orders
+  if (!targetEmail && !orderIdParam) {
+    return NextResponse.json({
+      success: true,
+      data: [],
+      pagination: {
+        total_items: 0,
+        current_page: page,
+        total_pages: 1,
+        items_per_page: limit,
+      },
+    });
+  }
+
+  // Synchronize orders from PostgreSQL via Prisma matching the user
+  const dbOrdersList: Order[] = [];
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const whereClause: any = {};
+    if (targetEmail) {
+      whereClause.customerEmail = {
+        equals: targetEmail,
+        mode: 'insensitive',
+      };
+    } else if (orderIdParam) {
+      whereClause.id = {
+        equals: orderIdParam,
+        mode: 'insensitive',
+      };
+    }
+
+    if (status && status !== 'all') {
+      whereClause.status = status;
+    }
+
     const dbOrders = await prisma.order.findMany({
-      take: 50,
+      where: whereClause,
+      take: 100,
       include: {
         items: true,
         logs: {
@@ -40,26 +90,41 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: 'desc' },
     });
 
-    const existingIds = new Set(orders.map((o) => o.id));
     for (const d of dbOrders) {
-      if (!existingIds.has(d.id)) {
-        orders.push(mapDbOrderToOrder(d as unknown as RawDbOrder));
-      }
+      dbOrdersList.push(mapDbOrderToOrder(d as unknown as RawDbOrder));
     }
   } catch (err) {
-    console.warn('[OrdersAPI] Prisma sync warning on GET:', err);
+    console.warn('[OrdersAPI] Prisma query warning on GET:', err);
+  }
+
+  // Filter in-memory orders strictly for this user
+  let userOrders = getGlobalOrders().filter((o) => {
+    if (targetEmail) {
+      return (o.customer_email || '').toLowerCase() === targetEmail;
+    }
+    if (orderIdParam) {
+      return o.id.toLowerCase() === orderIdParam.toLowerCase();
+    }
+    return false;
+  });
+
+  const existingIds = new Set(userOrders.map((o) => o.id));
+  for (const d of dbOrdersList) {
+    if (!existingIds.has(d.id)) {
+      userOrders.push(d);
+    }
   }
 
   // Sort strictly by order_date descending (newest first)
-  orders.sort((a, b) => new Date(b.order_date).getTime() - new Date(a.order_date).getTime());
+  userOrders.sort((a, b) => new Date(b.order_date).getTime() - new Date(a.order_date).getTime());
 
   if (status && status !== 'all') {
-    orders = orders.filter((o) => o.order_status === status);
+    userOrders = userOrders.filter((o) => o.order_status === status);
   }
 
-  const total = orders.length;
+  const total = userOrders.length;
   const startIndex = (page - 1) * limit;
-  const paginatedOrders = orders.slice(startIndex, startIndex + limit);
+  const paginatedOrders = userOrders.slice(startIndex, startIndex + limit);
 
   return NextResponse.json({
     success: true,
@@ -339,11 +404,11 @@ export async function POST(request: NextRequest) {
           logs: {
             create: [
               {
-                actor: 'system',
+                actor: 'customer',
                 action: appliedPromoCode ? 'promo_applied' : 'order_created',
                 notes: appliedPromoCode
-                  ? `Voucher "${appliedPromoCode}" diterapkan (Potongan: Rp ${discountAmount.toLocaleString('id-ID')})`
-                  : 'Pesanan baru dibuat oleh pelanggan.',
+                  ? `Pesanan baru dibuat oleh pelanggan (${customerName}) dengan voucher "${appliedPromoCode}" (Diskon: Rp ${discountAmount.toLocaleString('id-ID')})`
+                  : `Pesanan baru dibuat oleh pelanggan (${customerName}).`,
                 metadata: appliedPromoCode
                   ? { promo_code: appliedPromoCode, discount_amount: discountAmount }
                   : {},

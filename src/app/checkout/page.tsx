@@ -351,6 +351,14 @@ export default function CheckoutPage() {
       const orderData = await OrdersApi.create(orderPayload);
       const createdOrder = orderData.order;
 
+      // Save customer email to localStorage for persistent individual order tracking
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('asterra_customer_email', targetEmail.trim());
+          localStorage.setItem('asterra_last_order_id', createdOrder.id);
+        } catch {}
+      }
+
       // Clear shopping cart
       clearCart();
 

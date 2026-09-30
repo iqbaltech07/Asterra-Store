@@ -26,7 +26,10 @@ import {
   ChevronUp,
   X,
   CreditCard,
+  Mail,
+  LogIn,
 } from 'lucide-react';
+import { useSession } from '@/lib/auth-client';
 import {
   CheckoutManualModal,
   ManualPaymentModalData,
@@ -168,10 +171,24 @@ function getTimelineStep(order: Order): number {
 }
 
 export default function OrdersPage() {
+  const { data: session } = useSession();
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
   const [notification, setNotification] = useState<string | null>(null);
+
+  // Individual Order Scoping: Session Email or Guest Email from localStorage
+  const [guestEmail, setGuestEmail] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('asterra_customer_email') || '';
+    }
+    return '';
+  });
+  const [emailInput, setEmailInput] = useState('');
+  const [isChangingEmail, setIsChangingEmail] = useState(false);
+
+  // Effective email to filter orders
+  const activeEmail = session?.user?.email || guestEmail;
 
   // Manual payment modal states
   const [paymentConfig, setPaymentConfig] = useState<PublicPaymentConfig | null>(null);
@@ -191,14 +208,16 @@ export default function OrdersPage() {
   }, []);
 
   const { data, isLoading, error, refetch } = useQuery<{ success: boolean; data: Order[] }>({
-    queryKey: ['orders', selectedStatus],
+    queryKey: ['orders', selectedStatus, activeEmail],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (selectedStatus !== 'all') params.append('status', selectedStatus);
+      if (activeEmail) params.append('email', activeEmail);
       const res = await fetch(`/api/v1/orders?${params.toString()}`);
       if (!res.ok) throw new Error('Gagal mengambil riwayat pesanan');
       return res.json();
     },
+    enabled: Boolean(activeEmail),
   });
 
   // SSE Real-Time Listener for User (Silent background sync)
@@ -406,6 +425,96 @@ export default function OrdersPage() {
           </div>
         </div>
 
+        {/* Email Entry & Lookup Card when unauthenticated or changing email */}
+        {(!activeEmail || isChangingEmail) && (
+          <div className="bg-surface border border-primary/30 rounded-xl p-6 sm:p-8 max-w-xl mx-auto text-center space-y-4 mb-8 shadow-sm">
+            <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto">
+              <Mail className="w-6 h-6" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-foreground">Lacak Riwayat Pesanan Anda</h2>
+              <p className="text-xs text-foreground-muted mt-1 max-w-md mx-auto">
+                Setiap pesanan di Asterra Store bersifat privat dan terisolasi untuk masing-masing pelanggan. Masukkan email yang Anda gunakan saat pemesanan untuk melihat pesanan Anda.
+              </p>
+            </div>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const trimmed = emailInput.trim();
+                if (trimmed) {
+                  setGuestEmail(trimmed);
+                  if (typeof window !== 'undefined') {
+                    localStorage.setItem('asterra_customer_email', trimmed);
+                  }
+                  setIsChangingEmail(false);
+                  showNotification(`Memuat riwayat pesanan untuk ${trimmed}`);
+                }
+              }}
+              className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto"
+            >
+              <input
+                type="email"
+                required
+                placeholder="nama@email.com"
+                value={emailInput}
+                onChange={(e) => setEmailInput(e.target.value)}
+                className="flex-1 px-3 py-2 text-xs rounded-lg bg-surface-raised border border-border text-foreground placeholder:text-foreground-muted focus:outline-none focus:border-primary"
+              />
+              <Button type="submit" size="sm" className="text-xs shrink-0">
+                Lihat Pesanan
+              </Button>
+            </form>
+            <div className="pt-2 text-xs text-foreground-muted border-t border-border flex items-center justify-center gap-3">
+              <span>Sudah memiliki akun?</span>
+              <Link href="/profile" className="text-primary font-medium hover:underline inline-flex items-center gap-1">
+                <LogIn className="w-3 h-3" />
+                <span>Masuk Akun</span>
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {/* Active Account / Tracking Banner */}
+        {activeEmail && !isChangingEmail && (
+          <div className="bg-surface border border-border rounded-xl px-4 py-3 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-2.5">
+              <div className="w-2.5 h-2.5 rounded-full bg-status-success animate-pulse shrink-0" />
+              <div className="text-foreground">
+                <span className="text-foreground-muted">Menampilkan riwayat pesanan untuk:{' '}</span>
+                <strong className="font-semibold text-primary">{activeEmail}</strong>
+                {session?.user?.email && (
+                  <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
+                    Akun Terverifikasi
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center gap-3 shrink-0 self-end sm:self-auto">
+              {!session?.user?.email && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmailInput(guestEmail);
+                    setIsChangingEmail(true);
+                  }}
+                  className="text-primary hover:underline text-[11px] font-medium"
+                >
+                  Ganti Email Pelacakan
+                </button>
+              )}
+              {!session?.user && (
+                <Link
+                  href="/profile"
+                  className="text-foreground-muted hover:text-foreground text-[11px] inline-flex items-center gap-1"
+                >
+                  <LogIn className="w-3 h-3" />
+                  <span>Masuk Akun</span>
+                </Link>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Filters and Search Bar */}
         <div className="bg-surface border border-border rounded-xl p-4 sm:p-5 mb-8 space-y-4">
           <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
@@ -484,7 +593,9 @@ export default function OrdersPage() {
               <p className="text-xs text-foreground-muted">
                 {selectedStatus !== 'all' || searchQuery
                   ? 'Tidak ada transaksi yang cocok dengan filter atau kata kunci saat ini.'
-                  : 'Anda belum memiliki transaksi pesanan lisensi digital.'}
+                  : activeEmail
+                  ? `Tidak ada transaksi pesanan yang ditemukan untuk email ${activeEmail}.`
+                  : 'Silakan masukkan email pesanan Anda di atas untuk melihat riwayat transaksi.'}
               </p>
             </div>
             {selectedStatus !== 'all' || searchQuery ? (

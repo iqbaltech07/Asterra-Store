@@ -387,7 +387,7 @@ export class OrderAdminService {
           prismaClient.orderLog.count({ where: whereClause }),
         ]);
 
-        if (dbLogs && dbLogs.length > 0) {
+        if (dbLogs) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const mappedLogs: OrderLog[] = dbLogs.map((l: any) => ({
             id: l.id,
