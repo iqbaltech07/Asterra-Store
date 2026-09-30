@@ -62,7 +62,7 @@ export function CheckoutVoucherSection({
             <Tag className="w-3.5 h-3.5 text-foreground-muted absolute left-3 top-1/2 -translate-y-1/2" />
             <Input
               type="text"
-              placeholder="Kode Promo (ASTERRA10)"
+              placeholder="Kode Promo"
               value={promoCode}
               onChange={(e) => onPromoCodeChange(e.target.value)}
               onKeyDown={(e) => {

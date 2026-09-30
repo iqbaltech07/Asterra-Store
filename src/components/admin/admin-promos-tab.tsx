@@ -575,7 +575,7 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
                   <Input
                     type="text"
                     required
-                    placeholder="contoh: DISKON50 / ASTERRA10"
+                    placeholder="contoh: DISKON50 / GAJIAN"
                     value={formCode}
                     onChange={(e) => setFormCode(e.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g, ''))}
                     className="font-mono uppercase font-bold text-sm bg-surface-raised border-border tracking-wider"

@@ -41,62 +41,7 @@ export interface PromoValidationResult {
   error?: string;
 }
 
-// In-memory fallback default promos for resilience
-const DEFAULT_PROMOS: PromoCode[] = [
-  {
-    id: 'promo-asterra10',
-    code: 'ASTERRA10',
-    description: 'Diskon 10% untuk seluruh lisensi digital Asterra Store',
-    discountType: 'percentage',
-    discountValue: 10,
-    maxDiscount: 50000,
-    minOrderAmount: 0,
-    usageLimit: 1000,
-    usedCount: 0,
-    perUserLimit: 5,
-    startDate: new Date('2026-01-01').toISOString(),
-    expiresAt: new Date('2027-12-31').toISOString(),
-    isActive: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'promo-promohemat',
-    code: 'PROMOHEMAT',
-    description: 'Potongan langsung Rp 15.000 untuk minimal belanja Rp 25.000',
-    discountType: 'fixed',
-    discountValue: 15000,
-    maxDiscount: null,
-    minOrderAmount: 25000,
-    usageLimit: 500,
-    usedCount: 0,
-    perUserLimit: 2,
-    startDate: new Date('2026-01-01').toISOString(),
-    expiresAt: new Date('2027-12-31').toISOString(),
-    isActive: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'promo-launching',
-    code: 'LAUNCHING20',
-    description: 'Voucher Spesial Pelanggan Baru Diskon 20% (Maks. Rp 25.000)',
-    discountType: 'percentage',
-    discountValue: 20,
-    maxDiscount: 25000,
-    minOrderAmount: 14000,
-    usageLimit: 200,
-    usedCount: 0,
-    perUserLimit: 1,
-    startDate: new Date('2026-01-01').toISOString(),
-    expiresAt: new Date('2027-12-31').toISOString(),
-    isActive: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-];
-
-let inMemoryPromos: PromoCode[] = [...DEFAULT_PROMOS];
+let inMemoryPromos: PromoCode[] = [];
 const inMemoryUsages: PromoUsage[] = [];
 let dbInitialized = false;
 
@@ -142,38 +87,6 @@ export class PromoService {
       await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS idx_promo_codes_active ON promo_codes(is_active)`);
       await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS idx_promo_usages_email ON promo_usages(user_email)`);
       await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS idx_promo_usages_code_email ON promo_usages(promo_code_id, user_email)`);
-
-      // Check if table is empty, if so, seed default promos
-      const countResult: Array<{ count: string | number }> = await prisma.$queryRawUnsafe(
-        `SELECT COUNT(*) as count FROM promo_codes;`
-      );
-      const totalInDb = Number(countResult[0]?.count || 0);
-
-      if (totalInDb === 0) {
-        for (const p of DEFAULT_PROMOS) {
-          await prisma.$executeRawUnsafe(
-            `INSERT INTO promo_codes 
-            (id, code, description, discount_type, discount_value, max_discount, min_order_amount, usage_limit, used_count, per_user_limit, start_date, expires_at, is_active, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
-            ON CONFLICT (code) DO NOTHING;`,
-            p.id,
-            p.code,
-            p.description,
-            p.discountType,
-            p.discountValue,
-            p.maxDiscount,
-            p.minOrderAmount,
-            p.usageLimit,
-            p.usedCount,
-            p.perUserLimit,
-            new Date(p.startDate),
-            p.expiresAt ? new Date(p.expiresAt) : null,
-            p.isActive,
-            new Date(p.createdAt),
-            new Date(p.updatedAt)
-          );
-        }
-      }
 
       dbInitialized = true;
       return true;
