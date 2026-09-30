@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 import { ShieldCheck, Lock, Headphones, ExternalLink } from 'lucide-react';
 
