@@ -41,6 +41,17 @@
   --input: #d9ddd8;
   --card: #fcfbf8;
   --card-foreground: #171a18;
+
+  /* HeroUI / Accent Tokens */
+  --accent: #0485f7;
+  --accent-hover: #0473d4;
+  --accent-foreground: #ffffff;
+}
+
+.dark {
+  --accent: #0485f7;
+  --accent-hover: #3197ff;
+  --accent-foreground: #ffffff;
 }
 
 body {

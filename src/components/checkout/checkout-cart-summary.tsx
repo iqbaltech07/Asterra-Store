@@ -3,7 +3,8 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CreditCard, ShieldCheck } from 'lucide-react';
+import { AlertDialog } from '@/components/ui/heroui-alert-dialog';
+import { CreditCard, ShieldCheck, AlertCircle } from 'lucide-react';
 import { CheckoutVoucherSection } from './checkout-voucher-section';
 
 export interface CartItemSummary {
@@ -147,31 +148,102 @@ export function CheckoutCartSummary({
         </div>
       </div>
 
-      {/* Submit Button */}
-      <Button
-        type="submit"
-        disabled={isSubmitting || hasOutOfStockItems}
-        className={`w-full gap-2 text-sm font-bold h-12 shadow-lg shadow-primary/20 ${
-          hasOutOfStockItems
-            ? 'opacity-60 cursor-not-allowed bg-muted text-muted-foreground shadow-none'
-            : ''
-        }`}
-      >
-        {isSubmitting ? (
-          <span>Memproses Pesanan...</span>
-        ) : hasOutOfStockItems ? (
+      {/* Submit Button with HeroUI AlertDialog Confirmation */}
+      {hasOutOfStockItems ? (
+        <Button
+          type="button"
+          disabled
+          className="w-full gap-2 text-sm font-bold h-12 opacity-60 cursor-not-allowed bg-muted text-muted-foreground shadow-none"
+        >
           <span>Stok Habis (Hapus Item)</span>
-        ) : (
-          <>
-            <CreditCard className="w-4 h-4" />
-            <span>
-              {isManualMode
-                ? 'Lanjut ke Transfer Manual'
-                : `Bayar Sekarang (Rp ${finalTotal.toLocaleString('id-ID')})`}
-            </span>
-          </>
-        )}
-      </Button>
+        </Button>
+      ) : (
+        <AlertDialog>
+          <Button
+            type="button"
+            disabled={isSubmitting}
+            className="w-full gap-2 text-sm font-bold h-12 shadow-lg shadow-primary/20 bg-primary text-white hover:bg-primary/90 transition-all"
+          >
+            {isSubmitting ? (
+              <span>Memproses Pesanan...</span>
+            ) : (
+              <>
+                <CreditCard className="w-4 h-4" />
+                <span>{`Bayar Sekarang (Rp ${finalTotal.toLocaleString('id-ID')})`}</span>
+              </>
+            )}
+          </Button>
+
+          <AlertDialog.Backdrop className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm animate-in fade-in">
+            <AlertDialog.Container className="fixed inset-0 z-50 flex items-center justify-center p-4">
+              <AlertDialog.Dialog className="w-full max-w-[420px] bg-surface border border-border rounded-2xl shadow-2xl p-6 space-y-4 animate-in zoom-in-95">
+                <AlertDialog.CloseTrigger className="absolute top-4 right-4 text-foreground-muted hover:text-foreground p-1 rounded-lg" />
+                <AlertDialog.Header className="space-y-2">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0">
+                      <CreditCard className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <AlertDialog.Heading className="text-base font-bold text-foreground">
+                        Konfirmasi Pembayaran
+                      </AlertDialog.Heading>
+                      <p className="text-xs text-foreground-muted">
+                        Periksa kembali ringkasan pesanan sebelum melanjutkan.
+                      </p>
+                    </div>
+                  </div>
+                </AlertDialog.Header>
+
+                <AlertDialog.Body className="text-xs space-y-3 pt-1">
+                  <div className="p-3.5 bg-surface-raised rounded-xl border border-border/80 space-y-2">
+                    <div className="flex justify-between items-center text-foreground-muted">
+                      <span>Jumlah Produk:</span>
+                      <span className="font-semibold text-foreground">{totalItems} Layanan Digital</span>
+                    </div>
+                    <div className="flex justify-between items-center text-foreground-muted">
+                      <span>Metode Pembayaran:</span>
+                      <span className="font-semibold text-foreground">
+                        {isManualMode ? 'Transfer Bank / E-Wallet Manual' : 'Payment Gateway Instan'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center text-foreground-muted pt-2 border-t border-border/60">
+                      <span className="font-medium text-foreground">Total Tagihan:</span>
+                      <span className="font-mono font-extrabold text-base text-primary">
+                        Rp {finalTotal.toLocaleString('id-ID')}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-status-warning/10 border border-status-warning/20 flex items-start gap-2 text-[11px] text-foreground-muted">
+                    <AlertCircle className="w-4 h-4 text-status-warning shrink-0 mt-0.5" />
+                    <span>Pastikan email penerima lisensi dan nomor WhatsApp Anda telah terisi dengan benar.</span>
+                  </div>
+                </AlertDialog.Body>
+
+                <AlertDialog.Footer className="flex items-center justify-end gap-2.5 pt-3 border-t border-border">
+                  <Button
+                    slot="close"
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="text-xs border-border h-9 px-4"
+                  >
+                    Batal
+                  </Button>
+                  <Button
+                    slot="close"
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="text-xs font-bold h-9 px-4 gap-2 bg-primary text-white hover:bg-primary/90 shadow-md"
+                  >
+                    <CreditCard className="w-3.5 h-3.5" />
+                    <span>{isSubmitting ? 'Memproses...' : 'Konfirmasi & Bayar'}</span>
+                  </Button>
+                </AlertDialog.Footer>
+              </AlertDialog.Dialog>
+            </AlertDialog.Container>
+          </AlertDialog.Backdrop>
+        </AlertDialog>
+      )}
 
       <div className="flex items-center justify-center gap-2 text-[11px] text-foreground-muted text-center">
         <ShieldCheck className="w-3.5 h-3.5 text-primary" />

@@ -184,11 +184,15 @@ export default function CheckoutPage() {
           try {
             localStorage.setItem('asterra_payment_config', JSON.stringify(json.data));
           } catch {}
-          if (json.data.mode === 'manual' && !selectedMethod.startsWith('manual_')) {
-            setSelectedMethod('manual_bca');
-          } else if (json.data.mode === 'gateway' && selectedMethod.startsWith('manual_')) {
-            setSelectedMethod('qris');
-          }
+          setSelectedMethod((prev) => {
+            if (json.data.mode === 'manual' && !prev.startsWith('manual_')) {
+              return 'manual_bca';
+            }
+            if (json.data.mode === 'gateway' && prev.startsWith('manual_')) {
+              return 'qris';
+            }
+            return prev;
+          });
         }
       } catch (err) {
         console.warn('[Checkout] Failed to load payment config, using default:', err);
