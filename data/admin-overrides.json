@@ -11,7 +11,7 @@
       "Aktivasi cepat & garansi resmi"
     ],
     "status": "active",
-    "imageUrl": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80",
+    "imageUrl": "/images/default-product-banner.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "TEST-CODE-01",
@@ -30,7 +30,7 @@
       "Aktivasi cepat & garansi resmi"
     ],
     "status": "active",
-    "imageUrl": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80",
+    "imageUrl": "/images/default-product-banner.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "TEST-CODE-01",
@@ -49,7 +49,7 @@
       "Aktivasi cepat & garansi resmi"
     ],
     "status": "active",
-    "imageUrl": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80",
+    "imageUrl": "/images/default-product-banner.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "TEST-CODE-01",
@@ -61,7 +61,7 @@
     "price": 23000,
     "status": "active",
     "description": "GO Plan 1 Tahun [ Private Account ] [ Garansi 1 Bulan ] - Layanan digital resmi terverifikasi dengan aktivasi instan.",
-    "imageUrl": "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?auto=format&fit=crop&w=600&q=80",
+    "imageUrl": "/api/v1/media/products/chatgpt-go-1790741410852-oqFvh5vvY2DgpOT5v7Fvk5CoRulqIf.png",
     "category": {
       "id": "cat-apps---streaming",
       "name": "Apps & Streaming"
@@ -79,7 +79,7 @@
     "price": 33000,
     "status": "active",
     "description": "GO Plan 1 Tahun [ Private Account ] [ Garansi 6 Bulan ] - Layanan digital resmi terverifikasi dengan aktivasi instan.",
-    "imageUrl": "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?auto=format&fit=crop&w=600&q=80",
+    "imageUrl": "/api/v1/media/products/chatgpt-go-1790683677930-YUJcz4hPGBLD68TGPRQ5XYAC9hU4bS.png",
     "category": {
       "id": "cat-apps---streaming",
       "name": "Apps & Streaming"
@@ -97,7 +97,7 @@
     "price": 25000,
     "status": "active",
     "description": "Gemini AI Pro 1 Tahun [ Anggota ] [ Garansi 1 Bulan ] [ 5 TB GDRIVE ] - Layanan digital resmi terverifikasi dengan aktivasi instan.",
-    "imageUrl": "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?auto=format&fit=crop&w=600&q=80",
+    "imageUrl": "/api/v1/media/products/google-pro-1790683258865-0odrb3mF35ylJCso1q4eks6uUbBv8v.png",
     "category": {
       "id": "cat-apps---streaming",
       "name": "Apps & Streaming"

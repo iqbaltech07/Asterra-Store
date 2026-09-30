@@ -449,7 +449,7 @@ export default function AdminPage() {
     setFormStatus('active');
     setFormDescription('');
     setFormFeatures('Akses resmi bergaransi\nProses aktivasi cepat 1-5 menit');
-    setFormImageUrl('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80');
+    setFormImageUrl('/images/default-product-banner.png');
     setFormPopular(false);
     setFormGuaranteeTitle('Garansi Penuh');
     setFormGuaranteeDesc('Jaminan ganti akun 100%');

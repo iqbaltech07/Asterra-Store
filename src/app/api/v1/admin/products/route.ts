@@ -135,7 +135,7 @@ export async function POST(req: NextRequest) {
         stock: body.stock !== undefined ? Math.max(0, Number(body.stock)) : 100,
         imageUrl:
           body.imageUrl ||
-          'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80',
+          '/images/default-product-banner.png',
         popular: Boolean(body.popular),
         provider: body.provider || 'native',
         providerCode: body.providerCode || null,

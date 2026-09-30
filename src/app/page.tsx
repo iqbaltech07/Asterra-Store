@@ -299,9 +299,7 @@ export default function HomePage() {
                       <span className="text-sm sm:text-2xl font-bold tracking-tight text-foreground">
                         {product.priceFormatted}
                       </span>
-                      <span className="text-[10px] sm:text-xs text-foreground-muted">/ bln</span>
                     </div>
-
                     <ul className="space-y-1.5 pt-2 border-t border-border hidden sm:block">
                       {product.features.slice(0, 3).map((feature, fIdx) => (
                         <li

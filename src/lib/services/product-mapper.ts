@@ -136,53 +136,16 @@ export function mapCategory(
 }
 
 /**
- * Provides curated image URLs based on brand/category
+ * Default product banner visual used for any product without custom banner image
  */
-export function getProductImageUrl(brand?: string, type?: string): string {
-  const b = (brand || '').toUpperCase();
-  const t = (type || '').toLowerCase();
+export const DEFAULT_PRODUCT_BANNER = '/images/default-product-banner.png';
 
-  // Apps & Streaming specific branded visuals
-  if (b.includes('GEMINI')) {
-    return 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80';
-  }
-  if (b.includes('CANVA')) {
-    return 'https://images.unsplash.com/photo-1626785774573-4b799315345d?auto=format&fit=crop&w=600&q=80';
-  }
-  if (b.includes('CAPCUT')) {
-    return 'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&w=600&q=80';
-  }
-  if (b.includes('ALIGHT MOTION')) {
-    return 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=600&q=80';
-  }
-  if (b.includes('SPOTIFY')) {
-    return 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=600&q=80';
-  }
-  if (b.includes('YOUTUBE')) {
-    return 'https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?auto=format&fit=crop&w=600&q=80';
-  }
-  if (b.includes('AMAZON') || b.includes('PRIME')) {
-    return 'https://images.unsplash.com/photo-1522869635100-9f4c5e86aa37?auto=format&fit=crop&w=600&q=80';
-  }
-  if (b.includes('BSTATION') || b.includes('VIU') || b.includes('WETV') || b.includes('IQIYI')) {
-    return 'https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=600&q=80';
-  }
-  if (b.includes('VIDIO') || b.includes('VISION')) {
-    return 'https://images.unsplash.com/photo-1593784991095-a205069470b6?auto=format&fit=crop&w=600&q=80';
-  }
-  if (b.includes('K-VISION') || b.includes('NEX PARABOLA') || t.includes('streaming')) {
-    return 'https://images.unsplash.com/photo-1593784991095-a205069470b6?auto=format&fit=crop&w=600&q=80';
-  }
-  if (t.includes('game') || b.includes('STEAM') || b.includes('FREE FIRE')) {
-    return 'https://images.unsplash.com/photo-1538481199705-c710c4e965fc?auto=format&fit=crop&w=600&q=80';
-  }
-  if (t.includes('emoney') || b.includes('DANA') || b.includes('GOPAY')) {
-    return 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?auto=format&fit=crop&w=600&q=80';
-  }
-  if (t.includes('internet') || t.includes('pulsa')) {
-    return 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80';
-  }
-  return 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80';
+/**
+ * Provides default product visual banner (replaces external unsplash fallbacks)
+ */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function getProductImageUrl(..._args: unknown[]): string {
+  return DEFAULT_PRODUCT_BANNER;
 }
 
 /**
