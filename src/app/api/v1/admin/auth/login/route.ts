@@ -24,9 +24,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const isValid = AdminAuthService.validateCredentials(email, password);
+    const authResult = await AdminAuthService.validateCredentials(email, password);
 
-    if (!isValid) {
+    if (!authResult.valid || !authResult.admin) {
       // Artificial delay (400ms) to mitigate timing attacks and brute-force attempts
       await new Promise((resolve) => setTimeout(resolve, 400));
 
@@ -35,15 +35,22 @@ export async function POST(req: NextRequest) {
           success: false,
           error: {
             code: 'UNAUTHORIZED',
-            message: 'Kredensial administrator tidak valid atau akses ditolak.',
+            message: authResult.error || 'Kredensial administrator tidak valid atau akses ditolak.',
           },
         },
         { status: 401 }
       );
     }
 
-    // Generate secure session token
-    const token = AdminAuthService.createSessionToken(email);
+    const admin = authResult.admin;
+
+    // Generate secure session token with admin details
+    const token = AdminAuthService.createSessionToken({
+      id: admin.id,
+      email: admin.email,
+      name: admin.name || undefined,
+      role: admin.role,
+    });
     const cookieOptions = AdminAuthService.getCookieOptions();
 
     const response = NextResponse.json({
@@ -51,8 +58,11 @@ export async function POST(req: NextRequest) {
       message: 'Autentikasi Administrator Asterra berhasil.',
       token,
       admin: {
-        email: email.toLowerCase().trim(),
-        role: 'admin',
+        id: admin.id,
+        username: admin.username,
+        email: admin.email,
+        name: admin.name,
+        role: admin.role,
       },
     });
 

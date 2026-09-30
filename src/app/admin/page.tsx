@@ -32,12 +32,21 @@ import {
   CreditCard,
   Tag,
   Trash2,
+  ShieldCheck,
 } from 'lucide-react';
 import { AdminOrdersTab } from '@/components/admin/admin-orders-tab';
 import { AdminLogsTab } from '@/components/admin/admin-logs-tab';
 import { AdminPaymentSettingsTab } from '@/components/admin/admin-payment-settings-tab';
 import { AdminPromosTab } from '@/components/admin/admin-promos-tab';
+import { AdminUsersTab } from '@/components/admin/admin-users-tab';
 import { ImageUploadDropzone } from '@/components/admin/image-upload-dropzone';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface AdminProductsResponse {
   success: boolean;
@@ -66,7 +75,7 @@ export default function AdminPage() {
   const queryClient = useQueryClient();
 
   // Admin authentication state
-  const [adminUser, setAdminUser] = useState<{ email: string } | null>(null);
+  const [adminUser, setAdminUser] = useState<{ id?: string; email: string; name?: string; role?: string } | null>(null);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
 
   // Check admin session on mount
@@ -104,7 +113,7 @@ export default function AdminPage() {
   };
 
   // Navigation tab
-  const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'logs' | 'payment-settings' | 'promos' | 'vip-explorer'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'logs' | 'payment-settings' | 'promos' | 'vip-explorer' | 'admins'>('products');
 
   // Filter states for Managed Products
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'archived' | 'warning'>('all');
@@ -815,6 +824,19 @@ export default function AdminPage() {
             <DownloadCloud className="w-4 h-4" />
             <span>Jelajahi & Impor VIP Reseller</span>
           </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('admins')}
+            className={`px-4 py-2 rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap ${
+              activeTab === 'admins'
+                ? 'bg-primary text-white shadow-sm'
+                : 'bg-surface text-foreground-muted hover:text-foreground hover:bg-surface-hover border border-border'
+            }`}
+          >
+            <ShieldCheck className="w-4 h-4" />
+            <span>Kelola Admin</span>
+          </button>
         </div>
 
         {/* TAB 1: MANAGED PRODUCTS */}
@@ -875,19 +897,21 @@ export default function AdminPage() {
               </div>
 
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                <select
-                  value={categoryFilter}
-                  onChange={(e) => setCategoryFilter(e.target.value)}
-                  className="text-xs bg-surface-raised border border-border rounded-md px-2.5 py-2 text-foreground focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
-                  title="Filter Kategori Produk"
-                >
-                  <option value="all">Semua Kategori ({allProducts.length})</option>
-                  {availableCategories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.name} ({cat.count})
-                    </option>
-                  ))}
-                </select>
+                <div className="min-w-[190px]">
+                  <Select value={categoryFilter} onValueChange={(val) => setCategoryFilter(val)}>
+                    <SelectTrigger className="text-xs bg-surface-raised border-border h-9">
+                      <SelectValue placeholder="Semua Kategori" />
+                    </SelectTrigger>
+                    <SelectContent align="start">
+                      <SelectItem value="all">Semua Kategori ({allProducts.length})</SelectItem>
+                      {availableCategories.map((cat) => (
+                        <SelectItem key={cat.id} value={cat.id}>
+                          {cat.name} ({cat.count})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
                 <div className="relative min-w-[240px]">
                   <Search className="w-4 h-4 text-foreground-muted absolute left-3 top-1/2 -translate-y-1/2" />
@@ -1003,8 +1027,8 @@ export default function AdminPage() {
                         </th>
                         <th className="py-3 px-4 min-w-[220px]">Produk</th>
                         <th className="py-3 px-4 whitespace-nowrap">Kategori</th>
-                        <th className="py-3 px-4 whitespace-nowrap">Harga Modal (VIP)</th>
-                        <th className="py-3 px-4 whitespace-nowrap">Harga Jual (Asterra)</th>
+                        <th className="py-3 px-4 whitespace-nowrap">Harga Modal</th>
+                        <th className="py-3 px-4 whitespace-nowrap">Harga Jual</th>
                         <th className="py-3 px-4 whitespace-nowrap">Margin Laba</th>
                         <th className="py-3 px-4 whitespace-nowrap">Stok Supplier</th>
                         <th className="py-3 px-4 whitespace-nowrap">Visibilitas Toko</th>
@@ -1289,34 +1313,40 @@ export default function AdminPage() {
                   />
                 </div>
 
-                <div className="flex items-center gap-2 bg-surface-raised border border-border rounded-lg px-3 py-1.5 text-xs text-foreground-muted">
-                  <Filter className="w-3.5 h-3.5 text-primary" />
-                  <span>Kategori:</span>
-                  <select
-                    value={vipType}
-                    onChange={(e) => setVipType(e.target.value)}
-                    className="bg-transparent text-foreground font-medium text-xs focus:outline-none cursor-pointer w-full"
-                  >
-                    <option value="all">Semua Tipe Layanan</option>
-                    {vipData?.availableTypes.map((t) => (
-                      <option key={t} value={t} className="bg-surface text-foreground">
-                        {t}
-                      </option>
-                    ))}
-                  </select>
+                <div className="w-full">
+                  <Select value={vipType} onValueChange={(val) => setVipType(val)}>
+                    <SelectTrigger className="h-9 text-xs bg-surface-raised border-border">
+                      <div className="flex items-center gap-1.5 truncate">
+                        <Filter className="w-3.5 h-3.5 text-primary shrink-0" />
+                        <span className="text-foreground-muted">Kategori:</span>
+                        <SelectValue placeholder="Semua Tipe Layanan" />
+                      </div>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Semua Tipe Layanan</SelectItem>
+                      {vipData?.availableTypes.map((t) => (
+                        <SelectItem key={t} value={t}>
+                          {t}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
-                <div className="flex items-center gap-2 bg-surface-raised border border-border rounded-lg px-3 py-1.5 text-xs text-foreground-muted">
-                  <span>Status Ketersediaan:</span>
-                  <select
-                    value={vipStatus}
-                    onChange={(e) => setVipStatus(e.target.value)}
-                    className="bg-transparent text-foreground font-medium text-xs focus:outline-none cursor-pointer w-full"
-                  >
-                    <option value="all">Semua Status</option>
-                    <option value="available">Tersedia (Ready)</option>
-                    <option value="empty">Kosong (Empty)</option>
-                  </select>
+                <div className="w-full">
+                  <Select value={vipStatus} onValueChange={(val) => setVipStatus(val)}>
+                    <SelectTrigger className="h-9 text-xs bg-surface-raised border-border">
+                      <div className="flex items-center gap-1.5 truncate">
+                        <span className="text-foreground-muted">Status:</span>
+                        <SelectValue placeholder="Semua Status" />
+                      </div>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Semua Status</SelectItem>
+                      <SelectItem value="available">Tersedia (Ready)</SelectItem>
+                      <SelectItem value="empty">Kosong (Empty)</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </div>
@@ -1463,6 +1493,14 @@ export default function AdminPage() {
             </div>
           )}
           </div>
+        )}
+
+        {/* TAB 7: KELOLA ADMIN */}
+        {activeTab === 'admins' && (
+          <AdminUsersTab
+            currentAdminEmail={adminUser?.email}
+            onNotify={showNotification}
+          />
         )}
       </main>
 

@@ -80,11 +80,13 @@ export function CheckoutCartSummary({
                 itemOutOfStock ? 'bg-status-error/10 border-status-error/30' : ''
               }`}
             >
-              <div className="space-y-0.5">
+              <div className="space-y-0.5 min-w-0 flex-1 pr-2">
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="font-semibold text-foreground">{item.name}</span>
+                  <span className="font-semibold text-foreground truncate block max-w-full">
+                    {item.name}
+                  </span>
                   {itemOutOfStock && (
-                    <Badge variant="destructive" className="text-[9px] px-1.5 py-0 bg-status-error text-white font-semibold">
+                    <Badge variant="destructive" className="text-[9px] px-1.5 py-0 bg-status-error text-white font-semibold shrink-0">
                       Stok Habis
                     </Badge>
                   )}
@@ -93,7 +95,7 @@ export function CheckoutCartSummary({
                   {item.quantity}x @ Rp {item.priceNumeric.toLocaleString('id-ID')}
                 </span>
               </div>
-              <span className="font-mono font-bold text-foreground">
+              <span className="font-mono font-bold text-foreground shrink-0 text-right">
                 Rp {(item.priceNumeric * item.quantity).toLocaleString('id-ID')}
               </span>
             </div>

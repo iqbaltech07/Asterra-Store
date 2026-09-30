@@ -705,12 +705,12 @@ export default function ProfilePage() {
                                     key={item.id}
                                     className="flex items-center justify-between text-xs"
                                   >
-                                    <div className="flex items-center gap-2.5">
-                                      <div className="w-7 h-7 rounded-md bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
+                                    <div className="flex items-center gap-2.5 min-w-0 flex-1 pr-2">
+                                      <div className="w-7 h-7 rounded-md bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0">
                                         <Package className="w-3.5 h-3.5" />
                                       </div>
-                                      <div>
-                                        <p className="font-semibold text-foreground">
+                                      <div className="min-w-0 flex-1">
+                                        <p className="font-semibold text-foreground truncate">
                                           {item.productName}
                                         </p>
                                         <p className="text-[10px] text-foreground-muted">
@@ -718,7 +718,7 @@ export default function ProfilePage() {
                                         </p>
                                       </div>
                                     </div>
-                                    <span className="font-medium text-foreground">
+                                    <span className="font-medium text-foreground shrink-0 text-right">
                                       {formatIDR(item.price * item.quantity)}
                                     </span>
                                   </div>

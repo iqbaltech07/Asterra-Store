@@ -9,6 +9,13 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardContent, CardFooter, CardTitle, CardDescription } from '@/components/ui/card';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useCartStore } from '@/store/use-cart-store';
 import { ProductItem } from '@/lib/products-data';
 import {
@@ -207,21 +214,22 @@ export default function ProductsPage() {
 
             {/* Sort & View Mode Controls */}
             <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5 bg-surface-raised border border-border rounded-lg px-2.5 py-1.5 text-xs text-foreground-muted">
-                <SlidersHorizontal className="w-3.5 h-3.5 text-primary" />
-                <span className="hidden sm:inline">Urutkan:</span>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="bg-transparent text-foreground font-medium text-xs focus:outline-none cursor-pointer"
-                >
+              <Select value={sortBy} onValueChange={(val) => setSortBy(val)}>
+                <SelectTrigger className="h-9 w-[130px] sm:w-[170px] text-xs bg-surface-raised border-border">
+                  <div className="flex items-center gap-1.5 truncate">
+                    <SlidersHorizontal className="w-3.5 h-3.5 text-primary shrink-0" />
+                    <span className="hidden sm:inline text-foreground-muted">Urut:</span>
+                    <SelectValue placeholder="Urutan" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent align="end">
                   {SORT_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value} className="bg-surface text-foreground">
+                    <SelectItem key={opt.value} value={opt.value}>
                       {opt.label}
-                    </option>
+                    </SelectItem>
                   ))}
-                </select>
-              </div>
+                </SelectContent>
+              </Select>
 
               {/* View Toggle */}
               <div className="hidden sm:flex items-center bg-surface-raised border border-border rounded-lg p-1">

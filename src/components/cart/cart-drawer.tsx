@@ -76,21 +76,21 @@ export function CartDrawer({ isOpen, onClose, onCheckout }: CartDrawerProps) {
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <div className="flex items-center gap-2">
+                    <div className="min-w-0 flex-1 pr-1">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-[11px] text-primary font-medium">{item.category}</span>
                         {itemOutOfStock && (
-                          <span className="text-[10px] px-2 py-0.2 rounded-full bg-status-error text-white font-semibold shadow-xs">
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-status-error text-white font-semibold shadow-xs shrink-0">
                             Stok Habis
                           </span>
                         )}
                       </div>
-                      <h4 className="font-semibold text-sm text-foreground mt-0.5">{item.name}</h4>
+                      <h4 className="font-semibold text-sm text-foreground mt-0.5 break-words">{item.name}</h4>
                     </div>
                     <button
                       type="button"
                       onClick={() => removeItem(item.id)}
-                      className="text-foreground-muted hover:text-status-error transition-colors p-1"
+                      className="text-foreground-muted hover:text-status-error transition-colors p-1 shrink-0"
                       title="Hapus item"
                     >
                       <Trash2 className="w-4 h-4" />

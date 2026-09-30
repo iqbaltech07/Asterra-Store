@@ -26,8 +26,10 @@ export async function GET(req: NextRequest) {
     success: true,
     authenticated: true,
     admin: {
+      id: session.id,
       email: session.email,
-      role: 'admin',
+      name: session.name,
+      role: session.role || 'admin',
     },
   });
 }

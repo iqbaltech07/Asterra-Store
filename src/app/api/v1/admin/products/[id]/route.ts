@@ -96,6 +96,13 @@ export async function PATCH(
     if (body.providerStatus !== undefined) {
       updates.providerStatus = body.providerStatus;
     }
+
+    // [T10] Jika stok dari vip reseller habis/empty maka set ke 0 langsung
+    const finalProviderStatus = updates.providerStatus ?? product.providerStatus;
+    if (product.provider === 'vip-reseller' && finalProviderStatus === 'empty') {
+      updates.stock = 0;
+    }
+
     if (body.description !== undefined) updates.description = String(body.description);
     if (body.imageUrl !== undefined) updates.imageUrl = String(body.imageUrl);
     if (body.features !== undefined) updates.features = body.features;

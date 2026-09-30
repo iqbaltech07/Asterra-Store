@@ -1,26 +1,22 @@
 import crypto from 'crypto';
+import bcrypt from 'bcryptjs';
 import { NextRequest } from 'next/server';
+import { prisma } from '@/lib/prisma';
 
 export const ADMIN_COOKIE_NAME = 'asterra_admin_session';
 export const ADMIN_SESSION_DURATION_SEC = 8 * 60 * 60; // 8 hours
 
 export interface AdminSessionPayload {
+  id?: string;
   email: string;
-  role: 'admin';
+  name?: string;
+  role: string;
   issuedAt: number;
   expiresAt: number;
   nonce: string;
 }
 
 export class AdminAuthService {
-  private static getAdminEmail(): string {
-    return process.env.ADMIN_EMAIL || 'admin@asterra.store';
-  }
-
-  private static getAdminPassword(): string {
-    return process.env.ADMIN_PASSWORD || 'AsterraAdmin#2026';
-  }
-
   private static getSecret(): string {
     return (
       process.env.ADMIN_SESSION_SECRET ||
@@ -30,36 +26,83 @@ export class AdminAuthService {
   }
 
   /**
-   * Validate provided admin credentials with constant-time equality check
+   * Validate provided admin credentials against database admin_users
+   * Checks username/email, password hash (bcrypt), and isActive flag
    */
-  public static validateCredentials(emailInput: string, passwordInput: string): boolean {
-    if (!emailInput || !passwordInput) return false;
-
-    const expectedEmail = this.getAdminEmail().toLowerCase().trim();
-    const cleanEmail = emailInput.toLowerCase().trim();
-
-    if (cleanEmail !== expectedEmail) {
-      return false;
+  public static async validateCredentials(
+    identifierInput: string,
+    passwordInput: string
+  ): Promise<{
+    valid: boolean;
+    admin?: {
+      id: string;
+      username: string;
+      email: string;
+      name: string | null;
+      role: string;
+      isActive: boolean;
+    };
+    error?: string;
+  }> {
+    if (!identifierInput || !passwordInput) {
+      return { valid: false, error: 'Email atau username serta kata sandi wajib diisi.' };
     }
 
-    const expectedPassword = this.getAdminPassword();
-    const expectedBuf = Buffer.from(expectedPassword);
-    const inputBuf = Buffer.from(passwordInput);
+    const clean = identifierInput.trim().toLowerCase();
 
-    if (expectedBuf.length !== inputBuf.length) {
-      return false;
+    // Query database for admin user by email or username
+    const admin = await prisma.adminUser.findFirst({
+      where: {
+        OR: [
+          { email: { equals: clean, mode: 'insensitive' } },
+          { username: { equals: clean, mode: 'insensitive' } },
+        ],
+      },
+    });
+
+    if (!admin) {
+      return {
+        valid: false,
+        error: 'Kredensial administrator tidak valid atau akun tidak ditemukan.',
+      };
     }
 
-    return crypto.timingSafeEqual(expectedBuf, inputBuf);
+    // Critical check: if admin is inactive, deny login immediately
+    if (!admin.isActive) {
+      return {
+        valid: false,
+        error: 'Akun administrator dinonaktifkan. Silakan hubungi Super Administrator.',
+      };
+    }
+
+    // Verify bcrypt password hash
+    const isMatch = await bcrypt.compare(passwordInput, admin.passwordHash);
+    if (!isMatch) {
+      return {
+        valid: false,
+        error: 'Kata sandi administrator salah atau tidak cocok.',
+      };
+    }
+
+    return { valid: true, admin };
   }
 
   /**
    * Create a cryptographically signed session token
    */
-  public static createSessionToken(email: string): string {
+  public static createSessionToken(
+    admin: { id?: string; email: string; name?: string | null; role?: string } | string
+  ): string {
+    const email = typeof admin === 'string' ? admin : admin.email;
+    const role = (typeof admin === 'object' && admin.role) || 'admin';
+    const id = typeof admin === 'object' ? admin.id : undefined;
+    const name = typeof admin === 'object' ? admin.name || undefined : undefined;
+
     const payload: AdminSessionPayload = {
+      id,
       email: email.toLowerCase().trim(),
-      role: 'admin',
+      name,
+      role,
       issuedAt: Date.now(),
       expiresAt: Date.now() + ADMIN_SESSION_DURATION_SEC * 1000,
       nonce: crypto.randomBytes(16).toString('hex'),
@@ -79,7 +122,7 @@ export class AdminAuthService {
    */
   public static verifySessionToken(
     token: string | undefined | null
-  ): { valid: boolean; email?: string } {
+  ): { valid: boolean; email?: string; id?: string; name?: string; role?: string } {
     if (!token || typeof token !== 'string') {
       return { valid: false };
     }
@@ -108,7 +151,7 @@ export class AdminAuthService {
       const decodedJson = Buffer.from(payloadBase64, 'base64url').toString('utf8');
       const payload: AdminSessionPayload = JSON.parse(decodedJson);
 
-      if (payload.role !== 'admin') {
+      if (payload.role !== 'admin' && payload.role !== 'superadmin') {
         return { valid: false };
       }
 
@@ -116,12 +159,17 @@ export class AdminAuthService {
         return { valid: false }; // Expired
       }
 
-      const adminEmail = this.getAdminEmail().toLowerCase().trim();
-      if (payload.email !== adminEmail) {
+      if (!payload.email || typeof payload.email !== 'string') {
         return { valid: false };
       }
 
-      return { valid: true, email: payload.email };
+      return {
+        valid: true,
+        email: payload.email,
+        id: payload.id,
+        name: payload.name,
+        role: payload.role,
+      };
     } catch {
       return { valid: false };
     }
@@ -133,7 +181,7 @@ export class AdminAuthService {
    */
   public static verifyAdminSession(
     req: NextRequest | Request
-  ): { valid: boolean; email?: string } {
+  ): { valid: boolean; email?: string; id?: string; name?: string; role?: string } {
     let token: string | undefined;
 
     // Check cookie

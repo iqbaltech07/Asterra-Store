@@ -212,12 +212,13 @@ export async function POST(req: NextRequest) {
     const name = body.name || rawService.name;
     const status = (body.status as 'active' | 'archived') || 'archived';
     const providerStatus = rawService.status === 'available' ? 'available' : 'empty';
+    // [T10] Jika stok dari vip reseller habis maka set ke 0 langsung
     const stock =
-      body.stock !== undefined
-        ? Number(body.stock)
-        : providerStatus === 'available'
-          ? 100
-          : 0;
+      providerStatus === 'empty'
+        ? 0
+        : body.stock !== undefined
+          ? Math.max(0, Number(body.stock))
+          : 100;
 
     let profitMargin: number | null = null;
     let profitPercentage: number | null = null;

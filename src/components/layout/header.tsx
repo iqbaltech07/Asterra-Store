@@ -9,7 +9,15 @@ import { useAuthStore } from '@/store/use-auth-store';
 import { useSession, signOut } from '@/lib/auth-client';
 import { CartDrawer } from '@/components/cart/cart-drawer';
 import { useRouter } from 'next/navigation';
-import { ShoppingCart, Menu, X, Package, LogOut } from 'lucide-react';
+import { ShoppingCart, Menu, X, Package, LogOut, User, ChevronDown } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
 
 interface HeaderProps {
   onNotify?: (message: string) => void;
@@ -89,17 +97,17 @@ export function Header({ onNotify }: HeaderProps) {
           </nav>
 
           {/* Action Buttons */}
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2 sm:gap-2.5">
             {/* Cart Trigger */}
             <Button
               variant="outline"
               size="sm"
-              className="relative gap-2 border-border hover:border-primary/40 transition-colors"
+              className="relative gap-2 border-border hover:border-primary/40 transition-colors h-9 px-3"
               onClick={() => setIsCartOpen(true)}
               aria-label="Buka Keranjang Pesanan"
             >
               <ShoppingCart className="w-4 h-4 text-primary" />
-              <span className="hidden sm:inline">Pesanan</span>
+              <span className="hidden sm:inline text-xs">Pesanan</span>
               {getTotalItems() > 0 && (
                 <span className="w-5 h-5 rounded-full bg-primary text-white text-[11px] font-bold flex items-center justify-center -mr-1">
                   {getTotalItems()}
@@ -107,45 +115,71 @@ export function Header({ onNotify }: HeaderProps) {
               )}
             </Button>
 
-            {/* Auth Actions */}
+            {/* Auth Actions: [T12a] User Badge with dropdown menu */}
             {currentUser ? (
-              <div className="flex items-center gap-2">
-                <Link
-                  href="/profile"
-                  className="flex items-center gap-2 pl-1.5 pr-3 py-1 rounded-full border border-border bg-surface-raised hover:border-primary/40 hover:shadow-xs transition-all text-xs font-medium text-foreground group"
-                  aria-label="Buka Profil Pengguna"
-                >
-                  {userImage ? (
-                    <img
-                      src={userImage}
-                      alt={currentUser.name || 'Profil'}
-                      className="w-6 h-6 rounded-full object-cover ring-1 ring-border group-hover:ring-primary/50 transition-all"
-                      referrerPolicy="no-referrer"
-                    />
-                  ) : (
-                    <div className="w-6 h-6 rounded-full bg-primary/10 border border-primary/20 text-primary flex items-center justify-center font-bold text-[11px]">
-                      {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U'}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className="flex items-center gap-1.5 p-1 sm:px-2.5 sm:py-1 rounded-full border border-border bg-surface-raised hover:border-primary/40 hover:bg-surface-hover transition-all text-xs font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
+                    aria-label="Menu Akun Pengguna"
+                  >
+                    {userImage ? (
+                      <img
+                        src={userImage}
+                        alt={currentUser.name || 'Profil'}
+                        className="w-7 h-7 rounded-full object-cover ring-1 ring-border"
+                        referrerPolicy="no-referrer"
+                      />
+                    ) : (
+                      <div className="w-7 h-7 rounded-full bg-primary/10 border border-primary/20 text-primary flex items-center justify-center font-bold text-xs">
+                        {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U'}
+                      </div>
+                    )}
+                    <span className="hidden md:inline-block max-w-[85px] truncate text-foreground text-xs font-medium">
+                      {currentUser.name?.split(' ')[0] || 'Profil'}
+                    </span>
+                    <ChevronDown className="w-3.5 h-3.5 text-foreground-muted hidden md:inline-block" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel className="font-normal py-2.5 px-3">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-xs font-semibold leading-none text-foreground truncate">
+                        {currentUser.name || 'Pengguna Asterra'}
+                      </p>
+                      <p className="text-[11px] leading-none text-foreground-muted truncate">
+                        {currentUser.email || 'Akun Aktif'}
+                      </p>
                     </div>
-                  )}
-                  <span className="max-w-[100px] truncate text-foreground group-hover:text-primary transition-colors font-medium">
-                    {currentUser.name || 'Profil'}
-                  </span>
-                </Link>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleLogout}
-                  className="h-8 w-8 p-0 text-foreground-muted hover:text-status-error hover:bg-status-error/10 transition-colors"
-                  title="Keluar dari Akun"
-                  aria-label="Keluar dari Akun"
-                >
-                  <LogOut className="w-3.5 h-3.5" />
-                </Button>
-              </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/profile" className="flex items-center gap-2 cursor-pointer w-full">
+                      <User className="w-4 h-4 text-primary" />
+                      <span>Profil Saya</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/orders" className="flex items-center gap-2 cursor-pointer w-full">
+                      <Package className="w-4 h-4 text-primary" />
+                      <span>Pesanan Saya</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={handleLogout}
+                    className="flex items-center gap-2 text-status-error focus:text-status-error focus:bg-status-error/10 cursor-pointer"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    <span>Keluar Akun</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             ) : (
               <div className="flex items-center gap-1.5">
                 <Link href="/login">
-                  <Button size="sm" className="text-xs font-medium">
+                  <Button size="sm" className="text-xs font-medium h-9 px-3">
                     Masuk
                   </Button>
                 </Link>

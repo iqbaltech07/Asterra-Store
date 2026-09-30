@@ -51,24 +51,24 @@ export function CheckoutPaymentMethods({
                   : 'bg-surface border-border hover:border-foreground-muted/40'
               }`}
             >
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 min-w-0 flex-1 pr-2">
                 <div className="w-8 h-8 rounded-lg bg-surface-raised flex items-center justify-center text-primary shrink-0">
                   {method.category === 'qris' && <QrCode className="w-4 h-4" />}
                   {method.category === 'ewallet' && <Wallet className="w-4 h-4" />}
                   {method.category === 'va' && <Building2 className="w-4 h-4" />}
                   {method.category === 'bank_manual' && <CreditCard className="w-4 h-4" />}
                 </div>
-                <div>
+                <div className="min-w-0">
                   <span className="text-xs font-bold text-foreground block">
                     {method.name}
                   </span>
-                  <span className="text-[11px] text-foreground-muted">
+                  <span className="text-[11px] text-foreground-muted line-clamp-2 sm:line-clamp-none">
                     {method.description}
                   </span>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
                 <span
                   className={`w-4 h-4 rounded-full flex items-center justify-center ${
                     isSelected ? 'bg-primary text-white' : 'bg-surface-hover'
