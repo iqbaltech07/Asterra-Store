@@ -39,7 +39,7 @@ import { AdminLogsTab } from '@/components/admin/admin-logs-tab';
 import { AdminPaymentSettingsTab } from '@/components/admin/admin-payment-settings-tab';
 import { AdminPromosTab } from '@/components/admin/admin-promos-tab';
 import { AdminUsersTab } from '@/components/admin/admin-users-tab';
-import { ImageUploadDropzone } from '@/components/admin/image-upload-dropzone';
+import { ImageUploadDropzone, uploadFileToBlob } from '@/components/admin/image-upload-dropzone';
 import {
   Select,
   SelectContent,
@@ -152,6 +152,7 @@ export default function AdminPage() {
   const [formDescription, setFormDescription] = useState('');
   const [formFeatures, setFormFeatures] = useState('');
   const [formImageUrl, setFormImageUrl] = useState('');
+  const [stagedFile, setStagedFile] = useState<File | null>(null);
   const [formPopular, setFormPopular] = useState(false);
   const [formGuaranteeTitle, setFormGuaranteeTitle] = useState('Garansi Penuh');
   const [formGuaranteeDesc, setFormGuaranteeDesc] = useState('Jaminan ganti akun 100%');
@@ -289,8 +290,16 @@ export default function AdminPage() {
   });
 
   // Save Product (Create / Edit)
+  // Pilar 2: Lazy/Deferred Upload — file is uploaded to Blob only on form submit
   const saveProductMutation = useMutation({
     mutationFn: async () => {
+      // If a file is staged (lazy mode), upload it now before saving the product
+      let finalImageUrl = formImageUrl;
+      if (stagedFile) {
+        const uploadResult = await uploadFileToBlob(stagedFile, 'products');
+        finalImageUrl = uploadResult.viewUrl;
+      }
+
       const payload = {
         name: formName,
         category: {
@@ -306,7 +315,7 @@ export default function AdminPage() {
           .split('\n')
           .map((f) => f.trim())
           .filter(Boolean),
-        imageUrl: formImageUrl || undefined,
+        imageUrl: finalImageUrl || undefined,
         popular: formPopular,
         guaranteeTitle: formGuaranteeTitle,
         guaranteeDesc: formGuaranteeDesc,
@@ -338,6 +347,7 @@ export default function AdminPage() {
       showNotification(data.message);
       setEditingProduct(null);
       setIsCreateModalOpen(false);
+      setStagedFile(null);
       queryClient.invalidateQueries({ queryKey: ['admin-products'] });
     },
   });
@@ -429,6 +439,7 @@ export default function AdminPage() {
     setFormDescription(p.description);
     setFormFeatures(p.features.join('\n'));
     setFormImageUrl(p.imageUrl);
+    setStagedFile(null);
     setFormPopular(Boolean(p.popular));
     setFormGuaranteeTitle(p.guaranteeTitle || 'Garansi Penuh');
     setFormGuaranteeDesc(p.guaranteeDesc || 'Jaminan ganti akun 100%');
@@ -450,6 +461,7 @@ export default function AdminPage() {
     setFormDescription('');
     setFormFeatures('Akses resmi bergaransi\nProses aktivasi cepat 1-5 menit');
     setFormImageUrl('/images/default-product-banner.png');
+    setStagedFile(null);
     setFormPopular(false);
     setFormGuaranteeTitle('Garansi Penuh');
     setFormGuaranteeDesc('Jaminan ganti akun 100%');
@@ -494,6 +506,7 @@ export default function AdminPage() {
     setFormStatus('archived'); // Default to archived so admin reviews before publishing
     setFormDescription(service.note && service.note !== '-' ? `${service.name}. ${service.note}` : service.name);
     setFormImageUrl('');
+    setStagedFile(null);
     setFormGuaranteeTitle('Garansi Penuh');
     setFormGuaranteeDesc('Jaminan ganti akun 100%');
     setFormProcessTitle('Proses Instan');
@@ -1884,9 +1897,11 @@ export default function AdminPage() {
               <ImageUploadDropzone
                 value={formImageUrl}
                 onChange={setFormImageUrl}
+                onFileStaged={setStagedFile}
                 folder="products"
                 label="Banner / Gambar Produk"
                 description="Tarik & lepas gambar banner produk ke sini, atau klik untuk memilih file."
+                mode="lazy"
               />
 
               <div className="flex items-center gap-2 pt-2">

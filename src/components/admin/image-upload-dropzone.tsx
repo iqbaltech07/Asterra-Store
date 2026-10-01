@@ -12,31 +12,80 @@ import {
   Link as LinkIcon,
   ShieldCheck,
   Check,
+  Zap,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { compressImageToWebP } from '@/lib/utils/image-compression';
+
+/**
+ * Modes of operation:
+ * - 'eager' (default): uploads immediately on file select (legacy behavior, for QRIS etc.)
+ * - 'lazy': stores File in local state, only uploads on explicit flush (for product banners)
+ */
+type UploadMode = 'eager' | 'lazy';
 
 interface ImageUploadDropzoneProps {
   value: string;
   onChange: (url: string) => void;
+  /** Callback to pass the pending File object to parent (lazy mode only) */
+  onFileStaged?: (file: File | null) => void;
   folder?: string;
   label?: string;
   description?: string;
   className?: string;
   disabled?: boolean;
+  /** Upload mode: 'eager' uploads immediately, 'lazy' defers to parent submit */
+  mode?: UploadMode;
 }
 
 const MAX_FILE_SIZE_MB = 10;
 const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml', 'image/avif'];
 
+/**
+ * Uploads a file to Vercel Blob via the admin upload API.
+ * Extracted as a static helper so both the component and parent can call it.
+ */
+export async function uploadFileToBlob(
+  file: File,
+  folder: string = 'products'
+): Promise<{ viewUrl: string; url: string; pathname: string; deduplicated: boolean }> {
+  // Compress to WebP before upload (Pilar 4)
+  const compressed = await compressImageToWebP(file);
+
+  const formData = new FormData();
+  formData.append('file', compressed);
+  formData.append('folder', folder);
+
+  const res = await fetch('/api/v1/admin/upload', {
+    method: 'POST',
+    body: formData,
+  });
+
+  const data = await res.json();
+
+  if (!res.ok || !data.success) {
+    throw new Error(data.error || 'Gagal mengunggah file ke Vercel Blob.');
+  }
+
+  return {
+    viewUrl: data.data?.viewUrl || data.data?.url,
+    url: data.data?.url,
+    pathname: data.data?.pathname,
+    deduplicated: data.data?.deduplicated ?? false,
+  };
+}
+
 export function ImageUploadDropzone({
   value,
   onChange,
+  onFileStaged,
   folder = 'products',
   label = 'Banner / Gambar Produk',
   description = 'Tarik & lepas gambar ke sini, atau klik untuk memilih file.',
   className = '',
   disabled = false,
+  mode = 'eager',
 }: ImageUploadDropzoneProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -45,6 +94,7 @@ export function ImageUploadDropzone({
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [showManualInput, setShowManualInput] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
+  const [isCompressing, setIsCompressing] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -56,7 +106,16 @@ export function ImageUploadDropzone({
     setImgError(false);
   }, [value]);
 
-  const uploadFile = useCallback(
+  // Clean up object URLs on unmount
+  useEffect(() => {
+    return () => {
+      if (localPreview && localPreview.startsWith('blob:')) {
+        URL.revokeObjectURL(localPreview);
+      }
+    };
+  }, [localPreview]);
+
+  const processFile = useCallback(
     async (file: File) => {
       setUploadError(null);
 
@@ -72,31 +131,32 @@ export function ImageUploadDropzone({
         return;
       }
 
-      // Instant local preview
+      // Instant local preview (Pilar 2: no upload yet in lazy mode)
       const objectUrl = URL.createObjectURL(file);
       setLocalPreview(objectUrl);
       setImgError(false);
-      setIsUploading(true);
 
-      try {
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('folder', folder);
-
-        const res = await fetch('/api/v1/admin/upload', {
-          method: 'POST',
-          body: formData,
-        });
-
-        const data = await res.json();
-
-        if (!res.ok || !data.success) {
-          throw new Error(data.error || 'Gagal mengunggah file ke Vercel Blob.');
+      if (mode === 'lazy') {
+        // --- LAZY MODE ---
+        // Compress client-side, then pass File to parent for deferred upload
+        setIsCompressing(true);
+        try {
+          const compressed = await compressImageToWebP(file);
+          onFileStaged?.(compressed);
+          // Don't call onChange yet — parent will set the final URL after upload on submit
+        } catch {
+          setUploadError('Gagal mengompres gambar.');
+        } finally {
+          setIsCompressing(false);
         }
+        return;
+      }
 
-        // Use clean viewUrl (/api/v1/media/...)
-        const finalUrl = data.data?.viewUrl || data.data?.url;
-        onChange(finalUrl);
+      // --- EAGER MODE (legacy behavior) ---
+      setIsUploading(true);
+      try {
+        const result = await uploadFileToBlob(file, folder);
+        onChange(result.viewUrl);
 
         // Keep local object preview briefly to avoid visual flicker while network fetches stream
         setTimeout(() => {
@@ -110,7 +170,7 @@ export function ImageUploadDropzone({
         setIsUploading(false);
       }
     },
-    [folder, onChange]
+    [folder, onChange, onFileStaged, mode]
   );
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -136,14 +196,14 @@ export function ImageUploadDropzone({
 
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const file = e.dataTransfer.files[0];
-      uploadFile(file);
+      processFile(file);
     }
   };
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
-      uploadFile(file);
+      processFile(file);
       e.target.value = '';
     }
   };
@@ -157,7 +217,7 @@ export function ImageUploadDropzone({
       if (items[i].type.startsWith('image/')) {
         const file = items[i].getAsFile();
         if (file) {
-          uploadFile(file);
+          processFile(file);
           break;
         }
       }
@@ -173,10 +233,16 @@ export function ImageUploadDropzone({
   };
 
   const handleRemove = () => {
+    if (localPreview && localPreview.startsWith('blob:')) {
+      URL.revokeObjectURL(localPreview);
+    }
     setLocalPreview(null);
     setImgError(false);
+    onFileStaged?.(null);
     onChange('');
   };
+
+  const isBusy = isUploading || isCompressing;
 
   return (
     <div className={`space-y-2 ${className}`} onPaste={handlePaste}>
@@ -185,6 +251,12 @@ export function ImageUploadDropzone({
         <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
           <ImageIcon className="w-3.5 h-3.5 text-primary" />
           <span>{label}</span>
+          {mode === 'lazy' && (
+            <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 inline-flex items-center gap-0.5">
+              <Zap className="w-2.5 h-2.5" />
+              <span>Upload saat Simpan</span>
+            </span>
+          )}
         </label>
         <button
           type="button"
@@ -203,7 +275,7 @@ export function ImageUploadDropzone({
         accept={ACCEPTED_TYPES.join(',')}
         className="hidden"
         onChange={handleFileInputChange}
-        disabled={disabled || isUploading}
+        disabled={disabled || isBusy}
       />
 
       {/* Upload Error Alert */}
@@ -245,16 +317,18 @@ export function ImageUploadDropzone({
                 </div>
               )}
 
-              {/* Uploading Overlay */}
-              {isUploading && (
+              {/* Uploading / Compressing Overlay */}
+              {isBusy && (
                 <div className="absolute inset-0 bg-black/60 backdrop-blur-xs flex flex-col items-center justify-center text-white gap-1.5 z-10">
                   <Loader2 className="w-5 h-5 animate-spin text-primary" />
-                  <span className="text-[10px] font-medium">Mengunggah...</span>
+                  <span className="text-[10px] font-medium">
+                    {isCompressing ? 'Mengompres...' : 'Mengunggah...'}
+                  </span>
                 </div>
               )}
 
               {/* Open in new tab overlay */}
-              {!isUploading && (
+              {!isBusy && (
                 <a
                   href={displayImage}
                   target="_blank"
@@ -271,10 +345,15 @@ export function ImageUploadDropzone({
             {/* Info & Action Controls */}
             <div className="flex-1 w-full space-y-2">
               <div className="flex items-center gap-1.5 flex-wrap">
-                {isUploading ? (
+                {isBusy ? (
                   <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/30 inline-flex items-center gap-1">
                     <Loader2 className="w-3 h-3 animate-spin" />
-                    <span>Menyimpan ke Vercel Blob...</span>
+                    <span>{isCompressing ? 'Mengompres gambar...' : 'Menyimpan ke Vercel Blob...'}</span>
+                  </span>
+                ) : mode === 'lazy' && localPreview ? (
+                  <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 border border-amber-500/30 inline-flex items-center gap-1">
+                    <Zap className="w-3 h-3" />
+                    <span>Siap Upload (saat Simpan)</span>
                   </span>
                 ) : isPrivateBlob ? (
                   <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-status-success/15 text-status-success border border-status-success/30 inline-flex items-center gap-1">
@@ -298,7 +377,7 @@ export function ImageUploadDropzone({
                   size="sm"
                   variant="outline"
                   onClick={() => fileInputRef.current?.click()}
-                  disabled={disabled || isUploading}
+                  disabled={disabled || isBusy}
                   className="h-7 text-xs gap-1.5 border-border hover:border-primary/50"
                 >
                   <RefreshCw className="w-3 h-3 text-primary" />
@@ -323,7 +402,7 @@ export function ImageUploadDropzone({
                   size="sm"
                   variant="outline"
                   onClick={handleRemove}
-                  disabled={disabled || isUploading}
+                  disabled={disabled || isBusy}
                   className="h-7 text-xs gap-1.5 text-status-error hover:bg-status-error/10 hover:text-status-error border-border hover:border-status-error/30"
                 >
                   <Trash2 className="w-3 h-3" />
@@ -339,14 +418,14 @@ export function ImageUploadDropzone({
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
-          onClick={() => !isUploading && fileInputRef.current?.click()}
+          onClick={() => !isBusy && fileInputRef.current?.click()}
           className={`relative border-2 border-dashed rounded-xl p-5 text-center cursor-pointer transition-all duration-200 select-none ${
             isDragging
               ? 'border-primary bg-primary/10 scale-[1.01] shadow-md shadow-primary/10'
               : 'border-border/80 bg-surface-raised/40 hover:border-primary/50 hover:bg-surface-raised/70'
-          } ${isUploading || disabled ? 'pointer-events-none opacity-80' : ''}`}
+          } ${isBusy || disabled ? 'pointer-events-none opacity-80' : ''}`}
         >
-          {isUploading ? (
+          {isBusy ? (
             /* Uploading Active State */
             <div className="py-4 space-y-2.5">
               <div className="w-10 h-10 mx-auto rounded-full bg-primary/10 flex items-center justify-center text-primary">
@@ -354,10 +433,14 @@ export function ImageUploadDropzone({
               </div>
               <div className="space-y-1">
                 <p className="text-xs font-semibold text-foreground">
-                  Mengunggah ke Vercel Blob (Private Mode)...
+                  {isCompressing
+                    ? 'Mengompres gambar ke format WebP...'
+                    : 'Mengunggah ke Vercel Blob (Private Mode)...'}
                 </p>
                 <p className="text-[11px] text-foreground-muted">
-                  Memproses enkripsi dan streaming storage Vercel
+                  {isCompressing
+                    ? 'Mengoptimalkan ukuran untuk hemat storage'
+                    : 'Memproses enkripsi dan streaming storage Vercel'}
                 </p>
               </div>
               <div className="w-36 h-1 bg-surface-raised rounded-full mx-auto overflow-hidden">
@@ -409,7 +492,7 @@ export function ImageUploadDropzone({
               onChange={(e) => onChange(e.target.value)}
               placeholder="https://... atau /api/v1/media/products/..."
               className="text-xs bg-surface-raised border-border font-mono flex-1 h-8"
-              disabled={disabled || isUploading}
+              disabled={disabled || isBusy}
             />
             {value && (
               <Button

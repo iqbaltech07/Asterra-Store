@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { put } from '@vercel/blob';
+import { put, head } from '@vercel/blob';
 import { AdminAuthService } from '@/lib/services/admin-auth.service';
+import { createHash } from 'crypto';
 
 const ALLOWED_MIME_TYPES = [
   'image/jpeg',
@@ -16,6 +17,11 @@ const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
 /**
  * POST /api/v1/admin/upload
  * Securely uploads product banners / images to Vercel Blob in Private Mode.
+ *
+ * Anti-Redundancy Architecture (5-Pillar):
+ * - Pilar 1: Content-Hash (SHA-256) deduplication — deterministic pathname
+ * - Pilar 2: Client sends hash; server checks `head()` before `put()`
+ * - addRandomSuffix disabled; allowOverwrite enabled for idempotent re-uploads
  */
 export async function POST(req: NextRequest) {
   try {
@@ -63,17 +69,55 @@ export async function POST(req: NextRequest) {
     }
 
     const folder = (formData.get('folder') as string) || 'products';
-    const ext = file.name.split('.').pop()?.toLowerCase() || 'png';
+    const ext = file.name.split('.').pop()?.toLowerCase() || 'webp';
+
+    // --- Pilar 1: Content-Hash Deduplication ---
+    // Read file buffer once, compute SHA-256 hash for deterministic naming
+    const fileBuffer = await file.arrayBuffer();
+    const hash = createHash('sha256')
+      .update(Buffer.from(fileBuffer))
+      .digest('hex')
+      .slice(0, 16);
+
     const cleanBaseName = file.name
       .replace(/\.[^/.]+$/, '')
       .replace(/[^a-zA-Z0-9_-]/g, '_')
       .slice(0, 40);
-    const pathname = `${folder}/${cleanBaseName}-${Date.now()}.${ext}`;
+
+    // Deterministic pathname: folder/basename-hash.ext
+    // Same content always produces the same path — zero duplicates
+    const pathname = `${folder}/${cleanBaseName}-${hash}.${ext}`;
+
+    // --- Pilar 2: Check-Before-Upload Deduplication ---
+    // Use head() to check if a blob with this exact pathname already exists
+    try {
+      const existing = await head(pathname);
+      if (existing && existing.url) {
+        // Blob already exists with identical content — skip upload entirely
+        const viewUrl = `/api/v1/media/${pathname}`;
+        return NextResponse.json({
+          success: true,
+          data: {
+            url: existing.url,
+            pathname: pathname,
+            downloadUrl: existing.downloadUrl,
+            viewUrl,
+            deduplicated: true,
+          },
+          message: 'Banner sudah ada di storage (deduplicated). Tidak ada upload ulang.',
+        });
+      }
+    } catch {
+      // head() throws BlobNotFoundError if blob doesn't exist — this is expected, proceed to upload
+    }
 
     // Upload to Vercel Blob strictly in private mode
-    const blob = await put(pathname, file, {
+    // addRandomSuffix: false — we control uniqueness via content hash
+    // allowOverwrite: true — idempotent operation for same content
+    const blob = await put(pathname, Buffer.from(fileBuffer), {
       access: 'private',
-      addRandomSuffix: true,
+      addRandomSuffix: false,
+      allowOverwrite: true,
       contentType: file.type,
     });
 
@@ -87,6 +131,7 @@ export async function POST(req: NextRequest) {
         pathname: blob.pathname,
         downloadUrl: blob.downloadUrl,
         viewUrl,
+        deduplicated: false,
       },
       message: 'Banner produk berhasil disimpan ke Vercel Blob (Private Mode).',
     });

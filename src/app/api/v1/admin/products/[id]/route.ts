@@ -1,6 +1,73 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { del } from '@vercel/blob';
+import { prisma } from '@/lib/prisma';
 import { PrismaCatalogRepository } from '@/lib/services/prisma-catalog.repository';
 import { AdminAuthService } from '@/lib/services/admin-auth.service';
+
+/**
+ * Checks if a URL is a Vercel Blob private media URL managed by Asterra.
+ * Only these URLs should be cleaned up from Blob storage.
+ */
+function isAsterraBlobUrl(url: string | undefined | null): boolean {
+  if (!url) return false;
+  return url.includes('/api/v1/media/') || url.includes('blob.vercel-storage.com');
+}
+
+/**
+ * Extracts the Blob pathname from an internal media URL.
+ * /api/v1/media/products/file.webp → products/file.webp
+ */
+function extractBlobPathname(url: string): string | null {
+  const prefix = '/api/v1/media/';
+  const idx = url.indexOf(prefix);
+  if (idx !== -1) {
+    return url.slice(idx + prefix.length);
+  }
+  // Direct blob URL — use as-is for del()
+  if (url.includes('blob.vercel-storage.com')) {
+    return url;
+  }
+  return null;
+}
+
+/**
+ * Safely deletes a blob from Vercel Blob storage.
+ * Logs errors but never throws — GC failures should not break the main operation.
+ */
+async function safeDeleteBlob(url: string): Promise<void> {
+  const pathname = extractBlobPathname(url);
+  if (!pathname) return;
+
+  try {
+    await del(pathname);
+    console.log(`[BlobGC] Deleted orphan blob: ${pathname}`);
+  } catch (err) {
+    // BlobNotFoundError is expected if blob was already removed
+    console.warn(`[BlobGC] Failed to delete blob "${pathname}":`, err);
+  }
+}
+
+/**
+ * Checks if any other product in the catalog is using the same image URL.
+ * Uses a focused Prisma count query for efficiency.
+ */
+async function isBlobUsedByOtherProducts(
+  imageUrl: string,
+  excludeProductId: string
+): Promise<boolean> {
+  try {
+    const count = await prisma.product.count({
+      where: {
+        imageUrl: imageUrl,
+        id: { not: excludeProductId },
+      },
+    });
+    return count > 0;
+  } catch {
+    // If we can't check, assume it's in use to be safe
+    return true;
+  }
+}
 
 /**
  * GET /api/v1/admin/products/:id
@@ -32,7 +99,10 @@ export async function GET(
 
 /**
  * PATCH /api/v1/admin/products/:id
- * Update product details, retail price, or visibility status
+ * Update product details, retail price, or visibility status.
+ *
+ * Pilar 3 (Garbage Collection): When imageUrl changes, the old Blob is deleted
+ * if it's an Asterra-managed private blob and not shared by other products.
  */
 export async function PATCH(
   req: NextRequest,
@@ -114,7 +184,21 @@ export async function PATCH(
     if (body.privacyTitle !== undefined) updates.privacyTitle = String(body.privacyTitle).trim();
     if (body.privacyDesc !== undefined) updates.privacyDesc = String(body.privacyDesc).trim();
 
+    // --- Pilar 3: Garbage Collection on Image Change ---
+    const oldImageUrl = product.imageUrl;
+    const newImageUrl = updates.imageUrl as string | undefined;
+    const imageChanged = newImageUrl !== undefined && newImageUrl !== oldImageUrl;
+
     const updated = await PrismaCatalogRepository.updateProduct(id, updates);
+
+    // After successful update, clean up the old blob if image changed
+    if (imageChanged && isAsterraBlobUrl(oldImageUrl)) {
+      const isShared = await isBlobUsedByOtherProducts(oldImageUrl, id);
+      if (!isShared) {
+        // Fire-and-forget: GC should not block the response
+        safeDeleteBlob(oldImageUrl).catch(() => {});
+      }
+    }
 
     return NextResponse.json({
       success: true,
@@ -132,6 +216,9 @@ export async function PATCH(
 
 /**
  * DELETE /api/v1/admin/products/:id
+ *
+ * Pilar 3 (Garbage Collection): When a product is deleted, its Blob image
+ * is also removed from storage if not shared by other products.
  */
 export async function DELETE(
   req: NextRequest,
@@ -147,7 +234,19 @@ export async function DELETE(
 
   const { id } = await params;
   try {
+    // Fetch product before deletion to get its image URL for GC
+    const product = await PrismaCatalogRepository.getProductById(id);
+    const imageUrlToClean = product?.imageUrl;
+
     await PrismaCatalogRepository.deleteProduct(id);
+
+    // --- Pilar 3: Garbage Collection on Product Delete ---
+    if (imageUrlToClean && isAsterraBlobUrl(imageUrlToClean)) {
+      const isShared = await isBlobUsedByOtherProducts(imageUrlToClean, id);
+      if (!isShared) {
+        safeDeleteBlob(imageUrlToClean).catch(() => {});
+      }
+    }
 
     return NextResponse.json({
       success: true,
