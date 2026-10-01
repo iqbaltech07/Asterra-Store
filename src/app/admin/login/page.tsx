@@ -14,7 +14,6 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import {
-  ShieldAlert,
   ShieldCheck,
   Lock,
   Mail,

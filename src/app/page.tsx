@@ -5,15 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
 import {
   ShoppingCart,
   Check,
@@ -26,7 +18,6 @@ import {
   Headphones,
   ArrowRight,
   Package,
-  AlertTriangle,
   UserCheck,
   Award,
 } from 'lucide-react';
