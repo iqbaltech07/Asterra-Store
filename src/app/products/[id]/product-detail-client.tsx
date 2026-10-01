@@ -7,7 +7,6 @@ import { useQuery } from '@tanstack/react-query';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
 import { useCartStore } from '@/store/use-cart-store';
 import {
@@ -168,33 +167,33 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col font-sans selection:bg-primary/20 selection:text-primary">
+    <div className="min-h-screen bg-white text-navy-900 flex flex-col font-sans selection:bg-accent/20 selection:text-accent">
       <Header onNotify={showNotification} />
 
       {/* Floating Notification */}
       {notification && (
         <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-5">
-          <div className="bg-surface-raised border border-primary/40 text-foreground px-4 py-3 rounded-lg shadow-xl flex items-center gap-3">
-            <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-primary">
+          <div className="bg-white border border-accent/40 text-navy-900 px-4 py-3 rounded-xl shadow-editorial flex items-center gap-3">
+            <div className="w-6 h-6 rounded-full bg-orange-50 border border-orange-200 flex items-center justify-center text-accent">
               <Check className="w-3.5 h-3.5" />
             </div>
-            <p className="text-xs font-medium">{notification}</p>
+            <p className="text-xs font-semibold">{notification}</p>
           </div>
         </div>
       )}
 
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 w-full">
-        {/* Breadcrumb with clean truncation [T20] */}
-        <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-foreground-muted mb-6 overflow-hidden">
-          <Link href="/" className="hover:text-foreground transition-colors shrink-0">
+        {/* Breadcrumb */}
+        <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-slate-500 mb-6 overflow-hidden">
+          <Link href="/" className="hover:text-navy-900 transition-colors shrink-0">
             Beranda
           </Link>
-          <span className="shrink-0 text-foreground-muted/60">/</span>
-          <Link href="/products" className="hover:text-foreground transition-colors shrink-0">
+          <span className="shrink-0 text-slate-300">/</span>
+          <Link href="/products" className="hover:text-navy-900 transition-colors shrink-0">
             Katalog Produk
           </Link>
-          <span className="shrink-0 text-foreground-muted/60">/</span>
-          <span className="text-foreground font-medium truncate max-w-[140px] sm:max-w-md">
+          <span className="shrink-0 text-slate-300">/</span>
+          <span className="text-navy-900 font-semibold truncate max-w-[160px] sm:max-w-md">
             {product?.name || 'Detail Produk'}
           </span>
         </nav>
@@ -202,20 +201,20 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
         {/* Loading State */}
         {isLoading && !product && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-pulse">
-            <div className="lg:col-span-7 h-96 bg-surface border border-border rounded-xl" />
-            <div className="lg:col-span-5 h-96 bg-surface border border-border rounded-xl" />
+            <div className="lg:col-span-7 h-96 bg-slate-50 border border-border rounded-2xl" />
+            <div className="lg:col-span-5 h-96 bg-slate-50 border border-border rounded-2xl" />
           </div>
         )}
 
         {/* Error State */}
         {error && !product && (
-          <div className="bg-surface-raised border border-status-error/40 rounded-xl p-12 text-center space-y-4 max-w-md mx-auto my-12">
-            <h3 className="text-lg font-bold text-foreground">Produk Tidak Ditemukan</h3>
-            <p className="text-xs text-foreground-muted">
+          <div className="bg-white border border-red-200 rounded-2xl p-12 text-center space-y-4 max-w-md mx-auto my-12 shadow-card">
+            <h3 className="text-lg font-bold text-navy-900">Produk Tidak Ditemukan</h3>
+            <p className="text-xs text-slate-500">
               Lisensi atau produk digital yang Anda cari tidak tersedia atau tautan telah kedaluwarsa.
             </p>
             <Link href="/products">
-              <Button size="sm">Kembali ke Katalog</Button>
+              <Button size="sm" className="rounded-xl">Kembali ke Katalog</Button>
             </Link>
           </div>
         )}
@@ -228,8 +227,8 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
               {/* Left Column: Image & Feature Highlights (7 Cols) */}
               <div className="lg:col-span-7 space-y-6">
                 {/* Product Banner Card */}
-                <div className="bg-surface border border-border rounded-xl overflow-hidden relative group">
-                  <div className="relative h-64 sm:h-96 w-full bg-surface-raised">
+                <div className="bg-white border border-border rounded-2xl overflow-hidden relative group shadow-card">
+                  <div className="relative h-64 sm:h-96 w-full bg-slate-50">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={product.imageUrl}
@@ -239,21 +238,21 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                       decoding="async"
                       className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-300"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/25 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-navy-950/80 via-transparent to-transparent" />
 
                     <div className="absolute top-4 left-4 flex gap-2 flex-wrap">
-                      <Badge variant="secondary" className="bg-background/80 backdrop-blur-sm border-border text-xs">
+                      <span className="text-xs font-semibold px-3 py-1 rounded-full bg-white/90 backdrop-blur-sm text-navy-900 border border-slate-200 shadow-xs">
                         {product.category.name}
-                      </Badge>
+                      </span>
                       {product.popular && (
-                        <Badge className="bg-primary text-white text-xs">
+                        <span className="text-xs font-semibold px-3 py-1 rounded-full bg-accent text-white shadow-xs">
                           Paling Populer
-                        </Badge>
+                        </span>
                       )}
                       {isOutOfStock && (
-                        <Badge variant="destructive" className="bg-status-error text-white text-xs font-semibold shadow-xs">
+                        <span className="text-xs font-bold px-3 py-1 rounded-full bg-status-error text-white shadow-xs">
                           Stok Habis
-                        </Badge>
+                        </span>
                       )}
                     </div>
 
@@ -261,7 +260,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                       <button
                         type="button"
                         onClick={handleShare}
-                        className="w-8 h-8 rounded-lg bg-background/80 backdrop-blur-sm flex items-center justify-center text-foreground-muted hover:text-foreground transition-colors"
+                        className="w-8 h-8 rounded-xl bg-white/90 backdrop-blur-sm flex items-center justify-center text-slate-600 hover:text-navy-900 transition-colors shadow-xs cursor-pointer"
                         title="Bagikan Tautan Produk"
                       >
                         <Share2 className="w-4 h-4" />
@@ -276,8 +275,8 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                               : 'Produk dihapus dari daftar keinginan.'
                           );
                         }}
-                        className={`w-8 h-8 rounded-lg bg-background/80 backdrop-blur-sm flex items-center justify-center transition-colors ${
-                          isWishlisted ? 'text-status-error' : 'text-foreground-muted hover:text-foreground'
+                        className={`w-8 h-8 rounded-xl bg-white/90 backdrop-blur-sm flex items-center justify-center transition-colors shadow-xs cursor-pointer ${
+                          isWishlisted ? 'text-red-500' : 'text-slate-600 hover:text-navy-900'
                         }`}
                         title="Simpan ke Favorit"
                       >
@@ -286,80 +285,80 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                     </div>
 
                     <div className="absolute bottom-4 sm:bottom-6 left-4 sm:left-6 right-4 sm:right-6">
-                      <span className="text-[11px] sm:text-xs font-semibold text-primary uppercase tracking-wider block mb-1">
+                      <span className="text-[11px] sm:text-xs font-bold text-accent uppercase tracking-wider block mb-1">
                         Lisensi Digital Resmi
                       </span>
-                      <h1 className="text-xl sm:text-3xl font-extrabold text-foreground tracking-tight line-clamp-2">
+                      <h1 className="text-xl sm:text-3xl font-extrabold text-white tracking-tight line-clamp-2">
                         {product.name}
                       </h1>
                     </div>
                   </div>
                 </div>
 
-                {/* Guarantee Chips [T19: Dynamic & Admin-controlled] */}
+                {/* Guarantee Chips */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div className="bg-surface border border-border rounded-xl p-3.5 flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0">
-                      <ShieldCheck className="w-4 h-4" />
+                  <div className="bg-white border border-border rounded-2xl p-4 flex items-center gap-3.5 shadow-xs">
+                    <div className="w-10 h-10 rounded-xl bg-orange-50 border border-orange-200/60 flex items-center justify-center text-accent shrink-0">
+                      <ShieldCheck className="w-5 h-5" />
                     </div>
                     <div className="min-w-0">
-                      <span className="text-xs font-semibold text-foreground block truncate">
+                      <span className="text-xs font-bold text-navy-900 block truncate">
                         {product.guaranteeTitle || 'Garansi Penuh'}
                       </span>
-                      <span className="text-[11px] text-foreground-muted block truncate">
+                      <span className="text-[11px] text-slate-500 block truncate">
                         {product.guaranteeDesc || 'Jaminan ganti akun 100%'}
                       </span>
                     </div>
                   </div>
 
-                  <div className="bg-surface border border-border rounded-xl p-3.5 flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0">
-                      <Clock className="w-4 h-4" />
+                  <div className="bg-white border border-border rounded-2xl p-4 flex items-center gap-3.5 shadow-xs">
+                    <div className="w-10 h-10 rounded-xl bg-orange-50 border border-orange-200/60 flex items-center justify-center text-accent shrink-0">
+                      <Clock className="w-5 h-5" />
                     </div>
                     <div className="min-w-0">
-                      <span className="text-xs font-semibold text-foreground block truncate">
+                      <span className="text-xs font-bold text-navy-900 block truncate">
                         {product.processTitle || 'Proses Instan'}
                       </span>
-                      <span className="text-[11px] text-foreground-muted block truncate">
+                      <span className="text-[11px] text-slate-500 block truncate">
                         {product.processDesc || '1 - 15 menit selesai'}
                       </span>
                     </div>
                   </div>
 
-                  <div className="bg-surface border border-border rounded-xl p-3.5 flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0">
-                      <Zap className="w-4 h-4" />
+                  <div className="bg-white border border-border rounded-2xl p-4 flex items-center gap-3.5 shadow-xs">
+                    <div className="w-10 h-10 rounded-xl bg-orange-50 border border-orange-200/60 flex items-center justify-center text-accent shrink-0">
+                      <Zap className="w-5 h-5" />
                     </div>
                     <div className="min-w-0">
-                      <span className="text-xs font-semibold text-foreground block truncate">
+                      <span className="text-xs font-bold text-navy-900 block truncate">
                         {product.privacyTitle || 'Akun Private'}
                       </span>
-                      <span className="text-[11px] text-foreground-muted block truncate">
+                      <span className="text-[11px] text-slate-500 block truncate">
                         {product.privacyDesc || 'Ruang kerja aman & personal'}
                       </span>
                     </div>
                   </div>
                 </div>
 
-                {/* Description & Features [T19: Dynamic & Admin-controlled] */}
-                <div className="bg-surface border border-border rounded-xl p-5 sm:p-6 space-y-6">
+                {/* Description & Features */}
+                <div className="bg-white border border-border rounded-2xl p-6 sm:p-7 space-y-6 shadow-card">
                   <div>
-                    <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-foreground-muted mb-2">
+                    <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-400 mb-2">
                       Deskripsi Layanan
                     </h3>
-                    <p className="text-xs sm:text-sm text-foreground/90 leading-relaxed whitespace-pre-line">
+                    <p className="text-xs sm:text-sm text-slate-700 leading-relaxed whitespace-pre-line">
                       {product.description}
                     </p>
                   </div>
 
-                  <div className="pt-4 border-t border-border">
-                    <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-foreground-muted mb-3">
+                  <div className="pt-5 border-t border-border">
+                    <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-400 mb-3.5">
                       Fitur Unggulan Yang Anda Dapatkan
                     </h3>
-                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {product.features.map((feature, idx) => (
-                        <li key={idx} className="flex items-start gap-2.5 text-xs text-foreground/90">
-                          <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                        <li key={idx} className="flex items-start gap-2.5 text-xs text-slate-700">
+                          <CheckCircle2 className="w-4 h-4 text-accent shrink-0 mt-0.5" />
                           <span>{feature}</span>
                         </li>
                       ))}
@@ -369,15 +368,15 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
 
                 {/* Technical Specifications */}
                 {product.specifications && product.specifications.length > 0 && (
-                  <div className="bg-surface border border-border rounded-xl p-5 sm:p-6 space-y-4">
-                    <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-foreground-muted">
+                  <div className="bg-white border border-border rounded-2xl p-6 space-y-4 shadow-card">
+                    <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-400">
                       Informasi & Spesifikasi Lisensi
                     </h3>
                     <div className="divide-y divide-border/60">
                       {product.specifications.map((spec, idx) => (
                         <div key={idx} className="py-2.5 flex justify-between items-center text-xs">
-                          <span className="text-foreground-muted">{spec.label}</span>
-                          <span className="font-semibold text-foreground">{spec.value}</span>
+                          <span className="text-slate-500">{spec.label}</span>
+                          <span className="font-bold text-navy-900">{spec.value}</span>
                         </div>
                       ))}
                     </div>
@@ -387,36 +386,36 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
 
               {/* Right Column: Dynamic Pricing & Action Box (5 Cols) */}
               <div className="lg:col-span-5 lg:sticky lg:top-24 space-y-6">
-                <Card className="bg-surface border-border shadow-xl">
-                  <CardHeader className="pb-4">
+                <Card className="bg-white border-border shadow-card hover:shadow-card-hover transition-all rounded-2xl">
+                  <CardHeader className="p-6 pb-4">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold text-primary uppercase tracking-wide">
+                      <span className="text-xs font-bold text-accent uppercase tracking-wide">
                         Pilihan Paket Berlangganan
                       </span>
                       {isOutOfStock ? (
-                        <span className="text-xs px-2.5 py-0.5 rounded-full bg-status-error/15 text-status-error font-semibold border border-status-error/30 flex items-center gap-1 shadow-xs">
+                        <span className="text-xs px-2.5 py-0.5 rounded-full bg-red-50 text-status-error font-semibold border border-red-200 flex items-center gap-1 shadow-xs">
                           <AlertTriangle className="w-3 h-3 text-status-error" />
                           <span>Stok Habis</span>
                         </span>
                       ) : (
-                        <span className="text-xs px-2.5 py-0.5 rounded-full bg-status-success/10 text-status-success font-medium border border-status-success/20">
+                        <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200">
                           Stok Tersedia ({product.stock ?? 100})
                         </span>
                       )}
                     </div>
-                    <CardTitle className="text-2xl font-bold text-foreground mt-2">
+                    <CardTitle className="text-2xl sm:text-3xl font-extrabold text-navy-900 mt-2">
                       Rp {totalPrice.toLocaleString('id-ID')}
                     </CardTitle>
-                    <p className="text-xs text-foreground-muted">
+                    <p className="text-xs text-slate-500 mt-1">
                       Harga nett termasuk panduan aktivasi resmi & garansi pergantian.
                     </p>
                   </CardHeader>
 
-                  <CardContent className="space-y-5">
+                  <CardContent className="p-6 pt-0 space-y-5">
                     {/* Duration Options */}
                     {product.durations && product.durations.length > 1 && (
                       <div className="space-y-2">
-                        <label className="text-xs font-semibold text-foreground block">
+                        <label className="text-xs font-bold text-navy-900 block">
                           Pilih Durasi Akses:
                         </label>
                         <div className="grid grid-cols-2 gap-2">
@@ -427,16 +426,16 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                                 key={dur.id}
                                 type="button"
                                 onClick={() => setSelectedDurationIndex(idx)}
-                                className={`p-3 rounded-lg border text-left transition-all ${
+                                className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
                                   isSelected
-                                    ? 'border-primary bg-primary/10 text-foreground ring-1 ring-primary'
-                                    : 'border-border bg-surface-raised hover:border-primary/40 text-foreground-muted'
+                                    ? 'border-accent bg-orange-50/70 text-navy-900 ring-2 ring-accent/30'
+                                    : 'border-border bg-white hover:border-slate-300 text-slate-600'
                                 }`}
                               >
-                                <span className="block text-xs font-semibold text-foreground">
+                                <span className="block text-xs font-bold text-navy-900">
                                   {dur.label}
                                 </span>
-                                <span className="block text-[11px] text-primary font-mono mt-0.5">
+                                <span className="block text-[11px] text-accent font-semibold mt-0.5">
                                   Rp {dur.price.toLocaleString('id-ID')}
                                 </span>
                               </button>
@@ -447,8 +446,8 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                     )}
 
                     {/* Quantity Selector */}
-                    <div className="flex items-center justify-between py-2 border-t border-b border-border/80">
-                      <span className="text-xs font-semibold text-foreground">Jumlah Pesanan:</span>
+                    <div className="flex items-center justify-between py-3 border-t border-b border-border">
+                      <span className="text-xs font-bold text-navy-900">Jumlah Pesanan:</span>
                       <div className="flex items-center gap-3">
                         <Button
                           type="button"
@@ -456,11 +455,11 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                           size="icon"
                           disabled={quantity <= 1 || isOutOfStock}
                           onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                          className="w-8 h-8 rounded-lg border-border"
+                          className="w-8 h-8 rounded-xl border-border"
                         >
                           <Minus className="w-3.5 h-3.5" />
                         </Button>
-                        <span className="text-sm font-bold font-mono text-foreground w-6 text-center">
+                        <span className="text-sm font-bold font-mono text-navy-900 w-6 text-center">
                           {quantity}
                         </span>
                         <Button
@@ -469,7 +468,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                           size="icon"
                           disabled={isOutOfStock || (product.stock !== undefined && quantity >= product.stock)}
                           onClick={() => setQuantity(quantity + 1)}
-                          className="w-8 h-8 rounded-lg border-border"
+                          className="w-8 h-8 rounded-xl border-border"
                         >
                           <Plus className="w-3.5 h-3.5" />
                         </Button>
@@ -482,7 +481,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                         type="button"
                         onClick={handleBuyNow}
                         disabled={isOutOfStock}
-                        className="w-full text-xs font-bold py-2.5 h-auto shadow-md"
+                        className="w-full text-xs sm:text-sm font-bold py-3 h-auto rounded-xl bg-accent hover:bg-accent-hover text-white shadow-md cursor-pointer"
                       >
                         {isOutOfStock ? 'Stok Habis' : 'Beli Sekarang (Langsung Checkout)'}
                       </Button>
@@ -492,20 +491,20 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                         variant="outline"
                         onClick={handleAddToCart}
                         disabled={isOutOfStock}
-                        className="w-full text-xs border-border py-2.5 h-auto gap-2"
+                        className="w-full text-xs font-semibold border-border py-2.5 h-auto gap-2 rounded-xl text-navy-900 hover:text-accent cursor-pointer"
                       >
-                        <ShoppingCart className="w-4 h-4" />
+                        <ShoppingCart className="w-4 h-4 text-accent" />
                         <span>{isOutOfStock ? 'Stok Habis' : 'Tambah ke Keranjang'}</span>
                       </Button>
                     </div>
 
                     {/* Trust Badges */}
                     <div className="pt-3 border-t border-border space-y-2">
-                      <div className="flex items-center gap-2 text-[11px] text-foreground-muted">
+                      <div className="flex items-center gap-2 text-[11px] text-slate-500">
                         <Check className="w-3.5 h-3.5 text-status-success shrink-0" />
                         <span>Aktivasi otomatis & garansi uang kembali jika terkendala</span>
                       </div>
-                      <div className="flex items-center gap-2 text-[11px] text-foreground-muted">
+                      <div className="flex items-center gap-2 text-[11px] text-slate-500">
                         <Check className="w-3.5 h-3.5 text-status-success shrink-0" />
                         <span>Dukungan WhatsApp Customer Service ramah & responsif</span>
                       </div>
@@ -517,10 +516,10 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
 
             {/* FAQs */}
             {product.faqs && product.faqs.length > 0 && (
-              <div className="bg-surface border border-border rounded-xl p-5 sm:p-6 space-y-4">
+              <div className="bg-white border border-border rounded-2xl p-6 sm:p-7 space-y-4 shadow-card">
                 <div className="flex items-center gap-2">
-                  <HelpCircle className="w-5 h-5 text-primary" />
-                  <h2 className="text-base sm:text-lg font-bold text-foreground">Pertanyaan Umum (FAQ)</h2>
+                  <HelpCircle className="w-5 h-5 text-accent" />
+                  <h2 className="text-base sm:text-lg font-bold text-navy-900">Pertanyaan Umum (FAQ)</h2>
                 </div>
 
                 <div className="space-y-3">
@@ -529,24 +528,24 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                     return (
                       <div
                         key={idx}
-                        className="border border-border rounded-lg overflow-hidden bg-surface-raised"
+                        className="border border-border rounded-xl overflow-hidden bg-white shadow-xs"
                       >
                         <button
                           type="button"
                           onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
-                          className="w-full p-4 text-left flex items-center justify-between gap-4 hover:bg-surface-hover transition-colors"
+                          className="w-full p-4 text-left flex items-center justify-between gap-4 hover:bg-slate-50 transition-colors cursor-pointer"
                         >
-                          <span className="text-xs sm:text-sm font-semibold text-foreground">
+                          <span className="text-xs sm:text-sm font-bold text-navy-900">
                             {faq.question}
                           </span>
                           {isOpen ? (
-                            <ChevronUp className="w-4 h-4 text-primary shrink-0" />
+                            <ChevronUp className="w-4 h-4 text-accent shrink-0" />
                           ) : (
-                            <ChevronDown className="w-4 h-4 text-foreground-muted shrink-0" />
+                            <ChevronDown className="w-4 h-4 text-slate-400 shrink-0" />
                           )}
                         </button>
                         {isOpen && (
-                          <div className="px-4 pb-4 pt-1 text-xs text-foreground-muted border-t border-border/40">
+                          <div className="px-4 pb-4 pt-1 text-xs text-slate-600 border-t border-border/40 leading-relaxed">
                             {faq.answer}
                           </div>
                         )}
@@ -557,17 +556,17 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
               </div>
             )}
 
-            {/* Related Products Recommendation [T23: Smart Relevance Algorithm] */}
+            {/* Related Products Recommendation */}
             {product.relatedProducts && product.relatedProducts.length > 0 && (
               <div className="space-y-5">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h2 className="text-base sm:text-lg font-bold text-foreground">Rekomendasi Produk Lainnya</h2>
-                    <p className="text-xs text-foreground-muted">Pilihan relevan yang paling sering dibeli bersama produk ini</p>
+                    <h2 className="text-base sm:text-lg font-bold text-navy-900">Rekomendasi Produk Lainnya</h2>
+                    <p className="text-xs text-slate-500">Pilihan relevan yang paling sering dibeli bersama produk ini</p>
                   </div>
                   <Link
                     href="/products"
-                    className="text-xs text-primary hover:underline inline-flex items-center gap-1 shrink-0"
+                    className="text-xs text-accent font-semibold hover:underline inline-flex items-center gap-1 shrink-0"
                   >
                     <span>Lihat Semua Katalog</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -578,10 +577,10 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                   {product.relatedProducts.map((rel) => (
                     <div
                       key={rel.id}
-                      className="bg-surface border border-border rounded-xl p-4 flex flex-col justify-between hover:border-primary/50 transition-all duration-200"
+                      className="bg-white border border-border rounded-2xl p-4 flex flex-col justify-between shadow-card hover:shadow-card-hover hover:border-slate-300 transition-all duration-200"
                     >
                       <div className="space-y-3">
-                        <div className="h-32 rounded-lg bg-surface-raised overflow-hidden border border-border relative">
+                        <div className="h-32 rounded-xl bg-slate-50 overflow-hidden border border-border relative">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={rel.imageUrl}
@@ -597,15 +596,15 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                           ) : null}
                         </div>
                         <div>
-                          <span className="text-[11px] text-primary font-medium">{rel.category.name}</span>
-                          <h4 className="text-sm font-bold text-foreground line-clamp-2">{rel.name}</h4>
+                          <span className="text-[11px] text-accent font-semibold">{rel.category.name}</span>
+                          <h4 className="text-sm font-bold text-navy-900 line-clamp-2">{rel.name}</h4>
                         </div>
                       </div>
 
                       <div className="flex items-center justify-between pt-3 mt-3 border-t border-border">
-                        <span className="text-xs font-bold text-foreground font-mono">{rel.priceFormatted}</span>
+                        <span className="text-xs font-bold text-navy-900">{rel.priceFormatted}</span>
                         <Link href={`/products/${rel.id}`}>
-                          <Button size="sm" variant="outline" className="text-xs h-7 px-2.5">
+                          <Button size="sm" variant="outline" className="text-xs h-7 px-3 rounded-xl hover:text-accent">
                             Lihat
                           </Button>
                         </Link>

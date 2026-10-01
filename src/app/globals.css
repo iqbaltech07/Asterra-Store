@@ -3,60 +3,69 @@
 @tailwind utilities;
 
 :root {
-  /* Moryn Authentic Color Tokens */
-  --color-bg: #f7f5f0;
-  --color-surface: #fcfbf8;
-  --color-surface-raised: #ffffff;
-  --color-ink: #171a18;
-  --color-ink-soft: #303633;
-  --color-muted: #707874;
-  --color-border: #d9ddd8;
-  --color-border-strong: #b9bfbb;
-  --color-accent: #c66543;
-  --color-accent-dark: #a94f32;
-  --color-accent-soft: #f1dfd7;
+  /* Asterra Store Brand System Tokens */
+  --color-navy: #0b1a2e;
+  --color-navy-deep: #071321;
+  --color-navy-surface: #102238;
+  --color-navy-surface-2: #152b43;
+  --color-navy-border: #1e3550;
 
-  /* Semantic colors */
-  --color-success: #2f6b4f;
-  --color-warning: #a56a21;
-  --color-danger: #b4433a;
-  --color-info: #486875;
+  --color-accent: #e96f3d;
+  --color-accent-hover: #f27e4a;
+  --color-accent-soft: #fff0e9;
+  --color-accent-dark: #c95b3c;
+
+  --color-bg: #ffffff;
+  --color-surface: #ffffff;
+  --color-surface-secondary: #f7f9fb;
+  --color-surface-raised: #ffffff;
+  --color-surface-hover: #f8fafc;
+
+  --color-border: #e2e8f0;
+  --color-border-subtle: #eef2f6;
+  --color-border-strong: #cbd5e1;
+
+  --color-ink: #0b1a2e;
+  --color-ink-soft: #1e293b;
+  --color-muted: #8793a3;
+  --color-secondary: #607085;
+
+  /* Semantic Status Colors */
+  --color-success: #16a34a;
+  --color-warning: #d97706;
+  --color-danger: #dc2626;
+  --color-info: #2563eb;
 
   /* Radius */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 18px;
-  --radius-xl: 24px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-card: 12px;
+  --radius-input: 8px;
 
-  /* Aliases for Tailwind CSS variables */
-  --background: #f7f5f0;
-  --surface: #fcfbf8;
+  /* Tailwind Semantic Variable Aliases */
+  --background: #ffffff;
+  --surface: #ffffff;
   --surface-raised: #ffffff;
-  --border: #d9ddd8;
-  --primary: #c66543;
-  --foreground: #171a18;
-  --foreground-muted: #707874;
-  --popover: #fcfbf8;
-  --popover-foreground: #171a18;
-  --input: #d9ddd8;
-  --card: #fcfbf8;
-  --card-foreground: #171a18;
+  --border: #e2e8f0;
+  --primary: #e96f3d;
+  --foreground: #0b1a2e;
+  --foreground-muted: #8793a3;
+  --popover: #ffffff;
+  --popover-foreground: #0b1a2e;
+  --input: #e2e8f0;
+  --card: #ffffff;
+  --card-foreground: #0b1a2e;
 
-  /* HeroUI / Accent Tokens */
-  --accent: #0485f7;
-  --accent-hover: #0473d4;
-  --accent-foreground: #ffffff;
-}
-
-.dark {
-  --accent: #0485f7;
-  --accent-hover: #3197ff;
+  --accent: #e96f3d;
+  --accent-hover: #f27e4a;
   --accent-foreground: #ffffff;
 }
 
 body {
-  background-color: #f7f5f0;
-  color: #171a18;
+  background-color: #ffffff;
+  color: #0b1a2e;
   font-family:
     var(--font-inter),
     Inter,
@@ -69,21 +78,21 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Custom Editorial Scrollbar */
+/* Custom Sleek Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f7f5f0;
+  background: #f7f9fb;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #d9ddd8;
+  background: #cbd5e1;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #b9bfbb;
+  background: #94a3b8;
 }

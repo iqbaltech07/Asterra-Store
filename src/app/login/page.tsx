@@ -11,6 +11,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { signIn } from '@/lib/auth-client';
+import { AsterraLogo } from '@/components/ui/asterra-logo';
 import { ArrowLeft, Loader2, AlertCircle, ShieldCheck, Check } from 'lucide-react';
 
 export default function LoginPage() {
@@ -35,27 +36,27 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col justify-center items-center px-4 py-12 selection:bg-primary/20 selection:text-primary">
+    <div className="min-h-screen bg-surface-secondary text-navy-900 flex flex-col justify-center items-center px-4 py-12 selection:bg-accent/20 selection:text-accent">
       {/* Back to Home Link */}
       <div className="w-full max-w-md mb-6">
         <Link
           href="/"
-          className="inline-flex items-center gap-2 text-xs font-medium text-foreground-muted hover:text-foreground transition-colors group"
+          className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-navy-900 transition-colors group"
         >
           <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
           <span>Kembali ke Beranda Toko</span>
         </Link>
       </div>
 
-      <Card className="w-full max-w-md border-border bg-surface shadow-editorial">
-        <CardHeader className="space-y-2 text-center pb-6 pt-6">
-          <div className="mx-auto w-12 h-12 rounded-xl bg-primary text-white flex items-center justify-center font-bold text-lg shadow-sm mb-1">
-            A
+      <Card className="w-full max-w-md border-border bg-white rounded-2xl shadow-card">
+        <CardHeader className="space-y-3 text-center pb-6 pt-7">
+          <div className="flex justify-center mb-1">
+            <AsterraLogo variant="light-bg" size="lg" linkToHome={true} />
           </div>
-          <CardTitle className="text-2xl font-bold tracking-tight text-foreground">
-            Masuk ke Asterra Store
+          <CardTitle className="text-2xl font-extrabold tracking-tight text-navy-900">
+            Masuk ke Akun Anda
           </CardTitle>
-          <CardDescription className="text-xs text-foreground-muted max-w-xs mx-auto">
+          <CardDescription className="text-xs text-slate-500 max-w-xs mx-auto">
             Akses instan untuk mengelola langganan, lisensi, dan riwayat pesanan digital Anda
           </CardDescription>
         </CardHeader>
@@ -63,28 +64,28 @@ export default function LoginPage() {
         <CardContent className="space-y-5">
           {/* Error notification */}
           {errorMessage && (
-            <div className="p-3 rounded-md bg-status-error/10 border border-status-error/20 flex items-start gap-2.5 text-xs text-status-error animate-in fade-in">
+            <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 flex items-start gap-2.5 text-xs text-status-error animate-in fade-in">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-status-error" />
-              <span className="leading-relaxed">{errorMessage}</span>
+              <span className="leading-relaxed font-medium">{errorMessage}</span>
             </div>
           )}
 
-          {/* Single Google Login Button */}
+          {/* Google Login Button */}
           <div className="space-y-3">
             <button
               type="button"
               onClick={handleGoogleLogin}
               disabled={isLoading}
-              className="w-full h-12 rounded-md bg-surface-raised border border-border hover:bg-surface-hover hover:border-primary/40 text-foreground font-medium text-sm flex items-center justify-center gap-3 shadow-subtle transition-all duration-200 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed group cursor-pointer"
+              className="w-full h-12 rounded-xl bg-white border border-border hover:border-accent hover:bg-orange-50/20 text-navy-900 font-semibold text-sm flex items-center justify-center gap-3 shadow-xs transition-all duration-200 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed group cursor-pointer"
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                  <Loader2 className="w-4 h-4 animate-spin text-accent" />
                   <span>Menghubungkan ke Google...</span>
                 </>
               ) : (
                 <>
-                  {/* Official Google 'G' SVG Logo */}
+                  {/* Google SVG Logo */}
                   <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
                     <path
                       fill="#4285F4"
@@ -103,7 +104,7 @@ export default function LoginPage() {
                       d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
                     />
                   </svg>
-                  <span className="font-semibold text-foreground tracking-tight">
+                  <span className="font-bold text-navy-900 tracking-tight">
                     Lanjutkan dengan Akun Google
                   </span>
                 </>
@@ -113,15 +114,15 @@ export default function LoginPage() {
 
           {/* Key Security Value Props */}
           <div className="pt-4 border-t border-border space-y-2.5">
-            <div className="flex items-center gap-2.5 text-xs text-foreground-muted">
+            <div className="flex items-center gap-2.5 text-xs text-slate-600">
               <Check className="w-3.5 h-3.5 text-status-success shrink-0" />
               <span>Akses 1-klik instan tanpa perlu mengingat password</span>
             </div>
-            <div className="flex items-center gap-2.5 text-xs text-foreground-muted">
+            <div className="flex items-center gap-2.5 text-xs text-slate-600">
               <Check className="w-3.5 h-3.5 text-status-success shrink-0" />
               <span>Verifikasi identitas langsung dilindungi enkripsi Google</span>
             </div>
-            <div className="flex items-center gap-2.5 text-xs text-foreground-muted">
+            <div className="flex items-center gap-2.5 text-xs text-slate-600">
               <ShieldCheck className="w-3.5 h-3.5 text-status-success shrink-0" />
               <span>Privasi data pesanan terisolasi dengan aman di database</span>
             </div>
@@ -129,15 +130,15 @@ export default function LoginPage() {
         </CardContent>
 
         <CardFooter className="flex flex-col space-y-3 pt-2 pb-6 border-t border-border/60">
-          <p className="text-[11px] text-center text-foreground-muted leading-relaxed">
+          <p className="text-[11px] text-center text-slate-400 leading-relaxed">
             Dengan masuk, Anda menyetujui Ketentuan Layanan dan Kebijakan Privasi Asterra Store.
           </p>
         </CardFooter>
       </Card>
 
-      {/* Developer note regarding credentials */}
-      <div className="mt-8 text-center text-[11px] text-foreground-muted max-w-sm">
-        Sistem autentikasi pelanggan didukung oleh <span className="font-semibold text-foreground">Better Auth</span> & <span className="font-semibold text-foreground">Supabase PostgreSQL</span>.
+      {/* Footer system note */}
+      <div className="mt-8 text-center text-[11px] text-slate-400 max-w-sm">
+        Sistem autentikasi pelanggan dilindungi oleh enkripsi SSL & verifikasi Google resmi.
       </div>
     </div>
   );

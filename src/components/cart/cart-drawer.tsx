@@ -31,18 +31,22 @@ export function CartDrawer({ isOpen, onClose, onCheckout }: CartDrawerProps) {
       {/* Drawer Panel */}
       <div className="relative w-full max-w-md bg-surface border-l border-border h-full shadow-2xl flex flex-col z-10 animate-in slide-in-from-right duration-200">
         {/* Header */}
-        <div className="p-5 border-b border-border flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <ShoppingBag className="w-5 h-5 text-primary" />
-            <h2 className="font-semibold text-lg text-foreground">Keranjang Pesanan</h2>
-            <span className="text-xs bg-surface-raised border border-border px-2 py-0.5 rounded-full text-foreground-muted">
-              {getTotalItems()} item
-            </span>
+        <div className="p-5 bg-navy-900 border-b border-navy-800 text-white flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-primary">
+              <ShoppingBag className="w-4 h-4" />
+            </div>
+            <div>
+              <h2 className="font-bold text-base text-white leading-tight">Keranjang Pesanan</h2>
+              <span className="text-[11px] text-white/70">
+                {getTotalItems()} item digital terpilih
+              </span>
+            </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-1 rounded-md text-foreground-muted hover:text-foreground hover:bg-surface-hover transition-colors"
+            className="p-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -148,9 +152,9 @@ export function CartDrawer({ isOpen, onClose, onCheckout }: CartDrawerProps) {
                 <span>Biaya Layanan & PPN</span>
                 <span className="text-status-success font-medium">Gratis (Rp 0)</span>
               </div>
-              <div className="flex justify-between text-sm font-bold text-foreground pt-2 border-t border-border">
+              <div className="flex justify-between text-sm font-bold text-foreground pt-2.5 border-t border-border">
                 <span>Total Pembayaran</span>
-                <span className="text-primary text-base">
+                <span className="text-primary text-base font-extrabold font-mono">
                   Rp {getTotalAmount().toLocaleString('id-ID')}
                 </span>
               </div>
@@ -161,21 +165,21 @@ export function CartDrawer({ isOpen, onClose, onCheckout }: CartDrawerProps) {
                 variant="outline"
                 size="sm"
                 onClick={clearCart}
-                className="text-foreground-muted hover:text-status-error"
+                className="text-foreground-muted hover:text-status-error border-border h-10 px-3"
               >
                 Kosongkan
               </Button>
               <Button
-                className={`flex-1 gap-2 ${
+                className={`flex-1 gap-2 h-10 font-bold shadow-md shadow-primary/20 ${
                   hasOutOfStockItems
                     ? 'opacity-50 cursor-not-allowed bg-muted text-muted-foreground'
-                    : ''
+                    : 'bg-primary hover:bg-primary-hover text-white'
                 }`}
                 disabled={hasOutOfStockItems}
                 onClick={onCheckout}
                 title={hasOutOfStockItems ? 'Hapus item stok habis terlebih dahulu' : undefined}
               >
-                <span>{hasOutOfStockItems ? 'Stok Habis' : 'Lanjut Checkout'}</span>
+                <span>{hasOutOfStockItems ? 'Stok Habis' : 'Lanjut ke Checkout'}</span>
                 <ArrowRight className="w-4 h-4" />
               </Button>
             </div>

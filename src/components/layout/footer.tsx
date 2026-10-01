@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { ShieldCheck, Lock, Headphones, ExternalLink } from 'lucide-react';
+import { AsterraLogo } from '@/components/ui/asterra-logo';
 
 interface FooterProps {
   onNotify?: (message: string) => void;
@@ -13,26 +14,24 @@ export function Footer({ onNotify }: FooterProps) {
   };
 
   return (
-    <footer className="border-t border-border bg-surface mt-20 pt-14 pb-10">
+    <footer className="border-t border-navy-border bg-navy-950 text-white mt-24 pt-16 pb-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-10 pb-12 border-b border-border/70">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-10 pb-12 border-b border-navy-border/80">
           {/* Brand Col */}
           <div className="space-y-4 md:col-span-1">
-            <Link href="/" className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center text-white font-bold text-sm shadow-sm">
-                A
-              </div>
-              <span className="font-semibold text-lg text-foreground tracking-tight">
-                Asterra Store
-              </span>
-            </Link>
-            <p className="text-xs text-foreground-muted leading-relaxed">
+            <AsterraLogo
+              variant="navbar"
+              size="md"
+              showTagline={true}
+              linkToHome={true}
+            />
+            <p className="text-xs text-slate-400 leading-relaxed pt-1">
               Platform penyedia produk dan layanan digital premium terpercaya di Indonesia dengan
               konfirmasi pembayaran instan dan garansi resmi.
             </p>
-            <div className="flex items-center gap-3 pt-2 text-xs text-foreground-muted">
+            <div className="flex items-center gap-4 pt-2 text-xs text-slate-300">
               <div className="flex items-center gap-1.5">
-                <Lock className="w-3.5 h-3.5 text-primary" />
+                <Lock className="w-3.5 h-3.5 text-accent" />
                 <span>SSL Terenkripsi</span>
               </div>
               <div className="flex items-center gap-1.5">
@@ -44,33 +43,34 @@ export function Footer({ onNotify }: FooterProps) {
 
           {/* Product Categories */}
           <div className="space-y-3">
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-foreground">
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-200">
               Katalog Produk
             </h4>
-            <ul className="space-y-2 text-xs text-foreground-muted">
+            <ul className="space-y-2 text-xs text-slate-400">
               <li>
-                <Link href="/products?search=Canva" className="hover:text-foreground transition-colors">
+                <Link href="/products?search=Canva" className="hover:text-accent transition-colors">
                   Canva Pro (Desain Grafis)
                 </Link>
               </li>
               <li>
-                <Link href="/products?search=ChatGPT" className="hover:text-foreground transition-colors">
+                <Link href="/products?search=ChatGPT" className="hover:text-accent transition-colors">
                   ChatGPT Plus (AI Tools)
                 </Link>
               </li>
               <li>
-                <Link href="/products?search=Gemini" className="hover:text-foreground transition-colors">
+                <Link href="/products?search=Gemini" className="hover:text-accent transition-colors">
                   Gemini Pro (Google AI)
                 </Link>
               </li>
               <li>
-                <Link href="/products?search=Capcut" className="hover:text-foreground transition-colors">
+                <Link href="/products?search=Capcut" className="hover:text-accent transition-colors">
                   Capcut Pro (Video Editing)
                 </Link>
               </li>
               <li>
-                <Link href="/products" className="hover:text-foreground transition-colors font-medium text-primary">
-                  Lihat Seluruh Katalog Produk →
+                <Link href="/products" className="hover:text-accent transition-colors font-medium text-accent inline-flex items-center gap-1">
+                  <span>Lihat Seluruh Katalog</span>
+                  <span>→</span>
                 </Link>
               </li>
             </ul>
@@ -78,39 +78,39 @@ export function Footer({ onNotify }: FooterProps) {
 
           {/* Customer Service & Help */}
           <div className="space-y-3">
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-foreground">
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-200">
               Bantuan & Layanan
             </h4>
-            <ul className="space-y-2 text-xs text-foreground-muted">
+            <ul className="space-y-2 text-xs text-slate-400">
               <li>
                 <a
                   href="https://wa.me/6281234567890?text=Halo%20Customer%20Service%20Asterra%20Store%2C%20saya%20memerlukan%20bantuan%20layanan."
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:text-foreground transition-colors inline-flex items-center gap-1.5"
+                  className="hover:text-accent transition-colors inline-flex items-center gap-1.5 text-slate-300"
                 >
-                  <Headphones className="w-3.5 h-3.5 text-primary" />
-                  <span>Hubungi Customer Service (WA)</span>
-                  <ExternalLink className="w-3 h-3 text-foreground-muted" />
+                  <Headphones className="w-3.5 h-3.5 text-accent" />
+                  <span>Hubungi CS (WhatsApp)</span>
+                  <ExternalLink className="w-3 h-3 text-slate-500" />
                 </a>
               </li>
               <li>
-                <Link href="/#panduan" className="hover:text-foreground transition-colors">
+                <Link href="/#panduan" className="hover:text-accent transition-colors">
                   Cara Pemesanan & Aktivasi
                 </Link>
               </li>
               <li>
-                <Link href="/orders" className="hover:text-foreground transition-colors">
+                <Link href="/orders" className="hover:text-accent transition-colors">
                   Pelacakan Status Pesanan
                 </Link>
               </li>
               <li>
-                <Link href="/#keunggulan" className="hover:text-foreground transition-colors">
+                <Link href="/#keunggulan" className="hover:text-accent transition-colors">
                   Keunggulan Layanan & Garansi
                 </Link>
               </li>
               <li>
-                <Link href="/profile" className="hover:text-foreground transition-colors">
+                <Link href="/profile" className="hover:text-accent transition-colors">
                   Profil Pelanggan Saya
                 </Link>
               </li>
@@ -119,18 +119,18 @@ export function Footer({ onNotify }: FooterProps) {
 
           {/* Payment Methods */}
           <div className="space-y-3">
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-foreground">
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-200">
               Metode Pembayaran
             </h4>
-            <p className="text-xs text-foreground-muted">
-              Mendukung transaksi otomatis dan instan dari berbagai metode pembayaran online:
+            <p className="text-xs text-slate-400">
+              Mendukung transaksi otomatis dan instan dari berbagai metode pembayaran resmi:
             </p>
             <div className="flex flex-wrap gap-2 pt-1">
               {['QRIS', 'GoPay', 'OVO', 'Dana', 'ShopeePay', 'BCA VA', 'Mandiri VA', 'BRI VA'].map(
                 (badge) => (
                   <span
                     key={badge}
-                    className="text-[11px] font-medium bg-surface-raised border border-border px-2 py-1 rounded text-foreground-muted"
+                    className="text-[11px] font-medium bg-navy-900 border border-navy-border px-2.5 py-1 rounded-md text-slate-300"
                   >
                     {badge}
                   </span>
@@ -141,27 +141,27 @@ export function Footer({ onNotify }: FooterProps) {
         </div>
 
         {/* Bottom Bar */}
-        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-foreground-muted">
+        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
           <p>© 2026 Asterra Store. Hak cipta dilindungi undang-undang.</p>
           <div className="flex items-center gap-6">
             <button
               type="button"
               onClick={() => handleAction('Ketentuan Layanan Asterra Store')}
-              className="hover:text-foreground transition-colors"
+              className="hover:text-accent transition-colors cursor-pointer"
             >
               Ketentuan Layanan
             </button>
             <button
               type="button"
               onClick={() => handleAction('Kebijakan Privasi Asterra Store')}
-              className="hover:text-foreground transition-colors"
+              className="hover:text-accent transition-colors cursor-pointer"
             >
               Kebijakan Privasi
             </button>
             <button
               type="button"
               onClick={() => handleAction('Keamanan Sistem & Perlindungan Pembayaran')}
-              className="hover:text-foreground transition-colors"
+              className="hover:text-accent transition-colors cursor-pointer"
             >
               Keamanan Transaksi
             </button>

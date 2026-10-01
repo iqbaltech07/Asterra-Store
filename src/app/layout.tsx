@@ -66,7 +66,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id" className={`dark ${inter.variable}`}>
+    <html lang="id" className={inter.variable}>
       <head>
         <script
           type="application/ld+json"

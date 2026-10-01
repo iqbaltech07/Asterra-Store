@@ -47,6 +47,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { AsterraLogo } from '@/components/ui/asterra-logo';
 
 interface AdminProductsResponse {
   success: boolean;
@@ -641,27 +642,20 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col font-sans selection:bg-primary/20 selection:text-primary">
-      {/* Dedicated Admin Navigation Header */}
-      <header className="w-full bg-surface/95 backdrop-blur-md border-b border-border px-4 sm:px-8 py-3 flex items-center justify-between sticky top-0 z-50 shadow-subtle">
+    <div className="min-h-screen bg-background text-foreground flex flex-col font-sans selection:bg-primary/20 selection:text-primary">      {/* Dedicated Admin Navigation Header */}
+      <header className="w-full bg-navy-900 border-b border-navy-800 text-white px-4 sm:px-8 py-3 flex items-center justify-between sticky top-0 z-50 shadow-md">
         <div className="flex items-center gap-4">
-          <Link href="/admin" className="flex items-center gap-2.5 group">
-            <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold text-sm tracking-wider">
-              AS
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="font-extrabold text-sm sm:text-base tracking-tight text-foreground">
-                Asterra<span className="text-primary">Store</span>
-              </span>
-              <span className="px-2 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-mono font-bold uppercase tracking-wider">
-                Admin Panel
-              </span>
-            </div>
+          <Link href="/admin" className="flex items-center gap-3 group">
+            <AsterraLogo variant="navbar" size="sm" />
+            <span className="hidden sm:inline-block px-2 py-0.5 rounded-full bg-white/10 border border-white/20 text-white text-[10px] font-mono font-bold uppercase tracking-wider">
+              Admin Panel
+            </span>
           </Link>
-          <div className="hidden md:flex items-center gap-2 pl-4 border-l border-border text-xs text-foreground-muted">
-            <span className="w-2 h-2 rounded-full bg-status-success animate-pulse" />
+
+          <div className="hidden md:flex items-center gap-2 pl-4 border-l border-white/20 text-xs text-white/70">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             <span>Terhubung sebagai:</span>
-            <span className="text-foreground font-semibold font-mono text-[11px]">
+            <span className="text-white font-semibold font-mono text-[11px]">
               {adminUser?.email || 'admin@asterra.store'}
             </span>
           </div>
@@ -672,7 +666,7 @@ export default function AdminPage() {
             href="/"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-foreground-muted hover:text-foreground hover:bg-surface-raised px-3 py-1.5 rounded-lg border border-border transition-colors text-xs font-medium flex items-center gap-1.5"
+            className="text-white/80 hover:text-white hover:bg-white/10 px-3 py-1.5 rounded-lg border border-white/20 transition-colors text-xs font-medium flex items-center gap-1.5"
             title="Buka Toko Publik di tab baru"
           >
             <span>Toko Publik</span>
@@ -682,7 +676,7 @@ export default function AdminPage() {
             variant="ghost"
             size="sm"
             onClick={handleLogout}
-            className="h-8 text-xs text-status-error hover:bg-status-error/10 hover:text-status-error gap-1.5 px-3 font-medium border border-status-error/20"
+            className="h-8 text-xs text-rose-300 hover:bg-rose-500/20 hover:text-rose-200 gap-1.5 px-3 font-medium border border-rose-500/30"
           >
             <LogOut className="w-3.5 h-3.5" />
             <span>Keluar Admin</span>

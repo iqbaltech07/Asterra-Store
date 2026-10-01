@@ -527,10 +527,10 @@ export default function OrdersPage() {
                     key={filter.value}
                     type="button"
                     onClick={() => setSelectedStatus(filter.value)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all shrink-0 border ${
+                    className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all shrink-0 border ${
                       isSelected
-                        ? 'bg-primary text-white border-primary shadow-sm'
-                        : 'bg-surface-raised text-foreground-muted border-border hover:border-foreground-muted/40 hover:text-foreground'
+                        ? 'bg-navy-900 text-white border-navy-900 shadow-xs'
+                        : 'bg-surface text-foreground-muted border-border hover:border-primary/40 hover:text-primary'
                     }`}
                   >
                     {filter.label}
