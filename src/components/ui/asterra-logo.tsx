@@ -18,44 +18,34 @@ export function AsterraLogo({
   size = 'md',
   showBadge = false,
   badgeText = 'Toko Digital Premium',
-  showTagline = false,
   className,
   linkToHome = false,
 }: AsterraLogoProps) {
-  // Sizing definitions
-  const sizeMap = {
-    sm: {
-      mark: 'w-7 h-5',
-      text: 'text-sm',
-      tagline: 'text-[9px]',
-      badge: 'text-[10px] px-2 py-0.5',
-    },
-    md: {
-      mark: 'w-8 h-6 sm:w-9 sm:h-7',
-      text: 'text-base sm:text-lg',
-      tagline: 'text-[10px]',
-      badge: 'text-[11px] px-2.5 py-0.5',
-    },
-    lg: {
-      mark: 'w-11 h-8 sm:w-12 sm:h-9',
-      text: 'text-xl sm:text-2xl',
-      tagline: 'text-xs',
-      badge: 'text-xs px-3 py-1',
-    },
-    xl: {
-      mark: 'w-14 h-10 sm:w-16 sm:h-12',
-      text: 'text-2xl sm:text-3xl',
-      tagline: 'text-sm',
-      badge: 'text-xs px-3 py-1',
-    },
-  }[size];
-
   const isDarkBg = variant === 'navbar' || variant === 'dark-bg';
 
+  // Responsive heights that maintain perfect 5:1 logo aspect ratio without distortion
+  const heightClass = {
+    sm: 'h-6 sm:h-7',
+    md: 'h-7 sm:h-8',
+    lg: 'h-9 sm:h-10',
+    xl: 'h-11 sm:h-12',
+  }[size];
+
+  const markHeightClass = {
+    sm: 'h-6 w-8',
+    md: 'h-7 w-10',
+    lg: 'h-9 w-12',
+    xl: 'h-11 w-16',
+  }[size];
+
+  const logoSrc = isDarkBg
+    ? '/images/brand/asterra-logo-light-text.png'
+    : '/images/brand/asterra-logo-dark-text.png';
+
   const content = (
-    <div className={cn('inline-flex items-center gap-2.5 select-none group', className)}>
+    <div className={cn('inline-flex items-center gap-3 select-none group', className)}>
       {variant === 'app-icon' ? (
-        <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl overflow-hidden shadow-sm shrink-0">
+        <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl overflow-hidden shadow-xs shrink-0">
           <Image
             src="/images/brand/asterra-app-icon.png"
             alt="Asterra App Icon"
@@ -64,74 +54,51 @@ export function AsterraLogo({
             className="w-full h-full object-contain"
           />
         </div>
-      ) : (
-        <div className={cn('relative shrink-0 flex items-center justify-center transition-transform group-hover:scale-105 duration-200', sizeMap.mark)}>
+      ) : variant === 'mark-only' ? (
+        <div className={cn('relative shrink-0 flex items-center justify-center transition-transform group-hover:scale-105 duration-200', markHeightClass)}>
           <Image
             src="/images/brand/asterra-mark.png"
             alt="Asterra Planet Mark"
-            width={70}
-            height={50}
-            className={cn(
-              'w-full h-full object-contain',
-              isDarkBg ? 'brightness-125 contrast-125' : ''
-            )}
+            width={222}
+            height={155}
+            className="w-full h-full object-contain"
             priority
+          />
+        </div>
+      ) : (
+        <div className={cn('relative shrink-0 flex items-center transition-opacity duration-200', heightClass)}>
+          <Image
+            src={logoSrc}
+            alt="Asterra Store"
+            width={536}
+            height={107}
+            priority
+            className="h-full w-auto object-contain shrink-0"
           />
         </div>
       )}
 
-      {variant !== 'mark-only' && (
-        <div className="flex items-center gap-2.5">
-          <div className="flex flex-col">
-            <div className="flex items-baseline font-bold tracking-tight leading-none">
-              <span className={cn(
-                'font-extrabold',
-                sizeMap.text,
-                isDarkBg ? 'text-white' : 'text-navy-900'
-              )}>
-                Asterra
-              </span>
-              <span className={cn(
-                'font-semibold ml-0.5',
-                sizeMap.text,
-                isDarkBg ? 'text-slate-100' : 'text-navy-800'
-              )}>
-                Store
-              </span>
-            </div>
-
-            {showTagline && (
-              <span className={cn(
-                'font-normal leading-tight mt-0.5',
-                sizeMap.tagline,
-                isDarkBg ? 'text-slate-300' : 'text-foreground-muted'
-              )}>
-                Good Things, One Place.
-              </span>
-            )}
-          </div>
-
-          {showBadge && (
-            <span
-              className={cn(
-                'rounded-full border font-medium hidden sm:inline-flex items-center',
-                sizeMap.badge,
-                isDarkBg
-                  ? 'bg-navy-800/80 text-slate-200 border-navy-700/80 shadow-inner'
-                  : 'bg-surface-secondary text-foreground-muted border-border'
-              )}
-            >
-              {badgeText}
-            </span>
+      {showBadge && (
+        <span
+          className={cn(
+            'hidden sm:inline-flex items-center text-[10px] font-semibold px-2 py-0.5 rounded border transition-colors',
+            isDarkBg
+              ? 'bg-[rgba(201,111,85,0.15)] text-[#F7F5EF] border-[rgba(201,111,85,0.35)]'
+              : 'bg-[rgba(201,111,85,0.08)] text-[#C96F55] border-[rgba(201,111,85,0.25)]'
           )}
-        </div>
+        >
+          {badgeText}
+        </span>
       )}
     </div>
   );
 
   if (linkToHome) {
     return (
-      <Link href="/" className="inline-flex items-center focus:outline-none focus:ring-2 focus:ring-accent/40 rounded-lg">
+      <Link
+        href="/"
+        className="inline-flex items-center focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 rounded-lg py-0.5"
+      >
         {content}
       </Link>
     );

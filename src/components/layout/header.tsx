@@ -1,22 +1,30 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
+import {
+  ShoppingCart,
+  Menu,
+  X,
+  Package,
+  User,
+  LogOut,
+  ChevronDown,
+} from 'lucide-react';
 import { useCartStore } from '@/store/use-cart-store';
 import { useAuthStore } from '@/store/use-auth-store';
 import { useSession, signOut } from '@/lib/auth-client';
 import { CartDrawer } from '@/components/cart/cart-drawer';
 import { AsterraLogo } from '@/components/ui/asterra-logo';
-import { ShoppingCart, Menu, X, Package, LogOut, User, ChevronDown } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
-  DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
 interface HeaderProps {
@@ -24,23 +32,21 @@ interface HeaderProps {
 }
 
 export function Header({ onNotify }: HeaderProps) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const [isCartOpen, setIsCartOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
+  const [isCartOpen, setIsCartOpen] = useState(false);
   const { getTotalItems } = useCartStore();
   const { data: session } = useSession();
   const { user: legacyUser, logout: legacyLogout } = useAuthStore();
 
-  const currentUser = session?.user || legacyUser;
-  const userImage = currentUser && 'image' in currentUser ? currentUser.image : null;
+  const pathname = usePathname();
+  const router = useRouter();
 
-  const handleActionNotice = (message: string) => {
-    if (onNotify) {
-      onNotify(message);
-    }
+  const handleActionNotice = (msg: string) => {
+    if (onNotify) onNotify(msg);
   };
+
+  const currentUser = session?.user || legacyUser;
+  const userImage = currentUser && 'image' in currentUser ? (currentUser as { image?: string | null }).image : null;
 
   const handleLogout = async () => {
     try {
@@ -59,7 +65,7 @@ export function Header({ onNotify }: HeaderProps) {
   return (
     <>
       <header className="sticky top-0 z-40 w-full px-2 sm:px-6 pt-2.5 pb-2 transition-all">
-        <div className="max-w-7xl mx-auto rounded-2xl bg-navy-900 border border-navy-border shadow-navbar px-3.5 sm:px-6 h-16 sm:h-18 flex items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto rounded-2xl bg-[#121A2A] border border-white/10 shadow-navbar px-3.5 sm:px-6 h-16 sm:h-18 flex items-center justify-between gap-4">
           {/* Brand Logo */}
           <div className="flex items-center gap-3">
             <AsterraLogo
@@ -77,8 +83,8 @@ export function Header({ onNotify }: HeaderProps) {
               href="/"
               className={`transition-colors py-1 ${
                 isHomeActive
-                  ? 'text-accent font-semibold'
-                  : 'text-slate-300 hover:text-white'
+                  ? 'text-[#C96F55] font-semibold'
+                  : 'text-[#F7F5EF]/80 hover:text-[#F7F5EF]'
               }`}
             >
               Beranda
@@ -87,8 +93,8 @@ export function Header({ onNotify }: HeaderProps) {
               href="/products"
               className={`transition-colors py-1 ${
                 isProductsActive
-                  ? 'text-accent font-semibold'
-                  : 'text-slate-300 hover:text-white'
+                  ? 'text-[#C96F55] font-semibold'
+                  : 'text-[#F7F5EF]/80 hover:text-[#F7F5EF]'
               }`}
             >
               Katalog Produk
@@ -97,22 +103,22 @@ export function Header({ onNotify }: HeaderProps) {
               href="/orders"
               className={`transition-colors py-1 inline-flex items-center gap-1.5 ${
                 isOrdersActive
-                  ? 'text-accent font-semibold'
-                  : 'text-slate-300 hover:text-white'
+                  ? 'text-[#C96F55] font-semibold'
+                  : 'text-[#F7F5EF]/80 hover:text-[#F7F5EF]'
               }`}
             >
-              <Package className="w-3.5 h-3.5 text-accent" />
+              <Package className="w-3.5 h-3.5 text-[#C96F55]" />
               <span>Pesanan Saya</span>
             </Link>
             <Link
               href="/#keunggulan"
-              className="text-slate-300 hover:text-white transition-colors py-1"
+              className="text-[#F7F5EF]/80 hover:text-[#F7F5EF] transition-colors py-1"
             >
               Keunggulan
             </Link>
             <Link
               href="/#panduan"
-              className="text-slate-300 hover:text-white transition-colors py-1"
+              className="text-[#F7F5EF]/80 hover:text-[#F7F5EF] transition-colors py-1"
             >
               Cara Pemesanan
             </Link>
@@ -123,14 +129,14 @@ export function Header({ onNotify }: HeaderProps) {
             {/* Cart Trigger Button */}
             <button
               type="button"
-              className="relative inline-flex items-center gap-2 h-9 sm:h-10 px-3 sm:px-4 rounded-xl bg-navy-800/90 border border-navy-border hover:border-accent/50 text-slate-200 hover:text-white text-xs sm:text-sm font-medium transition-all shadow-inner cursor-pointer group active:scale-95"
+              className="relative inline-flex items-center gap-2 h-9 sm:h-10 px-3 sm:px-4 rounded-xl bg-[#182235] border border-white/10 hover:border-[#C96F55]/50 text-[#F7F5EF] text-xs sm:text-sm font-medium transition-all shadow-inner cursor-pointer group active:scale-95"
               onClick={() => setIsCartOpen(true)}
               aria-label="Buka Keranjang Pesanan"
             >
-              <ShoppingCart className="w-4 h-4 text-accent transition-transform group-hover:scale-110" />
+              <ShoppingCart className="w-4 h-4 text-[#C96F55] transition-transform group-hover:scale-110" />
               <span className="hidden sm:inline">Pesanan</span>
               {getTotalItems() > 0 && (
-                <span className="w-5 h-5 rounded-full bg-accent text-white text-[11px] font-bold flex items-center justify-center -mr-1 shadow-sm animate-in zoom-in-75">
+                <span className="w-5 h-5 rounded-full bg-[#C96F55] text-[#F7F5EF] text-[11px] font-bold flex items-center justify-center -mr-1 shadow-xs animate-in zoom-in-75">
                   {getTotalItems()}
                 </span>
               )}
@@ -143,52 +149,52 @@ export function Header({ onNotify }: HeaderProps) {
                   <DropdownMenuTrigger asChild>
                     <button
                       type="button"
-                      className="flex items-center gap-2 p-1 sm:px-3 sm:py-1.5 rounded-xl border border-navy-border bg-navy-800/90 hover:border-accent/40 hover:bg-navy-700/80 transition-all text-xs font-medium text-white focus:outline-none focus:ring-2 focus:ring-accent/30 cursor-pointer"
+                      className="flex items-center gap-2 p-1 sm:px-3 sm:py-1.5 rounded-xl border border-white/10 bg-[#182235] hover:border-[#C96F55]/40 hover:bg-[#1e2a40] transition-all text-xs font-medium text-[#F7F5EF] focus:outline-none focus:ring-2 focus:ring-[#C96F55]/30 cursor-pointer"
                       aria-label="Menu Akun Pengguna"
                     >
                       {userImage ? (
                         <img
                           src={userImage}
                           alt={currentUser.name || 'Profil'}
-                          className="w-7 h-7 rounded-full object-cover ring-1 ring-navy-border"
+                          className="w-7 h-7 rounded-full object-cover ring-1 ring-white/20"
                           referrerPolicy="no-referrer"
                         />
                       ) : (
-                        <div className="w-7 h-7 rounded-full bg-accent/20 border border-accent/40 text-accent flex items-center justify-center font-bold text-xs">
+                        <div className="w-7 h-7 rounded-full bg-[rgba(201,111,85,0.2)] border border-[rgba(201,111,85,0.4)] text-[#C96F55] flex items-center justify-center font-bold text-xs">
                           {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U'}
                         </div>
                       )}
-                      <span className="inline-block max-w-[90px] truncate text-slate-100 text-xs font-medium">
+                      <span className="inline-block max-w-[90px] truncate text-[#F7F5EF] text-xs font-medium">
                         {currentUser.name?.split(' ')[0] || 'Profil'}
                       </span>
-                      <ChevronDown className="w-3.5 h-3.5 text-slate-400 inline-block" />
+                      <ChevronDown className="w-3.5 h-3.5 text-[#F7F5EF]/60 inline-block" />
                     </button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56 bg-white text-navy-900 border border-border shadow-editorial">
+                  <DropdownMenuContent align="end" className="w-56 bg-white text-[#121A2A] border border-[rgba(18,26,42,0.1)] shadow-editorial">
                     <DropdownMenuLabel className="font-normal py-2.5 px-3">
                       <div className="flex flex-col space-y-1">
-                        <p className="text-xs font-semibold leading-none text-navy-900 truncate">
+                        <p className="text-xs font-semibold leading-none text-[#121A2A] truncate">
                           {currentUser.name || 'Pengguna Asterra'}
                         </p>
-                        <p className="text-[11px] leading-none text-foreground-muted truncate">
+                        <p className="text-[11px] leading-none text-[#5F6C80] truncate">
                           {currentUser.email || 'Akun Aktif'}
                         </p>
                       </div>
                     </DropdownMenuLabel>
-                    <DropdownMenuSeparator className="bg-border/60" />
+                    <DropdownMenuSeparator className="bg-[rgba(18,26,42,0.08)]" />
                     <DropdownMenuItem asChild>
-                      <Link href="/profile" className="flex items-center gap-2 cursor-pointer w-full text-navy-900 hover:text-accent">
-                        <User className="w-4 h-4 text-accent" />
+                      <Link href="/profile" className="flex items-center gap-2 cursor-pointer w-full text-[#121A2A] hover:text-[#C96F55]">
+                        <User className="w-4 h-4 text-[#C96F55]" />
                         <span>Profil Saya</span>
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link href="/orders" className="flex items-center gap-2 cursor-pointer w-full text-navy-900 hover:text-accent">
-                        <Package className="w-4 h-4 text-accent" />
+                      <Link href="/orders" className="flex items-center gap-2 cursor-pointer w-full text-[#121A2A] hover:text-[#C96F55]">
+                        <Package className="w-4 h-4 text-[#C96F55]" />
                         <span>Pesanan Saya</span>
                       </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuSeparator className="bg-border/60" />
+                    <DropdownMenuSeparator className="bg-[rgba(18,26,42,0.08)]" />
                     <DropdownMenuItem
                       onClick={handleLogout}
                       className="flex items-center gap-2 text-status-error focus:text-status-error focus:bg-status-error/10 cursor-pointer"
@@ -204,7 +210,7 @@ export function Header({ onNotify }: HeaderProps) {
                 <Link href="/login">
                   <Button
                     size="sm"
-                    className="bg-accent hover:bg-accent-hover text-white font-semibold text-xs sm:text-sm h-9 sm:h-10 px-5 rounded-xl shadow-sm transition-transform active:scale-95"
+                    className="bg-[#C96F55] hover:bg-[#B86047] text-[#F7F5EF] font-semibold text-xs sm:text-sm h-9 sm:h-10 px-5 rounded-xl shadow-xs transition-transform active:scale-95"
                   >
                     Masuk
                   </Button>
@@ -216,7 +222,7 @@ export function Header({ onNotify }: HeaderProps) {
             <button
               type="button"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="lg:hidden p-2 text-slate-300 hover:text-white rounded-xl hover:bg-navy-800/80 transition-colors"
+              className="lg:hidden p-2 text-[#F7F5EF]/80 hover:text-[#F7F5EF] rounded-xl hover:bg-[#182235] transition-colors"
               aria-label="Buka Menu"
             >
               {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -226,9 +232,9 @@ export function Header({ onNotify }: HeaderProps) {
 
         {/* Mobile Navigation Dropdown */}
         {isMobileMenuOpen && (
-          <div className="lg:hidden mt-2 rounded-2xl bg-navy-950 border border-navy-border shadow-2xl p-4 space-y-4 animate-in slide-in-from-top-2 text-white">
+          <div className="lg:hidden mt-2 rounded-2xl bg-[#121A2A] border border-white/10 shadow-2xl p-4 space-y-4 animate-in slide-in-from-top-2 text-[#F7F5EF]">
             {currentUser ? (
-              <div className="p-3 rounded-xl bg-navy-900 border border-navy-border flex items-center justify-between gap-3">
+              <div className="p-3 rounded-xl bg-[#182235] border border-white/10 flex items-center justify-between gap-3">
                 <Link
                   href="/profile"
                   onClick={() => setIsMobileMenuOpen(false)}
@@ -238,19 +244,19 @@ export function Header({ onNotify }: HeaderProps) {
                     <img
                       src={userImage}
                       alt={currentUser.name || 'Profil'}
-                      className="w-9 h-9 rounded-full object-cover ring-1 ring-navy-border shrink-0"
+                      className="w-9 h-9 rounded-full object-cover ring-1 ring-white/20 shrink-0"
                       referrerPolicy="no-referrer"
                     />
                   ) : (
-                    <div className="w-9 h-9 rounded-full bg-accent/20 border border-accent/40 text-accent flex items-center justify-center font-bold text-sm shrink-0">
+                    <div className="w-9 h-9 rounded-full bg-[rgba(201,111,85,0.2)] border border-[rgba(201,111,85,0.4)] text-[#C96F55] flex items-center justify-center font-bold text-sm shrink-0">
                       {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U'}
                     </div>
                   )}
                   <div className="truncate">
-                    <p className="font-semibold text-xs text-white group-hover:text-accent transition-colors truncate">
+                    <p className="font-semibold text-xs text-[#F7F5EF] group-hover:text-[#C96F55] transition-colors truncate">
                       {currentUser.name || 'Profil Pengguna'}
                     </p>
-                    <p className="text-[11px] text-slate-400 truncate">
+                    <p className="text-[11px] text-[#F7F5EF]/60 truncate">
                       {currentUser.email || 'Lihat Akun & Pesanan'}
                     </p>
                   </div>
@@ -262,7 +268,7 @@ export function Header({ onNotify }: HeaderProps) {
                     setIsMobileMenuOpen(false);
                     handleLogout();
                   }}
-                  className="text-xs text-slate-300 hover:text-status-error shrink-0"
+                  className="text-xs text-[#F7F5EF]/80 hover:text-status-error shrink-0"
                   aria-label="Keluar"
                 >
                   <LogOut className="w-4 h-4" />
@@ -275,7 +281,7 @@ export function Header({ onNotify }: HeaderProps) {
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="w-full block"
                 >
-                  <Button size="sm" className="w-full text-xs font-semibold h-10 rounded-xl bg-accent hover:bg-accent-hover text-white">
+                  <Button size="sm" className="w-full text-xs font-semibold h-10 rounded-xl bg-[#C96F55] hover:bg-[#B86047] text-[#F7F5EF]">
                     Masuk Akun
                   </Button>
                 </Link>
@@ -287,7 +293,7 @@ export function Header({ onNotify }: HeaderProps) {
                 href="/"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={`py-2 px-3 rounded-lg transition-colors ${
-                  isHomeActive ? 'bg-navy-800 text-accent font-semibold' : 'text-slate-300 hover:text-white hover:bg-navy-900'
+                  isHomeActive ? 'bg-[#182235] text-[#C96F55] font-semibold' : 'text-[#F7F5EF]/80 hover:text-[#F7F5EF] hover:bg-[#182235]'
                 }`}
               >
                 Beranda
@@ -296,7 +302,7 @@ export function Header({ onNotify }: HeaderProps) {
                 href="/products"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={`py-2 px-3 rounded-lg transition-colors ${
-                  isProductsActive ? 'bg-navy-800 text-accent font-semibold' : 'text-slate-300 hover:text-white hover:bg-navy-900'
+                  isProductsActive ? 'bg-[#182235] text-[#C96F55] font-semibold' : 'text-[#F7F5EF]/80 hover:text-[#F7F5EF] hover:bg-[#182235]'
                 }`}
               >
                 Katalog Produk
@@ -305,7 +311,7 @@ export function Header({ onNotify }: HeaderProps) {
                 href="/orders"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={`py-2 px-3 rounded-lg transition-colors ${
-                  isOrdersActive ? 'bg-navy-800 text-accent font-semibold' : 'text-slate-300 hover:text-white hover:bg-navy-900'
+                  isOrdersActive ? 'bg-[#182235] text-[#C96F55] font-semibold' : 'text-[#F7F5EF]/80 hover:text-[#F7F5EF] hover:bg-[#182235]'
                 }`}
               >
                 Pesanan Saya
@@ -313,21 +319,21 @@ export function Header({ onNotify }: HeaderProps) {
               <Link
                 href={currentUser ? '/profile' : '/login'}
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="py-2 px-3 rounded-lg text-slate-300 hover:text-white hover:bg-navy-900 transition-colors"
+                className="py-2 px-3 rounded-lg text-[#F7F5EF]/80 hover:text-[#F7F5EF] hover:bg-[#182235] transition-colors"
               >
                 Profil Saya
               </Link>
               <Link
                 href="/#keunggulan"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="py-2 px-3 rounded-lg text-slate-300 hover:text-white hover:bg-navy-900 transition-colors"
+                className="py-2 px-3 rounded-lg text-[#F7F5EF]/80 hover:text-[#F7F5EF] hover:bg-[#182235] transition-colors"
               >
                 Keunggulan
               </Link>
               <Link
                 href="/#panduan"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="py-2 px-3 rounded-lg text-slate-300 hover:text-white hover:bg-navy-900 transition-colors"
+                className="py-2 px-3 rounded-lg text-[#F7F5EF]/80 hover:text-[#F7F5EF] hover:bg-[#182235] transition-colors"
               >
                 Cara Pemesanan
               </Link>

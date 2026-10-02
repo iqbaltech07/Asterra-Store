@@ -10,19 +10,19 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = 'default', size = 'default', ...props }, ref) => {
     const variantStyles = {
       default:
-        'bg-accent text-white hover:bg-accent-hover active:bg-accent-dark shadow-sm border border-transparent font-semibold',
-      navy:
-        'bg-navy-900 text-white hover:bg-navy-800 active:bg-navy-950 shadow-sm border border-navy-border font-semibold',
-      destructive:
-        'bg-status-error text-white hover:bg-red-700 active:bg-red-800 shadow-sm font-semibold',
-      outline:
-        'border border-border bg-white text-navy-900 hover:bg-surface-secondary hover:text-accent hover:border-slate-300 font-medium',
+        'bg-[#C96F55] text-[#F7F5EF] hover:bg-[#B86047] active:bg-[#A9553E] shadow-xs border border-transparent font-semibold',
       secondary:
-        'bg-surface-secondary text-navy-900 hover:bg-slate-100 hover:text-accent border border-border font-medium',
+        'bg-[#121A2A] text-[#F7F5EF] hover:bg-[#182235] active:bg-[#0C121E] shadow-xs border border-[#121A2A] font-semibold',
+      navy:
+        'bg-[#121A2A] text-[#F7F5EF] hover:bg-[#182235] active:bg-[#0C121E] shadow-xs border border-[#121A2A] font-semibold',
+      outline:
+        'border border-[#121A2A] bg-transparent text-[#121A2A] hover:bg-[#121A2A]/5 active:bg-[#121A2A]/10 font-semibold',
       ghost:
-        'bg-transparent hover:bg-surface-secondary text-navy-900 hover:text-accent font-medium',
+        'bg-transparent hover:bg-[#121A2A]/5 text-[#121A2A] hover:text-[#C96F55] font-medium',
       link:
-        'text-accent underline-offset-4 hover:underline hover:text-accent-hover p-0 h-auto font-medium',
+        'text-[#C96F55] underline-offset-4 hover:underline p-0 h-auto font-medium',
+      destructive:
+        'bg-red-600 text-white hover:bg-red-700 active:bg-red-800 shadow-xs font-semibold',
     }[variant];
 
     const sizeStyles = {

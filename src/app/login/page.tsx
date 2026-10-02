@@ -36,27 +36,27 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-surface-secondary text-navy-900 flex flex-col justify-center items-center px-4 py-12 selection:bg-accent/20 selection:text-accent">
+    <div className="min-h-screen bg-[#F7F5EF] text-[#121A2A] flex flex-col justify-center items-center px-4 py-12 selection:bg-[#C96F55]/20 selection:text-[#C96F55]">
       {/* Back to Home Link */}
       <div className="w-full max-w-md mb-6">
         <Link
           href="/"
-          className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-navy-900 transition-colors group"
+          className="inline-flex items-center gap-2 text-xs font-semibold text-[#121A2A]/60 hover:text-[#121A2A] transition-colors group"
         >
           <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
           <span>Kembali ke Beranda Toko</span>
         </Link>
       </div>
 
-      <Card className="w-full max-w-md border-border bg-white rounded-2xl shadow-card">
+      <Card className="w-full max-w-md border border-[rgba(18,26,42,0.08)] bg-white rounded-2xl shadow-card">
         <CardHeader className="space-y-3 text-center pb-6 pt-7">
           <div className="flex justify-center mb-1">
             <AsterraLogo variant="light-bg" size="lg" linkToHome={true} />
           </div>
-          <CardTitle className="text-2xl font-extrabold tracking-tight text-navy-900">
+          <CardTitle className="text-2xl font-extrabold tracking-tight text-[#121A2A]">
             Masuk ke Akun Anda
           </CardTitle>
-          <CardDescription className="text-xs text-slate-500 max-w-xs mx-auto">
+          <CardDescription className="text-xs text-[#121A2A]/60 max-w-xs mx-auto">
             Akses instan untuk mengelola langganan, lisensi, dan riwayat pesanan digital Anda
           </CardDescription>
         </CardHeader>
@@ -76,11 +76,11 @@ export default function LoginPage() {
               type="button"
               onClick={handleGoogleLogin}
               disabled={isLoading}
-              className="w-full h-12 rounded-xl bg-white border border-border hover:border-accent hover:bg-orange-50/20 text-navy-900 font-semibold text-sm flex items-center justify-center gap-3 shadow-xs transition-all duration-200 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed group cursor-pointer"
+              className="w-full h-12 rounded-xl bg-white border border-[rgba(18,26,42,0.12)] hover:border-[#C96F55] hover:bg-[rgba(201,111,85,0.06)] text-[#121A2A] font-semibold text-sm flex items-center justify-center gap-3 shadow-xs transition-all duration-200 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed group cursor-pointer"
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin text-accent" />
+                  <Loader2 className="w-4 h-4 animate-spin text-[#C96F55]" />
                   <span>Menghubungkan ke Google...</span>
                 </>
               ) : (
@@ -104,7 +104,7 @@ export default function LoginPage() {
                       d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
                     />
                   </svg>
-                  <span className="font-bold text-navy-900 tracking-tight">
+                  <span className="font-bold text-[#121A2A] tracking-tight">
                     Lanjutkan dengan Akun Google
                   </span>
                 </>
@@ -113,31 +113,31 @@ export default function LoginPage() {
           </div>
 
           {/* Key Security Value Props */}
-          <div className="pt-4 border-t border-border space-y-2.5">
-            <div className="flex items-center gap-2.5 text-xs text-slate-600">
+          <div className="pt-4 border-t border-[rgba(18,26,42,0.08)] space-y-2.5">
+            <div className="flex items-center gap-2.5 text-xs text-[#121A2A]/70">
               <Check className="w-3.5 h-3.5 text-status-success shrink-0" />
               <span>Akses 1-klik instan tanpa perlu mengingat password</span>
             </div>
-            <div className="flex items-center gap-2.5 text-xs text-slate-600">
+            <div className="flex items-center gap-2.5 text-xs text-[#121A2A]/70">
               <Check className="w-3.5 h-3.5 text-status-success shrink-0" />
               <span>Verifikasi identitas langsung dilindungi enkripsi Google</span>
             </div>
-            <div className="flex items-center gap-2.5 text-xs text-slate-600">
+            <div className="flex items-center gap-2.5 text-xs text-[#121A2A]/70">
               <ShieldCheck className="w-3.5 h-3.5 text-status-success shrink-0" />
               <span>Privasi data pesanan terisolasi dengan aman di database</span>
             </div>
           </div>
         </CardContent>
 
-        <CardFooter className="flex flex-col space-y-3 pt-2 pb-6 border-t border-border/60">
-          <p className="text-[11px] text-center text-slate-400 leading-relaxed">
+        <CardFooter className="flex flex-col space-y-3 pt-2 pb-6 border-t border-[rgba(18,26,42,0.06)]">
+          <p className="text-[11px] text-center text-[#121A2A]/50 leading-relaxed">
             Dengan masuk, Anda menyetujui Ketentuan Layanan dan Kebijakan Privasi Asterra Store.
           </p>
         </CardFooter>
       </Card>
 
       {/* Footer system note */}
-      <div className="mt-8 text-center text-[11px] text-slate-400 max-w-sm">
+      <div className="mt-8 text-center text-[11px] text-[#121A2A]/50 max-w-sm">
         Sistem autentikasi pelanggan dilindungi oleh enkripsi SSL & verifikasi Google resmi.
       </div>
     </div>

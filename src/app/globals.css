@@ -3,32 +3,32 @@
 @tailwind utilities;
 
 :root {
-  /* Asterra Store Brand System Tokens */
-  --color-navy: #0b1a2e;
-  --color-navy-deep: #071321;
-  --color-navy-surface: #102238;
-  --color-navy-surface-2: #152b43;
-  --color-navy-border: #1e3550;
+  /* Asterra Store Brand System Tokens - FINAL PALETTE */
+  --color-navy: #121a2a;
+  --color-navy-deep: #0c121e;
+  --color-navy-surface: #182235;
+  --color-navy-surface-2: #1e2a40;
+  --color-navy-border: rgba(18, 26, 42, 0.12);
 
-  --color-accent: #e96f3d;
-  --color-accent-hover: #f27e4a;
-  --color-accent-soft: #fff0e9;
-  --color-accent-dark: #c95b3c;
+  --color-accent: #c96f55;
+  --color-accent-hover: #b86047;
+  --color-accent-soft: rgba(201, 111, 85, 0.08);
+  --color-accent-dark: #a9553e;
 
-  --color-bg: #ffffff;
+  --color-bg: #f7f5ef;
   --color-surface: #ffffff;
-  --color-surface-secondary: #f7f9fb;
+  --color-surface-secondary: #f0ece1;
   --color-surface-raised: #ffffff;
-  --color-surface-hover: #f8fafc;
+  --color-surface-hover: #ebe7db;
 
-  --color-border: #e2e8f0;
-  --color-border-subtle: #eef2f6;
-  --color-border-strong: #cbd5e1;
+  --color-border: rgba(18, 26, 42, 0.1);
+  --color-border-subtle: rgba(18, 26, 42, 0.06);
+  --color-border-strong: rgba(18, 26, 42, 0.2);
 
-  --color-ink: #0b1a2e;
-  --color-ink-soft: #1e293b;
-  --color-muted: #8793a3;
-  --color-secondary: #607085;
+  --color-ink: #121a2a;
+  --color-ink-soft: #23314b;
+  --color-muted: #5f6c80;
+  --color-secondary: #4a566a;
 
   /* Semantic Status Colors */
   --color-success: #16a34a;
@@ -45,27 +45,27 @@
   --radius-input: 8px;
 
   /* Tailwind Semantic Variable Aliases */
-  --background: #ffffff;
+  --background: #f7f5ef;
   --surface: #ffffff;
   --surface-raised: #ffffff;
-  --border: #e2e8f0;
-  --primary: #e96f3d;
-  --foreground: #0b1a2e;
-  --foreground-muted: #8793a3;
+  --border: rgba(18, 26, 42, 0.1);
+  --primary: #c96f55;
+  --foreground: #121a2a;
+  --foreground-muted: #5f6c80;
   --popover: #ffffff;
-  --popover-foreground: #0b1a2e;
-  --input: #e2e8f0;
+  --popover-foreground: #121a2a;
+  --input: rgba(18, 26, 42, 0.12);
   --card: #ffffff;
-  --card-foreground: #0b1a2e;
+  --card-foreground: #121a2a;
 
-  --accent: #e96f3d;
-  --accent-hover: #f27e4a;
-  --accent-foreground: #ffffff;
+  --accent: #c96f55;
+  --accent-hover: #b86047;
+  --accent-foreground: #f7f5ef;
 }
 
 body {
-  background-color: #ffffff;
-  color: #0b1a2e;
+  background-color: #f7f5ef;
+  color: #121a2a;
   font-family:
     var(--font-inter),
     Inter,
@@ -85,14 +85,14 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #f7f9fb;
+  background: #f7f5ef;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: rgba(18, 26, 42, 0.2);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: rgba(18, 26, 42, 0.35);
 }

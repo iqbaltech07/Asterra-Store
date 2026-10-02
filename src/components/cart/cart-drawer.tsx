@@ -24,21 +24,21 @@ export function CartDrawer({ isOpen, onClose, onCheckout }: CartDrawerProps) {
     <div className="fixed inset-0 z-50 flex justify-end">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-ink/40 backdrop-blur-sm transition-opacity animate-in fade-in"
+        className="fixed inset-0 bg-[#121A2A]/50 backdrop-blur-xs transition-opacity animate-in fade-in"
         onClick={onClose}
       />
 
       {/* Drawer Panel */}
-      <div className="relative w-full max-w-md bg-surface border-l border-border h-full shadow-2xl flex flex-col z-10 animate-in slide-in-from-right duration-200">
+      <div className="relative w-full max-w-md bg-[#F7F5EF] border-l border-[rgba(18,26,42,0.1)] h-full shadow-2xl flex flex-col z-10 animate-in slide-in-from-right duration-200">
         {/* Header */}
-        <div className="p-5 bg-navy-900 border-b border-navy-800 text-white flex items-center justify-between">
+        <div className="p-5 bg-[#121A2A] border-b border-white/10 text-[#F7F5EF] flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-primary">
+            <div className="w-8 h-8 rounded-lg bg-[rgba(201,111,85,0.15)] flex items-center justify-center text-[#C96F55]">
               <ShoppingBag className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="font-bold text-base text-white leading-tight">Keranjang Pesanan</h2>
-              <span className="text-[11px] text-white/70">
+              <h2 className="font-bold text-base text-[#F7F5EF] leading-tight">Keranjang Pesanan</h2>
+              <span className="text-[11px] text-[#F7F5EF]/70">
                 {getTotalItems()} item digital terpilih
               </span>
             </div>
@@ -46,7 +46,7 @@ export function CartDrawer({ isOpen, onClose, onCheckout }: CartDrawerProps) {
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+            className="p-1.5 rounded-lg text-[#F7F5EF]/70 hover:text-[#F7F5EF] hover:bg-white/10 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -56,14 +56,14 @@ export function CartDrawer({ isOpen, onClose, onCheckout }: CartDrawerProps) {
         <div className="flex-1 overflow-y-auto p-5 space-y-4">
           {items.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-3">
-              <div className="w-12 h-12 rounded-full bg-surface-raised border border-border flex items-center justify-center text-foreground-muted">
+              <div className="w-12 h-12 rounded-full bg-white border border-[rgba(18,26,42,0.08)] flex items-center justify-center text-[#121A2A]/40">
                 <ShoppingBag className="w-6 h-6" />
               </div>
-              <p className="text-sm font-medium text-foreground">Keranjang masih kosong</p>
-              <p className="text-xs text-foreground-muted max-w-xs">
+              <p className="text-sm font-semibold text-[#121A2A]">Keranjang masih kosong</p>
+              <p className="text-xs text-[#121A2A]/60 max-w-xs">
                 Pilih produk digital dari katalog untuk menambahkannya ke keranjang pesanan.
               </p>
-              <Button size="sm" variant="outline" onClick={onClose} className="mt-2">
+              <Button size="sm" variant="outline" onClick={onClose} className="mt-2 rounded-lg">
                 Lihat Katalog
               </Button>
             </div>
@@ -75,50 +75,50 @@ export function CartDrawer({ isOpen, onClose, onCheckout }: CartDrawerProps) {
               return (
                 <div
                   key={item.id}
-                  className={`bg-surface-raised border rounded-card p-4 flex flex-col justify-between gap-3 ${
-                    itemOutOfStock ? 'border-status-error/40 bg-status-error/5' : 'border-border'
+                  className={`bg-white border rounded-xl p-4 flex flex-col justify-between gap-3 shadow-card ${
+                    itemOutOfStock ? 'border-status-error/40 bg-status-error/5' : 'border-[rgba(18,26,42,0.08)]'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0 flex-1 pr-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-[11px] text-primary font-medium">{item.category}</span>
+                        <span className="text-[11px] text-[#C96F55] font-semibold">{item.category}</span>
                         {itemOutOfStock && (
-                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-status-error text-white font-semibold shadow-xs shrink-0">
+                          <span className="text-[10px] px-2 py-0.5 rounded bg-status-error text-white font-semibold shadow-xs shrink-0">
                             Stok Habis
                           </span>
                         )}
                       </div>
-                      <h4 className="font-semibold text-sm text-foreground mt-0.5 break-words">{item.name}</h4>
+                      <h4 className="font-bold text-sm text-[#121A2A] mt-0.5 break-words">{item.name}</h4>
                     </div>
                     <button
                       type="button"
                       onClick={() => removeItem(item.id)}
-                      className="text-foreground-muted hover:text-status-error transition-colors p-1 shrink-0"
+                      className="text-[#121A2A]/40 hover:text-status-error transition-colors p-1 shrink-0"
                       title="Hapus item"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
 
-                  <div className="flex items-center justify-between pt-2 border-t border-border/60">
-                    <span className="font-bold text-sm text-foreground">
+                  <div className="flex items-center justify-between pt-2 border-t border-[rgba(18,26,42,0.06)]">
+                    <span className="font-bold text-sm text-[#121A2A]">
                       Rp {(item.priceNumeric * item.quantity).toLocaleString('id-ID')}
                     </span>
 
-                    <div className="flex items-center gap-2 bg-surface border border-border rounded-md px-2 py-0.5">
+                    <div className="flex items-center gap-2 bg-[#F7F5EF] border border-[rgba(18,26,42,0.1)] rounded-md px-2 py-0.5">
                       <button
                         type="button"
                         onClick={() => updateQuantity(item.id, -1)}
-                        className="text-foreground-muted hover:text-foreground text-xs"
+                        className="text-[#121A2A]/60 hover:text-[#121A2A] text-xs"
                       >
                         <Minus className="w-3 h-3" />
                       </button>
-                      <span className="text-xs font-semibold px-1">{item.quantity}</span>
+                      <span className="text-xs font-semibold px-1 text-[#121A2A]">{item.quantity}</span>
                       <button
                         type="button"
                         onClick={() => updateQuantity(item.id, 1)}
-                        className="text-foreground-muted hover:text-foreground text-xs"
+                        className="text-[#121A2A]/60 hover:text-[#121A2A] text-xs"
                         disabled={itemOutOfStock}
                       >
                         <Plus className="w-3 h-3" />
@@ -133,7 +133,7 @@ export function CartDrawer({ isOpen, onClose, onCheckout }: CartDrawerProps) {
 
         {/* Footer Checkout Summary */}
         {items.length > 0 && (
-          <div className="p-5 border-t border-border bg-surface-raised space-y-4">
+          <div className="p-5 border-t border-[rgba(18,26,42,0.08)] bg-white space-y-4">
             {hasOutOfStockItems && (
               <div className="text-[11px] text-status-error bg-status-error/10 border border-status-error/25 p-2.5 rounded-lg flex items-center gap-2">
                 <span>⚠️</span>
@@ -144,17 +144,17 @@ export function CartDrawer({ isOpen, onClose, onCheckout }: CartDrawerProps) {
             )}
 
             <div className="space-y-1.5 text-xs">
-              <div className="flex justify-between text-foreground-muted">
+              <div className="flex justify-between text-[#121A2A]/60">
                 <span>Subtotal ({getTotalItems()} item)</span>
-                <span>Rp {getTotalAmount().toLocaleString('id-ID')}</span>
+                <span className="font-semibold text-[#121A2A]">Rp {getTotalAmount().toLocaleString('id-ID')}</span>
               </div>
-              <div className="flex justify-between text-foreground-muted">
+              <div className="flex justify-between text-[#121A2A]/60">
                 <span>Biaya Layanan & PPN</span>
                 <span className="text-status-success font-medium">Gratis (Rp 0)</span>
               </div>
-              <div className="flex justify-between text-sm font-bold text-foreground pt-2.5 border-t border-border">
+              <div className="flex justify-between text-sm font-bold text-[#121A2A] pt-2.5 border-t border-[rgba(18,26,42,0.08)]">
                 <span>Total Pembayaran</span>
-                <span className="text-primary text-base font-extrabold font-mono">
+                <span className="text-[#C96F55] text-base font-extrabold font-mono">
                   Rp {getTotalAmount().toLocaleString('id-ID')}
                 </span>
               </div>
@@ -165,15 +165,15 @@ export function CartDrawer({ isOpen, onClose, onCheckout }: CartDrawerProps) {
                 variant="outline"
                 size="sm"
                 onClick={clearCart}
-                className="text-foreground-muted hover:text-status-error border-border h-10 px-3"
+                className="text-[#121A2A]/70 hover:text-status-error border-[rgba(18,26,42,0.15)] h-10 px-3 rounded-lg"
               >
                 Kosongkan
               </Button>
               <Button
-                className={`flex-1 gap-2 h-10 font-bold shadow-md shadow-primary/20 ${
+                className={`flex-1 gap-2 h-10 font-bold rounded-lg shadow-xs ${
                   hasOutOfStockItems
-                    ? 'opacity-50 cursor-not-allowed bg-muted text-muted-foreground'
-                    : 'bg-primary hover:bg-primary-hover text-white'
+                    ? 'opacity-50 cursor-not-allowed bg-slate-200 text-slate-500'
+                    : 'bg-[#C96F55] hover:bg-[#B86047] text-[#F7F5EF]'
                 }`}
                 disabled={hasOutOfStockItems}
                 onClick={onCheckout}

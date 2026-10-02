@@ -81,10 +81,10 @@ export function CheckoutCartSummary({
   };
 
   return (
-    <div className="bg-white border border-border rounded-2xl p-6 shadow-card space-y-6">
-      <div className="flex items-center justify-between pb-3 border-b border-border">
-        <h3 className="text-base font-bold text-navy-900">Ringkasan Pesanan</h3>
-        <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+    <div className="bg-white border border-[rgba(18,26,42,0.08)] rounded-2xl p-6 shadow-card space-y-6">
+      <div className="flex items-center justify-between pb-3 border-b border-[rgba(18,26,42,0.08)]">
+        <h3 className="text-base font-bold text-[#121A2A]">Ringkasan Pesanan</h3>
+        <span className="text-xs font-semibold px-2.5 py-0.5 rounded-md bg-[#F7F5EF] text-[#121A2A]/80 border border-[rgba(18,26,42,0.08)]">
           {totalItems} Item
         </span>
       </div>
@@ -101,12 +101,12 @@ export function CheckoutCartSummary({
               className={`p-3 rounded-xl border flex items-center justify-between text-xs gap-3 ${
                 itemOutOfStock
                   ? 'border-red-200 bg-red-50/50'
-                  : 'border-border bg-slate-50'
+                  : 'border-[rgba(18,26,42,0.08)] bg-[#F7F5EF]'
               }`}
             >
               <div className="min-w-0 flex-1">
-                <span className="font-bold text-navy-900 block truncate">{item.name}</span>
-                <span className="text-[11px] text-slate-500">
+                <span className="font-bold text-[#121A2A] block truncate">{item.name}</span>
+                <span className="text-[11px] text-[#121A2A]/60">
                   {item.quantity} x Rp {item.priceNumeric.toLocaleString('id-ID')}
                 </span>
                 {itemOutOfStock && (
@@ -115,7 +115,7 @@ export function CheckoutCartSummary({
                   </span>
                 )}
               </div>
-              <span className="font-bold text-navy-900 shrink-0">
+              <span className="font-bold text-[#121A2A] shrink-0">
                 Rp {(item.priceNumeric * item.quantity).toLocaleString('id-ID')}
               </span>
             </div>
@@ -135,10 +135,10 @@ export function CheckoutCartSummary({
       />
 
       {/* Calculation Breakdown */}
-      <div className="space-y-2 pt-2 border-t border-border text-xs">
-        <div className="flex justify-between text-slate-500">
+      <div className="space-y-2 pt-2 border-t border-[rgba(18,26,42,0.08)] text-xs">
+        <div className="flex justify-between text-[#121A2A]/60">
           <span>Subtotal:</span>
-          <span className="font-semibold text-navy-900">Rp {subtotal.toLocaleString('id-ID')}</span>
+          <span className="font-semibold text-[#121A2A]">Rp {subtotal.toLocaleString('id-ID')}</span>
         </div>
 
         {discountAmount > 0 && (
@@ -148,14 +148,14 @@ export function CheckoutCartSummary({
           </div>
         )}
 
-        <div className="flex justify-between text-slate-500">
+        <div className="flex justify-between text-[#121A2A]/60">
           <span>Biaya Layanan:</span>
           <span className="font-semibold text-status-success">Gratis (Rp 0)</span>
         </div>
 
-        <div className="flex justify-between items-center text-sm pt-3 border-t border-border">
-          <span className="font-bold text-navy-900">Total Pembayaran:</span>
-          <span className="font-extrabold text-xl text-accent">
+        <div className="flex justify-between items-center text-sm pt-3 border-t border-[rgba(18,26,42,0.08)]">
+          <span className="font-bold text-[#121A2A]">Total Pembayaran:</span>
+          <span className="font-extrabold text-xl text-[#C96F55]">
             Rp {finalTotal.toLocaleString('id-ID')}
           </span>
         </div>
@@ -166,7 +166,7 @@ export function CheckoutCartSummary({
         <Button
           type="button"
           disabled
-          className="w-full h-12 text-xs font-bold rounded-xl bg-red-100 text-status-error border border-red-200 cursor-not-allowed opacity-90"
+          className="w-full h-12 text-xs font-bold rounded-lg bg-red-100 text-status-error border border-red-200 cursor-not-allowed opacity-90"
         >
           Sebagian Item Habis
         </Button>
@@ -176,7 +176,7 @@ export function CheckoutCartSummary({
             type="button"
             disabled={isSubmitting}
             onClick={handleTriggerClick}
-            className="w-full gap-2 text-sm font-bold h-12 rounded-xl bg-accent hover:bg-accent-hover text-white shadow-sm transition-all cursor-pointer"
+            className="w-full gap-2 text-sm font-bold h-12 rounded-lg bg-[#C96F55] hover:bg-[#B86047] text-[#F7F5EF] shadow-xs transition-all cursor-pointer"
           >
             {isSubmitting ? (
               <span>Memproses Pesanan...</span>
@@ -188,20 +188,20 @@ export function CheckoutCartSummary({
             )}
           </Button>
 
-          <AlertDialog.Backdrop className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm animate-in fade-in">
+          <AlertDialog.Backdrop className="fixed inset-0 z-50 bg-[#121A2A]/60 backdrop-blur-xs animate-in fade-in">
             <AlertDialog.Container className="fixed inset-0 z-50 flex items-center justify-center p-4">
-              <AlertDialog.Dialog className="w-full max-w-[420px] bg-white border border-border rounded-2xl shadow-2xl p-6 space-y-4 animate-in zoom-in-95">
-                <AlertDialog.CloseTrigger className="absolute top-4 right-4 text-slate-400 hover:text-navy-900 p-1 rounded-lg" />
+              <AlertDialog.Dialog className="w-full max-w-[420px] bg-white border border-[rgba(18,26,42,0.1)] rounded-2xl shadow-2xl p-6 space-y-4 animate-in zoom-in-95">
+                <AlertDialog.CloseTrigger className="absolute top-4 right-4 text-[#121A2A]/50 hover:text-[#121A2A] p-1 rounded-lg" />
                 <AlertDialog.Header className="space-y-2">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-orange-50 border border-orange-200/80 flex items-center justify-center text-accent shrink-0">
+                    <div className="w-10 h-10 rounded-lg bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.25)] flex items-center justify-center text-[#C96F55] shrink-0">
                       <CreditCard className="w-5 h-5" />
                     </div>
                     <div>
-                      <AlertDialog.Heading className="text-base font-bold text-navy-900">
+                      <AlertDialog.Heading className="text-base font-bold text-[#121A2A]">
                         Konfirmasi Pembayaran
                       </AlertDialog.Heading>
-                      <p className="text-xs text-slate-500">
+                      <p className="text-xs text-[#121A2A]/60">
                         Periksa kembali ringkasan pesanan sebelum melanjutkan.
                       </p>
                     </div>
@@ -209,48 +209,48 @@ export function CheckoutCartSummary({
                 </AlertDialog.Header>
 
                 <AlertDialog.Body className="text-xs space-y-3 pt-1">
-                  <div className="p-3.5 bg-slate-50 rounded-xl border border-border space-y-2">
-                    <div className="flex justify-between items-center text-slate-500">
+                  <div className="p-3.5 bg-[#F7F5EF] rounded-xl border border-[rgba(18,26,42,0.08)] space-y-2">
+                    <div className="flex justify-between items-center text-[#121A2A]/60">
                       <span>Jumlah Produk:</span>
-                      <span className="font-bold text-navy-900">{totalItems} Layanan Digital</span>
+                      <span className="font-bold text-[#121A2A]">{totalItems} Layanan Digital</span>
                     </div>
-                    <div className="flex justify-between items-center text-slate-500">
+                    <div className="flex justify-between items-center text-[#121A2A]/60">
                       <span>Metode Pembayaran:</span>
-                      <span className="font-bold text-navy-900">
+                      <span className="font-bold text-[#121A2A]">
                         {isManualMode ? 'Transfer Bank / E-Wallet Manual' : 'Payment Gateway Instan'}
                       </span>
                     </div>
-                    <div className="flex justify-between items-center text-slate-500 pt-2 border-t border-border/80">
-                      <span className="font-bold text-navy-900">Total Tagihan:</span>
-                      <span className="font-extrabold text-base text-accent">
+                    <div className="flex justify-between items-center text-[#121A2A]/60 pt-2 border-t border-[rgba(18,26,42,0.08)]">
+                      <span className="font-bold text-[#121A2A]">Total Tagihan:</span>
+                      <span className="font-extrabold text-base text-[#C96F55]">
                         Rp {finalTotal.toLocaleString('id-ID')}
                       </span>
                     </div>
                   </div>
-                  <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 flex items-start gap-2 text-[11px] text-amber-800">
-                    <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                  <div className="p-2.5 rounded-lg bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.25)] flex items-start gap-2 text-[11px] text-[#121A2A]">
+                    <AlertCircle className="w-4 h-4 text-[#C96F55] shrink-0 mt-0.5" />
                     <span>Pastikan email penerima lisensi dan nomor WhatsApp Anda telah terisi dengan benar.</span>
                   </div>
                 </AlertDialog.Body>
 
-                <AlertDialog.Footer className="flex items-center justify-end gap-2.5 pt-3 border-t border-border">
+                <AlertDialog.Footer className="flex items-center justify-end gap-2.5 pt-3 border-t border-[rgba(18,26,42,0.08)]">
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
                     onClick={() => setIsConfirmOpen(false)}
-                    className="text-xs border-border h-9 px-4 rounded-xl text-navy-900"
+                    className="rounded-lg text-xs"
                   >
                     Batal
                   </Button>
                   <Button
                     type="button"
+                    size="sm"
                     disabled={isSubmitting}
                     onClick={handleConfirmPayment}
-                    className="text-xs font-bold h-9 px-4 gap-2 bg-accent hover:bg-accent-hover text-white shadow-sm rounded-xl cursor-pointer"
+                    className="rounded-lg text-xs font-bold bg-[#C96F55] hover:bg-[#B86047] text-[#F7F5EF]"
                   >
-                    <CreditCard className="w-3.5 h-3.5" />
-                    <span>{isSubmitting ? 'Memproses...' : 'Konfirmasi & Bayar'}</span>
+                    {isSubmitting ? 'Memproses...' : 'Ya, Lanjutkan Pembayaran'}
                   </Button>
                 </AlertDialog.Footer>
               </AlertDialog.Dialog>
@@ -259,9 +259,15 @@ export function CheckoutCartSummary({
         </AlertDialog>
       )}
 
-      <div className="flex items-center justify-center gap-2 text-[11px] text-slate-500 text-center">
-        <ShieldCheck className="w-3.5 h-3.5 text-accent" />
-        <span>Garansi uang kembali 100% jika aktivasi akun gagal.</span>
+      {/* Security Guarantee Bar */}
+      <div className="p-3.5 bg-[#F7F5EF] rounded-xl border border-[rgba(18,26,42,0.08)] space-y-2 text-[11px] text-[#121A2A]/70">
+        <div className="flex items-center gap-2 text-[#121A2A] font-semibold">
+          <ShieldCheck className="w-4 h-4 text-[#C96F55]" />
+          <span>Jaminan Transaksi Terpercaya & Terenkripsi</span>
+        </div>
+        <p className="leading-relaxed">
+          Kredensial aktivasi diproses secara langsung ke email tujuan. Seluruh data transaksi dilindungi standar keamanan perbankan resmi.
+        </p>
       </div>
     </div>
   );
