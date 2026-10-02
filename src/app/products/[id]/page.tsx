@@ -113,6 +113,16 @@ export default async function ProductDetailPage({ params }: PageProps) {
         answer:
           'Ya, seluruh produk dilindungi garansi 100% penggantian jika mengalami kendala teknis atau akses sebelum masa aktif berakhir.',
       },
+      {
+        question: 'Bagaimana jika akun tidak dapat digunakan?',
+        answer:
+          'Jika Anda mengalami kendala saat login atau kredensial bermasalah, segera hubungi tim CS Asterra Store melalui WhatsApp. Kami akan melakukan verifikasi akun dan memberikan penggantian baru sesuai ketentuan garansi.',
+      },
+      {
+        question: 'Apa yang harus dilakukan jika terjadi kendala?',
+        answer:
+          'Cukup siapkan nomor Invoice pesanan Anda dan hubungi WhatsApp CS Asterra Store. Tim kami siap membantu panduan setup maupun klaim garansi.',
+      },
     ],
     relatedProducts: relevantProducts.map((p) => ({
       id: p.id,

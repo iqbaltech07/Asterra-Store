@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, Suspense } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
@@ -35,13 +36,24 @@ const SORT_OPTIONS = [
   { value: 'name_asc', label: 'Nama A - Z' },
 ];
 
-export default function ProductsPage() {
-  const [selectedCategory, setSelectedCategory] = useState<string>('Semua');
-  const [searchQuery, setSearchQuery] = useState<string>('');
+function ProductsContent() {
+  const searchParams = useSearchParams();
+  const initialSearch = searchParams.get('search') || searchParams.get('brand') || '';
+  const initialCategory = searchParams.get('category') || 'Semua';
+
+  const [selectedCategory, setSelectedCategory] = useState<string>(initialCategory);
+  const [searchQuery, setSearchQuery] = useState<string>(initialSearch);
   const [sortBy, setSortBy] = useState<string>('popular');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [notification, setNotification] = useState<string | null>(null);
   const [visibleCount, setVisibleCount] = useState<number>(24);
+
+  useEffect(() => {
+    const q = searchParams.get('search') || searchParams.get('brand');
+    const cat = searchParams.get('category');
+    if (q !== null) setSearchQuery(q);
+    if (cat !== null) setSelectedCategory(cat);
+  }, [searchParams]);
 
   const { items: cartItems, addItem, removeItem } = useCartStore();
 
@@ -523,5 +535,19 @@ export default function ProductsPage() {
 
       <Footer onNotify={showNotification} />
     </div>
+  );
+}
+
+export default function ProductsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#F7F5EF] flex items-center justify-center">
+          <div className="w-8 h-8 rounded-full border-2 border-[#C96F55] border-t-transparent animate-spin" />
+        </div>
+      }
+    >
+      <ProductsContent />
+    </Suspense>
   );
 }
