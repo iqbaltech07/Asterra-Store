@@ -6,7 +6,6 @@ import { useQuery } from '@tanstack/react-query';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import {
   Search,
   ShoppingCart,
@@ -17,11 +16,10 @@ import {
   LayoutGrid,
   List,
   ArrowRight,
-  UserCheck,
-  Award,
 } from 'lucide-react';
 import { useCartStore } from '@/store/use-cart-store';
 import { ProductItem } from '@/lib/products-data';
+import { ProductCard } from '@/components/products/product-card';
 import {
   Select,
   SelectContent,
@@ -176,7 +174,7 @@ export default function ProductsPage() {
         </div>
       )}
 
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-10 w-full">
+      <main className="flex-1 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-10 w-full overflow-hidden">
         {/* Breadcrumb & Title */}
         <div className="mb-8">
           <div className="flex items-center gap-2 text-xs text-[#121A2A]/60 mb-2">
@@ -325,8 +323,8 @@ export default function ProductsPage() {
 
         {/* Loading Skeletons */}
         {isLoading && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+          <div className="grid grid-cols-2 gap-3 md:gap-5 lg:grid-cols-3">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
               <div
                 key={i}
                 className="bg-white border border-[rgba(18,26,42,0.08)] rounded-2xl p-4 sm:p-5 h-80 animate-pulse flex flex-col justify-between"
@@ -334,7 +332,7 @@ export default function ProductsPage() {
                 <div className="space-y-3">
                   <div className="w-20 h-4 bg-[rgba(18,26,42,0.06)] rounded" />
                   <div className="w-3/4 h-5 bg-[rgba(18,26,42,0.06)] rounded" />
-                  <div className="w-full h-32 bg-[rgba(18,26,42,0.06)] rounded-xl" />
+                  <div className="w-full aspect-[16/10] bg-[rgba(18,26,42,0.06)] rounded-xl" />
                 </div>
                 <div className="w-full h-9 bg-[rgba(18,26,42,0.06)] rounded-xl" />
               </div>
@@ -374,135 +372,17 @@ export default function ProductsPage() {
 
         {/* Products Listing Grid */}
         {!isLoading && !error && products.length > 0 && viewMode === 'grid' && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          <div className="grid grid-cols-2 gap-3 md:gap-5 lg:grid-cols-3">
             {products.map((product, idx) => {
               const isSelected = cartItems.some((item) => item.id === product.id);
-              const isOutOfStock =
-                (product.stock !== undefined && product.stock <= 0) ||
-                product.providerStatus === 'empty' ||
-                product.status === 'out_of_stock';
-
               return (
-                <Card
+                <ProductCard
                   key={product.id}
-                  className="bg-white border border-[rgba(18,26,42,0.08)] rounded-2xl shadow-card hover:shadow-card-hover hover:border-[rgba(18,26,42,0.18)] transition-all duration-200 overflow-hidden flex flex-col justify-between group"
-                >
-                  <div>
-                    {/* Card Top: Badges */}
-                    <div className="p-4 pb-2 flex items-center justify-between gap-2">
-                      <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-[#F7F5EF] text-[#121A2A]/70 border border-[rgba(18,26,42,0.08)] truncate">
-                        {product.category.name}
-                      </span>
-                      {product.popular && (
-                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-[rgba(201,111,85,0.08)] text-[#C96F55] border border-[rgba(201,111,85,0.25)] shrink-0">
-                          Populer
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Product Title & Description */}
-                    <div className="px-4 pb-2">
-                      <Link
-                        href={`/products/${product.id}`}
-                        prefetch={true}
-                        className="block font-bold text-sm sm:text-base text-[#121A2A] group-hover:text-[#C96F55] transition-colors line-clamp-1"
-                      >
-                        {product.name}
-                      </Link>
-                      <p className="text-[11px] text-[#121A2A]/65 line-clamp-2 mt-1 leading-relaxed">
-                        {product.description}
-                      </p>
-                    </div>
-
-                    {/* Product Image Banner */}
-                    {product.imageUrl && (
-                      <div className="relative h-28 sm:h-32 mx-4 my-2 rounded-xl bg-[#F7F5EF] border border-[rgba(18,26,42,0.08)] overflow-hidden">
-                        <Link href={`/products/${product.id}`} prefetch={true} className="block w-full h-full">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={product.imageUrl}
-                            alt={product.name}
-                            loading={idx < 4 ? 'eager' : 'lazy'}
-                            fetchPriority={idx < 4 ? 'high' : 'auto'}
-                            decoding="async"
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          />
-                        </Link>
-                        {isOutOfStock && (
-                          <div className="absolute inset-0 bg-[#121A2A]/70 backdrop-blur-[2px] flex items-center justify-center">
-                            <span className="text-xs font-bold text-[#F7F5EF] bg-status-error/90 px-2.5 py-0.5 rounded">
-                              Stok Habis
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Trust / Features Pills */}
-                    <div className="px-4 pt-1 pb-2 flex items-center justify-between text-[10px] text-[#121A2A]/60 border-t border-[rgba(18,26,42,0.06)] mx-4">
-                      <span className="inline-flex items-center gap-1">
-                        <UserCheck className="w-3 h-3 text-[#121A2A]/40" />
-                        <span>Akun Resmi</span>
-                      </span>
-                      <span className="inline-flex items-center gap-1">
-                        <Zap className="w-3 h-3 text-[#C96F55]" />
-                        <span>Aktivasi Instan</span>
-                      </span>
-                      <span className="inline-flex items-center gap-1">
-                        <Award className="w-3 h-3 text-[#121A2A]/40" />
-                        <span>Garansi</span>
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Card Bottom: Price, Select Button & Circular Arrow */}
-                  <div className="p-4 pt-3 border-t border-[rgba(18,26,42,0.08)] flex items-center justify-between gap-2">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[10px] text-[#121A2A]/50 uppercase font-semibold tracking-wider leading-none">
-                        Mulai dari
-                      </p>
-                      <span className="text-base sm:text-lg font-extrabold tracking-tight text-[#121A2A] block truncate">
-                        {product.priceFormatted}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <Button
-                        size="sm"
-                        variant={isOutOfStock ? 'outline' : isSelected ? 'secondary' : 'default'}
-                        className={`h-8 sm:h-9 px-3 text-xs font-semibold rounded-lg ${
-                          isSelected ? 'bg-[rgba(201,111,85,0.1)] text-[#C96F55] border border-[rgba(201,111,85,0.3)]' : ''
-                        }`}
-                        disabled={isOutOfStock}
-                        onClick={() => !isOutOfStock && handleAddToCart(product)}
-                      >
-                        {isOutOfStock ? (
-                          'Habis'
-                        ) : isSelected ? (
-                          <>
-                            <Check className="w-3.5 h-3.5 text-[#C96F55] mr-1" />
-                            <span>Dipilih</span>
-                          </>
-                        ) : (
-                          <>
-                            <ShoppingCart className="w-3.5 h-3.5 mr-1" />
-                            <span>Pilih</span>
-                          </>
-                        )}
-                      </Button>
-
-                      <Link href={`/products/${product.id}`} prefetch={true}>
-                        <button
-                          type="button"
-                          className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-[#121A2A] text-[#F7F5EF] flex items-center justify-center hover:bg-[#C96F55] transition-colors shadow-xs cursor-pointer"
-                          aria-label={`Detail ${product.name}`}
-                        >
-                          <ArrowRight className="w-4 h-4" />
-                        </button>
-                      </Link>
-                    </div>
-                  </div>
-                </Card>
+                  product={product}
+                  isSelected={isSelected}
+                  onAddToCart={handleAddToCart}
+                  priorityImage={idx < 6}
+                />
               );
             })}
           </div>

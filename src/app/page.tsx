@@ -5,10 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import {
-  ShoppingCart,
-  Check,
   CheckCircle2,
   ShieldCheck,
   Zap,
@@ -18,13 +15,12 @@ import {
   Headphones,
   ArrowRight,
   Package,
-  UserCheck,
-  Award,
 } from 'lucide-react';
 import { useCartStore } from '@/store/use-cart-store';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { ProductItem } from '@/lib/products-data';
+import { ProductCard } from '@/components/products/product-card';
 
 export default function HomePage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -137,10 +133,10 @@ export default function HomePage() {
       <Header onNotify={showNotification} />
 
       {/* Main Content */}
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12 w-full">
+      <main className="flex-1 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-10 w-full overflow-hidden">
         {/* Hero Section */}
-        <section className="mb-14 sm:mb-18">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+        <section className="mb-10 sm:mb-16">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-center">
             {/* Left Content */}
             <div className="lg:col-span-7 xl:col-span-8 space-y-4">
               {/* Badge */}
@@ -162,9 +158,9 @@ export default function HomePage() {
               </p>
             </div>
 
-            {/* Right Graphic: Elegant Subtle Asterra Planet & Orbit Visual */}
-            <div className="hidden lg:flex lg:col-span-5 xl:col-span-4 items-center justify-end relative select-none">
-              <div className="relative w-72 h-64 flex items-center justify-center">
+            {/* Right Graphic: Asterra Planet & Orbit Visual (Desktop Large, Mobile Scaled) */}
+            <div className="flex justify-center lg:justify-end lg:col-span-5 xl:col-span-4 items-center relative select-none mt-2 lg:mt-0">
+              <div className="relative w-64 h-56 sm:w-72 sm:h-64 flex items-center justify-center">
                 {/* Subtle orbital SVG background rings */}
                 <svg
                   className="absolute inset-0 w-full h-full pointer-events-none"
@@ -196,10 +192,10 @@ export default function HomePage() {
                 </svg>
 
                 {/* Soft ambient radial blur */}
-                <div className="absolute w-44 h-44 rounded-full bg-[rgba(201,111,85,0.06)] blur-2xl pointer-events-none" />
+                <div className="absolute w-40 h-40 sm:w-44 sm:h-44 rounded-full bg-[rgba(201,111,85,0.06)] blur-2xl pointer-events-none" />
 
                 {/* Official Asterra Planet Mark Asset */}
-                <div className="relative z-10 w-44 h-36 flex items-center justify-center transition-transform hover:scale-105 duration-300">
+                <div className="relative z-10 w-36 h-28 sm:w-44 sm:h-36 flex items-center justify-center transition-transform hover:scale-105 duration-300">
                   <Image
                     src="/images/brand/asterra-mark.png"
                     alt="Asterra Planet Mark"
@@ -211,16 +207,16 @@ export default function HomePage() {
                 </div>
 
                 {/* Editorial subtle floating badge */}
-                <div className="absolute bottom-2 right-2 z-20 bg-white/95 backdrop-blur-xs border border-[rgba(18,26,42,0.08)] px-3 py-1.5 rounded-lg shadow-xs flex items-center gap-2">
+                <div className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2 z-20 bg-white/95 backdrop-blur-xs border border-[rgba(18,26,42,0.08)] px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg shadow-xs flex items-center gap-1.5 sm:gap-2">
                   <span className="w-2 h-2 rounded-full bg-[#C96F55] animate-pulse" />
-                  <span className="text-[11px] font-semibold text-[#121A2A]">Garansi Resmi 100%</span>
+                  <span className="text-[10px] sm:text-[11px] font-semibold text-[#121A2A]">Garansi Resmi 100%</span>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Quick Metrics / Trust Bar */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mt-10 pt-8 border-t border-[rgba(18,26,42,0.1)]">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6 mt-8 sm:mt-10 pt-6 sm:pt-8 border-t border-[rgba(18,26,42,0.1)]">
             <div className="flex items-center gap-3.5 p-2">
               <div className="w-10 h-10 rounded-xl bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.2)] flex items-center justify-center shrink-0">
                 <ShieldCheck className="w-5 h-5 text-[#C96F55]" />
@@ -254,9 +250,9 @@ export default function HomePage() {
         </section>
 
         {/* Filter & Search Bar */}
-        <section className="mb-8 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-          {/* Category Tabs */}
-          <div className="flex flex-wrap items-center gap-2">
+        <section className="mb-6 sm:mb-8 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 sm:gap-4">
+          {/* Category Tabs: Horizontal scroll on mobile without wrapping */}
+          <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-1.5 scrollbar-none w-full lg:w-auto -mx-1 px-1">
             {categories.map((cat) => {
               const isActive = selectedCategory === cat;
               return (
@@ -264,10 +260,10 @@ export default function HomePage() {
                   key={cat}
                   type="button"
                   onClick={() => setSelectedCategory(cat)}
-                  className={`px-3.5 py-1.5 text-xs font-semibold rounded-md transition-all duration-150 cursor-pointer ${
+                  className={`px-3 sm:px-3.5 py-1.5 text-xs font-semibold rounded-lg whitespace-nowrap transition-all duration-150 cursor-pointer shrink-0 ${
                     isActive
                       ? 'bg-[#121A2A] text-[#F7F5EF] shadow-xs'
-                      : 'bg-transparent text-[#121A2A] border border-[rgba(18,26,42,0.12)] hover:border-[#121A2A] hover:bg-white/60'
+                      : 'bg-white/70 text-[#121A2A] border border-[rgba(18,26,42,0.12)] hover:border-[#121A2A] hover:bg-white'
                   }`}
                 >
                   {cat === 'all' ? 'Semua Katalog' : cat}
@@ -276,23 +272,23 @@ export default function HomePage() {
             })}
           </div>
 
-          {/* Search Box */}
-          <div className="relative min-w-[260px] sm:min-w-[300px]">
+          {/* Search Box: full width on mobile, sleek on desktop */}
+          <div className="relative w-full lg:w-72 xl:w-80 shrink-0">
             <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#121A2A]/40 pointer-events-none" />
             <input
               type="text"
               placeholder="Cari produk digital..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-white border border-[rgba(18,26,42,0.12)] rounded-lg pl-10 pr-4 py-2 text-xs text-[#121A2A] placeholder:text-[#121A2A]/40 focus:outline-none focus:border-[#C96F55] focus:ring-2 focus:ring-[#C96F55]/20 transition-all shadow-xs"
+              className="w-full bg-white border border-[rgba(18,26,42,0.12)] rounded-xl pl-10 pr-4 py-2 text-xs sm:text-sm text-[#121A2A] placeholder:text-[#121A2A]/40 focus:outline-none focus:border-[#C96F55] focus:ring-2 focus:ring-[#C96F55]/20 transition-all shadow-xs"
             />
           </div>
         </section>
 
-        {/* Product Catalog Grid */}
+        {/* Product Catalog Grid (Mobile: 2 cards, Desktop: 3 cards) */}
         {isLoadingProducts ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-            {[1, 2, 3, 4].map((i) => (
+          <div className="grid grid-cols-2 gap-3 md:gap-5 lg:grid-cols-3">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
               <div
                 key={i}
                 className="bg-white border border-[rgba(18,26,42,0.08)] rounded-2xl p-4 sm:p-5 h-80 animate-pulse flex flex-col justify-between"
@@ -300,142 +296,24 @@ export default function HomePage() {
                 <div className="space-y-3">
                   <div className="w-20 h-4 bg-[rgba(18,26,42,0.06)] rounded" />
                   <div className="w-3/4 h-5 bg-[rgba(18,26,42,0.06)] rounded" />
-                  <div className="w-full h-32 bg-[rgba(18,26,42,0.06)] rounded-xl" />
+                  <div className="w-full aspect-[16/10] bg-[rgba(18,26,42,0.06)] rounded-xl" />
                 </div>
                 <div className="w-full h-9 bg-[rgba(18,26,42,0.06)] rounded-xl" />
               </div>
             ))}
           </div>
         ) : filteredProducts.length > 0 ? (
-          <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          <section className="grid grid-cols-2 gap-3 md:gap-5 lg:grid-cols-3">
             {filteredProducts.map((product, idx) => {
               const isSelected = cartItems.some((item) => item.id === product.id);
-              const isOutOfStock =
-                (product.stock !== undefined && product.stock <= 0) ||
-                product.providerStatus === 'empty' ||
-                product.status === 'out_of_stock';
-
               return (
-                <Card
+                <ProductCard
                   key={product.id}
-                  className="bg-white border border-[rgba(18,26,42,0.08)] rounded-2xl shadow-card hover:shadow-card-hover hover:border-[rgba(18,26,42,0.18)] transition-all duration-200 overflow-hidden flex flex-col justify-between group"
-                >
-                  <div>
-                    {/* Card Top: Badges */}
-                    <div className="p-4 pb-2 flex items-center justify-between gap-2">
-                      <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-[#F7F5EF] text-[#121A2A]/70 border border-[rgba(18,26,42,0.08)] truncate">
-                        {product.category.name}
-                      </span>
-                      {product.popular && (
-                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-[rgba(201,111,85,0.08)] text-[#C96F55] border border-[rgba(201,111,85,0.25)] shrink-0">
-                          Populer
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Product Title & Description */}
-                    <div className="px-4 pb-2">
-                      <Link
-                        href={`/products/${product.id}`}
-                        prefetch={true}
-                        className="block font-bold text-sm sm:text-base text-[#121A2A] group-hover:text-[#C96F55] transition-colors line-clamp-1"
-                      >
-                        {product.name}
-                      </Link>
-                      <p className="text-[11px] text-[#121A2A]/65 line-clamp-2 mt-1 leading-relaxed">
-                        {product.description}
-                      </p>
-                    </div>
-
-                    {/* Product Image Banner */}
-                    {product.imageUrl && (
-                      <div className="relative h-28 sm:h-32 mx-4 my-2 rounded-xl bg-[#F7F5EF] border border-[rgba(18,26,42,0.08)] overflow-hidden">
-                        <Link href={`/products/${product.id}`} prefetch={true} className="block w-full h-full">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={product.imageUrl}
-                            alt={product.name}
-                            loading={idx < 4 ? 'eager' : 'lazy'}
-                            fetchPriority={idx < 4 ? 'high' : 'auto'}
-                            decoding="async"
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          />
-                        </Link>
-                        {isOutOfStock && (
-                          <div className="absolute inset-0 bg-[#121A2A]/70 backdrop-blur-[2px] flex items-center justify-center">
-                            <span className="text-xs font-bold text-[#F7F5EF] bg-status-error/90 px-2.5 py-0.5 rounded">
-                              Stok Habis
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Trust / Features Pills */}
-                    <div className="px-4 pt-1 pb-2 flex items-center justify-between text-[10px] text-[#121A2A]/60 border-t border-[rgba(18,26,42,0.06)] mx-4">
-                      <span className="inline-flex items-center gap-1">
-                        <UserCheck className="w-3 h-3 text-[#121A2A]/40" />
-                        <span>Akun Resmi</span>
-                      </span>
-                      <span className="inline-flex items-center gap-1">
-                        <Zap className="w-3 h-3 text-[#C96F55]" />
-                        <span>Aktivasi Instan</span>
-                      </span>
-                      <span className="inline-flex items-center gap-1">
-                        <Award className="w-3 h-3 text-[#121A2A]/40" />
-                        <span>Garansi</span>
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Card Bottom: Price, Select Button & Circular Arrow */}
-                  <div className="p-4 pt-3 border-t border-[rgba(18,26,42,0.08)] flex items-center justify-between gap-2">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[10px] text-[#121A2A]/50 uppercase font-semibold tracking-wider leading-none">
-                        Mulai dari
-                      </p>
-                      <span className="text-base sm:text-lg font-extrabold tracking-tight text-[#121A2A] block truncate">
-                        {product.priceFormatted}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <Button
-                        size="sm"
-                        variant={isOutOfStock ? 'outline' : isSelected ? 'secondary' : 'default'}
-                        className={`h-8 sm:h-9 px-3 text-xs font-semibold rounded-lg ${
-                          isSelected ? 'bg-[rgba(201,111,85,0.1)] text-[#C96F55] border border-[rgba(201,111,85,0.3)]' : ''
-                        }`}
-                        disabled={isOutOfStock}
-                        onClick={() => !isOutOfStock && handleAddToCart(product)}
-                      >
-                        {isOutOfStock ? (
-                          'Habis'
-                        ) : isSelected ? (
-                          <>
-                            <Check className="w-3.5 h-3.5 text-[#C96F55] mr-1" />
-                            <span>Dipilih</span>
-                          </>
-                        ) : (
-                          <>
-                            <ShoppingCart className="w-3.5 h-3.5 mr-1" />
-                            <span>Pilih</span>
-                          </>
-                        )}
-                      </Button>
-
-                      <Link href={`/products/${product.id}`} prefetch={true}>
-                        <button
-                          type="button"
-                          className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-[#121A2A] text-[#F7F5EF] flex items-center justify-center hover:bg-[#C96F55] transition-colors shadow-xs cursor-pointer"
-                          aria-label={`Detail ${product.name}`}
-                        >
-                          <ArrowRight className="w-4 h-4" />
-                        </button>
-                      </Link>
-                    </div>
-                  </div>
-                </Card>
+                  product={product}
+                  isSelected={isSelected}
+                  onAddToCart={handleAddToCart}
+                  priorityImage={idx < 6}
+                />
               );
             })}
           </section>
