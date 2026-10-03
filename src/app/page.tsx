@@ -531,30 +531,19 @@ export default function HomePage() {
                 {/* Ambient Soft Glow */}
                 <div className="absolute w-36 h-36 lg:w-48 lg:h-48 rounded-full bg-[rgba(201,111,85,0.18)] blur-2xl pointer-events-none" />
 
-                {/* Scaled Asterra Planet Visual: Animated Video Test with Static Fallback (IMG_3652.MOV) */}
-                <div className="relative z-10 w-[150px] sm:w-[180px] lg:w-[220px] xl:w-[240px] flex items-center justify-center filter drop-shadow-[0_12px_24px_rgba(0,0,0,0.3)]">
-                  <video
-                    autoPlay
-                    muted
-                    loop
-                    playsInline
-                    preload="metadata"
-                    poster="/images/brand/hero-planet-white.png"
-                    className="w-full h-auto object-contain mix-blend-lighten pointer-events-none select-none"
-                  >
-                    <source src="/videos/hero-planet.mp4" type="video/mp4" />
-                    <source src="/videos/hero-planet.mov" type="video/quicktime" />
-                    {/* Fallback Static Planet Image */}
-                    <Image
-                      src="/images/brand/hero-planet-white.png"
-                      alt="Asterra Planet Illustration"
-                      width={360}
-                      height={282}
-                      unoptimized
-                      className="w-full h-auto object-contain"
-                      priority
-                    />
-                  </video>
+                {/* Scaled Asterra Planet Visual: Transparent Animated WebP with Static Fallback */}
+                <div className="relative z-10 w-[150px] sm:w-[180px] lg:w-[220px] xl:w-[240px] flex items-center justify-center">
+                  <img
+                    src="/assets/asterra-planet-transparent.webp"
+                    alt="Asterra Store"
+                    width={800}
+                    height={426}
+                    draggable={false}
+                    className="w-full h-auto object-contain pointer-events-none select-none"
+                    onError={(e) => {
+                      e.currentTarget.src = "/images/brand/hero-planet-white.png";
+                    }}
+                  />
                 </div>
               </div>
             </div>
