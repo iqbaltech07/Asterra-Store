@@ -13,6 +13,17 @@ export interface PayoutRequest {
   notes?: string;
 }
 
+export interface NetworkBonusLog {
+  id: string;
+  orderId?: string;
+  fromPartnerCode: string;
+  fromPartnerName: string;
+  orderTotal: number;
+  bonusAmount: number;
+  bonusPercentage: number;
+  createdAt: string;
+}
+
 export interface AffiliatePartnerData {
   id: string;
   name: string;
@@ -27,6 +38,8 @@ export interface AffiliatePartnerData {
   totalRevenue: number;
   unpaidCommission: number;
   paidCommission: number;
+  networkCommission?: number;
+  networkBonusLogs?: NetworkBonusLog[];
   bankName?: string;
   bankAccount?: string;
   status: 'active' | 'pending' | 'suspended';
@@ -320,13 +333,111 @@ export class AffiliateService {
       partner.rate = 15;
     }
 
+    // Network Sponsor Override Bonus (Bonus Komisi Teman)
+    // If this partner was invited by a sponsor, the sponsor receives an override bonus (2%)
+    let sponsorBonusInfo = '';
+    if (partner.referredByCode) {
+      const sponsor = list.find((a) => a.code.toUpperCase() === partner.referredByCode!.toUpperCase());
+      if (sponsor && sponsor.id !== partner.id) {
+        const overridePercent = 2; // 2% override bonus from Asterra Store
+        const bonusAmount = Math.max(1000, Math.round((orderTotal * overridePercent) / 100));
+
+        sponsor.unpaidCommission = (sponsor.unpaidCommission || 0) + bonusAmount;
+        sponsor.networkCommission = (sponsor.networkCommission || 0) + bonusAmount;
+        sponsor.networkBonusLogs = sponsor.networkBonusLogs || [];
+
+        sponsor.networkBonusLogs.unshift({
+          id: `net-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6)}`,
+          orderId,
+          fromPartnerCode: partner.code,
+          fromPartnerName: partner.name,
+          orderTotal,
+          bonusAmount,
+          bonusPercentage: overridePercent,
+          createdAt: new Date().toISOString(),
+        });
+
+        sponsorBonusInfo = ` & Bonus tim Rp ${bonusAmount.toLocaleString('id-ID')} ke sponsor ${sponsor.name}`;
+      }
+    }
+
     this.saveAffiliates(list);
 
     return {
       success: true,
       commission: earnedCommission,
       partnerName: partner.name,
-      message: `Komisi Rp ${earnedCommission.toLocaleString('id-ID')} berhasil dialokasikan ke ${partner.name}.`,
+      message: `Komisi Rp ${earnedCommission.toLocaleString('id-ID')} berhasil dialokasikan ke ${partner.name}${sponsorBonusInfo}.`,
+    };
+  }
+
+  /**
+   * Get team downline data and passive bonus metrics for a sponsor sales partner
+   */
+  public static getTeamDataForPartner(partnerCode: string): {
+    sponsorCode: string;
+    totalTeamMembers: number;
+    totalTeamOrders: number;
+    totalTeamRevenue: number;
+    totalNetworkBonus: number;
+    teamMembers: Array<{
+      id: string;
+      name: string;
+      email: string;
+      whatsapp: string;
+      code: string;
+      joinedAt: string;
+      totalOrders: number;
+      totalRevenue: number;
+      status: string;
+      bonusEarnedFromMember: number;
+    }>;
+    bonusLogs: NetworkBonusLog[];
+  } {
+    const normalizedCode = partnerCode.trim().toUpperCase();
+    const list = this.getAllAffiliates();
+    const sponsor = list.find((a) => a.code.toUpperCase() === normalizedCode);
+
+    // Find all partners who registered with this sponsor's referral code
+    const downlines = list.filter(
+      (a) => a.referredByCode && a.referredByCode.toUpperCase() === normalizedCode && a.code.toUpperCase() !== normalizedCode
+    );
+
+    const bonusLogs = sponsor?.networkBonusLogs || [];
+
+    const teamMembers = downlines.map((member) => {
+      // Calculate total bonus earned from this specific member
+      const bonusFromMember = bonusLogs
+        .filter((log) => log.fromPartnerCode.toUpperCase() === member.code.toUpperCase())
+        .reduce((sum, log) => sum + (log.bonusAmount || 0), 0);
+
+      return {
+        id: member.id,
+        name: member.name,
+        email: member.email,
+        whatsapp: member.whatsapp,
+        code: member.code,
+        joinedAt: member.joinedAt,
+        totalOrders: member.totalOrders || 0,
+        totalRevenue: member.totalRevenue || 0,
+        status: member.status || 'active',
+        bonusEarnedFromMember: bonusFromMember,
+      };
+    });
+
+    const totalTeamMembers = teamMembers.length;
+    const totalTeamOrders = teamMembers.reduce((sum, m) => sum + m.totalOrders, 0);
+    const totalTeamRevenue = teamMembers.reduce((sum, m) => sum + m.totalRevenue, 0);
+    const totalNetworkBonus = sponsor?.networkCommission || bonusLogs.reduce((sum, log) => sum + (log.bonusAmount || 0), 0);
+
+    return {
+      sponsorCode: normalizedCode,
+      totalTeamMembers,
+      totalTeamOrders,
+      totalTeamRevenue,
+      totalNetworkBonus,
+      teamMembers,
+      bonusLogs,
     };
   }
 

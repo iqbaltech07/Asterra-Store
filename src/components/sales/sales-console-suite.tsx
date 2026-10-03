@@ -38,6 +38,9 @@ import {
   ShieldCheck,
   Building,
   CreditCard,
+  Users,
+  Zap,
+  Coins,
 } from 'lucide-react';
 import { AdminTab } from '@/components/admin/admin-sidebar';
 
@@ -60,6 +63,7 @@ interface SalesProfileData {
   totalRevenue: number;
   unpaidCommission: number;
   paidCommission: number;
+  networkCommission?: number;
   bankName?: string;
   bankAccount?: string;
   status: string;
@@ -97,6 +101,40 @@ interface SalesOrder {
   commission: number;
   itemsCount: number;
   productNames: string;
+}
+
+export interface NetworkMember {
+  id: string;
+  name: string;
+  email: string;
+  whatsapp: string;
+  code: string;
+  joinedAt: string;
+  totalOrders: number;
+  totalRevenue: number;
+  status: string;
+  bonusEarnedFromMember: number;
+}
+
+export interface NetworkBonusLogItem {
+  id: string;
+  orderId?: string;
+  fromPartnerCode: string;
+  fromPartnerName: string;
+  orderTotal: number;
+  bonusAmount: number;
+  bonusPercentage: number;
+  createdAt: string;
+}
+
+export interface NetworkDataResponse {
+  sponsorCode: string;
+  totalTeamMembers: number;
+  totalTeamOrders: number;
+  totalTeamRevenue: number;
+  totalNetworkBonus: number;
+  teamMembers: NetworkMember[];
+  bonusLogs: NetworkBonusLogItem[];
 }
 
 export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesConsoleProps) {
@@ -155,6 +193,25 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
     staleTime: 30000,
   });
 
+  // 4. Fetch Sales Network / Downline Team & Bonus
+  const { data: networkRes, isLoading: isNetworkLoading, refetch: refetchNetwork } = useQuery<{
+    success: boolean;
+    data: NetworkDataResponse;
+  }>({
+    queryKey: ['sales-network'],
+    queryFn: async () => {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('asterra_admin_token') : null;
+      const headers: Record<string, string> = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const res = await fetch('/api/v1/sales/network', { headers });
+      if (!res.ok) throw new Error('Gagal memuat data bonus tim');
+      return res.json();
+    },
+    staleTime: 30000,
+  });
+
+  const networkData = networkRes?.data;
+
   // Helper copy link
   const handleCopy = (text: string, id: string) => {
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
@@ -170,6 +227,32 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
   };
 
   const referralUrl = `${getBaseUrl()}/?ref=${partnerCode}`;
+  const inviteSalesUrl = `${getBaseUrl()}/daftar-sales?ref=${partnerCode}`;
+
+  const inviteWaMessage = encodeURIComponent(
+    `Halo! Mau dapat penghasilan tambahan jutaan rupiah tanpa modal? Yuk gabung jadi Mitra Sales resmi di Asterra Store!\n\n` +
+      `✅ Komisi penjualan langsung 10% - 20%\n` +
+      `✅ Produk digital terlaris (Canva Pro, ChatGPT, Gemini, Netflix, Spotify, dll)\n` +
+      `✅ Disediakan link affiliate, banner & materi promosi siap pakai\n` +
+      `✅ Pencairan komisi mudah & cepat langsung ke rekening bank Anda\n\n` +
+      `Daftar gratis sekarang pakai link referral saya:\n${inviteSalesUrl}\n\n` +
+      `Kode Referral: ${partnerCode}`
+  );
+
+  const [teamSearch, setTeamSearch] = useState('');
+
+  const filteredTeamMembers = useMemo(() => {
+    const list = networkData?.teamMembers || [];
+    if (!teamSearch.trim()) return list;
+    const q = teamSearch.toLowerCase().trim();
+    return list.filter(
+      (m) =>
+        m.name.toLowerCase().includes(q) ||
+        m.code.toLowerCase().includes(q) ||
+        m.email.toLowerCase().includes(q) ||
+        m.whatsapp.includes(q)
+    );
+  }, [networkData?.teamMembers, teamSearch]);
 
   // Conversion rate calculation
   const conversionRate = useMemo(() => {
@@ -405,8 +488,53 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
             </div>
           </div>
 
-          {/* Fast Navigation Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Ajak Teman Jadi Sales Callout Banner */}
+          <div className="rounded-xl border border-primary/25 bg-gradient-to-r from-primary/10 via-surface to-primary/5 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center shrink-0 shadow-sm">
+                <Users className="w-5 h-5" />
+              </div>
+              <div className="space-y-0.5">
+                <h4 className="text-sm font-bold text-foreground">
+                  Ajak Teman Jadi Mitra Sales & Dapatkan Bonus Pasif 2%!
+                </h4>
+                <p className="text-xs text-foreground-muted">
+                  Dapatkan bagi hasil override 2% dari setiap transaksi teman yang Anda ajak, tanpa memotong komisi teman Anda.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => handleCopy(inviteSalesUrl, 'ref-banner-quick')}
+                className="text-xs gap-1.5 h-8"
+              >
+                {copiedLink === 'ref-banner-quick' ? (
+                  <>
+                    <Check className="w-3.5 h-3.5 text-status-success" />
+                    <span>Link Tersalin</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3.5 h-3.5" />
+                    <span>Salin Link Ajak</span>
+                  </>
+                )}
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => onTabChange('sales-network')}
+                className="text-xs gap-1.5 h-8 bg-primary hover:bg-primary/90 text-white font-semibold"
+              >
+                <span>Lihat Bonus Tim</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Fast Navigation Grid (4 Modules) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div
               onClick={() => onTabChange('sales-catalog')}
               className="bg-surface border border-border rounded-xl p-5 shadow-xs hover:border-primary/50 transition-all cursor-pointer group space-y-2"
@@ -436,6 +564,27 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
               <h3 className="font-bold text-sm text-foreground">Generator Link & Teks Promo</h3>
               <p className="text-xs text-foreground-muted">
                 Buat custom link kampanye dan gunakan template copywriting yang siap dibagikan ke medsos.
+              </p>
+            </div>
+
+            <div
+              onClick={() => onTabChange('sales-network')}
+              className="bg-surface border border-border rounded-xl p-5 shadow-xs hover:border-primary/50 transition-all cursor-pointer group space-y-2"
+            >
+              <div className="flex items-center justify-between">
+                <div className="w-9 h-9 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center group-hover:scale-105 transition-transform">
+                  <Users className="w-4 h-4" />
+                </div>
+                <ChevronRight className="w-4 h-4 text-foreground-muted group-hover:translate-x-1 transition-transform" />
+              </div>
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-sm text-foreground">Bonus Tim & Teman</h3>
+                <Badge variant="outline" className="text-[10px] font-semibold text-status-success border-status-success/30">
+                  {networkData?.totalTeamMembers || 0} Teman
+                </Badge>
+              </div>
+              <p className="text-xs text-foreground-muted">
+                Pantau teman yang diajak & bonus pasif 2% dari setiap transaksi yang mereka hasilkan.
               </p>
             </div>
 
@@ -839,7 +988,404 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
       )}
 
       {/* ========================================================================= */}
-      {/* 5. SALES WALLET & WITHDRAWAL TAB */}
+      {/* 5. SALES NETWORK & DOWNLINE TEAM TAB */}
+      {/* ========================================================================= */}
+      {activeTab === 'sales-network' && (
+        <div className="space-y-6">
+          {/* Header & Title */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold mb-2">
+                <Users className="w-3.5 h-3.5" />
+                <span>Program Afiliasi 2-Tier: Bonus Jaringan Sales</span>
+              </div>
+              <h2 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">
+                Bonus Tim & Teman yang Anda Ajak
+              </h2>
+              <p className="text-xs sm:text-sm text-foreground-muted">
+                Ajak teman menjadi mitra sales dengan kode referral Anda dan nikmati bonus pasif 2% dari setiap transaksi yang mereka hasilkan.
+              </p>
+            </div>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => refetchNetwork()}
+              disabled={isNetworkLoading}
+              className="gap-2 text-xs self-start sm:self-auto shrink-0"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isNetworkLoading ? 'animate-spin' : ''}`} />
+              <span>Muat Ulang</span>
+            </Button>
+          </div>
+
+          {/* Invitation Link Box */}
+          <div className="rounded-xl border border-primary/30 bg-gradient-to-br from-primary/5 via-surface to-surface-raised p-6 shadow-xs relative overflow-hidden">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+              <div className="space-y-2 max-w-xl">
+                <div className="flex items-center gap-2">
+                  <span className="p-1.5 rounded-lg bg-primary/10 text-primary">
+                    <Sparkles className="w-4 h-4" />
+                  </span>
+                  <h3 className="text-base sm:text-lg font-bold text-foreground">
+                    Link Khusus Pendaftaran Teman Sales
+                  </h3>
+                </div>
+                <p className="text-xs sm:text-sm text-foreground-muted leading-relaxed">
+                  Bagikan link ini ke rekan, kenalan, atau komunitas Anda. Saat mereka mendaftar lewat link ini, kode referral <strong className="text-primary font-mono">{partnerCode}</strong> otomatis terpasang sebagai pengajak.
+                </p>
+                <div className="flex items-center gap-2 pt-1 text-xs text-foreground-muted">
+                  <CheckCircle2 className="w-4 h-4 text-status-success shrink-0" />
+                  <span>Komisi teman tetap 100% utuh & Anda dapat bonus 2% subsidi Asterra Store.</span>
+                </div>
+              </div>
+
+              {/* Link Input & Share Actions */}
+              <div className="bg-surface border border-border p-4 rounded-xl space-y-3 min-w-[320px] max-w-md w-full">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-foreground-muted font-medium">Link Ajak Jadi Sales:</span>
+                  <Badge variant="outline" className="font-mono text-[10px] uppercase font-bold text-primary border-primary/30">
+                    Ref: {partnerCode}
+                  </Badge>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Input
+                    readOnly
+                    value={inviteSalesUrl}
+                    className="bg-surface-raised border-border text-xs font-mono h-9 select-all"
+                  />
+                  <Button
+                    size="sm"
+                    onClick={() => handleCopy(inviteSalesUrl, 'invite-sales')}
+                    className="h-9 px-3 gap-1.5 shrink-0 text-xs font-semibold"
+                  >
+                    {copiedLink === 'invite-sales' ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-status-success" />
+                        <span>Tersalin</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5" />
+                        <span>Salin</span>
+                      </>
+                    )}
+                  </Button>
+                </div>
+
+                <a
+                  href={`https://wa.me/?text=${inviteWaMessage}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full inline-flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-status-success hover:bg-status-success/90 text-white font-semibold text-xs transition-colors"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  <span>Ajak Teman via WhatsApp</span>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          {/* 3 Metric Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {/* Card 1: Total Bonus Komisi Teman */}
+            <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-foreground-muted">Total Bonus Komisi Teman</span>
+                <div className="w-8 h-8 rounded-lg bg-status-success/10 text-status-success flex items-center justify-center">
+                  <DollarSign className="w-4 h-4" />
+                </div>
+              </div>
+              <div className="text-2xl font-extrabold text-foreground tracking-tight">
+                Rp {(networkData?.totalNetworkBonus || 0).toLocaleString('id-ID')}
+              </div>
+              <p className="text-[11px] text-foreground-muted">
+                Otomatis masuk ke saldo dompet komisi siap tarik
+              </p>
+            </div>
+
+            {/* Card 2: Total Teman Bergabung */}
+            <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-foreground-muted">Teman Bergabung Jadi Sales</span>
+                <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                  <Users className="w-4 h-4" />
+                </div>
+              </div>
+              <div className="text-2xl font-extrabold text-foreground tracking-tight">
+                {networkData?.totalTeamMembers || 0}{' '}
+                <span className="text-xs font-normal text-foreground-muted">Orang</span>
+              </div>
+              <p className="text-[11px] text-foreground-muted">
+                Mitra sales aktif terdaftar dengan referral Anda
+              </p>
+            </div>
+
+            {/* Card 3: Total Omset & Transaksi Tim */}
+            <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-foreground-muted">Total Transaksi Tim Teman</span>
+                <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center">
+                  <TrendingUp className="w-4 h-4" />
+                </div>
+              </div>
+              <div className="text-2xl font-extrabold text-foreground tracking-tight">
+                Rp {(networkData?.totalTeamRevenue || 0).toLocaleString('id-ID')}
+              </div>
+              <p className="text-[11px] text-foreground-muted">
+                Dari akumulasi {networkData?.totalTeamOrders || 0} pesanan berhasil
+              </p>
+            </div>
+          </div>
+
+          {/* Section: Daftar Teman yang Diajak */}
+          <div className="bg-surface border border-border rounded-xl p-5 sm:p-6 shadow-xs space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h3 className="text-base font-bold text-foreground flex items-center gap-2">
+                  <Users className="w-4 h-4 text-primary" />
+                  <span>Daftar Teman yang Diajak ({networkData?.totalTeamMembers || 0})</span>
+                </h3>
+                <p className="text-xs text-foreground-muted">
+                  Pantau perkembangan penjualan teman Anda dan bonus komisi yang dihasilkan.
+                </p>
+              </div>
+
+              {/* Search Bar */}
+              <div className="relative w-full sm:w-64">
+                <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-foreground-muted" />
+                <Input
+                  placeholder="Cari nama atau kode teman..."
+                  value={teamSearch}
+                  onChange={(e) => setTeamSearch(e.target.value)}
+                  className="pl-8 text-xs h-9 bg-surface-raised border-border"
+                />
+              </div>
+            </div>
+
+            {isNetworkLoading ? (
+              <div className="py-12 text-center text-foreground-muted text-xs space-y-2">
+                <RefreshCw className="w-6 h-6 animate-spin mx-auto text-primary" />
+                <p>Memuat data jaringan tim sales...</p>
+              </div>
+            ) : filteredTeamMembers.length === 0 ? (
+              <div className="py-12 px-4 rounded-xl border border-dashed border-border text-center space-y-3 bg-surface-raised/40">
+                <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto">
+                  <Users className="w-6 h-6" />
+                </div>
+                <div className="space-y-1 max-w-md mx-auto">
+                  <h4 className="text-sm font-semibold text-foreground">
+                    {teamSearch ? 'Teman tidak ditemukan' : 'Belum Ada Teman yang Bergabung'}
+                  </h4>
+                  <p className="text-xs text-foreground-muted leading-relaxed">
+                    {teamSearch
+                      ? `Tidak ada teman dengan pencarian "${teamSearch}". Coba kata kunci lain.`
+                      : 'Ajak teman Anda mendaftar sebagai mitra sales Asterra Store dengan membagikan link referral pendaftaran Anda.'}
+                  </p>
+                </div>
+                {!teamSearch && (
+                  <Button
+                    size="sm"
+                    onClick={() => handleCopy(inviteSalesUrl, 'invite-empty')}
+                    className="gap-1.5 text-xs font-semibold"
+                  >
+                    {copiedLink === 'invite-empty' ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-status-success" />
+                        <span>Link Tersalin!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5" />
+                        <span>Salin Link Pendaftaran Sales</span>
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <div className="overflow-x-auto rounded-lg border border-border">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-surface-raised border-b border-border text-foreground-muted uppercase font-semibold text-[10px]">
+                    <tr>
+                      <th className="py-3 px-4">Nama Teman</th>
+                      <th className="py-3 px-4">Kode Referral</th>
+                      <th className="py-3 px-4">Bergabung</th>
+                      <th className="py-3 px-4">Total Order</th>
+                      <th className="py-3 px-4">Omzet Penjualan</th>
+                      <th className="py-3 px-4">Bonus Anda (2%)</th>
+                      <th className="py-3 px-4">Status</th>
+                      <th className="py-3 px-4 text-right">Kontak</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {filteredTeamMembers.map((member) => (
+                      <tr key={member.id} className="hover:bg-surface-raised/50 transition-colors">
+                        <td className="py-3 px-4">
+                          <div className="font-semibold text-foreground">{member.name}</div>
+                          <div className="text-[11px] text-foreground-muted">{member.email}</div>
+                        </td>
+                        <td className="py-3 px-4 font-mono font-bold text-primary">
+                          {member.code}
+                        </td>
+                        <td className="py-3 px-4 text-foreground-muted">{member.joinedAt}</td>
+                        <td className="py-3 px-4 font-semibold text-foreground">
+                          {member.totalOrders} Order
+                        </td>
+                        <td className="py-3 px-4 font-bold text-foreground">
+                          Rp {member.totalRevenue.toLocaleString('id-ID')}
+                        </td>
+                        <td className="py-3 px-4 font-bold text-status-success">
+                          + Rp {member.bonusEarnedFromMember.toLocaleString('id-ID')}
+                        </td>
+                        <td className="py-3 px-4">
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] font-semibold text-status-success border-status-success/30 bg-status-success/10 uppercase"
+                          >
+                            {member.status}
+                          </Badge>
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          {member.whatsapp && member.whatsapp !== '-' ? (
+                            <a
+                              href={`https://wa.me/${member.whatsapp.replace(/\D/g, '')}?text=Halo%20${encodeURIComponent(
+                                member.name
+                              )},%20semangat%20jualan%20produk%20digital%20di%20Asterra%20Store!`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-status-success/15 hover:bg-status-success/25 text-status-success text-[11px] font-medium transition-colors"
+                            >
+                              <Send className="w-3 h-3" />
+                              <span>Sapa WA</span>
+                            </a>
+                          ) : (
+                            <span className="text-foreground-muted text-[11px]">-</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          {/* Section: Riwayat Rincian Bonus Komisi Transaksi Teman */}
+          <div className="bg-surface border border-border rounded-xl p-5 sm:p-6 shadow-xs space-y-4">
+            <div>
+              <h3 className="text-base font-bold text-foreground flex items-center gap-2">
+                <FileText className="w-4 h-4 text-status-success" />
+                <span>Riwayat Bonus Komisi dari Transaksi Teman</span>
+              </h3>
+              <p className="text-xs text-foreground-muted">
+                Rincian kronologis bonus komisi override 2% yang masuk ke dompet Anda setiap kali teman Anda berhasil menjual produk.
+              </p>
+            </div>
+
+            {(!networkData?.bonusLogs || networkData.bonusLogs.length === 0) ? (
+              <div className="py-10 text-center text-xs text-foreground-muted border border-dashed border-border rounded-xl">
+                <Clock className="w-6 h-6 mx-auto mb-2 text-foreground-muted opacity-50" />
+                <p>Belum ada transaksi dari teman yang diajak.</p>
+                <p className="text-[11px] text-foreground-muted mt-0.5">
+                  Setiap transaksi sukses oleh teman akan tercatat otomatis di sini secara real-time.
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto rounded-lg border border-border">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-surface-raised border-b border-border text-foreground-muted uppercase font-semibold text-[10px]">
+                    <tr>
+                      <th className="py-3 px-4">Tanggal & Waktu</th>
+                      <th className="py-3 px-4">Teman Pengajak</th>
+                      <th className="py-3 px-4">ID Pesanan</th>
+                      <th className="py-3 px-4">Nilai Transaksi</th>
+                      <th className="py-3 px-4">Rate Bonus</th>
+                      <th className="py-3 px-4">Bonus Masuk Dompet</th>
+                      <th className="py-3 px-4">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {networkData.bonusLogs.map((log) => (
+                      <tr key={log.id} className="hover:bg-surface-raised/50 transition-colors">
+                        <td className="py-3 px-4 font-mono text-foreground-muted">
+                          {new Date(log.createdAt).toLocaleDateString('id-ID', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className="font-semibold text-foreground">{log.fromPartnerName}</span>
+                          <span className="ml-1.5 font-mono text-[10px] text-primary">({log.fromPartnerCode})</span>
+                        </td>
+                        <td className="py-3 px-4 font-mono text-foreground">
+                          {log.orderId ? `${log.orderId.substring(0, 12)}...` : '-'}
+                        </td>
+                        <td className="py-3 px-4 font-bold text-foreground">
+                          Rp {log.orderTotal.toLocaleString('id-ID')}
+                        </td>
+                        <td className="py-3 px-4 font-semibold text-primary">
+                          {log.bonusPercentage}%
+                        </td>
+                        <td className="py-3 px-4 font-bold text-status-success">
+                          + Rp {log.bonusAmount.toLocaleString('id-ID')}
+                        </td>
+                        <td className="py-3 px-4">
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] font-semibold text-status-success border-status-success/30 bg-status-success/10 uppercase"
+                          >
+                            Masuk Dompet
+                          </Badge>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          {/* Edukasi & Transparansi Sistem Komisi Teman */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="p-4 rounded-xl border border-border bg-surface space-y-1.5">
+              <div className="flex items-center gap-2 text-primary font-semibold text-xs">
+                <ShieldCheck className="w-4 h-4" />
+                <span>100% Hak Teman Utuh</span>
+              </div>
+              <p className="text-xs text-foreground-muted leading-relaxed">
+                Bonus 2% adalah bentuk apresiasi dan subsidi resmi dari Asterra Store. Komisi teman Anda tidak dipotong sepeser pun (tetap 10%-20%).
+              </p>
+            </div>
+
+            <div className="p-4 rounded-xl border border-border bg-surface space-y-1.5">
+              <div className="flex items-center gap-2 text-status-success font-semibold text-xs">
+                <Zap className="w-4 h-4" />
+                <span>Real-Time Masuk Dompet</span>
+              </div>
+              <p className="text-xs text-foreground-muted leading-relaxed">
+                Bonus masuk seketika saat pesanan pelanggan teman berstatus completed/sukses. Langsung terakumulasi di dompet komisi Anda.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-xl border border-border bg-surface space-y-1.5">
+              <div className="flex items-center gap-2 text-amber-500 font-semibold text-xs">
+                <Coins className="w-4 h-4" />
+                <span>Pencairan Mudah</span>
+              </div>
+              <p className="text-xs text-foreground-muted leading-relaxed">
+                Bonus tim dicairkan bersamaan dengan komisi penjualan langsung Anda melalui menu Dompet & Pencairan ke seluruh bank & e-wallet.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* 6. SALES WALLET & WITHDRAWAL TAB */}
       {/* ========================================================================= */}
       {activeTab === 'sales-wallet' && (
         <div className="space-y-6">

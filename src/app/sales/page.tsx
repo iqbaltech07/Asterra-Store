@@ -13,6 +13,7 @@ const TAB_TITLES: Record<string, { category: string; title: string }> = {
   'sales-catalog': { category: 'Portal Penjualan', title: 'Katalog Produk & Estimasi Komisi' },
   'sales-links': { category: 'Portal Penjualan', title: 'Generator Tautan & Materi Promosi' },
   'sales-orders': { category: 'Portal Penjualan', title: 'Pesanan Referral Saya' },
+  'sales-network': { category: 'Portal Penjualan', title: 'Bonus Komisi Tim & Teman Sales' },
   'sales-wallet': { category: 'Portal Penjualan', title: 'Dompet & Pencairan Komisi' },
   'sales-academy': { category: 'Portal Penjualan', title: 'Panduan & Edukasi Mitra Sales' },
 };

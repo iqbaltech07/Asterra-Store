@@ -24,16 +24,18 @@
     "email": "iqbal07@gmail.com",
     "whatsapp": "089676636637",
     "code": "AST-IQBAL-X6ZM",
+    "referredByCode": "AST-IQBAL-WLOZ",
     "tier": "Standard (10%)",
     "rate": 10,
-    "totalClicks": 1,
-    "totalOrders": 0,
-    "totalRevenue": 0,
-    "unpaidCommission": 0,
+    "totalClicks": 3,
+    "totalOrders": 2,
+    "totalRevenue": 250000,
+    "unpaidCommission": 25000,
     "paidCommission": 0,
     "status": "active",
     "joinedAt": "3 Okt 2026",
-    "createdAt": "2026-10-03T16:12:41.649Z"
+    "createdAt": "2026-10-03T16:12:41.649Z",
+    "creditedOrderIds": ["ORD-AST-20261003-8821", "ORD-AST-20261003-9142"]
   },
   {
     "id": "aff-muselwis",
@@ -46,8 +48,31 @@
     "totalClicks": 1,
     "totalOrders": 0,
     "totalRevenue": 0,
-    "unpaidCommission": 0,
+    "unpaidCommission": 5000,
     "paidCommission": 0,
+    "networkCommission": 5000,
+    "networkBonusLogs": [
+      {
+        "id": "net-muslb-02",
+        "orderId": "ORD-AST-20261003-9142",
+        "fromPartnerCode": "AST-IQBAL-X6ZM",
+        "fromPartnerName": "Iqbal",
+        "orderTotal": 100000,
+        "bonusAmount": 2000,
+        "bonusPercentage": 2,
+        "createdAt": "2026-10-03T17:10:00.000Z"
+      },
+      {
+        "id": "net-muslb-01",
+        "orderId": "ORD-AST-20261003-8821",
+        "fromPartnerCode": "AST-IQBAL-X6ZM",
+        "fromPartnerName": "Iqbal",
+        "orderTotal": 150000,
+        "bonusAmount": 3000,
+        "bonusPercentage": 2,
+        "createdAt": "2026-10-03T16:45:00.000Z"
+      }
+    ],
     "status": "active",
     "joinedAt": "3 Okt 2026",
     "createdAt": "2026-10-03T13:04:29.604Z",

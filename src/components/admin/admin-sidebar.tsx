@@ -77,6 +77,7 @@ export type AdminTab =
   | 'sales-catalog'
   | 'sales-links'
   | 'sales-orders'
+  | 'sales-network'
   | 'sales-wallet'
   | 'sales-academy';
 
@@ -161,6 +162,14 @@ export function AdminSidebar({
               label: 'Pesanan Referral Saya',
               icon: ShoppingBag,
               description: 'Daftar pesanan dari link referral Anda',
+            },
+            {
+              id: 'sales-network',
+              label: 'Bonus Tim & Teman',
+              icon: Users,
+              badge: 'Komisi Tim',
+              badgeVariant: 'success',
+              description: 'Bonus pasif dari teman yang diajak jadi sales',
             },
             {
               id: 'sales-wallet',

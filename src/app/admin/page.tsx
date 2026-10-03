@@ -116,6 +116,7 @@ const TAB_TITLES: Record<AdminTab, { category: string; title: string }> = {
   'sales-catalog': { category: 'Portal Penjualan', title: 'Katalog Produk & Estimasi Komisi' },
   'sales-links': { category: 'Portal Penjualan', title: 'Generator Tautan & Materi Promosi' },
   'sales-orders': { category: 'Portal Penjualan', title: 'Pesanan Referral Saya' },
+  'sales-network': { category: 'Portal Penjualan', title: 'Bonus Komisi Tim & Teman Sales' },
   'sales-wallet': { category: 'Portal Penjualan', title: 'Dompet & Pencairan Komisi' },
   'sales-academy': { category: 'Portal Penjualan', title: 'Panduan & Edukasi Mitra Sales' },
 };
@@ -1723,6 +1724,7 @@ export default function AdminPage() {
           activeTab === 'sales-catalog' ||
           activeTab === 'sales-links' ||
           activeTab === 'sales-orders' ||
+          activeTab === 'sales-network' ||
           activeTab === 'sales-wallet' ||
           activeTab === 'sales-academy') && (
           <SalesConsoleSuite
