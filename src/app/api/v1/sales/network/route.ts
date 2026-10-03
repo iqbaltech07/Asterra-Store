@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
       success: true,
       data: networkData,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error in sales /network API:', error);
     return NextResponse.json(
       { success: false, message: 'Gagal memuat data bonus tim dan teman.' },

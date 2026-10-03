@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
 import { AffiliateService } from '@/lib/services/affiliate.service';
 
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   try {
     const list = AffiliateService.getAllAffiliates();
     return NextResponse.json({

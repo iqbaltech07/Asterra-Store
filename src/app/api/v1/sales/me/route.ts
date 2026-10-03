@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
         role: session.role || 'sales',
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error in sales /me API:', error);
     return NextResponse.json(
       { success: false, message: 'Gagal memuat profil mitra sales.' },

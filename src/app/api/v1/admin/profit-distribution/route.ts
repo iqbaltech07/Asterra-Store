@@ -6,7 +6,7 @@ import { ProfitLedgerService } from '@/lib/services/profit-ledger.service';
  * Returns financial summary and full Section 8 audit ledger entries.
  * Strictly adheres to SSOT: asterra-referral-profit-model.md
  */
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   try {
     // Process any matured holding orders (3 days) automatically
     ProfitLedgerService.processMaturedHoldings();

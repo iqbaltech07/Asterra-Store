@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
       message: result.message,
       data: result.request,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error submitting sales payout request:', error);
     return NextResponse.json(
       { success: false, message: 'Terjadi kesalahan sistem saat mengajukan pencairan dana.' },

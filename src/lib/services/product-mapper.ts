@@ -143,7 +143,6 @@ export const DEFAULT_PRODUCT_BANNER = '/images/default-product-banner.png';
 /**
  * Provides default product visual banner (replaces external unsplash fallbacks)
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function getProductImageUrl(..._args: unknown[]): string {
   return DEFAULT_PRODUCT_BANNER;
 }

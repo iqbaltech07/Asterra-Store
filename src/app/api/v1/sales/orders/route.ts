@@ -19,12 +19,15 @@ export async function GET(req: NextRequest) {
     const creditedIds = partner.creditedOrderIds || [];
 
     // Query orders matching creditedOrderIds or customerNotes containing referral code
+    const orConditions: Array<{ id?: { in: string[] }; customerNotes?: { contains: string; mode: 'insensitive' } }> = [];
+    if (creditedIds.length > 0) {
+      orConditions.push({ id: { in: creditedIds } });
+    }
+    orConditions.push({ customerNotes: { contains: partner.code, mode: 'insensitive' } });
+
     const orders = await prisma.order.findMany({
       where: {
-        OR: [
-          creditedIds.length > 0 ? { id: { in: creditedIds } } : undefined,
-          { customerNotes: { contains: partner.code, mode: 'insensitive' } },
-        ].filter(Boolean) as any,
+        OR: orConditions,
       },
       include: {
         items: true,
@@ -72,7 +75,7 @@ export async function GET(req: NextRequest) {
       data: maskedOrders,
       total: maskedOrders.length,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching sales orders:', error);
     return NextResponse.json(
       { success: false, message: 'Gagal memuat daftar pesanan referral.' },

@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
       },
       { status: 201 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error in affiliate register API:', error);
     return NextResponse.json(
       { success: false, message: 'Terjadi kesalahan sistem saat mendaftar.' },

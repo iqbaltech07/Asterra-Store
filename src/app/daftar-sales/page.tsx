@@ -4,23 +4,17 @@ import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import {
-  TrendingUp,
-  Award,
   Wallet,
   CheckCircle2,
   AlertCircle,
   Copy,
   Check,
-  Send,
-  Users,
   ShieldCheck,
-  Share2,
   Sparkles,
   ArrowRight,
   HelpCircle,
   MessageSquare,
   Gift,
-  Zap,
   Lock,
   Eye,
   EyeOff,
@@ -145,8 +139,9 @@ function DaftarSalesContent() {
 
       setSuccessPartner(data.data);
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    } catch (err: any) {
-      setErrorMessage(err.message || 'Terjadi gangguan koneksi. Silakan coba lagi.');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Terjadi gangguan koneksi. Silakan coba lagi.';
+      setErrorMessage(msg);
     } finally {
       setIsSubmitting(false);
     }

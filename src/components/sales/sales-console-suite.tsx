@@ -16,31 +16,21 @@ import {
   Share2,
   Sparkles,
   ArrowRight,
-  ExternalLink,
   Search,
-  Filter,
   Package,
-  Layers,
   HelpCircle,
-  QrCode,
   DollarSign,
   ChevronRight,
   ShoppingBag,
   Percent,
   Clock,
-  ArrowUpRight,
-  Lock,
   Send,
   RefreshCw,
   FileText,
-  BookOpen,
   MessageSquare,
   ShieldCheck,
-  Building,
   CreditCard,
   Users,
-  Zap,
-  Coins,
 } from 'lucide-react';
 import { AdminTab } from '@/components/admin/admin-sidebar';
 
@@ -157,7 +147,7 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
 
   // 1. Fetch Sales Profile & Live Metrics
-  const { data: profileRes, isLoading: isProfileLoading, refetch: refetchProfile } = useQuery<{
+  const { data: profileRes } = useQuery<{
     success: boolean;
     data: SalesProfileData;
   }>({
@@ -351,7 +341,7 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
       setPayoutAmount('');
       queryClient.invalidateQueries({ queryKey: ['sales-me'] });
     },
-    onError: (err: any) => {
+    onError: (err: Error) => {
       setPayoutErrorMsg(err.message || 'Terjadi kesalahan sistem.');
       setPayoutSuccessMsg(null);
     },
@@ -947,7 +937,7 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
                     </Button>
                   </div>
                   <p className="text-foreground-muted leading-relaxed text-[11px]">
-                    "Halo temen-temen! Butuh akun Canva Pro, Gemini AI, atau Netflix private bergaransi resmi tanpa takut kena suspend? Langsung order aman lewat link resmi ini ya: [Link Referral Anda]"
+                    &ldquo;Halo temen-temen! Butuh akun Canva Pro, Gemini AI, atau Netflix private bergaransi resmi tanpa takut kena suspend? Langsung order aman lewat link resmi ini ya: [Link Referral Anda]&rdquo;
                   </p>
                 </div>
 
@@ -971,7 +961,7 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
                     </Button>
                   </div>
                   <p className="text-foreground-muted leading-relaxed text-[11px]">
-                    "Layanan Akun Digital Premium Resmi & Bergaransi 100% ✨ Canva Pro, Gemini, Netflix, Spotify ready kilat ⚡ Order: [Link Referral]"
+                    &ldquo;Layanan Akun Digital Premium Resmi &amp; Bergaransi 100% ✨ Canva Pro, Gemini, Netflix, Spotify ready kilat ⚡ Order: [Link Referral]&rdquo;
                   </p>
                 </div>
               </div>

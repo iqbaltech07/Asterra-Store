@@ -1,6 +1,5 @@
 import fs from 'fs';
 import path from 'path';
-import { ReferralProfitService } from './referral-profit.service';
 import { ProfitLedgerService } from './profit-ledger.service';
 import { ReferralDiscountService } from './referral-discount.service';
 

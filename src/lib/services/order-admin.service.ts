@@ -379,10 +379,8 @@ export class OrderAdminService {
             where: { id: { in: productIds } },
             select: { id: true, providerPrice: true, price: true },
           });
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const productMap = new Map<string, { providerPrice?: number | null; price: number }>(
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            dbProducts.map((p: any) => [p.id, p])
+          const productMap = new Map<string, { id: string; providerPrice?: number | null; price: number }>(
+            dbProducts.map((p: { id: string; providerPrice?: number | null; price: number }) => [p.id, p])
           );
 
           for (const item of itemsList) {
