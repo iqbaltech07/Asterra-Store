@@ -18,6 +18,10 @@ export interface VipRawService {
   category?: string;
   prepost?: string;
   type?: string;
+  game?: string;
+  server?: string;
+  id?: string | number;
+  description?: string;
 }
 
 export interface VipProfileData {
@@ -228,53 +232,124 @@ export class VipResellerService {
       this.getSocialMediaServices(),
     ]);
 
-    const combined: VipRawService[] = [];
+    const streamingAndApps: VipRawService[] = [];
+    const games: VipRawService[] = [];
+    const prepaidVouchers: VipRawService[] = [];
+    const socialMedia: VipRawService[] = [];
+    const others: VipRawService[] = [];
     const seenCodes = new Set<string>();
 
-    if (
-      prepaidRes.status === 'fulfilled' &&
-      prepaidRes.value.result &&
-      Array.isArray(prepaidRes.value.data)
-    ) {
-      for (const item of prepaidRes.value.data) {
-        if (item.code && !seenCodes.has(item.code)) {
-          seenCodes.add(item.code);
-          combined.push(item);
-        }
-      }
-    }
+    const isDigitalOrStreaming = (brand?: string, name?: string): boolean => {
+      const text = `${brand || ''} ${name || ''}`.toLowerCase();
+      return (
+        text.includes('netflix') ||
+        text.includes('youtube') ||
+        text.includes('canva') ||
+        text.includes('spotify') ||
+        text.includes('bstation') ||
+        text.includes('iqiyi') ||
+        text.includes('wetv') ||
+        text.includes('disney') ||
+        text.includes('prime video') ||
+        text.includes('chatgpt') ||
+        text.includes('openai') ||
+        text.includes('gemini') ||
+        text.includes('claude') ||
+        text.includes('vidio') ||
+        text.includes('viu') ||
+        text.includes('capcut') ||
+        text.includes('alight motion')
+      );
+    };
 
+    // 1. Process game-feature items (includes Netflix, YouTube, Spotify, Canva, Steam, Game vouchers)
     if (
       gameRes.status === 'fulfilled' &&
       gameRes.value.result &&
       Array.isArray(gameRes.value.data)
     ) {
       for (const item of gameRes.value.data) {
-        if (item.code && !seenCodes.has(item.code)) {
-          seenCodes.add(item.code);
-          combined.push({
-            ...item,
-            type: item.type || 'game',
-          });
+        if (!item.code || seenCodes.has(item.code)) continue;
+        seenCodes.add(item.code);
+
+        const brand = item.game || item.brand || 'Game';
+        const cleanName =
+          item.game && !item.name.toLowerCase().includes(item.game.toLowerCase())
+            ? `${item.game} - ${item.name}`
+            : item.name;
+
+        const isStreaming = isDigitalOrStreaming(brand, item.name);
+        const mapped: VipRawService = {
+          ...item,
+          brand,
+          name: cleanName,
+          note: item.description || item.note,
+          type: isStreaming ? 'streaming-tv' : (item.type || 'game'),
+        };
+
+        if (isStreaming) {
+          streamingAndApps.push(mapped);
+        } else {
+          games.push(mapped);
         }
       }
     }
 
+    // 2. Process prepaid items (includes streaming telco, e-money, data, pulsa)
+    if (
+      prepaidRes.status === 'fulfilled' &&
+      prepaidRes.value.result &&
+      Array.isArray(prepaidRes.value.data)
+    ) {
+      for (const item of prepaidRes.value.data) {
+        if (!item.code || seenCodes.has(item.code)) continue;
+        seenCodes.add(item.code);
+
+        const brand = item.brand || 'Digital';
+        const isStreaming = isDigitalOrStreaming(brand, item.name);
+        const mapped: VipRawService = {
+          ...item,
+          brand,
+          type: item.type || (isStreaming ? 'streaming-tv' : 'prepaid'),
+        };
+
+        if (isStreaming) {
+          streamingAndApps.push(mapped);
+        } else if (item.type?.includes('voucher') || item.type?.includes('game')) {
+          prepaidVouchers.push(mapped);
+        } else {
+          others.push(mapped);
+        }
+      }
+    }
+
+    // 3. Process social-media items (YouTube views, subscribers, shares, Instagram, TikTok)
     if (
       smRes.status === 'fulfilled' &&
       smRes.value.result &&
       Array.isArray(smRes.value.data)
     ) {
       for (const item of smRes.value.data) {
-        if (item.code && !seenCodes.has(item.code)) {
-          seenCodes.add(item.code);
-          combined.push({
-            ...item,
-            type: item.type || 'social-media',
-          });
-        }
+        const rawCode = item.code || (item.id ? `SM-${item.id}` : undefined);
+        if (!rawCode || seenCodes.has(rawCode)) continue;
+        seenCodes.add(rawCode);
+
+        socialMedia.push({
+          ...item,
+          code: rawCode,
+          brand: item.category || 'Social Media',
+          type: 'social-media',
+        });
       }
     }
+
+    const combined: VipRawService[] = [
+      ...streamingAndApps,
+      ...games,
+      ...prepaidVouchers,
+      ...socialMedia,
+      ...others,
+    ];
 
     if (combined.length > 0) {
       const res: VipApiResponse<VipRawService[]> = {

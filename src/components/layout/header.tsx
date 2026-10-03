@@ -94,6 +94,12 @@ export function Header({ onNotify }: HeaderProps) {
             <Link href="/#panduan" className="hover:text-foreground transition-colors">
               Cara Pemesanan
             </Link>
+            <Link
+              href="/daftar-sales"
+              className="text-primary hover:text-primary/80 transition-colors font-semibold"
+            >
+              Daftar Sales
+            </Link>
           </nav>
 
           {/* Action Buttons */}
@@ -293,6 +299,13 @@ export function Header({ onNotify }: HeaderProps) {
                 className="py-1 text-foreground-muted hover:text-foreground"
               >
                 Cara Pemesanan
+              </Link>
+              <Link
+                href="/daftar-sales"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="py-1 text-primary font-semibold hover:text-primary/80"
+              >
+                Daftar Jadi Sales (Komisi 15%)
               </Link>
             </nav>
           </div>

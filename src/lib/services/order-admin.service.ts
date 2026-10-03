@@ -9,6 +9,7 @@ import {
   OrderLog,
 } from '@/lib/orders-data';
 import { mapDbOrderToOrder, RawDbOrder } from '@/lib/utils/order-mapper';
+import { AffiliateService } from './affiliate.service';
 
 export interface OrderFilterParams {
   status?: string;
@@ -278,6 +279,88 @@ export class OrderAdminService {
       }
     } catch (dbErr) {
       console.warn('[OrderAdminService] Prisma status update warning:', dbErr);
+    }
+
+    // 3. Attribution of Affiliate Sales Commission (Real-time & Idempotent)
+    if (newStatus === 'completed' || newStatus === 'processing') {
+      try {
+        let referralCode: string | undefined = undefined;
+        let orderTotalAmount = 0;
+
+        // Check in-memory order first
+        const memOrder = getGlobalOrders().find((o) => o.id === orderId);
+        if (memOrder) {
+          referralCode = memOrder.referral_code;
+          orderTotalAmount = memOrder.total_amount;
+        }
+
+        // If not in memory or referralCode not found, check DB order & logs
+        if (!referralCode && prismaClient?.order) {
+          const dbOrder = await prismaClient.order.findUnique({
+            where: { id: orderId },
+            include: {
+              logs: {
+                where: {
+                  OR: [
+                    { action: 'referral_applied' },
+                    { action: 'order_created' },
+                    { action: 'promo_applied' },
+                  ],
+                },
+                take: 5,
+              },
+            },
+          });
+          if (dbOrder) {
+            orderTotalAmount = dbOrder.totalAmount;
+            // Check logs metadata
+            for (const log of dbOrder.logs || []) {
+              if (log.metadata && typeof log.metadata === 'object' && 'referral_code' in log.metadata) {
+                referralCode = (log.metadata as { referral_code?: string }).referral_code;
+                break;
+              }
+            }
+            // Check customerNotes pattern [Sales Ref: CODE]
+            if (!referralCode && dbOrder.customerNotes) {
+              const match = dbOrder.customerNotes.match(/\[Sales Ref:\s*([A-Za-z0-9_-]+)\]/i);
+              if (match && match[1]) {
+                referralCode = match[1];
+              }
+            }
+          }
+        }
+
+        if (referralCode && orderTotalAmount > 0) {
+          const creditResult = AffiliateService.recordSuccessfulOrder(
+            referralCode,
+            orderTotalAmount,
+            orderId
+          );
+
+          if (creditResult.success && creditResult.commission > 0) {
+            console.log(
+              `[AffiliateCommission] Credited Rp ${creditResult.commission} to partner "${creditResult.partnerName}" for order ${orderId}`
+            );
+            if (prismaClient?.orderLog) {
+              await prismaClient.orderLog.create({
+                data: {
+                  orderId,
+                  actor: 'system',
+                  action: 'affiliate_commission_credited',
+                  notes: `Komisi penjualan Rp ${creditResult.commission.toLocaleString('id-ID')} berhasil dialokasikan ke mitra sales "${creditResult.partnerName}" (${referralCode}).`,
+                  metadata: {
+                    referral_code: referralCode,
+                    commission: creditResult.commission,
+                    partner_name: creditResult.partnerName,
+                  },
+                },
+              });
+            }
+          }
+        }
+      } catch (affiliateErr) {
+        console.warn('[OrderAdminService] Error crediting affiliate commission:', affiliateErr);
+      }
     }
 
     const updatedOrder = await this.getOrderById(orderId);

@@ -72,7 +72,13 @@
       "Ketersediaan Supplier: Kosong",
       "Proses aktivasi cepat & otomatis"
     ],
-    "popular": false
+    "popular": false,
+    "providerPrice": 20000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 15,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-chatgptgo1thngar6b-s1": {
     "name": "ChatGPT GO Plan 1 Tahun [ Private Account ] [ Garansi 6 Bulan ]",
@@ -90,7 +96,13 @@
       "Ketersediaan Supplier: Kosong",
       "Proses aktivasi cepat & otomatis"
     ],
-    "popular": false
+    "popular": false,
+    "providerPrice": 30000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 10,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-geminiproinvt1thngar1bln-s2": {
     "name": "Gemini AI Pro 1 Tahun [ Anggota ] [ Garansi 1 Bulan ] [ 5 TB GDRIVE ]",
@@ -108,7 +120,20 @@
       "Ketersediaan Supplier: Tersedia",
       "Proses aktivasi cepat & otomatis"
     ],
-    "popular": false
+    "popular": false,
+    "providerPrice": 13000,
+    "providerStatus": "available",
+    "stock": 100,
+    "profitMargin": 12000,
+    "profitPercentage": 92,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "priceFormatted": "Rp 25 Rb",
+    "guaranteeTitle": "Garansi Penuh",
+    "guaranteeDesc": "Jaminan ganti akun 100%",
+    "processTitle": "Proses Instan",
+    "processDesc": "1 - 15 menit selesai",
+    "privacyTitle": "Shared Account",
+    "privacyDesc": "Ruang kerja aman & personal"
   },
   "vip-tdn5": {
     "providerPrice": 35705,
@@ -2493,164 +2518,245 @@
   "vip-kvisionanak": {
     "providerPrice": 34520,
     "providerStatus": "empty",
-    "lastProviderCheck": "2026-09-25T09:35:20.960Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 0,
+    "profitMargin": 3480,
+    "profitPercentage": 10
   },
   "vip-kvisionbein": {
     "providerPrice": 73325,
     "providerStatus": "available",
-    "lastProviderCheck": "2026-09-25T09:35:21.038Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 100,
+    "profitMargin": 6675,
+    "profitPercentage": 9
   },
   "vip-kvisiongopeuro1": {
     "providerPrice": 240725,
     "providerStatus": "available",
-    "lastProviderCheck": "2026-09-25T09:35:21.130Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 100,
+    "profitMargin": 19275,
+    "profitPercentage": 8
   },
   "vip-kvisiongoeurofilm6bln": {
     "providerPrice": 282840,
     "providerStatus": "available",
-    "lastProviderCheck": "2026-09-25T09:35:21.289Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 100,
+    "profitMargin": 23160,
+    "profitPercentage": 8
   },
   "vip-kvisiongojuara6bln": {
     "providerPrice": 707740,
     "providerStatus": "available",
-    "lastProviderCheck": "2026-09-25T09:35:21.426Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 100,
+    "profitMargin": 57260,
+    "profitPercentage": 8
   },
   "vip-kvisiongoolhrga6bln": {
     "providerPrice": 486490,
     "providerStatus": "available",
-    "lastProviderCheck": "2026-09-25T09:35:21.522Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 100,
+    "profitMargin": 39510,
+    "profitPercentage": 8
   },
   "vip-kvisiongospotv6bln": {
     "providerPrice": 353640,
     "providerStatus": "available",
-    "lastProviderCheck": "2026-09-25T09:35:21.618Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 100,
+    "profitMargin": 28360,
+    "profitPercentage": 8
   },
   "vip-kvisiongb01": {
     "providerPrice": 47480,
     "providerStatus": "available",
-    "lastProviderCheck": "2026-09-25T09:35:21.708Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 100,
+    "profitMargin": 4520,
+    "profitPercentage": 10
   },
   "vip-kvisionjw01": {
     "providerPrice": 22715,
     "providerStatus": "empty",
-    "lastProviderCheck": "2026-09-25T09:35:21.798Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 0,
+    "profitMargin": 3285,
+    "profitPercentage": 14
   },
   "vip-kvisionj01": {
     "providerPrice": 163585,
     "providerStatus": "available",
-    "lastProviderCheck": "2026-09-25T09:35:21.881Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 100,
+    "profitMargin": 13415,
+    "profitPercentage": 8
   },
   "vip-kvisionj03": {
     "providerPrice": 481875,
     "providerStatus": "available",
-    "lastProviderCheck": "2026-09-25T09:35:21.970Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 100,
+    "profitMargin": 39125,
+    "profitPercentage": 8
   },
   "vip-kvisionj06": {
     "providerPrice": 739000,
     "providerStatus": "available",
-    "lastProviderCheck": "2026-09-25T09:35:22.091Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 100,
+    "profitMargin": 60000,
+    "profitPercentage": 8
   },
   "vip-kvisionj12": {
     "providerPrice": 1236950,
     "providerStatus": "available",
-    "lastProviderCheck": "2026-09-25T09:35:22.221Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 100,
+    "profitMargin": 99050,
+    "profitPercentage": 8
   },
   "vip-kvisiong01": {
     "providerPrice": 120825,
     "providerStatus": "empty",
-    "lastProviderCheck": "2026-09-25T09:35:22.316Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 0,
+    "profitMargin": 10175,
+    "profitPercentage": 8
   },
   "vip-kvisiongorcti": {
     "providerPrice": 46425,
     "providerStatus": "available",
-    "lastProviderCheck": "2026-09-25T09:35:22.445Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 100,
+    "profitMargin": 4575,
+    "profitPercentage": 10
   },
   "vip-kvision10": {
     "providerPrice": 9850,
     "providerStatus": "available",
-    "lastProviderCheck": "2026-09-25T09:35:22.556Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 100,
+    "profitMargin": 3150,
+    "profitPercentage": 32
   },
   "vip-kvision100": {
     "providerPrice": 96700,
     "providerStatus": "available",
-    "lastProviderCheck": "2026-09-25T09:35:22.701Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 100,
+    "profitMargin": 8300,
+    "profitPercentage": 9
   },
   "vip-kvision125": {
     "providerPrice": 120825,
     "providerStatus": "available",
-    "lastProviderCheck": "2026-09-25T09:35:22.796Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 100,
+    "profitMargin": 10175,
+    "profitPercentage": 8
   },
   "vip-kvision15": {
     "providerPrice": 14825,
     "providerStatus": "available",
-    "lastProviderCheck": "2026-09-25T09:35:22.932Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 100,
+    "profitMargin": 3175,
+    "profitPercentage": 21
   },
   "vip-kvision150": {
     "providerPrice": 144950,
     "providerStatus": "available",
-    "lastProviderCheck": "2026-09-25T09:35:23.021Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 100,
+    "profitMargin": 12050,
+    "profitPercentage": 8
   },
   "vip-kvision180": {
     "providerPrice": 173900,
     "providerStatus": "available",
-    "lastProviderCheck": "2026-09-25T09:35:23.244Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 100,
+    "profitMargin": 14100,
+    "profitPercentage": 8
   },
   "vip-kvision20": {
     "providerPrice": 19700,
     "providerStatus": "available",
-    "lastProviderCheck": "2026-09-25T09:35:23.340Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 100,
+    "profitMargin": 3300,
+    "profitPercentage": 17
   },
   "vip-kvision200": {
     "providerPrice": 193200,
     "providerStatus": "available",
-    "lastProviderCheck": "2026-09-25T09:35:23.448Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 100,
+    "profitMargin": 15800,
+    "profitPercentage": 8
   },
   "vip-kvision25": {
     "providerPrice": 24575,
     "providerStatus": "available",
-    "lastProviderCheck": "2026-09-25T09:35:23.533Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 100,
+    "profitMargin": 3425,
+    "profitPercentage": 14
   },
   "vip-kvision250": {
     "providerPrice": 241450,
     "providerStatus": "available",
-    "lastProviderCheck": "2026-09-25T09:35:23.629Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 100,
+    "profitMargin": 19550,
+    "profitPercentage": 8
   },
   "vip-kvision30": {
     "providerPrice": 29450,
     "providerStatus": "available",
-    "lastProviderCheck": "2026-09-25T09:35:23.790Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 100,
+    "profitMargin": 2550,
+    "profitPercentage": 9
   },
   "vip-kvision300": {
     "providerPrice": 289700,
     "providerStatus": "available",
-    "lastProviderCheck": "2026-09-25T09:35:23.877Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 100,
+    "profitMargin": 23300,
+    "profitPercentage": 8
   },
   "vip-kvision50": {
     "providerPrice": 48450,
@@ -2660,8 +2766,11 @@
   "vip-kvision540": {
     "providerPrice": 521300,
     "providerStatus": "available",
-    "lastProviderCheck": "2026-09-25T09:35:24.187Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 100,
+    "profitMargin": 42700,
+    "profitPercentage": 8
   },
   "vip-kvision80": {
     "providerPrice": 77400,
@@ -3086,128 +3195,191 @@
   "vip-nexchamps2500": {
     "providerPrice": 431200,
     "providerStatus": "available",
-    "lastProviderCheck": "2026-09-25T09:35:32.955Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 100,
+    "profitMargin": 34800,
+    "profitPercentage": 8
   },
   "vip-nexchamps2506": {
     "providerPrice": 248800,
     "providerStatus": "available",
-    "lastProviderCheck": "2026-09-25T09:35:33.031Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 100,
+    "profitMargin": 20200,
+    "profitPercentage": 8
   },
   "vip-nexchamps2501": {
     "providerPrice": 47200,
     "providerStatus": "available",
-    "lastProviderCheck": "2026-09-25T09:35:33.112Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 100,
+    "profitMargin": 3800,
+    "profitPercentage": 8
   },
   "vip-nexchamps2503": {
     "providerPrice": 133600,
     "providerStatus": "available",
-    "lastProviderCheck": "2026-09-25T09:35:33.190Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 100,
+    "profitMargin": 11400,
+    "profitPercentage": 9
   },
   "vip-nexallchannel2906": {
     "providerPrice": 840150,
     "providerStatus": "available",
-    "lastProviderCheck": "2026-09-25T09:35:33.274Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 100,
+    "profitMargin": 67850,
+    "profitPercentage": 8
   },
   "vip-nexallchannel2901": {
     "providerPrice": 187350,
     "providerStatus": "available",
-    "lastProviderCheck": "2026-09-25T09:35:33.357Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 100,
+    "profitMargin": 15650,
+    "profitPercentage": 8
   },
   "vip-nexallchannel2903": {
     "providerPrice": 446585,
     "providerStatus": "available",
-    "lastProviderCheck": "2026-09-25T09:35:33.437Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 100,
+    "profitMargin": 36415,
+    "profitPercentage": 8
   },
   "vip-nexliga1906": {
     "providerPrice": 344840,
     "providerStatus": "empty",
-    "lastProviderCheck": "2026-09-25T09:35:33.562Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 0,
+    "profitMargin": 28160,
+    "profitPercentage": 8
   },
   "vip-nexliga1901": {
     "providerPrice": 94745,
     "providerStatus": "available",
-    "lastProviderCheck": "2026-09-25T09:35:33.653Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 100,
+    "profitMargin": 8255,
+    "profitPercentage": 9
   },
   "vip-nexliga1903": {
     "providerPrice": 181640,
     "providerStatus": "empty",
-    "lastProviderCheck": "2026-09-25T09:35:33.747Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 0,
+    "profitMargin": 15360,
+    "profitPercentage": 8
   },
   "vip-nextmola2700": {
     "providerPrice": 1453080,
     "providerStatus": "available",
-    "lastProviderCheck": "2026-09-25T09:35:33.834Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 100,
+    "profitMargin": 116920,
+    "profitPercentage": 8
   },
   "vip-nexmolas2706": {
     "providerPrice": 748933,
     "providerStatus": "available",
-    "lastProviderCheck": "2026-09-25T09:35:33.926Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 100,
+    "profitMargin": 60067,
+    "profitPercentage": 8
   },
   "vip-nexmola2701": {
     "providerPrice": 168020,
     "providerStatus": "available",
-    "lastProviderCheck": "2026-09-25T09:35:34.061Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 100,
+    "profitMargin": 13980,
+    "profitPercentage": 8
   },
   "vip-nexmola2703": {
     "providerPrice": 396027,
     "providerStatus": "available",
-    "lastProviderCheck": "2026-09-25T09:35:34.192Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 100,
+    "profitMargin": 31973,
+    "profitPercentage": 8
   },
   "vip-nexbt2306": {
     "providerPrice": 316120,
     "providerStatus": "empty",
-    "lastProviderCheck": "2026-09-25T09:35:34.319Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 0,
+    "profitMargin": 25880,
+    "profitPercentage": 8
   },
   "vip-nexbt2301": {
     "providerPrice": 60920,
     "providerStatus": "empty",
-    "lastProviderCheck": "2026-09-25T09:35:34.428Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 0,
+    "profitMargin": 5080,
+    "profitPercentage": 8
   },
   "vip-nexbt2303": {
     "providerPrice": 166520,
     "providerStatus": "empty",
-    "lastProviderCheck": "2026-09-25T09:35:34.530Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 0,
+    "profitMargin": 13480,
+    "profitPercentage": 8
   },
   "vip-otv100": {
     "providerPrice": 93300,
     "providerStatus": "available",
-    "lastProviderCheck": "2026-09-25T09:35:34.645Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 100,
+    "profitMargin": 7700,
+    "profitPercentage": 8
   },
   "vip-otv300": {
     "providerPrice": 291200,
     "providerStatus": "available",
-    "lastProviderCheck": "2026-09-25T09:35:34.812Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 100,
+    "profitMargin": 23800,
+    "profitPercentage": 8
   },
   "vip-otv50": {
     "providerPrice": 46800,
     "providerStatus": "available",
-    "lastProviderCheck": "2026-09-25T09:35:34.911Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 100,
+    "profitMargin": 4200,
+    "profitPercentage": 9
   },
   "vip-otv80": {
     "providerPrice": 74300,
     "providerStatus": "available",
-    "lastProviderCheck": "2026-09-25T09:35:35.013Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 100,
+    "profitMargin": 6700,
+    "profitPercentage": 9
   },
   "vip-ovo1000": {
     "providerPrice": 1000675,
@@ -3907,8 +4079,11 @@
   "vip-vspotify30": {
     "providerPrice": 56663,
     "providerStatus": "empty",
-    "lastProviderCheck": "2026-09-25T09:36:07.908Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 0,
+    "profitMargin": 5337,
+    "profitPercentage": 9
   },
   "vip-starhub10": {
     "providerPrice": 151537,
@@ -4203,8 +4378,11 @@
   "vip-tpy1": {
     "providerPrice": 24850,
     "providerStatus": "available",
-    "lastProviderCheck": "2026-09-25T09:36:14.516Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 100,
+    "profitMargin": 3150,
+    "profitPercentage": 13
   },
   "vip-tdu115": {
     "providerPrice": 11375,
@@ -4509,56 +4687,83 @@
   "vip-sddh31": {
     "providerPrice": 22060,
     "providerStatus": "available",
-    "lastProviderCheck": "2026-09-25T09:36:21.653Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 100,
+    "profitMargin": 2940,
+    "profitPercentage": 13
   },
   "vip-sddh312": {
     "providerPrice": 141225,
     "providerStatus": "empty",
-    "lastProviderCheck": "2026-09-25T09:36:21.773Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 0,
+    "profitMargin": 11775,
+    "profitPercentage": 8
   },
   "vip-sddh33": {
     "providerPrice": 51275,
     "providerStatus": "empty",
-    "lastProviderCheck": "2026-09-25T09:36:21.901Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 0,
+    "profitMargin": 4725,
+    "profitPercentage": 9
   },
   "vip-sddh36": {
     "providerPrice": 80050,
     "providerStatus": "empty",
-    "lastProviderCheck": "2026-09-25T09:36:22.022Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 0,
+    "profitMargin": 6950,
+    "profitPercentage": 9
   },
   "vip-tddh1030": {
     "providerPrice": 89875,
     "providerStatus": "empty",
-    "lastProviderCheck": "2026-09-25T09:36:22.143Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 0,
+    "profitMargin": 8125,
+    "profitPercentage": 9
   },
   "vip-tddh230": {
     "providerPrice": 36125,
     "providerStatus": "empty",
-    "lastProviderCheck": "2026-09-25T09:36:22.278Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 0,
+    "profitMargin": 3875,
+    "profitPercentage": 11
   },
   "vip-tddh2530": {
     "providerPrice": 144225,
     "providerStatus": "empty",
-    "lastProviderCheck": "2026-09-25T09:36:22.380Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 0,
+    "profitMargin": 11775,
+    "profitPercentage": 8
   },
   "vip-tddh4530": {
     "providerPrice": 193225,
     "providerStatus": "empty",
-    "lastProviderCheck": "2026-09-25T09:36:22.473Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 0,
+    "profitMargin": 15775,
+    "profitPercentage": 8
   },
   "vip-tddh530": {
     "providerPrice": 54125,
     "providerStatus": "empty",
-    "lastProviderCheck": "2026-09-25T09:36:22.570Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 0,
+    "profitMargin": 4875,
+    "profitPercentage": 9
   },
   "vip-sdf1": {
     "providerPrice": 11150,
@@ -5508,8 +5713,11 @@
   "vip-tdh30h": {
     "providerPrice": 62300,
     "providerStatus": "empty",
-    "lastProviderCheck": "2026-09-25T09:36:43.679Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 0,
+    "profitMargin": 5700,
+    "profitPercentage": 9
   },
   "vip-sdgm252": {
     "providerPrice": 22910,
@@ -5789,50 +5997,74 @@
   "vip-tpy11": {
     "providerPrice": 5705,
     "providerStatus": "available",
-    "lastProviderCheck": "2026-09-25T09:36:49.762Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 100,
+    "profitMargin": 3295,
+    "profitPercentage": 58
   },
   "vip-tpy13": {
     "providerPrice": 6201,
     "providerStatus": "empty",
-    "lastProviderCheck": "2026-09-25T09:36:49.843Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 0,
+    "profitMargin": 2799,
+    "profitPercentage": 45
   },
   "vip-tpy17": {
     "providerPrice": 16650,
     "providerStatus": "available",
-    "lastProviderCheck": "2026-09-25T09:36:49.954Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 100,
+    "profitMargin": 3350,
+    "profitPercentage": 20
   },
   "vip-tpy1030": {
     "providerPrice": 50224,
     "providerStatus": "empty",
-    "lastProviderCheck": "2026-09-25T09:36:50.166Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 0,
+    "profitMargin": 4776,
+    "profitPercentage": 10
   },
   "vip-tpy23": {
     "providerPrice": 11230,
     "providerStatus": "available",
-    "lastProviderCheck": "2026-09-25T09:36:50.409Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 100,
+    "profitMargin": 2770,
+    "profitPercentage": 25
   },
   "vip-tpy27": {
     "providerPrice": 12255,
     "providerStatus": "empty",
-    "lastProviderCheck": "2026-09-25T09:36:50.532Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 0,
+    "profitMargin": 2745,
+    "profitPercentage": 22
   },
   "vip-tpy37": {
     "providerPrice": 24710,
     "providerStatus": "available",
-    "lastProviderCheck": "2026-09-25T09:36:50.667Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 100,
+    "profitMargin": 3290,
+    "profitPercentage": 13
   },
   "vip-tpy530": {
     "providerPrice": 28225,
     "providerStatus": "empty",
-    "lastProviderCheck": "2026-09-25T09:36:50.839Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 0,
+    "profitMargin": 2775,
+    "profitPercentage": 10
   },
   "vip-st1000": {
     "providerPrice": 948315,
@@ -6467,8 +6699,11 @@
   "vip-td10gbytn": {
     "providerPrice": 67850,
     "providerStatus": "available",
-    "lastProviderCheck": "2026-09-25T09:37:04.446Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 100,
+    "profitMargin": 6150,
+    "profitPercentage": 9
   },
   "vip-td12gb": {
     "providerPrice": 57450,
@@ -6493,8 +6728,11 @@
   "vip-td10gbunl": {
     "providerPrice": 70250,
     "providerStatus": "available",
-    "lastProviderCheck": "2026-09-25T09:37:04.878Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 100,
+    "profitMargin": 5750,
+    "profitPercentage": 8
   },
   "vip-td30gb": {
     "providerPrice": 71994,
@@ -7114,26 +7352,38 @@
   "vip-visionfilm": {
     "providerPrice": 38375,
     "providerStatus": "empty",
-    "lastProviderCheck": "2026-09-25T09:37:20.397Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 0,
+    "profitMargin": 3625,
+    "profitPercentage": 9
   },
   "vip-visionpaketeuro": {
     "providerPrice": 145326,
     "providerStatus": "available",
-    "lastProviderCheck": "2026-09-25T09:37:20.561Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 100,
+    "profitMargin": 11674,
+    "profitPercentage": 8
   },
   "vip-visionpaketmvp": {
     "providerPrice": 29650,
     "providerStatus": "empty",
-    "lastProviderCheck": "2026-09-25T09:37:20.679Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 0,
+    "profitMargin": 3350,
+    "profitPercentage": 11
   },
   "vip-visionspotv30": {
     "providerPrice": 40020,
     "providerStatus": "available",
-    "lastProviderCheck": "2026-09-25T09:37:20.832Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 100,
+    "profitMargin": 3980,
+    "profitPercentage": 10
   },
   "vip-vdaxisaigo1": {
     "providerPrice": 27510,
@@ -8783,272 +9033,785 @@
   "vip-vidio365": {
     "providerPrice": 352200,
     "providerStatus": "empty",
-    "lastProviderCheck": "2026-09-25T09:38:06.249Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 0,
+    "profitMargin": 28800,
+    "profitPercentage": 8
   },
   "vip-vidio30": {
-    "providerPrice": 43400,
+    "providerPrice": 44700,
     "providerStatus": "empty",
-    "lastProviderCheck": "2026-09-25T09:38:06.338Z",
-    "status": "archived"
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "status": "archived",
+    "stock": 0,
+    "profitMargin": 2300,
+    "profitPercentage": 5
   },
   "vip-capcutprivate1blngar28d-s2": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 16800,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3200,
+    "profitPercentage": 19,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-capcutprivate21d-s2": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 13000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 23,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-capcutprivate1bln-s3": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 30000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 10,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-chatgpt1bgar7d-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 13500,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 2500,
+    "profitPercentage": 19,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-chatgpt1bgar28d-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 21500,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 2500,
+    "profitPercentage": 12,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-chatgptowner1bgar7d-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 49000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 4000,
+    "profitPercentage": 8,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-chatgptowner1bgar28d-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 79000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 7000,
+    "profitPercentage": 9,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-chatgptplus1thngar6b-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 90000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 8000,
+    "profitPercentage": 9,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-chatgptplus1bgar3d5pcs-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 212500,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 17500,
+    "profitPercentage": 8,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-chatgptplus1bgar7d5pcs-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 237500,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 19500,
+    "profitPercentage": 8,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-disney1bln-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 20000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 15,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-disney1blnshrd5u-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 10000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 30,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-disney1blnbasicprivate-s2": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 23000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 13,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-disney2bln-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 27000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 11,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-disney1blnprivate-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 35000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 9,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-disney3bln-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 45000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 4000,
+    "profitPercentage": 9,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-disney1thbbasicprivate-s2": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 120000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 10000,
+    "profitPercentage": 8,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-disney1thnprivate-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 230000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 19000,
+    "profitPercentage": 8,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-eggeventwg-s50": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 15591,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3409,
+    "profitPercentage": 22,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-geminiproinvt1thngar1bln-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 16000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 19,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-geminiproinvt1thngar6bln-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 21000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 14,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-geminiprohead1thngar1bln-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 45000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 4000,
+    "profitPercentage": 9,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-geminiprohead1thngar6bln-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 60000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 5000,
+    "profitPercentage": 8,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-iqiyiprivate-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 18000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 17,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-iqiyishared-s2": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 7000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 43,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-mlcmpgn3-s1a": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 86155,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 5845,
+    "profitPercentage": 7,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-mlcmpgn3-s1auto": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 84528,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 7472,
+    "profitPercentage": 9,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-mlcmpgn2-s1001": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 85634,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 7366,
+    "profitPercentage": 9,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-mlcmpgn2-s1auto": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 91046,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 7954,
+    "profitPercentage": 9,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-mlcmpgn2-s1a": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 93787,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 6213,
+    "profitPercentage": 7,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-mlcmpgn7-s1001": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 143161,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 11839,
+    "profitPercentage": 8,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-mlcmpgn8-s1001": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 147763,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 12237,
+    "profitPercentage": 8,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-spyinvt1bln-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 6000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 50,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-spyadm1bln-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 11000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 27,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-spyadm1blnus-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 13000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 23,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-vidioworldcupinfo-s24": {
-    "status": "archived"
+    "status": "archived",
+    "providerStatus": "empty",
+    "stock": 0,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-vidioprivate3bln-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 34000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 9,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-vidioprivate12blnnogar-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 8000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 38,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-vidioprivate12bln1xgar-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 26000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 12,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-vidioshared3bln-s2": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 17500,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 2500,
+    "profitPercentage": 14,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-vidioshared2bln-s2": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 15500,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 2500,
+    "profitPercentage": 16,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-vidioshared1blnprom-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 6000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 50,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-vidioprivate1blnprm-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 11000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 27,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-vidiotv1thngar1b-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 8000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 38,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-vidiotv1thngar3b-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 15000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 20,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-vidiotv6blngar1b-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 8000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 38,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-vidiotv6blngar3b-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 15000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 20,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-vidioshared-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 11000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 27,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-vidioshared3bln-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 20000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 15,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-vidioshared2blnprm-s2": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 17000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 18,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-vidioshared12bln-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 30000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 10,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-vidioshared2bln-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 18000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 17,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-vidioshared1bln-s2": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 13000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 23,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-vidioshared6bln-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 21000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 14,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-vidioprivate-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 24000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 13,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-vidiofifaworldcupkhusus-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 45000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 4000,
+    "profitPercentage": 9,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-vidioprivate2bln-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 35000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 9,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-vidiofifaworldcupall-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 50000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 4000,
+    "profitPercentage": 8,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-vidioprivate12bln-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 60000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 5000,
+    "profitPercentage": 8,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-vidioprivate6bln-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 60000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 5000,
+    "profitPercentage": 8,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-vidioworldcupmobilee-s23": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 55000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 5000,
+    "profitPercentage": 9,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-vidioworldcupmobileee-s23": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 51000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 5000,
+    "profitPercentage": 10,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-vidioworldcupallscreenn-s22": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 75000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 6000,
+    "profitPercentage": 8,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-visionshared1bln-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 9000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 33,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-visionprivate1bln-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 17000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 18,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-visionprivate1bln-s2": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 22500,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 2500,
+    "profitPercentage": 11,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-viu1blnprm-s2": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 2250,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 2750,
+    "profitPercentage": 122,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-viu3blnprm-s2": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 3000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 100,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-viu6blnprm-s2": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 5500,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 2500,
+    "profitPercentage": 45,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-viu3blnprm-s3": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 4500,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 2500,
+    "profitPercentage": 56,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-viu6blnprm-s3": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 7000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 43,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-viu3blngar2bln-s3": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 4500,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 2500,
+    "profitPercentage": 56,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-viu6blngar3bln-s3": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 7000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 43,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-viu1thngar1bln-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 4500,
+    "providerStatus": "available",
+    "stock": 100,
+    "profitMargin": 3000,
+    "profitPercentage": 67,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-viu1blnprm-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 5900,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3100,
+    "profitPercentage": 53,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-viu3blnprm-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 10000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 30,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-viu6blnprm-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 15000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 20,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-viu6bln-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 20000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 15,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-viu1bln-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 9000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 33,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-viu3bln-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 14000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 21,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-wetvshared1bln-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 6500,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 2500,
+    "profitPercentage": 38,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-wetvshared3bln-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 13000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 23,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-wetvshared1thn-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 20000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 15,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-wetvshared1thn-s2": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 17000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 18,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-ytpremindpo5x-s2": {
     "status": "archived"
   },
   "vip-ytpremindpo10x-s2": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 50000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 4000,
+    "profitPercentage": 8,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-ytpremindv6blnpo1x-s2": {
     "status": "archived"
@@ -9066,16 +9829,34 @@
     "status": "archived"
   },
   "vip-ytpremindhutri78-s2": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 1708,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3292,
+    "profitPercentage": 193,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-ytpremadm-s1": {
     "status": "archived"
   },
   "vip-ytprem4bln5pcs-s2": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 35000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 9,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-ytpremindprm-s2": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 10000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 30,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-ytpreminde-s1": {
     "status": "archived"
@@ -9084,61 +9865,163 @@
     "status": "archived"
   },
   "vip-ytpremind5pcs-s2": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 31250,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 2750,
+    "profitPercentage": 9,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-ytpremind-s1": {
     "status": "archived"
   },
   "vip-ytpremind10pcs-s2": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 65000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 6000,
+    "profitPercentage": 9,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-ytpremind6bln10pcs-s2": {
     "status": "archived"
   },
   "vip-ytprem4bln5pcsprm-s2": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 50000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 4000,
+    "profitPercentage": 8,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-ytprem4bln10pcs-s2": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 105000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 9000,
+    "profitPercentage": 9,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-ytprem4bln10pcsprm-s2": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 95000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 8000,
+    "profitPercentage": 8,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-vidio7": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 20360,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 2640,
+    "profitPercentage": 13,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-xlkvdbs530": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 60025,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 4975,
+    "profitPercentage": 8,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-xlkvdm530": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 50025,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 4975,
+    "profitPercentage": 10,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-xlkvpbs530": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 17755,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3245,
+    "profitPercentage": 18,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-xlkvpm530": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 12740,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3260,
+    "profitPercentage": 26,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-bspremprivate1bln-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 20000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 15,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-bspremprivate2bln-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 35000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 9,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-bspremprivate3bln-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 40000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 4000,
+    "profitPercentage": 10,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-canvatestt-s6": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 1200,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 2800,
+    "profitPercentage": 233,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-ytpremgsuite1bgar7d-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 12000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 25,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-ytpremgsuite1bgar28d-s1": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 16500,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 2500,
+    "profitPercentage": 15,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-visionpremprivate1bln-s2": {
-    "status": "archived"
+    "status": "archived",
+    "providerPrice": 25000,
+    "providerStatus": "available",
+    "stock": 100,
+    "profitMargin": 3000,
+    "profitPercentage": 12,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   },
   "vip-canva1bln-s1": {
     "name": "Canvaa Pro [ 1 Bulan ]",
@@ -9155,6 +10038,504 @@
     ],
     "popular": false,
     "profitMargin": 7000,
-    "profitPercentage": 140
+    "profitPercentage": 140,
+    "providerPrice": 5000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
+  },
+  "vip-ntflxshare30dgar14d-s2": {
+    "name": "Netflix Premium - Profile Sharing 30 Hari [ 1 Profile ] [ VIA LINK LOGIN ] [ GARANSI 14 HARI ]",
+    "category": {
+      "id": "cat-apps-streaming",
+      "name": "Apps & Streaming"
+    },
+    "price": 20000,
+    "description": "Netflix Premium - Profile Sharing 30 Hari [ 1 Profile ] [ VIA LINK LOGIN ] [ GARANSI 14 HARI ]. <p style=\"letter-spacing: 0.14px;\"><span style=\"font-weight: 600;\">Spesifikasi Produk</span></p><ul style=\"letter-spacing: 0.14px;\"><li>Plan Premium 4K</li><li><span style=\"letter-spacing: 0.14px;\">Proses Kirim Link Login Manual</span></li><li><span style=\"letter-spacing: 0.14px;\">Sharing Profile dan Bisa Limit Nonton</span></li><li>Login 1 Devices dan Jangan Melanggar!</li><li><font color=\"#ff0000\"><span style=\"font-weight: 600;\">Durasi 1 Bulan</span></font></li><li><font color=\"#ff0000\"><span style=\"font-weight: 600;\">Garansi 14 Hari (jangan claim garansi jika sudah lewat dari 14 hari pemakaian)</span></font></li></ul><p style=\"letter-spacing: 0.14px;\"></p><ul style=\"letter-spacing: 0.14px;\"></ul><p style=\"letter-spacing: 0.14px;\"></p><p style=\"letter-spacing: 0.14px;\"><span style=\"font-weight: 600;\">Ketentuan Produk</span></p><p style=\"letter-spacing: 0.14px;\"><span style=\"font-weight: 600;\"></span></p><ul style=\"letter-spacing: 0.14px;\"><li>Setelah Order Konfirmasi ke Whatsapp Admin</li><li>Setelah Link login diberikan, link hanya berlaku 1 jam</li><li><span style=\"font-weight: 600;\">KHUSUS TV</span> = berikan kode login TV saja</li><li><span style=\"font-weight: 600;\">KHUSUS MOBILE/LAPTOP/PC</span> = admin akan berikan link login</li></ul>",
+    "features": [
+      "Brand: Netflix Premium",
+      "Kode Provider: NTFLXSHARE30DGAR14D-S2",
+      "Ketersediaan Supplier: Tersedia",
+      "Catatan: <p style=\"letter-spacing: 0.14px;\"><span style=\"font-weight: 600;\">Spesifikasi Produk</span></p><ul style=\"letter-spacing: 0.14px;\"><li>Plan Premium 4K</li><li><span style=\"letter-spacing: 0.14px;\">Proses Kirim Link Login Manual</span></li><li><span style=\"letter-spacing: 0.14px;\">Sharing Profile dan Bisa Limit Nonton</span></li><li>Login 1 Devices dan Jangan Melanggar!</li><li><font color=\"#ff0000\"><span style=\"font-weight: 600;\">Durasi 1 Bulan</span></font></li><li><font color=\"#ff0000\"><span style=\"font-weight: 600;\">Garansi 14 Hari (jangan claim garansi jika sudah lewat dari 14 hari pemakaian)</span></font></li></ul><p style=\"letter-spacing: 0.14px;\"></p><ul style=\"letter-spacing: 0.14px;\"></ul><p style=\"letter-spacing: 0.14px;\"></p><p style=\"letter-spacing: 0.14px;\"><span style=\"font-weight: 600;\">Ketentuan Produk</span></p><p style=\"letter-spacing: 0.14px;\"><span style=\"font-weight: 600;\"></span></p><ul style=\"letter-spacing: 0.14px;\"><li>Setelah Order Konfirmasi ke Whatsapp Admin</li><li>Setelah Link login diberikan, link hanya berlaku 1 jam</li><li><span style=\"font-weight: 600;\">KHUSUS TV</span> = berikan kode login TV saja</li><li><span style=\"font-weight: 600;\">KHUSUS MOBILE/LAPTOP/PC</span> = admin akan berikan link login</li></ul>"
+    ],
+    "status": "active",
+    "imageUrl": "/images/default-product-banner.png",
+    "providerPrice": 13500,
+    "providerStatus": "available",
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "stock": 100,
+    "profitMargin": 6500,
+    "profitPercentage": 48
+  },
+  "vip-ntflxshare30dgar28d-s2": {
+    "name": "Netflix Premium - Profile Sharing 30 Hari [ 1 Profile ] [ VIA LINK LOGIN ] [ GARANSI 28 HARI ]",
+    "category": {
+      "id": "cat-apps-streaming",
+      "name": "Apps & Streaming"
+    },
+    "price": 25000,
+    "description": "Netflix Premium - Profile Sharing 30 Hari [ 1 Profile ] [ VIA LINK LOGIN ] [ GARANSI 28 HARI ]. <p style=\"letter-spacing: 0.14px;\"><span style=\"font-weight: 600;\">Spesifikasi Produk</span></p><ul style=\"letter-spacing: 0.14px;\"><li>Plan Premium 4K</li><li><span style=\"letter-spacing: 0.14px;\">Proses Kirim Link Login Manual</span></li><li><span style=\"letter-spacing: 0.14px;\">Sharing Profile dan Bisa Limit Nonton</span></li><li>Login 1 Devices dan Jangan Melanggar!</li><li><font color=\"#ff0000\"><span style=\"font-weight: 600;\">Durasi 1 Bulan</span></font></li><li><font color=\"#ff0000\"><span style=\"font-weight: 600;\">Garansi 28 Hari (jangan claim garansi jika sudah lewat dari 14 hari pemakaian)</span></font></li></ul><p style=\"letter-spacing: 0.14px;\"></p><ul style=\"letter-spacing: 0.14px;\"></ul><p style=\"letter-spacing: 0.14px;\"></p><p style=\"letter-spacing: 0.14px;\"><span style=\"font-weight: 600;\">Ketentuan Produk</span></p><p style=\"letter-spacing: 0.14px;\"><span style=\"font-weight: 600;\"></span></p><ul style=\"letter-spacing: 0.14px;\"><li>Setelah Order Konfirmasi ke Whatsapp Admin</li><li>Setelah Link login diberikan, link hanya berlaku 1 jam</li><li><span style=\"font-weight: 600;\">KHUSUS TV</span> = berikan kode login TV saja</li><li><span style=\"font-weight: 600;\">KHUSUS MOBILE/LAPTOP/PC</span> = admin akan berikan link login</li></ul>",
+    "features": [
+      "Brand: Netflix Premium",
+      "Kode Provider: NTFLXSHARE30DGAR28D-S2",
+      "Ketersediaan Supplier: Tersedia",
+      "Catatan: <p style=\"letter-spacing: 0.14px;\"><span style=\"font-weight: 600;\">Spesifikasi Produk</span></p><ul style=\"letter-spacing: 0.14px;\"><li>Plan Premium 4K</li><li><span style=\"letter-spacing: 0.14px;\">Proses Kirim Link Login Manual</span></li><li><span style=\"letter-spacing: 0.14px;\">Sharing Profile dan Bisa Limit Nonton</span></li><li>Login 1 Devices dan Jangan Melanggar!</li><li><font color=\"#ff0000\"><span style=\"font-weight: 600;\">Durasi 1 Bulan</span></font></li><li><font color=\"#ff0000\"><span style=\"font-weight: 600;\">Garansi 28 Hari (jangan claim garansi jika sudah lewat dari 14 hari pemakaian)</span></font></li></ul><p style=\"letter-spacing: 0.14px;\"></p><ul style=\"letter-spacing: 0.14px;\"></ul><p style=\"letter-spacing: 0.14px;\"></p><p style=\"letter-spacing: 0.14px;\"><span style=\"font-weight: 600;\">Ketentuan Produk</span></p><p style=\"letter-spacing: 0.14px;\"><span style=\"font-weight: 600;\"></span></p><ul style=\"letter-spacing: 0.14px;\"><li>Setelah Order Konfirmasi ke Whatsapp Admin</li><li>Setelah Link login diberikan, link hanya berlaku 1 jam</li><li><span style=\"font-weight: 600;\">KHUSUS TV</span> = berikan kode login TV saja</li><li><span style=\"font-weight: 600;\">KHUSUS MOBILE/LAPTOP/PC</span> = admin akan berikan link login</li></ul>"
+    ],
+    "status": "active",
+    "imageUrl": "/images/default-product-banner.png",
+    "providerPrice": 20000,
+    "providerStatus": "available",
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "stock": 100,
+    "profitMargin": 5000,
+    "profitPercentage": 25,
+    "priceFormatted": "Rp 25 Rb",
+    "popular": true,
+    "guaranteeTitle": "Garansi Penuh",
+    "guaranteeDesc": "Jaminan ganti akun 100%",
+    "processTitle": "Proses Instan",
+    "processDesc": "1 - 15 menit selesai",
+    "privacyTitle": "Akun Private",
+    "privacyDesc": "Ruang kerja aman & personal"
+  },
+  "vip-ytpreminvt1bln-s3": {
+    "name": "Youtube Premium - Anggota FamilyPlan 1 Bulan [ INVITE - 1X GARANSI ] [MANUAL]",
+    "category": {
+      "id": "cat-apps-streaming",
+      "name": "Apps & Streaming"
+    },
+    "price": 18000,
+    "description": "Youtube Premium - Anggota FamilyPlan 1 Bulan [ INVITE - 1X GARANSI ] [MANUAL]. <p style=\"letter-spacing: 0.14px;\"><font color=\"#424242\" face=\"Montserrat\"><span style=\"font-weight: 600;\">Deskripsi Produk</span></font></p><ul style=\"letter-spacing: 0.14px;\"><li><font color=\"#424242\" face=\"Montserrat\">Via Invite masukan email customer</font></li><li><font color=\"#424242\"><span style=\"font-family: Montserrat;\">Proses Manual, Link invite cek email tujuan</span></font></li><li><font color=\"#424242\" face=\"Montserrat\">Anggota bisa kehilangan Premium jika family terkena verif/disabled</font></li><li><font color=\"#424242\" face=\"Montserrat\">Garansi hanya 1x invite ulang pakai Family kami lainnya</font></li></ul><p style=\"letter-spacing: 0.14px;\"><font color=\"#424242\"><span style=\"font-family: Montserrat;\"><span style=\"font-weight: 600;\">Spesifikasi Produk</span></span></font></p><ul style=\"letter-spacing: 0.14px;\"><li><font color=\"#424242\" face=\"Montserrat\">Durasi 1 Bulan</font></li><li><font color=\"#424242\" face=\"Montserrat\">Akses Youtube Premium dan Youtube Music</font></li><li><span style=\"color: rgb(255, 0, 0); font-family: Montserrat; font-weight: 600; letter-spacing: 0.14px;\">Garansi Hanya 1x Invite Ulang</span></li><li><span style=\"color: rgb(255, 0, 0); font-family: Montserrat; font-weight: 600; letter-spacing: 0.14px;\">Tersedia Youtube GSUITE email lebih strong</span></li></ul>",
+    "features": [
+      "Brand: Youtube Premium",
+      "Kode Provider: YTPREMINVT1BLN-S3",
+      "Ketersediaan Supplier: Tersedia",
+      "Catatan: <p style=\"letter-spacing: 0.14px;\"><font color=\"#424242\" face=\"Montserrat\"><span style=\"font-weight: 600;\">Deskripsi Produk</span></font></p><ul style=\"letter-spacing: 0.14px;\"><li><font color=\"#424242\" face=\"Montserrat\">Via Invite masukan email customer</font></li><li><font color=\"#424242\"><span style=\"font-family: Montserrat;\">Proses Manual, Link invite cek email tujuan</span></font></li><li><font color=\"#424242\" face=\"Montserrat\">Anggota bisa kehilangan Premium jika family terkena verif/disabled</font></li><li><font color=\"#424242\" face=\"Montserrat\">Garansi hanya 1x invite ulang pakai Family kami lainnya</font></li></ul><p style=\"letter-spacing: 0.14px;\"><font color=\"#424242\"><span style=\"font-family: Montserrat;\"><span style=\"font-weight: 600;\">Spesifikasi Produk</span></span></font></p><ul style=\"letter-spacing: 0.14px;\"><li><font color=\"#424242\" face=\"Montserrat\">Durasi 1 Bulan</font></li><li><font color=\"#424242\" face=\"Montserrat\">Akses Youtube Premium dan Youtube Music</font></li><li><span style=\"color: rgb(255, 0, 0); font-family: Montserrat; font-weight: 600; letter-spacing: 0.14px;\">Garansi Hanya 1x Invite Ulang</span></li><li><span style=\"color: rgb(255, 0, 0); font-family: Montserrat; font-weight: 600; letter-spacing: 0.14px;\">Tersedia Youtube GSUITE email lebih strong</span></li></ul>"
+    ],
+    "status": "active",
+    "imageUrl": "/images/default-product-banner.png",
+    "providerPrice": 9000,
+    "providerStatus": "available",
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "stock": 100,
+    "profitMargin": 9000,
+    "profitPercentage": 100
+  },
+  "vip-capcutprivate30d-s1": {
+    "providerPrice": 34000,
+    "providerStatus": "available",
+    "stock": 100,
+    "profitMargin": 3000,
+    "profitPercentage": 9,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
+  },
+  "vip-canvadesainer6bln-s1": {
+    "providerPrice": 15500,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 2500,
+    "profitPercentage": 16,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
+  },
+  "vip-bspremshrd3bln-s1": {
+    "providerPrice": 10250,
+    "providerStatus": "available",
+    "stock": 100,
+    "profitMargin": 3750,
+    "profitPercentage": 37,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
+  },
+  "vip-canvadesainer12bln-s1": {
+    "providerPrice": 18000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 17,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
+  },
+  "vip-geminiprohead1thngar3bln-s2": {
+    "providerPrice": 60000,
+    "providerStatus": "available",
+    "stock": 100,
+    "profitMargin": 5000,
+    "profitPercentage": 8,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "name": "Gemini AI Pro 1 Tahun [ Head Invite 5 Anggota ] [ Garansi 3 Bulan ] [ 5 TB GDRIVE ]",
+    "price": 65000,
+    "priceFormatted": "Rp 65 Rb",
+    "status": "active",
+    "description": "Gemini AI Pro 1 Tahun [ Head Invite 5 Anggota ] [ Garansi 3 Bulan ] [ 5 TB GDRIVE ] - Layanan digital resmi terverifikasi dengan aktivasi instan.",
+    "imageUrl": "/api/v1/media/products/google-pro-1790683373626-l6DHtwqBLQsyYGof7xaOrw43UPcJXP.png",
+    "features": [
+      "Brand: Digital",
+      "Kode Layanan: GEMINIPROHEAD1THNGAR3BLN-S2",
+      "Ketersediaan Supplier: Tersedia",
+      "Proses aktivasi cepat & otomatis"
+    ],
+    "popular": true,
+    "guaranteeTitle": "Garansi Penuh",
+    "guaranteeDesc": "Jaminan ganti akun 100%",
+    "processTitle": "Proses Instan",
+    "processDesc": "1 - 15 menit selesai",
+    "privacyTitle": "Akun Private",
+    "privacyDesc": "Ruang kerja aman & personal"
+  },
+  "vip-bspremshrd1bln-s1": {
+    "providerPrice": 3750,
+    "providerStatus": "available",
+    "stock": 100,
+    "profitMargin": 3250,
+    "profitPercentage": 87,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
+  },
+  "vip-wetvshared1bln-s2": {
+    "providerPrice": 8500,
+    "providerStatus": "available",
+    "stock": 100,
+    "profitMargin": 3500,
+    "profitPercentage": 41,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
+  },
+  "vip-geminiprohead1thngar6bln-s2": {
+    "providerPrice": 100000,
+    "providerStatus": "available",
+    "stock": 100,
+    "profitMargin": 8000,
+    "profitPercentage": 8,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
+  },
+  "vip-canvadesainer1bln-s1": {
+    "providerPrice": 2300,
+    "providerStatus": "available",
+    "stock": 100,
+    "profitMargin": 2700,
+    "profitPercentage": 117,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
+  },
+  "vip-chatgptplus1bgar14d-s1": {
+    "providerPrice": 70000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 6000,
+    "profitPercentage": 9,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
+  },
+  "vip-wetvprivate1bln-s1": {
+    "providerPrice": 30000,
+    "providerStatus": "available",
+    "stock": 100,
+    "profitMargin": 3000,
+    "profitPercentage": 10,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
+  },
+  "vip-capcutshared1blngar28d-s2": {
+    "providerPrice": 16000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 19,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
+  },
+  "vip-chatgptplus3bgar1bln-s1": {
+    "providerPrice": 50000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 4000,
+    "profitPercentage": 8,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
+  },
+  "vip-canvalifetime-s1": {
+    "providerPrice": 15500,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 2500,
+    "profitPercentage": 16,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
+  },
+  "vip-canvaanggota12bln-s1": {
+    "providerPrice": 15000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 20,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
+  },
+  "vip-canva6bln-s1": {
+    "providerPrice": 12500,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 2500,
+    "profitPercentage": 20,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
+  },
+  "vip-capcutprivate7d-s1": {
+    "providerPrice": 6500,
+    "providerStatus": "available",
+    "stock": 99,
+    "profitMargin": 3000,
+    "profitPercentage": 46,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
+  },
+  "vip-chatgptplus1bgar4d-s1": {
+    "providerPrice": 70000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 6000,
+    "profitPercentage": 9,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
+  },
+  "vip-canvaanggota6bln-s1": {
+    "providerPrice": 12500,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 2500,
+    "profitPercentage": 20,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
+  },
+  "vip-canvaanggota2bln-s1": {
+    "providerPrice": 2500,
+    "providerStatus": "available",
+    "stock": 100,
+    "profitMargin": 2500,
+    "profitPercentage": 100,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
+  },
+  "vip-canvadesainerlifetime-s1": {
+    "providerPrice": 18500,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 2500,
+    "profitPercentage": 14,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
+  },
+  "vip-canvaanggota1bln-s1": {
+    "providerPrice": 1300,
+    "providerStatus": "available",
+    "stock": 100,
+    "profitMargin": 2700,
+    "profitPercentage": 208,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
+  },
+  "vip-iqiyishared-s1": {
+    "providerPrice": 10000,
+    "providerStatus": "available",
+    "stock": 100,
+    "profitMargin": 3000,
+    "profitPercentage": 30,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
+  },
+  "vip-capcutprivate1bln-s2": {
+    "providerPrice": 9800,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 5200,
+    "profitPercentage": 53,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
+  },
+  "vip-geminiproinvt1thngar3bln-s2": {
+    "providerPrice": 18000,
+    "providerStatus": "available",
+    "stock": 100,
+    "profitMargin": 3000,
+    "profitPercentage": 17,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "name": "Gemini AI Pro 1 Tahun [ Anggota ] [ Garansi 3 Bulan ] [ 5 TB GDRIVE ]",
+    "price": 21000,
+    "priceFormatted": "Rp 21 Rb",
+    "status": "active",
+    "description": "Gemini AI Pro 1 Tahun [ Anggota ] [ Garansi 3 Bulan ] [ 5 TB GDRIVE ] - Layanan digital resmi terverifikasi dengan aktivasi instan.",
+    "imageUrl": "/api/v1/media/products/google-pro-1790683398028-ZYtEJghD6u02AIc8oDfdfDFj95TyN4.png",
+    "features": [
+      "Brand: Digital",
+      "Kode Layanan: GEMINIPROINVT1THNGAR3BLN-S2",
+      "Ketersediaan Supplier: Tersedia",
+      "Proses aktivasi cepat & otomatis"
+    ],
+    "popular": false,
+    "guaranteeTitle": "Garansi Penuh",
+    "guaranteeDesc": "Jaminan ganti akun 100%",
+    "processTitle": "Proses Instan",
+    "processDesc": "1 - 15 menit selesai",
+    "privacyTitle": "Shared Account",
+    "privacyDesc": "Ruang kerja aman & personal"
+  },
+  "vip-chatgptplus1bshared-s1": {
+    "providerPrice": 20000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 15,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
+  },
+  "vip-vidiosharedmbl1bln-s2": {
+    "providerPrice": 14750,
+    "providerStatus": "available",
+    "stock": 100,
+    "profitMargin": 4750,
+    "profitPercentage": 32,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
+  },
+  "vip-chatgptplus1bgar28d-s1": {
+    "providerPrice": 47000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 4000,
+    "profitPercentage": 9,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
+  },
+  "vip-bspremshrd1thn-s1": {
+    "providerPrice": 20000,
+    "providerStatus": "available",
+    "stock": 100,
+    "profitMargin": 9000,
+    "profitPercentage": 45,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
+  },
+  "vip-alightmotionpriv1thn-s1": {
+    "providerPrice": 5000,
+    "providerStatus": "available",
+    "stock": 100,
+    "profitMargin": 3000,
+    "profitPercentage": 60,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
+  },
+  "vip-capcutshared1bln-s1": {
+    "providerPrice": 11000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 27,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
+  },
+  "vip-vidioplatmobprivate-s1": {
+    "providerPrice": 27000,
+    "providerStatus": "available",
+    "stock": 100,
+    "profitMargin": 3000,
+    "profitPercentage": 11,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
+  },
+  "vip-capcutshared1bln-s2": {
+    "providerPrice": 13000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 23,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
+  },
+  "vip-geminiprohead1thngar1bln-s2": {
+    "providerPrice": 45000,
+    "providerStatus": "available",
+    "stock": 100,
+    "profitMargin": 4000,
+    "profitPercentage": 9,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
+  },
+  "vip-capcutshared1thn-s1": {
+    "providerPrice": 15000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 20,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
+  },
+  "vip-viu1thngar3bln-s1": {
+    "providerPrice": 6500,
+    "providerStatus": "available",
+    "stock": 100,
+    "profitMargin": 5500,
+    "profitPercentage": 85,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
+  },
+  "vip-canvaedu1thn-s1": {
+    "providerPrice": 11500,
+    "providerStatus": "available",
+    "stock": 98,
+    "profitMargin": 2500,
+    "profitPercentage": 22,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
+  },
+  "vip-chatgptplus1bgar7d-s1": {
+    "providerPrice": 55000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 5000,
+    "profitPercentage": 9,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
+  },
+  "vip-geminiproinvt1thngar6bln-s2": {
+    "providerPrice": 28000,
+    "providerStatus": "available",
+    "stock": 100,
+    "profitMargin": 3000,
+    "profitPercentage": 11,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z",
+    "name": "Gemini AI Pro 1 Tahun [ Anggota ] [ Garansi 6 Bulan ] [ 5 TB GDRIVE ]",
+    "price": 31000,
+    "priceFormatted": "Rp 31 Rb",
+    "status": "active",
+    "description": "Gemini AI Pro 1 Tahun [ Anggota ] [ Garansi 6 Bulan ] [ 5 TB GDRIVE ] - Layanan digital resmi terverifikasi dengan aktivasi instan.",
+    "imageUrl": "/api/v1/media/products/google-pro-1790683415958-qYLMLgeDqzuqmup4fogHAPP3YHSAD3.png",
+    "features": [
+      "Brand: Digital",
+      "Kode Layanan: GEMINIPROINVT1THNGAR6BLN-S2",
+      "Ketersediaan Supplier: Tersedia",
+      "Proses aktivasi cepat & otomatis"
+    ],
+    "popular": false,
+    "guaranteeTitle": "Garansi Penuh",
+    "guaranteeDesc": "Jaminan ganti akun 100%",
+    "processTitle": "Proses Instan",
+    "processDesc": "1 - 15 menit selesai",
+    "privacyTitle": "Shared Account",
+    "privacyDesc": "Ruang kerja aman & personal"
+  },
+  "vip-capcutshared1bln-s3": {
+    "providerPrice": 16500,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 2500,
+    "profitPercentage": 15,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
+  },
+  "vip-chatgptteacher1thngar1b-s1": {
+    "providerPrice": 22000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 14,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
+  },
+  "vip-chatgptteacher1thngar6b-s1": {
+    "providerPrice": 37000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 3000,
+    "profitPercentage": 8,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
+  },
+  "vip-chatgptplus1bgar3d-s1": {
+    "providerPrice": 50000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 4000,
+    "profitPercentage": 8,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
+  },
+  "vip-chatgptplus1bgar28d-s2": {
+    "providerPrice": 85000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 7000,
+    "profitPercentage": 8,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
+  },
+  "vip-chatgptplus3bgar3bln-s1": {
+    "providerPrice": 65000,
+    "providerStatus": "empty",
+    "stock": 0,
+    "profitMargin": 6000,
+    "profitPercentage": 9,
+    "lastProviderCheck": "2026-10-01T18:13:32.397Z"
   }
 }

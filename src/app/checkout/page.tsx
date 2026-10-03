@@ -341,6 +341,7 @@ export default function CheckoutPage() {
         customer_notes: customerNotes.trim(),
         payment_method: selectedMethod,
         promo_code: appliedPromo?.code || undefined,
+        referral_code: typeof window !== 'undefined' ? localStorage.getItem('asterra_ref') || undefined : undefined,
         customer_contact: {
           name: customerName.trim(),
           email: targetEmail.trim(),

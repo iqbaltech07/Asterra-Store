@@ -11,6 +11,7 @@ import { headers } from 'next/headers';
 import { PromoService } from '@/lib/services/promo.service';
 import { mapDbOrderToOrder, RawDbOrder } from '@/lib/utils/order-mapper';
 import { OrderAdminService } from '@/lib/services/order-admin.service';
+import { AffiliateService } from '@/lib/services/affiliate.service';
 
 // GET /api/v1/orders - User-isolated order history
 export async function GET(request: NextRequest) {
@@ -142,7 +143,18 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { items, customer_notes, customer_contact } = body;
+    const { items, customer_notes, customer_contact, referral_code } = body;
+
+    // Validate referral code attribution if present
+    let verifiedReferralCode: string | undefined = undefined;
+    let salesPartnerName: string | undefined = undefined;
+    if (referral_code && typeof referral_code === 'string') {
+      const partner = AffiliateService.findByCode(referral_code);
+      if (partner && partner.status === 'active') {
+        verifiedReferralCode = partner.code;
+        salesPartnerName = partner.name;
+      }
+    }
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json(
@@ -328,6 +340,7 @@ export async function POST(request: NextRequest) {
       unique_code: uniqueCode > 0 ? uniqueCode : undefined,
       promo_code: appliedPromoCode || undefined,
       discount_amount: discountAmount > 0 ? discountAmount : undefined,
+      referral_code: verifiedReferralCode,
       payment_mode: isManualMode ? 'manual' : 'gateway',
       order_status: 'pending',
       order_date: new Date().toISOString(),
@@ -393,7 +406,9 @@ export async function POST(request: NextRequest) {
           customerName,
           customerEmail,
           customerWhatsapp,
-          customerNotes: customer_notes || null,
+          customerNotes: verifiedReferralCode
+            ? `${customer_notes || ''} [Sales Ref: ${verifiedReferralCode}]`.trim()
+            : customer_notes || null,
           totalAmount: finalTotalAmount,
           rawAmount: rawTotalAmount,
           uniqueCode: uniqueCode > 0 ? uniqueCode : null,
@@ -405,13 +420,30 @@ export async function POST(request: NextRequest) {
             create: [
               {
                 actor: 'customer',
-                action: appliedPromoCode ? 'promo_applied' : 'order_created',
-                notes: appliedPromoCode
-                  ? `Pesanan baru dibuat oleh pelanggan (${customerName}) dengan voucher "${appliedPromoCode}" (Diskon: Rp ${discountAmount.toLocaleString('id-ID')})`
-                  : `Pesanan baru dibuat oleh pelanggan (${customerName}).`,
-                metadata: appliedPromoCode
-                  ? { promo_code: appliedPromoCode, discount_amount: discountAmount }
-                  : {},
+                action: appliedPromoCode
+                  ? 'promo_applied'
+                  : verifiedReferralCode
+                  ? 'referral_applied'
+                  : 'order_created',
+                notes: [
+                  `Pesanan baru dibuat oleh pelanggan (${customerName}).`,
+                  appliedPromoCode
+                    ? `Voucher "${appliedPromoCode}" (Diskon: Rp ${discountAmount.toLocaleString('id-ID')}).`
+                    : '',
+                  verifiedReferralCode
+                    ? `Direferensikan oleh mitra sales "${salesPartnerName}" (${verifiedReferralCode}).`
+                    : '',
+                ]
+                  .filter(Boolean)
+                  .join(' '),
+                metadata: {
+                  ...(appliedPromoCode
+                    ? { promo_code: appliedPromoCode, discount_amount: discountAmount }
+                    : {}),
+                  ...(verifiedReferralCode
+                    ? { referral_code: verifiedReferralCode, sales_partner: salesPartnerName }
+                    : {}),
+                },
               },
             ],
           },

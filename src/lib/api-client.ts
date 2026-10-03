@@ -22,6 +22,7 @@ export interface CreateOrderPayload {
   customer_notes?: string;
   payment_method?: string;
   promo_code?: string;
+  referral_code?: string;
   customer_contact?: {
     name: string;
     email: string;

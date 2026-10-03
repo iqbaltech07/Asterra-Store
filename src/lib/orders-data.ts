@@ -44,6 +44,7 @@ export interface Order {
   items: OrderItem[];
   customer_notes?: string;
   promo_code?: string;
+  referral_code?: string;
   discount_amount?: number;
   logs?: OrderLog[];
   payment?: {

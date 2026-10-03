@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "next lint",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "export:excel": "node scripts/generate-product-excel.js"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
@@ -37,6 +38,7 @@
     "autoprefixer": "^10.4.20",
     "eslint": "^9.20.0",
     "eslint-config-next": "^15.1.7",
+    "exceljs": "^4.4.0",
     "postcss": "^8.4.49",
     "prettier": "^3.5.0",
     "prisma": "^6.19.3",

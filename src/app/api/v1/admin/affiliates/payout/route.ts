@@ -1,0 +1,41 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { AffiliateService } from '@/lib/services/affiliate.service';
+
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const { partnerId } = body;
+
+    if (!partnerId || typeof partnerId !== 'string') {
+      return NextResponse.json(
+        { success: false, message: 'ID mitra sales wajib disertakan.' },
+        { status: 400 }
+      );
+    }
+
+    const result = AffiliateService.processPayout(partnerId);
+
+    if (!result.success) {
+      return NextResponse.json(
+        { success: false, message: result.message },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: result.message,
+      data: {
+        partnerId,
+        amount: result.amount,
+        partner: result.partner,
+      },
+    });
+  } catch (error) {
+    console.error('Error processing payout:', error);
+    return NextResponse.json(
+      { success: false, message: 'Terjadi kesalahan sistem saat memproses pencairan komisi.' },
+      { status: 500 }
+    );
+  }
+}

@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -26,19 +25,27 @@ import {
   Check,
   Wallet,
   Filter,
-  LogOut,
-  ShoppingBag,
-  Activity,
-  CreditCard,
-  Tag,
   Trash2,
   ShieldCheck,
+  Menu,
+  Copy,
 } from 'lucide-react';
 import { AdminOrdersTab } from '@/components/admin/admin-orders-tab';
 import { AdminLogsTab } from '@/components/admin/admin-logs-tab';
 import { AdminPaymentSettingsTab } from '@/components/admin/admin-payment-settings-tab';
 import { AdminPromosTab } from '@/components/admin/admin-promos-tab';
 import { AdminUsersTab } from '@/components/admin/admin-users-tab';
+import { AdminSidebar, AdminTab } from '@/components/admin/admin-sidebar';
+import { AdminDashboardTab } from '@/components/admin/admin-dashboard-tab';
+import { AdminAffiliateTab } from '@/components/admin/admin-affiliate-tab';
+import { AdminCategoriesTab } from '@/components/admin/admin-categories-tab';
+import { AdminProvidersTab } from '@/components/admin/admin-providers-tab';
+import { AdminCustomersTab } from '@/components/admin/admin-customers-tab';
+import { AdminRefundsTab } from '@/components/admin/admin-refunds-tab';
+import { AdminFinanceSuite } from '@/components/admin/admin-finance-suite';
+import { AdminMarketingSuite } from '@/components/admin/admin-marketing-suite';
+import { AdminAnalyticsSuite } from '@/components/admin/admin-analytics-suite';
+import { AdminSystemSettingsSuite } from '@/components/admin/admin-system-settings-suite';
 import { ImageUploadDropzone, uploadFileToBlob } from '@/components/admin/image-upload-dropzone';
 import {
   Select,
@@ -67,8 +74,42 @@ interface VipServicesResponse {
   cacheAgeSeconds?: number;
   availableTypes: string[];
   availableBrands: string[];
-  data: (VipRawService & { isImported: boolean; importedProductId?: string })[];
+  data: (VipRawService & {
+    isImported: boolean;
+    isArchived?: boolean;
+    dbStatus?: 'active' | 'archived' | 'unimported';
+    importedProductId?: string;
+  })[];
 }
+
+const TAB_TITLES: Record<AdminTab, { category: string; title: string }> = {
+  dashboard: { category: 'Overview', title: 'Dashboard Eksekutif' },
+  products: { category: 'Katalog & Layanan', title: 'Manajemen Katalog & Produk' },
+  categories: { category: 'Katalog & Layanan', title: 'Kategori Layanan' },
+  'vip-explorer': { category: 'Katalog & Layanan', title: 'Jelajahi & Impor Layanan VIP Reseller' },
+  providers: { category: 'Katalog & Layanan', title: 'Koneksi Gateway & Supplier VIP' },
+  orders: { category: 'Transaksi', title: 'Pesanan & Transaksi Pelanggan' },
+  customers: { category: 'Transaksi', title: 'Database Pelanggan (CRM)' },
+  refunds: { category: 'Transaksi', title: 'Antrean Refund & Komplain' },
+  affiliate: { category: 'Marketing & Growth', title: 'Sistem Afiliasi & Tim Penjualan (Sales)' },
+  promos: { category: 'Marketing & Growth', title: 'Voucher & Promo Diskon' },
+  campaigns: { category: 'Marketing & Growth', title: 'Manajemen Campaign & Flash Sale' },
+  banners: { category: 'Marketing & Growth', title: 'Banner Hero & Konten Etalase' },
+  wallets: { category: 'Keuangan', title: 'Saldo & Wallet Pembayaran' },
+  revenue: { category: 'Keuangan', title: 'Laporan Pendapatan (Omzet Bruto)' },
+  expenses: { category: 'Keuangan', title: 'Pengeluaran & Biaya Modal (HPP)' },
+  profit: { category: 'Keuangan', title: 'Analisis Margin Keuntungan & Laba' },
+  'financial-transactions': { category: 'Keuangan', title: 'Jurnal Pembukuan & Riwayat Mutasi' },
+  'sales-summary': { category: 'Analytics & Laporan', title: 'Ringkasan & Grafik Penjualan' },
+  'product-performance': { category: 'Analytics & Laporan', title: 'Analisis Performa Produk Terlaris' },
+  'affiliate-performance': { category: 'Analytics & Laporan', title: 'Performa Konversi Afiliasi & Sales' },
+  'financial-reports': { category: 'Analytics & Laporan', title: 'Laporan Finansial & Rekapitulasi' },
+  'payment-settings': { category: 'Sistem & Konfigurasi', title: 'Metode Pembayaran & Gateway' },
+  logs: { category: 'Sistem & Konfigurasi', title: 'Log Aktivitas & Audit Gateway' },
+  notifications: { category: 'Sistem & Konfigurasi', title: 'Notifikasi WhatsApp & Email' },
+  admins: { category: 'Sistem & Konfigurasi', title: 'Kelola Staff & Administrator' },
+  'store-settings': { category: 'Sistem & Konfigurasi', title: 'Pengaturan Toko & Informasi CS' },
+};
 
 export default function AdminPage() {
   const router = useRouter();
@@ -121,7 +162,8 @@ export default function AdminPage() {
   };
 
   // Navigation tab
-  const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'logs' | 'payment-settings' | 'promos' | 'vip-explorer' | 'admins'>('products');
+  const [activeTab, setActiveTab] = useState<AdminTab>('products');
+  const [isSidebarMobileOpen, setIsSidebarMobileOpen] = useState(false);
 
   // Filter states for Managed Products
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'archived' | 'warning'>('all');
@@ -133,8 +175,17 @@ export default function AdminPage() {
 
   // Filter states for VIP Reseller Explorer
   const [vipSearch, setVipSearch] = useState('');
+  const [debouncedVipSearch, setDebouncedVipSearch] = useState('');
   const [vipType, setVipType] = useState('all');
   const [vipStatus, setVipStatus] = useState('all');
+
+  // Debounce search query to search across all 12,500+ services seamlessly on server
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedVipSearch(vipSearch.trim());
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [vipSearch]);
 
   // Modals
   const [notification, setNotification] = useState<string | null>(null);
@@ -192,15 +243,21 @@ export default function AdminPage() {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Fetch VIP Reseller Services Explorer once - cached in memory to prevent API spam
+  // Fetch VIP Reseller Services Explorer - server searches all 12,500+ cached services in memory
   const {
     data: vipData,
     isLoading: isLoadingVip,
     error: vipError,
   } = useQuery<VipServicesResponse>({
-    queryKey: ['admin-vip-services'],
+    queryKey: ['admin-vip-services', debouncedVipSearch, vipType, vipStatus],
     queryFn: async () => {
-      const res = await fetch('/api/v1/admin/vip-services?limit=2500');
+      const params = new URLSearchParams();
+      if (debouncedVipSearch) params.set('search', debouncedVipSearch);
+      if (vipType && vipType !== 'all') params.set('type', vipType);
+      if (vipStatus && vipStatus !== 'all') params.set('status', vipStatus);
+      params.set('limit', '2500');
+
+      const res = await fetch(`/api/v1/admin/vip-services?${params.toString()}`);
       if (res.status === 401) {
         router.replace('/admin/login');
         throw new Error('Unauthorized');
@@ -212,8 +269,8 @@ export default function AdminPage() {
       return data;
     },
     enabled: activeTab === 'vip-explorer',
-    staleTime: 30 * 60 * 1000,
-    gcTime: 60 * 60 * 1000,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
   });
 
   // Toggle Product Status (Active vs Archived)
@@ -472,6 +529,30 @@ export default function AdminPage() {
     setIsCreateModalOpen(true);
   };
 
+  // Duplicate Existing Product
+  const handleDuplicateProduct = (p: ManagedProductItem) => {
+    setEditingProduct(null);
+    setFormName(`${p.name} (Salinan)`);
+    setFormCategory(p.category.name);
+    setFormPrice(p.price);
+    setFormProviderPrice(p.providerPrice || 0);
+    setFormStock(p.stock !== undefined ? p.stock : 100);
+    setFormStatus('archived');
+    setFormDescription(p.description);
+    setFormFeatures(p.features.join('\n'));
+    setFormImageUrl(p.imageUrl);
+    setStagedFile(null);
+    setFormPopular(false);
+    setFormGuaranteeTitle(p.guaranteeTitle || 'Garansi Penuh');
+    setFormGuaranteeDesc(p.guaranteeDesc || 'Jaminan ganti akun 100%');
+    setFormProcessTitle(p.processTitle || 'Proses Instan');
+    setFormProcessDesc(p.processDesc || '1 - 15 menit selesai');
+    setFormPrivacyTitle(p.privacyTitle || 'Akun Private');
+    setFormPrivacyDesc(p.privacyDesc || 'Ruang kerja aman & personal');
+    setIsCreateModalOpen(true);
+    showNotification(`Menduplikasi produk "${p.name}". Silakan sesuaikan dan simpan.`);
+  };
+
   // Open Import Modal from VIP Service
   const handleOpenImport = (service: VipRawService) => {
     setImportingService(service);
@@ -490,7 +571,7 @@ export default function AdminPage() {
     setFormProviderPrice(base);
     setFormStock(service.status === 'available' ? 100 : 0);
 
-    // AI Tools vs Apps & Streaming mapping
+    // Category mapping: AI Tools, Apps & Streaming, Games, etc.
     const b = (service.brand || '').toUpperCase();
     const n = (service.name || '').toUpperCase();
     const isAi =
@@ -501,9 +582,27 @@ export default function AdminPage() {
       n.includes('GEMINI') ||
       n.includes('CHATGPT') ||
       n.includes('OPENAI');
-    setFormCategory(isAi ? 'AI Tools' : service.type ? service.type : 'Apps & Streaming');
+    const isStreaming =
+      service.type === 'streaming-tv' ||
+      b.includes('NETFLIX') ||
+      b.includes('YOUTUBE') ||
+      b.includes('SPOTIFY') ||
+      b.includes('CANVA') ||
+      b.includes('BSTATION') ||
+      b.includes('IQIYI') ||
+      b.includes('WETV') ||
+      b.includes('DISNEY') ||
+      b.includes('VIDIO') ||
+      n.includes('NETFLIX') ||
+      n.includes('YOUTUBE') ||
+      n.includes('SPOTIFY') ||
+      n.includes('CANVA');
 
-    setFormStatus('archived'); // Default to archived so admin reviews before publishing
+    setFormCategory(
+      isAi ? 'AI Tools' : isStreaming ? 'Apps & Streaming' : service.type === 'game' ? 'Voucher Game' : 'Apps & Streaming'
+    );
+
+    setFormStatus('active'); // Default to active so imported product goes live immediately
     setFormDescription(service.note && service.note !== '-' ? `${service.name}. ${service.note}` : service.name);
     setFormImageUrl('');
     setStagedFile(null);
@@ -614,13 +713,21 @@ export default function AdminPage() {
         (item) =>
           item.name.toLowerCase().includes(q) ||
           item.code.toLowerCase().includes(q) ||
-          (item.brand && item.brand.toLowerCase().includes(q))
+          (item.brand && item.brand.toLowerCase().includes(q)) ||
+          (item.category && item.category.toLowerCase().includes(q)) ||
+          (item.game && item.game.toLowerCase().includes(q))
       );
     }
     return items;
   }, [allVipServices, vipType, vipStatus, vipSearch]);
 
   const [vipVisibleCount, setVipVisibleCount] = useState(24);
+
+  // Reset pagination when search or filters change
+  useEffect(() => {
+    setVipVisibleCount(24);
+  }, [vipSearch, vipType, vipStatus]);
+
   const vipServices = useMemo(() => {
     return filteredVipServices.slice(0, vipVisibleCount);
   }, [filteredVipServices, vipVisibleCount]);
@@ -641,257 +748,156 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col font-sans selection:bg-primary/20 selection:text-primary">
-      {/* Dedicated Admin Navigation Header */}
-      <header className="w-full bg-surface/95 backdrop-blur-md border-b border-border px-4 sm:px-8 py-3 flex items-center justify-between sticky top-0 z-50 shadow-subtle">
-        <div className="flex items-center gap-4">
-          <Link href="/admin" className="flex items-center gap-2.5 group">
-            <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold text-sm tracking-wider">
-              AS
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="font-extrabold text-sm sm:text-base tracking-tight text-foreground">
-                Asterra<span className="text-primary">Store</span>
-              </span>
-              <span className="px-2 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-mono font-bold uppercase tracking-wider">
-                Admin Panel
-              </span>
-            </div>
-          </Link>
-          <div className="hidden md:flex items-center gap-2 pl-4 border-l border-border text-xs text-foreground-muted">
-            <span className="w-2 h-2 rounded-full bg-status-success animate-pulse" />
-            <span>Terhubung sebagai:</span>
-            <span className="text-foreground font-semibold font-mono text-[11px]">
-              {adminUser?.email || 'admin@asterra.store'}
-            </span>
-          </div>
-        </div>
+    <div className="min-h-screen bg-background text-foreground flex font-sans selection:bg-primary/20 selection:text-primary">
+      {/* Sidebar with Accordion / Dropdown Menus */}
+      <AdminSidebar
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        metrics={metrics}
+        adminUser={adminUser}
+        onLogout={handleLogout}
+        isOpenMobile={isSidebarMobileOpen}
+        onCloseMobile={() => setIsSidebarMobileOpen(false)}
+      />
 
-        <div className="flex items-center gap-3">
-          <Link
-            href="/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-foreground-muted hover:text-foreground hover:bg-surface-raised px-3 py-1.5 rounded-lg border border-border transition-colors text-xs font-medium flex items-center gap-1.5"
-            title="Buka Toko Publik di tab baru"
-          >
-            <span>Toko Publik</span>
-            <span className="text-[10px]">↗</span>
-          </Link>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleLogout}
-            className="h-8 text-xs text-status-error hover:bg-status-error/10 hover:text-status-error gap-1.5 px-3 font-medium border border-status-error/20"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            <span>Keluar Admin</span>
-          </Button>
-        </div>
-      </header>
-
-      {/* Floating Notification */}
-      {notification && (
-        <div className="fixed bottom-6 right-6 z-50 bg-surface-raised border border-primary/40 text-foreground px-4 py-3 rounded-lg shadow-xl flex items-center gap-3 animate-in slide-in-from-bottom-5">
-          <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-primary">
-            <Check className="w-3.5 h-3.5" />
-          </div>
-          <p className="text-xs font-medium">{notification}</p>
-        </div>
-      )}
-
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 py-8 w-full">
-        {/* Breadcrumb & Title */}
-        <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 text-xs text-foreground-muted mb-1">
-              <Link href="/" className="hover:text-foreground">Beranda</Link>
-              <span>/</span>
-              <span className="text-foreground font-medium">Panel Admin</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-              Manajemen Katalog & Produk
-            </h1>
-            <p className="text-xs sm:text-sm text-foreground-muted mt-1">
-              Atur produk aktif vs arsip, tentukan harga jual retail, dan pantau status ketersediaan live dari VIP Reseller.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2.5">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => syncVipMutation.mutate()}
-              disabled={syncVipMutation.isPending}
-              className="text-xs gap-1.5 border-primary/40 text-primary hover:bg-primary/10"
-              title="Ambil dan sinkronkan semua layanan dari gateway VIP Reseller"
+      {/* Main Content Pane */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Sticky Top Header Bar */}
+        <header className="sticky top-0 z-40 bg-surface/90 backdrop-blur-md border-b border-border px-4 sm:px-8 py-3 flex items-center justify-between shadow-xs">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setIsSidebarMobileOpen(true)}
+              className="lg:hidden p-2 rounded-lg text-foreground-muted hover:text-foreground hover:bg-surface-raised border border-border transition-colors"
+              aria-label="Buka Menu Sidebar"
             >
-              <DownloadCloud className={`w-3.5 h-3.5 ${syncVipMutation.isPending ? 'animate-bounce' : ''}`} />
-              <span>{syncVipMutation.isPending ? 'Menyinkronkan...' : 'Sinkronkan VIP Reseller'}</span>
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => refreshStockMutation.mutate()}
-              disabled={refreshStockMutation.isPending}
-              className="text-xs gap-1.5 border-border"
-              title="Periksa ketersediaan stok live dari VIP Reseller"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 text-primary ${refreshStockMutation.isPending ? 'animate-spin' : ''}`} />
-              <span>{refreshStockMutation.isPending ? 'Memeriksa...' : 'Cek Stok Supplier'}</span>
-            </Button>
-            <Button size="sm" onClick={handleOpenCreate} className="text-xs gap-1.5">
-              <Plus className="w-3.5 h-3.5" />
-              <span>Tambah Produk Baru</span>
-            </Button>
-          </div>
-        </div>
-
-        {/* Top Summary Metrics Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <div className="bg-surface border border-border rounded-xl p-4 sm:p-5">
-            <div className="flex items-center justify-between text-xs text-foreground-muted mb-2">
-              <span>Aktif di Katalog Toko</span>
-              <Eye className="w-4 h-4 text-status-success" />
+              <Menu className="w-5 h-5" />
+            </button>
+            <div className="flex flex-col">
+              <div className="flex items-center gap-1.5 text-[11px] text-foreground-muted">
+                <span className="font-medium text-foreground">Admin Console</span>
+                <span>/</span>
+                <span className="capitalize text-primary font-semibold">
+                  {TAB_TITLES[activeTab]?.category || 'Admin'}
+                </span>
+              </div>
+              <h1 className="text-base sm:text-lg font-bold text-foreground tracking-tight leading-tight">
+                {TAB_TITLES[activeTab]?.title || 'Panel Admin'}
+              </h1>
             </div>
-            <div className="text-2xl font-bold text-foreground">
-              {metrics?.totalActive ?? 0}
-            </div>
-            <span className="text-[11px] text-foreground-muted">Muncul di halaman pelanggan</span>
           </div>
 
-          <div className="bg-surface border border-border rounded-xl p-4 sm:p-5">
-            <div className="flex items-center justify-between text-xs text-foreground-muted mb-2">
-              <span>Diarsipkan (Draft / Hidden)</span>
-              <EyeOff className="w-4 h-4 text-foreground-muted" />
-            </div>
-            <div className="text-2xl font-bold text-foreground">
-              {metrics?.totalArchived ?? 0}
-            </div>
-            <span className="text-[11px] text-foreground-muted">Disembunyikan dari katalog</span>
+          {/* Quick Action Buttons for Product / VIP Management */}
+          <div className="flex items-center gap-2">
+            {(activeTab === 'products' || activeTab === 'vip-explorer' || activeTab === 'dashboard') && (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => syncVipMutation.mutate()}
+                  disabled={syncVipMutation.isPending}
+                  className="hidden sm:inline-flex text-xs gap-1.5 border-primary/40 text-primary hover:bg-primary/10"
+                  title="Ambil dan sinkronkan semua layanan dari gateway VIP Reseller"
+                >
+                  <DownloadCloud className={`w-3.5 h-3.5 ${syncVipMutation.isPending ? 'animate-bounce' : ''}`} />
+                  <span>{syncVipMutation.isPending ? 'Menyinkronkan...' : 'Sinkronkan VIP'}</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => refreshStockMutation.mutate()}
+                  disabled={refreshStockMutation.isPending}
+                  className="hidden md:inline-flex text-xs gap-1.5 border-border"
+                  title="Periksa ketersediaan stok live dari VIP Reseller"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 text-primary ${refreshStockMutation.isPending ? 'animate-spin' : ''}`} />
+                  <span>{refreshStockMutation.isPending ? 'Memeriksa...' : 'Cek Stok'}</span>
+                </Button>
+                <Button size="sm" onClick={handleOpenCreate} className="text-xs gap-1.5 shadow-xs">
+                  <Plus className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Tambah Produk</span>
+                  <span className="sm:hidden">Tambah</span>
+                </Button>
+              </>
+            )}
           </div>
+        </header>
 
-          <div className="bg-surface border border-border rounded-xl p-4 sm:p-5">
-            <div className="flex items-center justify-between text-xs text-foreground-muted mb-2">
-              <span>Perlu Perhatian (Stok VIP Kosong)</span>
-              <AlertTriangle className="w-4 h-4 text-status-warning" />
+        {/* Floating Notification */}
+        {notification && (
+          <div className="fixed bottom-6 right-6 z-50 bg-surface-raised border border-primary/40 text-foreground px-4 py-3 rounded-lg shadow-xl flex items-center gap-3 animate-in slide-in-from-bottom-5">
+            <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-primary">
+              <Check className="w-3.5 h-3.5" />
             </div>
-            <div className="text-2xl font-bold text-status-warning">
-              {metrics?.totalWarnings ?? 0}
-            </div>
-            <span className="text-[11px] text-foreground-muted">Produk aktif tapi supplier kosong</span>
+            <p className="text-xs font-medium">{notification}</p>
           </div>
+        )}
 
-          <div className="bg-surface border border-border rounded-xl p-4 sm:p-5">
-            <div className="flex items-center justify-between text-xs text-foreground-muted mb-2">
-              <span>Saldo Akun VIP Reseller</span>
-              <Wallet className="w-4 h-4 text-primary" />
+        <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-8 py-6 w-full">
+          {/* Top Summary Metrics Cards - show on products & vip-explorer */}
+          {(activeTab === 'products' || activeTab === 'vip-explorer') && (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              <div className="bg-surface border border-border rounded-xl p-4 sm:p-5 shadow-xs">
+                <div className="flex items-center justify-between text-xs text-foreground-muted mb-2">
+                  <span>Aktif di Katalog Toko</span>
+                  <Eye className="w-4 h-4 text-status-success" />
+                </div>
+                <div className="text-2xl font-bold text-foreground">
+                  {metrics?.totalActive ?? 0}
+                </div>
+                <span className="text-[11px] text-foreground-muted">Muncul di halaman pelanggan</span>
+              </div>
+
+              <div className="bg-surface border border-border rounded-xl p-4 sm:p-5 shadow-xs">
+                <div className="flex items-center justify-between text-xs text-foreground-muted mb-2">
+                  <span>Diarsipkan (Draft / Hidden)</span>
+                  <EyeOff className="w-4 h-4 text-foreground-muted" />
+                </div>
+                <div className="text-2xl font-bold text-foreground">
+                  {metrics?.totalArchived ?? 0}
+                </div>
+                <span className="text-[11px] text-foreground-muted">Disembunyikan dari katalog</span>
+              </div>
+
+              <div className="bg-surface border border-border rounded-xl p-4 sm:p-5 shadow-xs">
+                <div className="flex items-center justify-between text-xs text-foreground-muted mb-2">
+                  <span>Perlu Perhatian (Stok VIP Kosong)</span>
+                  <AlertTriangle className="w-4 h-4 text-status-warning" />
+                </div>
+                <div className="text-2xl font-bold text-status-warning">
+                  {metrics?.totalWarnings ?? 0}
+                </div>
+                <span className="text-[11px] text-foreground-muted">Produk aktif tapi supplier kosong</span>
+              </div>
+
+              <div className="bg-surface border border-border rounded-xl p-4 sm:p-5 shadow-xs">
+                <div className="flex items-center justify-between text-xs text-foreground-muted mb-2">
+                  <span>Saldo Akun VIP Reseller</span>
+                  <Wallet className="w-4 h-4 text-primary" />
+                </div>
+                <div className="text-2xl font-bold text-primary">
+                  {metrics?.vipBalance !== null && metrics?.vipBalance !== undefined
+                    ? `Rp ${metrics.vipBalance.toLocaleString('id-ID')}`
+                    : 'Terhubung'}
+                </div>
+                <span className="text-[11px] text-foreground-muted">Status API: Live Whitelisted</span>
+              </div>
             </div>
-            <div className="text-2xl font-bold text-primary">
-              {metrics?.vipBalance !== null && metrics?.vipBalance !== undefined
-                ? `Rp ${metrics.vipBalance.toLocaleString('id-ID')}`
-                : 'Terhubung'}
-            </div>
-            <span className="text-[11px] text-foreground-muted">Status API: Live Whitelisted</span>
-          </div>
-        </div>
+          )}
 
-        {/* Tab Navigation Controls */}
-        <div className="flex items-center gap-2 border-b border-border pb-3 mb-6 text-xs font-medium overflow-x-auto">
-          <button
-            type="button"
-            onClick={() => setActiveTab('products')}
-            className={`px-4 py-2 rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap ${
-              activeTab === 'products'
-                ? 'bg-primary text-white shadow-sm'
-                : 'bg-surface text-foreground-muted hover:text-foreground hover:bg-surface-hover border border-border'
-            }`}
-          >
-            <Package className="w-4 h-4" />
-            <span>Katalog Produk ({metrics?.total ?? 0})</span>
-          </button>
+          {/* TAB 0: DASHBOARD OVERVIEW */}
+          {activeTab === 'dashboard' && (
+            <AdminDashboardTab
+              metrics={metrics}
+              onNavigateTab={setActiveTab}
+              onOpenCreateProduct={handleOpenCreate}
+              onSyncVip={() => syncVipMutation.mutate()}
+              isSyncingVip={syncVipMutation.isPending}
+            />
+          )}
 
-          <button
-            type="button"
-            onClick={() => setActiveTab('orders')}
-            className={`px-4 py-2 rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap ${
-              activeTab === 'orders'
-                ? 'bg-primary text-white shadow-sm'
-                : 'bg-surface text-foreground-muted hover:text-foreground hover:bg-surface-hover border border-border'
-            }`}
-          >
-            <ShoppingBag className="w-4 h-4" />
-            <span>Pesanan Pelanggan</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('logs')}
-            className={`px-4 py-2 rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap ${
-              activeTab === 'logs'
-                ? 'bg-primary text-white shadow-sm'
-                : 'bg-surface text-foreground-muted hover:text-foreground hover:bg-surface-hover border border-border'
-            }`}
-          >
-            <Activity className="w-4 h-4" />
-            <span>Log Aktivitas & Gateway</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('payment-settings')}
-            className={`px-4 py-2 rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap ${
-              activeTab === 'payment-settings'
-                ? 'bg-primary text-white shadow-sm'
-                : 'bg-surface text-foreground-muted hover:text-foreground hover:bg-surface-hover border border-border'
-            }`}
-          >
-            <CreditCard className="w-4 h-4" />
-            <span>Pengaturan Pembayaran</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('promos')}
-            className={`px-4 py-2 rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap ${
-              activeTab === 'promos'
-                ? 'bg-primary text-white shadow-sm'
-                : 'bg-surface text-foreground-muted hover:text-foreground hover:bg-surface-hover border border-border'
-            }`}
-          >
-            <Tag className="w-4 h-4" />
-            <span>Voucher & Promo</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('vip-explorer')}
-            className={`px-4 py-2 rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap ${
-              activeTab === 'vip-explorer'
-                ? 'bg-primary text-white shadow-sm'
-                : 'bg-surface text-foreground-muted hover:text-foreground hover:bg-surface-hover border border-border'
-            }`}
-          >
-            <DownloadCloud className="w-4 h-4" />
-            <span>Jelajahi & Impor VIP Reseller</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('admins')}
-            className={`px-4 py-2 rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap ${
-              activeTab === 'admins'
-                ? 'bg-primary text-white shadow-sm'
-                : 'bg-surface text-foreground-muted hover:text-foreground hover:bg-surface-hover border border-border'
-            }`}
-          >
-            <ShieldCheck className="w-4 h-4" />
-            <span>Kelola Admin</span>
-          </button>
-        </div>
-
-        {/* TAB 1: MANAGED PRODUCTS */}
-        {activeTab === 'products' && (
+          {/* TAB 1: MANAGED PRODUCTS */}
+          {activeTab === 'products' && (
           <div className="space-y-6">
             {/* Filter & Search Bar */}
             <div className="bg-surface border border-border rounded-xl p-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
@@ -1269,6 +1275,16 @@ export default function AdminPage() {
                                 <Button
                                   variant="outline"
                                   size="sm"
+                                  onClick={() => handleDuplicateProduct(p)}
+                                  className="h-8 px-2.5 text-xs border-border hover:bg-surface-raised"
+                                  title="Duplikat produk ini"
+                                >
+                                  <Copy className="w-3.5 h-3.5 text-foreground-muted" />
+                                  <span className="hidden sm:inline ml-1">Duplikat</span>
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
                                   onClick={() => {
                                     setDeletingProductId(p.id);
                                     setDeletingProductName(p.name);
@@ -1491,18 +1507,31 @@ export default function AdminPage() {
                         </div>
 
                         {service.isImported ? (
-                          <Badge variant="secondary" className="gap-1 text-xs">
-                            <Check className="w-3 h-3 text-status-success" />
-                            <span>Sudah Diimpor</span>
-                          </Badge>
+                          <div className="flex items-center gap-1.5">
+                            <Badge variant="secondary" className="gap-1 text-xs bg-status-success/15 text-status-success border-status-success/30">
+                              <Check className="w-3 h-3 text-status-success" />
+                              <span>Aktif di Toko</span>
+                            </Badge>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleOpenImport(service)}
+                              className="text-xs h-7 px-2 text-foreground-muted hover:text-foreground"
+                              title="Konfigurasi ulang atau perbarui harga"
+                            >
+                              <Edit className="w-3 h-3" />
+                            </Button>
+                          </div>
                         ) : (
                           <Button
+                            type="button"
                             size="sm"
                             onClick={() => handleOpenImport(service)}
                             className="text-xs gap-1.5"
                           >
                             <DownloadCloud className="w-3.5 h-3.5" />
-                            <span>Impor Produk</span>
+                            <span>{service.isArchived ? 'Impor / Aktifkan' : 'Impor Produk'}</span>
                           </Button>
                         )}
                       </div>
@@ -1550,6 +1579,81 @@ export default function AdminPage() {
         {activeTab === 'admins' && (
           <AdminUsersTab
             currentAdminEmail={adminUser?.email}
+            onNotify={showNotification}
+          />
+        )}
+
+        {/* TAB 8: AFFILIATE & SALES SYSTEM */}
+        {activeTab === 'affiliate' && (
+          <AdminAffiliateTab onNotify={showNotification} />
+        )}
+
+        {/* TAB 9: KATEGORI */}
+        {activeTab === 'categories' && (
+          <AdminCategoriesTab
+            onNotify={showNotification}
+            onFilterCategoryInProducts={(cat) => {
+              setCategoryFilter(cat);
+              setActiveTab('products');
+            }}
+          />
+        )}
+
+        {/* TAB 10: PROVIDER & SUPPLIER */}
+        {activeTab === 'providers' && (
+          <AdminProvidersTab
+            metrics={metrics}
+            onNotify={showNotification}
+            onSyncVip={() => syncVipMutation.mutate()}
+          />
+        )}
+
+        {/* TAB 11: PELANGGAN (CRM 360) */}
+        {activeTab === 'customers' && (
+          <AdminCustomersTab onNotify={showNotification} />
+        )}
+
+        {/* TAB 12: REFUND & KOMPLAIN */}
+        {activeTab === 'refunds' && (
+          <AdminRefundsTab onNotify={showNotification} />
+        )}
+
+        {/* TAB 13: MARKETING & GROWTH (Campaigns & Banners) */}
+        {(activeTab === 'campaigns' || activeTab === 'banners') && (
+          <AdminMarketingSuite
+            activeTab={activeTab}
+            onNotify={showNotification}
+          />
+        )}
+
+        {/* TAB 14: KEUANGAN (Wallets, Revenue, Expenses, Profit, Transactions) */}
+        {(activeTab === 'wallets' ||
+          activeTab === 'revenue' ||
+          activeTab === 'expenses' ||
+          activeTab === 'profit' ||
+          activeTab === 'financial-transactions') && (
+          <AdminFinanceSuite
+            activeTab={activeTab}
+            metrics={metrics}
+            onNotify={showNotification}
+          />
+        )}
+
+        {/* TAB 15: ANALYTICS & LAPORAN */}
+        {(activeTab === 'sales-summary' ||
+          activeTab === 'product-performance' ||
+          activeTab === 'affiliate-performance' ||
+          activeTab === 'financial-reports') && (
+          <AdminAnalyticsSuite
+            activeTab={activeTab}
+            onNotify={showNotification}
+          />
+        )}
+
+        {/* TAB 16: SISTEM & KONFIGURASI (Notifications & Store Settings) */}
+        {(activeTab === 'notifications' || activeTab === 'store-settings') && (
+          <AdminSystemSettingsSuite
+            activeTab={activeTab}
             onNotify={showNotification}
           />
         )}
@@ -2287,9 +2391,10 @@ export default function AdminPage() {
       )}
 
       {/* Admin Dedicated Footer */}
-      <footer className="mt-auto border-t border-border py-4 px-4 sm:px-8 bg-surface-raised text-center text-xs text-foreground-muted">
+      <footer className="mt-auto border-t border-border py-4 px-4 sm:px-8 bg-surface-raised/40 text-center text-xs text-foreground-muted">
         <p>© 2026 Asterra Store — Internal Management Console</p>
       </footer>
     </div>
+  </div>
   );
 }

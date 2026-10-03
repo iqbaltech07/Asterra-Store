@@ -114,6 +114,11 @@ export function Footer({ onNotify }: FooterProps) {
                   Profil Pelanggan Saya
                 </Link>
               </li>
+              <li>
+                <Link href="/daftar-sales" className="text-primary hover:underline font-medium transition-colors">
+                  ★ Daftar Jadi Sales (Komisi 15%)
+                </Link>
+              </li>
             </ul>
           </div>
 

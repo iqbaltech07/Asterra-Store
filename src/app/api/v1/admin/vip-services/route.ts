@@ -61,30 +61,44 @@ export async function GET(req: NextRequest) {
         (item) =>
           item.name.toLowerCase().includes(search) ||
           item.code.toLowerCase().includes(search) ||
-          (item.brand && item.brand.toLowerCase().includes(search))
+          (item.brand && item.brand.toLowerCase().includes(search)) ||
+          (item.category && item.category.toLowerCase().includes(search)) ||
+          (item.game && item.game.toLowerCase().includes(search))
       );
     }
 
     // Check which items are already imported in Asterra DB (prisma.product)
-    let importedCodes = new Set<string>();
+    // ONLY products with status 'active' are flagged as isImported: true.
+    // Archived products are flagged as isArchived: true, allowing admin to import/activate them.
+    let importedActiveCodes = new Set<string>();
+    const importedArchivedCodes = new Set<string>();
     const importedIdMap = new Map<string, string>();
 
     try {
       const dbProducts = await prisma.product.findMany({
-        select: { id: true, providerCode: true },
+        select: { id: true, providerCode: true, status: true },
       });
       for (const p of dbProducts) {
+        const idUpper = p.id.toUpperCase();
         if (p.providerCode) {
           const codeUpper = p.providerCode.toUpperCase();
-          importedCodes.add(codeUpper);
+          if (p.status === 'active') {
+            importedActiveCodes.add(codeUpper);
+          } else {
+            importedArchivedCodes.add(codeUpper);
+          }
           importedIdMap.set(codeUpper, p.id);
         }
-        importedCodes.add(p.id.toUpperCase());
+        if (p.status === 'active') {
+          importedActiveCodes.add(idUpper);
+        } else {
+          importedArchivedCodes.add(idUpper);
+        }
       }
     } catch {
       // Fallback to in-memory store if DB error
-      const allStoreProducts = AdminCatalogStore.getAllProducts();
-      importedCodes = new Set(
+      const allStoreProducts = AdminCatalogStore.getAllProducts({ status: 'active' });
+      importedActiveCodes = new Set(
         allStoreProducts
           .filter((p) => p.providerCode)
           .map((p) => p.providerCode?.toUpperCase() as string)
@@ -94,10 +108,20 @@ export async function GET(req: NextRequest) {
     const enrichedItems = items.slice(0, limit).map((s) => {
       const codeUpper = s.code.toUpperCase();
       const generatedId = `vip-${s.code.toLowerCase().replace(/[^a-z0-9_-]/g, '-')}`.toUpperCase();
-      const isImported = importedCodes.has(codeUpper) || importedCodes.has(generatedId);
+      const isImported = importedActiveCodes.has(codeUpper) || importedActiveCodes.has(generatedId);
+      const isArchived =
+        !isImported &&
+        (importedArchivedCodes.has(codeUpper) || importedArchivedCodes.has(generatedId));
+
       return {
         ...s,
         isImported,
+        isArchived,
+        dbStatus: isImported
+          ? ('active' as const)
+          : isArchived
+          ? ('archived' as const)
+          : ('unimported' as const),
         importedProductId: importedIdMap.get(codeUpper) || undefined,
       };
     });

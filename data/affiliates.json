@@ -1,0 +1,37 @@
+[
+  {
+    "id": "aff-muslbxi2",
+    "name": "Iqbal",
+    "email": "iqbal07@gmail.com",
+    "whatsapp": "089676636637",
+    "code": "AST-IQBAL-X6ZM",
+    "tier": "Standard (10%)",
+    "rate": 10,
+    "totalClicks": 1,
+    "totalOrders": 0,
+    "totalRevenue": 0,
+    "unpaidCommission": 0,
+    "paidCommission": 0,
+    "status": "active",
+    "joinedAt": "3 Okt 2026",
+    "createdAt": "2026-10-03T16:12:41.649Z"
+  },
+  {
+    "id": "aff-muselwis",
+    "name": "iqbal",
+    "email": "iqbal@gmail.com",
+    "whatsapp": "089751266121",
+    "code": "AST-IQBAL-WLOZ",
+    "tier": "Standard (10%)",
+    "rate": 10,
+    "totalClicks": 1,
+    "totalOrders": 0,
+    "totalRevenue": 0,
+    "unpaidCommission": 0,
+    "paidCommission": 0,
+    "status": "active",
+    "joinedAt": "3 Okt 2026",
+    "createdAt": "2026-10-03T13:04:29.604Z",
+    "creditedOrderIds": []
+  }
+]
