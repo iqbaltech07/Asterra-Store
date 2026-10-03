@@ -173,6 +173,7 @@ interface ApplicationGroupItem {
   slug: string;
   category: string;
   categoryTag: 'ai' | 'design' | 'video' | 'streaming' | 'other';
+  fallbackCount: number;
   items: ProductItem[];
 }
 
@@ -187,7 +188,8 @@ function ApplicationCard({
     <Link
       href={`/products?search=${encodeURIComponent(app.name)}`}
       tabIndex={isDuplicate ? -1 : undefined}
-      className="group bg-white border border-[rgba(18,26,42,0.08)] hover:border-[#C96F55]/60 rounded-xl sm:rounded-2xl p-3.5 sm:p-4 shadow-2xs hover:shadow-xs transition-all duration-200 flex flex-col justify-between shrink-0 w-[260px] sm:w-[320px] h-[126px] sm:h-[136px] select-none"
+      aria-hidden={isDuplicate ? true : undefined}
+      className="group bg-white border border-[rgba(18,26,42,0.08)] hover:border-[#C96F55]/60 rounded-xl sm:rounded-2xl p-3.5 sm:p-4 shadow-2xs hover:shadow-xs transition-all duration-200 flex flex-col justify-between shrink-0 flex-none w-[240px] sm:w-[270px] lg:w-[292px] h-[150px] sm:h-[156px] mr-3 sm:mr-4 select-none"
     >
       <div>
         {/* App Header: Brand Badge */}
@@ -207,9 +209,9 @@ function ApplicationCard({
       </div>
 
       {/* Action Link with Arrow */}
-      <div className="pt-2 sm:pt-2.5 mt-2.5 sm:mt-3 border-t border-[rgba(18,26,42,0.06)] flex items-center justify-between text-[10px] sm:text-xs font-semibold text-[#121A2A]/75 group-hover:text-[#C96F55] transition-colors">
+      <div className="pt-2 sm:pt-2.5 mt-2 sm:mt-2.5 border-t border-[rgba(18,26,42,0.06)] flex items-center justify-between text-[10px] sm:text-xs font-semibold text-[#121A2A]/75 group-hover:text-[#C96F55] transition-colors">
         <span className="font-medium text-[#121A2A]/50">
-          {app.items.length} Produk
+          {app.items.length || app.fallbackCount} Produk
         </span>
         <span className="inline-flex items-center gap-1">
           <span className="hidden xs:inline">Lihat Produk</span>
@@ -251,72 +253,84 @@ export default function HomePage() {
         match: (t: string) => t.includes('gemini') || t.includes('google ai'),
         cat: 'AI Assistant & Cloud',
         tag: 'ai' as const,
+        fallbackCount: 11,
       },
       {
         name: 'Canva',
         match: (t: string) => t.includes('canva'),
         cat: 'Design & Kreatif',
         tag: 'design' as const,
+        fallbackCount: 13,
       },
       {
         name: 'CapCut',
         match: (t: string) => t.includes('capcut'),
         cat: 'Video Editing & Content',
         tag: 'video' as const,
+        fallbackCount: 11,
       },
       {
         name: 'ChatGPT',
         match: (t: string) => t.includes('chatgpt') || t.includes('chat gpt') || t.includes('plus plan'),
         cat: 'AI Assistant & Writing',
         tag: 'ai' as const,
+        fallbackCount: 20,
       },
       {
         name: 'Alight Motion',
         match: (t: string) => t.includes('alightmotion') || t.includes('alight motion'),
         cat: 'Motion Graphic & VFX',
         tag: 'video' as const,
+        fallbackCount: 1,
       },
       {
         name: 'YouTube',
         match: (t: string) => t.includes('youtube'),
         cat: 'Streaming & Video',
         tag: 'streaming' as const,
+        fallbackCount: 33,
       },
       {
         name: 'Netflix',
         match: (t: string) => t.includes('netflix'),
         cat: 'Movies & Series',
         tag: 'streaming' as const,
+        fallbackCount: 1,
       },
       {
         name: 'Vidio',
         match: (t: string) => t.includes('vidio'),
         cat: 'Sports & TV Streaming',
         tag: 'streaming' as const,
+        fallbackCount: 37,
       },
       {
         name: 'Bstation',
         match: (t: string) => t.includes('bstation') || t.includes('bilibili'),
         cat: 'Anime & Creator Community',
         tag: 'streaming' as const,
+        fallbackCount: 6,
       },
       {
         name: 'iQIYI',
         match: (t: string) => t.includes('iqiyi'),
         cat: 'Drama & Anime Streaming',
         tag: 'streaming' as const,
+        fallbackCount: 10,
       },
       {
         name: 'WeTV',
         match: (t: string) => t.includes('wetv'),
         cat: 'Asian Drama & Anime',
         tag: 'streaming' as const,
+        fallbackCount: 6,
       },
       {
         name: 'Viu',
         match: (t: string) => t.includes('viu'),
         cat: 'Asian Drama & Variety',
         tag: 'streaming' as const,
+        fallbackCount: 16,
       },
     ];
 
@@ -333,6 +347,7 @@ export default function HomePage() {
         slug: target.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
         category: target.cat,
         categoryTag: target.tag,
+        fallbackCount: target.fallbackCount,
         items,
       };
     });
@@ -521,48 +536,34 @@ export default function HomePage() {
             </Link>
           </div>
 
-          {/* Infinite Horizontal Marquee: Strictly 1 Row, Continuous GPU Looping */}
-          {isLoadingProducts ? (
-            <div className="marquee-wrapper relative w-full overflow-hidden py-1">
-              <div className="flex items-center gap-3 sm:gap-4 w-max">
-                {[1, 2, 3, 4, 5, 6].map((i) => (
-                  <div
-                    key={i}
-                    className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-3.5 sm:p-4 w-[260px] sm:w-[320px] h-[126px] sm:h-[136px] animate-pulse flex flex-col justify-between shrink-0"
-                  >
-                    <div className="space-y-2">
-                      <div className="w-9 h-9 sm:w-10 sm:h-10 bg-[rgba(18,26,42,0.08)] rounded-xl" />
-                      <div className="w-24 h-3.5 bg-[rgba(18,26,42,0.08)] rounded" />
-                    </div>
-                    <div className="w-16 h-3 bg-[rgba(18,26,42,0.06)] rounded" />
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="marquee-wrapper relative w-full overflow-hidden py-1">
-              {/* Subtle edge fades (clean, no large AI masks) */}
-              <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-4 sm:w-8 z-10 bg-gradient-to-r from-white to-transparent" />
-              <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-4 sm:w-8 z-10 bg-gradient-to-l from-white to-transparent" />
+          {/* Carousel Viewport: Single Row, No Scrollbar, Infinite Auto Track */}
+          <div className="carousel-viewport relative w-full overflow-hidden py-1">
+            {/* Subtle edge fades (clean, no large AI masks) */}
+            <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-4 sm:w-8 z-10 bg-gradient-to-r from-white to-transparent" />
+            <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-4 sm:w-8 z-10 bg-gradient-to-l from-white to-transparent" />
 
-              {/* Marquee Track (Group A + Group B) */}
-              <div className="marquee-track flex flex-nowrap w-max">
-                {/* Group A */}
-                <div className="flex items-center gap-3 sm:gap-4 shrink-0 pr-3 sm:pr-4">
-                  {marqueeApps.map((app) => (
-                    <ApplicationCard key={`group-a-${app.name}`} app={app} />
-                  ))}
-                </div>
+            {/* Carousel Track: Duplicated sets for seamless -50% loop */}
+            <div
+              className="carousel-track flex flex-nowrap w-max shrink-0 items-stretch"
+              style={{
+                display: 'flex',
+                width: 'max-content',
+                flexShrink: 0,
+                willChange: 'transform',
+                animation: 'infinite-scroll 45s linear infinite',
+              }}
+            >
+              {/* Original 12 Cards */}
+              {marqueeApps.map((app) => (
+                <ApplicationCard key={`orig-${app.name}`} app={app} />
+              ))}
 
-                {/* Group B (Identical duplicate for seamless 50% translation loop, aria-hidden for accessibility) */}
-                <div className="flex items-center gap-3 sm:gap-4 shrink-0 pr-3 sm:pr-4" aria-hidden="true">
-                  {marqueeApps.map((app) => (
-                    <ApplicationCard key={`group-b-${app.name}`} app={app} isDuplicate />
-                  ))}
-                </div>
-              </div>
+              {/* Duplicated 12 Cards (aria-hidden for accessibility) */}
+              {marqueeApps.map((app) => (
+                <ApplicationCard key={`dup-${app.name}`} app={app} isDuplicate />
+              ))}
             </div>
-          )}
+          </div>
         </section>
 
         {/* SECTION 5: WHY ASTERRA (FEATURE / BENEFIT SECTION) */}

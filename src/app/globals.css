@@ -97,40 +97,42 @@ body {
   background: rgba(18, 26, 42, 0.35);
 }
 
-/* Seamless GPU-Accelerated Infinite Horizontal Marquee */
-@keyframes asterra-marquee {
-  0% {
+/* Seamless GPU-Accelerated Infinite Auto Marquee Carousel */
+@keyframes infinite-scroll {
+  from {
     transform: translate3d(0, 0, 0);
   }
-  100% {
+  to {
     transform: translate3d(-50%, 0, 0);
   }
 }
 
-.marquee-wrapper {
-  overflow: hidden;
+.carousel-viewport {
+  overflow: hidden !important;
   width: 100%;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
 }
 
-.marquee-track {
-  display: flex;
-  width: max-content;
+.carousel-viewport::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.carousel-track {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  width: max-content !important;
+  flex-shrink: 0 !important;
+  align-items: stretch;
   will-change: transform;
-  animation: asterra-marquee 50s linear infinite;
+  animation: infinite-scroll 45s linear infinite !important;
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .marquee-wrapper:hover .marquee-track {
+  .carousel-viewport:hover .carousel-track {
     animation-play-state: paused;
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .marquee-wrapper {
-    overflow-x: auto;
-  }
-  .marquee-track {
-    animation: none !important;
-    transform: none !important;
-  }
-}
