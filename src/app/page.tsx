@@ -32,8 +32,13 @@ function AppBrandBadge({ name }: { name: string }) {
 
   if (n.includes('gemini') || n.includes('google ai')) {
     return (
-      <div className="w-full h-full bg-gradient-to-tr from-[#1E88E5] via-[#7C4DFF] to-[#00E5FF] rounded-lg sm:rounded-xl flex items-center justify-center p-1.5 shadow-2xs">
-        <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+      <div className="w-full h-full bg-white rounded-lg sm:rounded-xl flex items-center justify-center p-1 shadow-2xs">
+        <img
+          src="/images/apps/gemini.png"
+          alt="Google Gemini"
+          className="w-full h-full object-contain"
+          draggable={false}
+        />
       </div>
     );
   }
@@ -128,10 +133,13 @@ function AppBrandBadge({ name }: { name: string }) {
 
   if (n.includes('vidio')) {
     return (
-      <div className="w-full h-full bg-[#ED1C24] rounded-lg sm:rounded-xl flex items-center justify-center p-1.5 shadow-2xs">
-        <span className="font-black text-white text-xs sm:text-sm tracking-tight italic">
-          Vidio
-        </span>
+      <div className="w-full h-full bg-white rounded-lg sm:rounded-xl flex items-center justify-center p-1 shadow-2xs">
+        <img
+          src="/images/apps/vidio.png"
+          alt="Vidio"
+          className="w-full h-full object-contain"
+          draggable={false}
+        />
       </div>
     );
   }
@@ -167,8 +175,13 @@ function AppBrandBadge({ name }: { name: string }) {
 
   if (n.includes('viu')) {
     return (
-      <div className="w-full h-full bg-[#FFBC00] rounded-lg sm:rounded-xl flex items-center justify-center p-1.5 shadow-2xs">
-        <span className="font-black text-[#121A2A] text-xs sm:text-sm">Viu</span>
+      <div className="w-full h-full bg-[#121A2A] rounded-lg sm:rounded-xl flex items-center justify-center p-1 shadow-2xs">
+        <img
+          src="/images/apps/viu.png"
+          alt="Viu"
+          className="w-full h-full object-contain"
+          draggable={false}
+        />
       </div>
     );
   }
