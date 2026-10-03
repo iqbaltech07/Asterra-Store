@@ -50,7 +50,13 @@ async function verifyAdminToken(token: string | undefined | null): Promise<boole
     const jsonStr = atob(payloadBase64.replace(/-/g, '+').replace(/_/g, '/'));
     const payload = JSON.parse(jsonStr);
 
-    if (payload.role !== 'admin' && payload.role !== 'superadmin') return false;
+    if (
+      payload.role !== 'admin' &&
+      payload.role !== 'superadmin' &&
+      payload.role !== 'sales'
+    ) {
+      return false;
+    }
     if (typeof payload.expiresAt === 'number' && Date.now() > payload.expiresAt) return false;
 
     return true;
@@ -58,6 +64,7 @@ async function verifyAdminToken(token: string | undefined | null): Promise<boole
     return false;
   }
 }
+
 
 /**
  * Next.js Network Proxy (Middleware) Interceptor
@@ -82,6 +89,25 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     // For any other /admin routes -> require valid admin session
     if (!isValidAdmin) {
       const loginUrl = new URL('/admin/login', request.url);
+      loginUrl.searchParams.set('callbackUrl', pathname + search);
+      return NextResponse.redirect(loginUrl);
+    }
+  }
+
+  // 1b. Sales Portal Page Routes Protection (/sales/*)
+  if (pathname.startsWith('/sales')) {
+    const adminToken = request.cookies.get(ADMIN_COOKIE_NAME)?.value;
+    const isValidUser = await verifyAdminToken(adminToken);
+
+    if (pathname === '/sales/login') {
+      if (isValidUser) {
+        return NextResponse.redirect(new URL('/sales', request.url));
+      }
+      return applySecurityHeaders(NextResponse.next());
+    }
+
+    if (!isValidUser) {
+      const loginUrl = new URL('/sales/login', request.url);
       loginUrl.searchParams.set('callbackUrl', pathname + search);
       return NextResponse.redirect(loginUrl);
     }
@@ -152,6 +178,7 @@ function applySecurityHeaders(response: NextResponse): NextResponse {
 export const config = {
   matcher: [
     '/admin/:path*',
+    '/sales/:path*',
     '/api/v1/admin/:path*',
     '/profile/:path*',
     '/login',

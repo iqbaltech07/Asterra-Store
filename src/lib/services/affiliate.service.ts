@@ -1,6 +1,18 @@
 import fs from 'fs';
 import path from 'path';
 
+export interface PayoutRequest {
+  id: string;
+  amount: number;
+  bankName: string;
+  bankAccount: string;
+  bankAccountName: string;
+  status: 'pending' | 'completed' | 'rejected';
+  requestedAt: string;
+  processedAt?: string;
+  notes?: string;
+}
+
 export interface AffiliatePartnerData {
   id: string;
   name: string;
@@ -21,6 +33,7 @@ export interface AffiliatePartnerData {
   joinedAt: string;
   createdAt: string;
   creditedOrderIds?: string[];
+  payoutRequests?: PayoutRequest[];
 }
 
 const AFFILIATES_STORAGE_PATH = path.join(process.cwd(), 'data', 'affiliates.json');
@@ -352,6 +365,113 @@ export class AffiliateService {
       amount: payoutAmount,
       partner,
       message: `Pencairan komisi Rp ${payoutAmount.toLocaleString('id-ID')} untuk ${partner.name} berhasil dicatat.`,
+    };
+  }
+
+  /**
+   * Find affiliate partner by email, or auto-provision if admin user exists
+   */
+  public static findOrCreateByEmail(
+    email: string,
+    fallbackName?: string
+  ): AffiliatePartnerData {
+    const normEmail = email.trim().toLowerCase();
+    const list = this.getAllAffiliates();
+    let partner = list.find((a) => a.email.toLowerCase() === normEmail);
+
+    if (!partner) {
+      const cleanName = (fallbackName || email.split('@')[0]).trim();
+      const codeSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
+      const cleanPrefix = cleanName.split(' ')[0].replace(/[^A-Za-z0-9]/g, '').toUpperCase() || 'SALES';
+      const code = `AST-${cleanPrefix}-${codeSuffix}`;
+
+      const todayDate = new Date();
+      partner = {
+        id: `aff-${Date.now().toString(36)}`,
+        name: cleanName,
+        email: normEmail,
+        whatsapp: '-',
+        code,
+        tier: 'Standard (10%)',
+        rate: 10,
+        totalClicks: 0,
+        totalOrders: 0,
+        totalRevenue: 0,
+        unpaidCommission: 0,
+        paidCommission: 0,
+        status: 'active',
+        joinedAt: todayDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }),
+        createdAt: todayDate.toISOString(),
+        creditedOrderIds: [],
+        payoutRequests: [],
+      };
+
+      list.unshift(partner);
+      this.saveAffiliates(list);
+    }
+
+    return partner;
+  }
+
+  /**
+   * Submit a new withdrawal request for a sales partner
+   */
+  public static submitPayoutRequest(
+    partnerId: string,
+    input: {
+      amount: number;
+      bankName: string;
+      bankAccount: string;
+      bankAccountName: string;
+      notes?: string;
+    }
+  ): { success: boolean; request?: PayoutRequest; message: string } {
+    const list = this.getAllAffiliates();
+    const partner = list.find((a) => a.id === partnerId);
+
+    if (!partner) {
+      return { success: false, message: 'Mitra sales tidak ditemukan.' };
+    }
+
+    const amount = Math.round(Number(input.amount));
+    if (isNaN(amount) || amount < 50000) {
+      return { success: false, message: 'Nominal pencairan minimal Rp 50.000.' };
+    }
+
+    if (amount > (partner.unpaidCommission || 0)) {
+      return {
+        success: false,
+        message: `Saldo komisi Anda saat ini (Rp ${(partner.unpaidCommission || 0).toLocaleString('id-ID')}) tidak mencukupi untuk penarikan Rp ${amount.toLocaleString('id-ID')}.`,
+      };
+    }
+
+    if (!input.bankName || !input.bankAccount || !input.bankAccountName) {
+      return { success: false, message: 'Nama bank, nomor rekening, dan nama pemilik rekening wajib diisi.' };
+    }
+
+    // Deduct available unpaidCommission
+    partner.unpaidCommission -= amount;
+    partner.paidCommission = (partner.paidCommission || 0) + amount;
+
+    partner.payoutRequests = partner.payoutRequests || [];
+    const newRequest: PayoutRequest = {
+      id: `pay-${Date.now().toString(36)}`,
+      amount,
+      bankName: input.bankName.trim(),
+      bankAccount: input.bankAccount.trim(),
+      bankAccountName: input.bankAccountName.trim(),
+      status: 'pending',
+      requestedAt: new Date().toISOString(),
+      notes: input.notes?.trim(),
+    };
+
+    partner.payoutRequests.unshift(newRequest);
+    this.saveAffiliates(list);
+
+    return {
+      success: true,
+      request: newRequest,
+      message: `Permintaan penarikan komisi Rp ${amount.toLocaleString('id-ID')} berhasil diajukan dan sedang diproses tim keuangan.`,
     };
   }
 }

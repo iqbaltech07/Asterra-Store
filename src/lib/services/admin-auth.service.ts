@@ -10,7 +10,7 @@ export interface AdminSessionPayload {
   id?: string;
   email: string;
   name?: string;
-  role: string;
+  role: 'superadmin' | 'admin' | 'sales' | string;
   issuedAt: number;
   expiresAt: number;
   nonce: string;
@@ -151,7 +151,7 @@ export class AdminAuthService {
       const decodedJson = Buffer.from(payloadBase64, 'base64url').toString('utf8');
       const payload: AdminSessionPayload = JSON.parse(decodedJson);
 
-      if (payload.role !== 'admin' && payload.role !== 'superadmin') {
+      if (payload.role !== 'admin' && payload.role !== 'superadmin' && payload.role !== 'sales') {
         return { valid: false };
       }
 

@@ -46,6 +46,7 @@ import { AdminFinanceSuite } from '@/components/admin/admin-finance-suite';
 import { AdminMarketingSuite } from '@/components/admin/admin-marketing-suite';
 import { AdminAnalyticsSuite } from '@/components/admin/admin-analytics-suite';
 import { AdminSystemSettingsSuite } from '@/components/admin/admin-system-settings-suite';
+import { SalesConsoleSuite } from '@/components/sales/sales-console-suite';
 import { ImageUploadDropzone, uploadFileToBlob } from '@/components/admin/image-upload-dropzone';
 import {
   Select,
@@ -110,6 +111,13 @@ const TAB_TITLES: Record<AdminTab, { category: string; title: string }> = {
   notifications: { category: 'Sistem & Konfigurasi', title: 'Notifikasi WhatsApp & Email' },
   admins: { category: 'Sistem & Konfigurasi', title: 'Kelola Staff & Administrator' },
   'store-settings': { category: 'Sistem & Konfigurasi', title: 'Pengaturan Toko & Informasi CS' },
+  // PORTAL PENJUALAN (SALES)
+  'sales-overview': { category: 'Portal Penjualan', title: 'Ringkasan Performa & Komisi Sales' },
+  'sales-catalog': { category: 'Portal Penjualan', title: 'Katalog Produk & Estimasi Komisi' },
+  'sales-links': { category: 'Portal Penjualan', title: 'Generator Tautan & Materi Promosi' },
+  'sales-orders': { category: 'Portal Penjualan', title: 'Pesanan Referral Saya' },
+  'sales-wallet': { category: 'Portal Penjualan', title: 'Dompet & Pencairan Komisi' },
+  'sales-academy': { category: 'Portal Penjualan', title: 'Panduan & Edukasi Mitra Sales' },
 };
 
 export default function AdminPage() {
@@ -140,6 +148,11 @@ export default function AdminPage() {
           return;
         }
         setAdminUser(data.admin);
+        if (data.admin?.role === 'sales') {
+          setActiveTab('sales-overview');
+        } else if (data.admin?.role === 'admin') {
+          setActiveTab('dashboard');
+        }
       } catch {
         router.replace('/admin/login');
       } finally {
@@ -163,8 +176,42 @@ export default function AdminPage() {
   };
 
   // Navigation tab
-  const [activeTab, setActiveTab] = useState<AdminTab>('products');
+  const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
   const [isSidebarMobileOpen, setIsSidebarMobileOpen] = useState(false);
+
+  // Role-based Access Control guard for active tab
+  useEffect(() => {
+    if (!adminUser) return;
+    const role = (adminUser.role || 'admin').toLowerCase();
+
+    // 1. Sales partner can ONLY access sales-* tabs
+    if (role === 'sales') {
+      if (!activeTab.startsWith('sales-')) {
+        setActiveTab('sales-overview');
+      }
+      return;
+    }
+
+    // 2. Operational Admin cannot access financial/sensitive system tabs
+    const restrictedForAdmin: AdminTab[] = [
+      'providers',
+      'wallets',
+      'revenue',
+      'expenses',
+      'profit',
+      'financial-transactions',
+      'financial-reports',
+      'payment-settings',
+      'logs',
+      'notifications',
+      'admins',
+      'store-settings',
+    ];
+
+    if (role === 'admin' && restrictedForAdmin.includes(activeTab)) {
+      setActiveTab('dashboard');
+    }
+  }, [adminUser, activeTab]);
 
   // Filter states for Managed Products
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'archived' | 'warning'>('all');
@@ -790,7 +837,8 @@ export default function AdminPage() {
 
           {/* Quick Action Buttons for Product / VIP Management */}
           <div className="flex items-center gap-2">
-            {(activeTab === 'products' || activeTab === 'vip-explorer' || activeTab === 'dashboard') && (
+            {(activeTab === 'products' || activeTab === 'vip-explorer' || activeTab === 'dashboard') &&
+              adminUser?.role !== 'sales' && (
               <>
                 <Button
                   variant="outline"
@@ -820,6 +868,17 @@ export default function AdminPage() {
                   <span className="sm:hidden">Tambah</span>
                 </Button>
               </>
+            )}
+
+            {adminUser?.role === 'sales' && (
+              <Button
+                size="sm"
+                onClick={() => setActiveTab('sales-wallet')}
+                className="text-xs gap-1.5 shadow-xs font-semibold bg-status-success hover:bg-status-success/90 text-white"
+              >
+                <Wallet className="w-3.5 h-3.5" />
+                <span>Dompet Komisi</span>
+              </Button>
             )}
           </div>
         </header>
@@ -1656,6 +1715,20 @@ export default function AdminPage() {
           <AdminSystemSettingsSuite
             activeTab={activeTab}
             onNotify={showNotification}
+          />
+        )}
+
+        {/* TAB 17: PORTAL PENJUALAN (SALES SUITE) */}
+        {(activeTab === 'sales-overview' ||
+          activeTab === 'sales-catalog' ||
+          activeTab === 'sales-links' ||
+          activeTab === 'sales-orders' ||
+          activeTab === 'sales-wallet' ||
+          activeTab === 'sales-academy') && (
+          <SalesConsoleSuite
+            activeTab={activeTab}
+            onTabChange={(tab) => setActiveTab(tab)}
+            adminUser={adminUser}
           />
         )}
       </main>

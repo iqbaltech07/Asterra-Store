@@ -71,7 +71,14 @@ export type AdminTab =
   | 'logs'
   | 'notifications'
   | 'admins'
-  | 'store-settings';
+  | 'store-settings'
+  // PORTAL PENJUALAN (SALES)
+  | 'sales-overview'
+  | 'sales-catalog'
+  | 'sales-links'
+  | 'sales-orders'
+  | 'sales-wallet'
+  | 'sales-academy';
 
 interface NavSubItem {
   id: AdminTab;
@@ -114,9 +121,197 @@ export function AdminSidebar({
   isOpenMobile,
   onCloseMobile,
 }: AdminSidebarProps) {
-  // Navigation categories with dropdown items matching user requested structure
-  const navGroups: NavGroup[] = useMemo(
-    () => [
+  const userRole = (adminUser?.role || 'admin').toLowerCase();
+
+  // Navigation categories with dropdown items matching user requested 3-role RBAC:
+  // - superadmin: SEMUA MENU (All 7 groups, 24 items)
+  // - admin: HANYA BEBERAPA MENU (Operational groups only)
+  // - sales: KHUSUS SALES SAJA (Portal Penjualan group only)
+  const navGroups: NavGroup[] = useMemo(() => {
+    // 1. Role: Sales -> ONLY Sales Portal items!
+    if (userRole === 'sales') {
+      return [
+        {
+          id: 'sales-portal',
+          label: 'PORTAL PENJUALAN',
+          icon: Share2,
+          items: [
+            {
+              id: 'sales-overview',
+              label: 'Ringkasan Performa',
+              icon: LayoutDashboard,
+              description: 'KPI komisi, link referral, & ringkasan penjualan',
+            },
+            {
+              id: 'sales-catalog',
+              label: 'Katalog & Komisi',
+              icon: Package,
+              badge: metrics?.total !== undefined ? metrics.total : '230+',
+              badgeVariant: 'primary',
+              description: 'Katalog toko & kalkulasi estimasi komisi',
+            },
+            {
+              id: 'sales-links',
+              label: 'Tautan & Materi Promo',
+              icon: Share2,
+              description: 'Link kustom UTM & template teks copywriting',
+            },
+            {
+              id: 'sales-orders',
+              label: 'Pesanan Referral Saya',
+              icon: ShoppingBag,
+              description: 'Daftar pesanan dari link referral Anda',
+            },
+            {
+              id: 'sales-wallet',
+              label: 'Dompet & Pencairan',
+              icon: Wallet,
+              description: 'Saldo siap tarik & pengajuan penarikan dana',
+            },
+            {
+              id: 'sales-academy',
+              label: 'Panduan & Edukasi',
+              icon: Award,
+              description: 'Pedoman promosi, FAQ komisi, & bantuan admin',
+            },
+          ],
+        },
+      ];
+    }
+
+    // 2. Role: Admin -> Operational items only
+    if (userRole === 'admin') {
+      return [
+        {
+          id: 'overview',
+          label: 'OVERVIEW',
+          icon: LayoutDashboard,
+          items: [
+            {
+              id: 'dashboard',
+              label: 'Dashboard',
+              icon: LayoutDashboard,
+              description: 'Ringkasan performa toko & aktivitas utama',
+            },
+          ],
+        },
+        {
+          id: 'catalog',
+          label: 'KATALOG & LAYANAN',
+          icon: Boxes,
+          items: [
+            {
+              id: 'products',
+              label: 'Katalog Produk',
+              icon: Package,
+              badge: metrics?.total !== undefined ? metrics.total : 236,
+              badgeVariant: 'primary',
+              description: 'Kelola harga retail, stok, dan arsip',
+            },
+            {
+              id: 'categories',
+              label: 'Kategori',
+              icon: FolderTree,
+              description: 'Kelola grup & taksonomi layanan',
+            },
+            {
+              id: 'vip-explorer',
+              label: 'Import VIP Reseller',
+              icon: DownloadCloud,
+              badge: '12K+',
+              badgeVariant: 'success',
+              description: 'Jelajahi ribuan produk upstream',
+            },
+          ],
+        },
+        {
+          id: 'transactions',
+          label: 'TRANSAKSI',
+          icon: ShoppingBag,
+          items: [
+            {
+              id: 'orders',
+              label: 'Pesanan Pelanggan',
+              icon: ShoppingBag,
+              description: 'Riwayat transaksi & status pembayaran',
+            },
+            {
+              id: 'customers',
+              label: 'Pelanggan',
+              icon: Users,
+              description: 'Database pelanggan & histori belanja',
+            },
+            {
+              id: 'refunds',
+              label: 'Refund & Komplain',
+              icon: AlertCircle,
+              description: 'Penanganan klaim garansi & pembatalan',
+            },
+          ],
+        },
+        {
+          id: 'marketing',
+          label: 'MARKETING & GROWTH',
+          icon: Sparkles,
+          items: [
+            {
+              id: 'affiliate',
+              label: 'Affiliate / Sales',
+              icon: Share2,
+              badge: 'Sistem Sales',
+              badgeVariant: 'primary',
+              description: 'Mitra afiliasi, referral link, & komisi',
+            },
+            {
+              id: 'promos',
+              label: 'Voucher & Promo',
+              icon: Tag,
+              description: 'Kupon diskon & potongan harga belanja',
+            },
+            {
+              id: 'campaigns',
+              label: 'Campaign',
+              icon: Flame,
+              description: 'Flash sale, payday deal, & promo berkala',
+            },
+            {
+              id: 'banners',
+              label: 'Banner & Konten',
+              icon: ImageIcon,
+              description: 'Banner beranda & materi promosi visual',
+            },
+          ],
+        },
+        {
+          id: 'analytics',
+          label: 'ANALYTICS & LAPORAN',
+          icon: BarChart3,
+          items: [
+            {
+              id: 'sales-summary',
+              label: 'Ringkasan Penjualan',
+              icon: BarChart3,
+              description: 'Grafik performa transaksi harian & bulanan',
+            },
+            {
+              id: 'product-performance',
+              label: 'Performa Produk',
+              icon: PackageCheck,
+              description: 'Daftar produk terlaris & konversi tinggi',
+            },
+            {
+              id: 'affiliate-performance',
+              label: 'Performa Affiliate',
+              icon: Award,
+              description: 'Efektivitas penjualan referral mitra sales',
+            },
+          ],
+        },
+      ];
+    }
+
+    // 3. Role: Superadmin (CEO & COO) -> SEMUA MENU (All 7 groups, 24 items)
+    return [
       {
         id: 'overview',
         label: 'OVERVIEW',
@@ -328,12 +523,14 @@ export function AdminSidebar({
           },
         ],
       },
-    ],
-    [metrics?.total]
-  );
+    ];
+  }, [userRole, metrics?.total]);
 
   // Accordion state: which groups are open
   const getInitialOpenGroups = (): Record<string, boolean> => {
+    if (userRole === 'sales') {
+      return { 'sales-portal': true };
+    }
     return {
       overview: true,
       catalog: true,
@@ -346,6 +543,13 @@ export function AdminSidebar({
   };
 
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(getInitialOpenGroups);
+
+  // Sync open groups if role switches
+  useEffect(() => {
+    if (userRole === 'sales') {
+      setOpenGroups({ 'sales-portal': true });
+    }
+  }, [userRole]);
 
   // Auto-expand group if activeTab changes to a child within it
   useEffect(() => {
@@ -383,7 +587,7 @@ export function AdminSidebar({
               Asterra<span className="text-primary">Store</span>
             </span>
             <span className="text-[10px] text-foreground-muted font-mono tracking-wider uppercase font-medium">
-              Admin Console
+              {userRole === 'sales' ? 'Portal Mitra Sales' : userRole === 'admin' ? 'Konsol Admin' : 'Admin Console'}
             </span>
           </div>
         </Link>
@@ -532,9 +736,26 @@ export function AdminSidebar({
               </p>
             </div>
           </div>
-          <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold uppercase tracking-wider bg-primary/15 text-primary border border-primary/30 shrink-0">
-            {adminUser?.role || 'Admin'}
-          </span>
+          {userRole === 'superadmin' && (
+            <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold uppercase tracking-wider bg-amber-500/15 text-amber-500 border border-amber-500/30 shrink-0">
+              Superadmin
+            </span>
+          )}
+          {userRole === 'admin' && (
+            <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold uppercase tracking-wider bg-blue-500/15 text-blue-500 border border-blue-500/30 shrink-0">
+              Admin
+            </span>
+          )}
+          {userRole === 'sales' && (
+            <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold uppercase tracking-wider bg-status-success/15 text-status-success border border-status-success/30 shrink-0">
+              Sales
+            </span>
+          )}
+          {userRole !== 'superadmin' && userRole !== 'admin' && userRole !== 'sales' && (
+            <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold uppercase tracking-wider bg-primary/15 text-primary border border-primary/30 shrink-0">
+              {adminUser?.role || 'Admin'}
+            </span>
+          )}
         </div>
 
         <button
@@ -543,7 +764,7 @@ export function AdminSidebar({
           className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-medium text-status-error hover:bg-status-error/10 border border-status-error/25 transition-colors"
         >
           <LogOut className="w-3.5 h-3.5" />
-          <span>Keluar Sesi Admin</span>
+          <span>{userRole === 'sales' ? 'Keluar Sesi Sales' : 'Keluar Sesi Admin'}</span>
         </button>
       </div>
     </div>

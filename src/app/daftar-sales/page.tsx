@@ -21,6 +21,9 @@ import {
   MessageSquare,
   Gift,
   Zap,
+  Lock,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -47,6 +50,9 @@ function DaftarSalesContent() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [referralCode, setReferralCode] = useState(initialRef);
   const [customCode, setCustomCode] = useState('');
   const [agreeTerms, setAgreeTerms] = useState(true);
@@ -105,6 +111,16 @@ function DaftarSalesContent() {
       return;
     }
 
+    if (!password || password.length < 6) {
+      setErrorMessage('Kata sandi akun sales wajib diisi minimal 6 karakter.');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setErrorMessage('Konfirmasi kata sandi tidak cocok. Harap periksa kembali.');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -115,6 +131,7 @@ function DaftarSalesContent() {
           name,
           email,
           whatsapp,
+          password,
           referralCode: referralCode.trim() || undefined,
           customCode: customCode.trim() || undefined,
         }),
@@ -229,6 +246,13 @@ function DaftarSalesContent() {
 
             {/* Quick Actions */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+              <Link href="/sales/login" className="w-full sm:w-auto">
+                <Button className="w-full sm:w-auto text-xs h-10 gap-2 bg-primary font-bold shadow-sm">
+                  <Lock className="w-3.5 h-3.5" />
+                  <span>Masuk ke Portal Sales Saya</span>
+                </Button>
+              </Link>
+
               <a
                 href={`https://wa.me/6281298765432?text=Halo%20Admin%20Asterra%20Store,%20saya%20sudah%20mendaftar%20jadi%20Sales%20dengan%20nama%20${encodeURIComponent(
                   successPartner.name
@@ -238,12 +262,12 @@ function DaftarSalesContent() {
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-status-success hover:bg-status-success/90 text-white font-semibold text-xs transition-colors shadow-sm"
               >
                 <MessageSquare className="w-4 h-4" />
-                <span>Hubungi Admin via WhatsApp</span>
+                <span>Hubungi Admin WhatsApp</span>
               </a>
 
               <Link href="/" className="w-full sm:w-auto">
                 <Button variant="outline" className="w-full text-xs h-10 border-border">
-                  Kembali ke Etalase Toko
+                  Kembali ke Toko
                 </Button>
               </Link>
             </div>
@@ -302,11 +326,18 @@ function DaftarSalesContent() {
 
             {/* Registration Form Card */}
             <div className="bg-surface border border-border rounded-2xl p-6 sm:p-10 shadow-sm max-w-xl mx-auto space-y-6">
-              <div className="border-b border-border pb-4 space-y-1">
-                <h2 className="text-lg font-bold text-foreground">Formulir Pendaftaran Mitra Sales</h2>
-                <p className="text-xs text-foreground-muted">
-                  Lengkapi data diri Anda di bawah ini untuk mengaktifkan kode referral instan.
-                </p>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-border pb-4 gap-2">
+                <div className="space-y-1">
+                  <h2 className="text-lg font-bold text-foreground">Formulir Pendaftaran Mitra Sales</h2>
+                  <p className="text-xs text-foreground-muted">
+                    Lengkapi data diri Anda di bawah ini untuk mengaktifkan akun & kode referral.
+                  </p>
+                </div>
+                <Link href="/sales/login">
+                  <Badge variant="outline" className="text-[11px] font-semibold text-primary border-primary/30 hover:bg-primary/10 transition-colors py-1 px-2.5 shrink-0 self-start sm:self-auto cursor-pointer">
+                    Sudah Punya Akun? Login &rarr;
+                  </Badge>
+                </Link>
               </div>
 
               {errorMessage && (
@@ -349,7 +380,7 @@ function DaftarSalesContent() {
                     className="bg-surface-raised border-border text-xs h-10"
                   />
                   <span className="text-[11px] text-foreground-muted mt-1 block">
-                    Laporan transaksi dan notifikasi payout akan dikirim ke email ini.
+                    Email ini digunakan untuk login ke portal sales & menerima notifikasi komisi.
                   </span>
                 </div>
 
@@ -371,6 +402,49 @@ function DaftarSalesContent() {
                   <span className="text-[11px] text-foreground-muted mt-1 block">
                     Digunakan untuk koordinasi promosi dan konfirmasi pencairan dana via CS WhatsApp.
                   </span>
+                </div>
+
+                {/* 3b. Kata Sandi Akun Sales */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="font-semibold text-foreground">
+                      Kata Sandi Akun Sales <span className="text-status-error">*</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="text-[10px] text-primary hover:underline flex items-center gap-1 font-medium"
+                    >
+                      {showPassword ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                      <span>{showPassword ? 'Sembunyikan' : 'Lihat Sandi'}</span>
+                    </button>
+                  </div>
+                  <Input
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    placeholder="Minimal 6 karakter"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="bg-surface-raised border-border text-xs h-10"
+                  />
+                  <span className="text-[11px] text-foreground-muted mt-1 block">
+                    Digunakan untuk login ke Portal Mitra Sales Asterra Store Anda.
+                  </span>
+                </div>
+
+                {/* 3c. Konfirmasi Kata Sandi */}
+                <div>
+                  <label className="font-semibold text-foreground block mb-1">
+                    Konfirmasi Kata Sandi <span className="text-status-error">*</span>
+                  </label>
+                  <Input
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    placeholder="Ulangi kata sandi yang sama"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="bg-surface-raised border-border text-xs h-10"
+                  />
                 </div>
 
                 {/* 4. Kode Referral Jika Punya */}
@@ -461,6 +535,13 @@ function DaftarSalesContent() {
                     </>
                   )}
                 </Button>
+
+                <div className="pt-2 text-center text-xs text-foreground-muted">
+                  Sudah terdaftar sebagai mitra sales?{' '}
+                  <Link href="/sales/login" className="text-primary font-bold hover:underline">
+                    Masuk ke Portal Sales di sini
+                  </Link>
+                </div>
               </form>
             </div>
 

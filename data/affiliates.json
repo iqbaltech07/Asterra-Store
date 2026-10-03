@@ -1,5 +1,24 @@
 [
   {
+    "id": "aff-musnacm1",
+    "name": "Super Admin Asterra",
+    "email": "admin@asterra.store",
+    "whatsapp": "-",
+    "code": "AST-SUPER-2KTH",
+    "tier": "Standard (10%)",
+    "rate": 10,
+    "totalClicks": 0,
+    "totalOrders": 0,
+    "totalRevenue": 0,
+    "unpaidCommission": 0,
+    "paidCommission": 0,
+    "status": "active",
+    "joinedAt": "4 Okt 2026",
+    "createdAt": "2026-10-03T17:07:27.193Z",
+    "creditedOrderIds": [],
+    "payoutRequests": []
+  },
+  {
     "id": "aff-muslbxi2",
     "name": "Iqbal",
     "email": "iqbal07@gmail.com",
