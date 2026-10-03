@@ -532,7 +532,7 @@ export default function HomePage() {
                 <div className="absolute w-36 h-36 lg:w-48 lg:h-48 rounded-full bg-[rgba(201,111,85,0.18)] blur-2xl pointer-events-none" />
 
                 {/* Scaled Asterra Planet Visual: Transparent Animated WebP with Static Fallback */}
-                <div className="relative z-10 w-[150px] sm:w-[180px] lg:w-[220px] xl:w-[240px] flex items-center justify-center">
+                <div className="relative z-10 w-[150px] sm:w-[180px] lg:w-[220px] xl:w-[240px] flex items-center justify-center translate-x-1 sm:translate-x-1.5 lg:translate-x-2 -translate-y-2 sm:-translate-y-2.5 lg:-translate-y-3">
                   <img
                     src="/assets/asterra-planet-transparent.webp"
                     alt="Asterra Store"
