@@ -12,6 +12,9 @@ export interface ParsedVariant {
   stock?: number;
   providerStatus?: string;
   isOutOfStock: boolean;
+  description?: string;
+  features?: string[];
+  imageUrl?: string;
 }
 
 export interface ProductFamilyData {
@@ -452,6 +455,9 @@ export function parseProductVariant(
     stock: p.stock ?? 100,
     providerStatus: p.providerStatus,
     isOutOfStock,
+    description: p.description,
+    features: p.features,
+    imageUrl: p.imageUrl,
   };
 }
 
