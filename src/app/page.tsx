@@ -479,7 +479,7 @@ export default function HomePage() {
       {/* Main Content */}
       <main className="flex-1 max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 pt-2 sm:pt-3.5 pb-8 sm:pb-12 w-full overflow-hidden">
         {/* SECTION 2 & 3: Hero Banner with Controlled Dimensions, Scaled Planet Anchor & Integrated Benefit Strip */}
-        <section className="relative w-full rounded-2xl sm:rounded-3xl bg-[#121A2A] border border-[rgba(255,255,255,0.08)] shadow-md overflow-hidden mb-6 sm:mb-8">
+        <section className="relative w-full rounded-2xl sm:rounded-3xl bg-[#101828] border border-[rgba(255,255,255,0.08)] shadow-md overflow-hidden mb-6 sm:mb-8">
           {/* Controlled Hero Area: compact & clean with reduced height */}
           <div className="relative min-h-[160px] sm:min-h-[190px] lg:h-[220px] xl:h-[235px] flex items-center px-5 sm:px-8 lg:px-12 py-5 sm:py-6 lg:py-0 overflow-hidden">
             {/* Left Column: Headline & Subheadline */}
@@ -531,7 +531,7 @@ export default function HomePage() {
                 {/* Ambient Soft Glow */}
                 <div className="absolute w-36 h-36 lg:w-48 lg:h-48 rounded-full bg-[rgba(201,111,85,0.18)] blur-2xl pointer-events-none" />
 
-                {/* Scaled Asterra Planet Visual: Animated Video Test with Static Fallback (IMG_3646.MOV) */}
+                {/* Scaled Asterra Planet Visual: Animated Video Test with Static Fallback (IMG_3652.MOV) */}
                 <div className="relative z-10 w-[150px] sm:w-[180px] lg:w-[220px] xl:w-[240px] flex items-center justify-center filter drop-shadow-[0_12px_24px_rgba(0,0,0,0.3)]">
                   <video
                     autoPlay
@@ -540,7 +540,7 @@ export default function HomePage() {
                     playsInline
                     preload="metadata"
                     poster="/images/brand/hero-planet-white.png"
-                    className="w-full h-auto object-contain mix-blend-screen pointer-events-none select-none"
+                    className="w-full h-auto object-contain mix-blend-lighten pointer-events-none select-none"
                   >
                     <source src="/videos/hero-planet.mp4" type="video/mp4" />
                     <source src="/videos/hero-planet.mov" type="video/quicktime" />
