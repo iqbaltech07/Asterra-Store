@@ -40,30 +40,39 @@ function AppBrandBadge({ name }: { name: string }) {
 
   if (n.includes('chatgpt')) {
     return (
-      <div className="w-full h-full bg-[#10A37F] rounded-lg sm:rounded-xl flex items-center justify-center p-1.5 shadow-2xs">
-        <svg viewBox="0 0 24 24" className="w-5 h-5 sm:w-6 sm:h-6 text-white fill-current">
-          <path d="M22.28 9.53a5.98 5.98 0 0 0-.52-4.91 6.05 6.05 0 0 0-6.51-2.9 6.07 6.07 0 0 0-4.66-2.1c-2.45 0-4.66 1.48-5.59 3.74a6.04 6.04 0 0 0-4.2 3.03 6.01 6.01 0 0 0 .74 7.15 6 6 0 0 0 .52 4.9 6.06 6.06 0 0 0 6.51 2.91 6.05 6.05 0 0 0 4.66 2.1c2.45 0 4.67-1.48 5.6-3.74a6.04 6.04 0 0 0 4.2-3.03 6 6 0 0 0-.75-7.15zm-8.87 11.96c-.4 0-.8-.06-1.18-.18l-.5-.16v-4.14a.75.75 0 0 0-.37-.65l-3.5-2.02a.75.75 0 0 0-.75 0l-3.5 2.02c-.89.51-1.44 1.47-1.44 2.5 0 1.25.8 2.34 2 2.74l.51.17v-4.14c0-.28.15-.53.4-.67l3.5-2.02a.75.75 0 0 1 .75 0l3.5 2.02c.24.14.39.4.39.68v4.14l.51-.17c1.2-.4 2-1.49 2-2.74 0-1.03-.55-1.99-1.44-2.5l-3.5-2.02a.75.75 0 0 0-.75 0l-3.5 2.02a.75.75 0 0 0-.38.65v4.14l-.5.16c-1.18.39-2.48-.06-3.19-1.07a3.52 3.52 0 0 1-.41-2.96l.16-.51 3.59 2.07c.24.14.54.14.78 0l3.5-2.02c.24-.14.39-.4.39-.68v-4.04l3.5 2.02c.24.14.39.4.39.68v4.04l.51.17c1.19.4 1.95 1.52 1.95 2.78 0 1.63-1.32 2.95-2.95 2.95z"/>
-        </svg>
+      <div className="w-full h-full bg-white rounded-lg sm:rounded-xl flex items-center justify-center p-1 shadow-2xs">
+        <img
+          src="/images/apps/chatgpt.png"
+          alt="ChatGPT"
+          className="w-full h-full object-contain"
+          draggable={false}
+        />
       </div>
     );
   }
 
   if (n.includes('canva')) {
     return (
-      <div className="w-full h-full bg-[#00C4CC] rounded-lg sm:rounded-xl flex items-center justify-center p-1.5 shadow-2xs">
-        <span className="font-black text-white text-xs sm:text-sm tracking-tight italic font-serif">
-          Canva
-        </span>
+      <div className="w-full h-full bg-white rounded-lg sm:rounded-xl flex items-center justify-center p-0.5 shadow-2xs">
+        <img
+          src="/images/apps/canva.png"
+          alt="Canva"
+          className="w-full h-full object-contain"
+          draggable={false}
+        />
       </div>
     );
   }
 
   if (n.includes('capcut')) {
     return (
-      <div className="w-full h-full bg-[#000000] rounded-lg sm:rounded-xl flex items-center justify-center p-1.5 shadow-2xs">
-        <span className="font-black text-white text-[11px] sm:text-xs tracking-tight">
-          CapCut
-        </span>
+      <div className="w-full h-full bg-white rounded-lg sm:rounded-xl flex items-center justify-center p-1 shadow-2xs">
+        <img
+          src="/images/apps/capcut.png"
+          alt="CapCut"
+          className="w-full h-full object-contain"
+          draggable={false}
+        />
       </div>
     );
   }
@@ -98,8 +107,13 @@ function AppBrandBadge({ name }: { name: string }) {
 
   if (n.includes('netflix')) {
     return (
-      <div className="w-full h-full bg-[#E50914] rounded-lg sm:rounded-xl flex items-center justify-center p-1.5 shadow-2xs">
-        <span className="font-black text-white text-sm sm:text-base font-serif">N</span>
+      <div className="w-full h-full bg-black rounded-lg sm:rounded-xl flex items-center justify-center p-1.5 shadow-2xs">
+        <img
+          src="/images/apps/netflix.png"
+          alt="Netflix"
+          className="w-full h-full object-contain"
+          draggable={false}
+        />
       </div>
     );
   }
@@ -124,8 +138,13 @@ function AppBrandBadge({ name }: { name: string }) {
 
   if (n.includes('wetv')) {
     return (
-      <div className="w-full h-full bg-gradient-to-r from-[#FF5E00] to-[#0084FF] rounded-lg sm:rounded-xl flex items-center justify-center p-1.5 shadow-2xs">
-        <span className="font-black text-white text-[11px] sm:text-xs">WeTV</span>
+      <div className="w-full h-full bg-white rounded-lg sm:rounded-xl flex items-center justify-center p-1 shadow-2xs">
+        <img
+          src="/images/apps/wetv.png"
+          alt="WeTV"
+          className="w-full h-full object-contain"
+          draggable={false}
+        />
       </div>
     );
   }
