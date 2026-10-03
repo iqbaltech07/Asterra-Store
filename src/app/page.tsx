@@ -517,13 +517,13 @@ export default function HomePage() {
             {/* Left Column: Headline & Subheadline */}
             <div className="relative z-10 w-full lg:max-w-[62%] xl:max-w-[60%] py-1">
               {/* Editorial Headline */}
-              <h1 className="text-xl sm:text-3xl lg:text-[32px] xl:text-[36px] font-black tracking-tight text-white leading-[1.15]">
+              <h1 data-gsap="page-title" className="text-xl sm:text-3xl lg:text-[32px] xl:text-[36px] font-black tracking-tight text-white leading-[1.15]">
                 Solusi Terpercaya Produk &<br />
                 <span className="text-[#E28870]">Layanan Digital Premium</span>
               </h1>
 
               {/* Subheadline */}
-              <p className="mt-2 sm:mt-2.5 text-xs sm:text-[13px] lg:text-sm text-white/75 max-w-xl leading-relaxed">
+              <p data-gsap="page-sub" className="mt-2 sm:mt-2.5 text-xs sm:text-[13px] lg:text-sm text-white/75 max-w-xl leading-relaxed">
                 Dapatkan akses langganan resmi untuk tool AI, software desain, voucher, dan layanan
                 digital lainnya tanpa kartu kredit dengan konfirmasi instan.
               </p>
@@ -531,7 +531,7 @@ export default function HomePage() {
 
             {/* Right Column: Planet Visual (Gambar 2: White planet with coral star, sized down) */}
             <div className="absolute right-[-20px] sm:right-0 lg:right-2 xl:right-6 top-1/2 -translate-y-1/2 pointer-events-none select-none z-0 opacity-60 sm:opacity-85 lg:opacity-100 transition-opacity">
-              <div className="relative w-[180px] h-[180px] sm:w-[220px] sm:h-[220px] lg:w-[260px] lg:h-[260px] flex items-center justify-center">
+              <div data-gsap="hero-media" className="relative w-[180px] h-[180px] sm:w-[220px] sm:h-[220px] lg:w-[260px] lg:h-[260px] flex items-center justify-center">
                 {/* Subtle SVG Orbital Background Rings */}
                 <svg
                   className="absolute inset-0 w-full h-full pointer-events-none opacity-60"
@@ -585,7 +585,7 @@ export default function HomePage() {
           <div className="border-t border-white/10 bg-[#0E1524] px-4 sm:px-8 lg:px-12 py-3 sm:py-3.5">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-6">
               {/* Benefit 1 */}
-              <div className="flex items-center gap-3">
+              <div data-gsap="benefit-card" className="flex items-center gap-3">
                 <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-[rgba(201,111,85,0.15)] border border-[rgba(201,111,85,0.25)] flex items-center justify-center shrink-0">
                   <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-[#E28870]" />
                 </div>
@@ -596,7 +596,7 @@ export default function HomePage() {
               </div>
 
               {/* Benefit 2 */}
-              <div className="flex items-center gap-3 sm:border-l sm:border-white/10 sm:pl-6">
+              <div data-gsap="benefit-card" className="flex items-center gap-3 sm:border-l sm:border-white/10 sm:pl-6">
                 <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-[rgba(201,111,85,0.15)] border border-[rgba(201,111,85,0.25)] flex items-center justify-center shrink-0">
                   <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-[#E28870]" />
                 </div>
@@ -607,7 +607,7 @@ export default function HomePage() {
               </div>
 
               {/* Benefit 3 */}
-              <div className="flex items-center gap-3 sm:border-l sm:border-white/10 sm:pl-6">
+              <div data-gsap="benefit-card" className="flex items-center gap-3 sm:border-l sm:border-white/10 sm:pl-6">
                 <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-[rgba(201,111,85,0.15)] border border-[rgba(201,111,85,0.25)] flex items-center justify-center shrink-0">
                   <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-[#E28870]" />
                 </div>
@@ -621,7 +621,7 @@ export default function HomePage() {
         </section>
 
         {/* SECTION 4: EXPLORE BY APPLICATION (KATALOG APLIKASI DIGITAL - INFINITE MARQUEE) */}
-        <section id="aplikasi" className="mb-10 sm:mb-14 overflow-hidden">
+        <section id="aplikasi" data-gsap-reveal className="mb-10 sm:mb-14 overflow-hidden">
           {/* Section Header (Static) */}
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2.5 mb-4 sm:mb-5 pb-2.5 border-b border-[rgba(18,26,42,0.08)]">
             <div>
@@ -676,7 +676,7 @@ export default function HomePage() {
         </section>
 
         {/* SECTION 5: WHY ASTERRA (FEATURE / BENEFIT SECTION) */}
-        <section id="keunggulan" className="mb-10 sm:mb-14 pt-6 sm:pt-8 border-t border-[rgba(18,26,42,0.08)]">
+        <section id="keunggulan" data-gsap-reveal className="mb-10 sm:mb-14 pt-6 sm:pt-8 border-t border-[rgba(18,26,42,0.08)]">
           <div className="max-w-2xl mb-6">
             <span className="text-[11px] font-bold text-[#C96F55] uppercase tracking-wider block mb-1">
               Standar Kualitas & Layanan
@@ -692,7 +692,7 @@ export default function HomePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4.5">
             {/* 1. Produk Terverifikasi */}
-            <div className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-4 sm:p-5 space-y-2 hover:border-[rgba(18,26,42,0.2)] transition-all">
+            <div data-gsap="card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-4 sm:p-5 space-y-2 hover:border-[rgba(18,26,42,0.2)] transition-all">
               <div className="w-9 h-9 rounded-xl bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.2)] flex items-center justify-center text-[#C96F55]">
                 <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
@@ -704,7 +704,7 @@ export default function HomePage() {
             </div>
 
             {/* 2. Aktivasi Cepat */}
-            <div className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-4 sm:p-5 space-y-2 hover:border-[rgba(18,26,42,0.2)] transition-all">
+            <div data-gsap="card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-4 sm:p-5 space-y-2 hover:border-[rgba(18,26,42,0.2)] transition-all">
               <div className="w-9 h-9 rounded-xl bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.2)] flex items-center justify-center text-[#C96F55]">
                 <Zap className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
@@ -716,7 +716,7 @@ export default function HomePage() {
             </div>
 
             {/* 3. Pilihan Lengkap */}
-            <div className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-4 sm:p-5 space-y-2 hover:border-[rgba(18,26,42,0.2)] transition-all">
+            <div data-gsap="card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-4 sm:p-5 space-y-2 hover:border-[rgba(18,26,42,0.2)] transition-all">
               <div className="w-9 h-9 rounded-xl bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.2)] flex items-center justify-center text-[#C96F55]">
                 <Layers className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
@@ -728,7 +728,7 @@ export default function HomePage() {
             </div>
 
             {/* 4. Pembayaran Praktis */}
-            <div className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-4 sm:p-5 space-y-2 hover:border-[rgba(18,26,42,0.2)] transition-all">
+            <div data-gsap="card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-4 sm:p-5 space-y-2 hover:border-[rgba(18,26,42,0.2)] transition-all">
               <div className="w-9 h-9 rounded-xl bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.2)] flex items-center justify-center text-[#C96F55]">
                 <CreditCard className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
@@ -740,7 +740,7 @@ export default function HomePage() {
             </div>
 
             {/* 5. Garansi Jelas */}
-            <div className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-4 sm:p-5 space-y-2 hover:border-[rgba(18,26,42,0.2)] transition-all">
+            <div data-gsap="card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-4 sm:p-5 space-y-2 hover:border-[rgba(18,26,42,0.2)] transition-all">
               <div className="w-9 h-9 rounded-xl bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.2)] flex items-center justify-center text-[#C96F55]">
                 <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
@@ -752,7 +752,7 @@ export default function HomePage() {
             </div>
 
             {/* 6. Customer Support */}
-            <div className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-4 sm:p-5 space-y-2 hover:border-[rgba(18,26,42,0.2)] transition-all">
+            <div data-gsap="card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-4 sm:p-5 space-y-2 hover:border-[rgba(18,26,42,0.2)] transition-all">
               <div className="w-9 h-9 rounded-xl bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.2)] flex items-center justify-center text-[#C96F55]">
                 <Headphones className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
@@ -766,7 +766,7 @@ export default function HomePage() {
         </section>
 
         {/* SECTION 6: HOW IT WORKS (Cara Pemesanan) */}
-        <section id="panduan" className="mb-10 sm:mb-14 pt-6 sm:pt-8 border-t border-[rgba(18,26,42,0.08)]">
+        <section id="panduan" data-gsap-reveal className="mb-10 sm:mb-14 pt-6 sm:pt-8 border-t border-[rgba(18,26,42,0.08)]">
           <div className="max-w-2xl mb-6">
             <span className="text-[11px] font-bold text-[#C96F55] uppercase tracking-wider block mb-1">
               Panduan Transaksi
@@ -781,7 +781,7 @@ export default function HomePage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4.5">
             {/* Step 01 */}
-            <div className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-4 sm:p-5 flex flex-col justify-between hover:border-[rgba(18,26,42,0.2)] transition-all">
+            <div data-gsap="card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-4 sm:p-5 flex flex-col justify-between hover:border-[rgba(18,26,42,0.2)] transition-all">
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-2xl sm:text-3xl font-black text-[#C96F55]/40 font-mono">
@@ -801,7 +801,7 @@ export default function HomePage() {
             </div>
 
             {/* Step 02 */}
-            <div className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-4 sm:p-5 flex flex-col justify-between hover:border-[rgba(18,26,42,0.2)] transition-all">
+            <div data-gsap="card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-4 sm:p-5 flex flex-col justify-between hover:border-[rgba(18,26,42,0.2)] transition-all">
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-2xl sm:text-3xl font-black text-[#C96F55]/40 font-mono">
@@ -821,7 +821,7 @@ export default function HomePage() {
             </div>
 
             {/* Step 03 */}
-            <div className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-4 sm:p-5 flex flex-col justify-between hover:border-[rgba(18,26,42,0.2)] transition-all">
+            <div data-gsap="card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-4 sm:p-5 flex flex-col justify-between hover:border-[rgba(18,26,42,0.2)] transition-all">
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-2xl sm:text-3xl font-black text-[#C96F55]/40 font-mono">
@@ -841,7 +841,7 @@ export default function HomePage() {
             </div>
 
             {/* Step 04 */}
-            <div className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-4 sm:p-5 flex flex-col justify-between hover:border-[rgba(18,26,42,0.2)] transition-all">
+            <div data-gsap="card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-4 sm:p-5 flex flex-col justify-between hover:border-[rgba(18,26,42,0.2)] transition-all">
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-2xl sm:text-3xl font-black text-[#C96F55]/40 font-mono">
@@ -863,7 +863,7 @@ export default function HomePage() {
         </section>
 
         {/* SECTION 7: FAQ (Pertanyaan yang Sering Ditanyakan) */}
-        <section id="faq" className="mb-10 sm:mb-14 pt-6 sm:pt-8 border-t border-[rgba(18,26,42,0.08)]">
+        <section id="faq" data-gsap-reveal className="mb-10 sm:mb-14 pt-6 sm:pt-8 border-t border-[rgba(18,26,42,0.08)]">
           <div className="max-w-2xl mb-6">
             <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#C96F55] uppercase tracking-wider mb-1">
               <CircleHelp className="w-3.5 h-3.5" />
@@ -913,7 +913,7 @@ export default function HomePage() {
         </section>
 
         {/* SECTION 8: FINAL CTA */}
-        <section className="mb-6 sm:mb-8 p-5 sm:p-8 bg-[#121A2A] text-[#F7F5EF] rounded-2xl border border-white/10 shadow-editorial flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
+        <section data-gsap-reveal className="mb-6 sm:mb-8 p-5 sm:p-8 bg-[#121A2A] text-[#F7F5EF] rounded-2xl border border-white/10 shadow-editorial flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
           <div className="space-y-1 max-w-xl">
             <h3 className="text-base sm:text-xl lg:text-2xl font-black text-[#F7F5EF] tracking-tight">
               Siap menemukan layanan digital yang kamu butuhkan?

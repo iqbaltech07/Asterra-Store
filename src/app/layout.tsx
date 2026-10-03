@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { QueryProvider } from '@/providers/query-provider';
 import { FloatingSupport } from '@/components/layout/floating-support';
+import { GsapProvider } from '@/providers/gsap-provider';
 import './globals.css';
 
 const inter = Inter({
@@ -75,7 +76,9 @@ export default function RootLayout({
       </head>
       <body className="bg-background text-foreground antialiased min-h-screen">
         <QueryProvider>
-          {children}
+          <GsapProvider>
+            {children}
+          </GsapProvider>
           <FloatingSupport />
         </QueryProvider>
       </body>

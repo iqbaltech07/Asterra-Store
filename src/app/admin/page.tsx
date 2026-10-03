@@ -703,15 +703,15 @@ export default function AdminPage() {
               <span>/</span>
               <span className="text-foreground font-medium">Panel Admin</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+            <h1 data-gsap="page-title" className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
               Manajemen Katalog & Produk
             </h1>
-            <p className="text-xs sm:text-sm text-foreground-muted mt-1">
+            <p data-gsap="page-sub" className="text-xs sm:text-sm text-foreground-muted mt-1">
               Atur produk aktif vs arsip, tentukan harga jual retail, dan pantau status ketersediaan live dari VIP Reseller.
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2.5">
+          <div data-gsap="hero-card" className="flex flex-wrap items-center gap-2.5">
             <Button
               variant="outline"
               size="sm"
@@ -742,7 +742,7 @@ export default function AdminPage() {
         </div>
 
         {/* Top Summary Metrics Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div data-gsap-reveal className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <div className="bg-surface border border-border rounded-xl p-4 sm:p-5">
             <div className="flex items-center justify-between text-xs text-foreground-muted mb-2">
               <span>Aktif di Katalog Toko</span>

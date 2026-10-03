@@ -112,15 +112,15 @@ export default function RegisterPage() {
         </Link>
       </div>
 
-      <Card className="w-full max-w-md border border-[rgba(18,26,42,0.08)] bg-white rounded-2xl shadow-card">
+      <Card data-gsap="hero-card" className="w-full max-w-md border border-[rgba(18,26,42,0.08)] bg-white rounded-2xl shadow-card">
         <CardHeader className="space-y-3 text-center pb-6 pt-7">
           <div className="flex justify-center mb-1">
             <AsterraLogo variant="light-bg" size="lg" linkToHome={true} />
           </div>
-          <CardTitle className="text-2xl font-extrabold tracking-tight text-[#121A2A]">
+          <CardTitle data-gsap="page-title" className="text-2xl font-extrabold tracking-tight text-[#121A2A]">
             Daftar Akun Baru
           </CardTitle>
-          <CardDescription className="text-xs text-[#121A2A]/60">
+          <CardDescription data-gsap="page-sub" className="text-xs text-[#121A2A]/60">
             Buat akun Asterra Store untuk mendapatkan kemudahan langganan digital
           </CardDescription>
         </CardHeader>

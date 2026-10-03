@@ -14,7 +14,7 @@ export function Footer({ onNotify }: FooterProps) {
   };
 
   return (
-    <footer className="border-t border-white/10 bg-[#121A2A] text-[#F7F5EF] mt-24 pt-16 pb-12">
+    <footer data-gsap-reveal className="border-t border-white/10 bg-[#121A2A] text-[#F7F5EF] mt-24 pt-16 pb-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10 pb-12 border-b border-white/10">
           {/* Brand Col */}

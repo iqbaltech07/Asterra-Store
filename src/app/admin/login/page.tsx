@@ -131,7 +131,7 @@ export default function AdminLoginPage() {
         </Link>
       </div>
 
-      <Card className="w-full max-w-md border-border bg-surface shadow-editorial">
+      <Card data-gsap="hero-card" className="w-full max-w-md border-border bg-surface shadow-editorial">
         <CardHeader className="space-y-2 text-center pb-6 pt-6">
           <div className="flex justify-center mb-2">
             <AsterraLogo variant="light-bg" size="md" />
@@ -142,10 +142,10 @@ export default function AdminLoginPage() {
             <span>Portal Terbatas</span>
           </div>
 
-          <CardTitle className="text-2xl font-bold tracking-tight text-foreground">
+          <CardTitle data-gsap="page-title" className="text-2xl font-bold tracking-tight text-foreground">
             Otorisasi Administrator
           </CardTitle>
-          <CardDescription className="text-xs text-foreground-muted max-w-xs mx-auto">
+          <CardDescription data-gsap="page-sub" className="text-xs text-foreground-muted max-w-xs mx-auto">
             Area terbatas khusus staf pengelola katalog dan konfigurasi Asterra Store
           </CardDescription>
         </CardHeader>

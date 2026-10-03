@@ -26,7 +26,7 @@ export function ProductCard({
     product.status === 'out_of_stock';
 
   return (
-    <Card className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl shadow-card hover:shadow-card-hover hover:border-[rgba(18,26,42,0.22)] transition-all duration-200 overflow-hidden flex flex-col justify-between group">
+    <Card data-gsap="card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl shadow-card hover:shadow-card-hover hover:border-[rgba(18,26,42,0.22)] transition-all duration-200 overflow-hidden flex flex-col justify-between group">
       <div>
         {/* 1. Product Image / Banner with fixed 16/7 aspect ratio */}
         <div className="relative w-full aspect-[16/7] bg-[#121A2A]/5 overflow-hidden border-b border-[rgba(18,26,42,0.06)]">

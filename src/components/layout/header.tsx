@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
@@ -18,6 +18,7 @@ import { useSession, signOut } from '@/lib/auth-client';
 import { CartDrawer } from '@/components/cart/cart-drawer';
 import { AsterraLogo } from '@/components/ui/asterra-logo';
 import { Button } from '@/components/ui/button';
+import { animateNavbar } from '@/lib/animations/gsap-utils';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,6 +41,14 @@ export function Header({ onNotify }: HeaderProps) {
 
   const pathname = usePathname();
   const router = useRouter();
+  const headerRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const cleanup = animateNavbar(headerRef.current);
+    return () => {
+      if (cleanup) cleanup();
+    };
+  }, []);
 
   const handleActionNotice = (msg: string) => {
     if (onNotify) onNotify(msg);
@@ -64,10 +73,10 @@ export function Header({ onNotify }: HeaderProps) {
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full px-2 sm:px-6 pt-2.5 pb-2 transition-all">
+      <header ref={headerRef} className="sticky top-0 z-40 w-full px-2 sm:px-6 pt-2.5 pb-2 transition-all">
         <div className="max-w-7xl mx-auto rounded-2xl bg-[#121A2A] border border-white/10 shadow-navbar px-3.5 sm:px-6 h-16 sm:h-18 flex items-center justify-between gap-4">
           {/* Brand Logo */}
-          <div className="flex items-center gap-3">
+          <div data-gsap="nav-logo" className="flex items-center gap-3">
             <AsterraLogo
               variant="navbar"
               size="md"
@@ -81,6 +90,7 @@ export function Header({ onNotify }: HeaderProps) {
           <nav className="hidden lg:flex items-center gap-6 text-xs sm:text-[13px] font-medium">
             <Link
               href="/"
+              data-gsap="nav-link"
               className={`transition-colors py-1 ${
                 isHomeActive
                   ? 'text-[#C96F55] font-semibold'
@@ -91,6 +101,7 @@ export function Header({ onNotify }: HeaderProps) {
             </Link>
             <Link
               href="/products"
+              data-gsap="nav-link"
               className={`transition-colors py-1 ${
                 isProductsActive
                   ? 'text-[#C96F55] font-semibold'
@@ -101,6 +112,7 @@ export function Header({ onNotify }: HeaderProps) {
             </Link>
             <Link
               href="/orders"
+              data-gsap="nav-link"
               className={`transition-colors py-1 inline-flex items-center gap-1.5 ${
                 isOrdersActive
                   ? 'text-[#C96F55] font-semibold'
@@ -112,12 +124,14 @@ export function Header({ onNotify }: HeaderProps) {
             </Link>
             <Link
               href="/#keunggulan"
+              data-gsap="nav-link"
               className="text-[#F7F5EF]/80 hover:text-[#F7F5EF] transition-colors py-1"
             >
               Keunggulan
             </Link>
             <Link
               href="/#panduan"
+              data-gsap="nav-link"
               className="text-[#F7F5EF]/80 hover:text-[#F7F5EF] transition-colors py-1"
             >
               Cara Pemesanan
@@ -129,6 +143,7 @@ export function Header({ onNotify }: HeaderProps) {
             {/* Cart Trigger Button */}
             <button
               type="button"
+              data-gsap="nav-action"
               className="relative inline-flex items-center gap-2 h-9 sm:h-10 px-3 sm:px-4 rounded-xl bg-[#182235] border border-white/10 hover:border-[#C96F55]/50 text-[#F7F5EF] text-xs sm:text-sm font-medium transition-all shadow-inner cursor-pointer group active:scale-95"
               onClick={() => setIsCartOpen(true)}
               aria-label="Buka Keranjang Pesanan"
@@ -144,7 +159,7 @@ export function Header({ onNotify }: HeaderProps) {
 
             {/* Auth Actions */}
             {currentUser ? (
-              <div className="hidden sm:block">
+              <div data-gsap="nav-action" className="hidden sm:block">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button
@@ -206,7 +221,7 @@ export function Header({ onNotify }: HeaderProps) {
                 </DropdownMenu>
               </div>
             ) : (
-              <div className="hidden sm:flex items-center">
+              <div data-gsap="nav-action" className="hidden sm:flex items-center">
                 <Link href="/login">
                   <Button
                     size="sm"
@@ -221,6 +236,7 @@ export function Header({ onNotify }: HeaderProps) {
             {/* Mobile Hamburger Toggle */}
             <button
               type="button"
+              data-gsap="nav-action"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="lg:hidden p-2 text-[#F7F5EF]/80 hover:text-[#F7F5EF] rounded-xl hover:bg-[#182235] transition-colors"
               aria-label="Buka Menu"

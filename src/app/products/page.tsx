@@ -198,14 +198,14 @@ function ProductsContent() {
           </div>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#121A2A]">
+              <h1 data-gsap="page-title" className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#121A2A]">
                 Katalog Produk & Lisensi Premium
               </h1>
-              <p className="text-xs sm:text-sm text-[#121A2A]/70 mt-1">
+              <p data-gsap="page-sub" className="text-xs sm:text-sm text-[#121A2A]/70 mt-1">
                 Jelajahi seluruh perangkat lunak, AI tools, dan platform kreatif resmi dengan aktivasi instan.
               </p>
             </div>
-            <div className="flex items-center gap-2 text-xs bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.25)] px-3 py-1.5 rounded-md text-[#C96F55] font-semibold w-fit">
+            <div data-gsap="hero-card" className="flex items-center gap-2 text-xs bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.25)] px-3 py-1.5 rounded-md text-[#C96F55] font-semibold w-fit">
               <Zap className="w-3.5 h-3.5 text-[#C96F55]" />
               <span>Aktivasi 100% Cepat & Bergaransi</span>
             </div>
@@ -213,7 +213,7 @@ function ProductsContent() {
         </div>
 
         {/* Filter & Search Bar Controls */}
-        <div className="bg-white border border-[rgba(18,26,42,0.08)] rounded-2xl p-4 sm:p-5 mb-8 space-y-4 shadow-card">
+        <div data-gsap="hero-card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-2xl p-4 sm:p-5 mb-8 space-y-4 shadow-card">
           <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
             {/* Search Input */}
             <div className="relative flex-1">
@@ -384,7 +384,7 @@ function ProductsContent() {
 
         {/* Products Listing Grid */}
         {!isLoading && !error && products.length > 0 && viewMode === 'grid' && (
-          <div className="grid grid-cols-2 gap-3 md:gap-5 lg:grid-cols-3">
+          <div data-gsap-reveal className="grid grid-cols-2 gap-3 md:gap-5 lg:grid-cols-3">
             {products.map((product, idx) => {
               const isSelected = cartItems.some((item) => item.id === product.id);
               return (
@@ -402,7 +402,7 @@ function ProductsContent() {
 
         {/* Products Listing List View */}
         {!isLoading && !error && products.length > 0 && viewMode === 'list' && (
-          <div className="space-y-4">
+          <div data-gsap-reveal className="space-y-4">
             {products.map((product, idx) => {
               const isSelected = cartItems.some((item) => item.id === product.id);
               const isOutOfStock =
@@ -413,6 +413,7 @@ function ProductsContent() {
               return (
                 <div
                   key={product.id}
+                  data-gsap="card"
                   className="bg-white border border-[rgba(18,26,42,0.08)] rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 shadow-card hover:shadow-card-hover hover:border-[rgba(18,26,42,0.18)] transition-all duration-200"
                 >
                   <div className="flex items-start sm:items-center gap-4">

@@ -48,15 +48,15 @@ export default function LoginPage() {
         </Link>
       </div>
 
-      <Card className="w-full max-w-md border border-[rgba(18,26,42,0.08)] bg-white rounded-2xl shadow-card">
+      <Card data-gsap="hero-card" className="w-full max-w-md border border-[rgba(18,26,42,0.08)] bg-white rounded-2xl shadow-card">
         <CardHeader className="space-y-3 text-center pb-6 pt-7">
           <div className="flex justify-center mb-1">
             <AsterraLogo variant="light-bg" size="lg" linkToHome={true} />
           </div>
-          <CardTitle className="text-2xl font-extrabold tracking-tight text-[#121A2A]">
+          <CardTitle data-gsap="page-title" className="text-2xl font-extrabold tracking-tight text-[#121A2A]">
             Masuk ke Akun Anda
           </CardTitle>
-          <CardDescription className="text-xs text-[#121A2A]/60 max-w-xs mx-auto">
+          <CardDescription data-gsap="page-sub" className="text-xs text-[#121A2A]/60 max-w-xs mx-auto">
             Akses instan untuk mengelola langganan, lisensi, dan riwayat pesanan digital Anda
           </CardDescription>
         </CardHeader>

@@ -445,14 +445,14 @@ export default function CheckoutPage() {
             <form onSubmit={handleSubmitOrder} className="space-y-8">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
                 <div>
-                  <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+                  <h1 data-gsap="page-title" className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
                     Checkout & Pembayaran Instan
                   </h1>
-                  <p className="text-xs sm:text-sm text-foreground-muted mt-1">
+                  <p data-gsap="page-sub" className="text-xs sm:text-sm text-foreground-muted mt-1">
                     Pastikan informasi akun dan email tujuan sudah benar sebelum melakukan transaksi.
                   </p>
                 </div>
-                <div className="flex items-center gap-2 text-xs bg-surface-raised border border-border px-3 py-1.5 rounded-lg text-foreground-muted w-fit">
+                <div data-gsap="hero-card" className="flex items-center gap-2 text-xs bg-surface-raised border border-border px-3 py-1.5 rounded-lg text-foreground-muted w-fit">
                   <Lock className="w-3.5 h-3.5 text-primary" />
                   <span>Transaksi Terenkripsi SSL 256-Bit</span>
                 </div>
