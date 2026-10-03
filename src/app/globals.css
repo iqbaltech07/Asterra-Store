@@ -96,3 +96,41 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(18, 26, 42, 0.35);
 }
+
+/* Seamless GPU-Accelerated Infinite Horizontal Marquee */
+@keyframes asterra-marquee {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.marquee-wrapper {
+  overflow: hidden;
+  width: 100%;
+}
+
+.marquee-track {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+  animation: asterra-marquee 50s linear infinite;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .marquee-wrapper:hover .marquee-track {
+    animation-play-state: paused;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-wrapper {
+    overflow-x: auto;
+  }
+  .marquee-track {
+    animation: none !important;
+    transform: none !important;
+  }
+}

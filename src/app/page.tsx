@@ -15,7 +15,6 @@ import {
   ArrowRight,
   Plus,
   Minus,
-  Search,
   Sparkles,
   Tv,
   CircleHelp,
@@ -169,11 +168,61 @@ function AppBrandBadge({ name }: { name: string }) {
   );
 }
 
+interface ApplicationGroupItem {
+  name: string;
+  slug: string;
+  category: string;
+  categoryTag: 'ai' | 'design' | 'video' | 'streaming' | 'other';
+  items: ProductItem[];
+}
+
+function ApplicationCard({
+  app,
+  isDuplicate = false,
+}: {
+  app: ApplicationGroupItem;
+  isDuplicate?: boolean;
+}) {
+  return (
+    <Link
+      href={`/products?search=${encodeURIComponent(app.name)}`}
+      tabIndex={isDuplicate ? -1 : undefined}
+      className="group bg-white border border-[rgba(18,26,42,0.08)] hover:border-[#C96F55]/60 rounded-xl sm:rounded-2xl p-3.5 sm:p-4 shadow-2xs hover:shadow-xs transition-all duration-200 flex flex-col justify-between shrink-0 w-[260px] sm:w-[320px] h-[126px] sm:h-[136px] select-none"
+    >
+      <div>
+        {/* App Header: Brand Badge */}
+        <div className="flex items-center justify-between mb-2 sm:mb-2.5">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-[#121A2A]/5 border border-[rgba(18,26,42,0.08)] flex items-center justify-center overflow-hidden shrink-0">
+            <AppBrandBadge name={app.name} />
+          </div>
+        </div>
+
+        {/* App Name & Category */}
+        <h3 className="font-extrabold text-xs sm:text-sm lg:text-[15px] text-[#121A2A] group-hover:text-[#C96F55] transition-colors line-clamp-1 leading-snug">
+          {app.name}
+        </h3>
+        <p className="text-[10px] sm:text-xs text-[#121A2A]/55 truncate mt-0.5">
+          {app.category}
+        </p>
+      </div>
+
+      {/* Action Link with Arrow */}
+      <div className="pt-2 sm:pt-2.5 mt-2.5 sm:mt-3 border-t border-[rgba(18,26,42,0.06)] flex items-center justify-between text-[10px] sm:text-xs font-semibold text-[#121A2A]/75 group-hover:text-[#C96F55] transition-colors">
+        <span className="font-medium text-[#121A2A]/50">
+          {app.items.length} Produk
+        </span>
+        <span className="inline-flex items-center gap-1">
+          <span className="hidden xs:inline">Lihat Produk</span>
+          <ArrowRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 transform group-hover:translate-x-0.5 transition-transform" />
+        </span>
+      </div>
+    </Link>
+  );
+}
+
 export default function HomePage() {
   const [activeNotification, setActiveNotification] = useState<string | null>(null);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
-  const [selectedFilter, setSelectedFilter] = useState<'all' | 'apps' | 'ai'>('all');
-  const [searchQuery, setSearchQuery] = useState('');
 
   // Dynamic products fetched from catalog API (active products only)
   const {
@@ -194,196 +243,101 @@ export default function HomePage() {
     [catalogResponse?.data]
   );
 
-  // Dynamically and accurately group products by Application / Service
-  const applicationGroups = useMemo(() => {
-    const map = new Map<
-      string,
+  // Strictly 12 priority applications explicitly ordered by user, mapped from real active catalog data
+  const marqueeApps = useMemo(() => {
+    const targetApps = [
       {
-        name: string;
-        slug: string;
-        category: string;
-        categoryTag: 'ai' | 'design' | 'video' | 'streaming' | 'other';
-        items: ProductItem[];
-      }
-    >();
-
-    allProducts.forEach((p) => {
-      const text = `${p.name} ${(p as unknown as { id?: string }).id || ''} ${(p as unknown as { providerCode?: string }).providerCode || ''}`.toLowerCase();
-      let name = 'Lainnya';
-      let slug = 'all';
-      let cat = p.category?.name || 'Digital Service';
-      let categoryTag: 'ai' | 'design' | 'video' | 'streaming' | 'other' = 'other';
-
-      if (text.includes('gemini') || text.includes('google ai')) {
-        name = 'Google Gemini';
-        slug = 'gemini';
-        cat = 'AI Assistant & Cloud';
-        categoryTag = 'ai';
-      } else if (text.includes('chatgpt') || text.includes('chat gpt') || text.includes('plus plan')) {
-        name = 'ChatGPT';
-        slug = 'chatgpt';
-        cat = 'AI Assistant & Writing';
-        categoryTag = 'ai';
-      } else if (text.includes('grammarly')) {
-        name = 'Grammarly';
-        slug = 'grammarly';
-        cat = 'Writing & Grammar AI';
-        categoryTag = 'ai';
-      } else if (text.includes('canva')) {
-        name = 'Canva';
-        slug = 'canva';
-        cat = 'Design & Kreatif';
-        categoryTag = 'design';
-      } else if (text.includes('picsart')) {
-        name = 'Picsart';
-        slug = 'picsart';
-        cat = 'Photo & Graphic Design';
-        categoryTag = 'design';
-      } else if (text.includes('capcut')) {
-        name = 'CapCut';
-        slug = 'capcut';
-        cat = 'Video Editing & Content';
-        categoryTag = 'video';
-      } else if (text.includes('alightmotion') || text.includes('alight motion')) {
-        name = 'Alight Motion';
-        slug = 'alight';
-        cat = 'Motion Graphic & VFX';
-        categoryTag = 'video';
-      } else if (text.includes('youtube')) {
-        name = 'YouTube';
-        slug = 'youtube';
-        cat = 'Streaming & Video';
-        categoryTag = 'streaming';
-      } else if (text.includes('spotify')) {
-        name = 'Spotify';
-        slug = 'spotify';
-        cat = 'Music Streaming';
-        categoryTag = 'streaming';
-      } else if (text.includes('netflix')) {
-        name = 'Netflix';
-        slug = 'netflix';
-        cat = 'Movies & Series';
-        categoryTag = 'streaming';
-      } else if (text.includes('disney')) {
-        name = 'Disney+ Hotstar';
-        slug = 'disney';
-        cat = 'Entertainment & Movies';
-        categoryTag = 'streaming';
-      } else if (text.includes('prime') || text.includes('amazon')) {
-        name = 'Prime Video';
-        slug = 'prime';
-        cat = 'Entertainment & Movies';
-        categoryTag = 'streaming';
-      } else if (text.includes('vidio')) {
-        name = 'Vidio';
-        slug = 'vidio';
-        cat = 'Sports & TV Streaming';
-        categoryTag = 'streaming';
-      } else if (text.includes('wetv')) {
-        name = 'WeTV';
-        slug = 'wetv';
-        cat = 'Asian Drama & Anime';
-        categoryTag = 'streaming';
-      } else if (text.includes('iqiyi')) {
-        name = 'iQIYI';
-        slug = 'iqiyi';
-        cat = 'Drama & Anime Streaming';
-        categoryTag = 'streaming';
-      } else if (text.includes('bstation') || text.includes('bilibili')) {
-        name = 'Bstation';
-        slug = 'bstation';
-        cat = 'Anime & Creator Community';
-        categoryTag = 'streaming';
-      } else if (text.includes('viu')) {
-        name = 'Viu';
-        slug = 'viu';
-        cat = 'Asian Drama & Variety';
-        categoryTag = 'streaming';
-      } else if (text.includes('k-vision') || text.includes('kvision')) {
-        name = 'K-Vision';
-        slug = 'kvision';
-        cat = 'TV Satelit & Sports';
-        categoryTag = 'streaming';
-      } else if (text.includes('nex parabola') || text.includes('nex')) {
-        name = 'Nex Parabola';
-        slug = 'nex';
-        cat = 'TV Satelit & Liga';
-        categoryTag = 'streaming';
-      } else if (text.includes('vision') || text.includes('visionku')) {
-        name = 'Vision+';
-        slug = 'vision';
-        cat = 'TV & Streaming';
-        categoryTag = 'streaming';
-      } else if (text.includes('orange tv') || text.includes('otv')) {
-        name = 'Orange TV';
-        slug = 'orangetv';
-        cat = 'Voucher TV Satelit';
-        categoryTag = 'streaming';
-      } else {
-        const firstWord = p.name.split(' ')[0];
-        name = firstWord;
-        slug = firstWord.toLowerCase();
-      }
-
-      if (!map.has(name)) {
-        map.set(name, {
-          name,
-          slug,
-          category: cat,
-          categoryTag,
-          items: [],
-        });
-      }
-      const entry = map.get(name)!;
-      entry.items.push(p);
-    });
-
-    // Priority ordering for primary applications
-    const priority = [
-      'Google Gemini',
-      'Canva',
-      'CapCut',
-      'ChatGPT',
-      'Alight Motion',
-      'YouTube',
-      'Spotify',
-      'Netflix',
-      'Disney+ Hotstar',
-      'Vidio',
-      'Bstation',
-      'iQIYI',
-      'WeTV',
-      'Viu',
-      'Vision+',
-      'K-Vision',
-      'Nex Parabola',
+        name: 'Google Gemini',
+        match: (t: string) => t.includes('gemini') || t.includes('google ai'),
+        cat: 'AI Assistant & Cloud',
+        tag: 'ai' as const,
+      },
+      {
+        name: 'Canva',
+        match: (t: string) => t.includes('canva'),
+        cat: 'Design & Kreatif',
+        tag: 'design' as const,
+      },
+      {
+        name: 'CapCut',
+        match: (t: string) => t.includes('capcut'),
+        cat: 'Video Editing & Content',
+        tag: 'video' as const,
+      },
+      {
+        name: 'ChatGPT',
+        match: (t: string) => t.includes('chatgpt') || t.includes('chat gpt') || t.includes('plus plan'),
+        cat: 'AI Assistant & Writing',
+        tag: 'ai' as const,
+      },
+      {
+        name: 'Alight Motion',
+        match: (t: string) => t.includes('alightmotion') || t.includes('alight motion'),
+        cat: 'Motion Graphic & VFX',
+        tag: 'video' as const,
+      },
+      {
+        name: 'YouTube',
+        match: (t: string) => t.includes('youtube'),
+        cat: 'Streaming & Video',
+        tag: 'streaming' as const,
+      },
+      {
+        name: 'Netflix',
+        match: (t: string) => t.includes('netflix'),
+        cat: 'Movies & Series',
+        tag: 'streaming' as const,
+      },
+      {
+        name: 'Vidio',
+        match: (t: string) => t.includes('vidio'),
+        cat: 'Sports & TV Streaming',
+        tag: 'streaming' as const,
+      },
+      {
+        name: 'Bstation',
+        match: (t: string) => t.includes('bstation') || t.includes('bilibili'),
+        cat: 'Anime & Creator Community',
+        tag: 'streaming' as const,
+      },
+      {
+        name: 'iQIYI',
+        match: (t: string) => t.includes('iqiyi'),
+        cat: 'Drama & Anime Streaming',
+        tag: 'streaming' as const,
+      },
+      {
+        name: 'WeTV',
+        match: (t: string) => t.includes('wetv'),
+        cat: 'Asian Drama & Anime',
+        tag: 'streaming' as const,
+      },
+      {
+        name: 'Viu',
+        match: (t: string) => t.includes('viu'),
+        cat: 'Asian Drama & Variety',
+        tag: 'streaming' as const,
+      },
     ];
 
-    return Array.from(map.values()).sort((a, b) => {
-      const idxA = priority.indexOf(a.name);
-      const idxB = priority.indexOf(b.name);
-      if (idxA !== -1 && idxB !== -1) return idxA - idxB;
-      if (idxA !== -1) return -1;
-      if (idxB !== -1) return 1;
-      return b.items.length - a.items.length;
+    return targetApps.map((target) => {
+      // Find matching items from allProducts (strictly excluding any item containing "lisensi")
+      const items = allProducts.filter((p) => {
+        const text = `${p.name} ${(p as unknown as { id?: string }).id || ''} ${(p as unknown as { providerCode?: string }).providerCode || ''}`.toLowerCase();
+        if (text.includes('lisensi')) return false;
+        return target.match(text);
+      });
+
+      return {
+        name: target.name,
+        slug: target.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+        category: target.cat,
+        categoryTag: target.tag,
+        items,
+      };
     });
   }, [allProducts]);
 
-  // Filter application groups based on selected tab and search query
-  const filteredApps = useMemo(() => {
-    return applicationGroups.filter((app) => {
-      if (selectedFilter === 'ai' && app.categoryTag !== 'ai') return false;
-      if (selectedFilter === 'apps' && app.categoryTag === 'ai') return false;
-
-      if (searchQuery.trim()) {
-        const query = searchQuery.toLowerCase().trim();
-        const matchesName = app.name.toLowerCase().includes(query);
-        const matchesCat = app.category.toLowerCase().includes(query);
-        return matchesName || matchesCat;
-      }
-      return true;
-    });
-  }, [applicationGroups, selectedFilter, searchQuery]);
 
   const showNotification = (message: string) => {
     setActiveNotification(message);
@@ -542,10 +496,10 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* SECTION 4: EXPLORE BY APPLICATION (KATALOG APLIKASI DIGITAL) */}
-        <section id="aplikasi" className="mb-10 sm:mb-14">
-          {/* Section Header */}
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2.5 mb-3.5 pb-2.5 border-b border-[rgba(18,26,42,0.08)]">
+        {/* SECTION 4: EXPLORE BY APPLICATION (KATALOG APLIKASI DIGITAL - INFINITE MARQUEE) */}
+        <section id="aplikasi" className="mb-10 sm:mb-14 overflow-hidden">
+          {/* Section Header (Static) */}
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2.5 mb-4 sm:mb-5 pb-2.5 border-b border-[rgba(18,26,42,0.08)]">
             <div>
               <span className="text-[11px] font-bold text-[#C96F55] uppercase tracking-wider block mb-0.5">
                 Katalog Aplikasi Digital
@@ -567,127 +521,46 @@ export default function HomePage() {
             </Link>
           </div>
 
-          {/* Filter Tabs & Search Bar (Matching Reference Visual) */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 sm:mb-5">
-            {/* Filter Tabs */}
-            <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
-              <button
-                type="button"
-                onClick={() => setSelectedFilter('all')}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all shrink-0 ${
-                  selectedFilter === 'all'
-                    ? 'bg-[#121A2A] text-[#F7F5EF] shadow-xs'
-                    : 'bg-white border border-[rgba(18,26,42,0.12)] text-[#121A2A]/75 hover:bg-[rgba(18,26,42,0.04)]'
-                }`}
-              >
-                Semua Katalog
-              </button>
-              <button
-                type="button"
-                onClick={() => setSelectedFilter('apps')}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all shrink-0 ${
-                  selectedFilter === 'apps'
-                    ? 'bg-[#121A2A] text-[#F7F5EF] shadow-xs'
-                    : 'bg-white border border-[rgba(18,26,42,0.12)] text-[#121A2A]/75 hover:bg-[rgba(18,26,42,0.04)]'
-                }`}
-              >
-                Apps & Streaming
-              </button>
-              <button
-                type="button"
-                onClick={() => setSelectedFilter('ai')}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all shrink-0 ${
-                  selectedFilter === 'ai'
-                    ? 'bg-[#121A2A] text-[#F7F5EF] shadow-xs'
-                    : 'bg-white border border-[rgba(18,26,42,0.12)] text-[#121A2A]/75 hover:bg-[rgba(18,26,42,0.04)]'
-                }`}
-              >
-                AI Tools
-              </button>
-            </div>
-
-            {/* Contextual Search Input */}
-            <div className="relative w-full sm:w-64 lg:w-72">
-              <Search className="w-4 h-4 text-[#121A2A]/40 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Cari produk digital..."
-                className="w-full pl-9 pr-3.5 py-1.5 sm:py-2 text-xs rounded-full bg-white border border-[rgba(18,26,42,0.14)] focus:outline-none focus:border-[#C96F55] focus:ring-1 focus:ring-[#C96F55] transition-all text-[#121A2A] placeholder:text-[#121A2A]/45 shadow-2xs"
-              />
-            </div>
-          </div>
-
-          {/* Dynamic Application Cards Grid (strictly 2 cols mobile, 3 tablet, 4 desktop) */}
+          {/* Infinite Horizontal Marquee: Strictly 1 Row, Continuous GPU Looping */}
           {isLoadingProducts ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-4">
-              {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-                <div
-                  key={i}
-                  className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-3.5 sm:p-4 h-32 sm:h-36 animate-pulse flex flex-col justify-between"
-                >
-                  <div className="space-y-2">
-                    <div className="w-9 h-9 sm:w-10 sm:h-10 bg-[rgba(18,26,42,0.08)] rounded-xl" />
-                    <div className="w-24 h-3.5 bg-[rgba(18,26,42,0.08)] rounded" />
+            <div className="marquee-wrapper relative w-full overflow-hidden py-1">
+              <div className="flex items-center gap-3 sm:gap-4 w-max">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <div
+                    key={i}
+                    className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-3.5 sm:p-4 w-[260px] sm:w-[320px] h-[126px] sm:h-[136px] animate-pulse flex flex-col justify-between shrink-0"
+                  >
+                    <div className="space-y-2">
+                      <div className="w-9 h-9 sm:w-10 sm:h-10 bg-[rgba(18,26,42,0.08)] rounded-xl" />
+                      <div className="w-24 h-3.5 bg-[rgba(18,26,42,0.08)] rounded" />
+                    </div>
+                    <div className="w-16 h-3 bg-[rgba(18,26,42,0.06)] rounded" />
                   </div>
-                  <div className="w-16 h-3 bg-[rgba(18,26,42,0.06)] rounded" />
-                </div>
-              ))}
-            </div>
-          ) : filteredApps.length === 0 ? (
-            <div className="p-8 text-center bg-white rounded-xl border border-[rgba(18,26,42,0.08)]">
-              <p className="text-xs sm:text-sm text-[#121A2A]/60">
-                Tidak ada aplikasi digital yang cocok dengan filter atau kata kunci Anda.
-              </p>
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedFilter('all');
-                  setSearchQuery('');
-                }}
-                className="mt-2 text-xs font-bold text-[#C96F55] hover:underline"
-              >
-                Reset Filter
-              </button>
+                ))}
+              </div>
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-4">
-              {filteredApps.map((app) => (
-                <Link
-                  key={app.name}
-                  href={`/products?search=${encodeURIComponent(app.name)}`}
-                  className="group bg-white border border-[rgba(18,26,42,0.08)] hover:border-[#C96F55]/60 rounded-xl sm:rounded-2xl p-3.5 sm:p-4 shadow-2xs hover:shadow-xs hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between"
-                >
-                  <div>
-                    {/* App Header: Brand / Representative Avatar */}
-                    <div className="flex items-center justify-between mb-2 sm:mb-2.5">
-                      <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-[#121A2A]/5 border border-[rgba(18,26,42,0.08)] flex items-center justify-center overflow-hidden shrink-0">
-                        <AppBrandBadge name={app.name} />
-                      </div>
-                    </div>
+            <div className="marquee-wrapper relative w-full overflow-hidden py-1">
+              {/* Subtle edge fades (clean, no large AI masks) */}
+              <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-4 sm:w-8 z-10 bg-gradient-to-r from-white to-transparent" />
+              <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-4 sm:w-8 z-10 bg-gradient-to-l from-white to-transparent" />
 
-                    {/* App Name & Category */}
-                    <h3 className="font-extrabold text-xs sm:text-sm lg:text-[15px] text-[#121A2A] group-hover:text-[#C96F55] transition-colors line-clamp-1 leading-snug">
-                      {app.name}
-                    </h3>
-                    <p className="text-[10px] sm:text-xs text-[#121A2A]/55 truncate mt-0.5">
-                      {app.category}
-                    </p>
-                  </div>
+              {/* Marquee Track (Group A + Group B) */}
+              <div className="marquee-track flex flex-nowrap w-max">
+                {/* Group A */}
+                <div className="flex items-center gap-3 sm:gap-4 shrink-0 pr-3 sm:pr-4">
+                  {marqueeApps.map((app) => (
+                    <ApplicationCard key={`group-a-${app.name}`} app={app} />
+                  ))}
+                </div>
 
-                  {/* Action Link with Arrow */}
-                  <div className="pt-2 sm:pt-2.5 mt-2.5 sm:mt-3 border-t border-[rgba(18,26,42,0.06)] flex items-center justify-between text-[10px] sm:text-xs font-semibold text-[#121A2A]/75 group-hover:text-[#C96F55] transition-colors">
-                    <span className="font-medium text-[#121A2A]/50">
-                      {app.items.length} Produk
-                    </span>
-                    <span className="inline-flex items-center gap-1">
-                      <span className="hidden xs:inline">Lihat Produk</span>
-                      <ArrowRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 transform group-hover:translate-x-0.5 transition-transform" />
-                    </span>
-                  </div>
-                </Link>
-              ))}
+                {/* Group B (Identical duplicate for seamless 50% translation loop, aria-hidden for accessibility) */}
+                <div className="flex items-center gap-3 sm:gap-4 shrink-0 pr-3 sm:pr-4" aria-hidden="true">
+                  {marqueeApps.map((app) => (
+                    <ApplicationCard key={`group-b-${app.name}`} app={app} isDuplicate />
+                  ))}
+                </div>
+              </div>
             </div>
           )}
         </section>
