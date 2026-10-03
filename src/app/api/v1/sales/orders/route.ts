@@ -40,7 +40,10 @@ export async function GET(req: NextRequest) {
           ? `${emailParts[0].substring(0, 2)}***@${emailParts[1]}`
           : 'Pelanggan';
 
-      const commission = Math.round((o.totalAmount * (partner.rate || 10)) / 100);
+      const commissionLog = partner.commissionLogs?.find((l) => l.orderId === o.id);
+      const commission = commissionLog?.commission ?? Math.round((o.totalAmount * (partner.rate || 10)) / 100);
+      const commissionStatus = commissionLog?.status ?? (o.status === 'completed' ? 'final' : o.status === 'refunded' ? 'reversed' : 'pending');
+      const holdingUntil = commissionLog?.holdingUntil;
 
       return {
         id: o.id,
@@ -51,6 +54,8 @@ export async function GET(req: NextRequest) {
         status: o.status,
         paymentStatus: o.paymentStatus || (o.status === 'completed' ? 'PAID' : 'PENDING'),
         commission,
+        commissionStatus,
+        holdingUntil,
         itemsCount: o.items.length,
         productNames: o.items.map((i) => i.productName).join(', '),
       };

@@ -405,46 +405,65 @@ function DaftarSalesContent() {
                 </div>
 
                 {/* 3b. Kata Sandi Akun Sales */}
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="font-semibold text-foreground">
-                      Kata Sandi Akun Sales <span className="text-status-error">*</span>
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label htmlFor="sales-password" className="font-semibold text-foreground flex items-center gap-1.5">
+                      <Lock className="w-3.5 h-3.5 text-primary" />
+                      <span>Kata Sandi Akun Sales</span>
+                      <span className="text-status-error">*</span>
                     </label>
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="text-[10px] text-primary hover:underline flex items-center gap-1 font-medium"
+                      className="text-[11px] text-primary hover:underline flex items-center gap-1 font-medium cursor-pointer"
                     >
-                      {showPassword ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                      {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                       <span>{showPassword ? 'Sembunyikan' : 'Lihat Sandi'}</span>
                     </button>
                   </div>
-                  <Input
-                    type={showPassword ? 'text' : 'password'}
-                    required
-                    placeholder="Minimal 6 karakter"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="bg-surface-raised border-border text-xs h-10"
-                  />
-                  <span className="text-[11px] text-foreground-muted mt-1 block">
-                    Digunakan untuk login ke Portal Mitra Sales Asterra Store Anda.
+                  <div className="relative">
+                    <Input
+                      id="sales-password"
+                      name="password"
+                      type={showPassword ? 'text' : 'password'}
+                      required
+                      autoComplete="new-password"
+                      placeholder="Minimal 6 karakter untuk login"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="bg-surface-raised border-border text-xs h-10 pr-10"
+                    />
+                  </div>
+                  <span className="text-[11px] text-foreground-muted block">
+                    Digunakan untuk login langsung ke Portal Mitra Sales Asterra Store Anda.
                   </span>
                 </div>
 
                 {/* 3c. Konfirmasi Kata Sandi */}
-                <div>
-                  <label className="font-semibold text-foreground block mb-1">
-                    Konfirmasi Kata Sandi <span className="text-status-error">*</span>
+                <div className="space-y-1.5">
+                  <label htmlFor="sales-confirm-password" className="font-semibold text-foreground flex items-center gap-1.5">
+                    <Lock className="w-3.5 h-3.5 text-primary" />
+                    <span>Konfirmasi Kata Sandi</span>
+                    <span className="text-status-error">*</span>
                   </label>
-                  <Input
-                    type={showPassword ? 'text' : 'password'}
-                    required
-                    placeholder="Ulangi kata sandi yang sama"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="bg-surface-raised border-border text-xs h-10"
-                  />
+                  <div className="relative">
+                    <Input
+                      id="sales-confirm-password"
+                      name="confirmPassword"
+                      type={showPassword ? 'text' : 'password'}
+                      required
+                      autoComplete="new-password"
+                      placeholder="Ulangi kata sandi yang sama"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="bg-surface-raised border-border text-xs h-10"
+                    />
+                  </div>
+                  {password && confirmPassword && password !== confirmPassword && (
+                    <span className="text-[11px] text-status-error block font-medium">
+                      Kata sandi dan konfirmasi belum cocok.
+                    </span>
+                  )}
                 </div>
 
                 {/* 4. Kode Referral Jika Punya */}

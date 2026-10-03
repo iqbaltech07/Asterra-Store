@@ -13,6 +13,19 @@ export interface PayoutRequest {
   notes?: string;
 }
 
+export interface CommissionOrderLog {
+  id: string;
+  orderId: string;
+  orderTotal: number;
+  rate: number;
+  commission: number;
+  status: 'pending' | 'final' | 'reversed';
+  holdingUntil: string; // 3-day holding period for warranty & fraud check
+  createdAt: string;
+  releasedAt?: string;
+  reversalReason?: string;
+}
+
 export interface NetworkBonusLog {
   id: string;
   orderId?: string;
@@ -21,7 +34,12 @@ export interface NetworkBonusLog {
   orderTotal: number;
   bonusAmount: number;
   bonusPercentage: number;
+  marginEstimate?: number;
+  status: 'pending' | 'final' | 'reversed';
+  holdingUntil: string;
   createdAt: string;
+  releasedAt?: string;
+  reversalReason?: string;
 }
 
 export interface AffiliatePartnerData {
@@ -36,13 +54,15 @@ export interface AffiliatePartnerData {
   totalClicks: number;
   totalOrders: number;
   totalRevenue: number;
-  unpaidCommission: number;
+  unpaidCommission: number; // Final & available to withdraw
+  pendingCommission?: number; // In 3-day warranty holding period
   paidCommission: number;
   networkCommission?: number;
   networkBonusLogs?: NetworkBonusLog[];
+  commissionLogs?: CommissionOrderLog[];
   bankName?: string;
   bankAccount?: string;
-  status: 'active' | 'pending' | 'suspended';
+  status: 'active' | 'pending' | 'suspended' | 'inactive';
   joinedAt: string;
   createdAt: string;
   creditedOrderIds?: string[];
@@ -64,11 +84,54 @@ export class AffiliateService {
     }
   }
 
+  /**
+   * Automatically transition pending commissions to available/final once 3-day holding period elapses
+   */
+  public static settleMatureCommissions(list: AffiliatePartnerData[]): boolean {
+    const now = Date.now();
+    let modified = false;
+
+    for (const partner of list) {
+      // 1. Direct sales commission logs
+      if (partner.commissionLogs && partner.commissionLogs.length > 0) {
+        for (const log of partner.commissionLogs) {
+          if (log.status === 'pending' && new Date(log.holdingUntil).getTime() <= now) {
+            log.status = 'final';
+            log.releasedAt = new Date().toISOString();
+            partner.pendingCommission = Math.max(0, (partner.pendingCommission || 0) - log.commission);
+            partner.unpaidCommission = (partner.unpaidCommission || 0) + log.commission;
+            modified = true;
+          }
+        }
+      }
+
+      // 2. Network override bonus logs
+      if (partner.networkBonusLogs && partner.networkBonusLogs.length > 0) {
+        for (const log of partner.networkBonusLogs) {
+          if (log.status === 'pending' && new Date(log.holdingUntil).getTime() <= now) {
+            log.status = 'final';
+            log.releasedAt = new Date().toISOString();
+            partner.pendingCommission = Math.max(0, (partner.pendingCommission || 0) - log.bonusAmount);
+            partner.unpaidCommission = (partner.unpaidCommission || 0) + log.bonusAmount;
+            modified = true;
+          }
+        }
+      }
+    }
+
+    return modified;
+  }
+
   public static getAllAffiliates(): AffiliatePartnerData[] {
     try {
       this.ensureStorage();
       const content = fs.readFileSync(AFFILIATES_STORAGE_PATH, 'utf-8');
-      return JSON.parse(content);
+      const list: AffiliatePartnerData[] = JSON.parse(content);
+      const changed = this.settleMatureCommissions(list);
+      if (changed) {
+        this.saveAffiliates(list);
+      }
+      return list;
     } catch {
       return INITIAL_AFFILIATES;
     }
@@ -130,11 +193,42 @@ export class AffiliateService {
       };
     }
 
-    // Validate sponsor referral code if provided
+    // Validate sponsor referral code if provided + Self-referral & Circular referral prevention
     let verifiedSponsorCode: string | undefined = undefined;
     if (input.referralCode && input.referralCode.trim()) {
       const sponsor = this.findByCode(input.referralCode);
       if (sponsor) {
+        // 1. Direct self-referral checks
+        if (sponsor.email.toLowerCase() === email) {
+          return {
+            success: false,
+            message: 'Pelanggaran keamanan: Anda tidak dapat menggunakan kode referral Anda sendiri (Self-referral dilarang).',
+          };
+        }
+        if (sponsor.whatsapp.replace(/\D/g, '') === whatsapp.replace(/\D/g, '')) {
+          return {
+            success: false,
+            message: 'Pelanggaran keamanan: Nomor WhatsApp pengajak sama dengan nomor pendaftar. Self-referral dilarang.',
+          };
+        }
+
+        // 2. Circular Referral Prevention (A cannot be invited by B if B was already invited by A)
+        const existingSelf = this.findByEmailOrPhone(email, whatsapp);
+        if (existingSelf && sponsor.referredByCode && sponsor.referredByCode.toUpperCase() === existingSelf.code.toUpperCase()) {
+          return {
+            success: false,
+            message: 'Pelanggaran keamanan: Terdeteksi circular referral (rujukan melingkar antara mitra). Hubungan referral ditolak.',
+          };
+        }
+
+        // 3. Status check: sponsor must be active
+        if (sponsor.status === 'suspended') {
+          return {
+            success: false,
+            message: 'Kode referral tidak dapat digunakan karena akun pengajak sedang ditangguhkan.',
+          };
+        }
+
         verifiedSponsorCode = sponsor.code;
       }
     }
@@ -183,10 +277,16 @@ export class AffiliateService {
       totalOrders: 0,
       totalRevenue: 0,
       unpaidCommission: 0,
+      pendingCommission: 0,
       paidCommission: 0,
+      networkCommission: 0,
+      networkBonusLogs: [],
+      commissionLogs: [],
       status: 'active',
       joinedAt: formattedJoinedAt,
       createdAt: todayDate.toISOString(),
+      creditedOrderIds: [],
+      payoutRequests: [],
     };
 
     const currentList = this.getAllAffiliates();
@@ -291,12 +391,17 @@ export class AffiliateService {
 
   /**
    * Record an order completion and credit commission to the affiliate sales partner.
-   * Fully idempotent: will NOT double-credit if orderId was previously credited.
+   * Fully idempotent, margin-aware, with self-purchase protection and 3-day holding period.
    */
   public static recordSuccessfulOrder(
     code: string,
     orderTotal: number,
-    orderId?: string
+    orderId?: string,
+    customerDetails?: {
+      customerEmail?: string;
+      customerPhone?: string;
+      customerName?: string;
+    }
   ): { success: boolean; commission: number; partnerName?: string; message?: string } {
     const normalized = code.trim().toUpperCase();
     const list = this.getAllAffiliates();
@@ -306,7 +411,43 @@ export class AffiliateService {
       return { success: false, commission: 0, message: 'Mitra afiliasi tidak ditemukan.' };
     }
 
-    // Idempotency verification
+    // 1. Lifecycle status check: only active partners can earn commissions
+    if (partner.status !== 'active') {
+      return {
+        success: false,
+        commission: 0,
+        partnerName: partner.name,
+        message: `Mitra sales "${partner.name}" berstatus "${partner.status}". Komisi hanya diberikan kepada akun yang berstatus aktif.`,
+      };
+    }
+
+    // 2. Anti Self-Purchase Protection: Selling partner cannot buy via their own link
+    if (customerDetails?.customerEmail) {
+      const custEmail = customerDetails.customerEmail.trim().toLowerCase();
+      if (partner.email.toLowerCase() === custEmail) {
+        return {
+          success: false,
+          commission: 0,
+          partnerName: partner.name,
+          message: `[Self-Purchase Terdeteksi] Mitra sales "${partner.name}" dilarang memperoleh komisi dari pembelian akun sendiri.`,
+        };
+      }
+    }
+
+    if (customerDetails?.customerPhone) {
+      const cleanCustPhone = customerDetails.customerPhone.replace(/\D/g, '');
+      const cleanPartnerPhone = partner.whatsapp.replace(/\D/g, '');
+      if (cleanCustPhone.length >= 8 && cleanPartnerPhone.length >= 8 && cleanCustPhone === cleanPartnerPhone) {
+        return {
+          success: false,
+          commission: 0,
+          partnerName: partner.name,
+          message: `[Self-Purchase Terdeteksi] Nomor kontak pembeli identik dengan nomor WhatsApp mitra sales "${partner.name}".`,
+        };
+      }
+    }
+
+    // 3. Idempotency verification: prevent double-crediting the same order
     if (orderId) {
       partner.creditedOrderIds = partner.creditedOrderIds || [];
       if (partner.creditedOrderIds.includes(orderId)) {
@@ -314,7 +455,7 @@ export class AffiliateService {
           success: false,
           commission: 0,
           partnerName: partner.name,
-          message: `Komisi untuk order ${orderId} sudah pernah dikreditkan sebelumnya.`,
+          message: `Komisi untuk order ${orderId} sudah pernah dialokasikan sebelumnya.`,
         };
       }
       partner.creditedOrderIds.push(orderId);
@@ -323,9 +464,27 @@ export class AffiliateService {
     const commissionRate = partner.rate || 10;
     const earnedCommission = Math.round((orderTotal * commissionRate) / 100);
 
+    // 4. Holding Period: 3 days (Masa Garansi Pembeli & Anti-Fraud)
+    const holdingDays = 3;
+    const holdingDurationMs = holdingDays * 24 * 60 * 60 * 1000;
+    const holdingUntil = new Date(Date.now() + holdingDurationMs).toISOString();
+
     partner.totalOrders = (partner.totalOrders || 0) + 1;
     partner.totalRevenue = (partner.totalRevenue || 0) + orderTotal;
-    partner.unpaidCommission = (partner.unpaidCommission || 0) + earnedCommission;
+
+    // Allocated to pendingCommission during warranty holding period
+    partner.pendingCommission = (partner.pendingCommission || 0) + earnedCommission;
+    partner.commissionLogs = partner.commissionLogs || [];
+    partner.commissionLogs.unshift({
+      id: `com-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6)}`,
+      orderId: orderId || `ORD-${Date.now()}`,
+      orderTotal,
+      rate: commissionRate,
+      commission: earnedCommission,
+      status: 'pending',
+      holdingUntil,
+      createdAt: new Date().toISOString(),
+    });
 
     // Automatic Tier Promotion: If partner reaches 50 orders, promote to VIP Sales (15%)
     if (partner.totalOrders >= 50 && partner.rate < 15) {
@@ -333,16 +492,33 @@ export class AffiliateService {
       partner.rate = 15;
     }
 
-    // Network Sponsor Override Bonus (Bonus Komisi Teman)
-    // If this partner was invited by a sponsor, the sponsor receives an override bonus (2%)
+    // 5. Margin-Aware Network Sponsor Override Bonus (Bonus Komisi Teman)
+    // Replaces risky flat omzet calculation with profit-margin-aware budgeting:
+    // Store gross profit = orderTotal - estimatedCOGS (~78% average wholesale cost)
+    // Store net margin = grossProfit - directCommission (10%)
+    // Override bonus is funded from store net profit and capped at max 35% of store net margin
     let sponsorBonusInfo = '';
     if (partner.referredByCode) {
       const sponsor = list.find((a) => a.code.toUpperCase() === partner.referredByCode!.toUpperCase());
-      if (sponsor && sponsor.id !== partner.id) {
-        const overridePercent = 2; // 2% override bonus from Asterra Store
-        const bonusAmount = Math.max(1000, Math.round((orderTotal * overridePercent) / 100));
+      // Prevent self-referral and ensure sponsor is active
+      if (
+        sponsor &&
+        sponsor.id !== partner.id &&
+        sponsor.email.toLowerCase() !== partner.email.toLowerCase() &&
+        sponsor.status === 'active'
+      ) {
+        const estimatedCOGS = Math.round(orderTotal * 0.78);
+        const grossProfit = Math.max(0, orderTotal - estimatedCOGS);
+        const directCommission = earnedCommission;
+        const storeNetMargin = Math.max(0, grossProfit - directCommission);
 
-        sponsor.unpaidCommission = (sponsor.unpaidCommission || 0) + bonusAmount;
+        // Target 2% omzet, but capped by net profit margin safety ceiling
+        const targetBonus = Math.round((orderTotal * 2) / 100);
+        const marginCeiling = Math.round(storeNetMargin * 0.35);
+        const bonusAmount = Math.max(500, Math.min(targetBonus, marginCeiling > 500 ? marginCeiling : targetBonus));
+
+        // Allocated to sponsor's pendingCommission during 3-day holding period
+        sponsor.pendingCommission = (sponsor.pendingCommission || 0) + bonusAmount;
         sponsor.networkCommission = (sponsor.networkCommission || 0) + bonusAmount;
         sponsor.networkBonusLogs = sponsor.networkBonusLogs || [];
 
@@ -353,11 +529,14 @@ export class AffiliateService {
           fromPartnerName: partner.name,
           orderTotal,
           bonusAmount,
-          bonusPercentage: overridePercent,
+          bonusPercentage: 2,
+          marginEstimate: storeNetMargin,
+          status: 'pending',
+          holdingUntil,
           createdAt: new Date().toISOString(),
         });
 
-        sponsorBonusInfo = ` & Bonus tim Rp ${bonusAmount.toLocaleString('id-ID')} ke sponsor ${sponsor.name}`;
+        sponsorBonusInfo = ` & Bonus tim Rp ${bonusAmount.toLocaleString('id-ID')} dialokasikan ke ${sponsor.name} (Holding Garansi 3 Hari)`;
       }
     }
 
@@ -367,7 +546,101 @@ export class AffiliateService {
       success: true,
       commission: earnedCommission,
       partnerName: partner.name,
-      message: `Komisi Rp ${earnedCommission.toLocaleString('id-ID')} berhasil dialokasikan ke ${partner.name}${sponsorBonusInfo}.`,
+      message: `Komisi Rp ${earnedCommission.toLocaleString('id-ID')} berhasil dialokasikan ke ${partner.name} (Holding Garansi 3 Hari)${sponsorBonusInfo}.`,
+    };
+  }
+
+  /**
+   * Handle order refund / cancellation / chargeback:
+   * Reverses credited direct commission and sponsor override bonus from pending/unpaid balances.
+   */
+  public static handleOrderRefund(
+    orderId: string,
+    reason?: string
+  ): {
+    success: boolean;
+    partnerReversed?: string;
+    directCommissionReversed: number;
+    sponsorReversed?: string;
+    networkBonusReversed: number;
+    message: string;
+  } {
+    const list = this.getAllAffiliates();
+    let directReversed = 0;
+    let networkReversed = 0;
+    let partnerName = '';
+    let sponsorName = '';
+
+    // 1. Reversal of direct sales commission
+    for (const partner of list) {
+      if (partner.creditedOrderIds && partner.creditedOrderIds.includes(orderId)) {
+        partnerName = partner.name;
+        const log = partner.commissionLogs?.find((l) => l.orderId === orderId && l.status !== 'reversed');
+        const commAmount = log ? log.commission : 0;
+
+        if (log) {
+          log.status = 'reversed';
+          log.reversalReason = reason || 'Pesanan dibatalkan / refund garansi';
+        }
+
+        if (commAmount > 0) {
+          directReversed = commAmount;
+          // Deduct from pendingCommission if not yet matured, else from unpaidCommission
+          if ((partner.pendingCommission || 0) >= commAmount) {
+            partner.pendingCommission = (partner.pendingCommission || 0) - commAmount;
+          } else {
+            const remainder = commAmount - (partner.pendingCommission || 0);
+            partner.pendingCommission = 0;
+            partner.unpaidCommission = Math.max(0, (partner.unpaidCommission || 0) - remainder);
+          }
+        }
+
+        partner.totalOrders = Math.max(0, (partner.totalOrders || 0) - 1);
+        partner.creditedOrderIds = partner.creditedOrderIds.filter((id) => id !== orderId);
+        break;
+      }
+    }
+
+    // 2. Reversal of sponsor override bonus
+    for (const sponsor of list) {
+      if (sponsor.networkBonusLogs && sponsor.networkBonusLogs.length > 0) {
+        const bonusLog = sponsor.networkBonusLogs.find((l) => l.orderId === orderId && l.status !== 'reversed');
+        if (bonusLog) {
+          sponsorName = sponsor.name;
+          networkReversed = bonusLog.bonusAmount;
+          bonusLog.status = 'reversed';
+          bonusLog.reversalReason = reason || 'Pesanan tim dibatalkan / refund';
+
+          if ((sponsor.pendingCommission || 0) >= networkReversed) {
+            sponsor.pendingCommission = (sponsor.pendingCommission || 0) - networkReversed;
+          } else {
+            const rem = networkReversed - (sponsor.pendingCommission || 0);
+            sponsor.pendingCommission = 0;
+            sponsor.unpaidCommission = Math.max(0, (sponsor.unpaidCommission || 0) - rem);
+          }
+          sponsor.networkCommission = Math.max(0, (sponsor.networkCommission || 0) - networkReversed);
+          break;
+        }
+      }
+    }
+
+    if (directReversed > 0 || networkReversed > 0) {
+      this.saveAffiliates(list);
+      return {
+        success: true,
+        partnerReversed: partnerName,
+        directCommissionReversed: directReversed,
+        sponsorReversed: sponsorName,
+        networkBonusReversed: networkReversed,
+        message: `Pembatalan komisi sukses untuk pesanan ${orderId}: Komisi penjualan Rp ${directReversed.toLocaleString('id-ID')} (${partnerName}) dan bonus tim Rp ${networkReversed.toLocaleString('id-ID')} (${sponsorName}) berhasil ditarik kembali.`,
+      };
+    }
+
+    return {
+      success: false,
+      directCommissionReversed: 0,
+      networkBonusReversed: 0,
+      message: `Tidak ada alokasi komisi aktif yang terhubung dengan pesanan ${orderId}.`,
     };
   }
 
@@ -380,6 +653,9 @@ export class AffiliateService {
     totalTeamOrders: number;
     totalTeamRevenue: number;
     totalNetworkBonus: number;
+    pendingNetworkBonus: number;
+    finalNetworkBonus: number;
+    reversedNetworkBonus: number;
     teamMembers: Array<{
       id: string;
       name: string;
@@ -398,7 +674,7 @@ export class AffiliateService {
     const list = this.getAllAffiliates();
     const sponsor = list.find((a) => a.code.toUpperCase() === normalizedCode);
 
-    // Find all partners who registered with this sponsor's referral code
+    // Find all partners who registered with this sponsor's referral code (strictly 1-level)
     const downlines = list.filter(
       (a) => a.referredByCode && a.referredByCode.toUpperCase() === normalizedCode && a.code.toUpperCase() !== normalizedCode
     );
@@ -406,9 +682,9 @@ export class AffiliateService {
     const bonusLogs = sponsor?.networkBonusLogs || [];
 
     const teamMembers = downlines.map((member) => {
-      // Calculate total bonus earned from this specific member
+      // Calculate total active bonus earned from this specific member
       const bonusFromMember = bonusLogs
-        .filter((log) => log.fromPartnerCode.toUpperCase() === member.code.toUpperCase())
+        .filter((log) => log.fromPartnerCode.toUpperCase() === member.code.toUpperCase() && log.status !== 'reversed')
         .reduce((sum, log) => sum + (log.bonusAmount || 0), 0);
 
       return {
@@ -428,7 +704,20 @@ export class AffiliateService {
     const totalTeamMembers = teamMembers.length;
     const totalTeamOrders = teamMembers.reduce((sum, m) => sum + m.totalOrders, 0);
     const totalTeamRevenue = teamMembers.reduce((sum, m) => sum + m.totalRevenue, 0);
-    const totalNetworkBonus = sponsor?.networkCommission || bonusLogs.reduce((sum, log) => sum + (log.bonusAmount || 0), 0);
+
+    const pendingNetworkBonus = bonusLogs
+      .filter((l) => l.status === 'pending')
+      .reduce((sum, l) => sum + (l.bonusAmount || 0), 0);
+
+    const finalNetworkBonus = bonusLogs
+      .filter((l) => l.status === 'final')
+      .reduce((sum, l) => sum + (l.bonusAmount || 0), 0);
+
+    const reversedNetworkBonus = bonusLogs
+      .filter((l) => l.status === 'reversed')
+      .reduce((sum, l) => sum + (l.bonusAmount || 0), 0);
+
+    const totalNetworkBonus = pendingNetworkBonus + finalNetworkBonus;
 
     return {
       sponsorCode: normalizedCode,
@@ -436,6 +725,9 @@ export class AffiliateService {
       totalTeamOrders,
       totalTeamRevenue,
       totalNetworkBonus,
+      pendingNetworkBonus,
+      finalNetworkBonus,
+      reversedNetworkBonus,
       teamMembers,
       bonusLogs,
     };
@@ -544,15 +836,26 @@ export class AffiliateService {
       return { success: false, message: 'Mitra sales tidak ditemukan.' };
     }
 
+    // Lifecycle status check
+    if (partner.status !== 'active') {
+      return {
+        success: false,
+        message: `Akun mitra sales Anda berstatus "${partner.status}". Penarikan komisi hanya dapat diajukan oleh akun yang berstatus aktif. Hubungi CS untuk bantuan.`,
+      };
+    }
+
     const amount = Math.round(Number(input.amount));
     if (isNaN(amount) || amount < 50000) {
       return { success: false, message: 'Nominal pencairan minimal Rp 50.000.' };
     }
 
     if (amount > (partner.unpaidCommission || 0)) {
+      const holdingInfo = partner.pendingCommission && partner.pendingCommission > 0
+        ? ` (Terdapat Rp ${partner.pendingCommission.toLocaleString('id-ID')} yang masih dalam masa garansi holding 3 hari).`
+        : '';
       return {
         success: false,
-        message: `Saldo komisi Anda saat ini (Rp ${(partner.unpaidCommission || 0).toLocaleString('id-ID')}) tidak mencukupi untuk penarikan Rp ${amount.toLocaleString('id-ID')}.`,
+        message: `Saldo komisi siap tarik Anda saat ini (Rp ${(partner.unpaidCommission || 0).toLocaleString('id-ID')}) tidak mencukupi untuk penarikan Rp ${amount.toLocaleString('id-ID')}${holdingInfo}`,
       };
     }
 

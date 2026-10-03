@@ -11,6 +11,7 @@
     "totalOrders": 0,
     "totalRevenue": 0,
     "unpaidCommission": 0,
+    "pendingCommission": 0,
     "paidCommission": 0,
     "status": "active",
     "joinedAt": "4 Okt 2026",
@@ -30,12 +31,36 @@
     "totalClicks": 3,
     "totalOrders": 2,
     "totalRevenue": 250000,
-    "unpaidCommission": 25000,
+    "unpaidCommission": 15000,
+    "pendingCommission": 10000,
     "paidCommission": 0,
     "status": "active",
     "joinedAt": "3 Okt 2026",
     "createdAt": "2026-10-03T16:12:41.649Z",
-    "creditedOrderIds": ["ORD-AST-20261003-8821", "ORD-AST-20261003-9142"]
+    "creditedOrderIds": ["ORD-AST-20261003-8821", "ORD-AST-20261003-9142"],
+    "commissionLogs": [
+      {
+        "id": "comm-ord-8821",
+        "orderId": "ORD-AST-20261003-8821",
+        "orderTotal": 150000,
+        "commission": 15000,
+        "rate": 10,
+        "status": "final",
+        "holdingUntil": "2026-10-06T16:45:00.000Z",
+        "releasedAt": "2026-10-03T16:45:00.000Z",
+        "createdAt": "2026-10-03T16:45:00.000Z"
+      },
+      {
+        "id": "comm-ord-9142",
+        "orderId": "ORD-AST-20261003-9142",
+        "orderTotal": 100000,
+        "commission": 10000,
+        "rate": 10,
+        "status": "pending",
+        "holdingUntil": "2026-10-06T17:10:00.000Z",
+        "createdAt": "2026-10-03T17:10:00.000Z"
+      }
+    ]
   },
   {
     "id": "aff-muselwis",
@@ -48,7 +73,8 @@
     "totalClicks": 1,
     "totalOrders": 0,
     "totalRevenue": 0,
-    "unpaidCommission": 5000,
+    "unpaidCommission": 3000,
+    "pendingCommission": 2000,
     "paidCommission": 0,
     "networkCommission": 5000,
     "networkBonusLogs": [
@@ -58,8 +84,11 @@
         "fromPartnerCode": "AST-IQBAL-X6ZM",
         "fromPartnerName": "Iqbal",
         "orderTotal": 100000,
+        "marginEstimate": 22000,
         "bonusAmount": 2000,
         "bonusPercentage": 2,
+        "status": "pending",
+        "holdingUntil": "2026-10-06T17:10:00.000Z",
         "createdAt": "2026-10-03T17:10:00.000Z"
       },
       {
@@ -68,8 +97,12 @@
         "fromPartnerCode": "AST-IQBAL-X6ZM",
         "fromPartnerName": "Iqbal",
         "orderTotal": 150000,
+        "marginEstimate": 33000,
         "bonusAmount": 3000,
         "bonusPercentage": 2,
+        "status": "final",
+        "holdingUntil": "2026-10-06T16:45:00.000Z",
+        "releasedAt": "2026-10-03T16:45:00.000Z",
         "createdAt": "2026-10-03T16:45:00.000Z"
       }
     ],

@@ -85,6 +85,7 @@ export function AdminAffiliateTab({ onNotify }: AdminAffiliateTabProps) {
   // New partner form states
   const [newName, setNewName] = useState('');
   const [newEmail, setNewEmail] = useState('');
+  const [newPassword, setNewPassword] = useState('');
   const [newWhatsapp, setNewWhatsapp] = useState('');
   const [newCode, setNewCode] = useState('');
   const [newRate, setNewRate] = useState(10);
@@ -128,6 +129,11 @@ export function AdminAffiliateTab({ onNotify }: AdminAffiliateTabProps) {
     e.preventDefault();
     if (!newName || !newCode) return;
 
+    if (!newPassword || newPassword.length < 6) {
+      alert('Kata sandi akun sales wajib diisi minimal 6 karakter.');
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       const res = await fetch('/api/v1/admin/affiliates', {
@@ -136,6 +142,7 @@ export function AdminAffiliateTab({ onNotify }: AdminAffiliateTabProps) {
         body: JSON.stringify({
           name: newName,
           email: newEmail || `${newCode.toLowerCase()}@partner.asterra.store`,
+          password: newPassword,
           whatsapp: newWhatsapp || '-',
           code: newCode,
           rate: Number(newRate),
@@ -153,6 +160,7 @@ export function AdminAffiliateTab({ onNotify }: AdminAffiliateTabProps) {
       setIsAddModalOpen(false);
       setNewName('');
       setNewEmail('');
+      setNewPassword('');
       setNewWhatsapp('');
       setNewCode('');
       setNewAccount('');
@@ -510,6 +518,23 @@ export function AdminAffiliateTab({ onNotify }: AdminAffiliateTabProps) {
                     className="bg-surface-raised border-border text-xs"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="font-semibold text-foreground block mb-1">
+                  Kata Sandi Akun Sales <span className="text-status-error">*</span>
+                </label>
+                <Input
+                  type="password"
+                  required
+                  placeholder="Minimal 6 karakter untuk login mitra"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="bg-surface-raised border-border text-xs"
+                />
+                <span className="text-[10px] text-foreground-muted mt-0.5 block">
+                  Digunakan mitra untuk login ke portal sales (/sales/login).
+                </span>
               </div>
 
               <div className="grid grid-cols-2 gap-2">

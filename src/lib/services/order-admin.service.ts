@@ -286,16 +286,22 @@ export class OrderAdminService {
       try {
         let referralCode: string | undefined = undefined;
         let orderTotalAmount = 0;
+        let customerEmail: string | undefined = undefined;
+        let customerPhone: string | undefined = undefined;
+        let customerName: string | undefined = undefined;
 
         // Check in-memory order first
         const memOrder = getGlobalOrders().find((o) => o.id === orderId);
         if (memOrder) {
           referralCode = memOrder.referral_code;
           orderTotalAmount = memOrder.total_amount;
+          customerEmail = memOrder.customer_email;
+          customerPhone = memOrder.customer_whatsapp;
+          customerName = memOrder.customer_name;
         }
 
         // If not in memory or referralCode not found, check DB order & logs
-        if (!referralCode && prismaClient?.order) {
+        if (prismaClient?.order) {
           const dbOrder = await prismaClient.order.findUnique({
             where: { id: orderId },
             include: {
@@ -313,11 +319,17 @@ export class OrderAdminService {
           });
           if (dbOrder) {
             orderTotalAmount = dbOrder.totalAmount;
+            customerEmail = customerEmail || dbOrder.customerEmail;
+            customerPhone = customerPhone || dbOrder.customerPhone || undefined;
+            customerName = customerName || dbOrder.customerName || undefined;
+
             // Check logs metadata
-            for (const log of dbOrder.logs || []) {
-              if (log.metadata && typeof log.metadata === 'object' && 'referral_code' in log.metadata) {
-                referralCode = (log.metadata as { referral_code?: string }).referral_code;
-                break;
+            if (!referralCode) {
+              for (const log of dbOrder.logs || []) {
+                if (log.metadata && typeof log.metadata === 'object' && 'referral_code' in log.metadata) {
+                  referralCode = (log.metadata as { referral_code?: string }).referral_code;
+                  break;
+                }
               }
             }
             // Check customerNotes pattern [Sales Ref: CODE]
@@ -334,7 +346,8 @@ export class OrderAdminService {
           const creditResult = AffiliateService.recordSuccessfulOrder(
             referralCode,
             orderTotalAmount,
-            orderId
+            orderId,
+            { customerEmail, customerPhone, customerName }
           );
 
           if (creditResult.success && creditResult.commission > 0) {
@@ -360,6 +373,37 @@ export class OrderAdminService {
         }
       } catch (affiliateErr) {
         console.warn('[OrderAdminService] Error crediting affiliate commission:', affiliateErr);
+      }
+    }
+
+    // 4. Automatic Reversal of Affiliate Commission on Order Refund / Cancellation
+    if (newStatus === 'cancelled' || (newStatus as string) === 'refunded') {
+      try {
+        const refundResult = AffiliateService.handleOrderRefund(
+          orderId,
+          notes || `Status pesanan diubah ke ${newStatus}`
+        );
+        if (refundResult.success) {
+          console.log(`[AffiliateCommission] ${refundResult.message}`);
+          if (prismaClient?.orderLog) {
+            await prismaClient.orderLog.create({
+              data: {
+                orderId,
+                actor: 'system',
+                action: 'affiliate_commission_reversed',
+                notes: refundResult.message,
+                metadata: {
+                  partner_reversed: refundResult.partnerReversed,
+                  direct_commission_reversed: refundResult.directCommissionReversed,
+                  sponsor_reversed: refundResult.sponsorReversed,
+                  network_bonus_reversed: refundResult.networkBonusReversed,
+                },
+              },
+            });
+          }
+        }
+      } catch (refundErr) {
+        console.warn('[OrderAdminService] Error reversing affiliate commission on refund:', refundErr);
       }
     }
 

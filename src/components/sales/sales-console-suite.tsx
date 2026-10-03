@@ -61,12 +61,13 @@ interface SalesProfileData {
   totalClicks: number;
   totalOrders: number;
   totalRevenue: number;
-  unpaidCommission: number;
+  unpaidCommission: number; // Saldo komisi siap tarik (final)
+  pendingCommission?: number; // Saldo dalam masa holding garansi 3 hari
   paidCommission: number;
   networkCommission?: number;
   bankName?: string;
   bankAccount?: string;
-  status: string;
+  status: 'active' | 'pending' | 'suspended' | 'inactive' | string;
   joinedAt: string;
   payoutRequests?: Array<{
     id: string;
@@ -99,6 +100,8 @@ interface SalesOrder {
   status: string;
   paymentStatus: string;
   commission: number;
+  commissionStatus?: 'pending' | 'final' | 'reversed';
+  holdingUntil?: string;
   itemsCount: number;
   productNames: string;
 }
@@ -112,7 +115,7 @@ export interface NetworkMember {
   joinedAt: string;
   totalOrders: number;
   totalRevenue: number;
-  status: string;
+  status: 'active' | 'pending' | 'suspended' | 'inactive' | string;
   bonusEarnedFromMember: number;
 }
 
@@ -122,8 +125,13 @@ export interface NetworkBonusLogItem {
   fromPartnerCode: string;
   fromPartnerName: string;
   orderTotal: number;
+  marginEstimate?: number;
   bonusAmount: number;
   bonusPercentage: number;
+  status: 'pending' | 'final' | 'reversed';
+  holdingUntil?: string;
+  releasedAt?: string;
+  reversalReason?: string;
   createdAt: string;
 }
 
@@ -133,6 +141,9 @@ export interface NetworkDataResponse {
   totalTeamOrders: number;
   totalTeamRevenue: number;
   totalNetworkBonus: number;
+  pendingNetworkBonus: number;
+  finalNetworkBonus: number;
+  reversedNetworkBonus: number;
   teamMembers: NetworkMember[];
   bonusLogs: NetworkBonusLogItem[];
 }
@@ -352,9 +363,37 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
           <div className="rounded-xl border border-border bg-surface p-6 shadow-xs relative overflow-hidden">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
               <div className="space-y-2 max-w-xl">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-status-success/15 border border-status-success/30 text-status-success text-xs font-semibold">
-                  <span className="w-2 h-2 rounded-full bg-status-success animate-pulse" />
-                  <span>Status Mitra: {partner?.tier || 'Standard (10%)'} Aktif</span>
+                <div
+                  className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold border ${
+                    partner?.status === 'active'
+                      ? 'bg-status-success/15 border-status-success/30 text-status-success'
+                      : partner?.status === 'suspended'
+                      ? 'bg-status-error/15 border-status-error/30 text-status-error'
+                      : partner?.status === 'pending'
+                      ? 'bg-amber-500/15 border-amber-500/30 text-amber-500'
+                      : 'bg-muted border-border text-foreground-muted'
+                  }`}
+                >
+                  <span
+                    className={`w-2 h-2 rounded-full ${
+                      partner?.status === 'active'
+                        ? 'bg-status-success animate-pulse'
+                        : partner?.status === 'suspended'
+                        ? 'bg-status-error'
+                        : 'bg-amber-500'
+                    }`}
+                  />
+                  <span>
+                    Status Akun: {
+                      partner?.status === 'active'
+                        ? `Mitra Aktif (${partner?.tier || 'Standard 10%'})`
+                        : partner?.status === 'suspended'
+                        ? 'Ditangguhkan (Suspended)'
+                        : partner?.status === 'pending'
+                        ? 'Menunggu Verifikasi (Pending Review)'
+                        : 'Non-Aktif'
+                    }
+                  </span>
                 </div>
                 <h2 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">
                   Halo, {partner?.name || adminUser?.name || 'Mitra Sales'}!
@@ -416,9 +455,9 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
           {/* 4 Metric Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* 1. Saldo Komisi Siap Tarik */}
-            <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-2">
+            <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-2 relative overflow-hidden">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-foreground-muted">Komisi Siap Tarik</span>
+                <span className="text-xs font-medium text-foreground-muted">Komisi Siap Tarik (Final)</span>
                 <div className="w-8 h-8 rounded-lg bg-status-success/10 text-status-success flex items-center justify-center">
                   <Wallet className="w-4 h-4" />
                 </div>
@@ -426,11 +465,22 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
               <div className="text-2xl font-extrabold text-foreground tracking-tight">
                 Rp {(partner?.unpaidCommission || 0).toLocaleString('id-ID')}
               </div>
-              <div className="flex items-center justify-between pt-1 text-[11px]">
-                <span className="text-foreground-muted">Total dicairkan:</span>
-                <span className="font-semibold text-foreground">
-                  Rp {(partner?.paidCommission || 0).toLocaleString('id-ID')}
-                </span>
+              <div className="pt-2 border-t border-border/60 space-y-1.5 text-[11px]">
+                <div className="flex items-center justify-between">
+                  <span className="text-foreground-muted flex items-center gap-1">
+                    <Clock className="w-3 h-3 text-amber-500" />
+                    <span>Masa Garansi (3 Hari):</span>
+                  </span>
+                  <span className="font-semibold text-amber-500">
+                    Rp {(partner?.pendingCommission || 0).toLocaleString('id-ID')}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-foreground-muted">
+                  <span>Total telah dicairkan:</span>
+                  <span className="font-medium text-foreground">
+                    Rp {(partner?.paidCommission || 0).toLocaleString('id-ID')}
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -495,11 +545,15 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
                 <Users className="w-5 h-5" />
               </div>
               <div className="space-y-0.5">
+                <div className="inline-flex items-center gap-1.5 text-[11px] font-bold text-primary mb-0.5">
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span>1-Level Referral Resmi • 100% Hak Teman Utuh</span>
+                </div>
                 <h4 className="text-sm font-bold text-foreground">
-                  Ajak Teman Jadi Mitra Sales & Dapatkan Bonus Pasif 2%!
+                  Ajak Teman Jadi Mitra Sales & Dapatkan Bonus 2%!
                 </h4>
                 <p className="text-xs text-foreground-muted">
-                  Dapatkan bagi hasil override 2% dari setiap transaksi teman yang Anda ajak, tanpa memotong komisi teman Anda.
+                  Dapatkan bonus 2% yang disubsidi 100% dari buffer margin Asterra Store tanpa memotong komisi teman Anda. Dilengkapi proteksi masa garansi 3 hari (bukan MLM).
                 </p>
               </div>
             </div>
@@ -960,8 +1014,25 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
                         <td className="py-3 px-4 font-bold text-foreground">
                           Rp {o.totalAmount.toLocaleString('id-ID')}
                         </td>
-                        <td className="py-3 px-4 font-bold text-status-success">
-                          + Rp {o.commission.toLocaleString('id-ID')}
+                        <td className="py-3 px-4">
+                          <div className="font-bold text-status-success">
+                            + Rp {o.commission.toLocaleString('id-ID')}
+                          </div>
+                          <div className="text-[10px] mt-0.5">
+                            {o.commissionStatus === 'final' ? (
+                              <span className="text-status-success font-medium inline-flex items-center gap-0.5">
+                                <CheckCircle2 className="w-2.5 h-2.5" /> Siap Tarik
+                              </span>
+                            ) : o.commissionStatus === 'reversed' ? (
+                              <span className="text-status-error font-medium inline-flex items-center gap-0.5">
+                                <AlertCircle className="w-2.5 h-2.5" /> Dibatalkan / Refund
+                              </span>
+                            ) : (
+                              <span className="text-amber-500 font-medium inline-flex items-center gap-0.5">
+                                <Clock className="w-2.5 h-2.5" /> Masa Garansi (3 Hari)
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="py-3 px-4">
                           <Badge
@@ -971,6 +1042,8 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
                                 ? 'text-status-success border-status-success/30 bg-status-success/10'
                                 : o.status === 'processing'
                                 ? 'text-blue-500 border-blue-500/30 bg-blue-500/10'
+                                : o.status === 'refunded'
+                                ? 'text-status-error border-status-error/30 bg-status-error/10'
                                 : 'text-amber-500 border-amber-500/30 bg-amber-500/10'
                             }`}
                           >
@@ -996,14 +1069,14 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold mb-2">
-                <Users className="w-3.5 h-3.5" />
-                <span>Program Afiliasi 2-Tier: Bonus Jaringan Sales</span>
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>Program Referral Mitra 1-Level Resmi (Single-Tier • Bukan MLM)</span>
               </div>
               <h2 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">
-                Bonus Tim & Teman yang Anda Ajak
+                Bonus Teman yang Anda Ajak (1-Level Referral)
               </h2>
               <p className="text-xs sm:text-sm text-foreground-muted">
-                Ajak teman menjadi mitra sales dengan kode referral Anda dan nikmati bonus pasif 2% dari setiap transaksi yang mereka hasilkan.
+                Ajak teman menjadi mitra sales langsung dengan kode Anda. Nikmati bonus 2% dari subsidi margin Asterra Store tanpa memotong hak komisi teman Anda.
               </p>
             </div>
 
@@ -1028,15 +1101,22 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
                     <Sparkles className="w-4 h-4" />
                   </span>
                   <h3 className="text-base sm:text-lg font-bold text-foreground">
-                    Link Khusus Pendaftaran Teman Sales
+                    Link Khusus Pendaftaran Mitra Sales (1-Level)
                   </h3>
                 </div>
                 <p className="text-xs sm:text-sm text-foreground-muted leading-relaxed">
-                  Bagikan link ini ke rekan, kenalan, atau komunitas Anda. Saat mereka mendaftar lewat link ini, kode referral <strong className="text-primary font-mono">{partnerCode}</strong> otomatis terpasang sebagai pengajak.
+                  Bagikan link pendaftaran resmi ini. Teman yang mendaftar akan langsung terdaftar di bawah kode referral{' '}
+                  <strong className="text-primary font-mono">{partnerCode}</strong>.
                 </p>
-                <div className="flex items-center gap-2 pt-1 text-xs text-foreground-muted">
-                  <CheckCircle2 className="w-4 h-4 text-status-success shrink-0" />
-                  <span>Komisi teman tetap 100% utuh & Anda dapat bonus 2% subsidi Asterra Store.</span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 text-xs text-foreground-muted">
+                  <div className="flex items-center gap-1.5">
+                    <CheckCircle2 className="w-4 h-4 text-status-success shrink-0" />
+                    <span>Komisi teman 100% utuh (10% - 20%)</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <ShieldCheck className="w-4 h-4 text-primary shrink-0" />
+                    <span>100% disubsidi dari laba toko (Bukan MLM)</span>
+                  </div>
                 </div>
               </div>
 
@@ -1091,7 +1171,7 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
             {/* Card 1: Total Bonus Komisi Teman */}
             <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-foreground-muted">Total Bonus Komisi Teman</span>
+                <span className="text-xs font-medium text-foreground-muted">Total Bonus Teman Sales</span>
                 <div className="w-8 h-8 rounded-lg bg-status-success/10 text-status-success flex items-center justify-center">
                   <DollarSign className="w-4 h-4" />
                 </div>
@@ -1099,32 +1179,61 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
               <div className="text-2xl font-extrabold text-foreground tracking-tight">
                 Rp {(networkData?.totalNetworkBonus || 0).toLocaleString('id-ID')}
               </div>
-              <p className="text-[11px] text-foreground-muted">
-                Otomatis masuk ke saldo dompet komisi siap tarik
-              </p>
+              <div className="pt-2 border-t border-border/60 space-y-1 text-[11px]">
+                <div className="flex items-center justify-between">
+                  <span className="text-foreground-muted flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3 text-status-success" />
+                    <span>Siap Tarik (Final):</span>
+                  </span>
+                  <span className="font-semibold text-status-success">
+                    Rp {(networkData?.finalNetworkBonus || 0).toLocaleString('id-ID')}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-foreground-muted flex items-center gap-1">
+                    <Clock className="w-3 h-3 text-amber-500" />
+                    <span>Masa Garansi (3 Hari):</span>
+                  </span>
+                  <span className="font-semibold text-amber-500">
+                    Rp {(networkData?.pendingNetworkBonus || 0).toLocaleString('id-ID')}
+                  </span>
+                </div>
+                {(networkData?.reversedNetworkBonus || 0) > 0 && (
+                  <div className="flex items-center justify-between text-status-error">
+                    <span className="flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" />
+                      <span>Dibatalkan / Refund:</span>
+                    </span>
+                    <span className="font-semibold">
+                      - Rp {(networkData?.reversedNetworkBonus || 0).toLocaleString('id-ID')}
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Card 2: Total Teman Bergabung */}
             <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-foreground-muted">Teman Bergabung Jadi Sales</span>
+                <span className="text-xs font-medium text-foreground-muted">Mitra 1-Level yang Diajak</span>
                 <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
                   <Users className="w-4 h-4" />
                 </div>
               </div>
               <div className="text-2xl font-extrabold text-foreground tracking-tight">
                 {networkData?.totalTeamMembers || 0}{' '}
-                <span className="text-xs font-normal text-foreground-muted">Orang</span>
+                <span className="text-xs font-normal text-foreground-muted">Mitra Langsung</span>
               </div>
-              <p className="text-[11px] text-foreground-muted">
-                Mitra sales aktif terdaftar dengan referral Anda
-              </p>
+              <div className="pt-2 border-t border-border/60 text-[11px] text-foreground-muted flex items-center gap-1.5">
+                <ShieldCheck className="w-3.5 h-3.5 text-primary shrink-0" />
+                <span>Murni tingkat 1 (Tidak ada level 2/3/MLM)</span>
+              </div>
             </div>
 
             {/* Card 3: Total Omset & Transaksi Tim */}
             <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-foreground-muted">Total Transaksi Tim Teman</span>
+                <span className="text-xs font-medium text-foreground-muted">Total Penjualan Teman</span>
                 <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center">
                   <TrendingUp className="w-4 h-4" />
                 </div>
@@ -1132,9 +1241,10 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
               <div className="text-2xl font-extrabold text-foreground tracking-tight">
                 Rp {(networkData?.totalTeamRevenue || 0).toLocaleString('id-ID')}
               </div>
-              <p className="text-[11px] text-foreground-muted">
-                Dari akumulasi {networkData?.totalTeamOrders || 0} pesanan berhasil
-              </p>
+              <div className="pt-2 border-t border-border/60 text-[11px] text-foreground-muted flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                <span>Dari {networkData?.totalTeamOrders || 0} order (Proteksi Margin Aktif)</span>
+              </div>
             </div>
           </div>
 
@@ -1144,7 +1254,7 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
               <div>
                 <h3 className="text-base font-bold text-foreground flex items-center gap-2">
                   <Users className="w-4 h-4 text-primary" />
-                  <span>Daftar Teman yang Diajak ({networkData?.totalTeamMembers || 0})</span>
+                  <span>Daftar Mitra Teman Langsung 1-Level ({networkData?.totalTeamMembers || 0})</span>
                 </h3>
                 <p className="text-xs text-foreground-muted">
                   Pantau perkembangan penjualan teman Anda dan bonus komisi yang dihasilkan.
@@ -1214,7 +1324,7 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
                       <th className="py-3 px-4">Total Order</th>
                       <th className="py-3 px-4">Omzet Penjualan</th>
                       <th className="py-3 px-4">Bonus Anda (2%)</th>
-                      <th className="py-3 px-4">Status</th>
+                      <th className="py-3 px-4">Status Mitra</th>
                       <th className="py-3 px-4 text-right">Kontak</th>
                     </tr>
                   </thead>
@@ -1241,9 +1351,19 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
                         <td className="py-3 px-4">
                           <Badge
                             variant="outline"
-                            className="text-[10px] font-semibold text-status-success border-status-success/30 bg-status-success/10 uppercase"
+                            className={`text-[10px] font-semibold uppercase ${
+                              member.status === 'active'
+                                ? 'text-status-success border-status-success/30 bg-status-success/10'
+                                : member.status === 'suspended'
+                                ? 'text-status-error border-status-error/30 bg-status-error/10'
+                                : 'text-amber-500 border-amber-500/30 bg-amber-500/10'
+                            }`}
                           >
-                            {member.status}
+                            {member.status === 'active'
+                              ? 'Aktif'
+                              : member.status === 'suspended'
+                              ? 'Ditangguhkan'
+                              : 'Pending'}
                           </Badge>
                         </td>
                         <td className="py-3 px-4 text-right">
@@ -1279,7 +1399,7 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
                 <span>Riwayat Bonus Komisi dari Transaksi Teman</span>
               </h3>
               <p className="text-xs text-foreground-muted">
-                Rincian kronologis bonus komisi override 2% yang masuk ke dompet Anda setiap kali teman Anda berhasil menjual produk.
+                Rincian kronologis bonus komisi override 2% (terkait proteksi margin toko & holding garansi 3 hari) dari penjualan teman Anda.
               </p>
             </div>
 
@@ -1297,12 +1417,12 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
                   <thead className="bg-surface-raised border-b border-border text-foreground-muted uppercase font-semibold text-[10px]">
                     <tr>
                       <th className="py-3 px-4">Tanggal & Waktu</th>
-                      <th className="py-3 px-4">Teman Pengajak</th>
+                      <th className="py-3 px-4">Teman Penjual</th>
                       <th className="py-3 px-4">ID Pesanan</th>
                       <th className="py-3 px-4">Nilai Transaksi</th>
-                      <th className="py-3 px-4">Rate Bonus</th>
-                      <th className="py-3 px-4">Bonus Masuk Dompet</th>
-                      <th className="py-3 px-4">Status</th>
+                      <th className="py-3 px-4">Proteksi Margin</th>
+                      <th className="py-3 px-4">Bonus 2%</th>
+                      <th className="py-3 px-4">Status & Garansi</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
@@ -1327,19 +1447,59 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
                         <td className="py-3 px-4 font-bold text-foreground">
                           Rp {log.orderTotal.toLocaleString('id-ID')}
                         </td>
-                        <td className="py-3 px-4 font-semibold text-primary">
-                          {log.bonusPercentage}%
+                        <td className="py-3 px-4 text-foreground-muted">
+                          {log.marginEstimate ? (
+                            <span className="font-mono text-[11px] text-foreground">
+                              Margin Rp {log.marginEstimate.toLocaleString('id-ID')}
+                            </span>
+                          ) : (
+                            <span className="text-[11px] text-status-success font-medium">Aman (Capped)</span>
+                          )}
                         </td>
                         <td className="py-3 px-4 font-bold text-status-success">
                           + Rp {log.bonusAmount.toLocaleString('id-ID')}
+                          <span className="text-[10px] text-foreground-muted ml-1">({log.bonusPercentage}%)</span>
                         </td>
                         <td className="py-3 px-4">
-                          <Badge
-                            variant="outline"
-                            className="text-[10px] font-semibold text-status-success border-status-success/30 bg-status-success/10 uppercase"
-                          >
-                            Masuk Dompet
-                          </Badge>
+                          {log.status === 'pending' ? (
+                            <div className="space-y-0.5">
+                              <Badge
+                                variant="outline"
+                                className="text-[10px] font-semibold text-amber-500 border-amber-500/30 bg-amber-500/10 flex items-center gap-1 w-fit"
+                              >
+                                <Clock className="w-2.5 h-2.5" />
+                                <span>Masa Garansi (3 Hari)</span>
+                              </Badge>
+                              {log.holdingUntil && (
+                                <p className="text-[9px] text-foreground-muted font-mono">
+                                  Rilis: {new Date(log.holdingUntil).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                                </p>
+                              )}
+                            </div>
+                          ) : log.status === 'reversed' ? (
+                            <div className="space-y-0.5">
+                              <Badge
+                                variant="outline"
+                                className="text-[10px] font-semibold text-status-error border-status-error/30 bg-status-error/10 flex items-center gap-1 w-fit"
+                              >
+                                <AlertCircle className="w-2.5 h-2.5" />
+                                <span>Dibatalkan / Refund</span>
+                              </Badge>
+                              {log.reversalReason && (
+                                <p className="text-[9px] text-foreground-muted max-w-[140px] truncate" title={log.reversalReason}>
+                                  {log.reversalReason}
+                                </p>
+                              )}
+                            </div>
+                          ) : (
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] font-semibold text-status-success border-status-success/30 bg-status-success/10 flex items-center gap-1 w-fit"
+                            >
+                              <CheckCircle2 className="w-2.5 h-2.5" />
+                              <span>Siap Ditarik (Final)</span>
+                            </Badge>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -1349,35 +1509,45 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
             )}
           </div>
 
-          {/* Edukasi & Transparansi Sistem Komisi Teman */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Edukasi & Transparansi Sistem Komisi Teman (Audit Compliance) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="p-4 rounded-xl border border-border bg-surface space-y-1.5">
               <div className="flex items-center gap-2 text-primary font-semibold text-xs">
-                <ShieldCheck className="w-4 h-4" />
-                <span>100% Hak Teman Utuh</span>
+                <ShieldCheck className="w-4 h-4 shrink-0" />
+                <span>1-Level Murni (Bukan MLM)</span>
               </div>
               <p className="text-xs text-foreground-muted leading-relaxed">
-                Bonus 2% adalah bentuk apresiasi dan subsidi resmi dari Asterra Store. Komisi teman Anda tidak dipotong sepeser pun (tetap 10%-20%).
+                Hanya 1 level langsung. Anda hanya menerima bonus dari mitra yang langsung Anda ajak. Tidak ada sistem piramida bertingkat.
               </p>
             </div>
 
             <div className="p-4 rounded-xl border border-border bg-surface space-y-1.5">
               <div className="flex items-center gap-2 text-status-success font-semibold text-xs">
-                <Zap className="w-4 h-4" />
-                <span>Real-Time Masuk Dompet</span>
+                <Award className="w-4 h-4 shrink-0" />
+                <span>100% Hak Teman Utuh</span>
               </div>
               <p className="text-xs text-foreground-muted leading-relaxed">
-                Bonus masuk seketika saat pesanan pelanggan teman berstatus completed/sukses. Langsung terakumulasi di dompet komisi Anda.
+                Bonus 2% disubsidi 100% dari alokasi laba bersih Asterra Store. Komisi teman Anda tidak dipotong sepeser pun (tetap 10%-20%).
               </p>
             </div>
 
             <div className="p-4 rounded-xl border border-border bg-surface space-y-1.5">
               <div className="flex items-center gap-2 text-amber-500 font-semibold text-xs">
-                <Coins className="w-4 h-4" />
-                <span>Pencairan Mudah</span>
+                <Percent className="w-4 h-4 shrink-0" />
+                <span>Terkait Buffer Margin Sehat</span>
               </div>
               <p className="text-xs text-foreground-muted leading-relaxed">
-                Bonus tim dicairkan bersamaan dengan komisi penjualan langsung Anda melalui menu Dompet & Pencairan ke seluruh bank & e-wallet.
+                Bonus dikaitkan dengan buffer margin laba toko, mencegah risiko defisit toko pada produk digital dengan margin sangat tipis.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-xl border border-border bg-surface space-y-1.5">
+              <div className="flex items-center gap-2 text-blue-500 font-semibold text-xs">
+                <Clock className="w-4 h-4 shrink-0" />
+                <span>Holding Garansi 3 Hari & Refund</span>
+              </div>
+              <p className="text-xs text-foreground-muted leading-relaxed">
+                Dana ditahan dalam masa garansi 3 hari untuk mengantisipasi refund pembeli, lalu otomatis berpindah ke saldo siap ditarik.
               </p>
             </div>
           </div>
@@ -1400,17 +1570,42 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
             {/* Wallet Balance Cards */}
             <div className="space-y-4">
               <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-2">
-                <span className="text-xs font-medium text-foreground-muted">Saldo Tersedia untuk Ditarik</span>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-foreground-muted">Saldo Siap Ditarik (Final)</span>
+                  <div className="w-7 h-7 rounded-lg bg-status-success/10 text-status-success flex items-center justify-center">
+                    <Wallet className="w-3.5 h-3.5" />
+                  </div>
+                </div>
                 <div className="text-3xl font-extrabold text-status-success tracking-tight">
                   Rp {(partner?.unpaidCommission || 0).toLocaleString('id-ID')}
                 </div>
                 <p className="text-[11px] text-foreground-muted pt-1">
-                  Minimal penarikan: <strong className="text-foreground">Rp 50.000</strong>
+                  Minimal penarikan: <strong className="text-foreground">Rp 50.000</strong> (Tersedia ditarik sekarang)
                 </p>
               </div>
 
               <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-2">
-                <span className="text-xs font-medium text-foreground-muted">Total Komisi Telah Dicairkan</span>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-foreground-muted">Saldo Masa Garansi (Holding 3 Hari)</span>
+                  <div className="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center">
+                    <Clock className="w-3.5 h-3.5" />
+                  </div>
+                </div>
+                <div className="text-2xl font-bold text-amber-500 tracking-tight">
+                  Rp {(partner?.pendingCommission || 0).toLocaleString('id-ID')}
+                </div>
+                <p className="text-[11px] text-foreground-muted pt-1">
+                  Dana komisi pesanan baru selama masa garansi pembeli 3 hari. Otomatis cair ke saldo siap tarik.
+                </p>
+              </div>
+
+              <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-foreground-muted">Total Komisi Telah Dicairkan</span>
+                  <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                  </div>
+                </div>
                 <div className="text-2xl font-bold text-foreground tracking-tight">
                   Rp {(partner?.paidCommission || 0).toLocaleString('id-ID')}
                 </div>
@@ -1422,10 +1617,26 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
 
             {/* Payout Request Form */}
             <div className="lg:col-span-2 bg-surface border border-border rounded-xl p-5 sm:p-6 shadow-xs space-y-4">
-              <h3 className="font-bold text-sm text-foreground flex items-center gap-2">
-                <CreditCard className="w-4 h-4 text-primary" />
-                <span>Formulir Pengajuan Penarikan Saldo</span>
-              </h3>
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-sm text-foreground flex items-center gap-2">
+                  <CreditCard className="w-4 h-4 text-primary" />
+                  <span>Formulir Pengajuan Penarikan Saldo</span>
+                </h3>
+                {partner?.status !== 'active' && (
+                  <Badge variant="outline" className="text-status-error border-status-error/30 bg-status-error/10 text-[10px]">
+                    Akun Tidak Aktif
+                  </Badge>
+                )}
+              </div>
+
+              {partner?.pendingCommission && partner.pendingCommission > 0 ? (
+                <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/25 text-amber-500 text-xs flex items-center gap-2">
+                  <Clock className="w-4 h-4 shrink-0" />
+                  <span>
+                    Terdapat <strong>Rp {partner.pendingCommission.toLocaleString('id-ID')}</strong> dalam masa garansi 3 hari. Saldo tersebut akan otomatis dapat ditarik setelah masa garansi produk berakhir.
+                  </span>
+                </div>
+              ) : null}
 
               {payoutSuccessMsg && (
                 <div className="p-3.5 rounded-lg bg-status-success/15 border border-status-success/30 text-status-success text-xs flex items-center gap-2.5 animate-in fade-in">
@@ -1524,6 +1735,7 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
                   disabled={
                     payoutMutation.isPending ||
                     !partner ||
+                    partner.status !== 'active' ||
                     (partner.unpaidCommission || 0) < 50000 ||
                     !payoutAccount ||
                     !payoutHolder
@@ -1615,9 +1827,9 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
       {activeTab === 'sales-academy' && (
         <div className="space-y-6">
           <div>
-            <h2 className="text-lg font-bold text-foreground">Panduan & Edukasi Mitra Sales</h2>
+            <h2 className="text-lg font-bold text-foreground">Panduan & Edukasi Kemitraan Sales</h2>
             <p className="text-xs text-foreground-muted">
-              Pusat pengetahuan, aturan promosi resmi, dan kontak koordinator tim penjualan Asterra Store.
+              Pusat pengetahuan, etika promosi, regulasi perlindungan mitra, dan kepatuhan sistem Asterra Store.
             </p>
           </div>
 
@@ -1627,16 +1839,19 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
               <div className="w-9 h-9 rounded-lg bg-status-success/10 text-status-success flex items-center justify-center">
                 <ShieldCheck className="w-5 h-5" />
               </div>
-              <h3 className="font-bold text-sm text-foreground">Etika Promosi & Regulasi Kemitraan</h3>
+              <h3 className="font-bold text-sm text-foreground">Etika Promosi & Regulasi Anti-Fraud</h3>
               <ul className="text-xs text-foreground-muted space-y-2 list-disc list-inside leading-relaxed">
                 <li>
-                  <strong className="text-foreground">Dilarang Spam:</strong> Jangan mengirimkan link secara membabi-buta di grup chat publik atau kolom komentar akun orang lain.
+                  <strong className="text-foreground">Dilarang Self-Referral:</strong> Mitra dilarang menggunakan link referral milik sendiri untuk pesanan pribadi atau membuat akun sirkular. Sistem secara otomatis mendeteksi kecocokan email dan WhatsApp.
                 </li>
                 <li>
-                  <strong className="text-foreground">Informasi Akurat:</strong> Sampaikan informasi garansi sesuai ketentuan toko (garansi penggantian akun 100%).
+                  <strong className="text-foreground">Proteksi Margin Sehat:</strong> Bonus referral 2% dikalkulasikan dengan buffer margin aman toko untuk menjamin kelangsungan ekosistem harga terjangkau.
                 </li>
                 <li>
-                  <strong className="text-foreground">Keamanan Akun:</strong> Jangan meminta kredensial akun pribadi pembeli selain data yang dibutuhkan saat checkout toko.
+                  <strong className="text-foreground">Dilarang Spam:</strong> Jangan menyebarkan link secara massal di grup publik tanpa izin atau kolom komentar media sosial orang lain.
+                </li>
+                <li>
+                  <strong className="text-foreground">Informasi Garansi Resmi:</strong> Sampaikan informasi garansi sesuai ketentuan toko (garansi penggantian akun 100% selama masa aktif).
                 </li>
               </ul>
             </div>
@@ -1647,14 +1862,30 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
                 <HelpCircle className="w-5 h-5" />
               </div>
               <h3 className="font-bold text-sm text-foreground">Pertanyaan Umum Seputar Komisi (FAQ)</h3>
-              <div className="text-xs text-foreground-muted space-y-2 leading-relaxed">
+              <div className="text-xs text-foreground-muted space-y-2.5 leading-relaxed">
                 <div>
-                  <p className="font-semibold text-foreground">Kapan komisi masuk ke saldo saya?</p>
-                  <p className="text-[11px]">Seketika setelah pembeli menyelesaikan pembayaran melalui payment gateway resmi toko kami.</p>
+                  <p className="font-semibold text-foreground">Kapan komisi masuk dan siap ditarik?</p>
+                  <p className="text-[11px]">
+                    Komisi tercatat seketika saat pembeli membayar dan masuk status <strong>Masa Garansi (Holding 3 Hari)</strong> untuk mengantisipasi klaim garansi/refund. Setelah 3 hari, saldo otomatis pindah ke <strong>Saldo Siap Ditarik</strong>.
+                  </p>
                 </div>
                 <div>
-                  <p className="font-semibold text-foreground">Berapa lama proses pencairan dana (payout)?</p>
-                  <p className="text-[11px]">Penarikan saldo komisi diverifikasi dan ditransfer maksimal 1x24 jam kerja.</p>
+                  <p className="font-semibold text-foreground">Dari mana sumber bonus 2% ajak teman?</p>
+                  <p className="text-[11px]">
+                    Bonus 2% adalah 100% subsidi resmi dari laba bersih Asterra Store. Komisi teman Anda tidak dipotong sepeser pun (tetap utuh 100% sesuai tier).
+                  </p>
+                </div>
+                <div>
+                  <p className="font-semibold text-foreground">Apakah ini sistem MLM atau piramida?</p>
+                  <p className="text-[11px]">
+                    Bukan MLM. Asterra Store menerapkan <strong>1-Level Referral Murni (Single-Tier)</strong>. Anda hanya mendapat bonus dari teman yang langsung mendaftar dengan kode Anda (tidak ada level 2 atau level seterusnya).
+                  </p>
+                </div>
+                <div>
+                  <p className="font-semibold text-foreground">Bagaimana jika ada pesanan teman yang di-refund?</p>
+                  <p className="text-[11px]">
+                    Jika pesanan dibatalkan atau di-refund sebelum melewati masa garansi, komisi dan bonus terkait akan dibatalkan (reversed) secara otomatis.
+                  </p>
                 </div>
               </div>
             </div>

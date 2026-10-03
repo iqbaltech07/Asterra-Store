@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import bcrypt from 'bcryptjs';
+import { prisma } from '@/lib/prisma';
 import { AffiliateService } from '@/lib/services/affiliate.service';
 
 export async function GET(req: NextRequest) {
@@ -21,7 +23,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { name, email, whatsapp, code, rate, bankName, bankAccount } = body;
+    const { name, email, password, whatsapp, code, rate, bankName, bankAccount } = body;
 
     const result = AffiliateService.createPartnerByAdmin({
       name,
@@ -33,11 +35,40 @@ export async function POST(req: NextRequest) {
       bankAccount,
     });
 
-    if (!result.success) {
+    if (!result.success || !result.partner) {
       return NextResponse.json(
         { success: false, message: result.message },
         { status: 400 }
       );
+    }
+
+    // If password provided, create or update AdminUser for sales portal login
+    if (password && typeof password === 'string' && password.length >= 6) {
+      try {
+        const cleanEmail = result.partner.email.toLowerCase().trim();
+        const passwordHash = await bcrypt.hash(password, 10);
+        const usernameSlug = `sales-${result.partner.code.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+
+        await prisma.adminUser.upsert({
+          where: { email: cleanEmail },
+          update: {
+            name: result.partner.name,
+            role: 'sales',
+            passwordHash,
+            isActive: true,
+          },
+          create: {
+            username: usernameSlug,
+            email: cleanEmail,
+            name: result.partner.name,
+            passwordHash,
+            role: 'sales',
+            isActive: true,
+          },
+        });
+      } catch (dbErr) {
+        console.error('Error creating admin_user record for admin-added sales partner:', dbErr);
+      }
     }
 
     return NextResponse.json(
