@@ -155,7 +155,25 @@ export class PrismaCatalogRepository {
   static async getProductById(id: string): Promise<ManagedProduct | null> {
     try {
       const p = await prisma.product.findUnique({ where: { id } });
-      if (!p) return null;
+      if (!p) {
+        // Resolve brand slug or family slug (e.g. 'chatgpt', 'google-gemini', 'canva', etc.)
+        const local = getLocalFallbackActiveProducts();
+        const { resolveProductFamily } = await import('./product-variant-parser');
+        const family = resolveProductFamily(id, local);
+        if (family) {
+          const match = local.find((x) => x.id === family.selectedVariant.id) || local[0];
+          if (match) {
+            return {
+              ...match,
+              name: family.name,
+              imageUrl: family.imageUrl,
+              description: family.description,
+              features: family.features,
+            };
+          }
+        }
+        return null;
+      }
 
       const { profitMargin, profitPercentage } = computeProductMargins(
         p.price,
@@ -197,7 +215,27 @@ export class PrismaCatalogRepository {
     } catch (err) {
       console.warn('[PrismaCatalogRepository] Database error on getProductById, using local fallback:', err);
       const local = getLocalFallbackActiveProducts();
-      return local.find((p) => p.id === id) || null;
+      const direct = local.find((p) => p.id === id);
+      if (direct) return direct;
+
+      try {
+        const { resolveProductFamily } = require('./product-variant-parser');
+        const family = resolveProductFamily(id, local);
+        if (family) {
+          const match = local.find((x: ManagedProduct) => x.id === family.selectedVariant.id) || local[0];
+          if (match) {
+            return {
+              ...match,
+              name: family.name,
+              imageUrl: family.imageUrl,
+              description: family.description,
+              features: family.features,
+            };
+          }
+        }
+      } catch {}
+
+      return null;
     }
   }
 

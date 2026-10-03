@@ -13,21 +13,19 @@ export function GsapProvider({ children }: { children: React.ReactNode }) {
   const pageContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (prefersReducedMotion()) return;
-
     let cleanupEntrance: (() => void) | undefined;
     let cleanupScroll: (() => void) | undefined;
 
-    // Wait one frame so the new route's DOM is painted before animating
-    const raf = requestAnimationFrame(() => {
+    // Small timeout ensures the route's DOM is painted before animating
+    const timer = setTimeout(() => {
       const container = pageContainerRef.current;
       if (!container) return;
       cleanupEntrance = animatePageEntrance(container);
       cleanupScroll = setupScrollReveal(container);
-    });
+    }, 40);
 
     return () => {
-      cancelAnimationFrame(raf);
+      clearTimeout(timer);
       cleanupEntrance?.();
       cleanupScroll?.();
     };

@@ -84,8 +84,13 @@ function AppBrandBadge({ name }: { name: string }) {
 
   if (n.includes('alight')) {
     return (
-      <div className="w-full h-full bg-gradient-to-tr from-[#6A11CB] to-[#2575FC] rounded-lg sm:rounded-xl flex items-center justify-center p-1.5 shadow-2xs">
-        <Layers className="w-5 h-5 text-white" />
+      <div className="w-full h-full bg-[#181d2a] rounded-lg sm:rounded-xl flex items-center justify-center p-0.5 shadow-2xs overflow-hidden">
+        <img
+          src="/images/apps/alightmotion.png"
+          alt="Alight Motion"
+          className="w-full h-full object-cover rounded-md"
+          draggable={false}
+        />
       </div>
     );
   }
@@ -225,10 +230,11 @@ function ApplicationCard({
 
   return (
     <Link
-      href={`/products?search=${encodeURIComponent(app.name)}`}
+      href={`/products/${app.slug}`}
       tabIndex={isDuplicate ? -1 : undefined}
       aria-hidden={isDuplicate ? true : undefined}
-      className="group bg-white border border-[rgba(18,26,42,0.08)] hover:border-[#C96F55]/60 hover:shadow-xs hover:-translate-y-0.5 rounded-xl sm:rounded-2xl p-3 sm:p-3.5 transition-all duration-200 flex flex-col justify-between shrink-0 flex-none w-[240px] sm:w-[270px] lg:w-[290px] h-[152px] sm:h-[158px] mr-3 sm:mr-4 select-none"
+      data-gsap="card"
+      className="group bg-white border border-[rgba(18,26,42,0.08)] hover:border-[#C96F55]/60 hover:shadow-xs hover:-translate-y-0.5 rounded-xl sm:rounded-2xl p-3 sm:p-3.5 transition-all duration-200 flex flex-col justify-between shrink-0 flex-none w-[240px] sm:w-[270px] lg:w-[290px] h-[152px] sm:h-[158px] mr-3 sm:mr-4 select-none cursor-pointer"
     >
       <div>
         {/* 1. PRODUCT HEADER: Logo + Product Info (Name & Rating + Terjual) */}
