@@ -66,8 +66,8 @@ export function animatePageEntrance(container: HTMLElement | null) {
   if (!container || typeof window === 'undefined') return;
 
   const reduced = prefersReducedMotion();
-  const dur = reduced ? 0.2 : 0.38;
-  const dist = reduced ? 3 : 8;
+  const dur = reduced ? 0.3 : 0.52;
+  const dist = reduced ? 6 : 16;
 
   const ctx = gsap.context(() => {
     // 1. Main Headings (h1, page titles)
@@ -76,7 +76,7 @@ export function animatePageEntrance(container: HTMLElement | null) {
       gsap.fromTo(
         headings,
         { y: dist, opacity: 0 },
-        { y: 0, opacity: 1, duration: dur, ease: 'power2.out', stagger: 0.04, force3D: true, clearProps: 'transform,opacity' }
+        { y: 0, opacity: 1, duration: dur, ease: 'power2.out', stagger: 0.05, force3D: true, clearProps: 'transform,opacity' }
       );
     }
 
@@ -87,20 +87,20 @@ export function animatePageEntrance(container: HTMLElement | null) {
     if (subheads.length > 0) {
       gsap.fromTo(
         subheads,
-        { y: dist * 0.5, opacity: 0 },
-        { y: 0, opacity: 1, duration: dur * 0.9, ease: 'power2.out', delay: 0.04, stagger: 0.03, force3D: true, clearProps: 'transform,opacity' }
+        { y: dist * 0.6, opacity: 0 },
+        { y: 0, opacity: 1, duration: dur * 0.9, ease: 'power2.out', delay: 0.06, stagger: 0.04, force3D: true, clearProps: 'transform,opacity' }
       );
     }
 
-    // 3. Hero media, graphics, and images (smooth subtle entrance, no raster recomputation)
+    // 3. Hero media, graphics, and images (Planet visual)
     const media = container.querySelectorAll(
       '[data-gsap="hero-media"], [data-gsap="media"]'
     );
     if (media.length > 0) {
       gsap.fromTo(
         media,
-        { y: dist * 0.5, opacity: 0 },
-        { y: 0, opacity: 1, duration: dur, ease: 'power2.out', delay: 0.04, force3D: true, clearProps: 'transform,opacity' }
+        { scale: 0.93, opacity: 0 },
+        { scale: 1, opacity: 1, duration: dur * 1.1, ease: 'power2.out', delay: 0.08, force3D: true, clearProps: 'transform,opacity' }
       );
     }
 
@@ -111,8 +111,8 @@ export function animatePageEntrance(container: HTMLElement | null) {
     if (initialCards.length > 0) {
       gsap.fromTo(
         initialCards,
-        { y: dist * 0.5, opacity: 0 },
-        { y: 0, opacity: 1, duration: dur * 0.85, stagger: 0.03, ease: 'power2.out', delay: 0.06, force3D: true, clearProps: 'transform,opacity' }
+        { y: dist * 0.7, opacity: 0 },
+        { y: 0, opacity: 1, duration: dur * 0.85, stagger: 0.05, ease: 'power2.out', delay: 0.1, force3D: true, clearProps: 'transform,opacity' }
       );
     }
   }, container);
@@ -121,15 +121,15 @@ export function animatePageEntrance(container: HTMLElement | null) {
 }
 
 /**
- * Set up smooth, lightweight scroll reveals for sections, headings, and card grids.
- * Uses positive bottom rootMargin so items start revealing smoothly before entering view.
+ * Set up smooth, visible scroll reveals for sections, headings, and card grids.
+ * Uses WeakSet to prevent double-animation and ensures in-view sections animate smoothly.
  */
 export function setupScrollReveal(root: HTMLElement | null) {
   if (!root || typeof window === 'undefined') return;
 
   const revealedElements = new WeakSet<Element>();
 
-  const reveal = (target: HTMLElement) => {
+  const reveal = (target: HTMLElement, isInitial = false) => {
     if (revealedElements.has(target)) return;
     revealedElements.add(target);
 
@@ -138,28 +138,31 @@ export function setupScrollReveal(root: HTMLElement | null) {
       target.querySelectorAll<HTMLElement>('[data-gsap="card"], .card')
     ).filter((el) => !el.closest('.carousel-track') && !el.closest('.carousel-viewport'));
 
-    const tl = gsap.timeline({ defaults: { ease: 'power2.out', overwrite: 'auto', force3D: true } });
+    const tl = gsap.timeline({
+      defaults: { ease: 'power2.out', force3D: true },
+      delay: isInitial ? 0.08 : 0,
+    });
 
     if (cards.length > 0) {
       tl.fromTo(
         cards,
-        { y: 8, opacity: 0 },
+        { y: 16, opacity: 0 },
         {
           y: 0,
           opacity: 1,
-          duration: 0.35,
-          stagger: 0.03,
+          duration: 0.45,
+          stagger: 0.05,
           clearProps: 'transform,opacity',
         }
       );
     } else {
       tl.fromTo(
         target,
-        { y: 8, opacity: 0 },
+        { y: 14, opacity: 0 },
         {
           y: 0,
           opacity: 1,
-          duration: 0.35,
+          duration: 0.42,
           clearProps: 'transform,opacity',
         }
       );
@@ -174,11 +177,11 @@ export function setupScrollReveal(root: HTMLElement | null) {
         reveal(entry.target as HTMLElement);
       });
     },
-    { rootMargin: '60px 0px 20px 0px', threshold: 0.01 }
+    { rootMargin: '40px 0px 20px 0px', threshold: 0.01 }
   );
 
   const scan = () => {
-    // Only target explicit sections that are below the initial fold
+    // Target sections and revealable elements
     const targets = root.querySelectorAll<HTMLElement>('[data-gsap-reveal], section[id]');
 
     targets.forEach((el) => {
@@ -190,9 +193,9 @@ export function setupScrollReveal(root: HTMLElement | null) {
         return;
 
       const rect = el.getBoundingClientRect();
-      // If already in viewport on load, mark it without re-triggering a competing animation
-      if (rect.top < window.innerHeight * 0.85 && rect.bottom > 0) {
-        revealedElements.add(el);
+      // If already in viewport on initial load, trigger reveal with slight delay so it visibly cascades in
+      if (rect.top < window.innerHeight && rect.bottom > 0) {
+        reveal(el, true);
       } else {
         io.observe(el);
       }

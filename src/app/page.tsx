@@ -115,13 +115,8 @@ function AppBrandBadge({ name }: { name: string }) {
 
   if (n.includes('netflix')) {
     return (
-      <div className="w-full h-full bg-black rounded-lg sm:rounded-xl flex items-center justify-center p-1.5 shadow-2xs">
-        <img
-          src="/images/apps/netflix.png"
-          alt="Netflix"
-          className="w-full h-full object-contain"
-          draggable={false}
-        />
+      <div className="w-full h-full bg-black rounded-lg sm:rounded-xl flex items-center justify-center p-1 shadow-2xs">
+        <span className="font-black text-[#E50914] text-xs sm:text-sm tracking-tighter">NETFLIX</span>
       </div>
     );
   }
@@ -512,29 +507,37 @@ export default function HomePage() {
       <main className="flex-1 max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 pt-2 sm:pt-3.5 pb-8 sm:pb-12 w-full overflow-hidden">
         {/* SECTION 2 & 3: Hero Banner with Controlled Dimensions, Scaled Planet Anchor & Integrated Benefit Strip */}
         <section className="relative w-full rounded-2xl sm:rounded-3xl bg-[#101828] border border-[rgba(255,255,255,0.08)] shadow-md overflow-hidden mb-6 sm:mb-8">
-          {/* Controlled Hero Area: compact & clean with reduced height */}
-          <div className="relative min-h-[160px] sm:min-h-[190px] lg:h-[220px] xl:h-[235px] flex items-center px-5 sm:px-8 lg:px-12 py-5 sm:py-6 lg:py-0 overflow-hidden">
-            {/* Left Column: Headline & Subheadline */}
-            <div className="relative z-10 w-full lg:max-w-[62%] xl:max-w-[60%] py-1">
+          {/* Controlled Hero Area: compact & clean with balanced text spacing */}
+          <div className="relative min-h-[165px] sm:min-h-[190px] lg:h-[220px] xl:h-[235px] flex items-center px-4.5 sm:px-8 lg:px-12 py-4.5 sm:py-6 lg:py-0 overflow-hidden">
+            {/* Left Column: Headline & Subheadline (Clear max-width on mobile prevents planet collision) */}
+            <div className="relative z-10 w-full max-w-[66%] sm:max-w-[70%] lg:max-w-[62%] xl:max-w-[60%] py-1">
               {/* Editorial Headline */}
-              <h1 data-gsap="page-title" className="text-xl sm:text-3xl lg:text-[32px] xl:text-[36px] font-black tracking-tight text-white leading-[1.15]">
+              <h1 data-gsap="page-title" className="text-lg sm:text-2xl lg:text-[32px] xl:text-[36px] font-black tracking-tight text-white leading-[1.18] sm:leading-[1.15]">
                 Solusi Terpercaya Produk &<br />
                 <span className="text-[#E28870]">Layanan Digital Premium</span>
               </h1>
 
               {/* Subheadline */}
-              <p data-gsap="page-sub" className="mt-2 sm:mt-2.5 text-xs sm:text-[13px] lg:text-sm text-white/75 max-w-xl leading-relaxed">
+              <p data-gsap="page-sub" className="mt-1.5 sm:mt-2.5 text-[11px] sm:text-[13px] lg:text-sm text-white/75 leading-relaxed line-clamp-3 sm:line-clamp-none">
                 Dapatkan akses langganan resmi untuk tool AI, software desain, voucher, dan layanan
                 digital lainnya tanpa kartu kredit dengan konfirmasi instan.
               </p>
             </div>
 
-            {/* Right Column: Planet Visual (Gambar 2: White planet with coral star, sized down) */}
-            <div className="absolute right-[-20px] sm:right-0 lg:right-2 xl:right-6 top-1/2 -translate-y-1/2 pointer-events-none select-none z-0 opacity-60 sm:opacity-85 lg:opacity-100 transition-opacity">
-              <div data-gsap="hero-media" className="relative w-[180px] h-[180px] sm:w-[220px] sm:h-[220px] lg:w-[260px] lg:h-[260px] flex items-center justify-center">
-                {/* Subtle SVG Orbital Background Rings */}
+            {/* Right Column: Planet Visual (Smooth, Cleanly Positioned in Top-Right on Mobile, Zero Lag on iPhone 12) */}
+            <div className="absolute right-0.5 sm:right-2 lg:right-6 top-2.5 sm:top-1/2 sm:-translate-y-1/2 pointer-events-none select-none z-10">
+              <div
+                data-gsap="hero-media"
+                className="relative w-[115px] h-[115px] sm:w-[170px] sm:h-[170px] lg:w-[250px] lg:h-[250px] flex items-center justify-center"
+                style={{
+                  transform: 'translate3d(0,0,0)',
+                  WebkitTransform: 'translate3d(0,0,0)',
+                  willChange: 'transform',
+                }}
+              >
+                {/* Subtle SVG Orbital Background Rings (desktop & tablet only) */}
                 <svg
-                  className="absolute inset-0 w-full h-full pointer-events-none opacity-60"
+                  className="hidden sm:block absolute inset-0 w-full h-full pointer-events-none opacity-50"
                   viewBox="0 0 500 500"
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
@@ -560,11 +563,24 @@ export default function HomePage() {
                   />
                 </svg>
 
-                {/* Ambient Soft Glow */}
-                <div className="absolute w-36 h-36 lg:w-48 lg:h-48 rounded-full bg-[rgba(201,111,85,0.18)] blur-2xl pointer-events-none" />
+                {/* Ambient Soft Glow: GPU-Native Radial Gradient (Zero CPU blur calculation on iOS WebKit) */}
+                <div
+                  className="absolute inset-0 rounded-full pointer-events-none"
+                  style={{
+                    background: 'radial-gradient(circle, rgba(201,111,85,0.25) 0%, rgba(201,111,85,0) 70%)',
+                  }}
+                />
 
-                {/* Scaled Asterra Planet Visual: Transparent Animated WebP with Static Fallback */}
-                <div className="relative z-10 w-[150px] sm:w-[180px] lg:w-[220px] xl:w-[240px] flex items-center justify-center translate-x-1 sm:translate-x-1.5 lg:translate-x-2 -translate-y-2 sm:-translate-y-2.5 lg:-translate-y-3">
+                {/* Scaled Asterra Planet Visual: Smooth Hardware-Accelerated Animation */}
+                <div
+                  className="relative z-10 w-[100px] sm:w-[150px] lg:w-[220px] flex items-center justify-center"
+                  style={{
+                    transform: 'translate3d(0,0,0)',
+                    WebkitTransform: 'translate3d(0,0,0)',
+                    WebkitBackfaceVisibility: 'hidden',
+                    backfaceVisibility: 'hidden',
+                  }}
+                >
                   <img
                     src="/assets/asterra-planet-transparent.webp"
                     alt="Asterra Store"
@@ -572,6 +588,10 @@ export default function HomePage() {
                     height={426}
                     draggable={false}
                     className="w-full h-auto object-contain pointer-events-none select-none"
+                    style={{
+                      transform: 'translate3d(0,0,0)',
+                      WebkitTransform: 'translate3d(0,0,0)',
+                    }}
                     onError={(e) => {
                       e.currentTarget.src = "/images/brand/hero-planet-white.png";
                     }}
