@@ -8,10 +8,10 @@ module.exports = {
           orange: '#C96F55',
           coral: '#C96F55',
         },
-        background: '#F7F5EF',
+        background: '#FFFFFF',
         surface: {
           DEFAULT: '#FFFFFF',
-          secondary: '#F0ECE1',
+          secondary: '#F8FAFC',
           raised: '#FFFFFF',
         },
         foreground: {
@@ -27,13 +27,13 @@ module.exports = {
         },
         primary: {
           DEFAULT: '#C96F55',
-          foreground: '#F7F5EF',
+          foreground: '#FFFFFF',
         },
         accent: {
           DEFAULT: '#C96F55',
           dark: '#A9553E',
           soft: 'rgba(201, 111, 85, 0.08)',
-          foreground: '#F7F5EF',
+          foreground: '#FFFFFF',
         },
         status: {
           success: '#16A34A',
@@ -43,7 +43,7 @@ module.exports = {
           info: '#2563EB',
         },
         moryn: {
-          bg: '#F7F5EF',
+          bg: '#FFFFFF',
           surface: '#FFFFFF',
           elevated: '#FFFFFF',
           ink: '#121A2A',

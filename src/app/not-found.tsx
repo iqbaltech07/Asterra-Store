@@ -6,7 +6,7 @@ import { ArrowLeft, Search } from 'lucide-react';
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen bg-[#F7F5EF] text-[#121A2A] flex flex-col font-sans">
+    <div className="min-h-screen bg-white text-[#121A2A] flex flex-col font-sans">
       <Header />
 
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-24 flex items-center justify-center w-full">

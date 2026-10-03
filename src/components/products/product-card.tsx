@@ -28,8 +28,8 @@ export function ProductCard({
   return (
     <Card className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl shadow-card hover:shadow-card-hover hover:border-[rgba(18,26,42,0.22)] transition-all duration-200 overflow-hidden flex flex-col justify-between group">
       <div>
-        {/* 1. Product Image / Banner with subtle 16/10 aspect ratio */}
-        <div className="relative w-full aspect-[16/10] bg-[#121A2A]/5 overflow-hidden border-b border-[rgba(18,26,42,0.06)]">
+        {/* 1. Product Image / Banner with fixed 16/7 aspect ratio */}
+        <div className="relative w-full aspect-[16/7] bg-[#121A2A]/5 overflow-hidden border-b border-[rgba(18,26,42,0.06)]">
           <Link href={`/products/${product.id}`} prefetch={true} className="block w-full h-full">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -123,7 +123,7 @@ export function ProductCard({
       </div>
 
       {/* 4. Price & Compact CTA */}
-      <div className="p-2.5 sm:p-3.5 pt-2 border-t border-[rgba(18,26,42,0.08)] bg-[#F7F5EF]/50 flex items-center justify-between gap-1.5 sm:gap-2">
+      <div className="p-2.5 sm:p-3.5 pt-2 border-t border-[rgba(18,26,42,0.08)] bg-[#F8FAFC] flex items-center justify-between gap-1.5 sm:gap-2">
         <div className="min-w-0 flex-1">
           <p className="text-[9px] sm:text-[10px] text-[#121A2A]/50 uppercase font-semibold tracking-wider leading-none">
             Harga

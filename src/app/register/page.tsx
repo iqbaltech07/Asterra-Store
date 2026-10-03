@@ -100,7 +100,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F7F5EF] text-[#121A2A] flex flex-col justify-center items-center px-4 py-12 selection:bg-[#C96F55]/20 selection:text-[#C96F55]">
+    <div className="min-h-screen bg-white text-[#121A2A] flex flex-col justify-center items-center px-4 py-12 selection:bg-[#C96F55]/20 selection:text-[#C96F55]">
       {/* Back to Home Link */}
       <div className="w-full max-w-md mb-6">
         <Link

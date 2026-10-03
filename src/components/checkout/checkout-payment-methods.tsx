@@ -48,14 +48,14 @@ export function CheckoutPaymentMethods({
               className={`p-4 rounded-xl border cursor-pointer transition-all flex items-center justify-between ${
                 isSelected
                   ? 'bg-[rgba(201,111,85,0.08)] border-[#C96F55] shadow-xs ring-2 ring-[#C96F55]/20'
-                  : 'bg-white border-[rgba(18,26,42,0.1)] hover:border-[#121A2A] hover:bg-[#F7F5EF]/60'
+                  : 'bg-white border-[rgba(18,26,42,0.1)] hover:border-[#121A2A] hover:bg-[#F8FAFC]'
               }`}
             >
               <div className="flex items-center gap-3.5 min-w-0 flex-1 pr-2">
                 <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 border ${
                   isSelected
                     ? 'bg-[rgba(201,111,85,0.15)] text-[#C96F55] border-[rgba(201,111,85,0.3)]'
-                    : 'bg-[#F7F5EF] text-[#121A2A]/60 border-[rgba(18,26,42,0.08)]'
+                    : 'bg-[#F8FAFC] text-[#121A2A]/60 border-[rgba(18,26,42,0.08)]'
                 }`}>
                   {method.category === 'qris' && <QrCode className="w-4 h-4" />}
                   {method.category === 'ewallet' && <Wallet className="w-4 h-4" />}

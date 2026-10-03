@@ -84,7 +84,7 @@ export function CheckoutCartSummary({
     <div className="bg-white border border-[rgba(18,26,42,0.08)] rounded-2xl p-6 shadow-card space-y-6">
       <div className="flex items-center justify-between pb-3 border-b border-[rgba(18,26,42,0.08)]">
         <h3 className="text-base font-bold text-[#121A2A]">Ringkasan Pesanan</h3>
-        <span className="text-xs font-semibold px-2.5 py-0.5 rounded-md bg-[#F7F5EF] text-[#121A2A]/80 border border-[rgba(18,26,42,0.08)]">
+        <span className="text-xs font-semibold px-2.5 py-0.5 rounded-md bg-[#F8FAFC] text-[#121A2A]/80 border border-[rgba(18,26,42,0.08)]">
           {totalItems} Item
         </span>
       </div>
@@ -101,7 +101,7 @@ export function CheckoutCartSummary({
               className={`p-3 rounded-xl border flex items-center justify-between text-xs gap-3 ${
                 itemOutOfStock
                   ? 'border-red-200 bg-red-50/50'
-                  : 'border-[rgba(18,26,42,0.08)] bg-[#F7F5EF]'
+                  : 'border-[rgba(18,26,42,0.08)] bg-[#F8FAFC]'
               }`}
             >
               <div className="min-w-0 flex-1">
@@ -209,7 +209,7 @@ export function CheckoutCartSummary({
                 </AlertDialog.Header>
 
                 <AlertDialog.Body className="text-xs space-y-3 pt-1">
-                  <div className="p-3.5 bg-[#F7F5EF] rounded-xl border border-[rgba(18,26,42,0.08)] space-y-2">
+                  <div className="p-3.5 bg-[#F8FAFC] rounded-xl border border-[rgba(18,26,42,0.08)] space-y-2">
                     <div className="flex justify-between items-center text-[#121A2A]/60">
                       <span>Jumlah Produk:</span>
                       <span className="font-bold text-[#121A2A]">{totalItems} Layanan Digital</span>
@@ -260,7 +260,7 @@ export function CheckoutCartSummary({
       )}
 
       {/* Security Guarantee Bar */}
-      <div className="p-3.5 bg-[#F7F5EF] rounded-xl border border-[rgba(18,26,42,0.08)] space-y-2 text-[11px] text-[#121A2A]/70">
+      <div className="p-3.5 bg-[#F8FAFC] rounded-xl border border-[rgba(18,26,42,0.08)] space-y-2 text-[11px] text-[#121A2A]/70">
         <div className="flex items-center gap-2 text-[#121A2A] font-semibold">
           <ShieldCheck className="w-4 h-4 text-[#C96F55]" />
           <span>Jaminan Transaksi Terpercaya & Terenkripsi</span>

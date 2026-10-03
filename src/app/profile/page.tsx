@@ -246,10 +246,10 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F7F5EF] text-[#121A2A] flex flex-col selection:bg-[#C96F55]/20 selection:text-[#C96F55]">
+    <div className="min-h-screen bg-white text-[#121A2A] flex flex-col selection:bg-[#C96F55]/20 selection:text-[#C96F55]">
       {/* Toast Notification */}
       {notification && (
-        <div className="fixed bottom-6 right-6 z-50 bg-[#121A2A] border border-white/15 text-[#F7F5EF] px-4 py-3 rounded-xl shadow-editorial flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2 duration-200">
+        <div className="fixed bottom-6 right-6 z-50 bg-[#121A2A] border border-white/15 text-white px-4 py-3 rounded-xl shadow-editorial flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2 duration-200">
           <CheckCircle2 className="w-4 h-4 text-[#C96F55] shrink-0" />
           <span className="text-sm font-semibold">{notification}</span>
         </div>

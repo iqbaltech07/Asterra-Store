@@ -15,11 +15,11 @@
   --color-accent-soft: rgba(201, 111, 85, 0.08);
   --color-accent-dark: #a9553e;
 
-  --color-bg: #f7f5ef;
+  --color-bg: #ffffff;
   --color-surface: #ffffff;
-  --color-surface-secondary: #f0ece1;
+  --color-surface-secondary: #f8fafc;
   --color-surface-raised: #ffffff;
-  --color-surface-hover: #ebe7db;
+  --color-surface-hover: #f1f5f9;
 
   --color-border: rgba(18, 26, 42, 0.1);
   --color-border-subtle: rgba(18, 26, 42, 0.06);
@@ -45,7 +45,7 @@
   --radius-input: 8px;
 
   /* Tailwind Semantic Variable Aliases */
-  --background: #f7f5ef;
+  --background: #ffffff;
   --surface: #ffffff;
   --surface-raised: #ffffff;
   --border: rgba(18, 26, 42, 0.1);
@@ -60,11 +60,11 @@
 
   --accent: #c96f55;
   --accent-hover: #b86047;
-  --accent-foreground: #f7f5ef;
+  --accent-foreground: #ffffff;
 }
 
 body {
-  background-color: #f7f5ef;
+  background-color: #ffffff;
   color: #121a2a;
   font-family:
     var(--font-inter),
@@ -85,7 +85,7 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #f7f5ef;
+  background: #ffffff;
 }
 
 ::-webkit-scrollbar-thumb {

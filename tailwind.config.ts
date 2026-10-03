@@ -10,13 +10,13 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: '#F7F5EF',
+        background: '#FFFFFF',
         surface: {
           DEFAULT: '#FFFFFF',
-          secondary: '#F0ECE1',
+          secondary: '#F8FAFC',
           raised: '#FFFFFF',
-          hover: '#EBE7DB',
-          muted: '#E5E1D4',
+          hover: '#F1F5F9',
+          muted: '#E2E8F0',
         },
         navy: {
           DEFAULT: '#121A2A',

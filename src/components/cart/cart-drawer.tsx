@@ -29,7 +29,7 @@ export function CartDrawer({ isOpen, onClose, onCheckout }: CartDrawerProps) {
       />
 
       {/* Drawer Panel */}
-      <div className="relative w-full max-w-md bg-[#F7F5EF] border-l border-[rgba(18,26,42,0.1)] h-full shadow-2xl flex flex-col z-10 animate-in slide-in-from-right duration-200">
+      <div className="relative w-full max-w-md bg-white border-l border-[rgba(18,26,42,0.1)] h-full shadow-2xl flex flex-col z-10 animate-in slide-in-from-right duration-200">
         {/* Header */}
         <div className="p-5 bg-[#121A2A] border-b border-white/10 text-[#F7F5EF] flex items-center justify-between">
           <div className="flex items-center gap-2.5">
@@ -106,7 +106,7 @@ export function CartDrawer({ isOpen, onClose, onCheckout }: CartDrawerProps) {
                       Rp {(item.priceNumeric * item.quantity).toLocaleString('id-ID')}
                     </span>
 
-                    <div className="flex items-center gap-2 bg-[#F7F5EF] border border-[rgba(18,26,42,0.1)] rounded-md px-2 py-0.5">
+                    <div className="flex items-center gap-2 bg-[#F8FAFC] border border-[rgba(18,26,42,0.1)] rounded-md px-2 py-0.5">
                       <button
                         type="button"
                         onClick={() => updateQuantity(item.id, -1)}

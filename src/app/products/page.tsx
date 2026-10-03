@@ -171,13 +171,13 @@ function ProductsContent() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F7F5EF] text-[#121A2A] flex flex-col font-sans selection:bg-[#C96F55]/20 selection:text-[#C96F55]">
+    <div className="min-h-screen bg-white text-[#121A2A] flex flex-col font-sans selection:bg-[#C96F55]/20 selection:text-[#C96F55]">
       <Header onNotify={showNotification} />
 
       {/* Floating Notification */}
       {notification && (
         <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-5">
-          <div className="bg-[#121A2A] border border-white/15 text-[#F7F5EF] px-4 py-3 rounded-xl shadow-editorial flex items-center gap-3">
+          <div className="bg-[#121A2A] border border-white/15 text-white px-4 py-3 rounded-xl shadow-editorial flex items-center gap-3">
             <div className="w-6 h-6 rounded-full bg-[rgba(201,111,85,0.15)] border border-[rgba(201,111,85,0.3)] flex items-center justify-center text-[#C96F55]">
               <Check className="w-3.5 h-3.5" />
             </div>
@@ -256,13 +256,13 @@ function ProductsContent() {
               </Select>
 
               {/* View Toggle */}
-              <div className="flex items-center bg-[#F7F5EF] border border-[rgba(18,26,42,0.08)] rounded-lg p-1 shrink-0">
+              <div className="flex items-center bg-[#F8FAFC] border border-[rgba(18,26,42,0.08)] rounded-lg p-1 shrink-0">
                 <button
                   type="button"
                   onClick={() => setViewMode('grid')}
                   className={`p-1.5 rounded transition-colors cursor-pointer ${
                     viewMode === 'grid'
-                      ? 'bg-[#121A2A] text-[#F7F5EF] shadow-xs'
+                      ? 'bg-[#121A2A] text-white shadow-xs'
                       : 'text-[#121A2A]/60 hover:text-[#121A2A]'
                   }`}
                   aria-label="Tampilan Grid"
@@ -416,7 +416,7 @@ function ProductsContent() {
                   className="bg-white border border-[rgba(18,26,42,0.08)] rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 shadow-card hover:shadow-card-hover hover:border-[rgba(18,26,42,0.18)] transition-all duration-200"
                 >
                   <div className="flex items-start sm:items-center gap-4">
-                    <div className="w-20 h-20 rounded-xl overflow-hidden bg-[#F7F5EF] shrink-0 border border-[rgba(18,26,42,0.08)]">
+                    <div className="w-20 h-20 rounded-xl overflow-hidden bg-[#F8FAFC] shrink-0 border border-[rgba(18,26,42,0.08)]">
                       <Link href={`/products/${product.id}`} prefetch={true} className="block w-full h-full">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
@@ -542,7 +542,7 @@ export default function ProductsPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-[#F7F5EF] flex items-center justify-center">
+        <div className="min-h-screen bg-white flex items-center justify-center">
           <div className="w-8 h-8 rounded-full border-2 border-[#C96F55] border-t-transparent animate-spin" />
         </div>
       }

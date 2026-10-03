@@ -10,11 +10,11 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = 'default', size = 'default', ...props }, ref) => {
     const variantStyles = {
       default:
-        'bg-[#C96F55] text-[#F7F5EF] hover:bg-[#B86047] active:bg-[#A9553E] shadow-xs border border-transparent font-semibold',
+        'bg-[#C96F55] text-white hover:bg-[#B86047] active:bg-[#A9553E] shadow-xs border border-transparent font-semibold',
       secondary:
-        'bg-[#121A2A] text-[#F7F5EF] hover:bg-[#182235] active:bg-[#0C121E] shadow-xs border border-[#121A2A] font-semibold',
+        'bg-[#121A2A] text-white hover:bg-[#182235] active:bg-[#0C121E] shadow-xs border border-[#121A2A] font-semibold',
       navy:
-        'bg-[#121A2A] text-[#F7F5EF] hover:bg-[#182235] active:bg-[#0C121E] shadow-xs border border-[#121A2A] font-semibold',
+        'bg-[#121A2A] text-white hover:bg-[#182235] active:bg-[#0C121E] shadow-xs border border-[#121A2A] font-semibold',
       outline:
         'border border-[#121A2A] bg-transparent text-[#121A2A] hover:bg-[#121A2A]/5 active:bg-[#121A2A]/10 font-semibold',
       ghost:
