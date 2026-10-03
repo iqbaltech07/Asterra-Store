@@ -384,7 +384,7 @@ function ProductsContent() {
 
         {/* Products Listing Grid */}
         {!isLoading && !error && products.length > 0 && viewMode === 'grid' && (
-          <div data-gsap-reveal className="grid grid-cols-2 gap-3 md:gap-5 lg:grid-cols-3">
+          <div key={`grid-${selectedCategory}-${sortBy}`} className="grid grid-cols-2 gap-3 md:gap-5 lg:grid-cols-3 animate-tab-glide">
             {products.map((product, idx) => {
               const isSelected = cartItems.some((item) => item.id === product.id);
               return (
@@ -402,7 +402,7 @@ function ProductsContent() {
 
         {/* Products Listing List View */}
         {!isLoading && !error && products.length > 0 && viewMode === 'list' && (
-          <div data-gsap-reveal className="space-y-4">
+          <div key={`list-${selectedCategory}-${sortBy}`} className="space-y-4 animate-tab-glide">
             {products.map((product, idx) => {
               const isSelected = cartItems.some((item) => item.id === product.id);
               const isOutOfStock =

@@ -641,7 +641,10 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                       <span className="text-[10px] sm:text-xs font-bold text-[#C96F55] uppercase tracking-wider block mb-0.5 sm:mb-1">
                         LISENSI DIGITAL RESMI
                       </span>
-                      <h1 className="text-base sm:text-2xl lg:text-3xl font-black text-white tracking-tight line-clamp-2 drop-shadow-xs leading-snug">
+                      <h1
+                        key={variantDetails.title}
+                        className="text-base sm:text-2xl lg:text-3xl font-black text-white tracking-tight line-clamp-2 drop-shadow-xs leading-snug animate-text-smooth"
+                      >
                         {variantDetails.title}
                       </h1>
                     </div>
@@ -649,7 +652,10 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                 </div>
 
                 {/* 3 Benefit Highlights (Under Image - Responsive for mobile) */}
-                <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                <div
+                  key={variantDetails.title}
+                  className="grid grid-cols-3 gap-2 sm:gap-3 animate-text-smooth"
+                >
                   <div className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl p-2.5 sm:p-3.5 space-y-0.5 sm:space-y-1 shadow-2xs">
                     <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-md sm:rounded-lg bg-[rgba(201,111,85,0.08)] flex items-center justify-center text-[#C96F55] mb-1 sm:mb-2">
                       <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -694,7 +700,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                     <button
                       type="button"
                       onClick={() => setActiveTab('deskripsi')}
-                      className={`rounded-full py-1.5 sm:py-2 px-3 sm:px-6 text-xs transition-all cursor-pointer text-center ${
+                      className={`rounded-full py-1.5 sm:py-2 px-3 sm:px-6 text-xs transition-all duration-200 cursor-pointer text-center ${
                         activeTab === 'deskripsi'
                           ? 'bg-white text-[#121A2A] font-bold shadow-xs'
                           : 'text-[#121A2A]/65 hover:text-[#121A2A] font-medium'
@@ -705,7 +711,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                     <button
                       type="button"
                       onClick={() => setActiveTab('benefit')}
-                      className={`rounded-full py-1.5 sm:py-2 px-3 sm:px-6 text-xs transition-all cursor-pointer text-center ${
+                      className={`rounded-full py-1.5 sm:py-2 px-3 sm:px-6 text-xs transition-all duration-200 cursor-pointer text-center ${
                         activeTab === 'benefit'
                           ? 'bg-white text-[#121A2A] font-bold shadow-xs'
                           : 'text-[#121A2A]/65 hover:text-[#121A2A] font-medium'
@@ -716,7 +722,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                     <button
                       type="button"
                       onClick={() => setActiveTab('garansi')}
-                      className={`rounded-full py-1.5 sm:py-2 px-3 sm:px-6 text-xs transition-all cursor-pointer text-center ${
+                      className={`rounded-full py-1.5 sm:py-2 px-3 sm:px-6 text-xs transition-all duration-200 cursor-pointer text-center ${
                         activeTab === 'garansi'
                           ? 'bg-white text-[#121A2A] font-bold shadow-xs'
                           : 'text-[#121A2A]/65 hover:text-[#121A2A] font-medium'
@@ -726,10 +732,13 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                     </button>
                   </div>
 
-                  {/* Tab Dynamic Content */}
-                  <div className="pt-1 min-h-[120px]">
+                  {/* Tab Dynamic Content - Smooth Morph Transition without delay */}
+                  <div
+                    key={`${activeTab}-${variantDetails.title}`}
+                    className="pt-1 min-h-[120px] animate-tab-glide"
+                  >
                     {activeTab === 'deskripsi' && (
-                      <div className="space-y-4 animate-in fade-in duration-200">
+                      <div className="space-y-4">
                         <div>
                           <h2 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#C96F55] mb-2 sm:mb-2.5">
                             Deskripsi Layanan
@@ -757,7 +766,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                     )}
 
                     {activeTab === 'benefit' && (
-                      <div className="space-y-3.5 sm:space-y-4 animate-in fade-in duration-200">
+                      <div className="space-y-3.5 sm:space-y-4">
                         <div>
                           <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#C96F55] mb-1.5 sm:mb-2">
                             Keunggulan Khusus Varian Ini
@@ -778,7 +787,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                     )}
 
                     {activeTab === 'garansi' && (
-                      <div className="space-y-3 sm:space-y-3.5 text-xs sm:text-sm text-[#121A2A]/85 leading-relaxed animate-in fade-in duration-200">
+                      <div className="space-y-3 sm:space-y-3.5 text-xs sm:text-sm text-[#121A2A]/85 leading-relaxed">
                         <div className="flex items-center gap-2 text-[#16A34A] font-bold">
                           <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
                           <span>Jaminan {variantDetails.guaranteeTitle} (100% Proteksi Penggantian Akun)</span>
@@ -815,7 +824,10 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
 
                   {/* Price Header */}
                   <div>
-                    <div className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#121A2A] font-mono tracking-tight">
+                    <div
+                      key={totalPrice}
+                      className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#121A2A] font-mono tracking-tight animate-text-smooth"
+                    >
                       Rp {totalPrice.toLocaleString('id-ID')}
                     </div>
                     <p className="text-[11px] sm:text-xs text-[#121A2A]/60 mt-0.5 sm:mt-1">
@@ -1032,7 +1044,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                 Informasi & Spesifikasi Lisensi
               </h3>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 sm:gap-y-3 pt-1">
+              <div key={variantDetails.title} className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 sm:gap-y-3 pt-1 animate-text-smooth">
                 {variantDetails.specifications.map((spec, idx) => (
                   <div
                     key={idx}

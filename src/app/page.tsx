@@ -231,8 +231,7 @@ function ApplicationCard({
       href={`/products/${app.slug}`}
       tabIndex={isDuplicate ? -1 : undefined}
       aria-hidden={isDuplicate ? true : undefined}
-      data-gsap="card"
-      className="group bg-white border border-[rgba(18,26,42,0.08)] hover:border-[#C96F55]/60 hover:shadow-xs hover:-translate-y-0.5 rounded-xl sm:rounded-2xl p-3 sm:p-3.5 transition-all duration-200 flex flex-col justify-between shrink-0 flex-none w-[240px] sm:w-[270px] lg:w-[290px] h-[152px] sm:h-[158px] mr-3 sm:mr-4 select-none cursor-pointer"
+      className="group bg-white border border-[rgba(18,26,42,0.08)] hover:border-[#C96F55]/60 hover:shadow-xs hover:-translate-y-0.5 rounded-xl sm:rounded-2xl p-3 sm:p-3.5 transition-[border-color,box-shadow,transform] duration-200 flex flex-col justify-between shrink-0 flex-none w-[240px] sm:w-[270px] lg:w-[290px] h-[152px] sm:h-[158px] mr-3 sm:mr-4 select-none cursor-pointer"
     >
       <div>
         {/* 1. PRODUCT HEADER: Logo + Product Info (Name & Rating + Terjual) */}
@@ -691,74 +690,74 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4.5">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-4.5">
             {/* 1. Produk Terverifikasi */}
-            <div data-gsap="card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-4 sm:p-5 space-y-2 hover:border-[rgba(18,26,42,0.2)] transition-all">
-              <div className="w-9 h-9 rounded-xl bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.2)] flex items-center justify-center text-[#C96F55]">
-                <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5" />
+            <div data-gsap="card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-3 sm:p-5 space-y-1.5 sm:space-y-2 hover:border-[rgba(18,26,42,0.2)] transition-[border-color,box-shadow,background-color] duration-200">
+              <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.2)] flex items-center justify-center text-[#C96F55]">
+                <ShieldCheck className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
               </div>
-              <h3 className="text-sm sm:text-base font-bold text-[#121A2A]">Produk Terverifikasi</h3>
-              <p className="text-xs text-[#121A2A]/65 leading-relaxed">
+              <h3 className="text-xs sm:text-base font-bold text-[#121A2A] leading-tight">Produk Terverifikasi</h3>
+              <p className="text-[10px] sm:text-xs text-[#121A2A]/65 leading-snug sm:leading-relaxed">
                 Setiap layanan memiliki informasi lisensi, durasi masa aktif, dan ketentuan garansi yang
                 tercantum jelas dan transparan.
               </p>
             </div>
 
             {/* 2. Aktivasi Cepat */}
-            <div data-gsap="card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-4 sm:p-5 space-y-2 hover:border-[rgba(18,26,42,0.2)] transition-all">
-              <div className="w-9 h-9 rounded-xl bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.2)] flex items-center justify-center text-[#C96F55]">
-                <Zap className="w-4 h-4 sm:w-5 sm:h-5" />
+            <div data-gsap="card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-3 sm:p-5 space-y-1.5 sm:space-y-2 hover:border-[rgba(18,26,42,0.2)] transition-[border-color,box-shadow,background-color] duration-200">
+              <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.2)] flex items-center justify-center text-[#C96F55]">
+                <Zap className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
               </div>
-              <h3 className="text-sm sm:text-base font-bold text-[#121A2A]">Aktivasi Cepat</h3>
-              <p className="text-xs text-[#121A2A]/65 leading-relaxed">
+              <h3 className="text-xs sm:text-base font-bold text-[#121A2A] leading-tight">Aktivasi Cepat</h3>
+              <p className="text-[10px] sm:text-xs text-[#121A2A]/65 leading-snug sm:leading-relaxed">
                 Alur pemrosesan pesanan otomatis terintegrasi. Anda mendapatkan akses kerja siap pakai
                 dalam 1 hingga 15 menit.
               </p>
             </div>
 
             {/* 3. Pilihan Lengkap */}
-            <div data-gsap="card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-4 sm:p-5 space-y-2 hover:border-[rgba(18,26,42,0.2)] transition-all">
-              <div className="w-9 h-9 rounded-xl bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.2)] flex items-center justify-center text-[#C96F55]">
-                <Layers className="w-4 h-4 sm:w-5 sm:h-5" />
+            <div data-gsap="card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-3 sm:p-5 space-y-1.5 sm:space-y-2 hover:border-[rgba(18,26,42,0.2)] transition-[border-color,box-shadow,background-color] duration-200">
+              <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.2)] flex items-center justify-center text-[#C96F55]">
+                <Layers className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
               </div>
-              <h3 className="text-sm sm:text-base font-bold text-[#121A2A]">Pilihan Lengkap</h3>
-              <p className="text-xs text-[#121A2A]/65 leading-relaxed">
+              <h3 className="text-xs sm:text-base font-bold text-[#121A2A] leading-tight">Pilihan Lengkap</h3>
+              <p className="text-[10px] sm:text-xs text-[#121A2A]/65 leading-snug sm:leading-relaxed">
                 Dari asisten AI, software desain, video editing, hingga hiburan streaming premium
                 semuanya tersedia dalam satu platform.
               </p>
             </div>
 
             {/* 4. Pembayaran Praktis */}
-            <div data-gsap="card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-4 sm:p-5 space-y-2 hover:border-[rgba(18,26,42,0.2)] transition-all">
-              <div className="w-9 h-9 rounded-xl bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.2)] flex items-center justify-center text-[#C96F55]">
-                <CreditCard className="w-4 h-4 sm:w-5 sm:h-5" />
+            <div data-gsap="card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-3 sm:p-5 space-y-1.5 sm:space-y-2 hover:border-[rgba(18,26,42,0.2)] transition-[border-color,box-shadow,background-color] duration-200">
+              <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.2)] flex items-center justify-center text-[#C96F55]">
+                <CreditCard className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
               </div>
-              <h3 className="text-sm sm:text-base font-bold text-[#121A2A]">Pembayaran Praktis</h3>
-              <p className="text-xs text-[#121A2A]/65 leading-relaxed">
+              <h3 className="text-xs sm:text-base font-bold text-[#121A2A] leading-tight">Pembayaran Praktis</h3>
+              <p className="text-[10px] sm:text-xs text-[#121A2A]/65 leading-snug sm:leading-relaxed">
                 Dukungan gateway pembayaran terpadu melalui QRIS real-time, dompet digital e-Wallet,
                 serta Virtual Account bank resmi.
               </p>
             </div>
 
             {/* 5. Garansi Jelas */}
-            <div data-gsap="card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-4 sm:p-5 space-y-2 hover:border-[rgba(18,26,42,0.2)] transition-all">
-              <div className="w-9 h-9 rounded-xl bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.2)] flex items-center justify-center text-[#C96F55]">
-                <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5" />
+            <div data-gsap="card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-3 sm:p-5 space-y-1.5 sm:space-y-2 hover:border-[rgba(18,26,42,0.2)] transition-[border-color,box-shadow,background-color] duration-200">
+              <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.2)] flex items-center justify-center text-[#C96F55]">
+                <ShieldCheck className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
               </div>
-              <h3 className="text-sm sm:text-base font-bold text-[#121A2A]">Garansi Jelas</h3>
-              <p className="text-xs text-[#121A2A]/65 leading-relaxed">
+              <h3 className="text-xs sm:text-base font-bold text-[#121A2A] leading-tight">Garansi Jelas</h3>
+              <p className="text-[10px] sm:text-xs text-[#121A2A]/65 leading-snug sm:leading-relaxed">
                 Klaim garansi mudah dan transparan. Jika terjadi kendala akses sebelum masa aktif
                 berakhir, kami sediakan penggantian unit 100%.
               </p>
             </div>
 
             {/* 6. Customer Support */}
-            <div data-gsap="card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-4 sm:p-5 space-y-2 hover:border-[rgba(18,26,42,0.2)] transition-all">
-              <div className="w-9 h-9 rounded-xl bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.2)] flex items-center justify-center text-[#C96F55]">
-                <Headphones className="w-4 h-4 sm:w-5 sm:h-5" />
+            <div data-gsap="card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-3 sm:p-5 space-y-1.5 sm:space-y-2 hover:border-[rgba(18,26,42,0.2)] transition-[border-color,box-shadow,background-color] duration-200">
+              <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.2)] flex items-center justify-center text-[#C96F55]">
+                <Headphones className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
               </div>
-              <h3 className="text-sm sm:text-base font-bold text-[#121A2A]">Customer Support</h3>
-              <p className="text-xs text-[#121A2A]/65 leading-relaxed">
+              <h3 className="text-xs sm:text-base font-bold text-[#121A2A] leading-tight">Customer Support</h3>
+              <p className="text-[10px] sm:text-xs text-[#121A2A]/65 leading-snug sm:leading-relaxed">
                 Tim bantuan profesional siap merespons kebutuhan dan pertanyaan teknis Anda melalui
                 saluran WhatsApp resmi Asterra Store.
               </p>
@@ -780,82 +779,82 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4.5">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4.5">
             {/* Step 01 */}
-            <div data-gsap="card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-4 sm:p-5 flex flex-col justify-between hover:border-[rgba(18,26,42,0.2)] transition-all">
+            <div data-gsap="card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-3 sm:p-5 flex flex-col justify-between hover:border-[rgba(18,26,42,0.2)] transition-[border-color,box-shadow,background-color] duration-200">
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-2xl sm:text-3xl font-black text-[#C96F55]/40 font-mono">
+                <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+                  <span className="text-xl sm:text-3xl font-black text-[#C96F55]/40 font-mono">
                     01
                   </span>
-                  <div className="w-8 h-8 rounded-lg bg-[rgba(201,111,85,0.08)] flex items-center justify-center text-[#C96F55]">
-                    <LayoutGrid className="w-4 h-4" />
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-md sm:rounded-lg bg-[rgba(201,111,85,0.08)] flex items-center justify-center text-[#C96F55]">
+                    <LayoutGrid className="w-3 h-3 sm:w-4 sm:h-4" />
                   </div>
                 </div>
-                <h3 className="text-sm font-bold text-[#121A2A] mb-1">
+                <h3 className="text-xs sm:text-sm font-bold text-[#121A2A] mb-0.5 sm:mb-1">
                   Pilih Aplikasi
                 </h3>
-                <p className="text-xs text-[#121A2A]/65 leading-relaxed">
+                <p className="text-[10px] sm:text-xs text-[#121A2A]/65 leading-snug sm:leading-relaxed">
                   Tentukan aplikasi atau tools digital yang ingin Anda gunakan dari katalog Asterra.
                 </p>
               </div>
             </div>
 
             {/* Step 02 */}
-            <div data-gsap="card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-4 sm:p-5 flex flex-col justify-between hover:border-[rgba(18,26,42,0.2)] transition-all">
+            <div data-gsap="card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-3 sm:p-5 flex flex-col justify-between hover:border-[rgba(18,26,42,0.2)] transition-[border-color,box-shadow,background-color] duration-200">
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-2xl sm:text-3xl font-black text-[#C96F55]/40 font-mono">
+                <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+                  <span className="text-xl sm:text-3xl font-black text-[#C96F55]/40 font-mono">
                     02
                   </span>
-                  <div className="w-8 h-8 rounded-lg bg-[rgba(201,111,85,0.08)] flex items-center justify-center text-[#C96F55]">
-                    <Package className="w-4 h-4" />
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-md sm:rounded-lg bg-[rgba(201,111,85,0.08)] flex items-center justify-center text-[#C96F55]">
+                    <Package className="w-3 h-3 sm:w-4 sm:h-4" />
                   </div>
                 </div>
-                <h3 className="text-sm font-bold text-[#121A2A] mb-1">
+                <h3 className="text-xs sm:text-sm font-bold text-[#121A2A] mb-0.5 sm:mb-1">
                   Pilih Produk
                 </h3>
-                <p className="text-xs text-[#121A2A]/65 leading-relaxed">
+                <p className="text-[10px] sm:text-xs text-[#121A2A]/65 leading-snug sm:leading-relaxed">
                   Pilih paket durasi masa aktif dan jenis lisensi (Private/Sharing) sesuai kebutuhan.
                 </p>
               </div>
             </div>
 
             {/* Step 03 */}
-            <div data-gsap="card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-4 sm:p-5 flex flex-col justify-between hover:border-[rgba(18,26,42,0.2)] transition-all">
+            <div data-gsap="card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-3 sm:p-5 flex flex-col justify-between hover:border-[rgba(18,26,42,0.2)] transition-[border-color,box-shadow,background-color] duration-200">
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-2xl sm:text-3xl font-black text-[#C96F55]/40 font-mono">
+                <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+                  <span className="text-xl sm:text-3xl font-black text-[#C96F55]/40 font-mono">
                     03
                   </span>
-                  <div className="w-8 h-8 rounded-lg bg-[rgba(201,111,85,0.08)] flex items-center justify-center text-[#C96F55]">
-                    <CreditCard className="w-4 h-4" />
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-md sm:rounded-lg bg-[rgba(201,111,85,0.08)] flex items-center justify-center text-[#C96F55]">
+                    <CreditCard className="w-3 h-3 sm:w-4 sm:h-4" />
                   </div>
                 </div>
-                <h3 className="text-sm font-bold text-[#121A2A] mb-1">
+                <h3 className="text-xs sm:text-sm font-bold text-[#121A2A] mb-0.5 sm:mb-1">
                   Lakukan Pembayaran
                 </h3>
-                <p className="text-xs text-[#121A2A]/65 leading-relaxed">
+                <p className="text-[10px] sm:text-xs text-[#121A2A]/65 leading-snug sm:leading-relaxed">
                   Scan kode QRIS instan atau bayar via Virtual Account tanpa perlu unggah bukti manual.
                 </p>
               </div>
             </div>
 
             {/* Step 04 */}
-            <div data-gsap="card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-4 sm:p-5 flex flex-col justify-between hover:border-[rgba(18,26,42,0.2)] transition-all">
+            <div data-gsap="card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-3 sm:p-5 flex flex-col justify-between hover:border-[rgba(18,26,42,0.2)] transition-[border-color,box-shadow,background-color] duration-200">
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-2xl sm:text-3xl font-black text-[#C96F55]/40 font-mono">
+                <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+                  <span className="text-xl sm:text-3xl font-black text-[#C96F55]/40 font-mono">
                     04
                   </span>
-                  <div className="w-8 h-8 rounded-lg bg-[rgba(201,111,85,0.08)] flex items-center justify-center text-[#C96F55]">
-                    <Zap className="w-4 h-4" />
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-md sm:rounded-lg bg-[rgba(201,111,85,0.08)] flex items-center justify-center text-[#C96F55]">
+                    <Zap className="w-3 h-3 sm:w-4 sm:h-4" />
                   </div>
                 </div>
-                <h3 className="text-sm font-bold text-[#121A2A] mb-1">
+                <h3 className="text-xs sm:text-sm font-bold text-[#121A2A] mb-0.5 sm:mb-1">
                   Terima Aktivasi
                 </h3>
-                <p className="text-xs text-[#121A2A]/65 leading-relaxed">
+                <p className="text-[10px] sm:text-xs text-[#121A2A]/65 leading-snug sm:leading-relaxed">
                   Kredensial atau tautan ruang kerja dikirimkan ke email Anda dan tercatat di menu pesanan.
                 </p>
               </div>
