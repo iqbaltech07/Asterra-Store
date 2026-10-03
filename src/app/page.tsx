@@ -436,50 +436,26 @@ export default function HomePage() {
       <main className="flex-1 max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 pt-2 sm:pt-3.5 pb-8 sm:pb-12 w-full overflow-hidden">
         {/* SECTION 2 & 3: Hero Banner with Controlled Dimensions, Scaled Planet Anchor & Integrated Benefit Strip */}
         <section className="relative w-full rounded-2xl sm:rounded-3xl bg-white border border-[rgba(18,26,42,0.08)] shadow-xs overflow-hidden mb-6 sm:mb-8">
-          {/* Controlled Hero Area: 360px - 440px on desktop */}
-          <div className="relative min-h-[340px] sm:min-h-[380px] lg:h-[420px] xl:h-[440px] flex items-center px-5 sm:px-8 lg:px-12 py-7 sm:py-8 lg:py-0 overflow-hidden">
-            {/* Left Column: Contextual Tag, Headline, Subheadline, CTAs */}
-            <div className="relative z-10 w-full lg:max-w-[60%] xl:max-w-[58%] py-1">
-              {/* Contextual Tag */}
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#C96F55]/10 border border-[#C96F55]/20 text-[#C96F55] text-xs font-semibold mb-3 sm:mb-4">
-                <Zap className="w-3.5 h-3.5 text-[#C96F55]" />
-                <span>Aktivasi Instan & Bergaransi 100%</span>
-              </div>
-
+          {/* Controlled Hero Area: compact & clean */}
+          <div className="relative min-h-[200px] sm:min-h-[240px] lg:h-[280px] xl:h-[300px] flex items-center px-5 sm:px-8 lg:px-12 py-6 sm:py-8 lg:py-0 overflow-hidden">
+            {/* Left Column: Headline & Subheadline */}
+            <div className="relative z-10 w-full lg:max-w-[62%] xl:max-w-[60%] py-1">
               {/* Editorial Headline */}
-              <h1 className="text-2xl sm:text-4xl lg:text-[40px] xl:text-[44px] font-black tracking-tight text-[#121A2A] leading-[1.15]">
+              <h1 className="text-2xl sm:text-4xl lg:text-[38px] xl:text-[42px] font-black tracking-tight text-[#121A2A] leading-[1.15]">
                 Solusi Terpercaya Produk &<br />
                 <span className="text-[#C96F55]">Layanan Digital Premium</span>
               </h1>
 
               {/* Subheadline */}
-              <p className="mt-3 sm:mt-3.5 text-xs sm:text-sm lg:text-[15px] text-[#121A2A]/70 max-w-xl leading-relaxed">
+              <p className="mt-2.5 sm:mt-3.5 text-xs sm:text-sm lg:text-[15px] text-[#121A2A]/70 max-w-xl leading-relaxed">
                 Dapatkan akses langganan resmi untuk tool AI, software desain, voucher, dan layanan
                 digital lainnya tanpa kartu kredit dengan konfirmasi instan.
               </p>
-
-              {/* CTAs */}
-              <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 pt-3.5 sm:pt-4">
-                <Link href="/products">
-                  <Button className="h-10 sm:h-11 px-5 sm:px-6 rounded-xl bg-[#C96F55] hover:bg-[#B86047] text-[#F7F5EF] font-bold shadow-xs gap-2 text-xs sm:text-sm active:scale-95 transition-all">
-                    <span>Jelajahi Produk</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </Button>
-                </Link>
-                <a href="#panduan">
-                  <Button
-                    variant="outline"
-                    className="h-10 sm:h-11 px-4 sm:px-5 rounded-xl border-[rgba(18,26,42,0.18)] bg-white/80 hover:bg-white text-[#121A2A] font-semibold text-xs sm:text-sm transition-all"
-                  >
-                    <span>Lihat Cara Kerja</span>
-                  </Button>
-                </a>
-              </div>
             </div>
 
-            {/* Right Column: Planet Visual (Absolute Positioned, Scaled, Clipped by Hero Container) */}
-            <div className="absolute right-[-40px] sm:right-[-20px] lg:right-[-10px] xl:right-4 top-1/2 -translate-y-1/2 pointer-events-none select-none z-0 opacity-25 sm:opacity-40 lg:opacity-100 transition-opacity">
-              <div className="relative w-[340px] h-[340px] sm:w-[420px] sm:h-[420px] lg:w-[480px] lg:h-[480px] flex items-center justify-center">
+            {/* Right Column: Planet Visual (Gambar 2: White planet with coral star, sized down) */}
+            <div className="absolute right-[-20px] sm:right-0 lg:right-2 xl:right-6 top-1/2 -translate-y-1/2 pointer-events-none select-none z-0 opacity-40 sm:opacity-75 lg:opacity-100 transition-opacity">
+              <div className="relative w-[230px] h-[230px] sm:w-[280px] sm:h-[280px] lg:w-[330px] lg:h-[330px] flex items-center justify-center">
                 {/* Subtle SVG Orbital Background Rings */}
                 <svg
                   className="absolute inset-0 w-full h-full pointer-events-none opacity-60"
@@ -509,15 +485,15 @@ export default function HomePage() {
                 </svg>
 
                 {/* Ambient Soft Glow */}
-                <div className="absolute w-60 h-60 lg:w-80 lg:h-80 rounded-full bg-[rgba(201,111,85,0.08)] blur-3xl pointer-events-none" />
+                <div className="absolute w-44 h-44 lg:w-56 lg:h-56 rounded-full bg-[rgba(201,111,85,0.06)] blur-2xl pointer-events-none" />
 
-                {/* Scaled Asterra Planet Illustration */}
-                <div className="relative z-10 w-[270px] sm:w-[340px] lg:w-[400px] xl:w-[430px] flex items-center justify-center transform scale-115 lg:scale-125 filter drop-shadow-[0_16px_36px_rgba(18,26,42,0.12)]">
+                {/* Scaled Asterra Planet Illustration (Gambar 2) */}
+                <div className="relative z-10 w-[190px] sm:w-[230px] lg:w-[280px] xl:w-[300px] flex items-center justify-center filter drop-shadow-[0_12px_24px_rgba(18,26,42,0.06)]">
                   <Image
-                    src="/images/brand/asterra-mark.png"
+                    src="/images/brand/hero-planet-white.png"
                     alt="Asterra Planet Illustration"
-                    width={460}
-                    height={320}
+                    width={360}
+                    height={282}
                     className="w-full h-auto object-contain"
                     priority
                   />
