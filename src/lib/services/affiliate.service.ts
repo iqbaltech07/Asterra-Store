@@ -1,5 +1,8 @@
 import fs from 'fs';
 import path from 'path';
+import { ReferralProfitService } from './referral-profit.service';
+import { ProfitLedgerService } from './profit-ledger.service';
+import { ReferralDiscountService } from './referral-discount.service';
 
 export interface PayoutRequest {
   id: string;
@@ -17,6 +20,9 @@ export interface CommissionOrderLog {
   id: string;
   orderId: string;
   orderTotal: number;
+  netRevenue?: number;
+  costOfGoods?: number;
+  transactionProfit?: number;
   rate: number;
   commission: number;
   status: 'pending' | 'final' | 'reversed';
@@ -32,6 +38,9 @@ export interface NetworkBonusLog {
   fromPartnerCode: string;
   fromPartnerName: string;
   orderTotal: number;
+  netRevenue?: number;
+  costOfGoods?: number;
+  transactionProfit?: number;
   bonusAmount: number;
   bonusPercentage: number;
   marginEstimate?: number;
@@ -116,6 +125,19 @@ export class AffiliateService {
             modified = true;
           }
         }
+      }
+
+      // 3. Automatic tier evaluation based on successful transactions (Milestone: ≥50 orders = 15% VIP Sales)
+      if ((partner.totalOrders || 0) >= 50 && partner.tier !== 'Executive (20%)') {
+        if (partner.tier !== 'VIP Sales (15%)' || partner.rate !== 15) {
+          partner.tier = 'VIP Sales (15%)';
+          partner.rate = 15;
+          modified = true;
+        }
+      } else if ((partner.totalOrders || 0) < 50 && partner.tier === 'VIP Sales (15%)' && partner.rate === 15) {
+        partner.tier = 'Standard (10%)';
+        partner.rate = 10;
+        modified = true;
       }
     }
 
@@ -401,8 +423,22 @@ export class AffiliateService {
       customerEmail?: string;
       customerPhone?: string;
       customerName?: string;
+    },
+    profitParams?: {
+      costOfGoods?: number;
+      paymentFee?: number;
+      otherDirectCost?: number;
+      customerDiscount?: number;
+      transactionProfit?: number;
     }
-  ): { success: boolean; commission: number; partnerName?: string; message?: string } {
+  ): {
+    success: boolean;
+    commission: number;
+    recruitmentBonus?: number;
+    partnerName?: string;
+    sponsorName?: string;
+    message?: string;
+  } {
     const normalized = code.trim().toUpperCase();
     const list = this.getAllAffiliates();
     const partner = list.find((a) => a.code.toUpperCase() === normalized);
@@ -461,16 +497,42 @@ export class AffiliateService {
       partner.creditedOrderIds.push(orderId);
     }
 
-    const commissionRate = partner.rate || 10;
-    const earnedCommission = Math.round((orderTotal * commissionRate) / 100);
+    // 4. Calculate Transaction Profit per SSOT §17
+    // NEVER calculate commission from omzet!
+    const customerDiscount = Math.max(0, profitParams?.customerDiscount ?? 0);
+    const netRevenue = Math.max(0, orderTotal - customerDiscount);
+    const costOfGoods = Math.max(0, profitParams?.costOfGoods ?? 0);
+    const paymentFee = Math.max(0, profitParams?.paymentFee ?? 0);
+    const otherDirectCost = Math.max(0, profitParams?.otherDirectCost ?? 0);
 
-    // 4. Holding Period: 3 days (Masa Garansi Pembeli & Anti-Fraud)
+    let transactionProfit = profitParams?.transactionProfit;
+    if (transactionProfit === undefined) {
+      const directTransactionCost = costOfGoods + paymentFee + otherDirectCost;
+      transactionProfit = Math.max(0, netRevenue - directTransactionCost);
+    }
+
+    partner.totalOrders = (partner.totalOrders || 0) + 1;
+    partner.totalRevenue = (partner.totalRevenue || 0) + netRevenue;
+
+    // Automatic Tier & Commission Rate Upgrade:
+    // When partner reaches 50 transactions, promote to VIP Sales (15% of Transaction Profit)
+    if (partner.totalOrders >= 50 && partner.tier !== 'Executive (20%)') {
+      partner.tier = 'VIP Sales (15%)';
+      partner.rate = 15;
+    } else if (!partner.rate || (partner.rate === 15 && partner.totalOrders < 50)) {
+      partner.tier = 'Standard (10%)';
+      partner.rate = 10;
+    }
+
+    // Direct Sales Commission: based on active partner rate (10% standard, 15% for VIP Sales with ≥50 orders)
+    // Always calculated from Transaction Profit, strictly 0 if profit <= 0 (SSOT §4, §13, §17)
+    const commissionRate = partner.rate || 10;
+    const earnedCommission = transactionProfit > 0 ? Math.round(transactionProfit * (commissionRate / 100)) : 0;
+
+    // 5. Holding Period: 3 days (Masa Garansi Pembeli & Anti-Fraud)
     const holdingDays = 3;
     const holdingDurationMs = holdingDays * 24 * 60 * 60 * 1000;
     const holdingUntil = new Date(Date.now() + holdingDurationMs).toISOString();
-
-    partner.totalOrders = (partner.totalOrders || 0) + 1;
-    partner.totalRevenue = (partner.totalRevenue || 0) + orderTotal;
 
     // Allocated to pendingCommission during warranty holding period
     partner.pendingCommission = (partner.pendingCommission || 0) + earnedCommission;
@@ -478,7 +540,10 @@ export class AffiliateService {
     partner.commissionLogs.unshift({
       id: `com-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6)}`,
       orderId: orderId || `ORD-${Date.now()}`,
-      orderTotal,
+      orderTotal: netRevenue,
+      netRevenue,
+      costOfGoods,
+      transactionProfit,
       rate: commissionRate,
       commission: earnedCommission,
       status: 'pending',
@@ -486,18 +551,12 @@ export class AffiliateService {
       createdAt: new Date().toISOString(),
     });
 
-    // Automatic Tier Promotion: If partner reaches 50 orders, promote to VIP Sales (15%)
-    if (partner.totalOrders >= 50 && partner.rate < 15) {
-      partner.tier = 'VIP Sales (15%)';
-      partner.rate = 15;
-    }
-
-    // 5. Margin-Aware Network Sponsor Override Bonus (Bonus Komisi Teman)
-    // Replaces risky flat omzet calculation with profit-margin-aware budgeting:
-    // Store gross profit = orderTotal - estimatedCOGS (~78% average wholesale cost)
-    // Store net margin = grossProfit - directCommission (10%)
-    // Override bonus is funded from store net profit and capped at max 35% of store net margin
+    // 6. Recruitment Bonus (1 Level Direct Recruiter only, SSOT §6 & §7 & §17)
+    // 2% of Transaction Profit. Upline above recruiter gets 0.
     let sponsorBonusInfo = '';
+    let sponsorName = '';
+    let recruitmentBonusAmount = 0;
+
     if (partner.referredByCode) {
       const sponsor = list.find((a) => a.code.toUpperCase() === partner.referredByCode!.toUpperCase());
       // Prevent self-referral and ensure sponsor is active
@@ -507,36 +566,32 @@ export class AffiliateService {
         sponsor.email.toLowerCase() !== partner.email.toLowerCase() &&
         sponsor.status === 'active'
       ) {
-        const estimatedCOGS = Math.round(orderTotal * 0.78);
-        const grossProfit = Math.max(0, orderTotal - estimatedCOGS);
-        const directCommission = earnedCommission;
-        const storeNetMargin = Math.max(0, grossProfit - directCommission);
+        sponsorName = sponsor.name;
+        recruitmentBonusAmount = transactionProfit > 0 ? Math.round(transactionProfit * 0.02) : 0;
 
-        // Target 2% omzet, but capped by net profit margin safety ceiling
-        const targetBonus = Math.round((orderTotal * 2) / 100);
-        const marginCeiling = Math.round(storeNetMargin * 0.35);
-        const bonusAmount = Math.max(500, Math.min(targetBonus, marginCeiling > 500 ? marginCeiling : targetBonus));
+        if (recruitmentBonusAmount > 0) {
+          sponsor.pendingCommission = (sponsor.pendingCommission || 0) + recruitmentBonusAmount;
+          sponsor.networkCommission = (sponsor.networkCommission || 0) + recruitmentBonusAmount;
+          sponsor.networkBonusLogs = sponsor.networkBonusLogs || [];
 
-        // Allocated to sponsor's pendingCommission during 3-day holding period
-        sponsor.pendingCommission = (sponsor.pendingCommission || 0) + bonusAmount;
-        sponsor.networkCommission = (sponsor.networkCommission || 0) + bonusAmount;
-        sponsor.networkBonusLogs = sponsor.networkBonusLogs || [];
+          sponsor.networkBonusLogs.unshift({
+            id: `net-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6)}`,
+            orderId,
+            fromPartnerCode: partner.code,
+            fromPartnerName: partner.name,
+            orderTotal: netRevenue,
+            netRevenue,
+            costOfGoods,
+            transactionProfit,
+            bonusAmount: recruitmentBonusAmount,
+            bonusPercentage: 2,
+            status: 'pending',
+            holdingUntil,
+            createdAt: new Date().toISOString(),
+          });
 
-        sponsor.networkBonusLogs.unshift({
-          id: `net-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6)}`,
-          orderId,
-          fromPartnerCode: partner.code,
-          fromPartnerName: partner.name,
-          orderTotal,
-          bonusAmount,
-          bonusPercentage: 2,
-          marginEstimate: storeNetMargin,
-          status: 'pending',
-          holdingUntil,
-          createdAt: new Date().toISOString(),
-        });
-
-        sponsorBonusInfo = ` & Bonus tim Rp ${bonusAmount.toLocaleString('id-ID')} dialokasikan ke ${sponsor.name} (Holding Garansi 3 Hari)`;
+          sponsorBonusInfo = ` & Bonus tim Rp ${recruitmentBonusAmount.toLocaleString('id-ID')} (2% profit) dialokasikan ke ${sponsor.name} (Holding 3 Hari)`;
+        }
       }
     }
 
@@ -545,14 +600,17 @@ export class AffiliateService {
     return {
       success: true,
       commission: earnedCommission,
+      recruitmentBonus: recruitmentBonusAmount,
       partnerName: partner.name,
-      message: `Komisi Rp ${earnedCommission.toLocaleString('id-ID')} berhasil dialokasikan ke ${partner.name} (Holding Garansi 3 Hari)${sponsorBonusInfo}.`,
+      sponsorName: sponsorName || undefined,
+      message: `Komisi Rp ${earnedCommission.toLocaleString('id-ID')} (10% profit) berhasil dialokasikan ke ${partner.name} (Holding Garansi 3 Hari)${sponsorBonusInfo}.`,
     };
   }
 
   /**
-   * Handle order refund / cancellation / chargeback:
-   * Reverses credited direct commission and sponsor override bonus from pending/unpaid balances.
+   * Handle order refund / cancellation / chargeback per SSOT §10:
+   * Reverses credited direct commission and sponsor recruitment bonus from pending/unpaid balances.
+   * Supports balance clawback if commissions had already matured.
    */
   public static handleOrderRefund(
     orderId: string,
@@ -585,13 +643,13 @@ export class AffiliateService {
 
         if (commAmount > 0) {
           directReversed = commAmount;
-          // Deduct from pendingCommission if not yet matured, else from unpaidCommission
+          // Deduct from pendingCommission if not yet matured, else clawback from unpaidCommission
           if ((partner.pendingCommission || 0) >= commAmount) {
             partner.pendingCommission = (partner.pendingCommission || 0) - commAmount;
           } else {
             const remainder = commAmount - (partner.pendingCommission || 0);
             partner.pendingCommission = 0;
-            partner.unpaidCommission = Math.max(0, (partner.unpaidCommission || 0) - remainder);
+            partner.unpaidCommission = (partner.unpaidCommission || 0) - remainder; // Allow negative balance / clawback debt!
           }
         }
 
@@ -601,7 +659,7 @@ export class AffiliateService {
       }
     }
 
-    // 2. Reversal of sponsor override bonus
+    // 2. Reversal of sponsor recruitment bonus
     for (const sponsor of list) {
       if (sponsor.networkBonusLogs && sponsor.networkBonusLogs.length > 0) {
         const bonusLog = sponsor.networkBonusLogs.find((l) => l.orderId === orderId && l.status !== 'reversed');
@@ -616,12 +674,20 @@ export class AffiliateService {
           } else {
             const rem = networkReversed - (sponsor.pendingCommission || 0);
             sponsor.pendingCommission = 0;
-            sponsor.unpaidCommission = Math.max(0, (sponsor.unpaidCommission || 0) - rem);
+            sponsor.unpaidCommission = (sponsor.unpaidCommission || 0) - rem; // Allow negative balance / clawback debt!
           }
           sponsor.networkCommission = Math.max(0, (sponsor.networkCommission || 0) - networkReversed);
           break;
         }
       }
+    }
+
+    // 3. Synchronize with Profit Ledger & Customer Referral Discount Reversion
+    try {
+      ProfitLedgerService.reverseOrderProfit(orderId, reason);
+      ReferralDiscountService.revertUsage(orderId);
+    } catch (syncErr) {
+      console.warn('[AffiliateService] Reversal sync warning:', syncErr);
     }
 
     if (directReversed > 0 || networkReversed > 0) {

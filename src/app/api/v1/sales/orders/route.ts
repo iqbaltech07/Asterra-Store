@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { AdminAuthService } from '@/lib/services/admin-auth.service';
 import { AffiliateService } from '@/lib/services/affiliate.service';
+import { ProfitLedgerService } from '@/lib/services/profit-ledger.service';
 
 export async function GET(req: NextRequest) {
   try {
@@ -41,9 +42,13 @@ export async function GET(req: NextRequest) {
           : 'Pelanggan';
 
       const commissionLog = partner.commissionLogs?.find((l) => l.orderId === o.id);
-      const commission = commissionLog?.commission ?? Math.round((o.totalAmount * (partner.rate || 10)) / 100);
-      const commissionStatus = commissionLog?.status ?? (o.status === 'completed' ? 'final' : o.status === 'refunded' ? 'reversed' : 'pending');
-      const holdingUntil = commissionLog?.holdingUntil;
+      const ledgerEntry = ProfitLedgerService.getAllEntries().find((l) => l.orderId === o.id);
+      
+      const transactionProfit = commissionLog?.transactionProfit ?? ledgerEntry?.transactionProfit ?? Math.max(0, Math.round(o.totalAmount * 0.15));
+      const effectiveRate = (partner.rate || 10) / 100;
+      const commission = commissionLog?.commission ?? ledgerEntry?.salesCommission ?? Math.round(transactionProfit * effectiveRate);
+      const commissionStatus = commissionLog?.status ?? (o.status === 'completed' ? 'final' : o.status === 'cancelled' || (o.status as string) === 'refunded' ? 'reversed' : 'pending');
+      const holdingUntil = commissionLog?.holdingUntil ?? ledgerEntry?.holdingUntil;
 
       return {
         id: o.id,
@@ -51,6 +56,7 @@ export async function GET(req: NextRequest) {
         customerEmail: maskedEmail,
         customerName: o.customerName ? `${o.customerName.charAt(0)}***` : 'Pelanggan',
         totalAmount: o.totalAmount,
+        transactionProfit,
         status: o.status,
         paymentStatus: o.paymentStatus || (o.status === 'completed' ? 'PAID' : 'PENDING'),
         commission,

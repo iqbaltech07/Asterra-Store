@@ -189,8 +189,8 @@ function DaftarSalesContent() {
                 Selamat Bergabung, {successPartner.name}!
               </h1>
               <p className="text-xs sm:text-sm text-foreground-muted leading-relaxed">
-                Anda kini resmi menjadi bagian dari Tim Sales & Mitra Afiliasi Asterra Store dengan rate komisi{' '}
-                <strong className="text-status-success font-semibold">{successPartner.tier}</strong>.
+                Anda kini resmi menjadi bagian dari Tim Sales & Mitra Afiliasi Asterra Store dengan skema bagi hasil{' '}
+                <strong className="text-status-success font-semibold">10% dari Profit Transaksi</strong>.
               </p>
             </div>
 
@@ -239,7 +239,7 @@ function DaftarSalesContent() {
                   <span>Cara Kerja Penghasilan Anda:</span>
                 </p>
                 <p className="text-[11px] text-foreground-muted leading-relaxed">
-                  Setiap transaksi dari pembeli yang membuka website Asterra Store menggunakan link referral Anda akan otomatis tercatat. Komisi sebesar {successPartner.rate}% akan langsung masuk ke saldo Anda setelah pembayaran berhasil.
+                  Setiap transaksi dari pembeli yang membuka website Asterra Store menggunakan link referral Anda akan otomatis tercatat. Komisi sebesar 10% dari Profit Bersih Transaksi akan otomatis dialokasikan ke akun Anda (dengan masa holding garansi 3 hari).
                 </p>
               </div>
             </div>
@@ -598,11 +598,14 @@ function DaftarSalesContent() {
                 <div>
                   <span className="text-foreground-muted block text-[11px]">Proyeksi Komisi Bulanan Anda:</span>
                   <span className="text-lg sm:text-xl font-extrabold text-status-success font-mono">
-                    Rp {(estimatedSales * 35000 * 0.12).toLocaleString('id-ID')}
+                    Rp {(estimatedSales * 1000).toLocaleString('id-ID')}
+                  </span>
+                  <span className="text-[10px] text-foreground-muted block mt-0.5">
+                    (Estimasi profit rata-rata Rp 10.000 / transaksi)
                   </span>
                 </div>
                 <Badge variant="outline" className="text-[10px] text-status-success border-status-success/40 bg-status-success/15 font-semibold">
-                  Tier VIP Sales 12% - 15%
+                  10% dari Profit Transaksi
                 </Badge>
               </div>
             </div>

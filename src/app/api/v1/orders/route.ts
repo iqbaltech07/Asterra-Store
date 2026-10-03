@@ -12,6 +12,7 @@ import { PromoService } from '@/lib/services/promo.service';
 import { mapDbOrderToOrder, RawDbOrder } from '@/lib/utils/order-mapper';
 import { OrderAdminService } from '@/lib/services/order-admin.service';
 import { AffiliateService } from '@/lib/services/affiliate.service';
+import { ReferralDiscountService } from '@/lib/services/referral-discount.service';
 
 // GET /api/v1/orders - User-isolated order history
 export async function GET(request: NextRequest) {
@@ -315,7 +316,22 @@ export async function POST(request: NextRequest) {
         appliedPromoCode = promoValidation.code || body.promo_code.trim().toUpperCase();
       }
     }
-    const discountedTotalAmount = Math.max(0, rawTotalAmount - discountAmount);
+
+    // Customer Referral 1x Discount Eligibility Check (SSOT §5, §11)
+    let referralDiscount = 0;
+    if (verifiedReferralCode) {
+      const refCheck = ReferralDiscountService.checkEligibility({
+        referralCode: verifiedReferralCode,
+        customerEmail,
+        customerPhone: customerWhatsapp || undefined,
+      });
+      if (refCheck.eligible && refCheck.discountAmount > 0) {
+        referralDiscount = refCheck.discountAmount;
+      }
+    }
+
+    const totalDiscountAmount = discountAmount + referralDiscount;
+    const discountedTotalAmount = Math.max(0, rawTotalAmount - totalDiscountAmount);
 
     // 4. Generate 3-digit randomized unique payment code for manual transfers (Anti-Fraud)
     let uniqueCode = 0;
@@ -339,7 +355,7 @@ export async function POST(request: NextRequest) {
       raw_amount: rawTotalAmount,
       unique_code: uniqueCode > 0 ? uniqueCode : undefined,
       promo_code: appliedPromoCode || undefined,
-      discount_amount: discountAmount > 0 ? discountAmount : undefined,
+      discount_amount: totalDiscountAmount > 0 ? totalDiscountAmount : undefined,
       referral_code: verifiedReferralCode,
       payment_mode: isManualMode ? 'manual' : 'gateway',
       order_status: 'pending',
@@ -357,6 +373,21 @@ export async function POST(request: NextRequest) {
     };
 
     addGlobalOrder(newOrder);
+
+    // Record 1-time referral discount usage if applied
+    if (verifiedReferralCode && referralDiscount > 0) {
+      try {
+        ReferralDiscountService.recordUsage({
+          orderId,
+          customerEmail,
+          customerPhone: customerWhatsapp || undefined,
+          referralCode: verifiedReferralCode,
+          discountAmount: referralDiscount,
+        });
+      } catch (refDiscountErr) {
+        console.warn('[OrdersAPI] Error recording referral discount usage:', refDiscountErr);
+      }
+    }
 
     // Record promo code redemption atomically if applied
     if (appliedPromoCode && discountAmount > 0) {

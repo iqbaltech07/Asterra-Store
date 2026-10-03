@@ -97,6 +97,7 @@ interface SalesOrder {
   customerEmail: string;
   customerName: string;
   totalAmount: number;
+  transactionProfit?: number;
   status: string;
   paymentStatus: string;
   commission: number;
@@ -125,6 +126,9 @@ export interface NetworkBonusLogItem {
   fromPartnerCode: string;
   fromPartnerName: string;
   orderTotal: number;
+  netRevenue?: number;
+  costOfGoods?: number;
+  transactionProfit?: number;
   marginEstimate?: number;
   bonusAmount: number;
   bonusPercentage: number;
@@ -241,8 +245,9 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
   const inviteSalesUrl = `${getBaseUrl()}/daftar-sales?ref=${partnerCode}`;
 
   const inviteWaMessage = encodeURIComponent(
-    `Halo! Mau dapat penghasilan tambahan jutaan rupiah tanpa modal? Yuk gabung jadi Mitra Sales resmi di Asterra Store!\n\n` +
-      `✅ Komisi penjualan langsung 10% - 20%\n` +
+    `Halo! Mau dapat penghasilan tambahan tanpa modal? Yuk gabung jadi Mitra Sales resmi di Asterra Store!\n\n` +
+      `✅ Komisi penjualan langsung 10% (naik 15% setelah 50 order) dari Profit Transaksi bersih\n` +
+      `✅ Bonus rekrutmen mitra sales 2% dari Profit Transaksi (1-Level resmi)\n` +
       `✅ Produk digital terlaris (Canva Pro, ChatGPT, Gemini, Netflix, Spotify, dll)\n` +
       `✅ Disediakan link affiliate, banner & materi promosi siap pakai\n` +
       `✅ Pencairan komisi mudah & cepat langsung ke rekening bank Anda\n\n` +
@@ -400,7 +405,7 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
                 </h2>
                 <p className="text-xs sm:text-sm text-foreground-muted leading-relaxed">
                   Bagikan link referral Anda untuk mendapatkan bagi hasil komisi{' '}
-                  <strong className="text-foreground">{partnerRate}%</strong> dari setiap transaksi pembelian produk digital di Asterra Store.
+                  <strong className="text-foreground">{partnerRate}% dari Profit Transaksi</strong> bersih (naik ke 15% setelah 50 transaksi).
                 </p>
               </div>
 
@@ -524,16 +529,55 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
             <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-medium text-foreground-muted">Skema Komisi Anda</span>
-                <div className="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-500 flex items-center justify-center">
+                <div
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                    partnerRate >= 15 ? 'bg-amber-500/10 text-amber-500' : 'bg-purple-500/10 text-purple-500'
+                  }`}
+                >
                   <Award className="w-4 h-4" />
                 </div>
               </div>
-              <div className="text-2xl font-extrabold text-foreground tracking-tight">
-                {partnerRate}% <span className="text-xs font-normal text-foreground-muted">/ Transaksi</span>
+              <div className="flex items-baseline justify-between">
+                <div className="text-2xl font-extrabold text-foreground tracking-tight">
+                  {partnerRate}% <span className="text-xs font-normal text-foreground-muted">Profit Transaksi</span>
+                </div>
+                <Badge
+                  variant="outline"
+                  className={`text-[10px] font-semibold ${
+                    partnerRate >= 15
+                      ? 'text-amber-500 border-amber-500/30 bg-amber-500/10'
+                      : 'text-primary border-primary/30 bg-primary/10'
+                  }`}
+                >
+                  {partnerRate >= 15 ? 'VIP Sales (15%)' : 'Standard (10%)'}
+                </Badge>
               </div>
-              <div className="flex items-center justify-between pt-1 text-[11px]">
-                <span className="text-foreground-muted">Target VIP (15%):</span>
-                <span className="font-semibold text-foreground">50 Transaksi</span>
+
+              {/* Progress Bar Milestone 50 Orders -> VIP Sales 15% */}
+              <div className="pt-1.5 space-y-1">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-foreground-muted">
+                    {partnerRate >= 15 ? 'Status VIP Aktif:' : 'Target VIP (15% Profit):'}
+                  </span>
+                  <span className="font-semibold text-foreground font-mono">
+                    {partner?.totalOrders || 0} / 50 Order
+                  </span>
+                </div>
+                <div className="w-full h-1.5 bg-surface-raised rounded-full overflow-hidden border border-border">
+                  <div
+                    className={`h-full transition-all duration-500 ${
+                      partnerRate >= 15 ? 'bg-amber-500' : 'bg-primary'
+                    }`}
+                    style={{
+                      width: `${Math.min(100, Math.max(4, (((partner?.totalOrders || 0) / 50) * 100)))}%`,
+                    }}
+                  />
+                </div>
+                <p className="text-[10px] text-foreground-muted leading-tight">
+                  {partnerRate >= 15
+                    ? '🌟 Selamat! Anda telah mencapai 50 order. Komisi 15% dari profit transaksi aktif!'
+                    : `${Math.max(0, 50 - (partner?.totalOrders || 0))} order lagi untuk upgrade ke VIP Sales (15% Profit Transaksi).`}
+                </p>
               </div>
             </div>
           </div>
@@ -550,10 +594,10 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
                   <span>1-Level Referral Resmi • 100% Hak Teman Utuh</span>
                 </div>
                 <h4 className="text-sm font-bold text-foreground">
-                  Ajak Teman Jadi Mitra Sales & Dapatkan Bonus 2%!
+                  Ajak Teman Jadi Mitra Sales & Dapatkan Bonus 2% Profit!
                 </h4>
                 <p className="text-xs text-foreground-muted">
-                  Dapatkan bonus 2% yang disubsidi 100% dari buffer margin Asterra Store tanpa memotong komisi teman Anda. Dilengkapi proteksi masa garansi 3 hari (bukan MLM).
+                  Dapatkan bonus 2% dari Profit Transaksi teman langsung Anda tanpa memotong komisi penjualan mereka (teman tetap menerima 10% utuh). Dilengkapi masa garansi 3 hari (bukan MLM).
                 </p>
               </div>
             </div>
@@ -988,7 +1032,8 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
                       <th className="py-3 px-4">Produk</th>
                       <th className="py-3 px-4">Pelanggan</th>
                       <th className="py-3 px-4">Total Nilai</th>
-                      <th className="py-3 px-4">Komisi Saya</th>
+                      <th className="py-3 px-4">Profit Transaksi</th>
+                      <th className="py-3 px-4">Komisi Saya ({partnerRate}%)</th>
                       <th className="py-3 px-4">Status</th>
                     </tr>
                   </thead>
@@ -1013,6 +1058,9 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
                         </td>
                         <td className="py-3 px-4 font-bold text-foreground">
                           Rp {o.totalAmount.toLocaleString('id-ID')}
+                        </td>
+                        <td className="py-3 px-4 font-mono font-semibold text-primary">
+                          Rp {(o.transactionProfit || Math.max(0, Math.round(o.totalAmount * 0.15))).toLocaleString('id-ID')}
                         </td>
                         <td className="py-3 px-4">
                           <div className="font-bold text-status-success">
@@ -1111,11 +1159,11 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 text-xs text-foreground-muted">
                   <div className="flex items-center gap-1.5">
                     <CheckCircle2 className="w-4 h-4 text-status-success shrink-0" />
-                    <span>Komisi teman 100% utuh (10% - 20%)</span>
+                    <span>Komisi teman 100% utuh (10% Profit Transaksi)</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <ShieldCheck className="w-4 h-4 text-primary shrink-0" />
-                    <span>100% disubsidi dari laba toko (Bukan MLM)</span>
+                    <span>Bonus rekrutmen 2% dari Profit Transaksi (1-Level, bukan MLM)</span>
                   </div>
                 </div>
               </div>
@@ -1243,7 +1291,7 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
               </div>
               <div className="pt-2 border-t border-border/60 text-[11px] text-foreground-muted flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                <span>Dari {networkData?.totalTeamOrders || 0} order (Proteksi Margin Aktif)</span>
+                <span>Dari {networkData?.totalTeamOrders || 0} order (Model Bagi Hasil Profit SSOT)</span>
               </div>
             </div>
           </div>
@@ -1323,7 +1371,7 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
                       <th className="py-3 px-4">Bergabung</th>
                       <th className="py-3 px-4">Total Order</th>
                       <th className="py-3 px-4">Omzet Penjualan</th>
-                      <th className="py-3 px-4">Bonus Anda (2%)</th>
+                      <th className="py-3 px-4">Bonus Anda (2% Profit)</th>
                       <th className="py-3 px-4">Status Mitra</th>
                       <th className="py-3 px-4 text-right">Kontak</th>
                     </tr>
@@ -1420,8 +1468,8 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
                       <th className="py-3 px-4">Teman Penjual</th>
                       <th className="py-3 px-4">ID Pesanan</th>
                       <th className="py-3 px-4">Nilai Transaksi</th>
-                      <th className="py-3 px-4">Proteksi Margin</th>
-                      <th className="py-3 px-4">Bonus 2%</th>
+                      <th className="py-3 px-4">Profit Transaksi</th>
+                      <th className="py-3 px-4">Bonus Rekrutmen (2%)</th>
                       <th className="py-3 px-4">Status & Garansi</th>
                     </tr>
                   </thead>
@@ -1447,18 +1495,12 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
                         <td className="py-3 px-4 font-bold text-foreground">
                           Rp {log.orderTotal.toLocaleString('id-ID')}
                         </td>
-                        <td className="py-3 px-4 text-foreground-muted">
-                          {log.marginEstimate ? (
-                            <span className="font-mono text-[11px] text-foreground">
-                              Margin Rp {log.marginEstimate.toLocaleString('id-ID')}
-                            </span>
-                          ) : (
-                            <span className="text-[11px] text-status-success font-medium">Aman (Capped)</span>
-                          )}
+                        <td className="py-3 px-4 font-mono font-semibold text-primary">
+                          Rp {(log.transactionProfit || Math.max(0, Math.round(log.orderTotal * 0.15))).toLocaleString('id-ID')}
                         </td>
                         <td className="py-3 px-4 font-bold text-status-success">
                           + Rp {log.bonusAmount.toLocaleString('id-ID')}
-                          <span className="text-[10px] text-foreground-muted ml-1">({log.bonusPercentage}%)</span>
+                          <span className="text-[10px] text-foreground-muted ml-1">(2% Profit)</span>
                         </td>
                         <td className="py-3 px-4">
                           {log.status === 'pending' ? (
@@ -1845,7 +1887,7 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
                   <strong className="text-foreground">Dilarang Self-Referral:</strong> Mitra dilarang menggunakan link referral milik sendiri untuk pesanan pribadi atau membuat akun sirkular. Sistem secara otomatis mendeteksi kecocokan email dan WhatsApp.
                 </li>
                 <li>
-                  <strong className="text-foreground">Proteksi Margin Sehat:</strong> Bonus referral 2% dikalkulasikan dengan buffer margin aman toko untuk menjamin kelangsungan ekosistem harga terjangkau.
+                  <strong className="text-foreground">Kalkulasi Berbasis Profit Transaksi:</strong> Komisi direct sales (10%) dan bonus rekrutmen (2%) selalu dihitung dari Profit Transaksi (Net Revenue dikurangi modal produk & biaya langsung), bukan dari omzet kotor.
                 </li>
                 <li>
                   <strong className="text-foreground">Dilarang Spam:</strong> Jangan menyebarkan link secara massal di grup publik tanpa izin atau kolom komentar media sosial orang lain.
@@ -1872,7 +1914,7 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
                 <div>
                   <p className="font-semibold text-foreground">Dari mana sumber bonus 2% ajak teman?</p>
                   <p className="text-[11px]">
-                    Bonus 2% adalah 100% subsidi resmi dari laba bersih Asterra Store. Komisi teman Anda tidak dipotong sepeser pun (tetap utuh 100% sesuai tier).
+                    Bonus rekrutmen 2% dihitung dari Profit Transaksi yang dihasilkan oleh teman langsung Anda. Komisi penjualan teman Anda tetap utuh 100% (10% dari Profit Transaksi) tanpa ada potongan.
                   </p>
                 </div>
                 <div>

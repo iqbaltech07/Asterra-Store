@@ -275,10 +275,10 @@ export function AdminAffiliateTab({ onNotify }: AdminAffiliateTabProps) {
           </div>
           <div>
             <p className="font-semibold text-foreground">
-              Skema Komisi Otomatis: Standard 10% | VIP Sales 15%
+              Skema Tier Otomatis: Standard 10% (1-49 Order) | VIP Sales 15% (≥50 Order) dari Profit Transaksi
             </p>
             <p className="text-foreground-muted text-[11px]">
-              Setiap kali pembeli menyelesaikan pembayaran menggunakan link mitra, sistem otomatis mencatat komisi ke dompet afiliasi mereka.
+              Dihitung murni dari profit bersih transaksi (Net Revenue − Biaya Langsung). Mitra otomatis naik ke VIP (15% Profit) setelah membawa 50 order sukses.
             </p>
           </div>
         </div>
@@ -397,7 +397,7 @@ export function AdminAffiliateTab({ onNotify }: AdminAffiliateTabProps) {
                     <td className="py-3.5 px-4">
                       <span className="font-medium text-foreground text-[11px]">{partner.tier}</span>
                       <span className="text-[10px] text-status-success font-semibold block">
-                        {partner.rate}% dari omzet
+                        {partner.rate}% dari profit
                       </span>
                     </td>
 
@@ -549,7 +549,7 @@ export function AdminAffiliateTab({ onNotify }: AdminAffiliateTabProps) {
                   />
                 </div>
                 <div>
-                  <label className="font-semibold text-foreground block mb-1">Persentase Komisi (%)</label>
+                  <label className="font-semibold text-foreground block mb-1">Komisi (% Profit)</label>
                   <Input
                     type="number"
                     min="1"
@@ -559,6 +559,9 @@ export function AdminAffiliateTab({ onNotify }: AdminAffiliateTabProps) {
                     onChange={(e) => setNewRate(Number(e.target.value))}
                     className="bg-surface-raised border-border text-xs font-bold"
                   />
+                  <span className="text-[10px] text-foreground-muted block mt-0.5">
+                    Standar model: 10% dari Profit Transaksi
+                  </span>
                 </div>
               </div>
 

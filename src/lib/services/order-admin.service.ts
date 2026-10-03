@@ -10,6 +10,8 @@ import {
 } from '@/lib/orders-data';
 import { mapDbOrderToOrder, RawDbOrder } from '@/lib/utils/order-mapper';
 import { AffiliateService } from './affiliate.service';
+import { ReferralProfitService } from './referral-profit.service';
+import { ProfitLedgerService } from './profit-ledger.service';
 
 export interface OrderFilterParams {
   status?: string;
@@ -281,30 +283,44 @@ export class OrderAdminService {
       console.warn('[OrderAdminService] Prisma status update warning:', dbErr);
     }
 
-    // 3. Attribution of Affiliate Sales Commission (Real-time & Idempotent)
+    // 3. Attribution of Affiliate Sales Commission & Profit Ledger (SSOT §8, §15, §17)
     if (newStatus === 'completed' || newStatus === 'processing') {
       try {
         let referralCode: string | undefined = undefined;
         let orderTotalAmount = 0;
-        let customerEmail: string | undefined = undefined;
+        let rawSellingPrice = 0;
+        let customerDiscount = 0;
+        let customerEmail: string = 'customer@asterra.store';
         let customerPhone: string | undefined = undefined;
         let customerName: string | undefined = undefined;
+        let paymentMode = 'gateway';
+        let itemsList: Array<{ productId: string; productName: string; price: number; quantity: number }> = [];
 
         // Check in-memory order first
         const memOrder = getGlobalOrders().find((o) => o.id === orderId);
         if (memOrder) {
           referralCode = memOrder.referral_code;
           orderTotalAmount = memOrder.total_amount;
-          customerEmail = memOrder.customer_email;
+          rawSellingPrice = memOrder.raw_amount || memOrder.total_amount;
+          customerDiscount = memOrder.discount_amount || 0;
+          customerEmail = memOrder.customer_email || customerEmail;
           customerPhone = memOrder.customer_whatsapp;
           customerName = memOrder.customer_name;
+          paymentMode = memOrder.payment_mode || 'gateway';
+          itemsList = (memOrder.items || []).map((i) => ({
+            productId: i.product_id,
+            productName: i.product_name,
+            price: i.unit_price,
+            quantity: i.quantity,
+          }));
         }
 
-        // If not in memory or referralCode not found, check DB order & logs
+        // If in DB, fetch details and items
         if (prismaClient?.order) {
           const dbOrder = await prismaClient.order.findUnique({
             where: { id: orderId },
             include: {
+              items: true,
               logs: {
                 where: {
                   OR: [
@@ -319,9 +335,22 @@ export class OrderAdminService {
           });
           if (dbOrder) {
             orderTotalAmount = dbOrder.totalAmount;
-            customerEmail = customerEmail || dbOrder.customerEmail;
+            rawSellingPrice = dbOrder.rawAmount || rawSellingPrice || dbOrder.totalAmount;
+            customerDiscount = customerDiscount || (dbOrder.rawAmount ? Math.max(0, dbOrder.rawAmount - dbOrder.totalAmount) : 0);
+            customerEmail = dbOrder.customerEmail || customerEmail;
             customerPhone = customerPhone || dbOrder.customerPhone || undefined;
             customerName = customerName || dbOrder.customerName || undefined;
+            paymentMode = dbOrder.paymentMode || paymentMode;
+
+            if (dbOrder.items && dbOrder.items.length > 0 && itemsList.length === 0) {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              itemsList = dbOrder.items.map((i: any) => ({
+                productId: i.productId,
+                productName: i.productName,
+                price: i.price,
+                quantity: i.quantity,
+              }));
+            }
 
             // Check logs metadata
             if (!referralCode) {
@@ -342,17 +371,90 @@ export class OrderAdminService {
           }
         }
 
-        if (referralCode && orderTotalAmount > 0) {
+        // Fetch real product cost_of_goods from DB
+        let totalCOGS = 0;
+        const productIds = itemsList.map((i) => i.productId).filter(Boolean);
+        if (productIds.length > 0 && prismaClient?.product) {
+          const dbProducts = await prismaClient.product.findMany({
+            where: { id: { in: productIds } },
+            select: { id: true, providerPrice: true, price: true },
+          });
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const productMap = new Map<string, { providerPrice?: number | null; price: number }>(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            dbProducts.map((p: any) => [p.id, p])
+          );
+
+          for (const item of itemsList) {
+            const p = productMap.get(item.productId);
+            const unitCost = p?.providerPrice && p.providerPrice > 0
+              ? p.providerPrice
+              : Math.round(item.price * 0.85);
+            totalCOGS += unitCost * item.quantity;
+          }
+        } else {
+          totalCOGS = Math.round((rawSellingPrice || orderTotalAmount) * 0.85);
+        }
+
+        const paymentFee = ReferralProfitService.estimatePaymentFee(orderTotalAmount, paymentMode);
+
+        // Check if referral partner exists
+        const partner = referralCode ? AffiliateService.findByCode(referralCode) : undefined;
+        const sponsor = partner?.referredByCode ? AffiliateService.findByCode(partner.referredByCode) : undefined;
+
+        // Auto-tier calculation: If partner reaches 50 orders, rate upgrades to 15% VIP rate
+        const effectiveSalesRate = partner
+          ? ((partner.totalOrders || 0) + 1 >= 50 || partner.rate >= 15 ? 0.15 : (partner.rate || 10) / 100)
+          : undefined;
+
+        // Run SSOT profit calculation
+        const breakdown = ReferralProfitService.calculate({
+          sellingPrice: rawSellingPrice || orderTotalAmount,
+          customerDiscount,
+          costOfGoods: totalCOGS,
+          paymentFee,
+          otherDirectCost: 0,
+          hasDirectReferral: Boolean(partner && partner.status === 'active'),
+          hasDirectRecruiter: Boolean(sponsor && sponsor.status === 'active'),
+          salesCommissionRate: effectiveSalesRate,
+        });
+
+        // Record in Profit Sharing General Ledger (SSOT §8) for ALL orders (with or without referral)
+        const productNamesJoined = itemsList.map((i) => i.productName).join(', ') || 'Lisensi Digital';
+        const primaryProductId = itemsList[0]?.productId || 'prod-digital';
+
+        ProfitLedgerService.recordOrderProfit({
+          orderId,
+          customerEmail,
+          customerName,
+          productId: primaryProductId,
+          productNames: productNamesJoined,
+          salesId: partner?.id,
+          salesName: partner?.name,
+          referralCode: partner?.code,
+          recruiterSalesId: sponsor?.id,
+          recruiterSalesName: sponsor?.name,
+          breakdown,
+        });
+
+        // Credit to Affiliate Service if active referral
+        if (partner && partner.status === 'active') {
           const creditResult = AffiliateService.recordSuccessfulOrder(
-            referralCode,
+            partner.code,
             orderTotalAmount,
             orderId,
-            { customerEmail, customerPhone, customerName }
+            { customerEmail, customerPhone, customerName },
+            {
+              costOfGoods: totalCOGS,
+              paymentFee,
+              customerDiscount,
+              transactionProfit: breakdown.transactionProfit,
+            }
           );
 
           if (creditResult.success && creditResult.commission > 0) {
             console.log(
-              `[AffiliateCommission] Credited Rp ${creditResult.commission} to partner "${creditResult.partnerName}" for order ${orderId}`
+              `[AffiliateCommission] Credited Rp ${creditResult.commission} (10% profit) to partner "${creditResult.partnerName}" for order ${orderId}`
             );
             if (prismaClient?.orderLog) {
               await prismaClient.orderLog.create({
@@ -360,10 +462,15 @@ export class OrderAdminService {
                   orderId,
                   actor: 'system',
                   action: 'affiliate_commission_credited',
-                  notes: `Komisi penjualan Rp ${creditResult.commission.toLocaleString('id-ID')} berhasil dialokasikan ke mitra sales "${creditResult.partnerName}" (${referralCode}).`,
+                  notes: `Komisi penjualan Rp ${creditResult.commission.toLocaleString('id-ID')} (10% dari Profit Transaksi Rp ${breakdown.transactionProfit.toLocaleString('id-ID')}) berhasil dialokasikan ke mitra sales "${creditResult.partnerName}" (${partner.code}).`,
                   metadata: {
-                    referral_code: referralCode,
+                    referral_code: partner.code,
                     commission: creditResult.commission,
+                    transaction_profit: breakdown.transactionProfit,
+                    recruitment_bonus: breakdown.recruitmentBonus,
+                    ceo_share: breakdown.ceoShare,
+                    coo_share: breakdown.cooShare,
+                    business_reserve: breakdown.businessReserve,
                     partner_name: creditResult.partnerName,
                   },
                 },
@@ -372,7 +479,7 @@ export class OrderAdminService {
           }
         }
       } catch (affiliateErr) {
-        console.warn('[OrderAdminService] Error crediting affiliate commission:', affiliateErr);
+        console.warn('[OrderAdminService] Error processing profit sharing and affiliate commission:', affiliateErr);
       }
     }
 
