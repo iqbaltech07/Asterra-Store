@@ -505,215 +505,135 @@ export default function HomePage() {
 
       {/* Main Content */}
       <main className="flex-1 max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 pt-2 sm:pt-3.5 pb-8 sm:pb-12 w-full overflow-hidden">
-        {/* SECTION 2 & 3: Hero Bento Grid */}
-        <section className="relative w-full rounded-2xl sm:rounded-3xl bg-[#101828] border border-white/10 shadow-lg overflow-hidden mb-6 sm:mb-8">
-          {/* Subtle Ambient Radial Lighting */}
-          <div
-            className="pointer-events-none absolute -top-24 -left-24 w-80 h-80 rounded-full opacity-30"
-            style={{
-              background: 'radial-gradient(circle, rgba(201,111,85,0.35) 0%, transparent 70%)',
-            }}
-          />
-          <div
-            className="pointer-events-none absolute -bottom-24 -right-24 w-80 h-80 rounded-full opacity-25"
-            style={{
-              background: 'radial-gradient(circle, rgba(226,136,112,0.3) 0%, transparent 70%)',
-            }}
-          />
+        {/* SECTION 2 & 3: Hero Banner with Controlled Dimensions, Scaled Planet Anchor & Integrated Benefit Strip */}
+        <section className="relative w-full rounded-2xl sm:rounded-3xl bg-[#101828] border border-[rgba(255,255,255,0.08)] shadow-md overflow-hidden mb-6 sm:mb-8">
+          {/* Controlled Hero Area: compact & clean with balanced text spacing */}
+          <div className="relative min-h-[165px] sm:min-h-[190px] lg:h-[220px] xl:h-[235px] flex items-center px-4.5 sm:px-8 lg:px-12 py-4.5 sm:py-6 lg:py-0 overflow-hidden">
+            {/* Left Column: Headline & Subheadline (Clear max-width on mobile prevents planet collision) */}
+            <div className="relative z-10 w-full max-w-[66%] sm:max-w-[70%] lg:max-w-[62%] xl:max-w-[60%] py-1">
+              {/* Editorial Headline */}
+              <h1 data-gsap="page-title" className="text-lg sm:text-2xl lg:text-[32px] xl:text-[36px] font-black tracking-tight text-white leading-[1.18] sm:leading-[1.15]">
+                Solusi Terpercaya Produk &<br />
+                <span className="text-[#E28870]">Layanan Digital Premium</span>
+              </h1>
 
-          {/* MAIN HERO BENTO COMPARTMENT */}
-          <div className="relative p-4 sm:p-7 lg:p-10">
-            {/* Top Pill Badge */}
-            <div className="flex items-center justify-between gap-3 mb-3 sm:mb-4.5">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.06] border border-white/10 text-white/90 text-[11px] sm:text-xs font-semibold backdrop-blur-xs">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#E28870] animate-pulse" />
-                <span>Lisensi Digital Resmi & Terverifikasi</span>
-              </div>
-
-              {/* Status Indicator */}
-              <div className="inline-flex items-center gap-1.5 text-[11px] text-white/70 font-medium bg-white/[0.04] px-2.5 py-1 rounded-full border border-white/5">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 opacity-75" />
-                <span>Aktivasi 24 Jam Otomatis</span>
-              </div>
+              {/* Subheadline */}
+              <p data-gsap="page-sub" className="mt-1.5 sm:mt-2.5 text-[11px] sm:text-[13px] lg:text-sm text-white/75 leading-relaxed line-clamp-3 sm:line-clamp-none">
+                Dapatkan akses langganan resmi untuk tool AI, software desain, voucher, dan layanan
+                digital lainnya tanpa kartu kredit dengan konfirmasi instan.
+              </p>
             </div>
 
-            {/* Bento Grid: Text Column + Planet Showcase Column */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-8 items-center">
-              {/* Left Column: Full Editorial Typography (No Truncation, Clean Lines) */}
-              <div className="lg:col-span-8 space-y-2.5 sm:space-y-3.5">
-                <h1 data-gsap="page-title" className="text-xl sm:text-3xl lg:text-[34px] xl:text-[38px] font-black tracking-tight text-white leading-[1.2] sm:leading-[1.15]">
-                  Solusi Terpercaya Produk &<br />
-                  <span className="text-[#E28870] bg-gradient-to-r from-[#E28870] via-[#EE9E8B] to-[#F7C6BA] bg-clip-text text-transparent">
-                    Layanan Digital Premium
-                  </span>
-                </h1>
+            {/* Right Column: Planet Visual (Smooth, Cleanly Positioned in Top-Right on Mobile, Zero Lag on iPhone 12) */}
+            <div className="absolute right-0.5 sm:right-2 lg:right-6 top-2.5 sm:top-1/2 sm:-translate-y-1/2 pointer-events-none select-none z-10">
+              <div
+                data-gsap="hero-media"
+                className="relative w-[115px] h-[115px] sm:w-[170px] sm:h-[170px] lg:w-[250px] lg:h-[250px] flex items-center justify-center"
+                style={{
+                  transform: 'translate3d(0,0,0)',
+                  WebkitTransform: 'translate3d(0,0,0)',
+                  willChange: 'transform',
+                }}
+              >
+                {/* Subtle SVG Orbital Background Rings (desktop & tablet only) */}
+                <svg
+                  className="hidden sm:block absolute inset-0 w-full h-full pointer-events-none opacity-50"
+                  viewBox="0 0 500 500"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <ellipse
+                    cx="250"
+                    cy="250"
+                    rx="230"
+                    ry="115"
+                    transform="rotate(-14 250 250)"
+                    stroke="rgba(255, 255, 255, 0.12)"
+                    strokeWidth="1.5"
+                    strokeDasharray="6 8"
+                  />
+                  <ellipse
+                    cx="250"
+                    cy="250"
+                    rx="185"
+                    ry="92"
+                    transform="rotate(-14 250 250)"
+                    stroke="rgba(226, 136, 112, 0.35)"
+                    strokeWidth="1.2"
+                  />
+                </svg>
 
-                <p data-gsap="page-sub" className="text-xs sm:text-sm text-white/80 max-w-xl leading-relaxed">
-                  Dapatkan akses langganan resmi untuk tool AI, software desain grafis, voucher hiburan streaming, dan kebutuhan digital lainnya tanpa kartu kredit dengan konfirmasi instan 1 - 15 menit.
-                </p>
-
-                {/* Quick Action CTAs */}
-                <div className="flex items-center gap-2.5 pt-1 flex-wrap">
-                  <Link href="/products">
-                    <Button size="sm" className="h-8.5 sm:h-9 px-4 rounded-xl bg-[#C96F55] hover:bg-[#B86047] text-white font-bold text-xs gap-1.5 shadow-xs active:scale-95 transition-all cursor-pointer">
-                      <span>Jelajahi Katalog</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </Button>
-                  </Link>
-
-                  <a
-                    href="#panduan"
-                    className="h-8.5 sm:h-9 px-3.5 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 text-white/85 text-xs font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer"
-                  >
-                    <span>Cara Pemesanan</span>
-                  </a>
-                </div>
-              </div>
-
-              {/* Right Column / Bento Box: Cosmic Planet Showcase Card (Majestic 8s Rotation, Neatly Framed) */}
-              <div className="lg:col-span-4 flex items-center justify-center lg:justify-end">
+                {/* Ambient Soft Glow: GPU-Native Radial Gradient (Zero CPU blur calculation on iOS WebKit) */}
                 <div
-                  data-gsap="hero-media"
-                  className="relative w-full max-w-[340px] lg:max-w-none lg:w-[220px] xl:w-[240px] h-[115px] sm:h-[135px] lg:h-[210px] rounded-2xl bg-white/[0.04] border border-white/10 flex items-center justify-between lg:justify-center px-4 sm:px-6 lg:p-4 overflow-hidden shadow-inner backdrop-blur-xs"
+                  className="absolute inset-0 rounded-full pointer-events-none"
+                  style={{
+                    background: 'radial-gradient(circle, rgba(201,111,85,0.25) 0%, rgba(201,111,85,0) 70%)',
+                  }}
+                />
+
+                {/* Scaled Asterra Planet Visual: Smooth Hardware-Accelerated Animation */}
+                <div
+                  className="relative z-10 w-[100px] sm:w-[150px] lg:w-[220px] flex items-center justify-center"
                   style={{
                     transform: 'translate3d(0,0,0)',
                     WebkitTransform: 'translate3d(0,0,0)',
+                    WebkitBackfaceVisibility: 'hidden',
+                    backfaceVisibility: 'hidden',
                   }}
                 >
-                  {/* Subtle Background Orbital SVG */}
-                  <svg
-                    className="absolute inset-0 w-full h-full pointer-events-none opacity-40"
-                    viewBox="0 0 500 500"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <ellipse
-                      cx="250"
-                      cy="250"
-                      rx="210"
-                      ry="105"
-                      transform="rotate(-14 250 250)"
-                      stroke="rgba(255, 255, 255, 0.2)"
-                      strokeWidth="1.5"
-                      strokeDasharray="6 8"
-                    />
-                    <ellipse
-                      cx="250"
-                      cy="250"
-                      rx="160"
-                      ry="80"
-                      transform="rotate(-14 250 250)"
-                      stroke="rgba(226, 136, 112, 0.4)"
-                      strokeWidth="1.2"
-                    />
-                  </svg>
-
-                  {/* Ambient Core Glow */}
-                  <div
-                    className="absolute w-24 h-24 sm:w-32 sm:h-32 rounded-full pointer-events-none"
-                    style={{
-                      background: 'radial-gradient(circle, rgba(201,111,85,0.35) 0%, transparent 70%)',
-                    }}
-                  />
-
-                  {/* Mobile Left Stat / Badge */}
-                  <div className="relative z-10 lg:hidden space-y-0.5">
-                    <span className="text-[10px] font-bold text-[#E28870] uppercase tracking-wider block">
-                      GARANSI AKTIF
-                    </span>
-                    <span className="text-xs font-black text-white block">
-                      100% Proteksi
-                    </span>
-                  </div>
-
-                  {/* Center: Scaled Asterra Planet Visual: Smooth Hardware-Accelerated 8.25s Rotation */}
-                  <div
-                    className="relative z-10 w-[90px] sm:w-[110px] lg:w-[165px] flex items-center justify-center pointer-events-none select-none"
+                  <img
+                    src="/assets/asterra-planet-transparent.webp"
+                    alt="Asterra Store"
+                    width={800}
+                    height={426}
+                    draggable={false}
+                    className="w-full h-auto object-contain pointer-events-none select-none"
                     style={{
                       transform: 'translate3d(0,0,0)',
                       WebkitTransform: 'translate3d(0,0,0)',
-                      WebkitBackfaceVisibility: 'hidden',
-                      backfaceVisibility: 'hidden',
                     }}
-                  >
-                    <img
-                      src="/assets/asterra-planet-transparent.webp"
-                      alt="Asterra Store"
-                      width={800}
-                      height={426}
-                      draggable={false}
-                      className="w-full h-auto object-contain pointer-events-none select-none"
-                      style={{
-                        transform: 'translate3d(0,0,0)',
-                        WebkitTransform: 'translate3d(0,0,0)',
-                      }}
-                      onError={(e) => {
-                        e.currentTarget.src = "/images/brand/hero-planet-white.png";
-                      }}
-                    />
-                  </div>
-
-                  {/* Mobile Right Stat / Badge */}
-                  <div className="relative z-10 lg:hidden text-right space-y-0.5">
-                    <span className="text-[10px] font-bold text-[#E28870] uppercase tracking-wider block">
-                      PROSES CEPAT
-                    </span>
-                    <span className="text-xs font-black text-white block">
-                      1 - 15 Menit
-                    </span>
-                  </div>
-
-                  {/* Desktop Bottom Badge */}
-                  <div className="hidden lg:block absolute bottom-2.5 left-2 right-2 text-center bg-black/40 backdrop-blur-xs border border-white/10 rounded-md py-0.5 px-1.5 text-[10px] text-white/75 font-medium truncate">
-                    ✦ Garansi Penggantian 100%
-                  </div>
+                    onError={(e) => {
+                      e.currentTarget.src = "/images/brand/hero-planet-white.png";
+                    }}
+                  />
                 </div>
               </div>
             </div>
           </div>
 
-          {/* BENTO PILLARS STRIP: 3 Compact Bento Tiles */}
-          <div className="border-t border-white/10 bg-[#0B111E] p-2.5 sm:p-4">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
-              {/* Tile 1 */}
-              <div
-                data-gsap="benefit-card"
-                className="bg-white/[0.03] border border-white/[0.08] hover:border-[#C96F55]/40 rounded-xl p-2.5 sm:p-3 flex items-center gap-2.5 transition-colors"
-              >
-                <div className="w-8 h-8 rounded-lg bg-[rgba(201,111,85,0.15)] border border-[rgba(201,111,85,0.25)] flex items-center justify-center shrink-0">
-                  <ShieldCheck className="w-4 h-4 text-[#E28870]" />
+          {/* SECTION 3: Trust / Benefits Strip (Compact Horizontal Row, 3 Columns) */}
+          <div className="border-t border-white/10 bg-[#0E1524] px-4 sm:px-8 lg:px-12 py-3 sm:py-3.5">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-6">
+              {/* Benefit 1 */}
+              <div data-gsap="benefit-card" className="flex items-center gap-3">
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-[rgba(201,111,85,0.15)] border border-[rgba(201,111,85,0.25)] flex items-center justify-center shrink-0">
+                  <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-[#E28870]" />
                 </div>
-                <div className="min-w-0 flex-1">
-                  <h3 className="font-bold text-xs text-white truncate">100% Legal & Bergaransi</h3>
-                  <p className="text-[10px] sm:text-[11px] text-white/60 truncate">Jaminan penggantian akun penuh</p>
+                <div className="space-y-0.5">
+                  <h3 className="font-bold text-xs sm:text-sm text-white">100% Legal & Bergaransi</h3>
+                  <p className="text-[11px] text-white/65">Jaminan penggantian penuh</p>
                 </div>
               </div>
 
-              {/* Tile 2 */}
-              <div
-                data-gsap="benefit-card"
-                className="bg-white/[0.03] border border-white/[0.08] hover:border-[#C96F55]/40 rounded-xl p-2.5 sm:p-3 flex items-center gap-2.5 transition-colors"
-              >
-                <div className="w-8 h-8 rounded-lg bg-[rgba(201,111,85,0.15)] border border-[rgba(201,111,85,0.25)] flex items-center justify-center shrink-0">
-                  <Zap className="w-4 h-4 text-[#E28870]" />
+              {/* Benefit 2 */}
+              <div data-gsap="benefit-card" className="flex items-center gap-3 sm:border-l sm:border-white/10 sm:pl-6">
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-[rgba(201,111,85,0.15)] border border-[rgba(201,111,85,0.25)] flex items-center justify-center shrink-0">
+                  <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-[#E28870]" />
                 </div>
-                <div className="min-w-0 flex-1">
-                  <h3 className="font-bold text-xs text-white truncate">Proses Cepat & Otomatis</h3>
-                  <p className="text-[10px] sm:text-[11px] text-white/60 truncate">Aktivasi hitungan 1-15 menit</p>
+                <div className="space-y-0.5">
+                  <h3 className="font-bold text-xs sm:text-sm text-white">Proses Cepat & Otomatis</h3>
+                  <p className="text-[11px] text-white/65">Aktivasi hitungan menit</p>
                 </div>
               </div>
 
-              {/* Tile 3 */}
-              <div
-                data-gsap="benefit-card"
-                className="bg-white/[0.03] border border-white/[0.08] hover:border-[#C96F55]/40 rounded-xl p-2.5 sm:p-3 flex items-center gap-2.5 transition-colors"
-              >
-                <div className="w-8 h-8 rounded-lg bg-[rgba(201,111,85,0.15)] border border-[rgba(201,111,85,0.25)] flex items-center justify-center shrink-0">
-                  <CreditCard className="w-4 h-4 text-[#E28870]" />
+              {/* Benefit 3 */}
+              <div data-gsap="benefit-card" className="flex items-center gap-3 sm:border-l sm:border-white/10 sm:pl-6">
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-[rgba(201,111,85,0.15)] border border-[rgba(201,111,85,0.25)] flex items-center justify-center shrink-0">
+                  <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-[#E28870]" />
                 </div>
-                <div className="min-w-0 flex-1">
-                  <h3 className="font-bold text-xs text-white truncate">Multi-Metode Pembayaran</h3>
-                  <p className="text-[10px] sm:text-[11px] text-white/60 truncate">QRIS, E-Wallet & Virtual Account</p>
+                <div className="space-y-0.5">
+                  <h3 className="font-bold text-xs sm:text-sm text-white">Multi-Metode Pembayaran</h3>
+                  <p className="text-[11px] text-white/65">QRIS, E-Wallet, Virtual Account</p>
                 </div>
               </div>
             </div>
