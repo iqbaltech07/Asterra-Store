@@ -27,6 +27,25 @@ export interface ProductFamilyData {
   selectedVariant: ParsedVariant;
 }
 
+/**
+ * Utility to strip raw HTML tags and clean up text into human-readable strings
+ */
+export function cleanHtmlContent(text: string | undefined | null): string {
+  if (!text) return '';
+  let s = text.replace(/<li[^>]*>/gi, '\n• ');
+  s = s.replace(/<\/?(?:p|h[1-6]|ul|ol|div|br)[^>]*>/gi, '\n');
+  s = s.replace(/<[^>]+>/g, '');
+  s = s
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, ' ');
+  const lines = s.split('\n').map((l) => l.trim()).filter(Boolean);
+  return lines.join('\n');
+}
+
 interface AppDefinition {
   slug: string;
   aliases: string[];
@@ -161,7 +180,7 @@ export const KNOWN_APPS: AppDefinition[] = [
   },
   {
     slug: 'netflix',
-    aliases: ['netflix', 'netflix-premium'],
+    aliases: ['netflix', 'netflix-premium', 'ntflx'],
     name: 'Netflix',
     category: { id: 'cat-apps-streaming', name: 'Movies & Series' },
     imageUrl: '/images/apps/netflix.png',
@@ -175,7 +194,7 @@ export const KNOWN_APPS: AppDefinition[] = [
       'Dukungan unduhan offline di perangkat mobile',
       'Garansi penggantian akun jika terjadi hambatan',
     ],
-    match: (t) => t.includes('netflix'),
+    match: (t) => t.includes('netflix') || t.includes('ntflx'),
     parsePaket: () => 'Netflix Premium',
   },
   {
@@ -525,8 +544,10 @@ export function resolveProductFamily(
       imageUrl: directProduct.imageUrl || '/images/default-product-banner.png',
       rating: '4.9',
       soldCount: 150,
-      description: directProduct.description || 'Layanan digital resmi bergaransi.',
-      features: directProduct.features || ['Garansi Penggantian Penuh', 'Aktivasi Instan Otomatis'],
+      description: cleanHtmlContent(directProduct.description) || 'Layanan digital resmi bergaransi.',
+      features: (directProduct.features && directProduct.features.length > 0)
+        ? directProduct.features.map(cleanHtmlContent).filter(Boolean)
+        : ['Garansi Penggantian Penuh', 'Aktivasi Instan Otomatis'],
       variants: [singleVariant],
       selectedVariant: singleVariant,
     };

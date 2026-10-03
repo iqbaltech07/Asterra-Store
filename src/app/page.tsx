@@ -2,7 +2,6 @@
 
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import {
@@ -15,7 +14,6 @@ import {
   ArrowRight,
   Plus,
   Minus,
-  Sparkles,
   Tv,
   CircleHelp,
   Package,
@@ -301,10 +299,7 @@ export default function HomePage() {
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
 
   // Dynamic products fetched from catalog API (active products only)
-  const {
-    data: catalogResponse,
-    isLoading: isLoadingProducts,
-  } = useQuery<{ success: boolean; data: ProductItem[]; total: number }>({
+  const { data: catalogResponse } = useQuery<{ success: boolean; data: ProductItem[]; total: number }>({
     queryKey: ['products'],
     queryFn: async () => {
       const res = await fetch('/api/v1/products');

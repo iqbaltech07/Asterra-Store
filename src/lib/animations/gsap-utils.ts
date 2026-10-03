@@ -134,27 +134,54 @@ export function setupScrollReveal(root: HTMLElement | null) {
   const observed = new WeakSet<Element>();
 
   const reveal = (target: HTMLElement, immediate = false) => {
-    // Section heading + its sibling description only (never pick text inside cards)
-    const header = target.querySelector<HTMLElement>('h2, [data-gsap="section-title"]');
-    const desc = header?.parentElement?.querySelector<HTMLElement>('p') ?? null;
-
-    const cardNodes = target.querySelectorAll<HTMLElement>('[data-gsap="card"], .grid > div');
-    const cards = Array.from(cardNodes).filter((el) => !el.closest('.carousel-viewport'));
+    // 1. Headings in target (h2, h3, h4)
+    const headings = target.querySelectorAll<HTMLElement>(
+      'h2, h3, h4, [data-gsap="section-title"]'
+    );
+    // 2. Subtitles and paragraphs
+    const paragraphs = target.querySelectorAll<HTMLElement>('p:not(.no-animate)');
+    // 3. Media & images
+    const images = target.querySelectorAll<HTMLElement>(
+      'img:not(.no-animate), [data-gsap="media"]'
+    );
+    // 4. Cards and grid items (strictly exclude anything in the infinite carousel)
+    const cardNodes = target.querySelectorAll<HTMLElement>(
+      '[data-gsap="card"], .grid > div, article, .card'
+    );
+    const cards = Array.from(cardNodes).filter(
+      (el) => !el.closest('.carousel-viewport') && !el.closest('.carousel-track')
+    );
 
     const tl = gsap.timeline({ defaults: { ease: 'power2.out', overwrite: 'auto' } });
     const dur = immediate ? 0.45 : 0.55;
 
-    if (header) {
-      tl.fromTo(header, { y: 16, opacity: 0 }, { y: 0, opacity: 1, duration: dur });
+    if (headings.length > 0) {
+      tl.fromTo(
+        headings,
+        { y: 16, opacity: 0 },
+        { y: 0, opacity: 1, duration: dur, stagger: 0.05, clearProps: 'transform' }
+      );
     }
-    if (desc) {
-      tl.fromTo(desc, { y: 12, opacity: 0 }, { y: 0, opacity: 1, duration: dur * 0.9 }, '<0.08');
+    if (paragraphs.length > 0) {
+      tl.fromTo(
+        paragraphs,
+        { y: 12, opacity: 0 },
+        { y: 0, opacity: 1, duration: dur * 0.9, stagger: 0.04, clearProps: 'transform' },
+        '<0.08'
+      );
     }
-
+    if (images.length > 0) {
+      tl.fromTo(
+        images,
+        { scale: 0.96, opacity: 0 },
+        { scale: 1, opacity: 1, duration: dur * 0.85, stagger: 0.04, clearProps: 'transform' },
+        '<0.1'
+      );
+    }
     if (cards.length > 0) {
       tl.fromTo(
         cards,
-        { y: 20, opacity: 0 },
+        { y: 18, opacity: 0 },
         {
           y: 0,
           opacity: 1,
@@ -162,10 +189,14 @@ export function setupScrollReveal(root: HTMLElement | null) {
           stagger: { each: 0.04, amount: Math.min(cards.length, 12) * 0.04 },
           clearProps: 'transform',
         },
-        header || desc ? '<0.1' : 0
+        headings.length > 0 || paragraphs.length > 0 ? '<0.1' : 0
       );
-    } else if (!header && !desc) {
-      tl.fromTo(target, { y: 16, opacity: 0 }, { y: 0, opacity: 1, duration: dur, clearProps: 'transform' });
+    } else if (headings.length === 0 && paragraphs.length === 0 && images.length === 0) {
+      tl.fromTo(
+        target,
+        { y: 16, opacity: 0 },
+        { y: 0, opacity: 1, duration: dur, clearProps: 'transform' }
+      );
     }
   };
 
@@ -181,16 +212,24 @@ export function setupScrollReveal(root: HTMLElement | null) {
   );
 
   const scan = () => {
-    root.querySelectorAll<HTMLElement>('[data-gsap-reveal]').forEach((el) => {
-      if (observed.has(el) || el.closest('.carousel-track')) return;
+    // Comprehensively target sections, containers, and explicit reveal targets across any page
+    const targets = root.querySelectorAll<HTMLElement>(
+      'section, [data-gsap-reveal], main > div, article, .space-y-6, .space-y-8, .grid'
+    );
+
+    targets.forEach((el) => {
+      if (
+        observed.has(el) ||
+        el.closest('.carousel-track') ||
+        el.closest('.carousel-viewport')
+      )
+        return;
       observed.add(el);
 
-      // Check if already in initial viewport on mount
+      // Check if already in viewport
       const rect = el.getBoundingClientRect();
       if (rect.top < window.innerHeight && rect.bottom > 0) {
-        io.unobserve(el);
-        // Small delay to let entrance finish
-        setTimeout(() => reveal(el, true), 120);
+        setTimeout(() => reveal(el, true), 80);
       } else {
         io.observe(el);
       }
@@ -199,7 +238,7 @@ export function setupScrollReveal(root: HTMLElement | null) {
 
   scan();
 
-  // Pick up sections rendered later (data fetched async, view mode toggles, etc.)
+  // Watch for dynamically mounted DOM elements (React Query async catalog items, modal drawers, etc.)
   const mo = new MutationObserver(() => scan());
   mo.observe(root, { childList: true, subtree: true });
 

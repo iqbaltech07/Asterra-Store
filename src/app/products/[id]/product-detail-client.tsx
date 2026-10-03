@@ -14,9 +14,7 @@ import { useAuthStore } from '@/store/use-auth-store';
 import {
   CheckCircle2,
   ShoppingCart,
-  Zap,
   ShieldCheck,
-  Clock,
   ArrowRight,
   Check,
   Plus,
@@ -29,7 +27,7 @@ import {
 } from 'lucide-react';
 import { ProductCard } from '@/components/products/product-card';
 import { ProductItem } from '@/lib/products-data';
-import { ParsedVariant } from '@/lib/services/product-variant-parser';
+import { ParsedVariant, cleanHtmlContent } from '@/lib/services/product-variant-parser';
 
 export interface DurationOption {
   id: string;
@@ -167,7 +165,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
     } else if (availablePakets.length > 0 && !availablePakets.includes(selectedPaket)) {
       setSelectedPaket(availablePakets[0]);
     }
-  }, [product?.selectedVariant?.paket, availablePakets]);
+  }, [product?.selectedVariant?.paket, availablePakets, selectedPaket]);
 
   // 2. Variants for selected Paket
   const variantsForPaket = useMemo(() => {
@@ -192,7 +190,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
     } else if (availableTypes.length > 0 && !availableTypes.includes(selectedType)) {
       setSelectedType(availableTypes[0]);
     }
-  }, [availableTypes, product?.selectedVariant?.type]);
+  }, [availableTypes, product?.selectedVariant?.type, selectedType]);
 
   // 4. Variants for selected Paket + Type
   const variantsForType = useMemo(() => {
@@ -216,7 +214,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
     } else if (availableDurations.length > 0 && !availableDurations.includes(selectedDuration)) {
       setSelectedDuration(availableDurations[0]);
     }
-  }, [availableDurations, product?.selectedVariant?.duration]);
+  }, [availableDurations, product?.selectedVariant?.duration, selectedDuration]);
 
   // 6. Variants for selected Paket + Type + Duration
   const variantsForDuration = useMemo(() => {
@@ -240,7 +238,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
     } else if (availableWarranties.length > 0 && !availableWarranties.includes(selectedWarranty)) {
       setSelectedWarranty(availableWarranties[0]);
     }
-  }, [availableWarranties, product?.selectedVariant?.warranty]);
+  }, [availableWarranties, product?.selectedVariant?.warranty, selectedWarranty]);
 
   // 8. FINAL RESOLVED VARIANT
   const activeVariant: ParsedVariant | null = useMemo(() => {
@@ -491,6 +489,10 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                         <ul className="space-y-2">
                           {(product.features && product.features.length > 0
                             ? product.features
+                                .map(cleanHtmlContent)
+                                .flatMap((f) => f.split('\n'))
+                                .map((s) => s.replace(/^[•\-\*]\s*/, '').trim())
+                                .filter(Boolean)
                             : [
                                 'Akses fitur premium resmi tanpa batasan kuota',
                                 'Aktivasi otomatis & cepat (1 - 15 Menit)',
@@ -526,7 +528,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
 
                     {activeTab === 'deskripsi' && (
                       <div className="space-y-2 text-xs text-[#121A2A]/85 leading-relaxed animate-in fade-in duration-200 whitespace-pre-line">
-                        <p>{product.description || 'Layanan digital resmi terverifikasi dan bergaransi penuh di Asterra Store.'}</p>
+                        <p>{cleanHtmlContent(product.description) || 'Layanan digital resmi terverifikasi dan bergaransi penuh di Asterra Store.'}</p>
                       </div>
                     )}
                   </div>

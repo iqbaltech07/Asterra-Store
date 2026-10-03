@@ -5,7 +5,6 @@ import { usePathname } from 'next/navigation';
 import {
   animatePageEntrance,
   setupScrollReveal,
-  prefersReducedMotion,
 } from '@/lib/animations/gsap-utils';
 
 export function GsapProvider({ children }: { children: React.ReactNode }) {
@@ -16,13 +15,13 @@ export function GsapProvider({ children }: { children: React.ReactNode }) {
     let cleanupEntrance: (() => void) | undefined;
     let cleanupScroll: (() => void) | undefined;
 
-    // Small timeout ensures the route's DOM is painted before animating
+    // Small delay ensures route DOM is painted and ready for GSAP
     const timer = setTimeout(() => {
       const container = pageContainerRef.current;
       if (!container) return;
       cleanupEntrance = animatePageEntrance(container);
       cleanupScroll = setupScrollReveal(container);
-    }, 40);
+    }, 50);
 
     return () => {
       clearTimeout(timer);
@@ -32,7 +31,7 @@ export function GsapProvider({ children }: { children: React.ReactNode }) {
   }, [pathname]);
 
   return (
-    <div ref={pageContainerRef} className="contents" data-gsap-page-root>
+    <div ref={pageContainerRef} className="w-full min-h-screen" data-gsap-page-root>
       {children}
     </div>
   );
