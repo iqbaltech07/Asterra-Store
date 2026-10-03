@@ -396,15 +396,15 @@ export default function OrdersPage() {
         {/* Page Title & Stats Bar */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+            <h1 data-gsap="page-title" className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
               Riwayat Pesanan & Pelacakan Lisensi
             </h1>
-            <p className="text-xs sm:text-sm text-foreground-muted mt-1">
+            <p data-gsap="page-sub" className="text-xs sm:text-sm text-foreground-muted mt-1">
               Pantau progres aktivasi, rincian akun digital, dan unduh bukti transaksi resmi Anda.
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div data-gsap="hero-card" className="flex items-center gap-2">
             <Link href="/products">
               <Button size="sm" variant="outline" className="text-xs gap-1.5 border-border">
                 <ShoppingCart className="w-3.5 h-3.5 text-primary" />
@@ -427,7 +427,7 @@ export default function OrdersPage() {
 
         {/* Email Entry & Lookup Card when unauthenticated or changing email */}
         {(!activeEmail || isChangingEmail) && (
-          <div className="bg-surface border border-primary/30 rounded-xl p-6 sm:p-8 max-w-xl mx-auto text-center space-y-4 mb-8 shadow-sm">
+          <div data-gsap="hero-card" className="bg-surface border border-primary/30 rounded-xl p-6 sm:p-8 max-w-xl mx-auto text-center space-y-4 mb-8 shadow-sm">
             <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto">
               <Mail className="w-6 h-6" />
             </div>
@@ -527,10 +527,10 @@ export default function OrdersPage() {
                     key={filter.value}
                     type="button"
                     onClick={() => setSelectedStatus(filter.value)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all shrink-0 border ${
+                    className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all shrink-0 border ${
                       isSelected
-                        ? 'bg-primary text-white border-primary shadow-sm'
-                        : 'bg-surface-raised text-foreground-muted border-border hover:border-foreground-muted/40 hover:text-foreground'
+                        ? 'bg-navy-900 text-white border-navy-900 shadow-xs'
+                        : 'bg-surface text-foreground-muted border-border hover:border-primary/40 hover:text-primary'
                     }`}
                   >
                     {filter.label}

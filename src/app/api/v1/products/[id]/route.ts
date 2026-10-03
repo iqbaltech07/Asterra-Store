@@ -22,8 +22,8 @@ export async function GET(
     );
   }
 
-  // Active products for related recommendations (fetch up to 100 for maximum relevance accuracy)
-  const { products: activeProducts } = await PrismaCatalogRepository.getActiveProducts({ limit: 100 });
+  // Active products for variant family resolution and related recommendations
+  const { products: activeProducts } = await PrismaCatalogRepository.getActiveProducts();
 
   // Extract accurate duration and warranty from product metadata
   const { durations, primaryDurationLabel, warranty } = parseProductDurations(product);
@@ -31,10 +31,19 @@ export async function GET(
   // Smart relevance algorithm: brand match, ecosystem, duration, token overlap [T23]
   const relatedProducts = findRelevantProducts(product, activeProducts, 3);
 
+  const { resolveProductFamily } = await import('@/lib/services/product-variant-parser');
+  const familyData = resolveProductFamily(id, activeProducts);
+
   // Extended product detail schema matching PRD specs
   const responseData = {
     ...product,
     durations,
+    variants: familyData?.variants || [],
+    selectedVariant: familyData?.selectedVariant,
+    familySlug: familyData?.slug,
+    familyImageUrl: familyData?.imageUrl || product.imageUrl,
+    rating: familyData?.rating || '5.0',
+    soldCount: familyData?.soldCount || 500,
     specifications: [
       {
         label: 'Tipe Lisensi',

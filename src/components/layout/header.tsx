@@ -1,22 +1,31 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { usePathname, useRouter } from 'next/navigation';
+import {
+  ShoppingCart,
+  Menu,
+  X,
+  Package,
+  User,
+  LogOut,
+  ChevronDown,
+} from 'lucide-react';
 import { useCartStore } from '@/store/use-cart-store';
 import { useAuthStore } from '@/store/use-auth-store';
 import { useSession, signOut } from '@/lib/auth-client';
 import { CartDrawer } from '@/components/cart/cart-drawer';
-import { useRouter } from 'next/navigation';
-import { ShoppingCart, Menu, X, Package, LogOut, User, ChevronDown } from 'lucide-react';
+import { AsterraLogo } from '@/components/ui/asterra-logo';
+import { Button } from '@/components/ui/button';
+import { animateNavbar } from '@/lib/animations/gsap-utils';
 import {
   DropdownMenu,
-  DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
 interface HeaderProps {
@@ -24,22 +33,29 @@ interface HeaderProps {
 }
 
 export function Header({ onNotify }: HeaderProps) {
-  const router = useRouter();
-  const [isCartOpen, setIsCartOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
+  const [isCartOpen, setIsCartOpen] = useState(false);
   const { getTotalItems } = useCartStore();
   const { data: session } = useSession();
   const { user: legacyUser, logout: legacyLogout } = useAuthStore();
 
-  const currentUser = session?.user || legacyUser;
-  const userImage = currentUser && 'image' in currentUser ? currentUser.image : null;
+  const pathname = usePathname();
+  const router = useRouter();
+  const headerRef = useRef<HTMLElement>(null);
 
-  const handleActionNotice = (message: string) => {
-    if (onNotify) {
-      onNotify(message);
-    }
+  useEffect(() => {
+    const cleanup = animateNavbar(headerRef.current);
+    return () => {
+      if (cleanup) cleanup();
+    };
+  }, []);
+
+  const handleActionNotice = (msg: string) => {
+    if (onNotify) onNotify(msg);
   };
+
+  const currentUser = session?.user || legacyUser;
+  const userImage = currentUser && 'image' in currentUser ? (currentUser as { image?: string | null }).image : null;
 
   const handleLogout = async () => {
     try {
@@ -51,47 +67,73 @@ export function Header({ onNotify }: HeaderProps) {
     handleActionNotice('Anda telah keluar dari akun.');
   };
 
+  const isHomeActive = pathname === '/';
+  const isProductsActive = pathname.startsWith('/products');
+  const isOrdersActive = pathname.startsWith('/orders');
+
   return (
     <>
-      <header className="sticky top-0 z-40 w-full border-b border-border bg-background/85 backdrop-blur-md transition-all">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+      <header ref={headerRef} className="sticky top-0 z-40 w-full px-2 sm:px-6 pt-2.5 pb-2 transition-all">
+        <div className="max-w-7xl mx-auto rounded-2xl bg-[#121A2A] border border-white/10 shadow-navbar px-3.5 sm:px-6 h-16 sm:h-18 flex items-center justify-between gap-4">
           {/* Brand Logo */}
-          <div className="flex items-center gap-3">
-            <Link href="/" className="flex items-center gap-2.5 group">
-              <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center text-white font-bold text-sm shadow-sm group-hover:scale-105 transition-transform">
-                A
-              </div>
-              <div className="flex flex-col">
-                <span className="font-semibold text-base tracking-tight text-foreground">
-                  Asterra Store
-                </span>
-                <span className="text-[10px] text-foreground-muted font-normal leading-none hidden sm:inline">
-                  Toko Digital Premium
-                </span>
-              </div>
-            </Link>
-
-            <Badge
-              variant="outline"
-              className="hidden md:inline-flex ml-2 text-[11px] font-normal text-foreground-muted border-border"
-            >
-              Terpercaya
-            </Badge>
+          <div data-gsap="nav-logo" className="flex items-center gap-3">
+            <AsterraLogo
+              variant="navbar"
+              size="md"
+              showBadge={true}
+              badgeText="Toko Digital Premium"
+              linkToHome={true}
+            />
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-6 text-xs font-medium text-foreground-muted">
-            <Link href="/products" className="hover:text-foreground transition-colors">
+          <nav className="hidden lg:flex items-center gap-6 text-xs sm:text-[13px] font-medium">
+            <Link
+              href="/"
+              data-gsap="nav-link"
+              className={`transition-colors py-1 ${
+                isHomeActive
+                  ? 'text-[#C96F55] font-semibold'
+                  : 'text-[#F7F5EF]/80 hover:text-[#F7F5EF]'
+              }`}
+            >
+              Beranda
+            </Link>
+            <Link
+              href="/products"
+              data-gsap="nav-link"
+              className={`transition-colors py-1 ${
+                isProductsActive
+                  ? 'text-[#C96F55] font-semibold'
+                  : 'text-[#F7F5EF]/80 hover:text-[#F7F5EF]'
+              }`}
+            >
               Katalog Produk
             </Link>
-            <Link href="/orders" className="hover:text-foreground transition-colors inline-flex items-center gap-1">
-              <Package className="w-3.5 h-3.5 text-primary" />
+            <Link
+              href="/orders"
+              data-gsap="nav-link"
+              className={`transition-colors py-1 inline-flex items-center gap-1.5 ${
+                isOrdersActive
+                  ? 'text-[#C96F55] font-semibold'
+                  : 'text-[#F7F5EF]/80 hover:text-[#F7F5EF]'
+              }`}
+            >
+              <Package className="w-3.5 h-3.5 text-[#C96F55]" />
               <span>Pesanan Saya</span>
             </Link>
-            <Link href="/#keunggulan" className="hover:text-foreground transition-colors">
+            <Link
+              href="/#keunggulan"
+              data-gsap="nav-link"
+              className="text-[#F7F5EF]/80 hover:text-[#F7F5EF] transition-colors py-1"
+            >
               Keunggulan
             </Link>
-            <Link href="/#panduan" className="hover:text-foreground transition-colors">
+            <Link
+              href="/#panduan"
+              data-gsap="nav-link"
+              className="text-[#F7F5EF]/80 hover:text-[#F7F5EF] transition-colors py-1"
+            >
               Cara Pemesanan
             </Link>
             <Link
@@ -103,77 +145,77 @@ export function Header({ onNotify }: HeaderProps) {
           </nav>
 
           {/* Action Buttons */}
-          <div className="flex items-center gap-2 sm:gap-2.5">
-            {/* Cart Trigger */}
-            <Button
-              variant="outline"
-              size="sm"
-              className="relative gap-2 border-border hover:border-primary/40 transition-colors h-9 px-3"
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Cart Trigger Button */}
+            <button
+              type="button"
+              data-gsap="nav-action"
+              className="relative inline-flex items-center gap-2 h-9 sm:h-10 px-3 sm:px-4 rounded-xl bg-[#182235] border border-white/10 hover:border-[#C96F55]/50 text-[#F7F5EF] text-xs sm:text-sm font-medium transition-all shadow-inner cursor-pointer group active:scale-95"
               onClick={() => setIsCartOpen(true)}
               aria-label="Buka Keranjang Pesanan"
             >
-              <ShoppingCart className="w-4 h-4 text-primary" />
-              <span className="hidden sm:inline text-xs">Pesanan</span>
+              <ShoppingCart className="w-4 h-4 text-[#C96F55] transition-transform group-hover:scale-110" />
+              <span className="hidden sm:inline">Pesanan</span>
               {getTotalItems() > 0 && (
-                <span className="w-5 h-5 rounded-full bg-primary text-white text-[11px] font-bold flex items-center justify-center -mr-1">
+                <span className="w-5 h-5 rounded-full bg-[#C96F55] text-[#F7F5EF] text-[11px] font-bold flex items-center justify-center -mr-1 shadow-xs animate-in zoom-in-75">
                   {getTotalItems()}
                 </span>
               )}
-            </Button>
+            </button>
 
-            {/* Auth Actions: [T12a] User Badge with dropdown menu (Desktop only, mobile moved to hamburger) */}
+            {/* Auth Actions */}
             {currentUser ? (
-              <div className="hidden md:block">
+              <div data-gsap="nav-action" className="hidden sm:block">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button
                       type="button"
-                      className="flex items-center gap-1.5 p-1 sm:px-2.5 sm:py-1 rounded-full border border-border bg-surface-raised hover:border-primary/40 hover:bg-surface-hover transition-all text-xs font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
+                      className="flex items-center gap-2 p-1 sm:px-3 sm:py-1.5 rounded-xl border border-white/10 bg-[#182235] hover:border-[#C96F55]/40 hover:bg-[#1e2a40] transition-all text-xs font-medium text-[#F7F5EF] focus:outline-none focus:ring-2 focus:ring-[#C96F55]/30 cursor-pointer"
                       aria-label="Menu Akun Pengguna"
                     >
                       {userImage ? (
                         <img
                           src={userImage}
                           alt={currentUser.name || 'Profil'}
-                          className="w-7 h-7 rounded-full object-cover ring-1 ring-border"
+                          className="w-7 h-7 rounded-full object-cover ring-1 ring-white/20"
                           referrerPolicy="no-referrer"
                         />
                       ) : (
-                        <div className="w-7 h-7 rounded-full bg-primary/10 border border-primary/20 text-primary flex items-center justify-center font-bold text-xs">
+                        <div className="w-7 h-7 rounded-full bg-[rgba(201,111,85,0.2)] border border-[rgba(201,111,85,0.4)] text-[#C96F55] flex items-center justify-center font-bold text-xs">
                           {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U'}
                         </div>
                       )}
-                      <span className="inline-block max-w-[85px] truncate text-foreground text-xs font-medium">
+                      <span className="inline-block max-w-[90px] truncate text-[#F7F5EF] text-xs font-medium">
                         {currentUser.name?.split(' ')[0] || 'Profil'}
                       </span>
-                      <ChevronDown className="w-3.5 h-3.5 text-foreground-muted inline-block" />
+                      <ChevronDown className="w-3.5 h-3.5 text-[#F7F5EF]/60 inline-block" />
                     </button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuContent align="end" className="w-56 bg-white text-[#121A2A] border border-[rgba(18,26,42,0.1)] shadow-editorial">
                     <DropdownMenuLabel className="font-normal py-2.5 px-3">
                       <div className="flex flex-col space-y-1">
-                        <p className="text-xs font-semibold leading-none text-foreground truncate">
+                        <p className="text-xs font-semibold leading-none text-[#121A2A] truncate">
                           {currentUser.name || 'Pengguna Asterra'}
                         </p>
-                        <p className="text-[11px] leading-none text-foreground-muted truncate">
+                        <p className="text-[11px] leading-none text-[#5F6C80] truncate">
                           {currentUser.email || 'Akun Aktif'}
                         </p>
                       </div>
                     </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
+                    <DropdownMenuSeparator className="bg-[rgba(18,26,42,0.08)]" />
                     <DropdownMenuItem asChild>
-                      <Link href="/profile" className="flex items-center gap-2 cursor-pointer w-full">
-                        <User className="w-4 h-4 text-primary" />
+                      <Link href="/profile" className="flex items-center gap-2 cursor-pointer w-full text-[#121A2A] hover:text-[#C96F55]">
+                        <User className="w-4 h-4 text-[#C96F55]" />
                         <span>Profil Saya</span>
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link href="/orders" className="flex items-center gap-2 cursor-pointer w-full">
-                        <Package className="w-4 h-4 text-primary" />
+                      <Link href="/orders" className="flex items-center gap-2 cursor-pointer w-full text-[#121A2A] hover:text-[#C96F55]">
+                        <Package className="w-4 h-4 text-[#C96F55]" />
                         <span>Pesanan Saya</span>
                       </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuSeparator />
+                    <DropdownMenuSeparator className="bg-[rgba(18,26,42,0.08)]" />
                     <DropdownMenuItem
                       onClick={handleLogout}
                       className="flex items-center gap-2 text-status-error focus:text-status-error focus:bg-status-error/10 cursor-pointer"
@@ -185,9 +227,12 @@ export function Header({ onNotify }: HeaderProps) {
                 </DropdownMenu>
               </div>
             ) : (
-              <div className="hidden md:flex items-center gap-1.5">
+              <div data-gsap="nav-action" className="hidden sm:flex items-center">
                 <Link href="/login">
-                  <Button size="sm" className="text-xs font-medium h-9 px-3">
+                  <Button
+                    size="sm"
+                    className="bg-[#C96F55] hover:bg-[#B86047] text-[#F7F5EF] font-semibold text-xs sm:text-sm h-9 sm:h-10 px-5 rounded-xl shadow-xs transition-transform active:scale-95"
+                  >
                     Masuk
                   </Button>
                 </Link>
@@ -197,8 +242,9 @@ export function Header({ onNotify }: HeaderProps) {
             {/* Mobile Hamburger Toggle */}
             <button
               type="button"
+              data-gsap="nav-action"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden p-2 text-foreground-muted hover:text-foreground rounded-md"
+              className="lg:hidden p-2 text-[#F7F5EF]/80 hover:text-[#F7F5EF] rounded-xl hover:bg-[#182235] transition-colors"
               aria-label="Buka Menu"
             >
               {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -208,9 +254,9 @@ export function Header({ onNotify }: HeaderProps) {
 
         {/* Mobile Navigation Dropdown */}
         {isMobileMenuOpen && (
-          <div className="md:hidden border-t border-border bg-surface px-4 py-4 space-y-4 animate-in slide-in-from-top-2">
+          <div className="lg:hidden mt-2 rounded-2xl bg-[#121A2A] border border-white/10 shadow-2xl p-4 space-y-4 animate-in slide-in-from-top-2 text-[#F7F5EF]">
             {currentUser ? (
-              <div className="p-3 rounded-lg bg-surface-raised border border-border flex items-center justify-between gap-3">
+              <div className="p-3 rounded-xl bg-[#182235] border border-white/10 flex items-center justify-between gap-3">
                 <Link
                   href="/profile"
                   onClick={() => setIsMobileMenuOpen(false)}
@@ -220,19 +266,19 @@ export function Header({ onNotify }: HeaderProps) {
                     <img
                       src={userImage}
                       alt={currentUser.name || 'Profil'}
-                      className="w-9 h-9 rounded-full object-cover ring-1 ring-border shrink-0"
+                      className="w-9 h-9 rounded-full object-cover ring-1 ring-white/20 shrink-0"
                       referrerPolicy="no-referrer"
                     />
                   ) : (
-                    <div className="w-9 h-9 rounded-full bg-primary/10 border border-primary/20 text-primary flex items-center justify-center font-bold text-sm shrink-0">
+                    <div className="w-9 h-9 rounded-full bg-[rgba(201,111,85,0.2)] border border-[rgba(201,111,85,0.4)] text-[#C96F55] flex items-center justify-center font-bold text-sm shrink-0">
                       {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U'}
                     </div>
                   )}
                   <div className="truncate">
-                    <p className="font-semibold text-xs text-foreground group-hover:text-primary transition-colors truncate">
+                    <p className="font-semibold text-xs text-[#F7F5EF] group-hover:text-[#C96F55] transition-colors truncate">
                       {currentUser.name || 'Profil Pengguna'}
                     </p>
-                    <p className="text-[11px] text-foreground-muted truncate">
+                    <p className="text-[11px] text-[#F7F5EF]/60 truncate">
                       {currentUser.email || 'Lihat Akun & Pesanan'}
                     </p>
                   </div>
@@ -244,7 +290,7 @@ export function Header({ onNotify }: HeaderProps) {
                     setIsMobileMenuOpen(false);
                     handleLogout();
                   }}
-                  className="text-xs text-foreground-muted hover:text-status-error shrink-0"
+                  className="text-xs text-[#F7F5EF]/80 hover:text-status-error shrink-0"
                   aria-label="Keluar"
                 >
                   <LogOut className="w-4 h-4" />
@@ -257,7 +303,7 @@ export function Header({ onNotify }: HeaderProps) {
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="w-full block"
                 >
-                  <Button size="sm" className="w-full text-xs font-medium">
+                  <Button size="sm" className="w-full text-xs font-semibold h-10 rounded-xl bg-[#C96F55] hover:bg-[#B86047] text-[#F7F5EF]">
                     Masuk Akun
                   </Button>
                 </Link>
@@ -266,37 +312,50 @@ export function Header({ onNotify }: HeaderProps) {
 
             <nav className="flex flex-col space-y-2 text-sm font-medium">
               <Link
+                href="/"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`py-2 px-3 rounded-lg transition-colors ${
+                  isHomeActive ? 'bg-[#182235] text-[#C96F55] font-semibold' : 'text-[#F7F5EF]/80 hover:text-[#F7F5EF] hover:bg-[#182235]'
+                }`}
+              >
+                Beranda
+              </Link>
+              <Link
                 href="/products"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="py-1 text-foreground-muted hover:text-foreground"
+                className={`py-2 px-3 rounded-lg transition-colors ${
+                  isProductsActive ? 'bg-[#182235] text-[#C96F55] font-semibold' : 'text-[#F7F5EF]/80 hover:text-[#F7F5EF] hover:bg-[#182235]'
+                }`}
               >
                 Katalog Produk
               </Link>
               <Link
                 href="/orders"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="py-1 text-foreground-muted hover:text-foreground"
+                className={`py-2 px-3 rounded-lg transition-colors ${
+                  isOrdersActive ? 'bg-[#182235] text-[#C96F55] font-semibold' : 'text-[#F7F5EF]/80 hover:text-[#F7F5EF] hover:bg-[#182235]'
+                }`}
               >
                 Pesanan Saya
               </Link>
               <Link
-                href={currentUser ? "/profile" : "/login"}
+                href={currentUser ? '/profile' : '/login'}
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="py-1 text-foreground-muted hover:text-foreground"
+                className="py-2 px-3 rounded-lg text-[#F7F5EF]/80 hover:text-[#F7F5EF] hover:bg-[#182235] transition-colors"
               >
                 Profil Saya
               </Link>
               <Link
                 href="/#keunggulan"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="py-1 text-foreground-muted hover:text-foreground"
+                className="py-2 px-3 rounded-lg text-[#F7F5EF]/80 hover:text-[#F7F5EF] hover:bg-[#182235] transition-colors"
               >
                 Keunggulan
               </Link>
               <Link
                 href="/#panduan"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="py-1 text-foreground-muted hover:text-foreground"
+                className="py-2 px-3 rounded-lg text-[#F7F5EF]/80 hover:text-[#F7F5EF] hover:bg-[#182235] transition-colors"
               >
                 Cara Pemesanan
               </Link>

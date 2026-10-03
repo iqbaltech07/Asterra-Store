@@ -54,6 +54,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { AsterraLogo } from '@/components/ui/asterra-logo';
 
 interface AdminProductsResponse {
   success: boolean;

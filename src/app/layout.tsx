@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import { QueryProvider } from '@/providers/query-provider';
 import { FloatingSupport } from '@/components/layout/floating-support';
 import { ReferralTracker } from '@/components/analytics/referral-tracker';
+import { GsapProvider } from '@/providers/gsap-provider';
 import './globals.css';
 
 const inter = Inter({
@@ -67,7 +68,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id" className={`dark ${inter.variable}`}>
+    <html lang="id" className={inter.variable}>
       <head>
         <script
           type="application/ld+json"
@@ -77,7 +78,9 @@ export default function RootLayout({
       <body className="bg-background text-foreground antialiased min-h-screen">
         <QueryProvider>
           <ReferralTracker />
-          {children}
+          <GsapProvider>
+            {children}
+          </GsapProvider>
           <FloatingSupport />
         </QueryProvider>
       </body>
