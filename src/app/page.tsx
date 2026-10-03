@@ -20,6 +20,7 @@ import {
   CircleHelp,
   Package,
   LayoutGrid,
+  Star,
 } from 'lucide-react';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
@@ -174,6 +175,9 @@ interface ApplicationGroupItem {
   category: string;
   categoryTag: 'ai' | 'design' | 'video' | 'streaming' | 'other';
   fallbackCount: number;
+  fallbackPrice: number;
+  soldCount?: number;
+  rating?: string;
   items: ProductItem[];
 }
 
@@ -184,38 +188,70 @@ function ApplicationCard({
   app: ApplicationGroupItem;
   isDuplicate?: boolean;
 }) {
+  const activePrices = app.items.map((p) => p.price).filter((p) => p > 0);
+  const minPrice = activePrices.length > 0 ? Math.min(...activePrices) : app.fallbackPrice;
+
   return (
     <Link
       href={`/products?search=${encodeURIComponent(app.name)}`}
       tabIndex={isDuplicate ? -1 : undefined}
       aria-hidden={isDuplicate ? true : undefined}
-      className="group bg-white border border-[rgba(18,26,42,0.08)] hover:border-[#C96F55]/60 rounded-xl sm:rounded-2xl p-3.5 sm:p-4 shadow-2xs hover:shadow-xs transition-all duration-200 flex flex-col justify-between shrink-0 flex-none w-[240px] sm:w-[270px] lg:w-[292px] h-[150px] sm:h-[156px] mr-3 sm:mr-4 select-none"
+      className="group bg-white border border-[rgba(18,26,42,0.08)] hover:border-[#C96F55]/60 hover:shadow-xs hover:-translate-y-0.5 rounded-xl sm:rounded-2xl p-3 sm:p-3.5 transition-all duration-200 flex flex-col justify-between shrink-0 flex-none w-[240px] sm:w-[270px] lg:w-[290px] h-[152px] sm:h-[158px] mr-3 sm:mr-4 select-none"
     >
       <div>
-        {/* App Header: Brand Badge */}
-        <div className="flex items-center justify-between mb-2 sm:mb-2.5">
-          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-[#121A2A]/5 border border-[rgba(18,26,42,0.08)] flex items-center justify-center overflow-hidden shrink-0">
+        {/* 1. PRODUCT HEADER: Logo + Product Info (Name & Rating + Terjual) */}
+        <div className="flex items-start gap-2.5 sm:gap-3">
+          {/* Logo / Brand Badge */}
+          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-[#121A2A]/5 border border-[rgba(18,26,42,0.08)] flex items-center justify-center overflow-hidden shrink-0">
             <AppBrandBadge name={app.name} />
+          </div>
+
+          {/* Product Info */}
+          <div className="min-w-0 flex-1">
+            <h3 className="font-bold text-xs sm:text-sm text-[#121A2A] group-hover:text-[#C96F55] transition-colors truncate leading-snug">
+              {app.name}
+            </h3>
+
+            {/* Rating + Terjual: ⭐ 5.0 (Terjual 620) */}
+            <div className="flex items-center gap-1 text-[11px] text-[#121A2A]/75 font-medium mt-0.5">
+              <Star className="w-3 h-3 text-amber-500 fill-amber-500 shrink-0" />
+              <span className="font-semibold text-[#121A2A]">{app.rating || '5.0'}</span>
+              <span className="text-[#121A2A]/45 truncate">
+                (Terjual {app.soldCount ? app.soldCount.toLocaleString('id-ID') : 100 * (app.items.length || app.fallbackCount)})
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* App Name & Category */}
-        <h3 className="font-extrabold text-xs sm:text-sm lg:text-[15px] text-[#121A2A] group-hover:text-[#C96F55] transition-colors line-clamp-1 leading-snug">
-          {app.name}
-        </h3>
-        <p className="text-[10px] sm:text-xs text-[#121A2A]/55 truncate mt-0.5">
-          {app.category}
-        </p>
+        {/* 2. PRODUCT STATUS / BENEFIT TAGS: [Ready ⓘ] [Garansi ⓘ] [+1] */}
+        <div className="flex items-center gap-1.5 mt-2.5 pt-0.5">
+          {/* Ready Tag (Blue) */}
+          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200/60 leading-none">
+            <span>Ready</span>
+            <span className="text-[9px] opacity-75">ⓘ</span>
+          </span>
+
+          {/* Garansi Tag (Green) */}
+          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60 leading-none">
+            <span>Garansi</span>
+            <span className="text-[9px] opacity-75">ⓘ</span>
+          </span>
+
+          {/* Extra Tag */}
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#121A2A]/5 text-[#121A2A]/70 border border-[rgba(18,26,42,0.08)] leading-none">
+            +{app.items.length > 1 ? app.items.length - 1 : 1}
+          </span>
+        </div>
       </div>
 
-      {/* Action Link with Arrow */}
-      <div className="pt-2 sm:pt-2.5 mt-2 sm:mt-2.5 border-t border-[rgba(18,26,42,0.06)] flex items-center justify-between text-[10px] sm:text-xs font-semibold text-[#121A2A]/75 group-hover:text-[#C96F55] transition-colors">
-        <span className="font-medium text-[#121A2A]/50">
-          {app.items.length || app.fallbackCount} Produk
+      {/* 3. PRICE (Strictly normal price, no crossed-out price) */}
+      <div className="pt-2 border-t border-[rgba(18,26,42,0.06)] mt-2 flex items-center justify-between">
+        <span className="font-black text-sm sm:text-[15px] text-[#121A2A] tracking-tight">
+          Rp{minPrice.toLocaleString('id-ID')}
         </span>
-        <span className="inline-flex items-center gap-1">
-          <span className="hidden xs:inline">Lihat Produk</span>
-          <ArrowRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 transform group-hover:translate-x-0.5 transition-transform" />
+        <span className="text-[10px] sm:text-xs font-semibold text-[#C96F55] opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5">
+          <span>Pilih</span>
+          <ArrowRight className="w-3 h-3" />
         </span>
       </div>
     </Link>
@@ -254,6 +290,9 @@ export default function HomePage() {
         cat: 'AI Assistant & Cloud',
         tag: 'ai' as const,
         fallbackCount: 11,
+        fallbackPrice: 19000,
+        soldCount: 620,
+        rating: '5.0',
       },
       {
         name: 'Canva',
@@ -261,6 +300,9 @@ export default function HomePage() {
         cat: 'Design & Kreatif',
         tag: 'design' as const,
         fallbackCount: 13,
+        fallbackPrice: 4000,
+        soldCount: 1420,
+        rating: '5.0',
       },
       {
         name: 'CapCut',
@@ -268,6 +310,9 @@ export default function HomePage() {
         cat: 'Video Editing & Content',
         tag: 'video' as const,
         fallbackCount: 11,
+        fallbackPrice: 9000,
+        soldCount: 980,
+        rating: '4.9',
       },
       {
         name: 'ChatGPT',
@@ -275,6 +320,9 @@ export default function HomePage() {
         cat: 'AI Assistant & Writing',
         tag: 'ai' as const,
         fallbackCount: 20,
+        fallbackPrice: 16000,
+        soldCount: 850,
+        rating: '5.0',
       },
       {
         name: 'Alight Motion',
@@ -282,6 +330,9 @@ export default function HomePage() {
         cat: 'Motion Graphic & VFX',
         tag: 'video' as const,
         fallbackCount: 1,
+        fallbackPrice: 8000,
+        soldCount: 340,
+        rating: '4.8',
       },
       {
         name: 'YouTube',
@@ -289,6 +340,9 @@ export default function HomePage() {
         cat: 'Streaming & Video',
         tag: 'streaming' as const,
         fallbackCount: 33,
+        fallbackPrice: 4000,
+        soldCount: 1890,
+        rating: '5.0',
       },
       {
         name: 'Netflix',
@@ -296,6 +350,9 @@ export default function HomePage() {
         cat: 'Movies & Series',
         tag: 'streaming' as const,
         fallbackCount: 1,
+        fallbackPrice: 74000,
+        soldCount: 760,
+        rating: '4.9',
       },
       {
         name: 'Vidio',
@@ -303,6 +360,9 @@ export default function HomePage() {
         cat: 'Sports & TV Streaming',
         tag: 'streaming' as const,
         fallbackCount: 37,
+        fallbackPrice: 9000,
+        soldCount: 1150,
+        rating: '4.9',
       },
       {
         name: 'Bstation',
@@ -310,6 +370,9 @@ export default function HomePage() {
         cat: 'Anime & Creator Community',
         tag: 'streaming' as const,
         fallbackCount: 6,
+        fallbackPrice: 7000,
+        soldCount: 480,
+        rating: '4.9',
       },
       {
         name: 'iQIYI',
@@ -317,6 +380,9 @@ export default function HomePage() {
         cat: 'Drama & Anime Streaming',
         tag: 'streaming' as const,
         fallbackCount: 10,
+        fallbackPrice: 10000,
+        soldCount: 520,
+        rating: '4.9',
       },
       {
         name: 'WeTV',
@@ -324,6 +390,9 @@ export default function HomePage() {
         cat: 'Asian Drama & Anime',
         tag: 'streaming' as const,
         fallbackCount: 6,
+        fallbackPrice: 9000,
+        soldCount: 460,
+        rating: '4.9',
       },
       {
         name: 'Viu',
@@ -331,6 +400,9 @@ export default function HomePage() {
         cat: 'Asian Drama & Variety',
         tag: 'streaming' as const,
         fallbackCount: 16,
+        fallbackPrice: 5000,
+        soldCount: 910,
+        rating: '4.9',
       },
     ];
 
@@ -348,6 +420,9 @@ export default function HomePage() {
         category: target.cat,
         categoryTag: target.tag,
         fallbackCount: target.fallbackCount,
+        fallbackPrice: target.fallbackPrice,
+        soldCount: target.soldCount,
+        rating: target.rating,
         items,
       };
     });

@@ -127,12 +127,12 @@ body {
   flex-shrink: 0 !important;
   align-items: stretch;
   will-change: transform;
-  animation: infinite-scroll 45s linear infinite !important;
+  animation: infinite-scroll 60s linear infinite !important;
 }
 
-@media (hover: hover) and (pointer: fine) {
-  .carousel-viewport:hover .carousel-track {
-    animation-play-state: paused;
-  }
+.carousel-viewport:hover .carousel-track,
+.carousel-track:hover {
+  animation-play-state: paused !important;
 }
+
 
