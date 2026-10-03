@@ -435,27 +435,27 @@ export default function HomePage() {
       {/* Main Content */}
       <main className="flex-1 max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 pt-2 sm:pt-3.5 pb-8 sm:pb-12 w-full overflow-hidden">
         {/* SECTION 2 & 3: Hero Banner with Controlled Dimensions, Scaled Planet Anchor & Integrated Benefit Strip */}
-        <section className="relative w-full rounded-2xl sm:rounded-3xl bg-white border border-[rgba(18,26,42,0.08)] shadow-xs overflow-hidden mb-6 sm:mb-8">
-          {/* Controlled Hero Area: compact & clean */}
-          <div className="relative min-h-[200px] sm:min-h-[240px] lg:h-[280px] xl:h-[300px] flex items-center px-5 sm:px-8 lg:px-12 py-6 sm:py-8 lg:py-0 overflow-hidden">
+        <section className="relative w-full rounded-2xl sm:rounded-3xl bg-[#121A2A] border border-[rgba(255,255,255,0.08)] shadow-md overflow-hidden mb-6 sm:mb-8">
+          {/* Controlled Hero Area: compact & clean with reduced height */}
+          <div className="relative min-h-[160px] sm:min-h-[190px] lg:h-[220px] xl:h-[235px] flex items-center px-5 sm:px-8 lg:px-12 py-5 sm:py-6 lg:py-0 overflow-hidden">
             {/* Left Column: Headline & Subheadline */}
             <div className="relative z-10 w-full lg:max-w-[62%] xl:max-w-[60%] py-1">
               {/* Editorial Headline */}
-              <h1 className="text-2xl sm:text-4xl lg:text-[38px] xl:text-[42px] font-black tracking-tight text-[#121A2A] leading-[1.15]">
+              <h1 className="text-xl sm:text-3xl lg:text-[32px] xl:text-[36px] font-black tracking-tight text-white leading-[1.15]">
                 Solusi Terpercaya Produk &<br />
-                <span className="text-[#C96F55]">Layanan Digital Premium</span>
+                <span className="text-[#E28870]">Layanan Digital Premium</span>
               </h1>
 
               {/* Subheadline */}
-              <p className="mt-2.5 sm:mt-3.5 text-xs sm:text-sm lg:text-[15px] text-[#121A2A]/70 max-w-xl leading-relaxed">
+              <p className="mt-2 sm:mt-2.5 text-xs sm:text-[13px] lg:text-sm text-white/75 max-w-xl leading-relaxed">
                 Dapatkan akses langganan resmi untuk tool AI, software desain, voucher, dan layanan
                 digital lainnya tanpa kartu kredit dengan konfirmasi instan.
               </p>
             </div>
 
             {/* Right Column: Planet Visual (Gambar 2: White planet with coral star, sized down) */}
-            <div className="absolute right-[-20px] sm:right-0 lg:right-2 xl:right-6 top-1/2 -translate-y-1/2 pointer-events-none select-none z-0 opacity-40 sm:opacity-75 lg:opacity-100 transition-opacity">
-              <div className="relative w-[230px] h-[230px] sm:w-[280px] sm:h-[280px] lg:w-[330px] lg:h-[330px] flex items-center justify-center">
+            <div className="absolute right-[-20px] sm:right-0 lg:right-2 xl:right-6 top-1/2 -translate-y-1/2 pointer-events-none select-none z-0 opacity-60 sm:opacity-85 lg:opacity-100 transition-opacity">
+              <div className="relative w-[180px] h-[180px] sm:w-[220px] sm:h-[220px] lg:w-[260px] lg:h-[260px] flex items-center justify-center">
                 {/* Subtle SVG Orbital Background Rings */}
                 <svg
                   className="absolute inset-0 w-full h-full pointer-events-none opacity-60"
@@ -469,7 +469,7 @@ export default function HomePage() {
                     rx="230"
                     ry="115"
                     transform="rotate(-14 250 250)"
-                    stroke="rgba(18, 26, 42, 0.08)"
+                    stroke="rgba(255, 255, 255, 0.12)"
                     strokeWidth="1.5"
                     strokeDasharray="6 8"
                   />
@@ -479,21 +479,22 @@ export default function HomePage() {
                     rx="185"
                     ry="92"
                     transform="rotate(-14 250 250)"
-                    stroke="rgba(201, 111, 85, 0.22)"
+                    stroke="rgba(226, 136, 112, 0.35)"
                     strokeWidth="1.2"
                   />
                 </svg>
 
                 {/* Ambient Soft Glow */}
-                <div className="absolute w-44 h-44 lg:w-56 lg:h-56 rounded-full bg-[rgba(201,111,85,0.06)] blur-2xl pointer-events-none" />
+                <div className="absolute w-36 h-36 lg:w-48 lg:h-48 rounded-full bg-[rgba(201,111,85,0.18)] blur-2xl pointer-events-none" />
 
                 {/* Scaled Asterra Planet Illustration (Gambar 2) */}
-                <div className="relative z-10 w-[190px] sm:w-[230px] lg:w-[280px] xl:w-[300px] flex items-center justify-center filter drop-shadow-[0_12px_24px_rgba(18,26,42,0.06)]">
+                <div className="relative z-10 w-[150px] sm:w-[180px] lg:w-[220px] xl:w-[240px] flex items-center justify-center filter drop-shadow-[0_12px_24px_rgba(0,0,0,0.3)]">
                   <Image
                     src="/images/brand/hero-planet-white.png"
                     alt="Asterra Planet Illustration"
                     width={360}
                     height={282}
+                    unoptimized
                     className="w-full h-auto object-contain"
                     priority
                   />
@@ -503,38 +504,38 @@ export default function HomePage() {
           </div>
 
           {/* SECTION 3: Trust / Benefits Strip (Compact Horizontal Row, 3 Columns) */}
-          <div className="border-t border-[rgba(18,26,42,0.08)] bg-[#F8FAFC] px-4 sm:px-8 lg:px-12 py-3 sm:py-3.5">
+          <div className="border-t border-white/10 bg-[#0E1524] px-4 sm:px-8 lg:px-12 py-3 sm:py-3.5">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-6">
               {/* Benefit 1 */}
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-[rgba(201,111,85,0.1)] border border-[rgba(201,111,85,0.2)] flex items-center justify-center shrink-0">
-                  <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-[#C96F55]" />
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-[rgba(201,111,85,0.15)] border border-[rgba(201,111,85,0.25)] flex items-center justify-center shrink-0">
+                  <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-[#E28870]" />
                 </div>
                 <div className="space-y-0.5">
-                  <h3 className="font-bold text-xs sm:text-sm text-[#121A2A]">100% Legal & Bergaransi</h3>
-                  <p className="text-[11px] text-[#121A2A]/65">Jaminan penggantian penuh</p>
+                  <h3 className="font-bold text-xs sm:text-sm text-white">100% Legal & Bergaransi</h3>
+                  <p className="text-[11px] text-white/65">Jaminan penggantian penuh</p>
                 </div>
               </div>
 
               {/* Benefit 2 */}
-              <div className="flex items-center gap-3 sm:border-l sm:border-[rgba(18,26,42,0.08)] sm:pl-6">
-                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-[rgba(201,111,85,0.1)] border border-[rgba(201,111,85,0.2)] flex items-center justify-center shrink-0">
-                  <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-[#C96F55]" />
+              <div className="flex items-center gap-3 sm:border-l sm:border-white/10 sm:pl-6">
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-[rgba(201,111,85,0.15)] border border-[rgba(201,111,85,0.25)] flex items-center justify-center shrink-0">
+                  <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-[#E28870]" />
                 </div>
                 <div className="space-y-0.5">
-                  <h3 className="font-bold text-xs sm:text-sm text-[#121A2A]">Proses Cepat & Otomatis</h3>
-                  <p className="text-[11px] text-[#121A2A]/65">Aktivasi hitungan menit</p>
+                  <h3 className="font-bold text-xs sm:text-sm text-white">Proses Cepat & Otomatis</h3>
+                  <p className="text-[11px] text-white/65">Aktivasi hitungan menit</p>
                 </div>
               </div>
 
               {/* Benefit 3 */}
-              <div className="flex items-center gap-3 sm:border-l sm:border-[rgba(18,26,42,0.08)] sm:pl-6">
-                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-[rgba(201,111,85,0.1)] border border-[rgba(201,111,85,0.2)] flex items-center justify-center shrink-0">
-                  <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-[#C96F55]" />
+              <div className="flex items-center gap-3 sm:border-l sm:border-white/10 sm:pl-6">
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-[rgba(201,111,85,0.15)] border border-[rgba(201,111,85,0.25)] flex items-center justify-center shrink-0">
+                  <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-[#E28870]" />
                 </div>
                 <div className="space-y-0.5">
-                  <h3 className="font-bold text-xs sm:text-sm text-[#121A2A]">Multi-Metode Pembayaran</h3>
-                  <p className="text-[11px] text-[#121A2A]/65">QRIS, E-Wallet, Virtual Account</p>
+                  <h3 className="font-bold text-xs sm:text-sm text-white">Multi-Metode Pembayaran</h3>
+                  <p className="text-[11px] text-white/65">QRIS, E-Wallet, Virtual Account</p>
                 </div>
               </div>
             </div>
