@@ -529,13 +529,10 @@ export default function HomePage() {
               </p>
             </div>
 
-            {/* Right Column: Planet Visual (Smooth, Cleanly Centered in Right Area, Zero Lag) */}
+            {/* Right Column: Planet Visual (Cleanly Decoupled: Static Glow/Rings, Optical Center, GSAP Entrance, CSS Motion) */}
             <div className="absolute right-1 sm:right-3 lg:right-6 top-1/2 -translate-y-1/2 pointer-events-none select-none z-10">
-              <div
-                data-gsap="hero-media"
-                className="relative w-[115px] h-[115px] sm:w-[170px] sm:h-[170px] lg:w-[250px] lg:h-[250px] flex items-center justify-center"
-              >
-                {/* Subtle SVG Orbital Background Rings (desktop & tablet only) */}
+              <div className="relative w-[115px] h-[115px] sm:w-[170px] sm:h-[170px] lg:w-[250px] lg:h-[250px] flex items-center justify-center">
+                {/* Subtle SVG Orbital Background Rings (desktop & tablet only) - 100% STATIC */}
                 <svg
                   className="hidden sm:block absolute inset-0 w-full h-full pointer-events-none opacity-50"
                   viewBox="0 0 500 500"
@@ -571,25 +568,28 @@ export default function HomePage() {
                   }}
                 />
 
-                {/* Scaled Asterra Planet Motion Container: Optically Centered, Exclusively animated by GSAP for initial reveal */}
-                <div
-                  data-gsap="hero-media"
-                  className="relative z-10 w-[100px] sm:w-[150px] lg:w-[220px] flex items-center justify-center translate-x-1 sm:translate-x-1.5 lg:translate-x-2.5 -translate-y-1.5 sm:-translate-y-2 lg:-translate-y-3"
-                >
-                  {/* PlanetVisual Layer: Exclusively animated by CSS (8s linear spin on desktop, STATIC on mobile <=768px) */}
-                  <div className="planet-visual-layer w-full h-auto flex items-center justify-center">
-                    <img
-                      src="/assets/asterra-planet-static.webp"
-                      alt="Asterra Store"
-                      width={800}
-                      height={426}
-                      decoding="async"
-                      draggable={false}
-                      className="w-full h-auto object-contain pointer-events-none select-none"
-                      onError={(e) => {
-                        e.currentTarget.src = "/images/brand/hero-planet-white.png";
-                      }}
-                    />
+                {/* Layer 1 - PlanetWrapper: Layout & Optical Centering to Orbital Rings (Positioning Only) */}
+                <div className="relative z-10 w-[100px] sm:w-[150px] lg:w-[220px] flex items-center justify-center translate-x-1 sm:translate-x-1.5 lg:translate-x-2.5 -translate-y-1.5 sm:-translate-y-2 lg:-translate-y-3">
+                  {/* Layer 2 - PlanetEntrance: Exclusively animated by GSAP for initial reveal (scale + opacity) */}
+                  <div
+                    data-gsap="hero-media"
+                    className="w-full h-full flex items-center justify-center"
+                  >
+                    {/* Layer 3 - PlanetMotion: Exclusively animated by CSS (8s linear spin on desktop, 3.2s subtle float on mobile) */}
+                    <div className="planet-motion-layer planet-visual-layer w-full h-auto flex items-center justify-center">
+                      <img
+                        src="/assets/asterra-planet-static.webp"
+                        alt="Asterra Store"
+                        width={800}
+                        height={426}
+                        decoding="async"
+                        draggable={false}
+                        className="w-full h-auto object-contain pointer-events-none select-none"
+                        onError={(e) => {
+                          e.currentTarget.src = "/images/brand/hero-planet-white.png";
+                        }}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>

@@ -145,24 +145,36 @@ body {
   }
 }
 
-.planet-visual-layer {
+/* GPU-Accelerated Subtle Planet Floating (Mobile & Tablet: Gentle Breathing Float + 1.5deg Tilt, 3.2s Cycle) */
+@keyframes planetFloatMobile {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(0, -4px, 0) rotate(1.5deg);
+  }
+}
+
+.planet-visual-layer,
+.planet-motion-layer {
   transform: translate3d(0, 0, 0);
   backface-visibility: hidden;
   will-change: transform;
   animation: planetSpin 8s linear infinite;
 }
 
-/* Mobile & Tablet Responsive Rule: Planet is completely STATIC after initial reveal */
+/* Mobile & Tablet Responsive Rule: Subtle organic floating, lightweight single transform */
 @media (max-width: 768px) {
-  .planet-visual-layer {
-    animation: none !important;
-    transform: none !important;
-    will-change: auto !important;
+  .planet-visual-layer,
+  .planet-motion-layer {
+    animation: planetFloatMobile 3.2s ease-in-out infinite !important;
+    will-change: transform !important;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .planet-visual-layer {
+  .planet-visual-layer,
+  .planet-motion-layer {
     animation: none !important;
     transform: none !important;
     will-change: auto !important;
