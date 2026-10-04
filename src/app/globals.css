@@ -135,51 +135,7 @@ body {
   animation-play-state: paused !important;
 }
 
-/* GPU-Accelerated Continuous Planet Rotation (Desktop Only, Linear, 8s Cycle) */
-@keyframes planetSpin {
-  from {
-    transform: translate3d(0, 0, 0) rotate(0deg);
-  }
-  to {
-    transform: translate3d(0, 0, 0) rotate(360deg);
-  }
-}
 
-/* GPU-Accelerated Subtle Planet Floating (Mobile & Tablet: Gentle Breathing Float + 1.5deg Tilt, 3.2s Cycle) */
-@keyframes planetFloatMobile {
-  0%, 100% {
-    transform: translate3d(0, 0, 0) rotate(0deg);
-  }
-  50% {
-    transform: translate3d(0, -4px, 0) rotate(1.5deg);
-  }
-}
-
-.planet-visual-layer,
-.planet-motion-layer {
-  transform: translate3d(0, 0, 0);
-  backface-visibility: hidden;
-  will-change: transform;
-  animation: planetSpin 8s linear infinite;
-}
-
-/* Mobile & Tablet Responsive Rule: Subtle organic floating, lightweight single transform */
-@media (max-width: 768px) {
-  .planet-visual-layer,
-  .planet-motion-layer {
-    animation: planetFloatMobile 3.2s ease-in-out infinite !important;
-    will-change: transform !important;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .planet-visual-layer,
-  .planet-motion-layer {
-    animation: none !important;
-    transform: none !important;
-    will-change: auto !important;
-  }
-}
 
 /* Seamless Smooth Text & Content Transitions (Apple / Vercel style - GPU accelerated, zero blur filter overhead) */
 @keyframes tabGlideIn {
