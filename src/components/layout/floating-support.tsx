@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { Headphones, Mail, MessageCircle, X, ExternalLink } from 'lucide-react';
+import { animateFloatingButton } from '@/lib/animations/gsap-utils';
 
 export function FloatingSupport() {
   const pathname = usePathname();
@@ -35,6 +36,15 @@ export function FloatingSupport() {
       .catch(() => {
         // Fallback to default
       });
+  }, [isAdmin]);
+
+  // Entrance motion: scale from 0.7, rotation from -10deg
+  useEffect(() => {
+    if (isAdmin) return;
+    const cleanup = animateFloatingButton(containerRef.current);
+    return () => {
+      cleanup?.();
+    };
   }, [isAdmin]);
 
   // Click outside to close

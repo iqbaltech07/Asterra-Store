@@ -1,57 +1,384 @@
 'use client';
 
 import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
-// Helper to check if user prefers reduced motion
+// Register ScrollTrigger safely in browser context
+if (typeof window !== 'undefined') {
+  gsap.registerPlugin(ScrollTrigger);
+}
+
+/**
+ * Check if the user's system has requested reduced motion.
+ */
 export function prefersReducedMotion(): boolean {
   if (typeof window === 'undefined') return false;
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
+/* ==========================================================================
+   REUSABLE MOTION SYSTEM PRIMITIVES
+   ========================================================================== */
+
+export interface MotionOptions {
+  duration?: number;
+  delay?: number;
+  ease?: string;
+  dist?: number;
+  stagger?: number | gsap.StaggerVars;
+  onComplete?: () => void;
+}
+
+/**
+ * Reveal from top with vertical clip/unfold (used by Navbar)
+ */
+export function revealFromTop(
+  target: gsap.TweenTarget,
+  options: MotionOptions = {}
+) {
+  const reduced = prefersReducedMotion();
+  const dur = options.duration ?? (reduced ? 0.35 : 0.8);
+  const ease = options.ease ?? (reduced ? 'power1.out' : 'expo.out');
+  const dist = options.dist ?? (reduced ? 6 : 24);
+
+  if (reduced) {
+    return gsap.fromTo(
+      target,
+      { opacity: 0 },
+      {
+        opacity: 1,
+        duration: dur,
+        delay: options.delay ?? 0,
+        ease,
+        clearProps: 'opacity',
+        onComplete: options.onComplete,
+      }
+    );
+  }
+
+  return gsap.fromTo(
+    target,
+    {
+      y: -dist,
+      opacity: 0,
+      clipPath: 'inset(0% 0% 100% 0% round 1rem)',
+    },
+    {
+      y: 0,
+      opacity: 1,
+      clipPath: 'inset(0% 0% 0% 0% round 1rem)',
+      duration: dur,
+      delay: options.delay ?? 0,
+      ease,
+      force3D: true,
+      clearProps: 'transform,clipPath,opacity',
+      onComplete: options.onComplete,
+    }
+  );
+}
+
+/**
+ * Horizontal panel reveal opening from the center: LEFT <--- HERO ---> RIGHT
+ * Inspired by CapCut "Classic" panel opening.
+ */
+export function revealHorizontal(
+  target: gsap.TweenTarget,
+  options: MotionOptions = {}
+) {
+  const reduced = prefersReducedMotion();
+  const dur = options.duration ?? (reduced ? 0.4 : 1.05);
+  const ease = options.ease ?? (reduced ? 'power1.out' : 'power3.inOut');
+
+  if (reduced) {
+    return gsap.fromTo(
+      target,
+      { opacity: 0 },
+      {
+        opacity: 1,
+        duration: dur,
+        delay: options.delay ?? 0,
+        ease,
+        clearProps: 'opacity',
+        onComplete: options.onComplete,
+      }
+    );
+  }
+
+  return gsap.fromTo(
+    target,
+    {
+      clipPath: 'inset(0% 50% 0% 50% round 1.5rem)',
+      opacity: 0.15,
+    },
+    {
+      clipPath: 'inset(0% 0% 0% 0% round 1.5rem)',
+      opacity: 1,
+      duration: dur,
+      delay: options.delay ?? 0,
+      ease,
+      force3D: true,
+      clearProps: 'clipPath,opacity',
+      onComplete: options.onComplete,
+    }
+  );
+}
+
+/**
+ * Reveal from bottom with upward clip/mask (used by Catalog header & FAQ)
+ */
+export function revealFromBottom(
+  target: gsap.TweenTarget,
+  options: MotionOptions = {}
+) {
+  const reduced = prefersReducedMotion();
+  const dur = options.duration ?? (reduced ? 0.35 : 0.7);
+  const ease = options.ease ?? (reduced ? 'power1.out' : 'power3.out');
+  const dist = options.dist ?? (reduced ? 6 : 18);
+
+  if (reduced) {
+    return gsap.fromTo(
+      target,
+      { opacity: 0 },
+      {
+        opacity: 1,
+        duration: dur,
+        delay: options.delay ?? 0,
+        ease,
+        clearProps: 'opacity',
+        onComplete: options.onComplete,
+      }
+    );
+  }
+
+  return gsap.fromTo(
+    target,
+    {
+      y: dist,
+      opacity: 0,
+      clipPath: 'inset(100% 0% 0% 0%)',
+    },
+    {
+      y: 0,
+      opacity: 1,
+      clipPath: 'inset(0% 0% 0% 0%)',
+      duration: dur,
+      delay: options.delay ?? 0,
+      ease,
+      force3D: true,
+      clearProps: 'transform,clipPath,opacity',
+      onComplete: options.onComplete,
+    }
+  );
+}
+
+/**
+ * Reveal from side with angled directional entry (used by Features / Why Asterra)
+ */
+export function revealFromSide(
+  target: gsap.TweenTarget,
+  options: MotionOptions & { xDist?: number; yDist?: number } = {}
+) {
+  const reduced = prefersReducedMotion();
+  const dur = options.duration ?? (reduced ? 0.35 : 0.6);
+  const ease = options.ease ?? (reduced ? 'power1.out' : 'power2.out');
+  const xDist = options.xDist ?? (reduced ? 4 : 16);
+  const yDist = options.yDist ?? (reduced ? 4 : 14);
+
+  if (reduced) {
+    return gsap.fromTo(
+      target,
+      { opacity: 0 },
+      {
+        opacity: 1,
+        duration: dur,
+        delay: options.delay ?? 0,
+        ease,
+        clearProps: 'opacity',
+        onComplete: options.onComplete,
+      }
+    );
+  }
+
+  return gsap.fromTo(
+    target,
+    {
+      x: -xDist,
+      y: yDist,
+      opacity: 0,
+      scale: 0.98,
+    },
+    {
+      x: 0,
+      y: 0,
+      opacity: 1,
+      scale: 1,
+      duration: dur,
+      delay: options.delay ?? 0,
+      stagger: options.stagger ?? 0,
+      ease,
+      force3D: true,
+      clearProps: 'transform,opacity',
+      onComplete: options.onComplete,
+    }
+  );
+}
+
+/**
+ * Reveal with soft scale / zoom (used by Step Progression & CTA Banner)
+ */
+export function revealScale(
+  target: gsap.TweenTarget,
+  options: MotionOptions & { scaleFrom?: number } = {}
+) {
+  const reduced = prefersReducedMotion();
+  const dur = options.duration ?? (reduced ? 0.35 : 0.65);
+  const ease = options.ease ?? (reduced ? 'power1.out' : 'power3.out');
+  const scaleFrom = options.scaleFrom ?? (reduced ? 0.98 : 0.94);
+  const dist = options.dist ?? (reduced ? 4 : 16);
+
+  if (reduced) {
+    return gsap.fromTo(
+      target,
+      { opacity: 0 },
+      {
+        opacity: 1,
+        duration: dur,
+        delay: options.delay ?? 0,
+        ease,
+        clearProps: 'opacity',
+        onComplete: options.onComplete,
+      }
+    );
+  }
+
+  return gsap.fromTo(
+    target,
+    {
+      scale: scaleFrom,
+      y: dist,
+      opacity: 0,
+    },
+    {
+      scale: 1,
+      y: 0,
+      opacity: 1,
+      duration: dur,
+      delay: options.delay ?? 0,
+      stagger: options.stagger ?? 0,
+      ease,
+      force3D: true,
+      clearProps: 'transform,opacity',
+      onComplete: options.onComplete,
+    }
+  );
+}
+
+/* ==========================================================================
+   1. NAVBAR MOTION ORCHESTRATION
+   ========================================================================== */
+
 /**
  * Animate Header & Navbar components smoothly on mount
+ * Sequence:
+ * 1. Navbar container reveals from top to bottom (transform + clipPath)
+ * 2. Logo appears
+ * 3. Navigation links appear with stagger
+ * 4. Action buttons (Pesanan & Auth/Hamburger) appear last
  */
 export function animateNavbar(headerElement: HTMLElement | null) {
   if (!headerElement || typeof window === 'undefined') return;
 
   const reduced = prefersReducedMotion();
-  const dur = reduced ? 0.25 : 0.45;
-  const dist = reduced ? 4 : 10;
 
   const ctx = gsap.context(() => {
     const bar = headerElement.querySelector('div.max-w-7xl');
-    if (bar) {
-      gsap.fromTo(
-        bar,
-        { y: -dist, opacity: 0 },
-        { y: 0, opacity: 1, duration: dur, ease: 'power2.out', force3D: true, clearProps: 'all' }
-      );
-    }
-
     const logo = headerElement.querySelector('[data-gsap="nav-logo"], .nav-logo');
-    if (logo) {
-      gsap.fromTo(
-        logo,
-        { y: -dist * 0.5, opacity: 0 },
-        { y: 0, opacity: 1, duration: dur, ease: 'power2.out', delay: 0.04, force3D: true, clearProps: 'all' }
-      );
-    }
-
     const navLinks = headerElement.querySelectorAll('[data-gsap="nav-link"], nav a');
-    if (navLinks.length > 0) {
+    const actions = headerElement.querySelectorAll('[data-gsap="nav-action"], header button');
+
+    if (reduced) {
       gsap.fromTo(
-        navLinks,
-        { y: -dist * 0.5, opacity: 0 },
-        { y: 0, opacity: 1, duration: dur * 0.8, stagger: 0.03, ease: 'power2.out', delay: 0.06, force3D: true, clearProps: 'all' }
+        headerElement,
+        { opacity: 0 },
+        { opacity: 1, duration: 0.35, ease: 'power1.out' }
+      );
+      return;
+    }
+
+    const tl = gsap.timeline({
+      defaults: { force3D: true },
+    });
+
+    // 1. Container opens downward from top (0.00s)
+    if (bar) {
+      tl.fromTo(
+        bar,
+        {
+          y: -22,
+          opacity: 0,
+          clipPath: 'inset(0% 0% 100% 0% round 1rem)',
+        },
+        {
+          y: 0,
+          opacity: 1,
+          clipPath: 'inset(0% 0% 0% 0% round 1rem)',
+          duration: 0.8,
+          ease: 'expo.out',
+          clearProps: 'transform,clipPath,opacity',
+        },
+        0
       );
     }
 
-    const actions = headerElement.querySelectorAll('[data-gsap="nav-action"], header button');
+    // 2. Logo appears right after container unfolds (0.22s)
+    if (logo) {
+      tl.fromTo(
+        logo,
+        { opacity: 0, scale: 0.94, y: -6 },
+        {
+          opacity: 1,
+          scale: 1,
+          y: 0,
+          duration: 0.5,
+          ease: 'power2.out',
+          clearProps: 'transform,opacity',
+        },
+        0.22
+      );
+    }
+
+    // 3. Nav links stagger in (0.32s)
+    if (navLinks.length > 0) {
+      tl.fromTo(
+        navLinks,
+        { opacity: 0, y: -8 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.45,
+          stagger: 0.06,
+          ease: 'power2.out',
+          clearProps: 'transform,opacity',
+        },
+        0.32
+      );
+    }
+
+    // 4. Action buttons (Cart, User/Login, Hamburger) appear last (0.45s)
     if (actions.length > 0) {
-      gsap.fromTo(
+      tl.fromTo(
         actions,
-        { opacity: 0, scale: 0.96 },
-        { opacity: 1, scale: 1, duration: dur * 0.8, stagger: 0.03, ease: 'power2.out', delay: 0.08, force3D: true, clearProps: 'all' }
+        { opacity: 0, scale: 0.88, y: -4 },
+        {
+          opacity: 1,
+          scale: 1,
+          y: 0,
+          duration: 0.45,
+          stagger: 0.06,
+          ease: 'power2.out',
+          clearProps: 'transform,opacity',
+        },
+        0.45
       );
     }
   }, headerElement);
@@ -59,60 +386,700 @@ export function animateNavbar(headerElement: HTMLElement | null) {
   return () => ctx.revert();
 }
 
+/* ==========================================================================
+   2. HOMEPAGE MASTER ENTRANCE SEQUENCE (HERO & ABOVE THE FOLD)
+   ========================================================================== */
+
 /**
- * Animate page entrance elements (Hero, titles, lead texts, media, badges)
+ * Master initial page load sequence for Asterra Store Homepage:
+ * 0.00s -> (Navbar starts independently)
+ * 0.28s -> Hero container horizontal reveal (opens from center: LEFT <--- HERO ---> RIGHT)
+ * 0.72s -> Hero headline lines text reveal
+ * 0.88s -> Hero description
+ * 0.98s -> Planet visual (scale 0.85->1, opacity 0->1, subtle rotation -5deg->0deg)
+ * 1.10s -> Hero benefits horizontal stagger (Tile 1 -> Tile 2 -> Tile 3)
+ */
+export function animateHeroMasterSequence(container: HTMLElement | null) {
+  if (!container || typeof window === 'undefined') return;
+
+  const reduced = prefersReducedMotion();
+
+  const ctx = gsap.context(() => {
+    const heroContainer = container.querySelector('[data-gsap="hero-container"]');
+    const titleLines = container.querySelectorAll('[data-gsap="title-line"]');
+    const heroTitle = container.querySelector('[data-gsap="page-title"]');
+    const heroSub = container.querySelector('[data-gsap="page-sub"]');
+    const planetVisual = container.querySelector('[data-gsap="hero-media"]');
+    const benefitBar = container.querySelector('[data-gsap="hero-benefit-bar"]');
+    const benefitTiles = container.querySelectorAll('[data-gsap="benefit-tile"], [data-gsap="benefit-card"]');
+
+    if (reduced) {
+      gsap.fromTo(
+        [heroContainer, heroTitle, heroSub, planetVisual, benefitBar, benefitTiles],
+        { opacity: 0 },
+        { opacity: 1, duration: 0.35, stagger: 0.05, ease: 'power1.out', clearProps: 'opacity' }
+      );
+      return;
+    }
+
+    const masterTl = gsap.timeline({
+      defaults: { force3D: true },
+    });
+
+    // 1. HERO HORIZONTAL REVEAL (Starts at 0.28s, duration 1.0s, power3.inOut)
+    if (heroContainer) {
+      masterTl.fromTo(
+        heroContainer,
+        {
+          clipPath: 'inset(0% 50% 0% 50% round 1.5rem)',
+          opacity: 0.15,
+        },
+        {
+          clipPath: 'inset(0% 0% 0% 0% round 1.5rem)',
+          opacity: 1,
+          duration: 1.0,
+          ease: 'power3.inOut',
+          clearProps: 'clipPath,opacity',
+        },
+        0.28
+      );
+    }
+
+    // 2. HERO HEADLINE: Line-by-line text reveal (Starts at 0.72s)
+    if (titleLines.length > 0) {
+      masterTl.fromTo(
+        titleLines,
+        {
+          yPercent: 105,
+          opacity: 0,
+        },
+        {
+          yPercent: 0,
+          opacity: 1,
+          duration: 0.65,
+          stagger: 0.09,
+          ease: 'power3.out',
+          clearProps: 'transform,opacity',
+        },
+        0.72
+      );
+    } else if (heroTitle) {
+      masterTl.fromTo(
+        heroTitle,
+        { y: 18, opacity: 0 },
+        {
+          y: 0,
+          opacity: 1,
+          duration: 0.65,
+          ease: 'power3.out',
+          clearProps: 'transform,opacity',
+        },
+        0.72
+      );
+    }
+
+    // 3. HERO DESCRIPTION (Starts at 0.88s)
+    if (heroSub) {
+      masterTl.fromTo(
+        heroSub,
+        { y: 12, opacity: 0 },
+        {
+          y: 0,
+          opacity: 1,
+          duration: 0.55,
+          ease: 'power2.out',
+          clearProps: 'transform,opacity',
+        },
+        0.88
+      );
+    }
+
+    // 4. PLANET VISUAL: Scale, Opacity & Subtle Rotation (-5deg -> 0deg) (Starts at 0.98s)
+    if (planetVisual) {
+      masterTl.fromTo(
+        planetVisual,
+        {
+          scale: 0.85,
+          opacity: 0,
+          rotation: -5,
+        },
+        {
+          scale: 1,
+          opacity: 1,
+          rotation: 0,
+          duration: 0.7,
+          ease: 'power2.out',
+          clearProps: 'transform,opacity',
+        },
+        0.98
+      );
+    }
+
+    // 5. HERO BENEFIT BAR & TILES (Starts at 1.10s)
+    if (benefitBar) {
+      masterTl.fromTo(
+        benefitBar,
+        { opacity: 0, y: 8 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.5,
+          ease: 'power2.out',
+          clearProps: 'transform,opacity',
+        },
+        1.10
+      );
+    }
+
+    if (benefitTiles.length > 0) {
+      masterTl.fromTo(
+        benefitTiles,
+        {
+          opacity: 0,
+          x: -14,
+          scale: 0.96,
+        },
+        {
+          opacity: 1,
+          x: 0,
+          scale: 1,
+          duration: 0.5,
+          stagger: 0.08,
+          ease: 'power2.out',
+          clearProps: 'transform,opacity',
+        },
+        1.14
+      );
+    }
+  }, container);
+
+  return () => ctx.revert();
+}
+
+/* ==========================================================================
+   3. HOMEPAGE SCROLL REVEAL (BELOW THE FOLD SECTIONS)
+   ========================================================================== */
+
+/**
+ * Set up distinct, premium scroll-triggered reveals for homepage sections.
+ * Each section possesses its own distinct motion character:
+ * - Catalog: Bottom clip reveal for header + horizontal stagger for product cards
+ * - Keunggulan (Why Asterra): Side / angled 3D card stagger
+ * - Panduan (Steps): Sequential progression reveal (Step 1 -> 2 -> 3 -> 4)
+ * - FAQ: Vertical cascade unfold
+ * - CTA Banner: Expand inset / soft zoom reveal
+ * - Footer: Vertical bottom reveal + column stagger
+ */
+export function setupHomepageScrollReveal(root: HTMLElement | null) {
+  if (!root || typeof window === 'undefined') return;
+
+  const reduced = prefersReducedMotion();
+
+  const ctx = gsap.context(() => {
+    // ------------------------------------------------------------------------
+    // SECTION 1: Catalog / Jelajahi Layanan Digital
+    // ------------------------------------------------------------------------
+    const catalogSection = root.querySelector('[data-gsap-section="catalog"], #aplikasi');
+    if (catalogSection) {
+      const header = catalogSection.querySelector('[data-gsap="catalog-header"], div:first-child');
+      const headerItems = catalogSection.querySelectorAll('[data-gsap="catalog-item"]');
+      const cards = catalogSection.querySelectorAll<HTMLElement>(
+        '[data-gsap="marquee-card"], .carousel-track a'
+      );
+      // We only animate the first set of visible cards (first 6) on entry so marquee keeps running
+      const initialCards = Array.from(cards).slice(0, 6);
+
+      const catalogTl = gsap.timeline({
+        scrollTrigger: {
+          trigger: catalogSection,
+          start: 'top 82%',
+          once: true,
+        },
+      });
+
+      if (reduced) {
+        catalogTl.fromTo(
+          catalogSection,
+          { opacity: 0 },
+          { opacity: 1, duration: 0.35, ease: 'power1.out' }
+        );
+      } else {
+        // Header clip-path reveal from bottom
+        if (header) {
+          catalogTl.fromTo(
+            header,
+            { clipPath: 'inset(100% 0% 0% 0%)', opacity: 0, y: 14 },
+            {
+              clipPath: 'inset(0% 0% 0% 0%)',
+              opacity: 1,
+              y: 0,
+              duration: 0.7,
+              ease: 'power3.out',
+              clearProps: 'clipPath,transform,opacity',
+            },
+            0
+          );
+        }
+
+        if (headerItems.length > 0) {
+          catalogTl.fromTo(
+            headerItems,
+            { opacity: 0, y: 12 },
+            {
+              opacity: 1,
+              y: 0,
+              duration: 0.5,
+              stagger: 0.08,
+              ease: 'power2.out',
+              clearProps: 'transform,opacity',
+            },
+            0.15
+          );
+        }
+
+        // Product cards horizontal entry stagger (subtle translateX 25px, scale 0.97)
+        if (initialCards.length > 0) {
+          catalogTl.fromTo(
+            initialCards,
+            { x: -28, opacity: 0, scale: 0.97 },
+            {
+              x: 0,
+              opacity: 1,
+              scale: 1,
+              duration: 0.6,
+              stagger: 0.07,
+              ease: 'power2.out',
+              clearProps: 'transform,opacity',
+            },
+            0.25
+          );
+        }
+      }
+    }
+
+    // ------------------------------------------------------------------------
+    // SECTION 2: Kenapa Asterra? (#keunggulan) - Side / Angled Reveal
+    // ------------------------------------------------------------------------
+    const keunggulanSection = root.querySelector('[data-gsap-section="keunggulan"], #keunggulan');
+    if (keunggulanSection) {
+      const header = keunggulanSection.querySelector('[data-gsap="keunggulan-header"], div:first-child');
+      const cards = keunggulanSection.querySelectorAll('[data-gsap="keunggulan-card"], [data-gsap="card"]');
+
+      const keunggulanTl = gsap.timeline({
+        scrollTrigger: {
+          trigger: keunggulanSection,
+          start: 'top 80%',
+          once: true,
+        },
+      });
+
+      if (reduced) {
+        keunggulanTl.fromTo(
+          keunggulanSection,
+          { opacity: 0 },
+          { opacity: 1, duration: 0.35, ease: 'power1.out' }
+        );
+      } else {
+        if (header) {
+          keunggulanTl.fromTo(
+            header,
+            { x: -20, opacity: 0 },
+            {
+              x: 0,
+              opacity: 1,
+              duration: 0.6,
+              ease: 'power2.out',
+              clearProps: 'transform,opacity',
+            },
+            0
+          );
+        }
+
+        if (cards.length > 0) {
+          keunggulanTl.fromTo(
+            cards,
+            { x: -16, y: 16, opacity: 0, scale: 0.98 },
+            {
+              x: 0,
+              y: 0,
+              opacity: 1,
+              scale: 1,
+              duration: 0.55,
+              stagger: 0.06,
+              ease: 'power2.out',
+              clearProps: 'transform,opacity',
+            },
+            0.12
+          );
+        }
+      }
+    }
+
+    // ------------------------------------------------------------------------
+    // SECTION 3: Alur Pemesanan (#panduan) - Sequential Step Progression
+    // ------------------------------------------------------------------------
+    const panduanSection = root.querySelector('[data-gsap-section="panduan"], #panduan');
+    if (panduanSection) {
+      const header = panduanSection.querySelector('[data-gsap="panduan-header"], div:first-child');
+      const steps = panduanSection.querySelectorAll('[data-gsap="panduan-step"], [data-gsap="card"]');
+
+      const panduanTl = gsap.timeline({
+        scrollTrigger: {
+          trigger: panduanSection,
+          start: 'top 80%',
+          once: true,
+        },
+      });
+
+      if (reduced) {
+        panduanTl.fromTo(
+          panduanSection,
+          { opacity: 0 },
+          { opacity: 1, duration: 0.35, ease: 'power1.out' }
+        );
+      } else {
+        if (header) {
+          panduanTl.fromTo(
+            header,
+            { scale: 0.96, opacity: 0 },
+            {
+              scale: 1,
+              opacity: 1,
+              duration: 0.6,
+              ease: 'power3.out',
+              clearProps: 'transform,opacity',
+            },
+            0
+          );
+        }
+
+        if (steps.length > 0) {
+          panduanTl.fromTo(
+            steps,
+            { y: 20, scale: 0.94, opacity: 0 },
+            {
+              y: 0,
+              scale: 1,
+              opacity: 1,
+              duration: 0.6,
+              stagger: 0.12,
+              ease: 'power3.out',
+              clearProps: 'transform,opacity',
+            },
+            0.12
+          );
+        }
+      }
+    }
+
+    // ------------------------------------------------------------------------
+    // SECTION 4: FAQ (#faq) - Vertical Cascade Unfold
+    // ------------------------------------------------------------------------
+    const faqSection = root.querySelector('[data-gsap-section="faq"], #faq');
+    if (faqSection) {
+      const header = faqSection.querySelector('[data-gsap="faq-header"], div:first-child');
+      const items = faqSection.querySelectorAll('[data-gsap="faq-item"], .space-y-2\\.5 > div');
+
+      const faqTl = gsap.timeline({
+        scrollTrigger: {
+          trigger: faqSection,
+          start: 'top 80%',
+          once: true,
+        },
+      });
+
+      if (reduced) {
+        faqTl.fromTo(
+          faqSection,
+          { opacity: 0 },
+          { opacity: 1, duration: 0.35, ease: 'power1.out' }
+        );
+      } else {
+        if (header) {
+          faqTl.fromTo(
+            header,
+            { y: 16, opacity: 0 },
+            {
+              y: 0,
+              opacity: 1,
+              duration: 0.6,
+              ease: 'power2.out',
+              clearProps: 'transform,opacity',
+            },
+            0
+          );
+        }
+
+        if (items.length > 0) {
+          faqTl.fromTo(
+            items,
+            { y: 14, opacity: 0 },
+            {
+              y: 0,
+              opacity: 1,
+              duration: 0.45,
+              stagger: 0.05,
+              ease: 'power2.out',
+              clearProps: 'transform,opacity',
+            },
+            0.12
+          );
+        }
+      }
+    }
+
+    // ------------------------------------------------------------------------
+    // SECTION 5: CTA Banner - Expand Inset / Soft Zoom Reveal
+    // ------------------------------------------------------------------------
+    const ctaSection = root.querySelector('[data-gsap-section="cta"]');
+    if (ctaSection) {
+      const content = ctaSection.querySelector('[data-gsap="cta-content"]');
+      const actions = ctaSection.querySelector('[data-gsap="cta-actions"]');
+
+      const ctaTl = gsap.timeline({
+        scrollTrigger: {
+          trigger: ctaSection,
+          start: 'top 82%',
+          once: true,
+        },
+      });
+
+      if (reduced) {
+        ctaTl.fromTo(
+          ctaSection,
+          { opacity: 0 },
+          { opacity: 1, duration: 0.35, ease: 'power1.out' }
+        );
+      } else {
+        ctaTl.fromTo(
+          ctaSection,
+          {
+            scale: 0.97,
+            clipPath: 'inset(4% 4% 4% 4% round 1rem)',
+            opacity: 0,
+          },
+          {
+            scale: 1,
+            clipPath: 'inset(0% 0% 0% 0% round 1rem)',
+            opacity: 1,
+            duration: 0.75,
+            ease: 'power3.out',
+            clearProps: 'transform,clipPath,opacity',
+          },
+          0
+        );
+
+        if (content) {
+          ctaTl.fromTo(
+            content,
+            { y: 10, opacity: 0 },
+            {
+              y: 0,
+              opacity: 1,
+              duration: 0.5,
+              ease: 'power2.out',
+              clearProps: 'transform,opacity',
+            },
+            0.15
+          );
+        }
+
+        if (actions) {
+          ctaTl.fromTo(
+            actions,
+            { y: 10, opacity: 0, scale: 0.96 },
+            {
+              y: 0,
+              opacity: 1,
+              scale: 1,
+              duration: 0.5,
+              ease: 'power2.out',
+              clearProps: 'transform,opacity',
+            },
+            0.22
+          );
+        }
+      }
+    }
+
+    // ------------------------------------------------------------------------
+    // SECTION 6: Footer - Vertical Bottom Reveal + Column Stagger
+    // ------------------------------------------------------------------------
+    const footer = document.querySelector('footer[data-gsap="footer"], footer');
+    if (footer) {
+      const columns = footer.querySelectorAll('[data-gsap="footer-col"], .grid > div');
+      const bottom = footer.querySelector('[data-gsap="footer-bottom"], .border-t');
+
+      const footerTl = gsap.timeline({
+        scrollTrigger: {
+          trigger: footer,
+          start: 'top 88%',
+          once: true,
+        },
+      });
+
+      if (reduced) {
+        footerTl.fromTo(
+          footer,
+          { opacity: 0 },
+          { opacity: 1, duration: 0.35, ease: 'power1.out' }
+        );
+      } else {
+        footerTl.fromTo(
+          footer,
+          {
+            y: 24,
+            clipPath: 'inset(15% 0% 0% 0%)',
+            opacity: 0,
+          },
+          {
+            y: 0,
+            clipPath: 'inset(0% 0% 0% 0%)',
+            opacity: 1,
+            duration: 0.85,
+            ease: 'power3.out',
+            clearProps: 'transform,clipPath,opacity',
+          },
+          0
+        );
+
+        if (columns.length > 0) {
+          footerTl.fromTo(
+            columns,
+            { y: 14, opacity: 0 },
+            {
+              y: 0,
+              opacity: 1,
+              duration: 0.5,
+              stagger: 0.08,
+              ease: 'power2.out',
+              clearProps: 'transform,opacity',
+            },
+            0.18
+          );
+        }
+
+        if (bottom) {
+          footerTl.fromTo(
+            bottom,
+            { opacity: 0 },
+            {
+              opacity: 1,
+              duration: 0.5,
+              ease: 'power2.out',
+              clearProps: 'opacity',
+            },
+            0.35
+          );
+        }
+      }
+    }
+  }, root);
+
+  return () => ctx.revert();
+}
+
+/* ==========================================================================
+   4. FLOATING SUPPORT BUTTON
+   ========================================================================== */
+
+/**
+ * Animate the floating support button with subtle scale & slight rotation entry.
+ */
+export function animateFloatingButton(element: HTMLElement | null): (() => void) | undefined {
+  if (!element || typeof window === 'undefined') return;
+
+  const reduced = prefersReducedMotion();
+  const dur = reduced ? 0.35 : 0.65;
+
+  let tween: gsap.core.Tween;
+
+  if (reduced) {
+    tween = gsap.fromTo(
+      element,
+      { opacity: 0 },
+      { opacity: 1, duration: dur, delay: 0.5, ease: 'power1.out', clearProps: 'opacity' }
+    );
+  } else {
+    tween = gsap.fromTo(
+      element,
+      {
+        scale: 0.7,
+        opacity: 0,
+        rotation: -10,
+      },
+      {
+        scale: 1,
+        opacity: 1,
+        rotation: 0,
+        duration: dur,
+        delay: 1.25, // Appears smoothly after hero master sequence completes
+        ease: 'power2.out',
+        force3D: true,
+        clearProps: 'transform,opacity',
+      }
+    );
+  }
+
+  return () => {
+    tween.kill();
+  };
+}
+
+/* ==========================================================================
+   5. GENERAL SUBPAGE ENTRANCE & SCROLL REVEAL (FOR /products, /profile, ETC.)
+   ========================================================================== */
+
+/**
+ * Animate general entrance elements on subpages (titles, breadcrumbs, content)
  */
 export function animatePageEntrance(container: HTMLElement | null) {
   if (!container || typeof window === 'undefined') return;
 
   const reduced = prefersReducedMotion();
-  const dur = reduced ? 0.2 : 0.38;
-  const dist = reduced ? 3 : 8;
+  const dur = reduced ? 0.35 : 0.65;
+  const dist = reduced ? 8 : 18;
 
   const ctx = gsap.context(() => {
-    // 1. Main Headings (h1, page titles)
     const headings = container.querySelectorAll('h1, [data-gsap="page-title"]');
     if (headings.length > 0) {
       gsap.fromTo(
         headings,
         { y: dist, opacity: 0 },
-        { y: 0, opacity: 1, duration: dur, ease: 'power2.out', stagger: 0.04, force3D: true, clearProps: 'transform,opacity' }
+        { y: 0, opacity: 1, duration: dur, ease: 'power3.out', stagger: 0.08, force3D: true, clearProps: 'transform,opacity' }
       );
     }
 
-    // 2. Subtitles & Lead descriptions
     const subheads = container.querySelectorAll(
       '[data-gsap="page-sub"], p[data-gsap="lead"], .hero-lead'
     );
     if (subheads.length > 0) {
       gsap.fromTo(
         subheads,
-        { y: dist * 0.5, opacity: 0 },
-        { y: 0, opacity: 1, duration: dur * 0.9, ease: 'power2.out', delay: 0.04, stagger: 0.03, force3D: true, clearProps: 'transform,opacity' }
+        { y: dist * 0.7, opacity: 0 },
+        { y: 0, opacity: 1, duration: dur * 0.9, ease: 'power2.out', delay: 0.1, stagger: 0.05, force3D: true, clearProps: 'transform,opacity' }
       );
     }
 
-    // 3. Hero media, graphics, and images (smooth subtle entrance, no raster recomputation)
     const media = container.querySelectorAll(
       '[data-gsap="hero-media"], [data-gsap="media"]'
     );
     if (media.length > 0) {
       gsap.fromTo(
         media,
-        { y: dist * 0.5, opacity: 0 },
-        { y: 0, opacity: 1, duration: dur, ease: 'power2.out', delay: 0.04, force3D: true, clearProps: 'transform,opacity' }
+        { scale: 0.94, opacity: 0 },
+        { scale: 1, opacity: 1, duration: dur, ease: 'power2.out', delay: 0.08, force3D: true, clearProps: 'transform,opacity' }
       );
     }
 
-    // 4. Initial above-the-fold cards / benefit badges
     const initialCards = container.querySelectorAll(
       '[data-gsap="hero-card"], [data-gsap="benefit-card"]'
     );
     if (initialCards.length > 0) {
       gsap.fromTo(
         initialCards,
-        { y: dist * 0.5, opacity: 0 },
-        { y: 0, opacity: 1, duration: dur * 0.85, stagger: 0.03, ease: 'power2.out', delay: 0.06, force3D: true, clearProps: 'transform,opacity' }
+        { y: dist * 0.8, opacity: 0 },
+        { y: 0, opacity: 1, duration: dur * 0.85, stagger: 0.06, ease: 'power2.out', delay: 0.18, force3D: true, clearProps: 'transform,opacity' }
       );
     }
   }, container);
@@ -121,47 +1088,82 @@ export function animatePageEntrance(container: HTMLElement | null) {
 }
 
 /**
- * Set up smooth, lightweight scroll reveals for sections, headings, and card grids.
- * Uses positive bottom rootMargin so items start revealing smoothly before entering view.
+ * General scroll reveal for subpages using lightweight IntersectionObserver.
  */
 export function setupScrollReveal(root: HTMLElement | null) {
   if (!root || typeof window === 'undefined') return;
 
-  const revealedElements = new WeakSet<Element>();
+  const observed = new WeakSet<Element>();
+  const reduced = prefersReducedMotion();
+  const dur = reduced ? 0.35 : 0.55;
+  const dist = reduced ? 8 : 18;
 
-  const reveal = (target: HTMLElement) => {
-    if (revealedElements.has(target)) return;
-    revealedElements.add(target);
+  const reveal = (target: HTMLElement, immediate = false) => {
+    const headings = target.querySelectorAll<HTMLElement>(
+      'h2, h3, h4, [data-gsap="section-title"]'
+    );
+    const paragraphs = target.querySelectorAll<HTMLElement>(
+      'p:not(.no-animate), span.uppercase, [data-gsap="section-desc"]'
+    );
+    const images = target.querySelectorAll<HTMLElement>(
+      'img:not(.no-animate), [data-gsap="media"]'
+    );
+    const cardNodes = target.querySelectorAll<HTMLElement>(
+      '[data-gsap="card"], .grid > div, article, .card'
+    );
+    const cards = Array.from(cardNodes).filter(
+      (el) => !el.closest('.carousel-viewport') && !el.closest('.carousel-track')
+    );
 
-    // Target cards or elements inside section
-    const cards = Array.from(
-      target.querySelectorAll<HTMLElement>('[data-gsap="card"], .card')
-    ).filter((el) => !el.closest('.carousel-track') && !el.closest('.carousel-viewport'));
+    const tl = gsap.timeline({
+      defaults: { ease: 'power2.out', force3D: true, overwrite: 'auto' },
+      delay: immediate ? 0.08 : 0,
+    });
 
-    const tl = gsap.timeline({ defaults: { ease: 'power2.out', overwrite: 'auto', force3D: true } });
+    if (headings.length > 0) {
+      tl.fromTo(
+        headings,
+        { y: dist * 0.9, opacity: 0 },
+        { y: 0, opacity: 1, duration: dur, stagger: 0.05, clearProps: 'transform,opacity' }
+      );
+    }
+
+    if (paragraphs.length > 0) {
+      tl.fromTo(
+        paragraphs,
+        { y: dist * 0.6, opacity: 0 },
+        { y: 0, opacity: 1, duration: dur * 0.9, stagger: 0.04, clearProps: 'transform,opacity' },
+        headings.length > 0 ? '<0.08' : 0
+      );
+    }
+
+    if (images.length > 0) {
+      tl.fromTo(
+        images,
+        { scale: 0.95, opacity: 0 },
+        { scale: 1, opacity: 1, duration: dur * 0.85, stagger: 0.04, clearProps: 'transform,opacity' },
+        headings.length > 0 || paragraphs.length > 0 ? '<0.1' : 0
+      );
+    }
 
     if (cards.length > 0) {
       tl.fromTo(
         cards,
-        { y: 8, opacity: 0 },
+        { y: dist, opacity: 0 },
         {
           y: 0,
           opacity: 1,
-          duration: 0.35,
-          stagger: 0.03,
+          duration: dur * 0.85,
+          stagger: { each: 0.04, amount: Math.min(cards.length, 12) * 0.04 },
           clearProps: 'transform,opacity',
-        }
+        },
+        headings.length > 0 || paragraphs.length > 0 ? '<0.12' : 0
       );
-    } else {
+    } else if (headings.length === 0 && paragraphs.length === 0 && images.length === 0) {
       tl.fromTo(
         target,
-        { y: 8, opacity: 0 },
-        {
-          y: 0,
-          opacity: 1,
-          duration: 0.35,
-          clearProps: 'transform,opacity',
-        }
+        { y: dist, opacity: 0 },
+        { y: 0, opacity: 1, duration: dur, clearProps: 'transform,opacity' }
       );
     }
   };
@@ -174,25 +1176,26 @@ export function setupScrollReveal(root: HTMLElement | null) {
         reveal(entry.target as HTMLElement);
       });
     },
-    { rootMargin: '60px 0px 20px 0px', threshold: 0.01 }
+    { rootMargin: '0px 0px 60px 0px', threshold: 0.02 }
   );
 
   const scan = () => {
-    // Only target explicit sections that are below the initial fold
-    const targets = root.querySelectorAll<HTMLElement>('[data-gsap-reveal], section[id]');
+    const targets = root.querySelectorAll<HTMLElement>(
+      'section, [data-gsap-reveal], main > div, article, .space-y-6, .space-y-8, .grid'
+    );
 
     targets.forEach((el) => {
       if (
-        revealedElements.has(el) ||
+        observed.has(el) ||
         el.closest('.carousel-track') ||
         el.closest('.carousel-viewport')
       )
         return;
+      observed.add(el);
 
       const rect = el.getBoundingClientRect();
-      // If already in viewport on load, mark it without re-triggering a competing animation
-      if (rect.top < window.innerHeight * 0.85 && rect.bottom > 0) {
-        revealedElements.add(el);
+      if (rect.top < window.innerHeight && rect.bottom > 0) {
+        setTimeout(() => reveal(el, true), 120);
       } else {
         io.observe(el);
       }
@@ -201,11 +1204,10 @@ export function setupScrollReveal(root: HTMLElement | null) {
 
   scan();
 
-  // Debounced observer for dynamically loaded elements
   let debounceTimer: NodeJS.Timeout;
   const mo = new MutationObserver(() => {
     clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(scan, 200);
+    debounceTimer = setTimeout(scan, 150);
   });
   mo.observe(root, { childList: true, subtree: true });
 
@@ -217,16 +1219,16 @@ export function setupScrollReveal(root: HTMLElement | null) {
 }
 
 /**
- * Attach tactile GSAP hover interactions to interactive cards
+ * Attach tactile hover interactions to interactive cards
  */
 export function attachCardHoverEffect(cardElement: HTMLElement | null) {
   if (!cardElement || typeof window === 'undefined') return;
 
   const onEnter = () => {
-    gsap.to(cardElement, { y: -3, duration: 0.18, ease: 'power1.out', overwrite: 'auto', force3D: true });
+    gsap.to(cardElement, { y: -3, duration: 0.22, ease: 'power1.out', overwrite: 'auto', force3D: true });
   };
   const onLeave = () => {
-    gsap.to(cardElement, { y: 0, duration: 0.22, ease: 'power1.out', overwrite: 'auto', force3D: true });
+    gsap.to(cardElement, { y: 0, duration: 0.28, ease: 'power1.out', overwrite: 'auto', force3D: true });
   };
 
   cardElement.addEventListener('mouseenter', onEnter);

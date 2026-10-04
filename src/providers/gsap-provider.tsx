@@ -3,6 +3,8 @@
 import React, { useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import {
+  animateHeroMasterSequence,
+  setupHomepageScrollReveal,
   animatePageEntrance,
   setupScrollReveal,
 } from '@/lib/animations/gsap-utils';
@@ -19,9 +21,15 @@ export function GsapProvider({ children }: { children: React.ReactNode }) {
     const timer = setTimeout(() => {
       const container = pageContainerRef.current;
       if (!container) return;
-      cleanupEntrance = animatePageEntrance(container);
-      cleanupScroll = setupScrollReveal(container);
-    }, 50);
+
+      if (pathname === '/') {
+        cleanupEntrance = animateHeroMasterSequence(container);
+        cleanupScroll = setupHomepageScrollReveal(container);
+      } else {
+        cleanupEntrance = animatePageEntrance(container);
+        cleanupScroll = setupScrollReveal(container);
+      }
+    }, 40);
 
     return () => {
       clearTimeout(timer);

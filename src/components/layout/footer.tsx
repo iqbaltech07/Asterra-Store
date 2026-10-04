@@ -14,11 +14,11 @@ export function Footer({ onNotify }: FooterProps) {
   };
 
   return (
-    <footer data-gsap-reveal className="border-t border-white/10 bg-[#121A2A] text-[#F7F5EF] mt-24 pt-16 pb-12">
+    <footer data-gsap="footer" className="border-t border-white/10 bg-[#121A2A] text-[#F7F5EF] mt-24 pt-16 pb-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-10 pb-12 border-b border-white/10">
+        <div data-gsap="footer-columns" className="grid grid-cols-1 md:grid-cols-4 gap-10 pb-12 border-b border-white/10">
           {/* Brand Col */}
-          <div className="space-y-4 md:col-span-1">
+          <div data-gsap="footer-col" className="space-y-4 md:col-span-1">
             <AsterraLogo
               variant="navbar"
               size="md"
@@ -41,7 +41,7 @@ export function Footer({ onNotify }: FooterProps) {
           </div>
 
           {/* Product Categories */}
-          <div className="space-y-3">
+          <div data-gsap="footer-col" className="space-y-3">
             <h4 className="text-xs font-semibold uppercase tracking-wider text-[#F7F5EF]">
               Katalog Produk
             </h4>
@@ -76,7 +76,7 @@ export function Footer({ onNotify }: FooterProps) {
           </div>
 
           {/* Customer Service & Help */}
-          <div className="space-y-3">
+          <div data-gsap="footer-col" className="space-y-3">
             <h4 className="text-xs font-semibold uppercase tracking-wider text-[#F7F5EF]">
               Bantuan & Layanan
             </h4>
@@ -122,7 +122,7 @@ export function Footer({ onNotify }: FooterProps) {
           </div>
 
           {/* Payment Methods */}
-          <div className="space-y-3">
+          <div data-gsap="footer-col" className="space-y-3">
             <h4 className="text-xs font-semibold uppercase tracking-wider text-[#F7F5EF]">
               Metode Pembayaran
             </h4>
@@ -145,7 +145,7 @@ export function Footer({ onNotify }: FooterProps) {
         </div>
 
         {/* Bottom Bar */}
-        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#F7F5EF]/60">
+        <div data-gsap="footer-bottom" className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#F7F5EF]/60">
           <p>© 2026 Asterra Store. Hak cipta dilindungi undang-undang.</p>
           <div className="flex items-center gap-6">
             <button

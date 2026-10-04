@@ -43,3 +43,4 @@ data/managed-catalog.json
 /scratch/
 
 certificates
+*.MOV
