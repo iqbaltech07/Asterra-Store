@@ -575,18 +575,23 @@ export default function HomePage() {
                 <div
                   className="relative z-10 w-[100px] sm:w-[150px] lg:w-[220px] flex items-center justify-center translate-x-1 sm:translate-x-1.5 lg:translate-x-2.5 -translate-y-1.5 sm:-translate-y-2 lg:-translate-y-3"
                 >
-                  <img
-                    src="/assets/asterra-planet-transparent.webp"
-                    alt="Asterra Store"
-                    width={800}
-                    height={426}
-                    decoding="async"
-                    draggable={false}
-                    className="w-full h-auto object-contain pointer-events-none select-none"
-                    onError={(e) => {
-                      e.currentTarget.src = "/images/brand/hero-planet-white.png";
-                    }}
-                  />
+                  <picture className="w-full h-auto flex items-center justify-center pointer-events-none select-none">
+                    {/* Mobile: 9KB lightweight static frame, 0 loop decode overhead, rock-solid 60 FPS */}
+                    <source media="(max-width: 639px)" srcSet="/assets/asterra-planet-static.webp" />
+                    {/* Desktop & Tablet: rich animated planet */}
+                    <img
+                      src="/assets/asterra-planet-transparent.webp"
+                      alt="Asterra Store"
+                      width={800}
+                      height={426}
+                      decoding="async"
+                      draggable={false}
+                      className="w-full h-auto object-contain pointer-events-none select-none"
+                      onError={(e) => {
+                        e.currentTarget.src = "/images/brand/hero-planet-white.png";
+                      }}
+                    />
+                  </picture>
                 </div>
               </div>
             </div>

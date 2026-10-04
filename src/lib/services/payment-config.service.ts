@@ -67,6 +67,10 @@ export class PaymentConfigService {
    * Get complete payment configuration (Admin Access)
    */
   static async getConfig(): Promise<PaymentConfig> {
+    if (!process.env.DATABASE_URL) {
+      return memoryConfig;
+    }
+
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const prismaClient = prisma as any;
@@ -191,6 +195,10 @@ export class PaymentConfigService {
       ...updates,
       updatedAt: new Date().toISOString(),
     };
+
+    if (!process.env.DATABASE_URL) {
+      return memoryConfig;
+    }
 
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

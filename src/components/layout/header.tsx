@@ -73,7 +73,7 @@ export function Header({ onNotify }: HeaderProps) {
 
   return (
     <>
-      <header ref={headerRef} className="sticky top-0 z-40 w-full px-2 sm:px-6 pt-2.5 pb-2 transition-all">
+      <header ref={headerRef} className="sticky top-0 z-40 w-full px-2 sm:px-6 pt-2.5 pb-2 transition-colors duration-150">
         <div className="max-w-7xl mx-auto rounded-2xl bg-[#121A2A] border border-white/10 shadow-navbar px-3.5 sm:px-6 h-16 sm:h-18 flex items-center justify-between gap-4">
           {/* Brand Logo */}
           <div data-gsap="nav-logo" className="flex items-center gap-3">

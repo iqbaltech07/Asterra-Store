@@ -300,7 +300,7 @@ export function animateNavbar(headerElement: HTMLElement | null) {
       gsap.fromTo(
         headerElement,
         { opacity: 0 },
-        { opacity: 1, duration: 0.35, ease: 'power1.out' }
+        { opacity: 1, duration: 0.25, ease: 'power1.out', clearProps: 'opacity' }
       );
       return;
     }
@@ -314,7 +314,7 @@ export function animateNavbar(headerElement: HTMLElement | null) {
       tl.fromTo(
         bar,
         {
-          y: -18,
+          y: -14,
           opacity: 0,
           clipPath: 'inset(0% 0% 100% 0% round 1rem)',
         },
@@ -322,7 +322,7 @@ export function animateNavbar(headerElement: HTMLElement | null) {
           y: 0,
           opacity: 1,
           clipPath: 'inset(0% 0% 0% 0% round 1rem)',
-          duration: 0.65,
+          duration: 0.52,
           ease: 'expo.out',
           clearProps: 'transform,clipPath,opacity',
         },
@@ -330,55 +330,55 @@ export function animateNavbar(headerElement: HTMLElement | null) {
       );
     }
 
-    // 2. Logo appears right after container starts opening (0.10s)
+    // 2. Logo appears right as container opens (0.06s)
     if (logo) {
       tl.fromTo(
         logo,
-        { opacity: 0, scale: 0.96, y: -4 },
+        { opacity: 0, scale: 0.96, y: -3 },
         {
           opacity: 1,
           scale: 1,
           y: 0,
-          duration: 0.38,
+          duration: 0.32,
           ease: 'power2.out',
           clearProps: 'transform,opacity',
         },
-        0.10
+        0.06
       );
     }
 
-    // 3. Nav links stagger in (0.14s)
+    // 3. Nav links stagger in (0.09s)
     if (navLinks.length > 0) {
       tl.fromTo(
         navLinks,
-        { opacity: 0, y: -6 },
+        { opacity: 0, y: -4 },
         {
           opacity: 1,
           y: 0,
-          duration: 0.35,
-          stagger: 0.03,
+          duration: 0.30,
+          stagger: 0.02,
           ease: 'power2.out',
           clearProps: 'transform,opacity',
         },
-        0.14
+        0.09
       );
     }
 
-    // 4. Action buttons (Cart, User/Login, Hamburger) appear (0.18s)
+    // 4. Action buttons (Cart, User/Login, Hamburger) appear (0.12s)
     if (actions.length > 0) {
       tl.fromTo(
         actions,
-        { opacity: 0, scale: 0.92, y: -4 },
+        { opacity: 0, scale: 0.94, y: -3 },
         {
           opacity: 1,
           scale: 1,
           y: 0,
-          duration: 0.35,
-          stagger: 0.03,
+          duration: 0.30,
+          stagger: 0.02,
           ease: 'power2.out',
           clearProps: 'transform,opacity',
         },
-        0.18
+        0.12
       );
     }
   }, headerElement);
@@ -394,11 +394,11 @@ export function animateNavbar(headerElement: HTMLElement | null) {
  * Master initial page load sequence for Asterra Store Homepage:
  * Continuous, fluid, zero-dead-time cascade:
  * 0.00s -> Navbar starts
- * 0.06s -> Hero container horizontal reveal starts immediately with fluid overlap
- * 0.22s -> Hero headline lines text reveal
- * 0.32s -> Hero description
- * 0.38s -> Planet visual (Mobile: static rotation + subtle scale for 60fps; Desktop: subtle rotation)
- * 0.44s -> Hero benefits horizontal stagger (Tile 1 -> Tile 2 -> Tile 3)
+ * 0.04s -> Hero container horizontal reveal starts immediately with fluid overlap
+ * 0.12s -> Hero headline lines text reveal
+ * 0.18s -> Hero description
+ * 0.20s -> Planet visual (Mobile: static 9KB single frame for pure 60fps; Desktop: subtle rotation)
+ * 0.24s -> Hero benefits horizontal stagger (Tile 1 -> Tile 2 -> Tile 3)
  */
 export function animateHeroMasterSequence(container: HTMLElement | null) {
   if (!container || typeof window === 'undefined') return;
@@ -419,7 +419,7 @@ export function animateHeroMasterSequence(container: HTMLElement | null) {
       gsap.fromTo(
         [heroContainer, heroTitle, heroSub, planetVisual, benefitBar, benefitTiles],
         { opacity: 0 },
-        { opacity: 1, duration: 0.25, stagger: 0.04, ease: 'power1.out', clearProps: 'opacity' }
+        { opacity: 1, duration: 0.20, stagger: 0.03, ease: 'power1.out', clearProps: 'opacity' }
       );
       return;
     }
@@ -428,110 +428,111 @@ export function animateHeroMasterSequence(container: HTMLElement | null) {
       defaults: { force3D: true },
     });
 
-    // 1. HERO HORIZONTAL REVEAL (Starts immediately at 0.06s)
+    // 1. HERO HORIZONTAL REVEAL (Starts immediately at 0.04s, overlapping with navbar)
+    // Avoids bezier radius calculation inside clipPath since CSS overflow-hidden handles rounded corners natively
     if (heroContainer) {
       masterTl.fromTo(
         heroContainer,
         {
-          clipPath: 'inset(0% 50% 0% 50% round 1.5rem)',
-          opacity: 0.3,
+          clipPath: isMobile ? 'inset(0% 35% 0% 35%)' : 'inset(0% 50% 0% 50%)',
+          opacity: 0.4,
         },
         {
-          clipPath: 'inset(0% 0% 0% 0% round 1.5rem)',
+          clipPath: 'inset(0% 0% 0% 0%)',
           opacity: 1,
-          duration: isMobile ? 0.72 : 0.82,
-          ease: 'power3.inOut',
+          duration: isMobile ? 0.48 : 0.62,
+          ease: 'power2.out',
           clearProps: 'clipPath,opacity',
         },
-        0.06
+        0.04
       );
     }
 
-    // 2. HERO HEADLINE: Line-by-line text reveal (Starts at 0.22s)
+    // 2. HERO HEADLINE: Line-by-line text reveal (Starts at 0.12s)
     if (titleLines.length > 0) {
       masterTl.fromTo(
         titleLines,
         {
-          yPercent: 105,
+          yPercent: 100,
           opacity: 0,
         },
         {
           yPercent: 0,
           opacity: 1,
-          duration: isMobile ? 0.45 : 0.52,
-          stagger: 0.05,
-          ease: 'power3.out',
+          duration: isMobile ? 0.36 : 0.44,
+          stagger: 0.035,
+          ease: 'power2.out',
           clearProps: 'transform,opacity',
         },
-        0.22
+        0.12
       );
     } else if (heroTitle) {
       masterTl.fromTo(
         heroTitle,
-        { y: 12, opacity: 0 },
+        { y: 10, opacity: 0 },
         {
           y: 0,
           opacity: 1,
-          duration: 0.48,
-          ease: 'power3.out',
-          clearProps: 'transform,opacity',
-        },
-        0.22
-      );
-    }
-
-    // 3. HERO DESCRIPTION (Starts at 0.32s)
-    if (heroSub) {
-      masterTl.fromTo(
-        heroSub,
-        { y: 8, opacity: 0 },
-        {
-          y: 0,
-          opacity: 1,
-          duration: 0.38,
+          duration: 0.40,
           ease: 'power2.out',
           clearProps: 'transform,opacity',
         },
-        0.32
+        0.12
       );
     }
 
-    // 4. PLANET VISUAL (Starts at 0.38s)
-    // MOBILE: NO rotation to prevent expensive re-rasterization of transparent animated WebP; subtle scale only
-    // DESKTOP: subtle rotation -3deg -> 0deg and scale
+    // 3. HERO DESCRIPTION (Starts at 0.18s)
+    if (heroSub) {
+      masterTl.fromTo(
+        heroSub,
+        { y: 6, opacity: 0 },
+        {
+          y: 0,
+          opacity: 1,
+          duration: 0.32,
+          ease: 'power2.out',
+          clearProps: 'transform,opacity',
+        },
+        0.18
+      );
+    }
+
+    // 4. PLANET VISUAL (Starts at 0.20s)
+    // MOBILE: scale 0.92 -> 1, opacity 0 -> 1, rotation 0. Static afterwards for 60fps!
+    // DESKTOP: subtle rotation -2.5deg -> 0deg and scale
     if (planetVisual) {
       masterTl.fromTo(
         planetVisual,
         {
-          scale: isMobile ? 0.96 : 0.90,
+          scale: 0.92,
           opacity: 0,
-          rotation: isMobile ? 0 : -3,
+          rotation: isMobile ? 0 : -2.5,
         },
         {
           scale: 1,
           opacity: 1,
           rotation: 0,
-          duration: isMobile ? 0.42 : 0.52,
+          duration: isMobile ? 0.35 : 0.45,
           ease: 'power2.out',
           clearProps: 'transform,opacity',
         },
-        0.38
+        0.20
       );
     }
 
-    // 5. HERO BENEFIT BAR & TILES (Starts at 0.44s)
+    // 5. HERO BENEFIT BAR & TILES (Starts at 0.24s)
     if (benefitBar) {
       masterTl.fromTo(
         benefitBar,
-        { opacity: 0, y: 6 },
+        { opacity: 0, y: 5 },
         {
           opacity: 1,
           y: 0,
-          duration: 0.38,
+          duration: 0.30,
           ease: 'power2.out',
           clearProps: 'transform,opacity',
         },
-        0.44
+        0.24
       );
     }
 
@@ -540,19 +541,19 @@ export function animateHeroMasterSequence(container: HTMLElement | null) {
         benefitTiles,
         {
           opacity: 0,
-          x: isMobile ? -6 : -10,
-          scale: 0.97,
+          x: isMobile ? -5 : -8,
+          scale: 0.98,
         },
         {
           opacity: 1,
           x: 0,
           scale: 1,
-          duration: 0.38,
-          stagger: 0.05,
+          duration: 0.30,
+          stagger: 0.03,
           ease: 'power2.out',
           clearProps: 'transform,opacity',
         },
-        0.48
+        0.26
       );
     }
   }, container);
@@ -1018,7 +1019,7 @@ export function animateFloatingButton(element: HTMLElement | null): (() => void)
         opacity: 1,
         rotation: 0,
         duration: dur,
-        delay: 0.68, // Appears smoothly right as hero sequence completes (no 1.25s dead wait!)
+        delay: 0.42, // Appears smoothly right as hero sequence completes (no dead wait!)
         ease: 'power2.out',
         force3D: true,
         clearProps: 'transform,opacity',
@@ -1037,21 +1038,21 @@ export function animateFloatingButton(element: HTMLElement | null): (() => void)
 
 /**
  * Animate general entrance elements on subpages (titles, breadcrumbs, content)
- * Instant start on route change with smooth, non-blocking 0.32-0.35s transition.
+ * Instant start on route change with lightning-fast 200-260ms transition.
  */
 export function animatePageEntrance(container: HTMLElement | null) {
   if (!container || typeof window === 'undefined') return;
 
   const reduced = prefersReducedMotion();
-  const dur = reduced ? 0.25 : 0.35;
-  const dist = reduced ? 4 : 10;
+  const dur = reduced ? 0.18 : 0.24;
+  const dist = reduced ? 3 : 8;
 
   const ctx = gsap.context(() => {
     // 1. Root page container immediate smooth fade
     gsap.fromTo(
       container,
-      { opacity: 0.88, y: 4 },
-      { opacity: 1, y: 0, duration: 0.3, ease: 'power2.out', clearProps: 'transform,opacity' }
+      { opacity: 0.94, y: 3 },
+      { opacity: 1, y: 0, duration: 0.18, ease: 'power2.out', clearProps: 'transform,opacity' }
     );
 
     // 2. Headings
@@ -1060,7 +1061,7 @@ export function animatePageEntrance(container: HTMLElement | null) {
       gsap.fromTo(
         headings,
         { y: dist, opacity: 0 },
-        { y: 0, opacity: 1, duration: dur, ease: 'power2.out', stagger: 0.04, force3D: true, clearProps: 'transform,opacity' }
+        { y: 0, opacity: 1, duration: dur, ease: 'power2.out', stagger: 0.025, force3D: true, clearProps: 'transform,opacity' }
       );
     }
 
@@ -1071,8 +1072,8 @@ export function animatePageEntrance(container: HTMLElement | null) {
     if (subheads.length > 0) {
       gsap.fromTo(
         subheads,
-        { y: dist * 0.7, opacity: 0 },
-        { y: 0, opacity: 1, duration: dur * 0.9, ease: 'power2.out', stagger: 0.03, force3D: true, clearProps: 'transform,opacity' }
+        { y: dist * 0.6, opacity: 0 },
+        { y: 0, opacity: 1, duration: dur * 0.9, ease: 'power2.out', stagger: 0.02, force3D: true, clearProps: 'transform,opacity' }
       );
     }
 
@@ -1083,7 +1084,7 @@ export function animatePageEntrance(container: HTMLElement | null) {
     if (media.length > 0) {
       gsap.fromTo(
         media,
-        { scale: 0.96, opacity: 0 },
+        { scale: 0.98, opacity: 0 },
         { scale: 1, opacity: 1, duration: dur, ease: 'power2.out', force3D: true, clearProps: 'transform,opacity' }
       );
     }
@@ -1093,16 +1094,17 @@ export function animatePageEntrance(container: HTMLElement | null) {
       '[data-gsap="card"], [data-gsap="hero-card"], [data-gsap="benefit-card"]'
     );
     if (initialCards.length > 0) {
-      // Only animate above-the-fold cards (first 8) with light stagger (0.03s)
+      // Only animate above-the-fold cards (first 8) with light stagger (0.025s)
       const topCards = Array.from(initialCards).slice(0, 8);
       gsap.fromTo(
         topCards,
-        { y: dist, opacity: 0 },
+        { y: dist, opacity: 0, scale: 0.98 },
         {
           y: 0,
           opacity: 1,
+          scale: 1,
           duration: dur,
-          stagger: 0.03,
+          stagger: 0.025,
           ease: 'power2.out',
           force3D: true,
           clearProps: 'transform,opacity',
