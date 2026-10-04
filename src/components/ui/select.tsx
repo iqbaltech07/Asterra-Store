@@ -4,11 +4,12 @@ import * as SelectPrimitive from "@radix-ui/react-select";
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  CheckIcon,
-  ChevronDownIcon,
-  ChevronUpIcon,
-} from "@radix-ui/react-icons";
+  faCheck,
+  faChevronDown,
+  faChevronUp,
+} from "@fortawesome/free-solid-svg-icons";
 
 const Select = SelectPrimitive.Root;
 
@@ -30,10 +31,9 @@ const SelectTrigger = React.forwardRef<
   >
     {children}
     <SelectPrimitive.Icon asChild>
-      <ChevronDownIcon
-        width={16}
-        height={16}
-        className="shrink-0 text-foreground-muted"
+      <FontAwesomeIcon
+        icon={faChevronDown}
+        className="w-3.5 h-3.5 shrink-0 text-foreground-muted"
       />
     </SelectPrimitive.Icon>
   </SelectPrimitive.Trigger>
@@ -52,7 +52,7 @@ const SelectScrollUpButton = React.forwardRef<
     )}
     {...props}
   >
-    <ChevronUpIcon width={16} height={16} />
+    <FontAwesomeIcon icon={faChevronUp} className="w-3.5 h-3.5" />
   </SelectPrimitive.ScrollUpButton>
 ));
 SelectScrollUpButton.displayName = SelectPrimitive.ScrollUpButton.displayName;
@@ -69,7 +69,7 @@ const SelectScrollDownButton = React.forwardRef<
     )}
     {...props}
   >
-    <ChevronDownIcon width={16} height={16} />
+    <FontAwesomeIcon icon={faChevronDown} className="w-3.5 h-3.5" />
   </SelectPrimitive.ScrollDownButton>
 ));
 SelectScrollDownButton.displayName =
@@ -135,7 +135,7 @@ const SelectItem = React.forwardRef<
   >
     <span className="absolute start-2 flex size-3.5 items-center justify-center">
       <SelectPrimitive.ItemIndicator>
-        <CheckIcon width={16} height={16} className="text-primary font-bold" />
+        <FontAwesomeIcon icon={faCheck} className="w-3.5 h-3.5 text-primary font-bold" />
       </SelectPrimitive.ItemIndicator>
     </span>
 

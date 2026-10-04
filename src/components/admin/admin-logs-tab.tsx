@@ -5,17 +5,18 @@ import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { OrderLog } from '@/lib/orders-data';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  Search,
-  RefreshCw,
-  Activity,
-  User,
-  Zap,
-  ShieldCheck,
-  CheckCircle2,
-  Ban,
-  FileText,
-} from 'lucide-react';
+  faMagnifyingGlass,
+  faArrowsRotate,
+  faChartLine,
+  faUser,
+  faBolt,
+  faShieldHalved,
+  faCircleCheck,
+  faBan,
+  faFileLines,
+} from '@fortawesome/free-solid-svg-icons';
 
 interface LogsApiResponse {
   success: boolean;
@@ -66,29 +67,29 @@ export function AdminLogsTab() {
     switch (actor) {
       case 'admin':
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-primary/15 text-primary border border-primary/30">
-            <User className="w-3 h-3" />
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-primary/15 text-primary border border-primary/30">
+            <FontAwesomeIcon icon={faUser} className="w-3 h-3" />
             <span>Admin Manual</span>
           </span>
         );
       case 'tripay_webhook':
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-status-success/15 text-status-success border border-status-success/30">
-            <Zap className="w-3 h-3" />
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-status-success/15 text-status-success border border-status-success/30">
+            <FontAwesomeIcon icon={faBolt} className="w-3 h-3" />
             <span>Tripay Webhook</span>
           </span>
         );
       case 'customer':
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-surface-raised text-foreground-muted border border-border">
-            <User className="w-3 h-3" />
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-surface-raised text-foreground-muted border border-border">
+            <FontAwesomeIcon icon={faUser} className="w-3 h-3" />
             <span>Pelanggan</span>
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-surface-raised text-foreground-muted border border-border">
-            <ShieldCheck className="w-3 h-3" />
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-surface-raised text-foreground-muted border border-border">
+            <FontAwesomeIcon icon={faShieldHalved} className="w-3 h-3" />
             <span>Sistem Otomatis</span>
           </span>
         );
@@ -99,29 +100,29 @@ export function AdminLogsTab() {
     switch (action) {
       case 'payment_received':
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-status-success/10 text-status-success">
-            <CheckCircle2 className="w-3 h-3" />
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-semibold bg-status-success/10 text-status-success">
+            <FontAwesomeIcon icon={faCircleCheck} className="w-3 h-3" />
             <span>Pembayaran Lunas</span>
           </span>
         );
       case 'status_updated':
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-primary/10 text-primary">
-            <Activity className="w-3 h-3" />
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-semibold bg-primary/10 text-primary">
+            <FontAwesomeIcon icon={faChartLine} className="w-3 h-3" />
             <span>Status Diubah</span>
           </span>
         );
       case 'order_created':
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-status-warning/10 text-status-warning">
-            <FileText className="w-3 h-3" />
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-semibold bg-status-warning/10 text-status-warning">
+            <FontAwesomeIcon icon={faFileLines} className="w-3 h-3" />
             <span>Pesanan Dibuat</span>
           </span>
         );
       case 'cancelled':
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-status-error/10 text-status-error">
-            <Ban className="w-3 h-3" />
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-semibold bg-status-error/10 text-status-error">
+            <FontAwesomeIcon icon={faBan} className="w-3 h-3" />
             <span>Dibatalkan</span>
           </span>
         );
@@ -140,7 +141,7 @@ export function AdminLogsTab() {
       <div className="bg-surface border border-border rounded-xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-base font-bold text-foreground flex items-center gap-2">
-            <Activity className="w-4 h-4 text-primary" />
+            <FontAwesomeIcon icon={faChartLine} className="w-4 h-4 text-primary" />
             <span>Log Aktivitas & Audit Perubahan Status</span>
           </h2>
           <p className="text-xs text-foreground-muted mt-1 max-w-2xl">
@@ -161,7 +162,7 @@ export function AdminLogsTab() {
             disabled={isRefetching}
             className="border-border text-xs gap-1.5 h-9"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${isRefetching ? 'animate-spin text-primary' : ''}`} />
+            <FontAwesomeIcon icon={faArrowsRotate} className={`w-3.5 h-3.5 ${isRefetching ? 'animate-spin text-primary' : ''}`} />
             <span>Segarkan Log</span>
           </Button>
         </div>
@@ -191,7 +192,7 @@ export function AdminLogsTab() {
                 : 'bg-surface-raised text-foreground-muted hover:text-foreground border border-border'
             }`}
           >
-            <User className="w-3 h-3" />
+            <FontAwesomeIcon icon={faUser} className="w-3 h-3" />
             <span>Admin Manual</span>
           </button>
           <button
@@ -203,7 +204,7 @@ export function AdminLogsTab() {
                 : 'bg-surface-raised text-foreground-muted hover:text-foreground border border-border'
             }`}
           >
-            <Zap className="w-3 h-3" />
+            <FontAwesomeIcon icon={faBolt} className="w-3 h-3" />
             <span>Tripay Webhook</span>
           </button>
           <button
@@ -221,7 +222,7 @@ export function AdminLogsTab() {
 
         {/* Search Input */}
         <div className="relative flex-1 sm:w-80">
-          <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-foreground-muted" />
+          <FontAwesomeIcon icon={faMagnifyingGlass} className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-foreground-muted" />
           <Input
             type="text"
             placeholder="Cari Customer, Email, ID Pesanan, Action..."
@@ -236,12 +237,12 @@ export function AdminLogsTab() {
       <div className="bg-surface border border-border rounded-xl overflow-hidden shadow-sm">
         {isLoading ? (
           <div className="p-12 text-center">
-            <RefreshCw className="w-8 h-8 animate-spin mx-auto text-primary mb-3" />
+            <FontAwesomeIcon icon={faArrowsRotate} className="w-8 h-8 animate-spin mx-auto text-primary mb-3" />
             <p className="text-xs text-foreground-muted">Memuat log aktivitas sistem...</p>
           </div>
         ) : logs.length === 0 ? (
           <div className="p-12 text-center">
-            <Activity className="w-12 h-12 text-foreground-muted/40 mx-auto mb-3" />
+            <FontAwesomeIcon icon={faChartLine} className="w-12 h-12 text-foreground-muted/40 mx-auto mb-3" />
             <h3 className="text-sm font-semibold text-foreground">Tidak Ada Log Tercatat</h3>
             <p className="text-xs text-foreground-muted mt-1">
               {searchQuery

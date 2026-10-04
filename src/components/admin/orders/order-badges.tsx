@@ -1,35 +1,36 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Order, OrderLog } from '@/lib/orders-data';
-import { CheckCircle2, Clock, Ban } from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCircleCheck, faClock, faBan } from '@fortawesome/free-solid-svg-icons';
 
 export function OrderStatusBadge({ status }: { status: Order['order_status'] }) {
   switch (status) {
     case 'completed':
       return (
         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-status-success/15 text-status-success border border-status-success/30">
-          <CheckCircle2 className="w-3.5 h-3.5" />
+          <FontAwesomeIcon icon={faCircleCheck} className="w-3.5 h-3.5" />
           <span>Selesai</span>
         </span>
       );
     case 'processing':
       return (
         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-primary/15 text-primary border border-primary/30">
-          <Clock className="w-3.5 h-3.5 animate-spin" />
+          <FontAwesomeIcon icon={faClock} className="w-3.5 h-3.5 animate-spin" />
           <span>Di Proses</span>
         </span>
       );
     case 'cancelled':
       return (
         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-status-error/15 text-status-error border border-status-error/30">
-          <Ban className="w-3.5 h-3.5" />
+          <FontAwesomeIcon icon={faBan} className="w-3.5 h-3.5" />
           <span>Dibatalkan</span>
         </span>
       );
     default:
       return (
         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-status-warning/15 text-status-warning border border-status-warning/30">
-          <Clock className="w-3.5 h-3.5" />
+          <FontAwesomeIcon icon={faClock} className="w-3.5 h-3.5" />
           <span>Menunggu Bayar</span>
         </span>
       );

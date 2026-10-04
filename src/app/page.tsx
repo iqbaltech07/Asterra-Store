@@ -4,22 +4,27 @@ import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  ShieldCheck,
-  Zap,
-  CreditCard,
-  Layers,
-  Headphones,
-  CheckCircle2,
-  ArrowRight,
-  Plus,
-  Minus,
-  Tv,
-  CircleHelp,
-  Package,
-  LayoutGrid,
-  Star,
-} from 'lucide-react';
+  faShieldHalved,
+  faBolt,
+  faCreditCard,
+  faLayerGroup,
+  faHeadphones,
+  faCircleCheck,
+  faArrowRight,
+  faPlus,
+  faMinus,
+  faTv,
+  faCircleQuestion,
+  faBox,
+  faTableCellsLarge,
+  faStar,
+} from '@fortawesome/free-solid-svg-icons';
+import {
+  faYoutube,
+  faSpotify,
+} from '@fortawesome/free-brands-svg-icons';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { ProductItem } from '@/lib/products-data';
@@ -96,9 +101,7 @@ function AppBrandBadge({ name }: { name: string }) {
   if (n.includes('youtube')) {
     return (
       <div className="w-full h-full bg-[#FF0000] rounded-lg sm:rounded-xl flex items-center justify-center p-1.5 shadow-2xs">
-        <svg viewBox="0 0 24 24" className="w-5 h-5 sm:w-6 sm:h-6 text-white fill-current">
-          <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-        </svg>
+        <FontAwesomeIcon icon={faYoutube} className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
       </div>
     );
   }
@@ -106,9 +109,7 @@ function AppBrandBadge({ name }: { name: string }) {
   if (n.includes('spotify')) {
     return (
       <div className="w-full h-full bg-[#1DB954] rounded-lg sm:rounded-xl flex items-center justify-center p-1.5 shadow-2xs">
-        <svg viewBox="0 0 24 24" className="w-5 h-5 sm:w-6 sm:h-6 text-[#121A2A] fill-current">
-          <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/>
-        </svg>
+        <FontAwesomeIcon icon={faSpotify} className="w-5 h-5 sm:w-6 sm:h-6 text-[#121A2A]" />
       </div>
     );
   }
@@ -187,14 +188,14 @@ function AppBrandBadge({ name }: { name: string }) {
   if (n.includes('k-vision') || n.includes('nex') || n.includes('vision') || n.includes('orange tv')) {
     return (
       <div className="w-full h-full bg-[#121A2A] rounded-lg sm:rounded-xl flex items-center justify-center p-1.5 shadow-2xs">
-        <Tv className="w-5 h-5 text-[#C96F55]" />
+        <FontAwesomeIcon icon={faTv} className="w-5 h-5 text-[#C96F55]" />
       </div>
     );
   }
 
   return (
     <div className="w-full h-full bg-[#C96F55]/10 rounded-lg sm:rounded-xl flex items-center justify-center p-1.5 shadow-2xs">
-      <Layers className="w-5 h-5 text-[#C96F55]" />
+      <FontAwesomeIcon icon={faLayerGroup} className="w-5 h-5 text-[#C96F55]" />
     </div>
   );
 }
@@ -245,7 +246,7 @@ function ApplicationCard({
 
             {/* Rating + Terjual: ⭐ 5.0 (Terjual 620) */}
             <div className="flex items-center gap-1 text-[11px] text-[#121A2A]/75 font-medium mt-0.5">
-              <Star className="w-3 h-3 text-amber-500 fill-amber-500 shrink-0" />
+              <FontAwesomeIcon icon={faStar} className="w-3 h-3 text-amber-500 shrink-0" />
               <span className="font-semibold text-[#121A2A]">{app.rating || '5.0'}</span>
               <span className="text-[#121A2A]/45 truncate">
                 (Terjual {app.soldCount ? app.soldCount.toLocaleString('id-ID') : 100 * (app.items.length || app.fallbackCount)})
@@ -282,7 +283,7 @@ function ApplicationCard({
         </span>
         <span className="text-[10px] sm:text-xs font-semibold text-[#C96F55] opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5">
           <span>Pilih</span>
-          <ArrowRight className="w-3 h-3" />
+          <FontAwesomeIcon icon={faArrowRight} className="w-3 h-3" />
         </span>
       </div>
     </Link>
@@ -496,7 +497,7 @@ export default function HomePage() {
       {/* Toast Notification */}
       {activeNotification && (
         <div className="fixed bottom-6 right-6 z-50 bg-[#121A2A] border border-white/15 text-white px-4 py-3 rounded-xl shadow-editorial flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2 duration-200">
-          <CheckCircle2 className="w-4 h-4 text-[#C96F55] shrink-0" />
+          <FontAwesomeIcon icon={faCircleCheck} className="w-4 h-4 text-[#C96F55] shrink-0" />
           <span className="text-sm font-medium">{activeNotification}</span>
         </div>
       )}
@@ -529,18 +530,10 @@ export default function HomePage() {
               </p>
             </div>
 
-            {/* Right Column: Planet Visual (Smooth, Cleanly Centered in Right Area, Zero Lag) */}
+            {/* Right Column: Planet Visual (Original 3-Layer Sequential Animation) */}
             <div className="absolute right-1 sm:right-3 lg:right-6 top-1/2 -translate-y-1/2 pointer-events-none select-none z-10">
-              <div
-                data-gsap="hero-media"
-                className="relative w-[115px] h-[115px] sm:w-[170px] sm:h-[170px] lg:w-[250px] lg:h-[250px] flex items-center justify-center"
-                style={{
-                  transform: 'translate3d(0,0,0)',
-                  WebkitTransform: 'translate3d(0,0,0)',
-                  willChange: 'transform',
-                }}
-              >
-                {/* Subtle SVG Orbital Background Rings (desktop & tablet only) */}
+              <div className="relative w-[115px] h-[115px] sm:w-[170px] sm:h-[170px] lg:w-[250px] lg:h-[250px] flex items-center justify-center">
+                {/* Subtle SVG Orbital Background Rings (desktop & tablet only) - 100% STATIC */}
                 <svg
                   className="hidden sm:block absolute inset-0 w-full h-full pointer-events-none opacity-50"
                   viewBox="0 0 500 500"
@@ -568,7 +561,7 @@ export default function HomePage() {
                   />
                 </svg>
 
-                {/* Ambient Soft Glow: GPU-Native Radial Gradient (Zero CPU blur calculation on iOS WebKit) */}
+                {/* Ambient Soft Glow: STATIC, separated layer, zero blur/repaint */}
                 <div
                   className="absolute inset-0 rounded-full pointer-events-none"
                   style={{
@@ -576,26 +569,39 @@ export default function HomePage() {
                   }}
                 />
 
-                {/* Scaled Asterra Planet Visual: Optically Centered to Orbital Rings */}
+                {/* Scaled Asterra Planet Visual: Responsive Resolution-Optimized Animated WebP */}
                 <div
+                  data-gsap="hero-media"
                   className="relative z-10 w-[100px] sm:w-[150px] lg:w-[220px] flex items-center justify-center translate-x-1 sm:translate-x-1.5 lg:translate-x-2.5 -translate-y-1.5 sm:-translate-y-2 lg:-translate-y-3"
                   style={{
+                    transform: 'translate3d(0,0,0)',
+                    WebkitTransform: 'translate3d(0,0,0)',
                     WebkitBackfaceVisibility: 'hidden',
                     backfaceVisibility: 'hidden',
                     willChange: 'transform',
                   }}
                 >
-                  <img
-                    src="/assets/asterra-planet-transparent.webp"
-                    alt="Asterra Store"
-                    width={800}
-                    height={426}
-                    draggable={false}
-                    className="w-full h-auto object-contain pointer-events-none select-none"
-                    onError={(e) => {
-                      e.currentTarget.src = "/images/brand/hero-planet-white.png";
-                    }}
-                  />
+                  <picture className="w-full h-auto flex items-center justify-center pointer-events-none select-none">
+                    {/* Mobile: 400x213 Animated WebP (75% lower RAM & CPU decoding overhead on iPhone 12) */}
+                    <source
+                      media="(max-width: 640px)"
+                      srcSet="/assets/asterra-planet-mobile.webp"
+                      type="image/webp"
+                    />
+                    {/* Tablet & Desktop: Original 800x426 Animated WebP */}
+                    <img
+                      src="/assets/asterra-planet-transparent.webp"
+                      alt="Asterra Store"
+                      width={800}
+                      height={426}
+                      decoding="async"
+                      draggable={false}
+                      className="w-full h-auto object-contain pointer-events-none select-none"
+                      onError={(e) => {
+                        e.currentTarget.src = "/images/brand/hero-planet-white.png";
+                      }}
+                    />
+                  </picture>
                 </div>
               </div>
             </div>
@@ -611,7 +617,7 @@ export default function HomePage() {
               className="col-span-1 order-1 sm:order-1 bg-white/[0.03] sm:bg-transparent border border-white/[0.07] sm:border-none rounded-xl sm:rounded-none p-2.5 sm:p-0 flex flex-col sm:flex-row sm:items-center justify-between sm:justify-start gap-1.5 sm:gap-3"
             >
               <div className="w-6 h-6 sm:w-9 sm:h-9 rounded-md sm:rounded-xl bg-[rgba(201,111,85,0.15)] border border-[rgba(201,111,85,0.25)] flex items-center justify-center shrink-0">
-                <ShieldCheck className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-[#E28870]" />
+                <FontAwesomeIcon icon={faShieldHalved} className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-[#E28870]" />
               </div>
               <div className="min-w-0 flex-1">
                 <h3 className="font-bold text-[11px] sm:text-sm text-white leading-tight">100% Legal & Bergaransi</h3>
@@ -625,7 +631,7 @@ export default function HomePage() {
               className="col-span-1 order-2 sm:order-3 sm:border-l sm:border-white/10 sm:pl-6 bg-white/[0.03] sm:bg-transparent border border-white/[0.07] sm:border-none rounded-xl sm:rounded-none p-2.5 sm:p-0 flex flex-col sm:flex-row sm:items-center justify-between sm:justify-start gap-1.5 sm:gap-3"
             >
               <div className="w-6 h-6 sm:w-9 sm:h-9 rounded-md sm:rounded-xl bg-[rgba(201,111,85,0.15)] border border-[rgba(201,111,85,0.25)] flex items-center justify-center shrink-0">
-                <CreditCard className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-[#E28870]" />
+                <FontAwesomeIcon icon={faCreditCard} className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-[#E28870]" />
               </div>
               <div className="min-w-0 flex-1">
                 <h3 className="font-bold text-[11px] sm:text-sm text-white leading-tight">
@@ -645,7 +651,7 @@ export default function HomePage() {
               className="col-span-2 sm:col-span-1 order-3 sm:order-2 sm:border-l sm:border-white/10 sm:pl-6 bg-white/[0.03] sm:bg-transparent border border-white/[0.07] sm:border-none rounded-xl sm:rounded-none p-2.5 sm:p-0 flex items-center justify-center sm:justify-start gap-2.5 sm:gap-3"
             >
               <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-[rgba(201,111,85,0.15)] border border-[rgba(201,111,85,0.25)] flex items-center justify-center shrink-0">
-                <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-[#E28870]" />
+                <FontAwesomeIcon icon={faBolt} className="w-4 h-4 sm:w-5 sm:h-5 text-[#E28870]" />
               </div>
               <div className="min-w-0 text-center sm:text-left">
                 <h3 className="font-bold text-xs sm:text-sm text-white leading-tight">Proses Cepat & Otomatis</h3>
@@ -677,7 +683,7 @@ export default function HomePage() {
               className="text-xs sm:text-sm font-bold text-[#C96F55] hover:text-[#B86047] inline-flex items-center gap-1.5 shrink-0 transition-colors"
             >
               <span>Lihat Semua Katalog</span>
-              <ArrowRight className="w-4 h-4" />
+              <FontAwesomeIcon icon={faArrowRight} className="w-4 h-4" />
             </Link>
           </div>
 
@@ -730,7 +736,7 @@ export default function HomePage() {
             {/* 1. Produk Terverifikasi */}
             <div data-gsap="keunggulan-card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-3 sm:p-5 space-y-1.5 sm:space-y-2 hover:border-[rgba(18,26,42,0.2)] transition-[border-color,box-shadow,background-color] duration-200">
               <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.2)] flex items-center justify-center text-[#C96F55]">
-                <ShieldCheck className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
+                <FontAwesomeIcon icon={faShieldHalved} className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
               </div>
               <h3 className="text-xs sm:text-base font-bold text-[#121A2A] leading-tight">Produk Terverifikasi</h3>
               <p className="text-[10px] sm:text-xs text-[#121A2A]/65 leading-snug sm:leading-relaxed">
@@ -742,7 +748,7 @@ export default function HomePage() {
             {/* 2. Aktivasi Cepat */}
             <div data-gsap="keunggulan-card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-3 sm:p-5 space-y-1.5 sm:space-y-2 hover:border-[rgba(18,26,42,0.2)] transition-[border-color,box-shadow,background-color] duration-200">
               <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.2)] flex items-center justify-center text-[#C96F55]">
-                <Zap className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
+                <FontAwesomeIcon icon={faBolt} className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
               </div>
               <h3 className="text-xs sm:text-base font-bold text-[#121A2A] leading-tight">Aktivasi Cepat</h3>
               <p className="text-[10px] sm:text-xs text-[#121A2A]/65 leading-snug sm:leading-relaxed">
@@ -754,7 +760,7 @@ export default function HomePage() {
             {/* 3. Pilihan Lengkap */}
             <div data-gsap="keunggulan-card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-3 sm:p-5 space-y-1.5 sm:space-y-2 hover:border-[rgba(18,26,42,0.2)] transition-[border-color,box-shadow,background-color] duration-200">
               <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.2)] flex items-center justify-center text-[#C96F55]">
-                <Layers className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
+                <FontAwesomeIcon icon={faLayerGroup} className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
               </div>
               <h3 className="text-xs sm:text-base font-bold text-[#121A2A] leading-tight">Pilihan Lengkap</h3>
               <p className="text-[10px] sm:text-xs text-[#121A2A]/65 leading-snug sm:leading-relaxed">
@@ -766,7 +772,7 @@ export default function HomePage() {
             {/* 4. Pembayaran Praktis */}
             <div data-gsap="keunggulan-card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-3 sm:p-5 space-y-1.5 sm:space-y-2 hover:border-[rgba(18,26,42,0.2)] transition-[border-color,box-shadow,background-color] duration-200">
               <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.2)] flex items-center justify-center text-[#C96F55]">
-                <CreditCard className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
+                <FontAwesomeIcon icon={faCreditCard} className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
               </div>
               <h3 className="text-xs sm:text-base font-bold text-[#121A2A] leading-tight">Pembayaran Praktis</h3>
               <p className="text-[10px] sm:text-xs text-[#121A2A]/65 leading-snug sm:leading-relaxed">
@@ -778,7 +784,7 @@ export default function HomePage() {
             {/* 5. Garansi Jelas */}
             <div data-gsap="keunggulan-card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-3 sm:p-5 space-y-1.5 sm:space-y-2 hover:border-[rgba(18,26,42,0.2)] transition-[border-color,box-shadow,background-color] duration-200">
               <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.2)] flex items-center justify-center text-[#C96F55]">
-                <ShieldCheck className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
+                <FontAwesomeIcon icon={faShieldHalved} className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
               </div>
               <h3 className="text-xs sm:text-base font-bold text-[#121A2A] leading-tight">Garansi Jelas</h3>
               <p className="text-[10px] sm:text-xs text-[#121A2A]/65 leading-snug sm:leading-relaxed">
@@ -790,7 +796,7 @@ export default function HomePage() {
             {/* 6. Customer Support */}
             <div data-gsap="keunggulan-card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-3 sm:p-5 space-y-1.5 sm:space-y-2 hover:border-[rgba(18,26,42,0.2)] transition-[border-color,box-shadow,background-color] duration-200">
               <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.2)] flex items-center justify-center text-[#C96F55]">
-                <Headphones className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
+                <FontAwesomeIcon icon={faHeadphones} className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
               </div>
               <h3 className="text-xs sm:text-base font-bold text-[#121A2A] leading-tight">Customer Support</h3>
               <p className="text-[10px] sm:text-xs text-[#121A2A]/65 leading-snug sm:leading-relaxed">
@@ -824,7 +830,7 @@ export default function HomePage() {
                     01
                   </span>
                   <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-md sm:rounded-lg bg-[rgba(201,111,85,0.08)] flex items-center justify-center text-[#C96F55]">
-                    <LayoutGrid className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <FontAwesomeIcon icon={faTableCellsLarge} className="w-3 h-3 sm:w-4 sm:h-4" />
                   </div>
                 </div>
                 <h3 className="text-xs sm:text-sm font-bold text-[#121A2A] mb-0.5 sm:mb-1">
@@ -844,7 +850,7 @@ export default function HomePage() {
                     02
                   </span>
                   <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-md sm:rounded-lg bg-[rgba(201,111,85,0.08)] flex items-center justify-center text-[#C96F55]">
-                    <Package className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <FontAwesomeIcon icon={faBox} className="w-3 h-3 sm:w-4 sm:h-4" />
                   </div>
                 </div>
                 <h3 className="text-xs sm:text-sm font-bold text-[#121A2A] mb-0.5 sm:mb-1">
@@ -864,7 +870,7 @@ export default function HomePage() {
                     03
                   </span>
                   <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-md sm:rounded-lg bg-[rgba(201,111,85,0.08)] flex items-center justify-center text-[#C96F55]">
-                    <CreditCard className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <FontAwesomeIcon icon={faCreditCard} className="w-3 h-3 sm:w-4 sm:h-4" />
                   </div>
                 </div>
                 <h3 className="text-xs sm:text-sm font-bold text-[#121A2A] mb-0.5 sm:mb-1">
@@ -884,7 +890,7 @@ export default function HomePage() {
                     04
                   </span>
                   <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-md sm:rounded-lg bg-[rgba(201,111,85,0.08)] flex items-center justify-center text-[#C96F55]">
-                    <Zap className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <FontAwesomeIcon icon={faBolt} className="w-3 h-3 sm:w-4 sm:h-4" />
                   </div>
                 </div>
                 <h3 className="text-xs sm:text-sm font-bold text-[#121A2A] mb-0.5 sm:mb-1">
@@ -902,7 +908,7 @@ export default function HomePage() {
         <section id="faq" data-gsap-section="faq" className="mb-10 sm:mb-14 pt-6 sm:pt-8 border-t border-[rgba(18,26,42,0.08)]">
           <div data-gsap="faq-header" className="max-w-2xl mb-6">
             <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#C96F55] uppercase tracking-wider mb-1">
-              <CircleHelp className="w-3.5 h-3.5" />
+              <FontAwesomeIcon icon={faCircleQuestion} className="w-3.5 h-3.5" />
               <span>Bantuan & Panduan</span>
             </div>
             <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-[#121A2A] tracking-tight">
@@ -932,9 +938,9 @@ export default function HomePage() {
                     </span>
                     <span className="w-6 h-6 rounded-md bg-[rgba(18,26,42,0.05)] flex items-center justify-center text-[#121A2A]/70 shrink-0">
                       {isOpen ? (
-                        <Minus className="w-3.5 h-3.5 text-[#C96F55]" />
+                        <FontAwesomeIcon icon={faMinus} className="w-3.5 h-3.5 text-[#C96F55]" />
                       ) : (
-                        <Plus className="w-3.5 h-3.5" />
+                        <FontAwesomeIcon icon={faPlus} className="w-3.5 h-3.5" />
                       )}
                     </span>
                   </button>
@@ -964,7 +970,7 @@ export default function HomePage() {
             <Link href="/products">
               <Button className="h-10 sm:h-11 px-5 sm:px-6 rounded-xl bg-[#C96F55] hover:bg-[#B86047] text-[#F7F5EF] font-bold text-xs sm:text-sm gap-2 shrink-0 active:scale-95 transition-all">
                 <span>Jelajahi Produk</span>
-                <ArrowRight className="w-4 h-4" />
+                <FontAwesomeIcon icon={faArrowRight} className="w-4 h-4" />
               </Button>
             </Link>
           </div>

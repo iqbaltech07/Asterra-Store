@@ -2,7 +2,14 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
-import { Headphones, Mail, MessageCircle, X, ExternalLink } from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faHeadphones,
+  faEnvelope,
+  faXmark,
+  faArrowUpRightFromSquare,
+} from '@fortawesome/free-solid-svg-icons';
+import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
 import { animateFloatingButton } from '@/lib/animations/gsap-utils';
 
 export function FloatingSupport() {
@@ -101,7 +108,7 @@ export function FloatingSupport() {
               className="text-foreground-muted hover:text-foreground p-1 rounded-md transition-colors"
               aria-label="Tutup bantuan"
             >
-              <X className="w-3.5 h-3.5" />
+              <FontAwesomeIcon icon={faXmark} className="w-3.5 h-3.5" />
             </button>
           </div>
 
@@ -122,7 +129,7 @@ export function FloatingSupport() {
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
                     <div className="w-8 h-8 rounded-lg bg-status-success/15 text-status-success flex items-center justify-center shrink-0">
-                      <MessageCircle className="w-4 h-4" />
+                      <FontAwesomeIcon icon={faWhatsapp} className="w-4 h-4" />
                     </div>
                     <div className="min-w-0">
                       <span className="text-[11px] font-semibold text-foreground block">{label}</span>
@@ -131,7 +138,7 @@ export function FloatingSupport() {
                       </span>
                     </div>
                   </div>
-                  <ExternalLink className="w-3.5 h-3.5 text-foreground-muted group-hover:text-foreground shrink-0 ml-2" />
+                  <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="w-3.5 h-3.5 text-foreground-muted group-hover:text-foreground shrink-0 ml-2" />
                 </a>
               );
             })}
@@ -143,7 +150,7 @@ export function FloatingSupport() {
             >
               <div className="flex items-center gap-2.5 min-w-0">
                 <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                  <Mail className="w-4 h-4" />
+                  <FontAwesomeIcon icon={faEnvelope} className="w-4 h-4" />
                 </div>
                 <div className="min-w-0">
                   <span className="text-[11px] font-semibold text-foreground block">Email Dukungan</span>
@@ -152,7 +159,7 @@ export function FloatingSupport() {
                   </span>
                 </div>
               </div>
-              <ExternalLink className="w-3.5 h-3.5 text-foreground-muted group-hover:text-foreground shrink-0 ml-2" />
+              <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="w-3.5 h-3.5 text-foreground-muted group-hover:text-foreground shrink-0 ml-2" />
             </a>
           </div>
 
@@ -174,7 +181,7 @@ export function FloatingSupport() {
         aria-label="Bantuan & Kontak Customer Service"
         title="Bantuan & Kontak CS"
       >
-        {isOpen ? <X className="w-5 h-5" /> : <Headphones className="w-5 h-5 text-primary" />}
+        {isOpen ? <FontAwesomeIcon icon={faXmark} className="w-5 h-5" /> : <FontAwesomeIcon icon={faHeadphones} className="w-5 h-5 text-primary" />}
       </button>
     </div>
   );

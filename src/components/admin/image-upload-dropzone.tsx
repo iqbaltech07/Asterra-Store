@@ -1,19 +1,20 @@
 'use client';
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  UploadCloud,
-  ImageIcon,
-  Loader2,
-  Trash2,
-  ExternalLink,
-  RefreshCw,
-  AlertCircle,
-  Link as LinkIcon,
-  ShieldCheck,
-  Check,
-  Zap,
-} from 'lucide-react';
+  faCloudArrowUp,
+  faImage,
+  faSpinner,
+  faTrash,
+  faArrowUpRightFromSquare,
+  faArrowsRotate,
+  faTriangleExclamation,
+  faLink,
+  faShieldHalved,
+  faCheck,
+  faBolt,
+} from '@fortawesome/free-solid-svg-icons';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { compressImageToWebP } from '@/lib/utils/image-compression';
@@ -39,7 +40,7 @@ interface ImageUploadDropzoneProps {
   mode?: UploadMode;
 }
 
-const MAX_FILE_SIZE_MB = 10;
+const MAX_FILE_SIZE_MB = 5;
 const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml', 'image/avif'];
 
 /**
@@ -249,11 +250,11 @@ export function ImageUploadDropzone({
       {/* Label & Header Controls */}
       <div className="flex items-center justify-between">
         <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-          <ImageIcon className="w-3.5 h-3.5 text-primary" />
+          <FontAwesomeIcon icon={faImage} className="w-3.5 h-3.5 text-primary" />
           <span>{label}</span>
           {mode === 'lazy' && (
             <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 inline-flex items-center gap-0.5">
-              <Zap className="w-2.5 h-2.5" />
+              <FontAwesomeIcon icon={faBolt} className="w-2.5 h-2.5" />
               <span>Upload saat Simpan</span>
             </span>
           )}
@@ -263,7 +264,7 @@ export function ImageUploadDropzone({
           onClick={() => setShowManualInput(!showManualInput)}
           className="text-[11px] text-foreground-muted hover:text-primary transition-colors flex items-center gap-1"
         >
-          <LinkIcon className="w-3 h-3" />
+          <FontAwesomeIcon icon={faLink} className="w-3 h-3" />
           <span>{showManualInput ? 'Sembunyikan URL Manual' : 'Input URL Manual'}</span>
         </button>
       </div>
@@ -281,7 +282,7 @@ export function ImageUploadDropzone({
       {/* Upload Error Alert */}
       {uploadError && (
         <div className="p-2.5 rounded-lg bg-status-error/10 border border-status-error/30 text-status-error text-xs flex items-start gap-2 animate-in fade-in-50">
-          <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+          <FontAwesomeIcon icon={faTriangleExclamation} className="w-4 h-4 shrink-0 mt-0.5" />
           <div className="flex-1">
             <span className="font-semibold block">Gagal Mengunggah</span>
             <span>{uploadError}</span>
@@ -312,7 +313,7 @@ export function ImageUploadDropzone({
                 />
               ) : (
                 <div className="text-center p-2 text-foreground-muted text-[10px] space-y-1">
-                  <ImageIcon className="w-6 h-6 mx-auto opacity-50 text-primary" />
+                  <FontAwesomeIcon icon={faImage} className="w-6 h-6 mx-auto opacity-50 text-primary" />
                   <span className="block truncate max-w-[120px]">Gambar Baru Terpilih</span>
                 </div>
               )}
@@ -320,7 +321,7 @@ export function ImageUploadDropzone({
               {/* Uploading / Compressing Overlay */}
               {isBusy && (
                 <div className="absolute inset-0 bg-black/60 backdrop-blur-xs flex flex-col items-center justify-center text-white gap-1.5 z-10">
-                  <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                  <FontAwesomeIcon icon={faSpinner} className="w-5 h-5 animate-spin text-primary" />
                   <span className="text-[10px] font-medium">
                     {isCompressing ? 'Mengompres...' : 'Mengunggah...'}
                   </span>
@@ -336,7 +337,7 @@ export function ImageUploadDropzone({
                   className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white gap-1 text-[11px] font-medium"
                   title="Buka Gambar di Tab Baru"
                 >
-                  <ExternalLink className="w-3.5 h-3.5" />
+                  <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="w-3.5 h-3.5" />
                   <span>Lihat</span>
                 </a>
               )}
@@ -347,22 +348,22 @@ export function ImageUploadDropzone({
               <div className="flex items-center gap-1.5 flex-wrap">
                 {isBusy ? (
                   <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/30 inline-flex items-center gap-1">
-                    <Loader2 className="w-3 h-3 animate-spin" />
+                    <FontAwesomeIcon icon={faSpinner} className="w-3 h-3 animate-spin" />
                     <span>{isCompressing ? 'Mengompres gambar...' : 'Menyimpan ke Vercel Blob...'}</span>
                   </span>
                 ) : mode === 'lazy' && localPreview ? (
                   <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 border border-amber-500/30 inline-flex items-center gap-1">
-                    <Zap className="w-3 h-3" />
+                    <FontAwesomeIcon icon={faBolt} className="w-3 h-3" />
                     <span>Siap Upload (saat Simpan)</span>
                   </span>
                 ) : isPrivateBlob ? (
                   <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-status-success/15 text-status-success border border-status-success/30 inline-flex items-center gap-1">
-                    <ShieldCheck className="w-3 h-3" />
+                    <FontAwesomeIcon icon={faShieldHalved} className="w-3.5 h-3.5" />
                     <span>Vercel Blob Private</span>
                   </span>
                 ) : (
                   <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-surface-raised text-foreground-muted border border-border inline-flex items-center gap-1">
-                    <LinkIcon className="w-3 h-3" />
+                    <FontAwesomeIcon icon={faLink} className="w-3 h-3" />
                     <span>External URL</span>
                   </span>
                 )}
@@ -380,7 +381,7 @@ export function ImageUploadDropzone({
                   disabled={disabled || isBusy}
                   className="h-7 text-xs gap-1.5 border-border hover:border-primary/50"
                 >
-                  <RefreshCw className="w-3 h-3 text-primary" />
+                  <FontAwesomeIcon icon={faArrowsRotate} className="w-3 h-3 text-primary" />
                   <span>Ganti File</span>
                 </Button>
 
@@ -392,7 +393,7 @@ export function ImageUploadDropzone({
                     onClick={handleCopyUrl}
                     className="h-7 text-xs gap-1.5 border-border"
                   >
-                    {copySuccess ? <Check className="w-3 h-3 text-status-success" /> : <LinkIcon className="w-3 h-3" />}
+                    {copySuccess ? <FontAwesomeIcon icon={faCheck} className="w-3 h-3 text-status-success" /> : <FontAwesomeIcon icon={faLink} className="w-3 h-3" />}
                     <span>{copySuccess ? 'Tersalin' : 'Salin URL'}</span>
                   </Button>
                 )}
@@ -405,7 +406,7 @@ export function ImageUploadDropzone({
                   disabled={disabled || isBusy}
                   className="h-7 text-xs gap-1.5 text-status-error hover:bg-status-error/10 hover:text-status-error border-border hover:border-status-error/30"
                 >
-                  <Trash2 className="w-3 h-3" />
+                  <FontAwesomeIcon icon={faTrash} className="w-3 h-3" />
                   <span>Hapus</span>
                 </Button>
               </div>
@@ -429,7 +430,7 @@ export function ImageUploadDropzone({
             /* Uploading Active State */
             <div className="py-4 space-y-2.5">
               <div className="w-10 h-10 mx-auto rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                <Loader2 className="w-5 h-5 animate-spin" />
+                <FontAwesomeIcon icon={faSpinner} className="w-5 h-5 animate-spin" />
               </div>
               <div className="space-y-1">
                 <p className="text-xs font-semibold text-foreground">
@@ -457,7 +458,7 @@ export function ImageUploadDropzone({
                     : 'bg-primary/10 text-primary'
                 }`}
               >
-                <UploadCloud className="w-5 h-5" />
+                <FontAwesomeIcon icon={faCloudArrowUp} className="w-5 h-5" />
               </div>
               <div className="space-y-0.5">
                 <p className="text-xs font-semibold text-foreground">

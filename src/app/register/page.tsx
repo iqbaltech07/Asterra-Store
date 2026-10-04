@@ -15,16 +15,17 @@ import {
 } from '@/components/ui/card';
 import { useAuthStore } from '@/store/use-auth-store';
 import { AsterraLogo } from '@/components/ui/asterra-logo';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  Lock,
-  Mail,
-  User,
-  ArrowLeft,
-  Loader2,
-  AlertCircle,
-  CheckCircle2,
-  ShieldCheck,
-} from 'lucide-react';
+  faLock,
+  faEnvelope,
+  faUser,
+  faArrowLeft,
+  faSpinner,
+  faTriangleExclamation,
+  faCircleCheck,
+  faShieldHalved,
+} from '@fortawesome/free-solid-svg-icons';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -107,7 +108,7 @@ export default function RegisterPage() {
           href="/"
           className="inline-flex items-center gap-2 text-xs font-semibold text-[#121A2A]/60 hover:text-[#121A2A] transition-colors group"
         >
-          <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
+          <FontAwesomeIcon icon={faArrowLeft} className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
           <span>Kembali ke Beranda Toko</span>
         </Link>
       </div>
@@ -130,14 +131,14 @@ export default function RegisterPage() {
             {/* Feedback Notifications */}
             {errorMessage && (
               <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 flex items-center gap-2.5 text-xs text-status-error animate-in fade-in">
-                <AlertCircle className="w-4 h-4 shrink-0 text-status-error" />
+                <FontAwesomeIcon icon={faTriangleExclamation} className="w-4 h-4 shrink-0 text-status-error" />
                 <span className="font-medium">{errorMessage}</span>
               </div>
             )}
 
             {successMessage && (
               <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center gap-2.5 text-xs text-status-success animate-in fade-in">
-                <CheckCircle2 className="w-4 h-4 shrink-0 text-status-success" />
+                <FontAwesomeIcon icon={faCircleCheck} className="w-4 h-4 shrink-0 text-status-success" />
                 <span className="font-medium">{successMessage}</span>
               </div>
             )}
@@ -147,7 +148,7 @@ export default function RegisterPage() {
                 Nama Lengkap
               </label>
               <div className="relative">
-                <User className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#121A2A]/40 pointer-events-none" />
+                <FontAwesomeIcon icon={faUser} className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#121A2A]/40 pointer-events-none" />
                 <Input
                   id="name"
                   type="text"
@@ -165,7 +166,7 @@ export default function RegisterPage() {
                 Alamat Email
               </label>
               <div className="relative">
-                <Mail className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#121A2A]/40 pointer-events-none" />
+                <FontAwesomeIcon icon={faEnvelope} className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#121A2A]/40 pointer-events-none" />
                 <Input
                   id="email"
                   type="email"
@@ -183,7 +184,7 @@ export default function RegisterPage() {
                 Kata Sandi
               </label>
               <div className="relative">
-                <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#121A2A]/40 pointer-events-none" />
+                <FontAwesomeIcon icon={faLock} className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#121A2A]/40 pointer-events-none" />
                 <Input
                   id="password"
                   type="password"
@@ -204,7 +205,7 @@ export default function RegisterPage() {
                 Konfirmasi Kata Sandi
               </label>
               <div className="relative">
-                <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#121A2A]/40 pointer-events-none" />
+                <FontAwesomeIcon icon={faLock} className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#121A2A]/40 pointer-events-none" />
                 <Input
                   id="confirmPassword"
                   type="password"
@@ -235,12 +236,12 @@ export default function RegisterPage() {
             <Button type="submit" className="w-full gap-2 rounded-lg h-11 text-xs sm:text-sm font-bold bg-[#C96F55] hover:bg-[#B86047] text-[#F7F5EF] shadow-xs cursor-pointer" disabled={isLoading}>
               {isLoading ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <FontAwesomeIcon icon={faSpinner} className="w-4 h-4 animate-spin" />
                   <span>Mendaftarkan...</span>
                 </>
               ) : (
                 <>
-                  <ShieldCheck className="w-4 h-4" />
+                  <FontAwesomeIcon icon={faShieldHalved} className="w-4 h-4" />
                   <span>Daftar Akun</span>
                 </>
               )}

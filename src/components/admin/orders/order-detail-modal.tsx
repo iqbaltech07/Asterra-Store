@@ -4,22 +4,23 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Order } from '@/lib/orders-data';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  X,
-  User,
-  Copy,
-  Phone,
-  ExternalLink,
-  ShoppingBag,
-  Ticket,
-  Edit,
-  Clock,
-  CheckCircle2,
-  Ban,
-  ShieldCheck,
-  Check,
-  Activity,
-} from 'lucide-react';
+  faXmark,
+  faUser,
+  faCopy,
+  faPhone,
+  faArrowUpRightFromSquare,
+  faBagShopping,
+  faTicket,
+  faPen,
+  faClock,
+  faCircleCheck,
+  faBan,
+  faShieldHalved,
+  faCheck,
+  faClockRotateLeft,
+} from '@fortawesome/free-solid-svg-icons';
 import { OrderStatusBadge, OrderActorBadge } from './order-badges';
 import { formatWhatsAppUrl, generateOrderValidationText } from '@/lib/utils/format';
 
@@ -96,7 +97,7 @@ export function OrderDetailModal({
             onClick={onClose}
             className="h-8 w-8 p-0 rounded-full"
           >
-            <X className="w-4 h-4" />
+            <FontAwesomeIcon icon={faXmark} className="w-4 h-4" />
           </Button>
         </div>
 
@@ -105,7 +106,7 @@ export function OrderDetailModal({
           <div className="bg-surface-raised border border-border rounded-xl p-4">
             <div className="flex items-center justify-between pb-2 mb-3 border-b border-border/70">
               <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider flex items-center gap-1.5">
-                <User className="w-3.5 h-3.5 text-primary" />
+                <FontAwesomeIcon icon={faUser} className="w-3.5 h-3.5 text-primary" />
                 <span>Data Validasi Customer & Akun</span>
               </h4>
               <Button
@@ -115,7 +116,7 @@ export function OrderDetailModal({
                 className="h-7 text-[11px] gap-1 px-2 border-border text-foreground-muted hover:text-foreground"
                 title="Salin ringkasan data validasi"
               >
-                <Copy className="w-3 h-3" />
+                <FontAwesomeIcon icon={faCopy} className="w-3 h-3" />
                 <span>Salin Data Validasi</span>
               </Button>
             </div>
@@ -143,7 +144,7 @@ export function OrderDetailModal({
                     className="text-foreground-muted hover:text-primary p-0.5"
                     title="Salin Email"
                   >
-                    <Copy className="w-3 h-3" />
+                    <FontAwesomeIcon icon={faCopy} className="w-3 h-3" />
                   </button>
                 </div>
               </div>
@@ -157,9 +158,9 @@ export function OrderDetailModal({
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 font-semibold text-status-success hover:underline font-mono"
                   >
-                    <Phone className="w-3 h-3" />
+                    <FontAwesomeIcon icon={faPhone} className="w-3 h-3" />
                     <span>{order.customer_whatsapp}</span>
-                    <ExternalLink className="w-3 h-3" />
+                    <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="w-3 h-3" />
                   </a>
                 ) : (
                   <span className="text-foreground-muted italic">Tidak dicantumkan</span>
@@ -187,7 +188,7 @@ export function OrderDetailModal({
           {/* Items Breakdown */}
           <div className="bg-surface-raised border border-border rounded-xl p-4">
             <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
-              <ShoppingBag className="w-3.5 h-3.5 text-primary" />
+              <FontAwesomeIcon icon={faBagShopping} className="w-3.5 h-3.5 text-primary" />
               <span>Rincian Item yang Dipesan</span>
             </h4>
             <div className="space-y-2">
@@ -242,7 +243,7 @@ export function OrderDetailModal({
 
                 <div className="flex justify-between items-center">
                   <span className="flex items-center gap-1.5 text-foreground-muted">
-                    <Ticket className="w-3.5 h-3.5 text-emerald-500" />
+                    <FontAwesomeIcon icon={faTicket} className="w-3.5 h-3.5 text-emerald-500" />
                     <span>Kupon / Voucher</span>
                   </span>
                   {order.promo_code || (order.discount_amount && order.discount_amount > 0) ? (
@@ -280,7 +281,7 @@ export function OrderDetailModal({
           <div className="bg-surface-raised border border-primary/30 rounded-xl p-4 space-y-3">
             <div className="flex items-center justify-between">
               <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider flex items-center gap-1.5">
-                <Edit className="w-3.5 h-3.5 text-primary" />
+                <FontAwesomeIcon icon={faPen} className="w-3.5 h-3.5 text-primary" />
                 <span>Ubah Status Pesanan Manual</span>
               </h4>
               <span className="text-[11px] text-foreground-muted">Hak Akses Admin</span>
@@ -296,7 +297,7 @@ export function OrderDetailModal({
                     : 'border-border bg-surface text-foreground-muted hover:text-foreground'
                 }`}
               >
-                <Clock className="w-4 h-4" />
+                <FontAwesomeIcon icon={faClock} className="w-4 h-4" />
                 <span>Pending</span>
               </button>
 
@@ -309,7 +310,7 @@ export function OrderDetailModal({
                     : 'border-border bg-surface text-foreground-muted hover:text-foreground'
                 }`}
               >
-                <Clock className="w-4 h-4" />
+                <FontAwesomeIcon icon={faClock} className="w-4 h-4" />
                 <span>Di Proses</span>
               </button>
 
@@ -322,7 +323,7 @@ export function OrderDetailModal({
                     : 'border-border bg-surface text-foreground-muted hover:text-foreground'
                 }`}
               >
-                <CheckCircle2 className="w-4 h-4" />
+                <FontAwesomeIcon icon={faCircleCheck} className="w-4 h-4" />
                 <span>Selesai</span>
               </button>
 
@@ -335,7 +336,7 @@ export function OrderDetailModal({
                     : 'border-border bg-surface text-foreground-muted hover:text-foreground'
                 }`}
               >
-                <Ban className="w-4 h-4" />
+                <FontAwesomeIcon icon={faBan} className="w-4 h-4" />
                 <span>Dibatalkan</span>
               </button>
             </div>
@@ -362,7 +363,7 @@ export function OrderDetailModal({
                 !order.payment?.transaction_id?.startsWith('trx-tripay')) && (
                 <div className="p-3 bg-status-warning/10 border border-status-warning/40 rounded-lg space-y-2 text-xs">
                   <div className="flex items-center gap-2 text-status-warning font-semibold">
-                    <ShieldCheck className="w-4 h-4 shrink-0" />
+                    <FontAwesomeIcon icon={faShieldHalved} className="w-4 h-4 shrink-0" />
                     <span>Verifikasi Mutasi Rekening Anti-Fraud</span>
                   </div>
                   <p className="text-[11px] text-foreground-muted leading-relaxed">
@@ -414,7 +415,7 @@ export function OrderDetailModal({
                 }
                 className="text-xs gap-1.5 h-8 font-semibold"
               >
-                <Check className="w-3.5 h-3.5" />
+                <FontAwesomeIcon icon={faCheck} className="w-3.5 h-3.5" />
                 <span>{isUpdating ? 'Menyimpan...' : 'Simpan Status'}</span>
               </Button>
             </div>
@@ -423,7 +424,7 @@ export function OrderDetailModal({
           {/* TIMELINE AUDIT LOGS */}
           <div className="bg-surface-raised border border-border rounded-xl p-4">
             <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
-              <Activity className="w-3.5 h-3.5 text-primary" />
+              <FontAwesomeIcon icon={faClockRotateLeft} className="w-3.5 h-3.5 text-primary" />
               <span>Jejak Riwayat Transaksi (Timeline Logs)</span>
             </h4>
 

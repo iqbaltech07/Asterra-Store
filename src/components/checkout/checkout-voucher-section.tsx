@@ -3,7 +3,8 @@
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Tag, Check, X } from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faTag, faCheck, faXmark } from '@fortawesome/free-solid-svg-icons';
 
 interface CheckoutVoucherSectionProps {
   promoCode: string;
@@ -36,7 +37,7 @@ export function CheckoutVoucherSection({
       {appliedPromo ? (
         <div className="flex items-center justify-between p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-xs animate-in fade-in">
           <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
-            <Check className="w-4 h-4 shrink-0" />
+            <FontAwesomeIcon icon={faCheck} className="w-3.5 h-3.5 shrink-0" />
             <div>
               <span className="font-bold font-mono">{appliedPromo.code}</span>
               <span className="text-[11px] block text-foreground-muted">
@@ -51,7 +52,7 @@ export function CheckoutVoucherSection({
               className="text-[11px] font-medium text-foreground-muted hover:text-status-error flex items-center gap-1 px-2 py-1 rounded hover:bg-surface-raised transition-colors"
               title="Batalkan penggunaan voucher"
             >
-              <X className="w-3.5 h-3.5" />
+              <FontAwesomeIcon icon={faXmark} className="w-3.5 h-3.5" />
               <span>Hapus</span>
             </button>
           )}
@@ -59,7 +60,7 @@ export function CheckoutVoucherSection({
       ) : (
         <div className="flex gap-2">
           <div className="relative flex-1">
-            <Tag className="w-3.5 h-3.5 text-foreground-muted absolute left-3 top-1/2 -translate-y-1/2" />
+            <FontAwesomeIcon icon={faTag} className="w-3.5 h-3.5 text-foreground-muted absolute left-3 top-1/2 -translate-y-1/2" />
             <Input
               type="text"
               placeholder="Kode Promo"

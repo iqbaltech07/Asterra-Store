@@ -13,16 +13,17 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  ShieldCheck,
-  Lock,
-  Mail,
-  ArrowLeft,
-  Loader2,
-  AlertCircle,
-  KeyRound,
-  Terminal,
-} from 'lucide-react';
+  faShieldHalved,
+  faLock,
+  faEnvelope,
+  faArrowLeft,
+  faSpinner,
+  faCircleExclamation,
+  faKey,
+  faTerminal,
+} from '@fortawesome/free-solid-svg-icons';
 import { AsterraLogo } from '@/components/ui/asterra-logo';
 
 export default function AdminLoginPage() {
@@ -117,7 +118,7 @@ export default function AdminLoginPage() {
       <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center selection:bg-primary/20 selection:text-primary">
         <div className="flex flex-col items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-surface border border-border flex items-center justify-center shadow-subtle animate-pulse">
-            <Lock className="w-5 h-5 text-primary" />
+            <FontAwesomeIcon icon={faLock} className="w-5 h-5 text-primary" />
           </div>
           <span className="text-xs text-foreground-muted tracking-widest uppercase font-mono">
             Memverifikasi Otoritas Sesi Admin...
@@ -135,7 +136,7 @@ export default function AdminLoginPage() {
           href="/"
           className="inline-flex items-center gap-2 text-xs font-medium text-foreground-muted hover:text-foreground transition-colors group"
         >
-          <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
+          <FontAwesomeIcon icon={faArrowLeft} className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
           <span>Kembali ke Beranda Toko</span>
         </Link>
       </div>
@@ -147,7 +148,7 @@ export default function AdminLoginPage() {
           </div>
 
           <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-navy-900 text-white text-[10px] font-mono uppercase tracking-wider mx-auto">
-            <Terminal className="w-3 h-3 text-primary" />
+            <FontAwesomeIcon icon={faTerminal} className="w-3 h-3 text-primary" />
             <span>Portal Terbatas</span>
           </div>
 
@@ -164,14 +165,14 @@ export default function AdminLoginPage() {
             {/* Feedback Notifications */}
             {errorMessage && (
               <div className="p-3 rounded-md bg-status-error/10 border border-status-error/20 flex items-start gap-2.5 text-xs text-status-error animate-in fade-in">
-                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-status-error" />
+                <FontAwesomeIcon icon={faCircleExclamation} className="w-4 h-4 shrink-0 mt-0.5 text-status-error" />
                 <span className="leading-relaxed">{errorMessage}</span>
               </div>
             )}
 
             {successMessage && (
               <div className="p-3 rounded-md bg-status-success/10 border border-status-success/20 flex items-center gap-2.5 text-xs text-status-success animate-in fade-in">
-                <ShieldCheck className="w-4 h-4 shrink-0 text-status-success" />
+                <FontAwesomeIcon icon={faShieldHalved} className="w-4 h-4 shrink-0 text-status-success" />
                 <span>{successMessage}</span>
               </div>
             )}
@@ -181,7 +182,7 @@ export default function AdminLoginPage() {
                 htmlFor="admin-email"
                 className="text-xs font-medium text-foreground-muted flex items-center gap-1.5"
               >
-                <Mail className="w-3.5 h-3.5 text-primary" />
+                <FontAwesomeIcon icon={faEnvelope} className="w-3.5 h-3.5 text-primary" />
                 <span>Email Administrator</span>
               </label>
               <Input
@@ -200,7 +201,7 @@ export default function AdminLoginPage() {
                 htmlFor="admin-password"
                 className="text-xs font-medium text-foreground-muted flex items-center gap-1.5"
               >
-                <KeyRound className="w-3.5 h-3.5 text-primary" />
+                <FontAwesomeIcon icon={faKey} className="w-3.5 h-3.5 text-primary" />
                 <span>Kunci Sandi Otorisasi</span>
               </label>
               <Input
@@ -223,12 +224,12 @@ export default function AdminLoginPage() {
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <FontAwesomeIcon icon={faSpinner} className="w-4 h-4 animate-spin" />
                   <span>Memverifikasi Otoritas...</span>
                 </>
               ) : (
                 <>
-                  <Lock className="w-4 h-4" />
+                  <FontAwesomeIcon icon={faLock} className="w-4 h-4" />
                   <span>Masuk Panel Admin</span>
                 </>
               )}

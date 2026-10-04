@@ -3,7 +3,17 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Clock, CheckCircle2, Ban, Search, Volume2, VolumeX, Bell, RefreshCw } from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faClock,
+  faCircleCheck,
+  faBan,
+  faMagnifyingGlass,
+  faVolumeHigh,
+  faVolumeXmark,
+  faBell,
+  faArrowsRotate,
+} from '@fortawesome/free-solid-svg-icons';
 import { OrderMetrics } from './order-metrics-cards';
 
 interface OrderFiltersBarProps {
@@ -57,7 +67,7 @@ export function OrderFiltersBar({
               : 'bg-surface-raised text-foreground-muted hover:text-foreground border border-border'
           }`}
         >
-          <Clock className="w-3.5 h-3.5" />
+          <FontAwesomeIcon icon={faClock} className="w-3.5 h-3.5" />
           <span>Pending ({metrics?.pending ?? 0})</span>
         </button>
         <button
@@ -80,7 +90,7 @@ export function OrderFiltersBar({
               : 'bg-surface-raised text-foreground-muted hover:text-foreground border border-border'
           }`}
         >
-          <CheckCircle2 className="w-3.5 h-3.5" />
+          <FontAwesomeIcon icon={faCircleCheck} className="w-3.5 h-3.5" />
           <span>Selesai ({metrics?.completed ?? 0})</span>
         </button>
         <button
@@ -92,7 +102,7 @@ export function OrderFiltersBar({
               : 'bg-surface-raised text-foreground-muted hover:text-foreground border border-border'
           }`}
         >
-          <Ban className="w-3.5 h-3.5" />
+          <FontAwesomeIcon icon={faBan} className="w-3.5 h-3.5" />
           <span>Dibatalkan ({metrics?.cancelled ?? 0})</span>
         </button>
       </div>
@@ -121,9 +131,9 @@ export function OrderFiltersBar({
           title={isMuted ? 'Nyalakan audio notifikasi' : 'Bisukan audio notifikasi'}
         >
           {isMuted ? (
-            <VolumeX className="w-3.5 h-3.5 text-status-error" />
+            <FontAwesomeIcon icon={faVolumeXmark} className="w-3.5 h-3.5 text-status-error" />
           ) : (
-            <Volume2 className="w-3.5 h-3.5 text-status-success" />
+            <FontAwesomeIcon icon={faVolumeHigh} className="w-3.5 h-3.5 text-status-success" />
           )}
           <span className="hidden sm:inline">{isMuted ? 'Muted' : 'Sound ON'}</span>
         </Button>
@@ -137,12 +147,12 @@ export function OrderFiltersBar({
           className="h-9 px-2.5 border-border gap-1.5 text-xs text-foreground-muted hover:text-foreground"
           title="Uji coba suara notifikasi Web Audio"
         >
-          <Bell className="w-3.5 h-3.5 text-primary" />
+          <FontAwesomeIcon icon={faBell} className="w-3.5 h-3.5 text-primary" />
           <span className="hidden lg:inline">Tes Chime</span>
         </Button>
 
         <div className="relative flex-1 sm:w-60">
-          <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-foreground-muted" />
+          <FontAwesomeIcon icon={faMagnifyingGlass} className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-foreground-muted" />
           <Input
             type="text"
             placeholder="Cari ID, Email, WA..."
@@ -160,7 +170,7 @@ export function OrderFiltersBar({
           className="h-9 px-2.5 border-border text-xs gap-1.5 text-foreground-muted hover:text-foreground"
           title="Segarkan data pesanan"
         >
-          <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
+          <FontAwesomeIcon icon={faArrowsRotate} className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
           <span className="hidden sm:inline">Refresh</span>
         </Button>
       </div>

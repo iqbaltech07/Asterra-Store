@@ -1,12 +1,13 @@
 'use client';
 
 import React from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  QrCode,
-  Wallet,
-  Building2,
-  CreditCard,
-} from 'lucide-react';
+  faQrcode,
+  faWallet,
+  faBuildingColumns,
+  faCreditCard,
+} from '@fortawesome/free-solid-svg-icons';
 
 export interface PaymentMethodOption {
   id: string;
@@ -57,10 +58,10 @@ export function CheckoutPaymentMethods({
                     ? 'bg-[rgba(201,111,85,0.15)] text-[#C96F55] border-[rgba(201,111,85,0.3)]'
                     : 'bg-[#F8FAFC] text-[#121A2A]/60 border-[rgba(18,26,42,0.08)]'
                 }`}>
-                  {method.category === 'qris' && <QrCode className="w-4 h-4" />}
-                  {method.category === 'ewallet' && <Wallet className="w-4 h-4" />}
-                  {method.category === 'va' && <Building2 className="w-4 h-4" />}
-                  {method.category === 'bank_manual' && <CreditCard className="w-4 h-4" />}
+                  {method.category === 'qris' && <FontAwesomeIcon icon={faQrcode} className="w-4 h-4" />}
+                  {method.category === 'ewallet' && <FontAwesomeIcon icon={faWallet} className="w-4 h-4" />}
+                  {method.category === 'va' && <FontAwesomeIcon icon={faBuildingColumns} className="w-4 h-4" />}
+                  {method.category === 'bank_manual' && <FontAwesomeIcon icon={faCreditCard} className="w-4 h-4" />}
                 </div>
                 <div className="min-w-0">
                   <span className="text-xs sm:text-sm font-bold text-[#121A2A] block">

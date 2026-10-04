@@ -3,15 +3,16 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { PublicPaymentConfig } from '@/lib/services/payment-config.service';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  X,
-  Clock,
-  Check,
-  Copy,
-  QrCode,
-  MessageSquare,
-  ExternalLink,
-} from 'lucide-react';
+  faXmark,
+  faClock,
+  faCheck,
+  faCopy,
+  faQrcode,
+  faArrowUpRightFromSquare,
+} from '@fortawesome/free-solid-svg-icons';
+import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
 
 export interface ManualPaymentModalData {
   orderId: string;
@@ -116,7 +117,7 @@ export function CheckoutManualModal({
             onClick={onClose}
             className="text-foreground-muted hover:text-foreground p-1"
           >
-            <X className="w-5 h-5" />
+            <FontAwesomeIcon icon={faXmark} className="w-5 h-5" />
           </button>
         </div>
 
@@ -129,7 +130,8 @@ export function CheckoutManualModal({
           }`}
         >
           <div className="flex items-center gap-2 text-foreground-muted">
-            <Clock
+            <FontAwesomeIcon
+              icon={faClock}
               className={`w-4 h-4 ${
                 timeLeft.isExpired ? 'text-status-error' : 'text-status-warning'
               }`}
@@ -173,7 +175,7 @@ export function CheckoutManualModal({
               className="px-2 py-1 rounded bg-primary/20 text-primary hover:bg-primary/30 text-xs font-semibold flex items-center gap-1"
               title="Salin Nominal Tepat"
             >
-              {copiedKey === 'amount' ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+              {copiedKey === 'amount' ? <FontAwesomeIcon icon={faCheck} className="w-3.5 h-3.5" /> : <FontAwesomeIcon icon={faCopy} className="w-3.5 h-3.5" />}
               <span>{copiedKey === 'amount' ? 'Tersalin' : 'Salin'}</span>
             </button>
           </div>
@@ -207,7 +209,7 @@ export function CheckoutManualModal({
                 }
                 className="text-xs gap-1.5 h-8 font-semibold"
               >
-                {copiedKey === 'bca' ? <Check className="w-3.5 h-3.5 text-status-success" /> : <Copy className="w-3.5 h-3.5" />}
+                {copiedKey === 'bca' ? <FontAwesomeIcon icon={faCheck} className="w-3.5 h-3.5 text-status-success" /> : <FontAwesomeIcon icon={faCopy} className="w-3.5 h-3.5" />}
                 <span>{copiedKey === 'bca' ? 'Tersalin' : 'Salin'}</span>
               </Button>
             </div>
@@ -236,7 +238,7 @@ export function CheckoutManualModal({
                   paymentConfig?.qris?.image_url ? 'hidden' : 'flex'
                 }`}
               >
-                <QrCode className="w-14 h-14 mb-1" />
+                <FontAwesomeIcon icon={faQrcode} className="w-14 h-14 mb-1" />
                 <span className="text-[8px] font-bold uppercase tracking-wider text-zinc-900">
                   {paymentConfig?.qris?.merchant_name || 'ASTERRA STORE QRIS'}
                 </span>
@@ -256,7 +258,7 @@ export function CheckoutManualModal({
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 text-[11px] text-primary hover:underline font-medium pt-1"
                 >
-                  <ExternalLink className="w-3 h-3" />
+                  <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="w-3 h-3" />
                   <span>Buka Gambar QRIS Penuh</span>
                 </a>
               )}
@@ -291,7 +293,7 @@ export function CheckoutManualModal({
                 }
                 className="text-xs gap-1.5 h-8 font-semibold"
               >
-                {copiedKey === 'dana' ? <Check className="w-3.5 h-3.5 text-status-success" /> : <Copy className="w-3.5 h-3.5" />}
+                {copiedKey === 'dana' ? <FontAwesomeIcon icon={faCheck} className="w-3.5 h-3.5 text-status-success" /> : <FontAwesomeIcon icon={faCopy} className="w-3.5 h-3.5" />}
                 <span>{copiedKey === 'dana' ? 'Tersalin' : 'Salin'}</span>
               </Button>
             </div>
@@ -314,9 +316,9 @@ export function CheckoutManualModal({
             rel="noopener noreferrer"
             className="w-full py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold flex items-center justify-center gap-2 text-xs sm:text-sm shadow-lg shadow-emerald-900/30 transition-all cursor-pointer"
           >
-            <MessageSquare className="w-4 h-4" />
+            <FontAwesomeIcon icon={faWhatsapp} className="w-4 h-4" />
             <span>Kirim Bukti Pembayaran ke WhatsApp Admin</span>
-            <ExternalLink className="w-3.5 h-3.5" />
+            <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="w-3.5 h-3.5" />
           </a>
 
           <Button

@@ -1,25 +1,26 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  CreditCard,
-  QrCode,
-  Smartphone,
-  ShieldCheck,
-  Check,
-  Copy,
-  Save,
-  AlertTriangle,
-  ExternalLink,
-  RefreshCw,
-  Clock,
-  Sparkles,
-  Info,
-  Plus,
-  Trash2,
-  Mail,
-  MessageCircle,
-} from 'lucide-react';
+  faCreditCard,
+  faQrcode,
+  faMobileScreen,
+  faShieldHalved,
+  faCheck,
+  faCopy,
+  faFloppyDisk,
+  faTriangleExclamation,
+  faArrowUpRightFromSquare,
+  faArrowsRotate,
+  faClock,
+  faWandMagicSparkles,
+  faCircleInfo,
+  faPlus,
+  faTrash,
+  faEnvelope,
+  faComment,
+} from '@fortawesome/free-solid-svg-icons';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -149,7 +150,7 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
   if (isLoading) {
     return (
       <div className="bg-surface border border-border rounded-xl p-12 flex flex-col items-center justify-center gap-3">
-        <RefreshCw className="w-6 h-6 text-primary animate-spin" />
+        <FontAwesomeIcon icon={faArrowsRotate} className="w-6 h-6 text-primary animate-spin" />
         <span className="text-xs text-foreground-muted">Memuat konfigurasi payment mode switcher...</span>
       </div>
     );
@@ -208,7 +209,7 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
                 disabled={isSaving}
                 className="bg-status-warning text-black hover:bg-status-warning/90 font-semibold text-xs gap-2 px-5 py-5 shadow-lg shadow-status-warning/10"
               >
-                <AlertTriangle className="w-4 h-4 text-black" />
+                <FontAwesomeIcon icon={faTriangleExclamation} className="w-4 h-4 text-black" />
                 <span>Beralih ke Transfer Manual Toko</span>
               </Button>
             ) : (
@@ -218,7 +219,7 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
                 disabled={isSaving}
                 className="bg-status-success text-black hover:bg-status-success/90 font-semibold text-xs gap-2 px-5 py-5 shadow-lg shadow-status-success/10"
               >
-                <Check className="w-4 h-4 text-black" />
+                <FontAwesomeIcon icon={faCheck} className="w-4 h-4 text-black" />
                 <span>Beralih ke Gateway Otomatis (Tripay)</span>
               </Button>
             )}
@@ -232,7 +233,7 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
               className="text-xs gap-1.5 border-border"
               title="Refresh status dari database"
             >
-              <RefreshCw className={`w-3.5 h-3.5 text-foreground-muted ${isLoading ? 'animate-spin' : ''}`} />
+              <FontAwesomeIcon icon={faArrowsRotate} className={`w-3.5 h-3.5 text-foreground-muted ${isLoading ? 'animate-spin' : ''}`} />
               <span className="hidden sm:inline">Refresh</span>
             </Button>
           </div>
@@ -248,7 +249,7 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
             <div className="flex items-center justify-between pb-3 border-b border-border">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
-                  <CreditCard className="w-4 h-4" />
+                  <FontAwesomeIcon icon={faCreditCard} className="w-4 h-4" />
                 </div>
                 <div>
                   <h3 className="text-sm font-semibold text-foreground">Rekening Bank Manual (BCA)</h3>
@@ -289,7 +290,7 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
                     onClick={() => handleCopy(bankAccountNumber, 'bank')}
                     className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-primary hover:underline px-1 py-0.5 flex items-center gap-1"
                   >
-                    {copiedKey === 'bank' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                    {copiedKey === 'bank' ? <FontAwesomeIcon icon={faCheck} className="w-3 h-3" /> : <FontAwesomeIcon icon={faCopy} className="w-3 h-3" />}
                     <span>{copiedKey === 'bank' ? 'Tersalin' : 'Salin'}</span>
                   </button>
                 </div>
@@ -314,7 +315,7 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
             <div className="flex items-center justify-between pb-3 border-b border-border">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
-                  <QrCode className="w-4 h-4" />
+                  <FontAwesomeIcon icon={faQrcode} className="w-4 h-4" />
                 </div>
                 <div>
                   <h3 className="text-sm font-semibold text-foreground">QRIS Statis / Barcode Manual Toko</h3>
@@ -359,7 +360,7 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
             <div className="flex items-center justify-between pb-3 border-b border-border">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
-                  <Smartphone className="w-4 h-4" />
+                  <FontAwesomeIcon icon={faMobileScreen} className="w-4 h-4" />
                 </div>
                 <div>
                   <h3 className="text-sm font-semibold text-foreground">Akun E-Wallet DANA Manual</h3>
@@ -388,7 +389,7 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
                     onClick={() => handleCopy(danaNumber, 'dana')}
                     className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-primary hover:underline px-1 py-0.5 flex items-center gap-1"
                   >
-                    {copiedKey === 'dana' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                    {copiedKey === 'dana' ? <FontAwesomeIcon icon={faCheck} className="w-3 h-3" /> : <FontAwesomeIcon icon={faCopy} className="w-3 h-3" />}
                     <span>{copiedKey === 'dana' ? 'Tersalin' : 'Salin'}</span>
                   </button>
                 </div>
@@ -413,7 +414,7 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
             <div className="flex items-center justify-between pb-3 border-b border-border">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-lg bg-status-warning/10 border border-status-warning/20 flex items-center justify-center text-status-warning">
-                  <ShieldCheck className="w-4 h-4" />
+                  <FontAwesomeIcon icon={faShieldHalved} className="w-4 h-4" />
                 </div>
                 <div>
                   <h3 className="text-sm font-semibold text-foreground">Proteksi Anti-Fraud & Konfirmasi WhatsApp</h3>
@@ -457,7 +458,7 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
                     Batas Waktu Kedaluwarsa Pesanan (Jam)
                   </label>
                   <div className="relative">
-                    <Clock className="w-4 h-4 text-foreground-muted absolute left-3 top-1/2 -translate-y-1/2" />
+                    <FontAwesomeIcon icon={faClock} className="w-4 h-4 text-foreground-muted absolute left-3 top-1/2 -translate-y-1/2" />
                     <Input
                       type="number"
                       min={1}
@@ -488,12 +489,12 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
                 </div>
               </div>
 
-              {/* [T22] Kontak Customer Service & WhatsApp CS Tambahan */}
+              {/* [T22] Kontak Layanan Pelanggan & WhatsApp CS Tambahan */}
               <div className="pt-4 border-t border-border space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                      <MessageCircle className="w-3.5 h-3.5 text-primary" />
+                      <FontAwesomeIcon icon={faComment} className="w-3.5 h-3.5 text-primary" />
                       <span>Kontak Layanan Pelanggan (Customer Service)</span>
                     </h4>
                     <p className="text-[11px] text-foreground-muted">
@@ -507,7 +508,7 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
                     Email Customer Service
                   </label>
                   <div className="relative">
-                    <Mail className="w-3.5 h-3.5 text-foreground-muted absolute left-3 top-1/2 -translate-y-1/2" />
+                    <FontAwesomeIcon icon={faEnvelope} className="w-3.5 h-3.5 text-foreground-muted absolute left-3 top-1/2 -translate-y-1/2" />
                     <Input
                       type="email"
                       value={csEmail}
@@ -533,7 +534,7 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
                       onClick={() => setCsWhatsappNumbers([...csWhatsappNumbers, '628'])}
                       className="text-[10px] h-7 px-2.5 gap-1 border-border hover:border-primary/40"
                     >
-                      <Plus className="w-3 h-3 text-primary" />
+                      <FontAwesomeIcon icon={faPlus} className="w-3 h-3 text-primary" />
                       <span>Tambah Nomor WA CS</span>
                     </Button>
                   </div>
@@ -565,7 +566,7 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
                           className="h-8 w-8 p-0 text-status-error hover:bg-status-error/10 shrink-0"
                           title="Hapus nomor ini"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <FontAwesomeIcon icon={faTrash} className="w-3.5 h-3.5" />
                         </Button>
                       )}
                     </div>
@@ -603,7 +604,7 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
               disabled={isSaving}
               className="text-xs font-semibold gap-2 px-6"
             >
-              <Save className="w-4 h-4" />
+              <FontAwesomeIcon icon={faFloppyDisk} className="w-4 h-4" />
               <span>{isSaving ? 'Menyimpan...' : 'Simpan Perubahan Pengaturan'}</span>
             </Button>
           </div>
@@ -614,7 +615,7 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
           <div className="bg-surface border border-border rounded-xl p-5 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-border">
               <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-primary" />
+                <FontAwesomeIcon icon={faWandMagicSparkles} className="w-4 h-4 text-primary" />
                 <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">
                   Simulasi Tampilan Checkout Pelanggan
                 </h3>
@@ -629,7 +630,7 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
               {mode === 'gateway' ? (
                 <div className="space-y-3">
                   <div className="p-3 rounded-lg bg-status-success/10 border border-status-success/20 flex items-center gap-2 text-status-success text-xs">
-                    <Check className="w-4 h-4 shrink-0" />
+                    <FontAwesomeIcon icon={faCheck} className="w-4 h-4 shrink-0" />
                     <span>Payment Gateway Otomatis (Tripay) Aktif</span>
                   </div>
                   <div className="p-3 border border-border rounded-lg bg-surface space-y-2">
@@ -645,7 +646,7 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
                 <div className="space-y-3">
                   {/* Manual Alert */}
                   <div className="p-2.5 rounded-lg bg-status-warning/10 border border-status-warning/30 flex items-center gap-2 text-status-warning text-[11px]">
-                    <AlertTriangle className="w-4 h-4 shrink-0" />
+                    <FontAwesomeIcon icon={faTriangleExclamation} className="w-4 h-4 shrink-0" />
                     <span>Mode Transfer Manual Toko Sedang Aktif</span>
                   </div>
 
@@ -684,12 +685,12 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
                   {/* QRIS / DANA Quick Preview */}
                   <div className="grid grid-cols-2 gap-2 text-center text-[10px]">
                     <div className="p-2 bg-surface border border-border rounded-lg">
-                      <QrCode className="w-4 h-4 text-primary mx-auto mb-1" />
+                      <FontAwesomeIcon icon={faQrcode} className="w-4 h-4 text-primary mx-auto mb-1" />
                       <span className="font-semibold block text-foreground">QRIS Toko</span>
                       <span className="text-foreground-muted truncate block">{qrisMerchantName}</span>
                     </div>
                     <div className="p-2 bg-surface border border-border rounded-lg">
-                      <Smartphone className="w-4 h-4 text-primary mx-auto mb-1" />
+                      <FontAwesomeIcon icon={faMobileScreen} className="w-4 h-4 text-primary mx-auto mb-1" />
                       <span className="font-semibold block text-foreground">DANA</span>
                       <span className="text-foreground-muted font-mono block">{danaNumber}</span>
                     </div>
@@ -698,7 +699,7 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
                   {/* WhatsApp CTA Button Simulation */}
                   <div className="pt-1">
                     <div className="w-full py-2.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold flex items-center justify-center gap-2 text-xs cursor-pointer shadow-md">
-                      <ExternalLink className="w-3.5 h-3.5" />
+                      <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="w-3.5 h-3.5" />
                       <span>Kirim Bukti Pembayaran ke WhatsApp Admin</span>
                     </div>
                     <span className="text-[10px] text-foreground-muted block text-center mt-1.5">
@@ -710,7 +711,7 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
             </div>
 
             <div className="text-[11px] text-foreground-muted flex items-start gap-2 p-2.5 bg-surface-raised rounded-lg border border-border">
-              <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+              <FontAwesomeIcon icon={faCircleInfo} className="w-4 h-4 text-primary shrink-0 mt-0.5" />
               <span>
                 Perubahan pada halaman ini berdampak langsung saat pelanggan mengakses halaman checkout.
               </span>
@@ -721,7 +722,7 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
           <div className="bg-surface border border-border rounded-xl p-5 space-y-3.5">
             <div className="flex items-center justify-between pb-2.5 border-b border-border">
               <div className="flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-status-success" />
+                <FontAwesomeIcon icon={faShieldHalved} className="w-4 h-4 text-status-success" />
                 <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
                   Integrasi & Callback Tripay
                 </h4>
@@ -756,7 +757,7 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
                     }
                     className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-primary hover:underline px-1 py-0.5 flex items-center gap-1"
                   >
-                    {copiedKey === 'webhook' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                    {copiedKey === 'webhook' ? <FontAwesomeIcon icon={faCheck} className="w-3 h-3" /> : <FontAwesomeIcon icon={faCopy} className="w-3 h-3" />}
                     <span>{copiedKey === 'webhook' ? 'Tersalin' : 'Salin'}</span>
                   </button>
                 </div>
@@ -779,7 +780,7 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
                     }
                     className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-primary hover:underline px-1 py-0.5 flex items-center gap-1"
                   >
-                    {copiedKey === 'return' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                    {copiedKey === 'return' ? <FontAwesomeIcon icon={faCheck} className="w-3 h-3" /> : <FontAwesomeIcon icon={faCopy} className="w-3 h-3" />}
                     <span>{copiedKey === 'return' ? 'Tersalin' : 'Salin'}</span>
                   </button>
                 </div>

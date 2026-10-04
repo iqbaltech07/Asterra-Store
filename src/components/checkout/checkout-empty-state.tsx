@@ -3,7 +3,8 @@
 import React from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ShoppingBag, ArrowRight } from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faBagShopping, faArrowRight } from '@fortawesome/free-solid-svg-icons';
 
 export function CheckoutEmptyState() {
   return (
@@ -23,7 +24,7 @@ export function CheckoutEmptyState() {
 
       <div className="bg-surface border border-border rounded-xl p-8 sm:p-10 text-center max-w-md mx-auto">
         <div className="w-12 h-12 rounded-xl bg-surface-raised border border-border flex items-center justify-center mx-auto text-foreground-muted mb-4">
-          <ShoppingBag className="w-6 h-6" />
+          <FontAwesomeIcon icon={faBagShopping} className="w-6 h-6" />
         </div>
 
         <h2 className="text-xl font-bold tracking-tight text-foreground mb-2">
@@ -37,7 +38,7 @@ export function CheckoutEmptyState() {
           <Link href="/products" className="w-full sm:w-auto">
             <Button size="sm" className="w-full sm:w-auto gap-2 text-xs px-5 h-9 font-semibold">
               <span>Jelajahi Katalog Produk</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <FontAwesomeIcon icon={faArrowRight} className="w-3.5 h-3.5" />
             </Button>
           </Link>
 

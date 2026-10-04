@@ -4,7 +4,16 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Order } from '@/lib/orders-data';
-import { Clock, Mail, Copy, Phone, ExternalLink, Ticket, CreditCard } from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faClock,
+  faEnvelope,
+  faCopy,
+  faPhone,
+  faArrowUpRightFromSquare,
+  faTicket,
+  faCreditCard,
+} from '@fortawesome/free-solid-svg-icons';
 import { formatWhatsAppUrl, formatDateTimeIndo } from '@/lib/utils/format';
 
 import { OrderStatusBadge } from './order-badges';
@@ -28,7 +37,7 @@ export function OrderTableRow({ order, onOpenDetail, onCopyEmail }: OrderTableRo
           <span>{order.id}</span>
         </div>
         <div className="text-[11px] text-foreground-muted flex items-center gap-1 mt-1">
-          <Clock className="w-3 h-3 shrink-0" />
+          <FontAwesomeIcon icon={faClock} className="w-3 h-3 shrink-0" />
           <span>{formatDateTimeIndo(order.order_date)}</span>
         </div>
       </td>
@@ -44,7 +53,7 @@ export function OrderTableRow({ order, onOpenDetail, onCopyEmail }: OrderTableRo
               {order.customer_name || 'Pelanggan Toko'}
             </div>
             <div className="text-[11px] text-foreground-muted flex items-center gap-1.5 mt-0.5 group/email">
-              <Mail className="w-3 h-3 shrink-0 text-foreground-muted" />
+              <FontAwesomeIcon icon={faEnvelope} className="w-3 h-3 shrink-0 text-foreground-muted" />
               <a
                 href={`mailto:${order.customer_email || firstItem?.purchased_details?.target_email || 'customer@asterra.store'}`}
                 className="hover:text-primary hover:underline truncate max-w-[170px]"
@@ -61,7 +70,7 @@ export function OrderTableRow({ order, onOpenDetail, onCopyEmail }: OrderTableRo
                 className="opacity-0 group-hover/email:opacity-100 hover:text-foreground transition-opacity"
                 title="Salin Email"
               >
-                <Copy className="w-2.5 h-2.5" />
+                <FontAwesomeIcon icon={faCopy} className="w-2.5 h-2.5" />
               </button>
             </div>
             {order.customer_whatsapp && (
@@ -74,9 +83,9 @@ export function OrderTableRow({ order, onOpenDetail, onCopyEmail }: OrderTableRo
                     className="inline-flex items-center gap-1 text-[11px] text-status-success hover:underline font-mono"
                     title="Chat WhatsApp Pemesan"
                   >
-                    <Phone className="w-3 h-3" />
+                    <FontAwesomeIcon icon={faPhone} className="w-3 h-3" />
                     <span>{order.customer_whatsapp}</span>
-                    <ExternalLink className="w-2.5 h-2.5" />
+                    <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="w-2.5 h-2.5" />
                   </a>
                 ) : (
                   <span className="text-[11px] text-foreground-muted font-mono">
@@ -133,7 +142,7 @@ export function OrderTableRow({ order, onOpenDetail, onCopyEmail }: OrderTableRo
               className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-[10px] font-mono font-medium"
               title={`Voucher: ${order.promo_code || 'Promo'} - Potongan: Rp ${(order.discount_amount || 0).toLocaleString('id-ID')}`}
             >
-              <Ticket className="w-2.5 h-2.5 shrink-0" />
+              <FontAwesomeIcon icon={faTicket} className="w-2.5 h-2.5 shrink-0" />
               <span>{order.promo_code || 'PROMO'}</span>
               <span>(-Rp {(order.discount_amount || 0).toLocaleString('id-ID')})</span>
             </div>
@@ -149,7 +158,7 @@ export function OrderTableRow({ order, onOpenDetail, onCopyEmail }: OrderTableRo
             variant="outline"
             className="bg-surface-raised border-border text-[10px] uppercase font-mono py-0 px-1.5"
           >
-            <CreditCard className="w-2.5 h-2.5 mr-1" />
+            <FontAwesomeIcon icon={faCreditCard} className="w-2.5 h-2.5 mr-1" />
             {order.payment?.payment_method || 'QRIS'}
           </Badge>
           {order.payment_mode === 'manual' ? (

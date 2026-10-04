@@ -1,22 +1,23 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  Tag,
-  Percent,
-  Plus,
-  RefreshCw,
-  Search,
-  Check,
-  Copy,
-  Trash2,
-  Power,
-  Calendar,
-  Sparkles,
-  ShoppingBag,
-  X,
-  Clock,
-} from 'lucide-react';
+  faTag,
+  faPercent,
+  faPlus,
+  faArrowsRotate,
+  faMagnifyingGlass,
+  faCheck,
+  faCopy,
+  faTrash,
+  faPowerOff,
+  faCalendar,
+  faWandMagicSparkles,
+  faBagShopping,
+  faXmark,
+  faClock,
+} from '@fortawesome/free-solid-svg-icons';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -239,7 +240,7 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
             disabled={isLoading}
             className="text-xs border-border gap-1.5 h-10 px-3.5"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
+            <FontAwesomeIcon icon={faArrowsRotate} className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
             <span>Segarkan</span>
           </Button>
 
@@ -251,7 +252,7 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
             }}
             className="text-xs font-semibold gap-1.5 h-10 px-4 shadow-sm"
           >
-            <Plus className="w-4 h-4" />
+            <FontAwesomeIcon icon={faPlus} className="w-4 h-4" />
             <span>Generate Promo Baru</span>
           </Button>
         </div>
@@ -262,7 +263,7 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
         <div className="p-4 rounded-xl bg-surface border border-border shadow-xs space-y-1">
           <div className="flex items-center justify-between">
             <span className="text-xs text-foreground-muted font-medium">Total Kode Promo</span>
-            <Tag className="w-4 h-4 text-primary" />
+            <FontAwesomeIcon icon={faTag} className="w-4 h-4 text-primary" />
           </div>
           <p className="text-2xl font-bold text-foreground">{metrics.total}</p>
           <span className="text-[11px] text-foreground-muted">Voucher dalam database</span>
@@ -271,7 +272,7 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
         <div className="p-4 rounded-xl bg-surface border border-border shadow-xs space-y-1">
           <div className="flex items-center justify-between">
             <span className="text-xs text-foreground-muted font-medium">Promo Aktif</span>
-            <Sparkles className="w-4 h-4 text-status-success" />
+            <FontAwesomeIcon icon={faWandMagicSparkles} className="w-4 h-4 text-status-success" />
           </div>
           <p className="text-2xl font-bold text-status-success">{metrics.active}</p>
           <span className="text-[11px] text-foreground-muted">Dapat digunakan pengguna</span>
@@ -280,7 +281,7 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
         <div className="p-4 rounded-xl bg-surface border border-border shadow-xs space-y-1">
           <div className="flex items-center justify-between">
             <span className="text-xs text-foreground-muted font-medium">Total Penggunaan</span>
-            <ShoppingBag className="w-4 h-4 text-primary" />
+            <FontAwesomeIcon icon={faBagShopping} className="w-4 h-4 text-primary" />
           </div>
           <p className="text-2xl font-bold text-foreground">{metrics.totalUsed}x</p>
           <span className="text-[11px] text-foreground-muted">Transaksi memakai voucher</span>
@@ -289,7 +290,7 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
         <div className="p-4 rounded-xl bg-surface border border-border shadow-xs space-y-1">
           <div className="flex items-center justify-between">
             <span className="text-xs text-foreground-muted font-medium">Kedaluwarsa / Nonaktif</span>
-            <Clock className="w-4 h-4 text-status-warning" />
+            <FontAwesomeIcon icon={faClock} className="w-4 h-4 text-status-warning" />
           </div>
           <p className="text-2xl font-bold text-foreground-muted">{metrics.expired}</p>
           <span className="text-[11px] text-foreground-muted">Tidak dapat digunakan</span>
@@ -335,7 +336,7 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
         </div>
 
         <div className="relative w-full md:w-72">
-          <Search className="w-3.5 h-3.5 text-foreground-muted absolute left-3 top-1/2 -translate-y-1/2" />
+          <FontAwesomeIcon icon={faMagnifyingGlass} className="w-3.5 h-3.5 text-foreground-muted absolute left-3 top-1/2 -translate-y-1/2" />
           <Input
             type="text"
             placeholder="Cari kode promo..."
@@ -349,12 +350,12 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
       {/* Promo Code Cards List */}
       {isLoading ? (
         <div className="bg-surface border border-border rounded-xl p-12 text-center space-y-3">
-          <RefreshCw className="w-6 h-6 text-primary animate-spin mx-auto" />
+          <FontAwesomeIcon icon={faArrowsRotate} className="w-6 h-6 text-primary animate-spin mx-auto" />
           <p className="text-xs text-foreground-muted">Memuat daftar kode promo...</p>
         </div>
       ) : filteredPromos.length === 0 ? (
         <div className="bg-surface border border-dashed border-border rounded-xl p-12 text-center space-y-3">
-          <Tag className="w-10 h-10 text-foreground-muted mx-auto opacity-50" />
+          <FontAwesomeIcon icon={faTag} className="w-10 h-10 text-foreground-muted mx-auto opacity-50" />
           <h4 className="text-sm font-semibold text-foreground">Tidak Ada Kode Promo Ditemukan</h4>
           <p className="text-xs text-foreground-muted max-w-sm mx-auto">
             {searchQuery
@@ -369,7 +370,7 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
             }}
             className="text-xs gap-1.5 mt-2"
           >
-            <Plus className="w-3.5 h-3.5" />
+            <FontAwesomeIcon icon={faPlus} className="w-3.5 h-3.5" />
             <span>Buat Promo Pertama</span>
           </Button>
         </div>
@@ -403,9 +404,9 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
                         title="Salin kode"
                       >
                         {copiedKey === p.code ? (
-                          <Check className="w-3.5 h-3.5 text-status-success" />
+                          <FontAwesomeIcon icon={faCheck} className="w-3.5 h-3.5 text-status-success" />
                         ) : (
-                          <Copy className="w-3.5 h-3.5" />
+                          <FontAwesomeIcon icon={faCopy} className="w-3.5 h-3.5" />
                         )}
                       </button>
                     </div>
@@ -487,7 +488,7 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
 
                 {/* Expiration date */}
                 <div className="flex items-center gap-1.5 text-[11px] text-foreground-muted pt-1 border-t border-border/50">
-                  <Calendar className="w-3.5 h-3.5 shrink-0" />
+                  <FontAwesomeIcon icon={faCalendar} className="w-3.5 h-3.5 shrink-0" />
                   <span>
                     {p.expiresAt
                       ? `Kedaluwarsa: ${new Intl.DateTimeFormat('id-ID', {
@@ -508,7 +509,7 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
                     onClick={() => handleToggleStatus(p.id, p.code)}
                     className="text-xs h-8 gap-1.5 flex-1 border-border hover:bg-surface-raised"
                   >
-                    <Power className={`w-3 h-3 ${p.isActive ? 'text-status-warning' : 'text-status-success'}`} />
+                    <FontAwesomeIcon icon={faPowerOff} className={`w-3 h-3 ${p.isActive ? 'text-status-warning' : 'text-status-success'}`} />
                     <span>{p.isActive ? 'Nonaktifkan' : 'Aktifkan'}</span>
                   </Button>
 
@@ -520,7 +521,7 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
                     className="text-xs h-8 w-8 p-0 border-border text-status-error hover:bg-status-error/10 hover:border-status-error/30"
                     title="Hapus promo"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <FontAwesomeIcon icon={faTrash} className="w-3.5 h-3.5" />
                   </Button>
                 </div>
               </div>
@@ -541,7 +542,7 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
             <div className="flex items-start justify-between pb-3 border-b border-border">
               <div>
                 <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
-                  <Tag className="w-4 h-4 text-primary" />
+                  <FontAwesomeIcon icon={faTag} className="w-4 h-4 text-primary" />
                   <span>Generate Kode Promo Baru</span>
                 </h3>
                 <p className="text-xs text-foreground-muted mt-0.5">
@@ -553,7 +554,7 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
                 onClick={() => setIsCreateModalOpen(false)}
                 className="text-foreground-muted hover:text-foreground p-1"
               >
-                <X className="w-5 h-5" />
+                <FontAwesomeIcon icon={faXmark} className="w-5 h-5" />
               </button>
             </div>
 
@@ -567,7 +568,7 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
                     onClick={handleGenerateRandomCode}
                     className="text-[11px] text-primary hover:underline flex items-center gap-1 font-normal"
                   >
-                    <Sparkles className="w-3 h-3" />
+                    <FontAwesomeIcon icon={faWandMagicSparkles} className="w-3 h-3" />
                     <span>Acak Kode Otomatis</span>
                   </button>
                 </label>
@@ -608,7 +609,7 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
                         : 'bg-surface-raised border-border text-foreground-muted hover:text-foreground'
                     }`}
                   >
-                    <Percent className="w-3.5 h-3.5" />
+                    <FontAwesomeIcon icon={faPercent} className="w-3.5 h-3.5" />
                     <span>Persentase (%)</span>
                   </button>
 
@@ -621,7 +622,7 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
                         : 'bg-surface-raised border-border text-foreground-muted hover:text-foreground'
                     }`}
                   >
-                    <Tag className="w-3.5 h-3.5" />
+                    <FontAwesomeIcon icon={faTag} className="w-3.5 h-3.5" />
                     <span>Potongan Tetap (Rp)</span>
                   </button>
                 </div>
@@ -743,12 +744,12 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
                 >
                   {isSubmitting ? (
                     <>
-                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      <FontAwesomeIcon icon={faArrowsRotate} className="w-3.5 h-3.5 animate-spin" />
                       <span>Menyimpan...</span>
                     </>
                   ) : (
                     <>
-                      <Check className="w-3.5 h-3.5" />
+                      <FontAwesomeIcon icon={faCheck} className="w-3.5 h-3.5" />
                       <span>Simpan & Terbitkan Promo</span>
                     </>
                   )}

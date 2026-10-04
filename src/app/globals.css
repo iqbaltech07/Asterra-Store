@@ -67,8 +67,8 @@ body {
   background-color: #ffffff;
   color: #121a2a;
   font-family:
-    var(--font-inter),
-    Inter,
+    var(--font-jakarta),
+    'Plus Jakarta Sans',
     system-ui,
     -apple-system,
     sans-serif;
@@ -135,28 +135,12 @@ body {
   animation-play-state: paused !important;
 }
 
-/* Seamless Smooth Text & Content Transitions (Apple / Vercel style) */
+
+
+/* Seamless Smooth Text & Content Transitions (Apple / Vercel style - GPU accelerated, zero blur filter overhead) */
 @keyframes tabGlideIn {
   0% {
     opacity: 0.2;
-    transform: translate3d(0, 4px, 0);
-    filter: blur(1.5px);
-  }
-  100% {
-    opacity: 1;
-    transform: translate3d(0, 0, 0);
-    filter: blur(0);
-  }
-}
-
-.animate-tab-glide {
-  animation: tabGlideIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
-  will-change: opacity, transform, filter;
-}
-
-@keyframes textMorphSmooth {
-  0% {
-    opacity: 0.3;
     transform: translate3d(0, 3px, 0);
   }
   100% {
@@ -165,9 +149,23 @@ body {
   }
 }
 
+.animate-tab-glide {
+  animation: tabGlideIn 0.16s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes textMorphSmooth {
+  0% {
+    opacity: 0.3;
+    transform: translate3d(0, 2px, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
 .animate-text-smooth {
-  animation: textMorphSmooth 0.18s cubic-bezier(0.16, 1, 0.3, 1) both;
-  will-change: opacity, transform;
+  animation: textMorphSmooth 0.14s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 

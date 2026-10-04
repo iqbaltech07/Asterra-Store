@@ -17,8 +17,8 @@ export function GsapProvider({ children }: { children: React.ReactNode }) {
     let cleanupEntrance: (() => void) | undefined;
     let cleanupScroll: (() => void) | undefined;
 
-    // Small delay ensures route DOM is painted and ready for GSAP
-    const timer = setTimeout(() => {
+    // Use requestAnimationFrame for immediate frame execution without artificial delay
+    const rafId = requestAnimationFrame(() => {
       const container = pageContainerRef.current;
       if (!container) return;
 
@@ -29,10 +29,10 @@ export function GsapProvider({ children }: { children: React.ReactNode }) {
         cleanupEntrance = animatePageEntrance(container);
         cleanupScroll = setupScrollReveal(container);
       }
-    }, 40);
+    });
 
     return () => {
-      clearTimeout(timer);
+      cancelAnimationFrame(rafId);
       cleanupEntrance?.();
       cleanupScroll?.();
     };

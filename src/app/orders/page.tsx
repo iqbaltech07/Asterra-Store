@@ -9,26 +9,27 @@ import { Button } from '@/components/ui/button';
 import { useCartStore } from '@/store/use-cart-store';
 import { Order } from '@/lib/orders-data';
 import { notificationSound } from '@/lib/utils/notification-sound';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  Package,
-  Clock,
-  CheckCircle2,
-  AlertCircle,
-  Copy,
-  Check,
-  RotateCcw,
-  ArrowRight,
-  PhoneCall,
-  Search,
-  ShoppingCart,
-  ShieldCheck,
-  ChevronDown,
-  ChevronUp,
-  X,
-  CreditCard,
-  Mail,
-  LogIn,
-} from 'lucide-react';
+  faBox,
+  faClock,
+  faCircleCheck,
+  faCircleExclamation,
+  faCopy,
+  faCheck,
+  faRotateLeft,
+  faArrowRight,
+  faPhone,
+  faMagnifyingGlass,
+  faCartShopping,
+  faShieldHalved,
+  faChevronDown,
+  faChevronUp,
+  faXmark,
+  faCreditCard,
+  faEnvelope,
+  faRightToBracket,
+} from '@fortawesome/free-solid-svg-icons';
 import { useSession } from '@/lib/auth-client';
 import {
   CheckoutManualModal,
@@ -96,7 +97,7 @@ function OrderCountdownBadge({
       }`}
       title="Batas Waktu Pembayaran 24 Jam"
     >
-      <Clock className="w-3 h-3" />
+      <FontAwesomeIcon icon={faClock} className="w-3 h-3" />
       <span>{timeLeft}</span>
     </span>
   );
@@ -116,28 +117,28 @@ function getStatusBadge(status: Order['order_status']) {
     case 'completed':
       return (
         <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-status-success/15 text-status-success font-medium inline-flex items-center gap-1">
-          <CheckCircle2 className="w-3 h-3" />
+          <FontAwesomeIcon icon={faCircleCheck} className="w-3 h-3" />
           <span>Selesai</span>
         </span>
       );
     case 'processing':
       return (
         <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-status-info/15 text-status-info font-medium inline-flex items-center gap-1">
-          <Clock className="w-3 h-3" />
+          <FontAwesomeIcon icon={faClock} className="w-3 h-3" />
           <span>Di Proses</span>
         </span>
       );
     case 'pending':
       return (
         <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-status-warning/15 text-status-warning font-medium inline-flex items-center gap-1">
-          <AlertCircle className="w-3 h-3" />
+          <FontAwesomeIcon icon={faCircleExclamation} className="w-3 h-3" />
           <span>Menunggu Pembayaran</span>
         </span>
       );
     case 'cancelled':
       return (
         <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-status-error/15 text-status-error font-medium inline-flex items-center gap-1">
-          <AlertCircle className="w-3 h-3" />
+          <FontAwesomeIcon icon={faCircleExclamation} className="w-3 h-3" />
           <span>Dibatalkan</span>
         </span>
       );
@@ -377,7 +378,7 @@ export default function OrdersPage() {
       {notification && (
         <div className="fixed bottom-6 right-6 z-50 bg-surface-raised border border-primary/40 text-foreground px-4 py-3 rounded-lg shadow-xl flex items-center gap-3 animate-in slide-in-from-bottom-5">
           <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-primary">
-            <Check className="w-3.5 h-3.5" />
+            <FontAwesomeIcon icon={faCheck} className="w-3.5 h-3.5" />
           </div>
           <p className="text-xs font-medium">{notification}</p>
         </div>
@@ -407,7 +408,7 @@ export default function OrdersPage() {
           <div data-gsap="hero-card" className="flex items-center gap-2">
             <Link href="/products">
               <Button size="sm" variant="outline" className="text-xs gap-1.5 border-border">
-                <ShoppingCart className="w-3.5 h-3.5 text-primary" />
+                <FontAwesomeIcon icon={faCartShopping} className="w-3.5 h-3.5 text-primary" />
                 <span>Beli Lisensi Baru</span>
               </Button>
             </Link>
@@ -420,7 +421,7 @@ export default function OrdersPage() {
               className="p-2 rounded-lg bg-surface-raised border border-border text-foreground-muted hover:text-foreground transition-colors"
               title="Perbarui Data"
             >
-              <RotateCcw className="w-4 h-4" />
+              <FontAwesomeIcon icon={faRotateLeft} className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -429,7 +430,7 @@ export default function OrdersPage() {
         {(!activeEmail || isChangingEmail) && (
           <div data-gsap="hero-card" className="bg-surface border border-primary/30 rounded-xl p-6 sm:p-8 max-w-xl mx-auto text-center space-y-4 mb-8 shadow-sm">
             <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto">
-              <Mail className="w-6 h-6" />
+              <FontAwesomeIcon icon={faEnvelope} className="w-6 h-6" />
             </div>
             <div>
               <h2 className="text-lg font-bold text-foreground">Lacak Riwayat Pesanan Anda</h2>
@@ -464,10 +465,10 @@ export default function OrdersPage() {
                 Lihat Pesanan
               </Button>
             </form>
-            <div className="pt-2 text-xs text-foreground-muted border-t border-border flex items-center justify-center gap-3">
+            <div className="pt-2 text-xs text-foreground-muted border-border border-t flex items-center justify-center gap-3">
               <span>Sudah memiliki akun?</span>
               <Link href="/profile" className="text-primary font-medium hover:underline inline-flex items-center gap-1">
-                <LogIn className="w-3 h-3" />
+                <FontAwesomeIcon icon={faRightToBracket} className="w-3 h-3" />
                 <span>Masuk Akun</span>
               </Link>
             </div>
@@ -507,7 +508,7 @@ export default function OrdersPage() {
                   href="/profile"
                   className="text-foreground-muted hover:text-foreground text-[11px] inline-flex items-center gap-1"
                 >
-                  <LogIn className="w-3 h-3" />
+                  <FontAwesomeIcon icon={faRightToBracket} className="w-3 h-3" />
                   <span>Masuk Akun</span>
                 </Link>
               )}
@@ -541,7 +542,7 @@ export default function OrdersPage() {
 
             {/* Search within orders */}
             <div className="relative sm:w-72">
-              <Search className="w-3.5 h-3.5 text-foreground-muted absolute left-3 top-1/2 -translate-y-1/2" />
+              <FontAwesomeIcon icon={faMagnifyingGlass} className="w-3.5 h-3.5 text-foreground-muted absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 placeholder="Cari ID pesanan / nama produk..."
@@ -586,7 +587,7 @@ export default function OrdersPage() {
         {!isLoading && !error && filteredOrders.length === 0 && (
           <div className="bg-surface border border-border rounded-xl p-12 text-center space-y-4 max-w-md mx-auto my-12">
             <div className="w-12 h-12 rounded-xl bg-surface-raised border border-border flex items-center justify-center mx-auto text-foreground-muted">
-              <Package className="w-6 h-6" />
+              <FontAwesomeIcon icon={faBox} className="w-6 h-6" />
             </div>
             <div className="space-y-1">
               <h3 className="text-base font-bold text-foreground">Belum Ada Riwayat Pesanan</h3>
@@ -613,7 +614,7 @@ export default function OrdersPage() {
               <Link href="/products">
                 <Button size="sm" className="gap-2">
                   <span>Mulai Belanja</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  <FontAwesomeIcon icon={faArrowRight} className="w-3.5 h-3.5" />
                 </Button>
               </Link>
             )}
@@ -640,7 +641,7 @@ export default function OrdersPage() {
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-border">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-lg bg-surface-raised border border-border flex items-center justify-center text-primary shrink-0">
-                        <Package className="w-4 h-4" />
+                        <FontAwesomeIcon icon={faBox} className="w-4 h-4" />
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
@@ -653,7 +654,7 @@ export default function OrdersPage() {
                             className="text-foreground-muted hover:text-foreground"
                             title="Salin Data Pesanan"
                           >
-                            <Copy className="w-3.5 h-3.5" />
+                            <FontAwesomeIcon icon={faCopy} className="w-3.5 h-3.5" />
                           </button>
                         </div>
                         <span className="text-[11px] text-foreground-muted">
@@ -764,7 +765,7 @@ export default function OrdersPage() {
                               : 'bg-surface-hover'
                           }`}
                         >
-                          {isCancelled ? <X className="w-3 h-3" /> : '4'}
+                          {isCancelled ? <FontAwesomeIcon icon={faXmark} className="w-3 h-3" /> : '4'}
                         </div>
                         <span className="font-medium">
                           {isCancelled ? 'Dibatalkan' : 'Selesai'}
@@ -836,7 +837,7 @@ export default function OrdersPage() {
                       </div>
 
                       <div className="flex items-center gap-2 p-3 bg-surface-raised rounded-lg text-status-success">
-                        <ShieldCheck className="w-4 h-4 shrink-0" />
+                        <FontAwesomeIcon icon={faShieldHalved} className="w-4 h-4 shrink-0" />
                         <span className="text-[11px]">
                           Lisensi ini dilindungi oleh Garansi Asterra Store 100% penggantian jika mengalami kendala akses.
                         </span>
@@ -852,7 +853,7 @@ export default function OrdersPage() {
                       className="text-xs text-foreground-muted hover:text-foreground inline-flex items-center gap-1"
                     >
                       <span>{isExpanded ? 'Tutup Rincian' : 'Lihat Rincian Lisensi'}</span>
-                      {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                      {isExpanded ? <FontAwesomeIcon icon={faChevronUp} className="w-3.5 h-3.5" /> : <FontAwesomeIcon icon={faChevronDown} className="w-3.5 h-3.5" />}
                     </button>
 
                     <div className="flex flex-wrap items-center gap-2">
@@ -862,7 +863,7 @@ export default function OrdersPage() {
                         onClick={() => handleCopyOrderInfo(order)}
                         className="text-xs gap-1.5 border-border h-8"
                       >
-                        <Copy className="w-3 h-3" />
+                        <FontAwesomeIcon icon={faCopy} className="w-3 h-3" />
                         <span>Salin Bukti</span>
                       </Button>
 
@@ -872,7 +873,7 @@ export default function OrdersPage() {
                           onClick={() => handlePayOrder(order)}
                           className="text-xs gap-1.5 h-8 font-semibold bg-primary hover:bg-primary/90 text-white shadow-sm"
                         >
-                          <CreditCard className="w-3.5 h-3.5" />
+                          <FontAwesomeIcon icon={faCreditCard} className="w-3.5 h-3.5" />
                           <span>Bayar</span>
                         </Button>
                       )}
@@ -884,7 +885,7 @@ export default function OrdersPage() {
                           onClick={() => handleReorder(order)}
                           className="text-xs gap-1.5 border-border h-8 font-medium"
                         >
-                          <ShoppingCart className="w-3 h-3 text-primary" />
+                          <FontAwesomeIcon icon={faCartShopping} className="w-3 h-3 text-primary" />
                           <span>Beli Lagi</span>
                         </Button>
                       )}
@@ -897,7 +898,7 @@ export default function OrdersPage() {
                         rel="noreferrer"
                       >
                         <Button size="sm" className="text-xs gap-1.5 h-8">
-                          <PhoneCall className="w-3 h-3" />
+                          <FontAwesomeIcon icon={faPhone} className="w-3 h-3" />
                           <span>Hubungi CS</span>
                         </Button>
                       </a>

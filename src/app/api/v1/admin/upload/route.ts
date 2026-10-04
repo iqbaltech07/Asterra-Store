@@ -12,7 +12,7 @@ const ALLOWED_MIME_TYPES = [
   'image/avif',
 ];
 
-const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
+const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
 
 /**
  * POST /api/v1/admin/upload
@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
     // Validate size
     if (file.size > MAX_FILE_SIZE_BYTES) {
       return NextResponse.json(
-        { success: false, error: 'Ukuran file melebihi batas maksimal 10MB.' },
+        { success: false, error: 'Ukuran file melebihi batas maksimal 5MB.' },
         { status: 400 }
       );
     }

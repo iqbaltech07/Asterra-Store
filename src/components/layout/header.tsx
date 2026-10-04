@@ -3,15 +3,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import Image from 'next/image';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  ShoppingCart,
-  Menu,
-  X,
-  Package,
-  User,
-  LogOut,
-  ChevronDown,
-} from 'lucide-react';
+  faCartShopping,
+  faBars,
+  faXmark,
+  faBox,
+  faUser,
+  faRightFromBracket,
+  faChevronDown,
+} from '@fortawesome/free-solid-svg-icons';
 import { useCartStore } from '@/store/use-cart-store';
 import { useAuthStore } from '@/store/use-auth-store';
 import { useSession, signOut } from '@/lib/auth-client';
@@ -73,7 +75,7 @@ export function Header({ onNotify }: HeaderProps) {
 
   return (
     <>
-      <header ref={headerRef} className="sticky top-0 z-40 w-full px-2 sm:px-6 pt-2.5 pb-2 transition-all">
+      <header ref={headerRef} className="sticky top-0 z-40 w-full px-2 sm:px-6 pt-2.5 pb-2 transition-colors duration-150">
         <div className="max-w-7xl mx-auto rounded-2xl bg-[#121A2A] border border-white/10 shadow-navbar px-3.5 sm:px-6 h-16 sm:h-18 flex items-center justify-between gap-4">
           {/* Brand Logo */}
           <div data-gsap="nav-logo" className="flex items-center gap-3">
@@ -88,6 +90,7 @@ export function Header({ onNotify }: HeaderProps) {
           <nav className="hidden lg:flex items-center gap-6 text-xs sm:text-[13px] font-medium">
             <Link
               href="/"
+              prefetch={true}
               data-gsap="nav-link"
               className={`transition-colors py-1 ${
                 isHomeActive
@@ -99,6 +102,7 @@ export function Header({ onNotify }: HeaderProps) {
             </Link>
             <Link
               href="/products"
+              prefetch={true}
               data-gsap="nav-link"
               className={`transition-colors py-1 ${
                 isProductsActive
@@ -110,6 +114,7 @@ export function Header({ onNotify }: HeaderProps) {
             </Link>
             <Link
               href="/orders"
+              prefetch={true}
               data-gsap="nav-link"
               className={`transition-colors py-1 inline-flex items-center gap-1.5 ${
                 isOrdersActive
@@ -117,7 +122,7 @@ export function Header({ onNotify }: HeaderProps) {
                   : 'text-[#F7F5EF]/80 hover:text-[#F7F5EF]'
               }`}
             >
-              <Package className="w-3.5 h-3.5 text-[#C96F55]" />
+              <FontAwesomeIcon icon={faBox} className="w-3.5 h-3.5 text-[#C96F55]" />
               <span>Pesanan Saya</span>
             </Link>
             <Link
@@ -152,7 +157,7 @@ export function Header({ onNotify }: HeaderProps) {
               onClick={() => setIsCartOpen(true)}
               aria-label="Buka Keranjang Pesanan"
             >
-              <ShoppingCart className="w-4 h-4 text-[#C96F55] transition-transform group-hover:scale-110" />
+              <FontAwesomeIcon icon={faCartShopping} className="w-4 h-4 text-[#C96F55] transition-transform group-hover:scale-110" />
               <span className="hidden sm:inline">Pesanan</span>
               {getTotalItems() > 0 && (
                 <span className="w-5 h-5 rounded-full bg-[#C96F55] text-[#F7F5EF] text-[11px] font-bold flex items-center justify-center -mr-1 shadow-xs animate-in zoom-in-75">
@@ -172,11 +177,13 @@ export function Header({ onNotify }: HeaderProps) {
                       aria-label="Menu Akun Pengguna"
                     >
                       {userImage ? (
-                        <img
+                        <Image
                           src={userImage}
                           alt={currentUser.name || 'Profil'}
+                          width={28}
+                          height={28}
+                          unoptimized
                           className="w-7 h-7 rounded-full object-cover ring-1 ring-white/20"
-                          referrerPolicy="no-referrer"
                         />
                       ) : (
                         <div className="w-7 h-7 rounded-full bg-[rgba(201,111,85,0.2)] border border-[rgba(201,111,85,0.4)] text-[#C96F55] flex items-center justify-center font-bold text-xs">
@@ -186,7 +193,7 @@ export function Header({ onNotify }: HeaderProps) {
                       <span className="inline-block max-w-[90px] truncate text-[#F7F5EF] text-xs font-medium">
                         {currentUser.name?.split(' ')[0] || 'Profil'}
                       </span>
-                      <ChevronDown className="w-3.5 h-3.5 text-[#F7F5EF]/60 inline-block" />
+                      <FontAwesomeIcon icon={faChevronDown} className="w-3 h-3 text-[#F7F5EF]/60 inline-block" />
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56 bg-white text-[#121A2A] border border-[rgba(18,26,42,0.1)] shadow-editorial">
@@ -203,13 +210,13 @@ export function Header({ onNotify }: HeaderProps) {
                     <DropdownMenuSeparator className="bg-[rgba(18,26,42,0.08)]" />
                     <DropdownMenuItem asChild>
                       <Link href="/profile" className="flex items-center gap-2 cursor-pointer w-full text-[#121A2A] hover:text-[#C96F55]">
-                        <User className="w-4 h-4 text-[#C96F55]" />
+                        <FontAwesomeIcon icon={faUser} className="w-3.5 h-3.5 text-[#C96F55]" />
                         <span>Profil Saya</span>
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
                       <Link href="/orders" className="flex items-center gap-2 cursor-pointer w-full text-[#121A2A] hover:text-[#C96F55]">
-                        <Package className="w-4 h-4 text-[#C96F55]" />
+                        <FontAwesomeIcon icon={faBox} className="w-3.5 h-3.5 text-[#C96F55]" />
                         <span>Pesanan Saya</span>
                       </Link>
                     </DropdownMenuItem>
@@ -218,7 +225,7 @@ export function Header({ onNotify }: HeaderProps) {
                       onClick={handleLogout}
                       className="flex items-center gap-2 text-status-error focus:text-status-error focus:bg-status-error/10 cursor-pointer"
                     >
-                      <LogOut className="w-4 h-4" />
+                      <FontAwesomeIcon icon={faRightFromBracket} className="w-3.5 h-3.5" />
                       <span>Keluar Akun</span>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -245,7 +252,11 @@ export function Header({ onNotify }: HeaderProps) {
               className="lg:hidden p-2 text-[#F7F5EF]/80 hover:text-[#F7F5EF] rounded-xl hover:bg-[#182235] transition-colors"
               aria-label="Buka Menu"
             >
-              {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              {isMobileMenuOpen ? (
+                <FontAwesomeIcon icon={faXmark} className="w-5 h-5" />
+              ) : (
+                <FontAwesomeIcon icon={faBars} className="w-5 h-5" />
+              )}
             </button>
           </div>
         </div>
@@ -261,11 +272,13 @@ export function Header({ onNotify }: HeaderProps) {
                   className="flex items-center gap-2.5 min-w-0 flex-1 group"
                 >
                   {userImage ? (
-                    <img
+                    <Image
                       src={userImage}
                       alt={currentUser.name || 'Profil'}
+                      width={36}
+                      height={36}
+                      unoptimized
                       className="w-9 h-9 rounded-full object-cover ring-1 ring-white/20 shrink-0"
-                      referrerPolicy="no-referrer"
                     />
                   ) : (
                     <div className="w-9 h-9 rounded-full bg-[rgba(201,111,85,0.2)] border border-[rgba(201,111,85,0.4)] text-[#C96F55] flex items-center justify-center font-bold text-sm shrink-0">
@@ -291,7 +304,7 @@ export function Header({ onNotify }: HeaderProps) {
                   className="text-xs text-[#F7F5EF]/80 hover:text-status-error shrink-0"
                   aria-label="Keluar"
                 >
-                  <LogOut className="w-4 h-4" />
+                  <FontAwesomeIcon icon={faRightFromBracket} className="w-4 h-4" />
                 </Button>
               </div>
             ) : (
