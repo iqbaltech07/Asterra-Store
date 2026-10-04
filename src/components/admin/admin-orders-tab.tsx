@@ -5,7 +5,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Order } from '@/lib/orders-data';
 import { OrdersApi, OrdersApiResponse } from '@/lib/api-client';
 import { notificationSound } from '@/lib/utils/notification-sound';
-import { RefreshCw, ShoppingBag, Check } from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faArrowsRotate, faBagShopping, faCheck } from '@fortawesome/free-solid-svg-icons';
 import { OrderMetricsCards } from './orders/order-metrics-cards';
 import { OrderFiltersBar } from './orders/order-filters-bar';
 import { OrderTableRow } from './orders/order-table-row';
@@ -165,7 +166,7 @@ export function AdminOrdersTab() {
       {notification && (
         <div className="fixed bottom-6 right-6 z-50 bg-surface-raised border border-primary/50 text-foreground px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 animate-in slide-in-from-bottom-5">
           <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-primary">
-            <Check className="w-3.5 h-3.5" />
+            <FontAwesomeIcon icon={faCheck} className="w-3.5 h-3.5" />
           </div>
           <p className="text-xs font-medium">{notification}</p>
         </div>
@@ -193,12 +194,12 @@ export function AdminOrdersTab() {
       <div className="bg-surface border border-border rounded-xl overflow-hidden shadow-sm">
         {isLoading ? (
           <div className="p-12 text-center">
-            <RefreshCw className="w-8 h-8 animate-spin mx-auto text-primary mb-3" />
+            <FontAwesomeIcon icon={faArrowsRotate} className="w-8 h-8 animate-spin mx-auto text-primary mb-3" />
             <p className="text-xs text-foreground-muted">Memuat daftar pesanan pelanggan...</p>
           </div>
         ) : orders.length === 0 ? (
           <div className="p-12 text-center">
-            <ShoppingBag className="w-12 h-12 text-foreground-muted/40 mx-auto mb-3" />
+            <FontAwesomeIcon icon={faBagShopping} className="w-12 h-12 text-foreground-muted/40 mx-auto mb-3" />
             <h3 className="text-sm font-semibold text-foreground">Tidak Ada Pesanan Ditemukan</h3>
             <p className="text-xs text-foreground-muted mt-1 max-w-sm mx-auto">
               {searchQuery

@@ -9,31 +9,32 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ManagedProductItem } from '@/lib/services/admin-catalog-store';
 import { VipRawService } from '@/lib/services/vip-reseller.service';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  Search,
-  Plus,
-  RefreshCw,
-  Edit,
-  CheckCircle2,
-  AlertTriangle,
-  Eye,
-  EyeOff,
-  DownloadCloud,
-  TrendingUp,
-  TrendingDown,
-  Package,
-  X,
-  Check,
-  Wallet,
-  Filter,
-  LogOut,
-  ShoppingBag,
-  Activity,
-  CreditCard,
-  Tag,
-  Trash2,
-  ShieldCheck,
-} from 'lucide-react';
+  faMagnifyingGlass,
+  faPlus,
+  faArrowsRotate,
+  faPen,
+  faCircleCheck,
+  faTriangleExclamation,
+  faEye,
+  faEyeSlash,
+  faCloudArrowDown,
+  faArrowTrendUp,
+  faArrowTrendDown,
+  faBox,
+  faXmark,
+  faCheck,
+  faWallet,
+  faFilter,
+  faRightFromBracket,
+  faBagShopping,
+  faChartLine,
+  faCreditCard,
+  faTag,
+  faTrash,
+  faShieldHalved,
+} from '@fortawesome/free-solid-svg-icons';
 import { AdminOrdersTab } from '@/components/admin/admin-orders-tab';
 import { AdminLogsTab } from '@/components/admin/admin-logs-tab';
 import { AdminPaymentSettingsTab } from '@/components/admin/admin-payment-settings-tab';
@@ -631,7 +632,7 @@ export default function AdminPage() {
       <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center selection:bg-primary/20 selection:text-primary">
         <div className="flex flex-col items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-surface border border-border flex items-center justify-center shadow-subtle animate-pulse">
-            <RefreshCw className="w-5 h-5 text-primary animate-spin" />
+            <FontAwesomeIcon icon={faArrowsRotate} className="w-5 h-5 text-primary animate-spin" />
           </div>
           <span className="text-xs text-foreground-muted tracking-widest uppercase font-mono">
             Memverifikasi Otoritas Sesi Admin...
@@ -678,7 +679,7 @@ export default function AdminPage() {
             onClick={handleLogout}
             className="h-8 text-xs text-rose-300 hover:bg-rose-500/20 hover:text-rose-200 gap-1.5 px-3 font-medium border border-rose-500/30"
           >
-            <LogOut className="w-3.5 h-3.5" />
+            <FontAwesomeIcon icon={faRightFromBracket} className="w-3.5 h-3.5" />
             <span>Keluar Admin</span>
           </Button>
         </div>
@@ -688,7 +689,7 @@ export default function AdminPage() {
       {notification && (
         <div className="fixed bottom-6 right-6 z-50 bg-surface-raised border border-primary/40 text-foreground px-4 py-3 rounded-lg shadow-xl flex items-center gap-3 animate-in slide-in-from-bottom-5">
           <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-primary">
-            <Check className="w-3.5 h-3.5" />
+            <FontAwesomeIcon icon={faCheck} className="w-3.5 h-3.5" />
           </div>
           <p className="text-xs font-medium">{notification}</p>
         </div>
@@ -720,7 +721,7 @@ export default function AdminPage() {
               className="text-xs gap-1.5 border-primary/40 text-primary hover:bg-primary/10"
               title="Ambil dan sinkronkan semua layanan dari gateway VIP Reseller"
             >
-              <DownloadCloud className={`w-3.5 h-3.5 ${syncVipMutation.isPending ? 'animate-bounce' : ''}`} />
+              <FontAwesomeIcon icon={faCloudArrowDown} className={`w-3.5 h-3.5 ${syncVipMutation.isPending ? 'animate-bounce' : ''}`} />
               <span>{syncVipMutation.isPending ? 'Menyinkronkan...' : 'Sinkronkan VIP Reseller'}</span>
             </Button>
             <Button
@@ -731,11 +732,11 @@ export default function AdminPage() {
               className="text-xs gap-1.5 border-border"
               title="Periksa ketersediaan stok live dari VIP Reseller"
             >
-              <RefreshCw className={`w-3.5 h-3.5 text-primary ${refreshStockMutation.isPending ? 'animate-spin' : ''}`} />
+              <FontAwesomeIcon icon={faArrowsRotate} className={`w-3.5 h-3.5 text-primary ${refreshStockMutation.isPending ? 'animate-spin' : ''}`} />
               <span>{refreshStockMutation.isPending ? 'Memeriksa...' : 'Cek Stok Supplier'}</span>
             </Button>
             <Button size="sm" onClick={handleOpenCreate} className="text-xs gap-1.5">
-              <Plus className="w-3.5 h-3.5" />
+              <FontAwesomeIcon icon={faPlus} className="w-3.5 h-3.5" />
               <span>Tambah Produk Baru</span>
             </Button>
           </div>
@@ -746,7 +747,7 @@ export default function AdminPage() {
           <div className="bg-surface border border-border rounded-xl p-4 sm:p-5">
             <div className="flex items-center justify-between text-xs text-foreground-muted mb-2">
               <span>Aktif di Katalog Toko</span>
-              <Eye className="w-4 h-4 text-status-success" />
+              <FontAwesomeIcon icon={faEye} className="w-4 h-4 text-status-success" />
             </div>
             <div className="text-2xl font-bold text-foreground">
               {metrics?.totalActive ?? 0}
@@ -757,7 +758,7 @@ export default function AdminPage() {
           <div className="bg-surface border border-border rounded-xl p-4 sm:p-5">
             <div className="flex items-center justify-between text-xs text-foreground-muted mb-2">
               <span>Diarsipkan (Draft / Hidden)</span>
-              <EyeOff className="w-4 h-4 text-foreground-muted" />
+              <FontAwesomeIcon icon={faEyeSlash} className="w-4 h-4 text-foreground-muted" />
             </div>
             <div className="text-2xl font-bold text-foreground">
               {metrics?.totalArchived ?? 0}
@@ -768,7 +769,7 @@ export default function AdminPage() {
           <div className="bg-surface border border-border rounded-xl p-4 sm:p-5">
             <div className="flex items-center justify-between text-xs text-foreground-muted mb-2">
               <span>Perlu Perhatian (Stok VIP Kosong)</span>
-              <AlertTriangle className="w-4 h-4 text-status-warning" />
+              <FontAwesomeIcon icon={faTriangleExclamation} className="w-4 h-4 text-status-warning" />
             </div>
             <div className="text-2xl font-bold text-status-warning">
               {metrics?.totalWarnings ?? 0}
@@ -779,7 +780,7 @@ export default function AdminPage() {
           <div className="bg-surface border border-border rounded-xl p-4 sm:p-5">
             <div className="flex items-center justify-between text-xs text-foreground-muted mb-2">
               <span>Saldo Akun VIP Reseller</span>
-              <Wallet className="w-4 h-4 text-primary" />
+              <FontAwesomeIcon icon={faWallet} className="w-4 h-4 text-primary" />
             </div>
             <div className="text-2xl font-bold text-primary">
               {metrics?.vipBalance !== null && metrics?.vipBalance !== undefined
@@ -801,7 +802,7 @@ export default function AdminPage() {
                 : 'bg-surface text-foreground-muted hover:text-foreground hover:bg-surface-hover border border-border'
             }`}
           >
-            <Package className="w-4 h-4" />
+            <FontAwesomeIcon icon={faBox} className="w-4 h-4" />
             <span>Katalog Produk ({metrics?.total ?? 0})</span>
           </button>
 
@@ -814,7 +815,7 @@ export default function AdminPage() {
                 : 'bg-surface text-foreground-muted hover:text-foreground hover:bg-surface-hover border border-border'
             }`}
           >
-            <ShoppingBag className="w-4 h-4" />
+            <FontAwesomeIcon icon={faBagShopping} className="w-4 h-4" />
             <span>Pesanan Pelanggan</span>
           </button>
 
@@ -827,7 +828,7 @@ export default function AdminPage() {
                 : 'bg-surface text-foreground-muted hover:text-foreground hover:bg-surface-hover border border-border'
             }`}
           >
-            <Activity className="w-4 h-4" />
+            <FontAwesomeIcon icon={faChartLine} className="w-4 h-4" />
             <span>Log Aktivitas & Gateway</span>
           </button>
 
@@ -840,7 +841,7 @@ export default function AdminPage() {
                 : 'bg-surface text-foreground-muted hover:text-foreground hover:bg-surface-hover border border-border'
             }`}
           >
-            <CreditCard className="w-4 h-4" />
+            <FontAwesomeIcon icon={faCreditCard} className="w-4 h-4" />
             <span>Pengaturan Pembayaran</span>
           </button>
 
@@ -853,7 +854,7 @@ export default function AdminPage() {
                 : 'bg-surface text-foreground-muted hover:text-foreground hover:bg-surface-hover border border-border'
             }`}
           >
-            <Tag className="w-4 h-4" />
+            <FontAwesomeIcon icon={faTag} className="w-4 h-4" />
             <span>Voucher & Promo</span>
           </button>
 
@@ -866,7 +867,7 @@ export default function AdminPage() {
                 : 'bg-surface text-foreground-muted hover:text-foreground hover:bg-surface-hover border border-border'
             }`}
           >
-            <DownloadCloud className="w-4 h-4" />
+            <FontAwesomeIcon icon={faCloudArrowDown} className="w-4 h-4" />
             <span>Jelajahi & Impor VIP Reseller</span>
           </button>
 
@@ -879,7 +880,7 @@ export default function AdminPage() {
                 : 'bg-surface text-foreground-muted hover:text-foreground hover:bg-surface-hover border border-border'
             }`}
           >
-            <ShieldCheck className="w-4 h-4" />
+            <FontAwesomeIcon icon={faShieldHalved} className="w-4 h-4" />
             <span>Kelola Admin</span>
           </button>
         </div>
@@ -910,7 +911,7 @@ export default function AdminPage() {
                       : 'bg-surface-raised text-foreground-muted hover:text-foreground border border-border'
                   }`}
                 >
-                  <Eye className="w-3.5 h-3.5" />
+                  <FontAwesomeIcon icon={faEye} className="w-3.5 h-3.5" />
                   <span>Aktif di Toko ({metrics?.totalActive ?? 0})</span>
                 </button>
                 <button
@@ -922,7 +923,7 @@ export default function AdminPage() {
                       : 'bg-surface-raised text-foreground-muted hover:text-foreground border border-border'
                   }`}
                 >
-                  <EyeOff className="w-3.5 h-3.5" />
+                  <FontAwesomeIcon icon={faEyeSlash} className="w-3.5 h-3.5" />
                   <span>Diarsipkan ({metrics?.totalArchived ?? 0})</span>
                 </button>
                 {metrics?.totalWarnings ? (
@@ -935,7 +936,7 @@ export default function AdminPage() {
                         : 'bg-surface-raised text-status-warning border border-status-warning/30 hover:bg-status-warning/10'
                     }`}
                   >
-                    <AlertTriangle className="w-3.5 h-3.5" />
+                    <FontAwesomeIcon icon={faTriangleExclamation} className="w-3.5 h-3.5" />
                     <span>Supplier Kosong ({metrics.totalWarnings})</span>
                   </button>
                 ) : null}
@@ -959,7 +960,7 @@ export default function AdminPage() {
                 </div>
 
                 <div className="relative min-w-[240px]">
-                  <Search className="w-4 h-4 text-foreground-muted absolute left-3 top-1/2 -translate-y-1/2" />
+                  <FontAwesomeIcon icon={faMagnifyingGlass} className="w-4 h-4 text-foreground-muted absolute left-3 top-1/2 -translate-y-1/2" />
                   <Input
                     type="text"
                     placeholder="Cari produk terkelola..."
@@ -997,7 +998,7 @@ export default function AdminPage() {
                     className="h-8 gap-1.5 bg-status-success hover:bg-status-success/90 text-white text-xs font-medium"
                     title="Ubah semua produk terpilih menjadi Aktif (Tampil di Toko)"
                   >
-                    <Eye className="w-3.5 h-3.5" />
+                    <FontAwesomeIcon icon={faEye} className="w-3.5 h-3.5" />
                     <span>Aktifkan ({selectedIds.length})</span>
                   </Button>
 
@@ -1009,7 +1010,7 @@ export default function AdminPage() {
                     className="h-8 gap-1.5 border-border hover:bg-surface-hover text-xs font-medium"
                     title="Ubah semua produk terpilih menjadi Diarsipkan (Sembunyikan dari Toko)"
                   >
-                    <EyeOff className="w-3.5 h-3.5 text-foreground-muted" />
+                    <FontAwesomeIcon icon={faEyeSlash} className="w-3.5 h-3.5 text-foreground-muted" />
                     <span>Arsipkan ({selectedIds.length})</span>
                   </Button>
 
@@ -1021,7 +1022,7 @@ export default function AdminPage() {
                     className="h-8 gap-1.5 bg-status-error/15 hover:bg-status-error text-status-error hover:text-white border border-status-error/30 text-xs font-medium"
                     title="Hapus permanen produk terpilih"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <FontAwesomeIcon icon={faTrash} className="w-3.5 h-3.5" />
                     <span>Hapus ({selectedIds.length})</span>
                   </Button>
 
@@ -1032,7 +1033,7 @@ export default function AdminPage() {
                     disabled={bulkStatusMutation.isPending || bulkDeleteMutation.isPending}
                     className="h-8 text-foreground-muted hover:text-foreground text-xs"
                   >
-                    <X className="w-3.5 h-3.5 mr-1" />
+                    <FontAwesomeIcon icon={faXmark} className="w-3.5 h-3.5 mr-1" />
                     <span>Batal</span>
                   </Button>
                 </div>
@@ -1046,7 +1047,7 @@ export default function AdminPage() {
               </div>
             ) : products.length === 0 ? (
               <div className="p-12 text-center space-y-3 bg-surface border border-border rounded-xl">
-                <Package className="w-10 h-10 text-foreground-muted mx-auto" />
+                <FontAwesomeIcon icon={faBox} className="w-10 h-10 text-foreground-muted mx-auto" />
                 <p className="text-sm font-semibold text-foreground">Tidak ada produk ditemukan</p>
                 <p className="text-xs text-foreground-muted">
                   Coba ubah filter pencarian atau tambahkan produk baru.
@@ -1160,7 +1161,7 @@ export default function AdminPage() {
                                 if (margin !== undefined && margin > 0) {
                                   return (
                                     <div className="inline-flex items-center gap-1.5 text-status-success font-semibold whitespace-nowrap font-mono">
-                                      <TrendingUp className="w-3.5 h-3.5 shrink-0" />
+                                      <FontAwesomeIcon icon={faArrowTrendUp} className="w-3.5 h-3.5 shrink-0" />
                                       <span>+Rp {margin.toLocaleString('id-ID')}</span>
                                       <span className="text-[11px] text-status-success/80 font-normal">
                                         ({percentage}%)
@@ -1171,7 +1172,7 @@ export default function AdminPage() {
                                 if (margin !== undefined && margin < 0) {
                                   return (
                                     <div className="inline-flex items-center gap-1.5 text-status-error font-semibold whitespace-nowrap font-mono">
-                                      <TrendingDown className="w-3.5 h-3.5 shrink-0" />
+                                      <FontAwesomeIcon icon={faArrowTrendDown} className="w-3.5 h-3.5 shrink-0" />
                                       <span>-Rp {Math.abs(margin).toLocaleString('id-ID')}</span>
                                       <span className="text-[11px] text-status-error/80 font-normal">
                                         ({percentage}%)
@@ -1195,7 +1196,7 @@ export default function AdminPage() {
                               {p.provider === 'vip-reseller' ? (
                                 p.providerStatus === 'available' ? (
                                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-status-success/15 text-status-success">
-                                    <CheckCircle2 className="w-3 h-3" />
+                                    <FontAwesomeIcon icon={faCircleCheck} className="w-3 h-3" />
                                     <span>Tersedia ({p.stock ?? 100})</span>
                                   </span>
                                 ) : (
@@ -1203,19 +1204,19 @@ export default function AdminPage() {
                                     className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-status-warning/15 text-status-warning"
                                     title="Stok supplier kosong!"
                                   >
-                                    <AlertTriangle className="w-3 h-3" />
+                                    <FontAwesomeIcon icon={faTriangleExclamation} className="w-3 h-3" />
                                     <span>Kosong</span>
                                   </span>
                                 )
                               ) : (
                                 (p.stock !== undefined && p.stock <= 0) ? (
                                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-status-warning/15 text-status-warning">
-                                    <AlertTriangle className="w-3 h-3" />
+                                    <FontAwesomeIcon icon={faTriangleExclamation} className="w-3 h-3" />
                                     <span>Kosong (0)</span>
                                   </span>
                                 ) : (
                                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-status-success/15 text-status-success">
-                                    <CheckCircle2 className="w-3 h-3" />
+                                    <FontAwesomeIcon icon={faCircleCheck} className="w-3 h-3" />
                                     <span>Tersedia ({p.stock ?? 100})</span>
                                   </span>
                                 )
@@ -1236,12 +1237,12 @@ export default function AdminPage() {
                               >
                                 {p.status === 'active' ? (
                                   <>
-                                    <Eye className="w-3 h-3" />
+                                    <FontAwesomeIcon icon={faEye} className="w-3 h-3" />
                                     <span>Aktif (Tampil)</span>
                                   </>
                                 ) : (
                                   <>
-                                    <EyeOff className="w-3 h-3" />
+                                    <FontAwesomeIcon icon={faEyeSlash} className="w-3 h-3" />
                                     <span>Diarsipkan</span>
                                   </>
                                 )}
@@ -1257,7 +1258,7 @@ export default function AdminPage() {
                                   className="h-8 px-2.5 text-xs border-border"
                                   title="Edit detail & harga jual"
                                 >
-                                  <Edit className="w-3.5 h-3.5 text-primary" />
+                                  <FontAwesomeIcon icon={faPen} className="w-3.5 h-3.5 text-primary" />
                                   <span className="hidden sm:inline ml-1">Edit</span>
                                 </Button>
                                 <Button
@@ -1270,7 +1271,7 @@ export default function AdminPage() {
                                   className="h-8 px-2.5 text-xs border-border hover:border-status-error/50 hover:bg-status-error/10 text-status-error"
                                   title="Hapus produk permanen"
                                 >
-                                  <Trash2 className="w-3.5 h-3.5" />
+                                  <FontAwesomeIcon icon={faTrash} className="w-3.5 h-3.5" />
                                   <span className="hidden sm:inline ml-1">Hapus</span>
                                 </Button>
                               </div>
@@ -1333,7 +1334,7 @@ export default function AdminPage() {
               {/* Anti-Spam Cache Banner */}
               <div className="p-3 bg-primary/10 border border-primary/20 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-foreground">
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-status-success shrink-0" />
+                  <FontAwesomeIcon icon={faCircleCheck} className="w-4 h-4 text-status-success shrink-0" />
                   <span>
                     <strong>Anti-Spam Cache Aktif:</strong> {allVipServices.length} layanan dimuat di memori. Pencarian & filter dilakukan secara instan tanpa mengirim request berulang ke API VIP Reseller.
                   </span>
@@ -1348,7 +1349,7 @@ export default function AdminPage() {
               {/* Explorer Filters */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="relative">
-                  <Search className="w-4 h-4 text-foreground-muted absolute left-3 top-1/2 -translate-y-1/2" />
+                  <FontAwesomeIcon icon={faMagnifyingGlass} className="w-4 h-4 text-foreground-muted absolute left-3 top-1/2 -translate-y-1/2" />
                   <Input
                     type="text"
                     placeholder="Cari layanan (Canva, Netflix, K-Vision, Mobile Legends)..."
@@ -1362,7 +1363,7 @@ export default function AdminPage() {
                   <Select value={vipType} onValueChange={(val) => setVipType(val)}>
                     <SelectTrigger className="h-9 text-xs bg-surface-raised border-border">
                       <div className="flex items-center gap-1.5 truncate">
-                        <Filter className="w-3.5 h-3.5 text-primary shrink-0" />
+                        <FontAwesomeIcon icon={faFilter} className="w-3.5 h-3.5 text-primary shrink-0" />
                         <span className="text-foreground-muted">Kategori:</span>
                         <SelectValue placeholder="Semua Tipe Layanan" />
                       </div>
@@ -1403,7 +1404,7 @@ export default function AdminPage() {
               </div>
             ) : vipError ? (
               <div className="p-8 text-center space-y-4 bg-surface border border-status-warning/40 rounded-xl">
-                <AlertTriangle className="w-8 h-8 text-status-warning mx-auto" />
+                <FontAwesomeIcon icon={faTriangleExclamation} className="w-8 h-8 text-status-warning mx-auto" />
                 <div className="space-y-1">
                   <p className="text-sm font-semibold text-foreground">Kendala Gateway VIP Reseller</p>
                   <p className="text-xs text-foreground-muted max-w-lg mx-auto leading-relaxed">
@@ -1412,7 +1413,7 @@ export default function AdminPage() {
                 </div>
                 <div className="p-4 bg-surface-raised border border-border rounded-lg max-w-md mx-auto text-left text-xs space-y-2">
                   <p className="font-semibold text-foreground flex items-center gap-1.5">
-                    <CheckCircle2 className="w-4 h-4 text-status-success" />
+                    <FontAwesomeIcon icon={faCircleCheck} className="w-4 h-4 text-status-success" />
                     <span>Langkah Solusi IP Whitelist:</span>
                   </p>
                   <ol className="list-decimal list-inside space-y-1 text-foreground-muted text-[11px]">
@@ -1486,7 +1487,7 @@ export default function AdminPage() {
 
                         {service.isImported ? (
                           <Badge variant="secondary" className="gap-1 text-xs">
-                            <Check className="w-3 h-3 text-status-success" />
+                            <FontAwesomeIcon icon={faCheck} className="w-3 h-3 text-status-success" />
                             <span>Sudah Diimpor</span>
                           </Badge>
                         ) : (
@@ -1495,7 +1496,7 @@ export default function AdminPage() {
                             onClick={() => handleOpenImport(service)}
                             className="text-xs gap-1.5"
                           >
-                            <DownloadCloud className="w-3.5 h-3.5" />
+                            <FontAwesomeIcon icon={faCloudArrowDown} className="w-3.5 h-3.5" />
                             <span>Impor Produk</span>
                           </Button>
                         )}
@@ -1570,7 +1571,7 @@ export default function AdminPage() {
                 }}
                 className="text-foreground-muted hover:text-foreground p-1"
               >
-                <X className="w-5 h-5" />
+                <FontAwesomeIcon icon={faXmark} className="w-5 h-5" />
               </button>
             </div>
 
@@ -1740,7 +1741,7 @@ export default function AdminPage() {
                         : 'border-border bg-surface-raised text-foreground-muted'
                     }`}
                   >
-                    <Eye className="w-4 h-4 shrink-0" />
+                    <FontAwesomeIcon icon={faEye} className="w-4 h-4 shrink-0" />
                     <div>
                       <span className="block text-xs">Aktif di Katalog</span>
                       <span className="text-[10px] text-foreground-muted">Muncul di toko publik</span>
@@ -1756,7 +1757,7 @@ export default function AdminPage() {
                         : 'border-border bg-surface-raised text-foreground-muted'
                     }`}
                   >
-                    <EyeOff className="w-4 h-4 shrink-0" />
+                    <FontAwesomeIcon icon={faEyeSlash} className="w-4 h-4 shrink-0" />
                     <div>
                       <span className="block text-xs">Diarsipkan (Draft)</span>
                       <span className="text-[10px] text-foreground-muted">Sembunyikan dari toko</span>
@@ -1769,7 +1770,7 @@ export default function AdminPage() {
               <div className="p-3 bg-surface-raised/60 border border-border rounded-xl space-y-3">
                 <div>
                   <h4 className="font-semibold text-xs text-foreground flex items-center gap-1.5">
-                    <ShieldCheck className="w-4 h-4 text-primary" />
+                    <FontAwesomeIcon icon={faShieldHalved} className="w-4 h-4 text-primary" />
                     <span>3 Badge Keunggulan Layanan (Muncul di Halaman Detail)</span>
                   </h4>
                   <p className="text-[11px] text-foreground-muted">
@@ -1950,7 +1951,7 @@ export default function AdminPage() {
                 onClick={() => setImportingService(null)}
                 className="text-foreground-muted hover:text-foreground p-1"
               >
-                <X className="w-5 h-5" />
+                <FontAwesomeIcon icon={faXmark} className="w-5 h-5" />
               </button>
             </div>
 
@@ -2077,7 +2078,7 @@ export default function AdminPage() {
                         : 'border-border bg-surface-raised text-foreground-muted'
                     }`}
                   >
-                    <Eye className="w-4 h-4 shrink-0" />
+                    <FontAwesomeIcon icon={faEye} className="w-4 h-4 shrink-0" />
                     <div>
                       <span className="block text-xs">Langsung Tampil</span>
                       <span className="text-[10px] text-foreground-muted">Aktif di katalog</span>
@@ -2093,7 +2094,7 @@ export default function AdminPage() {
                         : 'border-border bg-surface-raised text-foreground-muted'
                     }`}
                   >
-                    <EyeOff className="w-4 h-4 shrink-0" />
+                    <FontAwesomeIcon icon={faEyeSlash} className="w-4 h-4 shrink-0" />
                     <div>
                       <span className="block text-xs">Simpan ke Arsip</span>
                       <span className="text-[10px] text-foreground-muted">Review sebelum live</span>
@@ -2152,7 +2153,7 @@ export default function AdminPage() {
                 disabled={bulkStatusMutation.isPending}
                 className="h-8 gap-1.5 bg-status-success hover:bg-status-success/90 text-white text-xs font-semibold px-3"
               >
-                <Eye className="w-3.5 h-3.5" />
+                <FontAwesomeIcon icon={faEye} className="w-3.5 h-3.5" />
                 <span>Aktifkan ({selectedIds.length})</span>
               </Button>
 
@@ -2163,7 +2164,7 @@ export default function AdminPage() {
                 disabled={bulkStatusMutation.isPending}
                 className="h-8 gap-1.5 border-border bg-surface hover:bg-surface-raised text-foreground text-xs font-semibold px-3"
               >
-                <EyeOff className="w-3.5 h-3.5 text-foreground-muted" />
+                <FontAwesomeIcon icon={faEyeSlash} className="w-3.5 h-3.5 text-foreground-muted" />
                 <span>Arsipkan ({selectedIds.length})</span>
               </Button>
 
@@ -2174,7 +2175,7 @@ export default function AdminPage() {
                 disabled={bulkStatusMutation.isPending || bulkDeleteMutation.isPending}
                 className="h-8 gap-1.5 text-xs font-semibold px-3"
               >
-                <Trash2 className="w-3.5 h-3.5" />
+                <FontAwesomeIcon icon={faTrash} className="w-3.5 h-3.5" />
                 <span>Hapus ({selectedIds.length})</span>
               </Button>
 
@@ -2185,7 +2186,7 @@ export default function AdminPage() {
                 disabled={bulkStatusMutation.isPending || bulkDeleteMutation.isPending}
                 className="h-8 text-foreground-muted hover:text-foreground text-xs"
               >
-                <X className="w-3.5 h-3.5 mr-1" />
+                <FontAwesomeIcon icon={faXmark} className="w-3.5 h-3.5 mr-1" />
                 <span className="hidden sm:inline">Batal</span>
               </Button>
             </div>
@@ -2199,7 +2200,7 @@ export default function AdminPage() {
           <div className="bg-surface border border-border rounded-xl max-w-md w-full p-6 shadow-2xl space-y-4">
             <div className="flex items-center gap-3 text-status-error">
               <div className="w-10 h-10 rounded-full bg-status-error/10 border border-status-error/20 flex items-center justify-center">
-                <Trash2 className="w-5 h-5 text-status-error" />
+                <FontAwesomeIcon icon={faTrash} className="w-5 h-5 text-status-error" />
               </div>
               <div>
                 <h3 className="text-base font-bold text-foreground">Hapus Produk?</h3>
@@ -2244,7 +2245,7 @@ export default function AdminPage() {
           <div className="bg-surface border border-border rounded-xl max-w-md w-full p-6 shadow-2xl space-y-4">
             <div className="flex items-center gap-3 text-status-error">
               <div className="w-10 h-10 rounded-full bg-status-error/10 border border-status-error/20 flex items-center justify-center">
-                <AlertTriangle className="w-5 h-5 text-status-error" />
+                <FontAwesomeIcon icon={faTriangleExclamation} className="w-5 h-5 text-status-error" />
               </div>
               <div>
                 <h3 className="text-base font-bold text-foreground">Hapus {selectedIds.length} Produk Sekaligus?</h3>

@@ -3,7 +3,12 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { AlertDialog } from '@/components/ui/heroui-alert-dialog';
-import { CreditCard, ShieldCheck, AlertCircle } from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faCreditCard,
+  faShieldHalved,
+  faCircleExclamation,
+} from '@fortawesome/free-solid-svg-icons';
 import { CheckoutVoucherSection } from './checkout-voucher-section';
 
 export interface CartItemSummary {
@@ -182,7 +187,7 @@ export function CheckoutCartSummary({
               <span>Memproses Pesanan...</span>
             ) : (
               <>
-                <CreditCard className="w-4 h-4" />
+                <FontAwesomeIcon icon={faCreditCard} className="w-4 h-4" />
                 <span>{`Bayar Sekarang (Rp ${finalTotal.toLocaleString('id-ID')})`}</span>
               </>
             )}
@@ -195,7 +200,7 @@ export function CheckoutCartSummary({
                 <AlertDialog.Header className="space-y-2">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.25)] flex items-center justify-center text-[#C96F55] shrink-0">
-                      <CreditCard className="w-5 h-5" />
+                      <FontAwesomeIcon icon={faCreditCard} className="w-5 h-5" />
                     </div>
                     <div>
                       <AlertDialog.Heading className="text-base font-bold text-[#121A2A]">
@@ -228,7 +233,7 @@ export function CheckoutCartSummary({
                     </div>
                   </div>
                   <div className="p-2.5 rounded-lg bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.25)] flex items-start gap-2 text-[11px] text-[#121A2A]">
-                    <AlertCircle className="w-4 h-4 text-[#C96F55] shrink-0 mt-0.5" />
+                    <FontAwesomeIcon icon={faCircleExclamation} className="w-4 h-4 text-[#C96F55] shrink-0 mt-0.5" />
                     <span>Pastikan email penerima lisensi dan nomor WhatsApp Anda telah terisi dengan benar.</span>
                   </div>
                 </AlertDialog.Body>
@@ -262,7 +267,7 @@ export function CheckoutCartSummary({
       {/* Security Guarantee Bar */}
       <div className="p-3.5 bg-[#F8FAFC] rounded-xl border border-[rgba(18,26,42,0.08)] space-y-2 text-[11px] text-[#121A2A]/70">
         <div className="flex items-center gap-2 text-[#121A2A] font-semibold">
-          <ShieldCheck className="w-4 h-4 text-[#C96F55]" />
+          <FontAwesomeIcon icon={faShieldHalved} className="w-4 h-4 text-[#C96F55]" />
           <span>Jaminan Transaksi Terpercaya & Terenkripsi</span>
         </div>
         <p className="leading-relaxed">

@@ -1,7 +1,13 @@
 'use client';
 
 import Link from 'next/link';
-import { ShieldCheck, Lock, Headphones, ExternalLink } from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faShieldHalved,
+  faLock,
+  faHeadphones,
+  faArrowUpRightFromSquare,
+} from '@fortawesome/free-solid-svg-icons';
 import { AsterraLogo } from '@/components/ui/asterra-logo';
 
 interface FooterProps {
@@ -30,11 +36,11 @@ export function Footer({ onNotify }: FooterProps) {
             </p>
             <div className="flex items-center gap-4 pt-2 text-xs text-[#F7F5EF]/80">
               <div className="flex items-center gap-1.5">
-                <Lock className="w-3.5 h-3.5 text-[#C96F55]" />
+                <FontAwesomeIcon icon={faLock} className="w-3.5 h-3.5 text-[#C96F55]" />
                 <span>SSL Terenkripsi</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-status-success" />
+                <FontAwesomeIcon icon={faShieldHalved} className="w-3.5 h-3.5 text-status-success" />
                 <span>Garansi 100%</span>
               </div>
             </div>
@@ -88,9 +94,9 @@ export function Footer({ onNotify }: FooterProps) {
                   rel="noopener noreferrer"
                   className="hover:text-[#C96F55] transition-colors inline-flex items-center gap-1.5 text-[#F7F5EF]/80"
                 >
-                  <Headphones className="w-3.5 h-3.5 text-[#C96F55]" />
+                  <FontAwesomeIcon icon={faHeadphones} className="w-3.5 h-3.5 text-[#C96F55]" />
                   <span>Hubungi CS (WhatsApp)</span>
-                  <ExternalLink className="w-3 h-3 text-[#F7F5EF]/50" />
+                  <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="w-3 h-3 text-[#F7F5EF]/50" />
                 </a>
               </li>
               <li>

@@ -2,7 +2,16 @@
 
 import { useCartStore } from '@/store/use-cart-store';
 import { Button } from '@/components/ui/button';
-import { X, Trash2, Plus, Minus, ArrowRight, ShoppingBag } from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faXmark,
+  faTrashCan,
+  faPlus,
+  faMinus,
+  faArrowRight,
+  faBagShopping,
+  faTriangleExclamation,
+} from '@fortawesome/free-solid-svg-icons';
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -34,7 +43,7 @@ export function CartDrawer({ isOpen, onClose, onCheckout }: CartDrawerProps) {
         <div className="p-5 bg-[#121A2A] border-b border-white/10 text-[#F7F5EF] flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-[rgba(201,111,85,0.15)] flex items-center justify-center text-[#C96F55]">
-              <ShoppingBag className="w-4 h-4" />
+              <FontAwesomeIcon icon={faBagShopping} className="w-4 h-4" />
             </div>
             <div>
               <h2 className="font-bold text-base text-[#F7F5EF] leading-tight">Keranjang Pesanan</h2>
@@ -48,7 +57,7 @@ export function CartDrawer({ isOpen, onClose, onCheckout }: CartDrawerProps) {
             onClick={onClose}
             className="p-1.5 rounded-lg text-[#F7F5EF]/70 hover:text-[#F7F5EF] hover:bg-white/10 transition-colors"
           >
-            <X className="w-5 h-5" />
+            <FontAwesomeIcon icon={faXmark} className="w-5 h-5" />
           </button>
         </div>
 
@@ -57,7 +66,7 @@ export function CartDrawer({ isOpen, onClose, onCheckout }: CartDrawerProps) {
           {items.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-3">
               <div className="w-12 h-12 rounded-full bg-white border border-[rgba(18,26,42,0.08)] flex items-center justify-center text-[#121A2A]/40">
-                <ShoppingBag className="w-6 h-6" />
+                <FontAwesomeIcon icon={faBagShopping} className="w-6 h-6" />
               </div>
               <p className="text-sm font-semibold text-[#121A2A]">Keranjang masih kosong</p>
               <p className="text-xs text-[#121A2A]/60 max-w-xs">
@@ -97,7 +106,7 @@ export function CartDrawer({ isOpen, onClose, onCheckout }: CartDrawerProps) {
                       className="text-[#121A2A]/40 hover:text-status-error transition-colors p-1 shrink-0"
                       title="Hapus item"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <FontAwesomeIcon icon={faTrashCan} className="w-4 h-4" />
                     </button>
                   </div>
 
@@ -112,7 +121,7 @@ export function CartDrawer({ isOpen, onClose, onCheckout }: CartDrawerProps) {
                         onClick={() => updateQuantity(item.id, -1)}
                         className="text-[#121A2A]/60 hover:text-[#121A2A] text-xs"
                       >
-                        <Minus className="w-3 h-3" />
+                        <FontAwesomeIcon icon={faMinus} className="w-3 h-3" />
                       </button>
                       <span className="text-xs font-semibold px-1 text-[#121A2A]">{item.quantity}</span>
                       <button
@@ -121,7 +130,7 @@ export function CartDrawer({ isOpen, onClose, onCheckout }: CartDrawerProps) {
                         className="text-[#121A2A]/60 hover:text-[#121A2A] text-xs"
                         disabled={itemOutOfStock}
                       >
-                        <Plus className="w-3 h-3" />
+                        <FontAwesomeIcon icon={faPlus} className="w-3 h-3" />
                       </button>
                     </div>
                   </div>
@@ -136,7 +145,7 @@ export function CartDrawer({ isOpen, onClose, onCheckout }: CartDrawerProps) {
           <div className="p-5 border-t border-[rgba(18,26,42,0.08)] bg-white space-y-4">
             {hasOutOfStockItems && (
               <div className="text-[11px] text-status-error bg-status-error/10 border border-status-error/25 p-2.5 rounded-lg flex items-center gap-2">
-                <span>⚠️</span>
+                <FontAwesomeIcon icon={faTriangleExclamation} className="w-3.5 h-3.5 shrink-0" />
                 <span>
                   Terdapat item dengan <strong>stok habis</strong>. Silakan hapus item tersebut untuk melanjutkan checkout.
                 </span>
@@ -180,7 +189,7 @@ export function CartDrawer({ isOpen, onClose, onCheckout }: CartDrawerProps) {
                 title={hasOutOfStockItems ? 'Hapus item stok habis terlebih dahulu' : undefined}
               >
                 <span>{hasOutOfStockItems ? 'Stok Habis' : 'Lanjut ke Checkout'}</span>
-                <ArrowRight className="w-4 h-4" />
+                <FontAwesomeIcon icon={faArrowRight} className="w-4 h-4" />
               </Button>
             </div>
           </div>

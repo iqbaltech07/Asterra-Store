@@ -67,8 +67,8 @@ body {
   background-color: #ffffff;
   color: #121a2a;
   font-family:
-    var(--font-inter),
-    Inter,
+    var(--font-jakarta),
+    'Plus Jakarta Sans',
     system-ui,
     -apple-system,
     sans-serif;

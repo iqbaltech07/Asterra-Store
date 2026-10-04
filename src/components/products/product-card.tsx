@@ -2,9 +2,11 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ShoppingCart, Check, ArrowRight } from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCartShopping, faCheck, faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { ProductItem } from '@/lib/products-data';
 
 interface ProductCardProps {
@@ -30,15 +32,14 @@ export function ProductCard({
       <div>
         {/* 1. Product Image / Banner with fixed 16/7 aspect ratio */}
         <div className="relative w-full aspect-[16/7] bg-[#121A2A]/5 overflow-hidden border-b border-[rgba(18,26,42,0.06)]">
-          <Link href={`/products/${product.id}`} prefetch={true} className="block w-full h-full">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+          <Link href={`/products/${product.id}`} prefetch={true} className="block w-full h-full relative">
+            <Image
               src={product.imageUrl}
               alt={product.name}
-              loading={priorityImage ? 'eager' : 'lazy'}
-              fetchPriority={priorityImage ? 'high' : 'auto'}
-              decoding="async"
-              className="w-full h-full object-cover group-hover:scale-104 transition-transform duration-300"
+              fill
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              priority={priorityImage}
+              className="object-cover group-hover:scale-104 transition-transform duration-300"
             />
           </Link>
 
@@ -151,12 +152,12 @@ export function ProductCard({
               'Habis'
             ) : isSelected ? (
               <>
-                <Check className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#C96F55] mr-0.5 sm:mr-1" />
+                <FontAwesomeIcon icon={faCheck} className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#C96F55] mr-0.5 sm:mr-1" />
                 <span>Dipilih</span>
               </>
             ) : (
               <>
-                <ShoppingCart className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-0.5 sm:mr-1" />
+                <FontAwesomeIcon icon={faCartShopping} className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-0.5 sm:mr-1" />
                 <span>Pilih</span>
               </>
             )}
@@ -168,7 +169,7 @@ export function ProductCard({
               className="w-7 h-7 sm:w-8.5 sm:h-8.5 rounded-lg sm:rounded-xl bg-[#121A2A] text-[#F7F5EF] flex items-center justify-center hover:bg-[#C96F55] transition-colors shadow-xs cursor-pointer active:scale-95"
               aria-label={`Lihat detail ${product.name}`}
             >
-              <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <FontAwesomeIcon icon={faArrowRight} className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
           </Link>
         </div>

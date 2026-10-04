@@ -1,13 +1,18 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Plus_Jakarta_Sans } from 'next/font/google';
+import { config } from '@fortawesome/fontawesome-svg-core';
+import '@fortawesome/fontawesome-svg-core/styles.css';
 import { QueryProvider } from '@/providers/query-provider';
 import { FloatingSupport } from '@/components/layout/floating-support';
 import { GsapProvider } from '@/providers/gsap-provider';
 import './globals.css';
 
-const inter = Inter({
+config.autoAddCss = false;
+
+const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ['latin'],
-  variable: '--font-inter',
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-jakarta',
   display: 'swap',
 });
 
@@ -67,7 +72,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id" className={inter.variable}>
+    <html lang="id" className={plusJakartaSans.variable}>
       <head>
         <script
           type="application/ld+json"

@@ -1,23 +1,23 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  ShieldCheck,
-  UserPlus,
-  RefreshCw,
-  Search,
-  Check,
-  X,
-  Power,
-  KeyRound,
-  Trash2,
-  AlertTriangle,
-  UserCheck,
-  UserX,
-  ShieldAlert,
-  Pencil,
-  UserCog,
-} from 'lucide-react';
+  faShieldHalved,
+  faUserPlus,
+  faArrowsRotate,
+  faMagnifyingGlass,
+  faCheck,
+  faXmark,
+  faPowerOff,
+  faKey,
+  faTrash,
+  faTriangleExclamation,
+  faUserCheck,
+  faUserXmark,
+  faPen,
+  faUserGear,
+} from '@fortawesome/free-solid-svg-icons';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -343,7 +343,7 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
         <div className="p-4 rounded-xl bg-surface border border-border">
           <div className="flex items-center justify-between">
             <span className="text-xs text-foreground-muted">Total Admin</span>
-            <ShieldCheck className="w-4 h-4 text-primary" />
+            <FontAwesomeIcon icon={faShieldHalved} className="w-4 h-4 text-primary" />
           </div>
           <p className="text-xl font-bold text-foreground mt-1">{admins.length}</p>
           <span className="text-[11px] text-foreground-muted">Terdaftar di database</span>
@@ -352,7 +352,7 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
         <div className="p-4 rounded-xl bg-surface border border-status-success/30 bg-status-success/5">
           <div className="flex items-center justify-between">
             <span className="text-xs text-status-success font-medium">Admin Aktif</span>
-            <UserCheck className="w-4 h-4 text-status-success" />
+            <FontAwesomeIcon icon={faUserCheck} className="w-4 h-4 text-status-success" />
           </div>
           <p className="text-xl font-bold text-status-success mt-1">{totalActive}</p>
           <span className="text-[11px] text-status-success/80">Bisa login ke panel</span>
@@ -361,7 +361,7 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
         <div className="p-4 rounded-xl bg-surface border border-status-error/30 bg-status-error/5">
           <div className="flex items-center justify-between">
             <span className="text-xs text-status-error font-medium">Non-Aktif</span>
-            <UserX className="w-4 h-4 text-status-error" />
+            <FontAwesomeIcon icon={faUserXmark} className="w-4 h-4 text-status-error" />
           </div>
           <p className="text-xl font-bold text-status-error mt-1">{totalInactive}</p>
           <span className="text-[11px] text-status-error/80">Akses login ditolak</span>
@@ -370,7 +370,7 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
         <div className="p-4 rounded-xl bg-surface border border-border">
           <div className="flex items-center justify-between">
             <span className="text-xs text-foreground-muted">Super Admin</span>
-            <ShieldAlert className="w-4 h-4 text-primary" />
+            <FontAwesomeIcon icon={faShieldHalved} className="w-4 h-4 text-primary" />
           </div>
           <p className="text-xl font-bold text-foreground mt-1">
             {admins.filter((a) => a.role === 'superadmin').length}
@@ -384,7 +384,7 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
         <div className="flex flex-1 flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
           {/* Search Bar */}
           <div className="relative flex-1 min-w-[200px]">
-            <Search className="w-4 h-4 text-foreground-muted absolute left-3 top-1/2 -translate-y-1/2" />
+            <FontAwesomeIcon icon={faMagnifyingGlass} className="w-4 h-4 text-foreground-muted absolute left-3 top-1/2 -translate-y-1/2" />
             <Input
               type="text"
               placeholder="Cari admin (username, nama, email)..."
@@ -432,7 +432,7 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
             disabled={isLoading}
             className="h-9 text-xs gap-1.5 border-border hover:bg-surface-hover"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
+            <FontAwesomeIcon icon={faArrowsRotate} className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
             <span className="hidden sm:inline">Segarkan</span>
           </Button>
 
@@ -441,7 +441,7 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
             onClick={() => setIsCreateModalOpen(true)}
             className="h-9 text-xs gap-1.5 font-medium shadow-xs"
           >
-            <UserPlus className="w-3.5 h-3.5" />
+            <FontAwesomeIcon icon={faUserPlus} className="w-3.5 h-3.5" />
             <span>Tambah Admin</span>
           </Button>
         </div>
@@ -599,7 +599,7 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
                             className="h-7 w-7 p-0 text-foreground-muted hover:text-foreground"
                             title="Edit Administrator (Nama, Jenis Admin, Status)"
                           >
-                            <Pencil className="w-3.5 h-3.5" />
+                            <FontAwesomeIcon icon={faPen} className="w-3.5 h-3.5" />
                           </Button>
 
                           {/* Toggle Active Switch/Button */}
@@ -618,7 +618,7 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
                                 : 'Aktifkan akun admin ini agar bisa login'
                             }
                           >
-                            <Power className="w-3.5 h-3.5" />
+                            <FontAwesomeIcon icon={faPowerOff} className="w-3.5 h-3.5" />
                             <span className="hidden sm:inline">
                               {admin.isActive ? 'Nonaktifkan' : 'Aktifkan'}
                             </span>
@@ -635,7 +635,7 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
                             className="h-7 w-7 p-0 text-foreground-muted hover:text-foreground"
                             title="Ganti Kata Sandi"
                           >
-                            <KeyRound className="w-3.5 h-3.5" />
+                            <FontAwesomeIcon icon={faKey} className="w-3.5 h-3.5" />
                           </Button>
 
                           {/* Delete Button */}
@@ -655,7 +655,7 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
                                 : 'Hapus Akun Administrator'
                             }
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            <FontAwesomeIcon icon={faTrash} className="w-3.5 h-3.5" />
                           </Button>
                         </div>
                       </td>
@@ -674,7 +674,7 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
           <div className="bg-surface border border-border rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95">
             <div className="flex items-center justify-between p-4 border-b border-border bg-surface-raised">
               <div className="flex items-center gap-2">
-                <UserCog className="w-4 h-4 text-primary" />
+                <FontAwesomeIcon icon={faUserGear} className="w-4 h-4 text-primary" />
                 <h3 className="font-semibold text-sm text-foreground">
                   Edit Data Administrator
                 </h3>
@@ -684,7 +684,7 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
                 onClick={() => setEditModalAdmin(null)}
                 className="text-foreground-muted hover:text-foreground p-1 rounded-md"
               >
-                <X className="w-4 h-4" />
+                <FontAwesomeIcon icon={faXmark} className="w-4 h-4" />
               </button>
             </div>
 
@@ -795,9 +795,9 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
                   className="text-xs font-medium gap-1.5"
                 >
                   {isSavingEdit ? (
-                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <FontAwesomeIcon icon={faArrowsRotate} className="w-3.5 h-3.5 animate-spin" />
                   ) : (
-                    <Check className="w-3.5 h-3.5" />
+                    <FontAwesomeIcon icon={faCheck} className="w-3.5 h-3.5" />
                   )}
                   <span>Simpan Perubahan</span>
                 </Button>
@@ -813,7 +813,7 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
           <div className="bg-surface border border-border rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95">
             <div className="flex items-center justify-between p-4 border-b border-border bg-surface-raised">
               <div className="flex items-center gap-2">
-                <UserPlus className="w-4 h-4 text-primary" />
+                <FontAwesomeIcon icon={faUserPlus} className="w-4 h-4 text-primary" />
                 <h3 className="font-semibold text-sm text-foreground">
                   Tambah Administrator Baru
                 </h3>
@@ -823,7 +823,7 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
                 onClick={() => setIsCreateModalOpen(false)}
                 className="text-foreground-muted hover:text-foreground p-1 rounded-md"
               >
-                <X className="w-4 h-4" />
+                <FontAwesomeIcon icon={faXmark} className="w-4 h-4" />
               </button>
             </div>
 
@@ -936,9 +936,9 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
                   className="text-xs font-medium gap-1.5"
                 >
                   {isSubmitting ? (
-                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <FontAwesomeIcon icon={faArrowsRotate} className="w-3.5 h-3.5 animate-spin" />
                   ) : (
-                    <Check className="w-3.5 h-3.5" />
+                    <FontAwesomeIcon icon={faCheck} className="w-3.5 h-3.5" />
                   )}
                   <span>Simpan Admin</span>
                 </Button>
@@ -954,7 +954,7 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
           <div className="bg-surface border border-border rounded-xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95">
             <div className="flex items-center justify-between p-4 border-b border-border bg-surface-raised">
               <div className="flex items-center gap-2">
-                <KeyRound className="w-4 h-4 text-primary" />
+                <FontAwesomeIcon icon={faKey} className="w-4 h-4 text-primary" />
                 <h3 className="font-semibold text-sm text-foreground">Ganti Kata Sandi</h3>
               </div>
               <button
@@ -962,7 +962,7 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
                 onClick={() => setEditingAdmin(null)}
                 className="text-foreground-muted hover:text-foreground p-1 rounded-md"
               >
-                <X className="w-4 h-4" />
+                <FontAwesomeIcon icon={faXmark} className="w-4 h-4" />
               </button>
             </div>
 
@@ -1003,9 +1003,9 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
                   className="text-xs font-medium gap-1.5"
                 >
                   {isResettingPassword ? (
-                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <FontAwesomeIcon icon={faArrowsRotate} className="w-3.5 h-3.5 animate-spin" />
                   ) : (
-                    <Check className="w-3.5 h-3.5" />
+                    <FontAwesomeIcon icon={faCheck} className="w-3.5 h-3.5" />
                   )}
                   <span>Perbarui Sandi</span>
                 </Button>
@@ -1021,7 +1021,7 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
           <div className="bg-surface border border-border rounded-xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95">
             <div className="p-4 space-y-3">
               <div className="w-10 h-10 rounded-full bg-status-error/15 text-status-error flex items-center justify-center mx-auto">
-                <AlertTriangle className="w-5 h-5" />
+                <FontAwesomeIcon icon={faTriangleExclamation} className="w-5 h-5" />
               </div>
               <div className="text-center space-y-1">
                 <h3 className="font-semibold text-sm text-foreground">Hapus Administrator?</h3>
@@ -1051,9 +1051,9 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
                   className="text-xs font-medium gap-1.5"
                 >
                   {isDeleting ? (
-                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <FontAwesomeIcon icon={faArrowsRotate} className="w-3.5 h-3.5 animate-spin" />
                   ) : (
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <FontAwesomeIcon icon={faTrash} className="w-3.5 h-3.5" />
                   )}
                   <span>Ya, Hapus Admin</span>
                 </Button>

@@ -12,23 +12,26 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useSession, signOut, signIn } from '@/lib/auth-client';
 import { useAuthStore } from '@/store/use-auth-store';
 import { AsterraLogo } from '@/components/ui/asterra-logo';
+import Image from 'next/image';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  User as UserIcon,
-  Mail,
-  Calendar,
-  LogOut,
-  ShieldCheck,
-  CheckCircle2,
-  Loader2,
-  Package,
-  Edit2,
-  ShoppingBag,
-  ExternalLink,
-  PhoneCall,
-  Clock,
-  ArrowRight,
-  Sparkles,
-} from 'lucide-react';
+  faUser,
+  faEnvelope,
+  faCalendarDays,
+  faRightFromBracket,
+  faShieldHalved,
+  faCircleCheck,
+  faSpinner,
+  faBox,
+  faPen,
+  faBagShopping,
+  faArrowUpRightFromSquare,
+  faPhone,
+  faClock,
+  faArrowRight,
+  faStar,
+} from '@fortawesome/free-solid-svg-icons';
+import { faGoogle } from '@fortawesome/free-brands-svg-icons';
 
 interface OrderItem {
   id: string;
@@ -205,28 +208,28 @@ export default function ProfilePage() {
       case 'paid':
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-            <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+            <FontAwesomeIcon icon={faCircleCheck} className="w-3 h-3 text-emerald-600" />
             <span>Lunas & Selesai</span>
           </span>
         );
       case 'processing':
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-[rgba(201,111,85,0.08)] text-[#C96F55] border border-[rgba(201,111,85,0.25)]">
-            <Sparkles className="w-3 h-3 text-[#C96F55]" />
+            <FontAwesomeIcon icon={faStar} className="w-3 h-3 text-[#C96F55]" />
             <span>Sedang Diproses</span>
           </span>
         );
       case 'verified':
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-            <CheckCircle2 className="w-3 h-3 text-blue-600" />
+            <FontAwesomeIcon icon={faCircleCheck} className="w-3 h-3 text-blue-600" />
             <span>Pembayaran Terverifikasi</span>
           </span>
         );
       case 'pending':
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-            <Clock className="w-3 h-3 text-amber-600" />
+            <FontAwesomeIcon icon={faClock} className="w-3 h-3 text-amber-600" />
             <span>Menunggu Pembayaran</span>
           </span>
         );
@@ -250,7 +253,7 @@ export default function ProfilePage() {
       {/* Toast Notification */}
       {notification && (
         <div className="fixed bottom-6 right-6 z-50 bg-[#121A2A] border border-white/15 text-white px-4 py-3 rounded-xl shadow-editorial flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2 duration-200">
-          <CheckCircle2 className="w-4 h-4 text-[#C96F55] shrink-0" />
+          <FontAwesomeIcon icon={faCircleCheck} className="w-4 h-4 text-[#C96F55] shrink-0" />
           <span className="text-sm font-semibold">{notification}</span>
         </div>
       )}
@@ -263,7 +266,7 @@ export default function ProfilePage() {
         {/* Loading State */}
         {isAuthPending ? (
           <div className="h-96 flex flex-col items-center justify-center space-y-4">
-            <Loader2 className="w-9 h-9 text-accent animate-spin" />
+            <FontAwesomeIcon icon={faSpinner} className="w-9 h-9 text-accent animate-spin" />
             <p className="text-sm text-slate-500 font-medium">
               Memeriksa autentikasi akun Google...
             </p>
@@ -291,26 +294,9 @@ export default function ProfilePage() {
                   className="w-full gap-2.5 h-11 bg-accent hover:bg-accent-hover text-white font-bold rounded-xl shadow-sm cursor-pointer"
                 >
                   {isLoggingIn ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <FontAwesomeIcon icon={faSpinner} className="w-4 h-4 animate-spin" />
                   ) : (
-                    <svg className="w-4 h-4" viewBox="0 0 24 24">
-                      <path
-                        fill="currentColor"
-                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                      />
-                      <path
-                        fill="currentColor"
-                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                      />
-                      <path
-                        fill="currentColor"
-                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                      />
-                      <path
-                        fill="currentColor"
-                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                      />
-                    </svg>
+                    <FontAwesomeIcon icon={faGoogle} className="w-4 h-4" />
                   )}
                   <span>Masuk dengan Akun Google</span>
                 </Button>
@@ -351,7 +337,7 @@ export default function ProfilePage() {
                   onClick={handleLogout}
                   className="gap-2 text-status-error hover:bg-red-50 hover:border-red-200 border-border text-xs rounded-xl"
                 >
-                  <LogOut className="w-3.5 h-3.5" />
+                  <FontAwesomeIcon icon={faRightFromBracket} className="w-3.5 h-3.5" />
                   <span>Keluar Akun</span>
                 </Button>
               </div>
@@ -366,11 +352,12 @@ export default function ProfilePage() {
                   <CardHeader className="text-center pb-4 pt-6">
                     <div className="relative mx-auto mb-3">
                       {session.user.image ? (
-                        <img
+                        <Image
                           src={session.user.image}
                           alt={session.user.name || 'User Profile'}
+                          width={96}
+                          height={96}
                           className="w-24 h-24 rounded-2xl object-cover ring-2 ring-accent/40 shadow-sm mx-auto"
-                          referrerPolicy="no-referrer"
                         />
                       ) : (
                         <div className="w-24 h-24 rounded-2xl bg-[rgba(201,111,85,0.08)] border-2 border-[rgba(201,111,85,0.25)] mx-auto flex items-center justify-center text-[#C96F55] text-3xl font-bold shadow-inner">
@@ -378,7 +365,7 @@ export default function ProfilePage() {
                         </div>
                       )}
                       <div className="absolute -bottom-2 -right-1 bg-white border border-border p-1.5 rounded-full shadow-xs">
-                        <ShieldCheck className="w-4 h-4 text-status-success" />
+                        <FontAwesomeIcon icon={faShieldHalved} className="w-4 h-4 text-status-success" />
                       </div>
                     </div>
 
@@ -386,13 +373,13 @@ export default function ProfilePage() {
                       {profile?.name || session.user.name || 'Pelanggan Asterra'}
                     </CardTitle>
                     <CardDescription className="text-xs text-slate-500 flex items-center justify-center gap-1 mt-0.5">
-                      <Mail className="w-3 h-3 text-slate-400" />
+                      <FontAwesomeIcon icon={faEnvelope} className="w-3 h-3 text-slate-400" />
                       <span>{session.user.email}</span>
                     </CardDescription>
 
                     <div className="pt-3 flex flex-wrap items-center justify-center gap-1.5">
                       <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 inline-flex items-center gap-1">
-                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                        <FontAwesomeIcon icon={faCircleCheck} className="w-3 h-3 text-emerald-600" />
                         <span>Google Terverifikasi</span>
                       </span>
                       <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
@@ -404,7 +391,7 @@ export default function ProfilePage() {
                   <CardContent className="space-y-3 pt-3 text-xs border-t border-border">
                     <div className="flex items-center justify-between text-slate-500">
                       <div className="flex items-center gap-2">
-                        <Calendar className="w-3.5 h-3.5 text-accent" />
+                        <FontAwesomeIcon icon={faCalendarDays} className="w-3.5 h-3.5 text-accent" />
                         <span>Bergabung Sejak</span>
                       </div>
                       <span className="font-semibold text-navy-900">
@@ -414,7 +401,7 @@ export default function ProfilePage() {
 
                     <div className="flex items-center justify-between text-slate-500">
                       <div className="flex items-center gap-2">
-                        <UserIcon className="w-3.5 h-3.5 text-accent" />
+                        <FontAwesomeIcon icon={faUser} className="w-3.5 h-3.5 text-accent" />
                         <span>Peran Akun</span>
                       </div>
                       <span className="font-semibold text-navy-900 capitalize">
@@ -424,7 +411,7 @@ export default function ProfilePage() {
 
                     <div className="flex items-center justify-between text-slate-500">
                       <div className="flex items-center gap-2">
-                        <Sparkles className="w-3.5 h-3.5 text-accent" />
+                        <FontAwesomeIcon icon={faStar} className="w-3.5 h-3.5 text-accent" />
                         <span>Metode Masuk</span>
                       </div>
                       <span className="font-semibold text-navy-900">
@@ -438,7 +425,7 @@ export default function ProfilePage() {
                 <div className="p-5 rounded-2xl bg-white border border-border space-y-3 shadow-card">
                   <div className="flex items-center gap-2.5">
                     <div className="w-9 h-9 rounded-xl bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.2)] flex items-center justify-center text-[#C96F55] shrink-0">
-                      <PhoneCall className="w-4 h-4" />
+                      <FontAwesomeIcon icon={faPhone} className="w-4 h-4" />
                     </div>
                     <div>
                       <h4 className="font-bold text-xs text-navy-900">
@@ -462,7 +449,7 @@ export default function ProfilePage() {
                       className="w-full text-xs gap-1.5 border-border hover:border-accent text-navy-900 rounded-xl"
                     >
                       <span>Hubungi CS via WhatsApp</span>
-                      <ExternalLink className="w-3 h-3 text-slate-400" />
+                      <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="w-3 h-3 text-slate-400" />
                     </Button>
                   </a>
                 </div>
@@ -475,7 +462,7 @@ export default function ProfilePage() {
                   <div className="p-4 rounded-2xl bg-white border border-border shadow-card space-y-1">
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-slate-500 font-semibold">Total Pesanan</span>
-                      <ShoppingBag className="w-4 h-4 text-accent" />
+                      <FontAwesomeIcon icon={faBagShopping} className="w-4 h-4 text-accent" />
                     </div>
                     <p className="text-2xl font-extrabold text-navy-900">
                       {isProfileLoading ? '-' : profile?.stats.totalOrders ?? 0}
@@ -488,7 +475,7 @@ export default function ProfilePage() {
                   <div className="p-4 rounded-2xl bg-white border border-border shadow-card space-y-1">
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-slate-500 font-semibold">Pesanan Selesai</span>
-                      <CheckCircle2 className="w-4 h-4 text-status-success" />
+                      <FontAwesomeIcon icon={faCircleCheck} className="w-4 h-4 text-status-success" />
                     </div>
                     <p className="text-2xl font-extrabold text-navy-900">
                       {isProfileLoading ? '-' : profile?.stats.completedOrders ?? 0}
@@ -501,7 +488,7 @@ export default function ProfilePage() {
                   <div className="p-4 rounded-2xl bg-white border border-border shadow-card space-y-1">
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-slate-500 font-semibold">Menunggu Bayar</span>
-                      <Clock className="w-4 h-4 text-status-warning" />
+                      <FontAwesomeIcon icon={faClock} className="w-4 h-4 text-status-warning" />
                     </div>
                     <p className="text-2xl font-extrabold text-navy-900">
                       {isProfileLoading ? '-' : profile?.stats.pendingOrders ?? 0}
@@ -529,7 +516,7 @@ export default function ProfilePage() {
                         onClick={() => setIsEditing(true)}
                         className="gap-1.5 text-xs border-border hover:border-accent rounded-xl text-navy-900"
                       >
-                        <Edit2 className="w-3.5 h-3.5 text-accent" />
+                        <FontAwesomeIcon icon={faPen} className="w-3.5 h-3.5 text-accent" />
                         <span>Ubah Data</span>
                       </Button>
                     )}
@@ -589,7 +576,7 @@ export default function ProfilePage() {
                             className="text-xs font-bold bg-accent hover:bg-accent-hover text-white gap-1.5 rounded-xl cursor-pointer"
                           >
                             {updateProfileMutation.isPending && (
-                              <Loader2 className="w-3 h-3 animate-spin" />
+                              <FontAwesomeIcon icon={faSpinner} className="w-3 h-3 animate-spin" />
                             )}
                             <span>Simpan Perubahan</span>
                           </Button>
@@ -626,7 +613,7 @@ export default function ProfilePage() {
                         <div className="p-3.5 rounded-xl bg-slate-50 border border-border space-y-1">
                           <span className="text-slate-400 font-semibold">Status Akun</span>
                           <p className="font-bold text-status-success text-sm flex items-center gap-1.5">
-                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <FontAwesomeIcon icon={faCircleCheck} className="w-3.5 h-3.5" />
                             <span>Aktif & Terverifikasi</span>
                           </p>
                         </div>
@@ -659,7 +646,7 @@ export default function ProfilePage() {
                         className="text-xs h-8 px-3 gap-1 border-border hover:border-accent rounded-xl text-navy-900 shrink-0"
                       >
                         <span>Belanja Lagi</span>
-                        <ArrowRight className="w-3 h-3" />
+                        <FontAwesomeIcon icon={faArrowRight} className="w-3 h-3" />
                       </Button>
                     </Link>
                   </CardHeader>
@@ -667,7 +654,7 @@ export default function ProfilePage() {
                   <CardContent className="p-6 pt-0 space-y-4">
                     {isProfileLoading ? (
                       <div className="py-12 flex flex-col items-center justify-center space-y-3">
-                        <Loader2 className="w-6 h-6 text-accent animate-spin" />
+                        <FontAwesomeIcon icon={faSpinner} className="w-6 h-6 text-accent animate-spin" />
                         <p className="text-xs text-slate-500 font-medium">
                           Memuat riwayat transaksi...
                         </p>
@@ -705,7 +692,7 @@ export default function ProfilePage() {
                                     >
                                       <div className="flex items-center gap-2.5 min-w-0 flex-1 pr-2">
                                         <div className="w-7 h-7 rounded-lg bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.2)] flex items-center justify-center text-[#C96F55] shrink-0">
-                                          <Package className="w-3.5 h-3.5" />
+                                          <FontAwesomeIcon icon={faBox} className="w-3.5 h-3.5" />
                                         </div>
                                         <div className="min-w-0 flex-1">
                                           <p className="font-bold text-navy-900 truncate">
@@ -744,7 +731,7 @@ export default function ProfilePage() {
                                   className="inline-flex items-center gap-1 text-[11px] text-accent hover:underline font-semibold"
                                 >
                                   <span>Bantuan Pesanan #{order.id.slice(0, 8).toUpperCase()}</span>
-                                  <ExternalLink className="w-3 h-3 shrink-0" />
+                                  <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="w-3 h-3 shrink-0" />
                                 </a>
                               </div>
                             </div>
@@ -761,7 +748,7 @@ export default function ProfilePage() {
                       /* Empty Orders State */
                       <div className="text-center py-10 px-4 rounded-xl border border-dashed border-border bg-slate-50 space-y-3">
                         <div className="w-12 h-12 rounded-2xl bg-[rgba(201,111,85,0.08)] text-[#C96F55] flex items-center justify-center mx-auto border border-[rgba(201,111,85,0.2)]">
-                          <Package className="w-6 h-6" />
+                          <FontAwesomeIcon icon={faBox} className="w-6 h-6" />
                         </div>
                         <div className="space-y-1">
                           <h4 className="font-bold text-sm text-navy-900">

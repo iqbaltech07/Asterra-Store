@@ -2,22 +2,24 @@
 
 import React, { useState, useMemo, useEffect, Suspense } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { Button } from '@/components/ui/button';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  Search,
-  ShoppingCart,
-  Check,
-  Zap,
-  RotateCcw,
-  SlidersHorizontal,
-  LayoutGrid,
-  List,
-  ArrowRight,
-} from 'lucide-react';
+  faMagnifyingGlass,
+  faCartShopping,
+  faCheck,
+  faBolt,
+  faRotateLeft,
+  faSliders,
+  faTableCellsLarge,
+  faList,
+  faArrowRight,
+} from '@fortawesome/free-solid-svg-icons';
 import { useCartStore } from '@/store/use-cart-store';
 import { ProductItem } from '@/lib/products-data';
 import { ProductCard } from '@/components/products/product-card';
@@ -179,7 +181,7 @@ function ProductsContent() {
         <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-5">
           <div className="bg-[#121A2A] border border-white/15 text-white px-4 py-3 rounded-xl shadow-editorial flex items-center gap-3">
             <div className="w-6 h-6 rounded-full bg-[rgba(201,111,85,0.15)] border border-[rgba(201,111,85,0.3)] flex items-center justify-center text-[#C96F55]">
-              <Check className="w-3.5 h-3.5" />
+              <FontAwesomeIcon icon={faCheck} className="w-3.5 h-3.5" />
             </div>
             <p className="text-xs font-semibold">{notification}</p>
           </div>
@@ -206,7 +208,7 @@ function ProductsContent() {
               </p>
             </div>
             <div data-gsap="hero-card" className="flex items-center gap-2 text-xs bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.25)] px-3 py-1.5 rounded-md text-[#C96F55] font-semibold w-fit">
-              <Zap className="w-3.5 h-3.5 text-[#C96F55]" />
+              <FontAwesomeIcon icon={faBolt} className="w-3.5 h-3.5 text-[#C96F55]" />
               <span>Aktivasi 100% Cepat & Bergaransi</span>
             </div>
           </div>
@@ -217,7 +219,7 @@ function ProductsContent() {
           <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
             {/* Search Input */}
             <div className="relative flex-1">
-              <Search className="w-4 h-4 text-[#121A2A]/40 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <FontAwesomeIcon icon={faMagnifyingGlass} className="w-4 h-4 text-[#121A2A]/40 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="text"
                 placeholder="Cari lisensi (misal: Canva, ChatGPT, Gemini, Capcut)..."
@@ -241,7 +243,7 @@ function ProductsContent() {
               <Select value={sortBy} onValueChange={(val) => setSortBy(val)}>
                 <SelectTrigger className="h-9 w-[140px] sm:w-[170px] text-xs bg-white border-[rgba(18,26,42,0.12)] rounded-lg text-[#121A2A]">
                   <div className="flex items-center gap-1.5 truncate">
-                    <SlidersHorizontal className="w-3.5 h-3.5 text-[#C96F55] shrink-0" />
+                    <FontAwesomeIcon icon={faSliders} className="w-3.5 h-3.5 text-[#C96F55] shrink-0" />
                     <span className="hidden sm:inline text-[#121A2A]/60">Urut:</span>
                     <SelectValue placeholder="Urutan" />
                   </div>
@@ -267,7 +269,7 @@ function ProductsContent() {
                   }`}
                   aria-label="Tampilan Grid"
                 >
-                  <LayoutGrid className="w-3.5 h-3.5" />
+                  <FontAwesomeIcon icon={faTableCellsLarge} className="w-3.5 h-3.5" />
                 </button>
                 <button
                   type="button"
@@ -279,7 +281,7 @@ function ProductsContent() {
                   }`}
                   aria-label="Tampilan List"
                 >
-                  <List className="w-3.5 h-3.5" />
+                  <FontAwesomeIcon icon={faList} className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
@@ -327,7 +329,7 @@ function ProductsContent() {
               onClick={handleResetFilters}
               className="inline-flex items-center gap-1 text-[#C96F55] font-semibold hover:underline cursor-pointer"
             >
-              <RotateCcw className="w-3 h-3" />
+              <FontAwesomeIcon icon={faRotateLeft} className="w-3 h-3" />
               <span>Reset Filter</span>
             </button>
           )}
@@ -367,7 +369,7 @@ function ProductsContent() {
         {!isLoading && !error && products.length === 0 && (
           <div className="bg-white border border-[rgba(18,26,42,0.08)] rounded-2xl p-12 text-center space-y-4 max-w-md mx-auto my-12 shadow-card">
             <div className="w-12 h-12 rounded-xl bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.2)] flex items-center justify-center mx-auto text-[#C96F55]">
-              <Search className="w-6 h-6" />
+              <FontAwesomeIcon icon={faMagnifyingGlass} className="w-6 h-6" />
             </div>
             <div className="space-y-1">
               <h3 className="text-base font-bold text-[#121A2A]">Produk tidak ditemukan</h3>
@@ -376,7 +378,7 @@ function ProductsContent() {
               </p>
             </div>
             <Button size="sm" variant="outline" onClick={handleResetFilters} className="gap-2 rounded-lg">
-              <RotateCcw className="w-3.5 h-3.5" />
+              <FontAwesomeIcon icon={faRotateLeft} className="w-3.5 h-3.5" />
               <span>Reset Semua Filter</span>
             </Button>
           </div>
@@ -417,16 +419,15 @@ function ProductsContent() {
                   className="bg-white border border-[rgba(18,26,42,0.08)] rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 shadow-card hover:shadow-card-hover hover:border-[rgba(18,26,42,0.18)] transition-all duration-200"
                 >
                   <div className="flex items-start sm:items-center gap-4">
-                    <div className="w-20 h-20 rounded-xl overflow-hidden bg-[#F8FAFC] shrink-0 border border-[rgba(18,26,42,0.08)]">
-                      <Link href={`/products/${product.id}`} prefetch={true} className="block w-full h-full">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
+                    <div className="w-20 h-20 rounded-xl overflow-hidden bg-[#F8FAFC] shrink-0 border border-[rgba(18,26,42,0.08)] relative">
+                      <Link href={`/products/${product.id}`} prefetch={true} className="block w-full h-full relative">
+                        <Image
                           src={product.imageUrl}
                           alt={product.name}
-                          loading={idx < 4 ? 'eager' : 'lazy'}
-                          fetchPriority={idx < 4 ? 'high' : 'auto'}
-                          decoding="async"
-                          className="w-full h-full object-cover"
+                          fill
+                          sizes="80px"
+                          priority={idx < 4}
+                          className="object-cover"
                         />
                       </Link>
                     </div>
@@ -474,12 +475,12 @@ function ProductsContent() {
                           'Habis'
                         ) : isSelected ? (
                           <>
-                            <Check className="w-3.5 h-3.5 text-[#C96F55] mr-1" />
+                            <FontAwesomeIcon icon={faCheck} className="w-3.5 h-3.5 text-[#C96F55] mr-1" />
                             <span>Dipilih</span>
                           </>
                         ) : (
                           <>
-                            <ShoppingCart className="w-3.5 h-3.5 mr-1" />
+                            <FontAwesomeIcon icon={faCartShopping} className="w-3.5 h-3.5 mr-1" />
                             <span>Pilih</span>
                           </>
                         )}
@@ -490,7 +491,7 @@ function ProductsContent() {
                           className="w-8 h-8 rounded-lg bg-[#121A2A] text-[#F7F5EF] flex items-center justify-center hover:bg-[#C96F55] transition-colors shadow-xs cursor-pointer"
                           aria-label={`Detail ${product.name}`}
                         >
-                          <ArrowRight className="w-3.5 h-3.5" />
+                          <FontAwesomeIcon icon={faArrowRight} className="w-3.5 h-3.5" />
                         </button>
                       </Link>
                     </div>

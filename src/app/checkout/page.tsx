@@ -10,7 +10,8 @@ import { useAuthStore } from '@/store/use-auth-store';
 import { useSession } from '@/lib/auth-client';
 import { PublicPaymentConfig } from '@/lib/services/payment-config.service';
 import { OrdersApi, PromosApi, PaymentConfigApi } from '@/lib/api-client';
-import { Lock, Check } from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faLock, faCheck } from '@fortawesome/free-solid-svg-icons';
 import { CheckoutEmptyState } from '@/components/checkout/checkout-empty-state';
 import { CheckoutCustomerForm } from '@/components/checkout/checkout-customer-form';
 import {
@@ -415,7 +416,7 @@ export default function CheckoutPage() {
         <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-5">
           <div className="bg-surface-raised border border-primary/40 text-foreground px-4 py-3 rounded-lg shadow-xl flex items-center gap-3">
             <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-primary">
-              <Check className="w-3.5 h-3.5" />
+              <FontAwesomeIcon icon={faCheck} className="w-3.5 h-3.5" />
             </div>
             <p className="text-xs font-medium">{notification}</p>
           </div>
@@ -453,7 +454,7 @@ export default function CheckoutPage() {
                   </p>
                 </div>
                 <div data-gsap="hero-card" className="flex items-center gap-2 text-xs bg-surface-raised border border-border px-3 py-1.5 rounded-lg text-foreground-muted w-fit">
-                  <Lock className="w-3.5 h-3.5 text-primary" />
+                  <FontAwesomeIcon icon={faLock} className="w-3.5 h-3.5 text-primary" />
                   <span>Transaksi Terenkripsi SSL 256-Bit</span>
                 </div>
               </div>

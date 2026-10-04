@@ -2,25 +2,27 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { Button } from '@/components/ui/button';
 import { useCartStore } from '@/store/use-cart-store';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  CheckCircle2,
-  ShoppingCart,
-  Zap,
-  ShieldCheck,
-  Clock,
-  ArrowRight,
-  Check,
-  Plus,
-  Minus,
-  Share2,
-  Heart,
-} from 'lucide-react';
+  faCircleCheck,
+  faCartShopping,
+  faBolt,
+  faShieldHalved,
+  faClock,
+  faArrowRight,
+  faCheck,
+  faPlus,
+  faMinus,
+  faShareNodes,
+  faHeart,
+} from '@fortawesome/free-solid-svg-icons';
 import { ProductCard } from '@/components/products/product-card';
 import { ProductItem } from '@/lib/products-data';
 import { ParsedVariant, cleanHtmlContent } from '@/lib/services/product-variant-parser';
@@ -522,7 +524,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
         <div className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-50 animate-in slide-in-from-bottom-5 max-w-[90vw] sm:max-w-md">
           <div className="bg-[#121A2A] border border-white/15 text-white px-4 py-3 rounded-xl shadow-editorial flex items-center gap-3">
             <div className="w-5 h-5 rounded-full bg-[rgba(201,111,85,0.2)] flex items-center justify-center text-[#C96F55] shrink-0">
-              <Check className="w-3 h-3" />
+              <FontAwesomeIcon icon={faCheck} className="w-3 h-3" />
             </div>
             <p className="text-xs font-medium leading-tight">{notification}</p>
           </div>
@@ -579,14 +581,13 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                 {/* Large Product Banner Card (Matching user Image 1) */}
                 <div className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl overflow-hidden relative shadow-card group">
                   <div className="relative h-56 sm:h-72 md:h-96 w-full bg-[#121A2A]/5 overflow-hidden">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
+                    <Image
                       src={activeVariant?.imageUrl || product.imageUrl}
                       alt={variantDetails.title}
-                      loading="eager"
-                      fetchPriority="high"
-                      decoding="async"
-                      className="w-full h-full object-cover group-hover:scale-103 transition-transform duration-300"
+                      fill
+                      priority
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 60vw, 700px"
+                      className="object-cover group-hover:scale-103 transition-transform duration-300"
                     />
 
                     {/* Gradient Overlay for Text Readability */}
@@ -615,7 +616,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                         className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white/95 backdrop-blur-xs border border-[rgba(18,26,42,0.12)] flex items-center justify-center text-[#121A2A]/70 hover:text-[#121A2A] transition-colors shadow-xs cursor-pointer active:scale-95"
                         title="Bagikan Tautan Produk"
                       >
-                        <Share2 className="w-3.5 h-3.5" />
+                        <FontAwesomeIcon icon={faShareNodes} className="w-3.5 h-3.5" />
                       </button>
                       <button
                         type="button"
@@ -632,7 +633,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                         }`}
                         title="Simpan ke Favorit"
                       >
-                        <Heart className={`w-3.5 h-3.5 ${isWishlisted ? 'fill-current text-[#C96F55]' : ''}`} />
+                        <FontAwesomeIcon icon={faHeart} className={`w-3.5 h-3.5 ${isWishlisted ? 'text-[#C96F55]' : ''}`} />
                       </button>
                     </div>
 
@@ -658,7 +659,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                 >
                   <div className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl p-2.5 sm:p-3.5 space-y-0.5 sm:space-y-1 shadow-2xs">
                     <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-md sm:rounded-lg bg-[rgba(201,111,85,0.08)] flex items-center justify-center text-[#C96F55] mb-1 sm:mb-2">
-                      <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      <FontAwesomeIcon icon={faShieldHalved} className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </div>
                     <span className="text-[11px] sm:text-xs font-bold text-[#121A2A] block truncate">
                       {variantDetails.guaranteeTitle}
@@ -670,7 +671,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
 
                   <div className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl p-2.5 sm:p-3.5 space-y-0.5 sm:space-y-1 shadow-2xs">
                     <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-md sm:rounded-lg bg-[rgba(201,111,85,0.08)] flex items-center justify-center text-[#C96F55] mb-1 sm:mb-2">
-                      <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      <FontAwesomeIcon icon={faClock} className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </div>
                     <span className="text-[11px] sm:text-xs font-bold text-[#121A2A] block truncate">
                       {variantDetails.processTitle}
@@ -682,7 +683,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
 
                   <div className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl p-2.5 sm:p-3.5 space-y-0.5 sm:space-y-1 shadow-2xs">
                     <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-md sm:rounded-lg bg-[rgba(201,111,85,0.08)] flex items-center justify-center text-[#C96F55] mb-1 sm:mb-2">
-                      <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      <FontAwesomeIcon icon={faBolt} className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </div>
                     <span className="text-[11px] sm:text-xs font-bold text-[#121A2A] block truncate">
                       {variantDetails.privacyTitle}
@@ -756,7 +757,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                           <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                             {variantDetails.features.map((feature, idx) => (
                               <li key={idx} className="flex items-start gap-2 text-xs sm:text-sm text-[#121A2A]/85">
-                                <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#C96F55] shrink-0 mt-0.5" />
+                                <FontAwesomeIcon icon={faCircleCheck} className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#C96F55] shrink-0 mt-0.5" />
                                 <span>{feature}</span>
                               </li>
                             ))}
@@ -778,7 +779,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                         <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                           {variantDetails.features.map((feature, idx) => (
                             <li key={idx} className="flex items-start gap-2 text-xs sm:text-sm text-[#121A2A]/85 leading-relaxed">
-                              <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#C96F55] shrink-0 mt-0.5" />
+                              <FontAwesomeIcon icon={faCircleCheck} className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#C96F55] shrink-0 mt-0.5" />
                               <span>{feature}</span>
                             </li>
                           ))}
@@ -789,7 +790,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                     {activeTab === 'garansi' && (
                       <div className="space-y-3 sm:space-y-3.5 text-xs sm:text-sm text-[#121A2A]/85 leading-relaxed">
                         <div className="flex items-center gap-2 text-[#16A34A] font-bold">
-                          <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
+                          <FontAwesomeIcon icon={faShieldHalved} className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
                           <span>Jaminan {variantDetails.guaranteeTitle} (100% Proteksi Penggantian Akun)</span>
                         </div>
                         <p>{variantDetails.warrantyText}</p>
@@ -981,7 +982,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                         onClick={() => setQuantity(Math.max(1, quantity - 1))}
                         className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg border-[rgba(18,26,42,0.15)] text-[#121A2A] cursor-pointer"
                       >
-                        <Minus className="w-3.5 h-3.5" />
+                        <FontAwesomeIcon icon={faMinus} className="w-3.5 h-3.5" />
                       </Button>
                       <span className="text-sm font-bold font-mono text-[#121A2A] w-6 sm:w-8 text-center">
                         {quantity}
@@ -994,7 +995,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                         onClick={() => setQuantity(quantity + 1)}
                         className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg border-[rgba(18,26,42,0.15)] text-[#121A2A] cursor-pointer"
                       >
-                        <Plus className="w-3.5 h-3.5" />
+                        <FontAwesomeIcon icon={faPlus} className="w-3.5 h-3.5" />
                       </Button>
                     </div>
                   </div>
@@ -1008,7 +1009,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                       className="w-full text-xs sm:text-sm font-bold py-3.5 h-auto rounded-xl bg-[#C96F55] hover:bg-[#B86047] text-[#F7F5EF] shadow-sm active:scale-98 transition-all gap-2 cursor-pointer"
                     >
                       <span>{isOutOfStock ? 'Stok Habis' : 'Beli Sekarang (Langsung Checkout)'}</span>
-                      <ArrowRight className="w-4 h-4" />
+                      <FontAwesomeIcon icon={faArrowRight} className="w-4 h-4" />
                     </Button>
 
                     <Button
@@ -1018,7 +1019,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                       disabled={isOutOfStock}
                       className="w-full text-xs sm:text-sm font-semibold border-[rgba(18,26,42,0.18)] hover:bg-white text-[#121A2A] py-3 h-auto gap-2 rounded-xl transition-all cursor-pointer active:scale-98"
                     >
-                      <ShoppingCart className="w-4 h-4 text-[#C96F55]" />
+                      <FontAwesomeIcon icon={faCartShopping} className="w-4 h-4 text-[#C96F55]" />
                       <span>{isOutOfStock ? 'Stok Habis' : 'Tambah ke Keranjang'}</span>
                     </Button>
                   </div>
@@ -1026,11 +1027,11 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                   {/* Trust Badges matching Image 1 */}
                   <div className="pt-2.5 sm:pt-3 border-t border-[rgba(18,26,42,0.08)] space-y-1.5 sm:space-y-2 text-[11px] sm:text-xs text-[#121A2A]/70">
                     <div className="flex items-center gap-2">
-                      <Check className="w-3.5 h-3.5 text-[#16A34A] shrink-0" />
+                      <FontAwesomeIcon icon={faCheck} className="w-3.5 h-3.5 text-[#16A34A] shrink-0" />
                       <span>Aktivasi otomatis & garansi uang kembali jika terkendala</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Check className="w-3.5 h-3.5 text-[#16A34A] shrink-0" />
+                      <FontAwesomeIcon icon={faCheck} className="w-3.5 h-3.5 text-[#16A34A] shrink-0" />
                       <span>Dukungan WhatsApp Customer Service ramah & responsif</span>
                     </div>
                   </div>
@@ -1087,9 +1088,9 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                           </span>
                           <span className="w-6 h-6 rounded-lg bg-[rgba(18,26,42,0.05)] flex items-center justify-center text-[#121A2A]/70 shrink-0">
                             {isOpen ? (
-                              <Minus className="w-3.5 h-3.5 text-[#C96F55]" />
+                              <FontAwesomeIcon icon={faMinus} className="w-3.5 h-3.5 text-[#C96F55]" />
                             ) : (
-                              <Plus className="w-3.5 h-3.5" />
+                              <FontAwesomeIcon icon={faPlus} className="w-3.5 h-3.5" />
                             )}
                           </span>
                         </button>
@@ -1122,7 +1123,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                     className="text-xs font-bold text-[#C96F55] hover:text-[#B86047] inline-flex items-center gap-1 shrink-0 transition-colors"
                   >
                     <span>Lihat Semua Katalog</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
+                    <FontAwesomeIcon icon={faArrowRight} className="w-3.5 h-3.5" />
                   </Link>
                 </div>
 
@@ -1192,7 +1193,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
               className="w-10 h-10 rounded-xl border border-[rgba(18,26,42,0.18)] bg-white flex items-center justify-center text-[#C96F55] active:scale-95 transition-transform cursor-pointer shadow-xs disabled:opacity-50"
               title="Tambah ke Keranjang"
             >
-              <ShoppingCart className="w-4 h-4" />
+              <FontAwesomeIcon icon={faCartShopping} className="w-4 h-4" />
             </button>
 
             <button
@@ -1202,7 +1203,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
               className="px-4 py-2.5 rounded-xl bg-[#C96F55] hover:bg-[#B86047] text-white text-xs font-bold active:scale-98 transition-transform cursor-pointer shadow-xs flex items-center gap-1.5 disabled:opacity-50"
             >
               <span>{isOutOfStock ? 'Stok Habis' : 'Beli Sekarang'}</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <FontAwesomeIcon icon={faArrowRight} className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
