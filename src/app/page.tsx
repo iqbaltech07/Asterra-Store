@@ -568,7 +568,7 @@ export default function HomePage() {
                   }}
                 />
 
-                {/* Scaled Asterra Planet Visual: Optically Centered to Orbital Rings */}
+                {/* Scaled Asterra Planet Visual: Native Hardware-Accelerated Video Playback */}
                 <div
                   data-gsap="hero-media"
                   className="relative z-10 w-[100px] sm:w-[150px] lg:w-[220px] flex items-center justify-center translate-x-1 sm:translate-x-1.5 lg:translate-x-2.5 -translate-y-1.5 sm:-translate-y-2 lg:-translate-y-3"
@@ -580,18 +580,36 @@ export default function HomePage() {
                     willChange: 'transform',
                   }}
                 >
-                  <img
-                    src="/assets/asterra-planet-transparent.webp"
-                    alt="Asterra Store"
-                    width={800}
-                    height={426}
-                    decoding="async"
-                    draggable={false}
+                  <video
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    preload="auto"
+                    poster="/assets/hero-planet-poster.webp"
                     className="w-full h-auto object-contain pointer-events-none select-none"
-                    onError={(e) => {
-                      e.currentTarget.src = "/images/brand/hero-planet-white.png";
+                    style={{
+                      transform: 'translate3d(0,0,0)',
+                      WebkitTransform: 'translate3d(0,0,0)',
                     }}
-                  />
+                  >
+                    <source src="/videos/hero-planet.webm" type="video/webm" />
+                    <source src="/videos/hero-planet.mp4" type="video/mp4" />
+                    <source src="/videos/hero-planet.mov" type="video/quicktime" />
+                    {/* Fallback to original transparent animated WebP */}
+                    <img
+                      src="/assets/asterra-planet-transparent.webp"
+                      alt="Asterra Store"
+                      width={800}
+                      height={426}
+                      decoding="async"
+                      draggable={false}
+                      className="w-full h-auto object-contain pointer-events-none select-none"
+                      onError={(e) => {
+                        e.currentTarget.src = "/images/brand/hero-planet-white.png";
+                      }}
+                    />
+                  </video>
                 </div>
               </div>
             </div>
