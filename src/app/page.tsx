@@ -291,6 +291,7 @@ function ApplicationCard({
 export default function HomePage() {
   const [activeNotification, setActiveNotification] = useState<string | null>(null);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
+  const [videoError, setVideoError] = useState(false);
 
   // Dynamic products fetched from catalog API (active products only)
   const { data: catalogResponse } = useQuery<{ success: boolean; data: ProductItem[]; total: number }>({
@@ -505,30 +506,34 @@ export default function HomePage() {
 
       {/* Main Content */}
       <main className="flex-1 max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 pt-2 sm:pt-3.5 pb-8 sm:pb-12 w-full overflow-hidden">
-        {/* SECTION 2 & 3: Hero Banner with Controlled Dimensions, Scaled Planet Anchor & Integrated Benefit Strip */}
-        <section className="relative w-full rounded-2xl sm:rounded-3xl bg-[#101828] border border-[rgba(255,255,255,0.08)] shadow-md overflow-hidden mb-6 sm:mb-8">
+        {/* SECTION 2: Hero Main Banner Container (Card 1: Separated on Mobile, Unified on Desktop) */}
+        <div className="relative w-full rounded-2xl sm:rounded-t-3xl sm:rounded-b-none bg-[#101828] border border-[rgba(255,255,255,0.08)] shadow-md overflow-hidden">
           {/* Controlled Hero Area: compact & clean with balanced text spacing */}
-          <div className="relative min-h-[165px] sm:min-h-[190px] lg:h-[220px] xl:h-[235px] flex items-center px-4.5 sm:px-8 lg:px-12 py-4.5 sm:py-6 lg:py-0 overflow-hidden">
+          <div className="relative min-h-[140px] sm:min-h-[190px] lg:h-[220px] xl:h-[235px] flex items-center px-4 sm:px-8 lg:px-12 py-3.5 sm:py-6 lg:py-0 overflow-hidden">
             {/* Left Column: Headline & Subheadline (Clear max-width on mobile prevents planet collision) */}
-            <div className="relative z-10 w-full max-w-[66%] sm:max-w-[70%] lg:max-w-[62%] xl:max-w-[60%] py-1">
+            <div className="relative z-10 w-full max-w-[64%] sm:max-w-[70%] lg:max-w-[62%] xl:max-w-[60%] py-1">
               {/* Editorial Headline */}
-              <h1 data-gsap="page-title" className="text-lg sm:text-2xl lg:text-[32px] xl:text-[36px] font-black tracking-tight text-white leading-[1.18] sm:leading-[1.15]">
+              <h1 data-gsap="page-title" className="text-base sm:text-2xl lg:text-[32px] xl:text-[36px] font-black tracking-tight text-white leading-[1.2] sm:leading-[1.15]">
                 Solusi Terpercaya Produk &<br />
                 <span className="text-[#E28870]">Layanan Digital Premium</span>
               </h1>
 
-              {/* Subheadline */}
-              <p data-gsap="page-sub" className="mt-1.5 sm:mt-2.5 text-[11px] sm:text-[13px] lg:text-sm text-white/75 leading-relaxed line-clamp-3 sm:line-clamp-none">
-                Dapatkan akses langganan resmi untuk tool AI, software desain, voucher, dan layanan
-                digital lainnya tanpa kartu kredit dengan konfirmasi instan.
+              {/* Subheadline: Refined & concise on mobile to avoid awkward clamping, full on desktop */}
+              <p data-gsap="page-sub" className="mt-1.5 sm:mt-2.5 text-[11px] sm:text-[13px] lg:text-sm text-white/75 leading-relaxed">
+                <span className="sm:hidden">
+                  Akses resmi langganan tool AI, desain, & voucher digital dengan konfirmasi instan.
+                </span>
+                <span className="hidden sm:inline">
+                  Dapatkan akses langganan resmi untuk tool AI, software desain, voucher, dan layanan digital lainnya tanpa kartu kredit dengan konfirmasi instan.
+                </span>
               </p>
             </div>
 
-            {/* Right Column: Planet Visual (Smooth, Cleanly Positioned in Top-Right on Mobile, Zero Lag on iPhone 12) */}
-            <div className="absolute right-0.5 sm:right-2 lg:right-6 top-2.5 sm:top-1/2 sm:-translate-y-1/2 pointer-events-none select-none z-10">
+            {/* Right Column: Planet Visual (Smooth, Cleanly Positioned in Center-Right on Mobile, Zero Collision) */}
+            <div className="absolute right-1 sm:right-2 lg:right-6 top-1/2 -translate-y-1/2 pointer-events-none select-none z-10">
               <div
                 data-gsap="hero-media"
-                className="relative w-[115px] h-[115px] sm:w-[170px] sm:h-[170px] lg:w-[250px] lg:h-[250px] flex items-center justify-center"
+                className="relative w-[110px] h-[110px] sm:w-[170px] sm:h-[170px] lg:w-[250px] lg:h-[250px] flex items-center justify-center"
                 style={{
                   transform: 'translate3d(0,0,0)',
                   WebkitTransform: 'translate3d(0,0,0)',
@@ -563,7 +568,7 @@ export default function HomePage() {
                   />
                 </svg>
 
-                {/* Ambient Soft Glow: GPU-Native Radial Gradient (Zero CPU blur calculation on iOS WebKit) */}
+                {/* Ambient Soft Glow: GPU-Native Radial Gradient */}
                 <div
                   className="absolute inset-0 rounded-full pointer-events-none"
                   style={{
@@ -571,9 +576,9 @@ export default function HomePage() {
                   }}
                 />
 
-                {/* Scaled Asterra Planet Visual: Smooth Hardware-Accelerated Animation */}
+                {/* Scaled Asterra Planet Visual: Native Smooth Hardware-Accelerated Video Animation with Fallbacks */}
                 <div
-                  className="relative z-10 w-[100px] sm:w-[150px] lg:w-[220px] flex items-center justify-center"
+                  className="relative z-10 w-[95px] sm:w-[150px] lg:w-[220px] flex items-center justify-center pointer-events-none select-none"
                   style={{
                     transform: 'translate3d(0,0,0)',
                     WebkitTransform: 'translate3d(0,0,0)',
@@ -581,64 +586,117 @@ export default function HomePage() {
                     backfaceVisibility: 'hidden',
                   }}
                 >
-                  <img
-                    src="/assets/asterra-planet-transparent.webp"
-                    alt="Asterra Store"
-                    width={800}
-                    height={426}
-                    draggable={false}
-                    className="w-full h-auto object-contain pointer-events-none select-none"
-                    style={{
-                      transform: 'translate3d(0,0,0)',
-                      WebkitTransform: 'translate3d(0,0,0)',
-                    }}
-                    onError={(e) => {
-                      e.currentTarget.src = "/images/brand/hero-planet-white.png";
-                    }}
-                  />
+                  {!videoError ? (
+                    <video
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      preload="auto"
+                      onError={() => setVideoError(true)}
+                      className="w-full h-auto object-contain pointer-events-none select-none"
+                      style={{
+                        transform: 'translate3d(0,0,0)',
+                        WebkitTransform: 'translate3d(0,0,0)',
+                        aspectRatio: '800 / 426',
+                      }}
+                    >
+                      <source
+                        src="/videos/hero-planet.webm"
+                        type="video/webm"
+                        onError={() => setVideoError(true)}
+                      />
+                      <img
+                        src="/assets/asterra-planet-transparent.webp"
+                        alt="Asterra Store"
+                        width={800}
+                        height={426}
+                        draggable={false}
+                        className="w-full h-auto object-contain pointer-events-none select-none"
+                        style={{
+                          aspectRatio: '800 / 426',
+                        }}
+                        onError={(e) => {
+                          e.currentTarget.src = "/images/brand/hero-planet-white.png";
+                        }}
+                      />
+                    </video>
+                  ) : (
+                    <img
+                      src="/assets/asterra-planet-transparent.webp"
+                      alt="Asterra Store"
+                      width={800}
+                      height={426}
+                      draggable={false}
+                      className="w-full h-auto object-contain pointer-events-none select-none"
+                      style={{
+                        transform: 'translate3d(0,0,0)',
+                        WebkitTransform: 'translate3d(0,0,0)',
+                        aspectRatio: '800 / 426',
+                      }}
+                      onError={(e) => {
+                        e.currentTarget.src = "/images/brand/hero-planet-white.png";
+                      }}
+                    />
+                  )}
                 </div>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* SECTION 3: Trust / Benefits Strip (Compact Horizontal Row, 3 Columns) */}
-          <div className="border-t border-white/10 bg-[#0E1524] px-4 sm:px-8 lg:px-12 py-3 sm:py-3.5">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-6">
-              {/* Benefit 1 */}
-              <div data-gsap="benefit-card" className="flex items-center gap-3">
-                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-[rgba(201,111,85,0.15)] border border-[rgba(201,111,85,0.25)] flex items-center justify-center shrink-0">
-                  <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-[#E28870]" />
-                </div>
-                <div className="space-y-0.5">
-                  <h3 className="font-bold text-xs sm:text-sm text-white">100% Legal & Bergaransi</h3>
-                  <p className="text-[11px] text-white/65">Jaminan penggantian penuh</p>
-                </div>
+        {/* SECTION 3: Trust / Benefits Bento Container (Card 2: Separated Bento Grid on Mobile, Sleek Strip on Desktop) */}
+        <div className="mt-2.5 sm:mt-0 mb-6 sm:mb-8 rounded-2xl sm:rounded-b-3xl sm:rounded-t-none bg-[#0E1524] border border-[rgba(255,255,255,0.08)] sm:border-t sm:border-t-white/10 p-2.5 sm:px-8 lg:px-12 sm:py-3.5 shadow-sm">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-6">
+            {/* Bento Tile 1: 100% Legal & Bergaransi (Mobile Row 1 Col 1, Desktop Col 1) */}
+            <div
+              data-gsap="benefit-card"
+              className="col-span-1 order-1 sm:order-1 bg-white/[0.03] sm:bg-transparent border border-white/[0.07] sm:border-none rounded-xl sm:rounded-none p-2.5 sm:p-0 flex flex-col sm:flex-row sm:items-center justify-between sm:justify-start gap-1.5 sm:gap-3"
+            >
+              <div className="w-6 h-6 sm:w-9 sm:h-9 rounded-md sm:rounded-xl bg-[rgba(201,111,85,0.15)] border border-[rgba(201,111,85,0.25)] flex items-center justify-center shrink-0">
+                <ShieldCheck className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-[#E28870]" />
               </div>
-
-              {/* Benefit 2 */}
-              <div data-gsap="benefit-card" className="flex items-center gap-3 sm:border-l sm:border-white/10 sm:pl-6">
-                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-[rgba(201,111,85,0.15)] border border-[rgba(201,111,85,0.25)] flex items-center justify-center shrink-0">
-                  <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-[#E28870]" />
-                </div>
-                <div className="space-y-0.5">
-                  <h3 className="font-bold text-xs sm:text-sm text-white">Proses Cepat & Otomatis</h3>
-                  <p className="text-[11px] text-white/65">Aktivasi hitungan menit</p>
-                </div>
+              <div className="min-w-0 flex-1">
+                <h3 className="font-bold text-[11px] sm:text-sm text-white leading-tight">100% Legal & Bergaransi</h3>
+                <p className="text-[10px] sm:text-[11px] text-white/65 leading-tight mt-0.5 truncate">Jaminan penggantian penuh</p>
               </div>
+            </div>
 
-              {/* Benefit 3 */}
-              <div data-gsap="benefit-card" className="flex items-center gap-3 sm:border-l sm:border-white/10 sm:pl-6">
-                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-[rgba(201,111,85,0.15)] border border-[rgba(201,111,85,0.25)] flex items-center justify-center shrink-0">
-                  <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-[#E28870]" />
-                </div>
-                <div className="space-y-0.5">
-                  <h3 className="font-bold text-xs sm:text-sm text-white">Multi-Metode Pembayaran</h3>
-                  <p className="text-[11px] text-white/65">QRIS, E-Wallet, Virtual Account</p>
-                </div>
+            {/* Bento Tile 2: Multi-Metode Pembayaran (Mobile Row 1 Col 2, Desktop Col 3) */}
+            <div
+              data-gsap="benefit-card"
+              className="col-span-1 order-2 sm:order-3 sm:border-l sm:border-white/10 sm:pl-6 bg-white/[0.03] sm:bg-transparent border border-white/[0.07] sm:border-none rounded-xl sm:rounded-none p-2.5 sm:p-0 flex flex-col sm:flex-row sm:items-center justify-between sm:justify-start gap-1.5 sm:gap-3"
+            >
+              <div className="w-6 h-6 sm:w-9 sm:h-9 rounded-md sm:rounded-xl bg-[rgba(201,111,85,0.15)] border border-[rgba(201,111,85,0.25)] flex items-center justify-center shrink-0">
+                <CreditCard className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-[#E28870]" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h3 className="font-bold text-[11px] sm:text-sm text-white leading-tight">
+                  <span className="sm:hidden">Multi-Metode Bayar</span>
+                  <span className="hidden sm:inline">Multi-Metode Pembayaran</span>
+                </h3>
+                <p className="text-[10px] sm:text-[11px] text-white/65 leading-tight mt-0.5 truncate">
+                  <span className="sm:hidden">QRIS, E-Wallet, VA</span>
+                  <span className="hidden sm:inline">QRIS, E-Wallet, Virtual Account</span>
+                </p>
+              </div>
+            </div>
+
+            {/* Bento Tile 3: Proses Cepat & Otomatis (Mobile Row 2 Col-span-2: Centered, Desktop Col 2 Tengah) */}
+            <div
+              data-gsap="benefit-card"
+              className="col-span-2 sm:col-span-1 order-3 sm:order-2 sm:border-l sm:border-white/10 sm:pl-6 bg-white/[0.03] sm:bg-transparent border border-white/[0.07] sm:border-none rounded-xl sm:rounded-none p-2.5 sm:p-0 flex items-center justify-center sm:justify-start gap-2.5 sm:gap-3"
+            >
+              <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-[rgba(201,111,85,0.15)] border border-[rgba(201,111,85,0.25)] flex items-center justify-center shrink-0">
+                <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-[#E28870]" />
+              </div>
+              <div className="min-w-0 text-center sm:text-left">
+                <h3 className="font-bold text-xs sm:text-sm text-white leading-tight">Proses Cepat & Otomatis</h3>
+                <p className="text-[10px] sm:text-[11px] text-white/65 leading-tight mt-0.5">Aktivasi hitungan menit</p>
               </div>
             </div>
           </div>
-        </section>
+        </div>
 
         {/* SECTION 4: EXPLORE BY APPLICATION (KATALOG APLIKASI DIGITAL - INFINITE MARQUEE) */}
         <section id="aplikasi" data-gsap-reveal className="mb-10 sm:mb-14 overflow-hidden">
