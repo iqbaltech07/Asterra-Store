@@ -30,6 +30,11 @@ interface CheckoutCartSummaryProps {
     description?: string;
   } | null;
   discountAmount: number;
+  referralDiscount?: number;
+  referralPartner?: {
+    code: string;
+    name: string;
+  } | null;
   finalTotal: number;
   isManualMode: boolean;
   enableUniqueCode?: boolean;
@@ -54,6 +59,8 @@ export function CheckoutCartSummary({
   subtotal,
   appliedPromo,
   discountAmount,
+  referralDiscount = 0,
+  referralPartner = null,
   finalTotal,
   isManualMode,
   isSubmitting,
@@ -139,6 +146,24 @@ export function CheckoutCartSummary({
         promoFeedback={promoFeedback}
       />
 
+      {/* Referral Partner Attribution Banner */}
+      {referralPartner && (
+        <div className="p-3 rounded-xl border border-status-success/30 bg-status-success/5 text-xs flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-status-success inline-block shrink-0 animate-pulse"></span>
+            <span className="text-[#121A2A] text-xs">
+              Mitra Sales: <strong className="text-status-success font-semibold">{referralPartner.name}</strong>{' '}
+              <span className="text-[11px] font-mono text-[#121A2A]/60">({referralPartner.code})</span>
+            </span>
+          </div>
+          {(referralDiscount ?? 0) > 0 && (
+            <span className="text-status-success font-bold text-[10px] bg-status-success/15 px-2 py-0.5 rounded-full shrink-0">
+              Hemat Rp {(referralDiscount ?? 0).toLocaleString('id-ID')}
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Calculation Breakdown */}
       <div className="space-y-2 pt-2 border-t border-[rgba(18,26,42,0.08)] text-xs">
         <div className="flex justify-between text-[#121A2A]/60">
@@ -150,6 +175,13 @@ export function CheckoutCartSummary({
           <div className="flex justify-between text-status-success font-semibold">
             <span>Diskon Voucher:</span>
             <span>-Rp {discountAmount.toLocaleString('id-ID')}</span>
+          </div>
+        )}
+
+        {(referralDiscount ?? 0) > 0 && (
+          <div className="flex justify-between text-status-success font-semibold">
+            <span>Diskon Referral Mitra:</span>
+            <span>-Rp {(referralDiscount ?? 0).toLocaleString('id-ID')}</span>
           </div>
         )}
 

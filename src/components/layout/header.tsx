@@ -16,7 +16,9 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { useCartStore } from '@/store/use-cart-store';
 import { useAuthStore } from '@/store/use-auth-store';
-import { useSession, signOut } from '@/lib/auth-client';
+import { useSession } from '@/lib/auth-client';
+import { useQueryClient } from '@tanstack/react-query';
+import { performCustomerLogout } from '@/lib/utils/auth-logout';
 import { CartDrawer } from '@/components/cart/cart-drawer';
 import { AsterraLogo } from '@/components/ui/asterra-logo';
 import { Button } from '@/components/ui/button';
@@ -39,11 +41,13 @@ export function Header({ onNotify }: HeaderProps) {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const { getTotalItems } = useCartStore();
   const { data: session } = useSession();
-  const { user: legacyUser, logout: legacyLogout } = useAuthStore();
+  const { user: legacyUser } = useAuthStore();
 
   const pathname = usePathname();
   const router = useRouter();
   const headerRef = useRef<HTMLElement>(null);
+
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     const cleanup = animateNavbar(headerRef.current);
@@ -60,13 +64,11 @@ export function Header({ onNotify }: HeaderProps) {
   const userImage = currentUser && 'image' in currentUser ? (currentUser as { image?: string | null }).image : null;
 
   const handleLogout = async () => {
-    try {
-      await signOut();
-    } catch {
-      // Ignore if offline
-    }
-    legacyLogout();
-    handleActionNotice('Anda telah keluar dari akun.');
+    await performCustomerLogout({
+      queryClient,
+      currentPath: pathname,
+      onNotice: handleActionNotice,
+    });
   };
 
   const isHomeActive = pathname === '/';

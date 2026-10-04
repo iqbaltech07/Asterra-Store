@@ -41,10 +41,15 @@ export async function PATCH(
       );
     }
 
+    const safeData = {
+      ...updatedOrder,
+      id: updatedOrder.id || id,
+    };
+
     return NextResponse.json({
       success: true,
       message: `Status pesanan ${id} berhasil diperbarui menjadi '${status}'.`,
-      data: updatedOrder,
+      data: safeData,
     });
   } catch (error) {
     console.error('[AdminOrdersAPI] Error updating order status:', error);

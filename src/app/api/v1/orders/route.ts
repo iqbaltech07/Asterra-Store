@@ -403,6 +403,21 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Record customer referral discount usage atomically if applied
+    if (verifiedReferralCode && referralDiscount > 0) {
+      try {
+        ReferralDiscountService.recordUsage({
+          orderId,
+          customerEmail,
+          customerPhone: customerWhatsapp || undefined,
+          referralCode: verifiedReferralCode,
+          discountAmount: referralDiscount,
+        });
+      } catch (refErr) {
+        console.warn('[OrdersAPI] Error recording referral discount usage:', refErr);
+      }
+    }
+
     // Persist to PostgreSQL Database via Prisma (with OrderItems)
     try {
       // Verify existing products to prevent foreign key errors

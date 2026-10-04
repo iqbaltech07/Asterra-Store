@@ -18,6 +18,8 @@ import {
   Lock,
   Eye,
   EyeOff,
+  Users,
+  X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -61,15 +63,29 @@ function DaftarSalesContent() {
   const [validatingRef, setValidatingRef] = useState(false);
   const [refValidationMessage, setRefValidationMessage] = useState<string | null>(null);
   const [isRefValid, setIsRefValid] = useState<boolean | null>(null);
+  const [sponsorData, setSponsorData] = useState<{ code: string; partnerName: string; tier?: string } | null>(null);
 
   // Commission Simulator State
   const [estimatedSales, setEstimatedSales] = useState(40);
+
+  // Auto-detect referral code from localStorage if not in URL query
+  useEffect(() => {
+    if (!initialRef && typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('asterra_ref');
+        if (stored && stored.trim()) {
+          setReferralCode(stored.trim().toUpperCase());
+        }
+      } catch (_) {}
+    }
+  }, [initialRef]);
 
   // Validate referral code when user stops typing or when initialRef is present
   useEffect(() => {
     if (!referralCode.trim()) {
       setRefValidationMessage(null);
       setIsRefValid(null);
+      setSponsorData(null);
       return;
     }
 
@@ -78,16 +94,19 @@ function DaftarSalesContent() {
       try {
         const res = await fetch(`/api/v1/affiliate/validate-referral?code=${encodeURIComponent(referralCode.trim())}`);
         const data = await res.json();
-        if (data.valid) {
+        if (data.valid && data.data) {
           setIsRefValid(true);
-          setRefValidationMessage(`Kode valid! Diundang oleh: ${data.data.partnerName}`);
+          setSponsorData(data.data);
+          setRefValidationMessage(`Kode referral valid! Diundang oleh mitra ${data.data.partnerName} (${data.data.code})`);
         } else {
           setIsRefValid(false);
-          setRefValidationMessage('Kode referral tidak ditemukan (lewati jika tidak ada).');
+          setSponsorData(null);
+          setRefValidationMessage('Kode referral tidak ditemukan di sistem. Hapus jika Anda mendaftar mandiri.');
         }
       } catch {
         setIsRefValid(null);
         setRefValidationMessage(null);
+        setSponsorData(null);
       } finally {
         setValidatingRef(false);
       }
@@ -112,6 +131,17 @@ function DaftarSalesContent() {
 
     if (password !== confirmPassword) {
       setErrorMessage('Konfirmasi kata sandi tidak cocok. Harap periksa kembali.');
+      return;
+    }
+
+    // STRICT GUARD: Block submit if referral code is entered but invalid or validating
+    if (referralCode.trim() && isRefValid === false) {
+      setErrorMessage('Kode referral pengajak tidak valid. Harap periksa kembali atau hapus kode jika Anda mendaftar mandiri.');
+      return;
+    }
+
+    if (referralCode.trim() && validatingRef) {
+      setErrorMessage('Harap tunggu sebentar, sistem sedang memverifikasi kode referral pengajak.');
       return;
     }
 
@@ -469,11 +499,19 @@ function DaftarSalesContent() {
                   </label>
                   <div className="relative">
                     <Input
+                      id="sales-referral-code"
+                      name="referralCode"
                       type="text"
                       placeholder="Contoh: AST-IQBAL"
                       value={referralCode}
                       onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
-                      className="bg-surface-raised border-border text-xs font-mono uppercase h-10 pr-24"
+                      className={`bg-surface-raised text-xs font-mono uppercase h-10 pr-28 transition-colors ${
+                        isRefValid === true
+                          ? 'border-status-success focus-visible:ring-status-success text-status-success font-semibold'
+                          : isRefValid === false
+                          ? 'border-status-error focus-visible:ring-status-error text-status-error'
+                          : 'border-border'
+                      }`}
                     />
                     {validatingRef && (
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-foreground-muted animate-pulse">
@@ -486,19 +524,70 @@ function DaftarSalesContent() {
                         <span>Valid</span>
                       </span>
                     )}
+                    {isRefValid === false && !validatingRef && (
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-status-error flex items-center gap-1">
+                        <X className="w-3.5 h-3.5" />
+                        <span>Tidak Valid</span>
+                      </span>
+                    )}
                   </div>
                   {refValidationMessage && (
                     <span
-                      className={`text-[11px] mt-1 block font-medium ${
-                        isRefValid ? 'text-status-success' : 'text-foreground-muted'
+                      className={`text-[11px] mt-1.5 block font-medium ${
+                        isRefValid === true
+                          ? 'text-status-success'
+                          : isRefValid === false
+                          ? 'text-status-error'
+                          : 'text-foreground-muted'
                       }`}
                     >
                       {refValidationMessage}
                     </span>
                   )}
-                  <span className="text-[10px] text-foreground-muted mt-0.5 block">
-                    Masukkan kode mitra yang mengajak Anda jika ada. Kosongkan jika Anda mendaftar mandiri.
-                  </span>
+
+                  {/* Sponsor Confirmation Card */}
+                  {isRefValid === true && sponsorData && (
+                    <div className="mt-2.5 p-3 rounded-lg border border-status-success/30 bg-status-success/5 flex flex-col gap-1.5 animate-in fade-in duration-200">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-start gap-2.5">
+                          <div className="w-7 h-7 rounded-full bg-status-success/20 flex items-center justify-center text-status-success shrink-0 mt-0.5">
+                            <Users className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <p className="text-xs font-semibold text-foreground">
+                              Mitra Pengajak:{' '}
+                              <span className="text-status-success">{sponsorData.partnerName}</span>{' '}
+                              <span className="font-mono text-foreground-muted">({sponsorData.code})</span>
+                            </p>
+                            <p className="text-[11px] text-foreground-muted leading-tight mt-0.5">
+                              Anda mendaftar di bawah bimbingan mitra ini. Hak komisi penjualan langsung Anda tetap 100% utuh (10%).
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setReferralCode('');
+                            setIsRefValid(null);
+                            setSponsorData(null);
+                            setRefValidationMessage(null);
+                            try {
+                              localStorage.removeItem('asterra_ref');
+                            } catch (_) {}
+                          }}
+                          className="text-[10px] text-status-error hover:underline font-medium shrink-0 ml-1 py-0.5 px-1.5 rounded hover:bg-status-error/10 transition-colors"
+                        >
+                          Hapus / Mandiri
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {!referralCode && (
+                    <span className="text-[10px] text-foreground-muted mt-1 block">
+                      Masukkan kode mitra yang mengajak Anda jika ada. Kosongkan jika Anda mendaftar mandiri.
+                    </span>
+                  )}
                 </div>
 
                 {/* 5. Kustomisasi Kode Referral Sendiri (Opsional) */}

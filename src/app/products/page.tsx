@@ -21,6 +21,9 @@ import {
   faArrowRight,
 } from '@fortawesome/free-solid-svg-icons';
 import { useCartStore } from '@/store/use-cart-store';
+import { useSession } from '@/lib/auth-client';
+import { useAuthStore } from '@/store/use-auth-store';
+import { AuthRequiredModal } from '@/components/auth/auth-required-modal';
 import { ProductItem } from '@/lib/products-data';
 import { ProductCard } from '@/components/products/product-card';
 import {
@@ -58,6 +61,10 @@ function ProductsContent() {
   }, [searchParams]);
 
   const { items: cartItems, addItem, removeItem } = useCartStore();
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const { data: session } = useSession();
+  const { user: legacyUser } = useAuthStore();
+  const isAuthenticated = Boolean(session?.user || legacyUser);
 
   const showNotification = (msg: string) => {
     setNotification(msg);
@@ -142,6 +149,11 @@ function ProductsContent() {
       (product.stock !== undefined && product.stock <= 0) ||
       product.providerStatus === 'empty' ||
       product.status === 'out_of_stock';
+
+    if (!isAuthenticated) {
+      setIsAuthModalOpen(true);
+      return;
+    }
 
     if (isOutOfStock) {
       showNotification(`Maaf, stok ${product.name} sedang habis.`);
@@ -536,6 +548,12 @@ function ProductsContent() {
       </main>
 
       <Footer onNotify={showNotification} />
+
+      {/* Guest Authentication Modal */}
+      <AuthRequiredModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+      />
     </div>
   );
 }

@@ -131,8 +131,13 @@ export function AdminOrdersTab() {
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
       queryClient.invalidateQueries({ queryKey: ['admin-logs'] });
-      showNotification(`Status pesanan ${data.data.id} berhasil diubah ke '${variables.status}'.`);
-      setSelectedOrder(data.data);
+      const targetId = data?.data?.id || variables?.orderId || selectedOrder?.id || 'Pesanan';
+      showNotification(`Status pesanan ${targetId} berhasil diubah ke '${variables.status}'.`);
+      if (data?.data && data.data.id) {
+        setSelectedOrder(data.data);
+      } else if (selectedOrder) {
+        setSelectedOrder((prev) => (prev ? { ...prev, order_status: variables.status as any } : null));
+      }
     },
     onError: (err: Error) => {
       showNotification(`Error: ${err.message}`);

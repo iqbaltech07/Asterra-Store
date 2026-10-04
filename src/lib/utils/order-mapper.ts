@@ -72,6 +72,21 @@ export function mapDbOrderToOrder(d: RawDbOrder): Order {
     promoLogNotes.match(/voucher\s+["']?([A-Z0-9_-]+)/i)?.[1] ||
     undefined;
 
+  // Extract referral code from direct columns, logs metadata, or notes pattern [Sales Ref: CODE]
+  const referralLog = logsList.find(
+    (l) => l.action === 'referral_applied' || !!l.metadata?.referral_code
+  );
+  const referralLogMeta = referralLog?.metadata as Record<string, unknown> | undefined;
+  const referralNotes = typeof d.customerNotes === 'string' ? d.customerNotes : '';
+  const referralNotesMatch = referralNotes.match(/\[Sales Ref:\s*([A-Za-z0-9_-]+)\]/i);
+
+  const referralCode =
+    (typeof rawObj.referralCode === 'string' ? rawObj.referralCode : undefined) ||
+    (typeof rawObj.referral_code === 'string' ? (rawObj.referral_code as string) : undefined) ||
+    (typeof referralLogMeta?.referral_code === 'string' ? (referralLogMeta.referral_code as string) : undefined) ||
+    referralNotesMatch?.[1] ||
+    undefined;
+
   // Extract discount amount
   const discountAmount =
     typeof rawObj.discountAmount === 'number'
@@ -133,7 +148,7 @@ export function mapDbOrderToOrder(d: RawDbOrder): Order {
   const orderStatus = (d.status as Order['order_status']) || 'pending';
 
   return {
-    id: d.id,
+    id: d.id || (rawObj.id as string) || `ORD-${Date.now()}`,
     user_id: 'user-001',
     customer_email: d.customerEmail,
     customer_name: d.customerName || undefined,
@@ -143,6 +158,7 @@ export function mapDbOrderToOrder(d: RawDbOrder): Order {
     raw_amount: d.rawAmount || undefined,
     unique_code: d.uniqueCode || undefined,
     promo_code: promoCode,
+    referral_code: referralCode,
     discount_amount: discountAmount,
     payment_mode: (d.paymentMode as 'gateway' | 'manual') || 'gateway',
     order_status: orderStatus,

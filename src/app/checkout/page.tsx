@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { useCartStore } from '@/store/use-cart-store';
@@ -23,6 +23,7 @@ import {
   CheckoutManualModal,
   ManualPaymentModalData,
 } from '@/components/checkout/checkout-manual-modal';
+import { AuthRequiredModal } from '@/components/auth/auth-required-modal';
 
 const GATEWAY_PAYMENT_METHODS: PaymentMethodOption[] = [
   {
@@ -51,11 +52,95 @@ const GATEWAY_PAYMENT_METHODS: PaymentMethodOption[] = [
   },
 ];
 
-export default function CheckoutPage() {
+function CheckoutPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { items, getTotalAmount, getTotalItems, clearCart } = useCartStore();
-  const { data: session } = useSession();
+  const { data: session, isPending: isSessionPending } = useSession();
   const { user: legacyUser } = useAuthStore();
+  const isAuthenticated = Boolean(session?.user || legacyUser);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
+  // Form states
+  const [customerName, setCustomerName] = useState('');
+  const [targetEmail, setTargetEmail] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [customerNotes, setCustomerNotes] = useState('');
+
+  // Sales Partner Referral & Discount Tracking
+  const [referralCode, setReferralCode] = useState<string>('');
+  const [referralPartner, setReferralPartner] = useState<{
+    code: string;
+    name: string;
+  } | null>(null);
+  const [referralDiscount, setReferralDiscount] = useState<number>(0);
+
+  // Auto-detect & persist referral code from query params or localStorage
+  useEffect(() => {
+    let activeRef = searchParams.get('ref');
+    if (!activeRef && typeof window !== 'undefined') {
+      try {
+        activeRef = localStorage.getItem('asterra_ref');
+      } catch (_) {}
+    }
+    if (activeRef && activeRef.trim()) {
+      const cleanRef = activeRef.trim().toUpperCase();
+      setReferralCode(cleanRef);
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('asterra_ref', cleanRef);
+        } catch (_) {}
+      }
+    }
+  }, [searchParams]);
+
+  // Real-time referral attribution & 1-time customer referral discount eligibility check
+  useEffect(() => {
+    if (!referralCode.trim()) {
+      setReferralPartner(null);
+      setReferralDiscount(0);
+      return;
+    }
+
+    let isCancelled = false;
+    const checkRef = async () => {
+      try {
+        const query = new URLSearchParams({
+          code: referralCode.trim(),
+          ...(targetEmail.trim() ? { email: targetEmail.trim() } : {}),
+          ...(phoneNumber.trim() ? { phone: phoneNumber.trim() } : {}),
+        });
+        const res = await fetch(`/api/v1/affiliate/validate-referral?${query.toString()}`);
+        const json = await res.json();
+        if (isCancelled) return;
+
+        if (json.valid && json.data) {
+          setReferralPartner({
+            code: json.data.code,
+            name: json.data.partnerName,
+          });
+          if (json.data.discountEligible && json.data.discountAmount > 0) {
+            setReferralDiscount(json.data.discountAmount);
+          } else {
+            setReferralDiscount(0);
+          }
+        } else {
+          setReferralPartner(null);
+          setReferralDiscount(0);
+        }
+      } catch (_) {
+        if (!isCancelled) {
+          setReferralPartner(null);
+          setReferralDiscount(0);
+        }
+      }
+    };
+
+    checkRef();
+    return () => {
+      isCancelled = true;
+    };
+  }, [referralCode, targetEmail, phoneNumber]);
 
   // Default fallback ensuring zero-delay rendering for users
   const DEFAULT_PUBLIC_CONFIG: PublicPaymentConfig = {
@@ -94,12 +179,6 @@ export default function CheckoutPage() {
     }
     return DEFAULT_PUBLIC_CONFIG;
   });
-
-  // Form states
-  const [customerName, setCustomerName] = useState('');
-  const [targetEmail, setTargetEmail] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [customerNotes, setCustomerNotes] = useState('');
   const [selectedMethod, setSelectedMethod] = useState<string>(() => {
     if (typeof window !== 'undefined') {
       try {
@@ -202,6 +281,13 @@ export default function CheckoutPage() {
     loadConfig();
   }, []);
 
+  // Prompt unauthenticated guests to login on checkout page
+  useEffect(() => {
+    if (!isSessionPending && !isAuthenticated) {
+      setIsAuthModalOpen(true);
+    }
+  }, [isSessionPending, isAuthenticated]);
+
   const isManualMode = paymentConfig?.mode === 'manual';
 
   // Dynamic payment methods based on server mode
@@ -272,7 +358,7 @@ export default function CheckoutPage() {
 
   const subtotal = getTotalAmount();
   const discountAmount = appliedPromo ? appliedPromo.discount : 0;
-  const finalTotal = Math.max(0, subtotal - discountAmount);
+  const finalTotal = Math.max(0, subtotal - discountAmount - referralDiscount);
 
   const handleCopy = (text: string, key: string, label: string) => {
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
@@ -288,6 +374,12 @@ export default function CheckoutPage() {
   );
 
   const handleValidateBeforeCheckout = (): boolean => {
+    if (!isAuthenticated) {
+      setIsAuthModalOpen(true);
+      showNotification('Silakan masuk ke akun Anda terlebih dahulu untuk memproses pesanan.');
+      return false;
+    }
+
     if (hasOutOfStockItems) {
       showNotification('Terdapat produk dengan stok habis di pesanan Anda. Hapus item tersebut sebelum melanjutkan.');
       return false;
@@ -342,7 +434,7 @@ export default function CheckoutPage() {
         customer_notes: customerNotes.trim(),
         payment_method: selectedMethod,
         promo_code: appliedPromo?.code || undefined,
-        referral_code: typeof window !== 'undefined' ? localStorage.getItem('asterra_ref') || undefined : undefined,
+        referral_code: referralPartner?.code || (referralCode.trim() ? referralCode.trim() : undefined),
         customer_contact: {
           name: customerName.trim(),
           email: targetEmail.trim(),
@@ -492,6 +584,8 @@ export default function CheckoutPage() {
                     subtotal={subtotal}
                     appliedPromo={appliedPromo}
                     discountAmount={discountAmount}
+                    referralDiscount={referralDiscount}
+                    referralPartner={referralPartner}
                     finalTotal={finalTotal}
                     isManualMode={isManualMode}
                     isSubmitting={isSubmitting}
@@ -527,7 +621,27 @@ export default function CheckoutPage() {
         getMethodName={getMethodName}
       />
 
+      {/* Guest Authentication Modal */}
+      <AuthRequiredModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+      />
+
       <Footer />
     </div>
+  );
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#FDFCF7] flex items-center justify-center">
+          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        </div>
+      }
+    >
+      <CheckoutPageContent />
+    </Suspense>
   );
 }

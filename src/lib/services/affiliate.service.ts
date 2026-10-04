@@ -174,13 +174,13 @@ export class AffiliateService {
   }
 
   public static findByEmailOrPhone(email: string, phone: string): AffiliatePartnerData | undefined {
-    const normEmail = email.trim().toLowerCase();
-    const normPhone = phone.replace(/\D/g, '');
+    const normEmail = (email || '').trim().toLowerCase();
+    const normPhone = (phone || '').replace(/\D/g, '');
     const list = this.getAllAffiliates();
     return list.find(
       (a) =>
-        a.email.toLowerCase() === normEmail ||
-        a.whatsapp.replace(/\D/g, '') === normPhone
+        (a.email || '').toLowerCase() === normEmail ||
+        (normPhone.length >= 8 && (a.whatsapp || '').replace(/\D/g, '') === normPhone)
     );
   }
 
@@ -217,41 +217,46 @@ export class AffiliateService {
     // Validate sponsor referral code if provided + Self-referral & Circular referral prevention
     let verifiedSponsorCode: string | undefined = undefined;
     if (input.referralCode && input.referralCode.trim()) {
-      const sponsor = this.findByCode(input.referralCode);
-      if (sponsor) {
-        // 1. Direct self-referral checks
-        if (sponsor.email.toLowerCase() === email) {
-          return {
-            success: false,
-            message: 'Pelanggaran keamanan: Anda tidak dapat menggunakan kode referral Anda sendiri (Self-referral dilarang).',
-          };
-        }
-        if (sponsor.whatsapp.replace(/\D/g, '') === whatsapp.replace(/\D/g, '')) {
-          return {
-            success: false,
-            message: 'Pelanggaran keamanan: Nomor WhatsApp pengajak sama dengan nomor pendaftar. Self-referral dilarang.',
-          };
-        }
-
-        // 2. Circular Referral Prevention (A cannot be invited by B if B was already invited by A)
-        const existingSelf = this.findByEmailOrPhone(email, whatsapp);
-        if (existingSelf && sponsor.referredByCode && sponsor.referredByCode.toUpperCase() === existingSelf.code.toUpperCase()) {
-          return {
-            success: false,
-            message: 'Pelanggaran keamanan: Terdeteksi circular referral (rujukan melingkar antara mitra). Hubungan referral ditolak.',
-          };
-        }
-
-        // 3. Status check: sponsor must be active
-        if (sponsor.status === 'suspended') {
-          return {
-            success: false,
-            message: 'Kode referral tidak dapat digunakan karena akun pengajak sedang ditangguhkan.',
-          };
-        }
-
-        verifiedSponsorCode = sponsor.code;
+      const sponsor = this.findByCode(input.referralCode.trim().toUpperCase());
+      if (!sponsor) {
+        return {
+          success: false,
+          message: 'Kode referral pengajak tidak valid atau tidak terdaftar di sistem Asterra Store. Kosongkan jika Anda ingin mendaftar mandiri.',
+        };
       }
+
+      // 1. Direct self-referral checks
+      if (sponsor.email.toLowerCase() === email) {
+        return {
+          success: false,
+          message: 'Pelanggaran keamanan: Anda tidak dapat menggunakan kode referral Anda sendiri (Self-referral dilarang).',
+        };
+      }
+      if ((sponsor.whatsapp || '').replace(/\D/g, '') === (whatsapp || '').replace(/\D/g, '')) {
+        return {
+          success: false,
+          message: 'Pelanggaran keamanan: Nomor WhatsApp pengajak sama dengan nomor pendaftar. Self-referral dilarang.',
+        };
+      }
+
+      // 2. Circular Referral Prevention (A cannot be invited by B if B was already invited by A)
+      const existingSelf = this.findByEmailOrPhone(email, whatsapp);
+      if (existingSelf && sponsor.referredByCode && sponsor.referredByCode.toUpperCase() === existingSelf.code.toUpperCase()) {
+        return {
+          success: false,
+          message: 'Pelanggaran keamanan: Terdeteksi circular referral (rujukan melingkar antara mitra). Hubungan referral ditolak.',
+        };
+      }
+
+      // 3. Status check: sponsor must be active
+      if (sponsor.status === 'suspended') {
+        return {
+          success: false,
+          message: 'Kode referral tidak dapat digunakan karena akun pengajak sedang ditangguhkan.',
+        };
+      }
+
+      verifiedSponsorCode = sponsor.code;
     }
 
     // Generate unique code for the new sales partner
@@ -470,8 +475,8 @@ export class AffiliateService {
     }
 
     if (customerDetails?.customerPhone) {
-      const cleanCustPhone = customerDetails.customerPhone.replace(/\D/g, '');
-      const cleanPartnerPhone = partner.whatsapp.replace(/\D/g, '');
+      const cleanCustPhone = (customerDetails.customerPhone || '').replace(/\D/g, '');
+      const cleanPartnerPhone = (partner.whatsapp || '').replace(/\D/g, '');
       if (cleanCustPhone.length >= 8 && cleanPartnerPhone.length >= 8 && cleanCustPhone === cleanPartnerPhone) {
         return {
           success: false,

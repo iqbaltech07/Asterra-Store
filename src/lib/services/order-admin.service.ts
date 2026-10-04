@@ -338,7 +338,7 @@ export class OrderAdminService {
             rawSellingPrice = dbOrder.rawAmount || rawSellingPrice || dbOrder.totalAmount;
             customerDiscount = customerDiscount || (dbOrder.rawAmount ? Math.max(0, dbOrder.rawAmount - dbOrder.totalAmount) : 0);
             customerEmail = dbOrder.customerEmail || customerEmail;
-            customerPhone = customerPhone || dbOrder.customerPhone || undefined;
+            customerPhone = customerPhone || dbOrder.customerWhatsapp || (dbOrder as any).customerPhone || undefined;
             customerName = customerName || dbOrder.customerName || undefined;
             paymentMode = dbOrder.paymentMode || paymentMode;
 
@@ -371,26 +371,30 @@ export class OrderAdminService {
           }
         }
 
-        // Fetch real product cost_of_goods from DB
+        // Fetch real product cost_of_goods from DB with resilient fallback
         let totalCOGS = 0;
-        const productIds = itemsList.map((i) => i.productId).filter(Boolean);
-        if (productIds.length > 0 && prismaClient?.product) {
-          const dbProducts = await prismaClient.product.findMany({
-            where: { id: { in: productIds } },
-            select: { id: true, providerPrice: true, price: true },
-          });
-          const productMap = new Map<string, { id: string; providerPrice?: number | null; price: number }>(
-            dbProducts.map((p: { id: string; providerPrice?: number | null; price: number }) => [p.id, p])
-          );
+        try {
+          const productIds = itemsList.map((i) => i.productId).filter(Boolean);
+          if (productIds.length > 0 && prismaClient?.product) {
+            const dbProducts = await prismaClient.product.findMany({
+              where: { id: { in: productIds } },
+              select: { id: true, providerPrice: true, price: true },
+            });
+            const productMap = new Map<string, { id: string; providerPrice?: number | null; price: number }>(
+              dbProducts.map((p: { id: string; providerPrice?: number | null; price: number }) => [p.id, p])
+            );
 
-          for (const item of itemsList) {
-            const p = productMap.get(item.productId);
-            const unitCost = p?.providerPrice && p.providerPrice > 0
-              ? p.providerPrice
-              : Math.round(item.price * 0.85);
-            totalCOGS += unitCost * item.quantity;
+            for (const item of itemsList) {
+              const p = productMap.get(item.productId);
+              const unitCost = p?.providerPrice && p.providerPrice > 0
+                ? p.providerPrice
+                : Math.round(item.price * 0.85);
+              totalCOGS += unitCost * item.quantity;
+            }
+          } else {
+            totalCOGS = Math.round((rawSellingPrice || orderTotalAmount) * 0.85);
           }
-        } else {
+        } catch {
           totalCOGS = Math.round((rawSellingPrice || orderTotalAmount) * 0.85);
         }
 
@@ -421,59 +425,70 @@ export class OrderAdminService {
         const productNamesJoined = itemsList.map((i) => i.productName).join(', ') || 'Lisensi Digital';
         const primaryProductId = itemsList[0]?.productId || 'prod-digital';
 
-        ProfitLedgerService.recordOrderProfit({
-          orderId,
-          customerEmail,
-          customerName,
-          productId: primaryProductId,
-          productNames: productNamesJoined,
-          salesId: partner?.id,
-          salesName: partner?.name,
-          referralCode: partner?.code,
-          recruiterSalesId: sponsor?.id,
-          recruiterSalesName: sponsor?.name,
-          breakdown,
-        });
+        try {
+          ProfitLedgerService.recordOrderProfit({
+            orderId,
+            customerEmail,
+            customerName,
+            productId: primaryProductId,
+            productNames: productNamesJoined,
+            salesId: partner?.id,
+            salesName: partner?.name,
+            referralCode: partner?.code,
+            recruiterSalesId: sponsor?.id,
+            recruiterSalesName: sponsor?.name,
+            breakdown,
+          });
+          console.log(`[ProfitLedger] Successfully recorded financial ledger for order ${orderId}`);
+        } catch (ledgerErr) {
+          console.error('[OrderAdminService] Failed to record profit ledger:', ledgerErr);
+        }
 
         // Credit to Affiliate Service if active referral
         if (partner && partner.status === 'active') {
-          const creditResult = AffiliateService.recordSuccessfulOrder(
-            partner.code,
-            orderTotalAmount,
-            orderId,
-            { customerEmail, customerPhone, customerName },
-            {
-              costOfGoods: totalCOGS,
-              paymentFee,
-              customerDiscount,
-              transactionProfit: breakdown.transactionProfit,
-            }
-          );
-
-          if (creditResult.success && creditResult.commission > 0) {
-            console.log(
-              `[AffiliateCommission] Credited Rp ${creditResult.commission} (10% profit) to partner "${creditResult.partnerName}" for order ${orderId}`
+          try {
+            const creditResult = AffiliateService.recordSuccessfulOrder(
+              partner.code,
+              orderTotalAmount,
+              orderId,
+              { customerEmail, customerPhone, customerName },
+              {
+                costOfGoods: totalCOGS,
+                paymentFee,
+                customerDiscount,
+                transactionProfit: breakdown.transactionProfit,
+              }
             );
-            if (prismaClient?.orderLog) {
-              await prismaClient.orderLog.create({
-                data: {
-                  orderId,
-                  actor: 'system',
-                  action: 'affiliate_commission_credited',
-                  notes: `Komisi penjualan Rp ${creditResult.commission.toLocaleString('id-ID')} (10% dari Profit Transaksi Rp ${breakdown.transactionProfit.toLocaleString('id-ID')}) berhasil dialokasikan ke mitra sales "${creditResult.partnerName}" (${partner.code}).`,
-                  metadata: {
-                    referral_code: partner.code,
-                    commission: creditResult.commission,
-                    transaction_profit: breakdown.transactionProfit,
-                    recruitment_bonus: breakdown.recruitmentBonus,
-                    ceo_share: breakdown.ceoShare,
-                    coo_share: breakdown.cooShare,
-                    business_reserve: breakdown.businessReserve,
-                    partner_name: creditResult.partnerName,
+
+            if (creditResult.success && creditResult.commission > 0) {
+              console.log(
+                `[AffiliateCommission] Credited Rp ${creditResult.commission} (10% profit) to partner "${creditResult.partnerName}" for order ${orderId}`
+              );
+              if (prismaClient?.orderLog) {
+                await prismaClient.orderLog.create({
+                  data: {
+                    orderId,
+                    actor: 'system',
+                    action: 'affiliate_commission_credited',
+                    notes: `Komisi penjualan Rp ${creditResult.commission.toLocaleString('id-ID')} (10% dari Profit Transaksi Rp ${breakdown.transactionProfit.toLocaleString('id-ID')}) berhasil dialokasikan ke mitra sales "${creditResult.partnerName}" (${partner.code}).`,
+                    metadata: {
+                      referral_code: partner.code,
+                      commission: creditResult.commission,
+                      transaction_profit: breakdown.transactionProfit,
+                      recruitment_bonus: breakdown.recruitmentBonus,
+                      ceo_share: breakdown.ceoShare,
+                      coo_share: breakdown.cooShare,
+                      business_reserve: breakdown.businessReserve,
+                      partner_name: creditResult.partnerName,
+                    },
                   },
-                },
-              });
+                });
+              }
+            } else if (!creditResult.success) {
+              console.warn(`[AffiliateCommission] Notice: ${creditResult.message}`);
             }
+          } catch (affCreditErr) {
+            console.error('[OrderAdminService] Failed to credit affiliate commission:', affCreditErr);
           }
         }
       } catch (affiliateErr) {
@@ -513,20 +528,29 @@ export class OrderAdminService {
     }
 
     const updatedOrder = await this.getOrderById(orderId);
+    const effectiveOrder: Order = updatedOrder || {
+      id: orderId,
+      user_id: 'user-001',
+      customer_email: 'customer@asterra.store',
+      total_amount: 0,
+      order_status: newStatus,
+      order_date: new Date().toISOString(),
+      items: [],
+    };
 
     // Broadcast SSE update event to user and admin clients
     broadcastOrderEvent({
       type: newStatus === 'processing' || newStatus === 'completed' ? 'order:payment_verified' : 'order:status_changed',
       orderId,
       status: newStatus,
-      customerName: updatedOrder?.customer_name,
-      customerEmail: updatedOrder?.customer_email,
-      totalAmount: updatedOrder?.total_amount,
+      customerName: effectiveOrder.customer_name,
+      customerEmail: effectiveOrder.customer_email,
+      totalAmount: effectiveOrder.total_amount,
       message: `Status pesanan ${orderId} diubah menjadi: ${newStatus === 'processing' ? 'Di Proses' : newStatus === 'completed' ? 'Selesai' : newStatus}`,
       timestamp: new Date().toISOString(),
     });
 
-    return updatedOrder;
+    return effectiveOrder;
   }
 
   /**

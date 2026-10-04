@@ -9,8 +9,9 @@ import { Footer } from '@/components/layout/footer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useSession, signOut, signIn } from '@/lib/auth-client';
+import { useSession, signIn } from '@/lib/auth-client';
 import { useAuthStore } from '@/store/use-auth-store';
+import { performCustomerLogout } from '@/lib/utils/auth-logout';
 import { AsterraLogo } from '@/components/ui/asterra-logo';
 import Image from 'next/image';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -179,14 +180,11 @@ export default function ProfilePage() {
   };
 
   const handleLogout = async () => {
-    try {
-      await signOut();
-    } catch {
-      // Ignore if offline
-    }
-    legacyLogout();
-    showNotification('Anda telah keluar dari akun.');
-    router.push('/');
+    await performCustomerLogout({
+      queryClient,
+      redirectTo: '/',
+      onNotice: showNotification,
+    });
   };
 
   const handleGoogleLogin = async () => {

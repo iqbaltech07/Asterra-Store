@@ -11,7 +11,8 @@ export async function POST() {
     message: 'Sesi administrator berhasil diakhiri.',
   });
 
-  // Clear cookie immediately
+  // Clear cookie immediately using both delete and expired maxAge
+  response.cookies.delete(ADMIN_COOKIE_NAME);
   response.cookies.set({
     name: ADMIN_COOKIE_NAME,
     value: '',
@@ -20,6 +21,7 @@ export async function POST() {
     sameSite: 'lax',
     path: '/',
     maxAge: 0,
+    expires: new Date(0),
   });
 
   return response;

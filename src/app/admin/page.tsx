@@ -167,12 +167,18 @@ export default function AdminPage() {
     try {
       if (typeof window !== 'undefined') {
         localStorage.removeItem('asterra_admin_token');
+        localStorage.removeItem('asterra_admin_user');
       }
-      await fetch('/api/v1/admin/auth/logout', { method: 'POST' });
+      await fetch('/api/v1/admin/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
     } catch {
       // ignore
     } finally {
-      router.replace('/admin/login');
+      if (typeof window !== 'undefined') {
+        window.location.href = '/admin/login?logged_out=1';
+      }
     }
   };
 

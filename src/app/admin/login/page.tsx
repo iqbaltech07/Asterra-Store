@@ -38,6 +38,12 @@ export default function AdminLoginPage() {
 
   // Check if admin is already logged in
   useEffect(() => {
+    // If just logged out, bypass automatic session checking
+    if (typeof window !== 'undefined' && window.location.search.includes('logged_out=1')) {
+      setIsVerifyingSession(false);
+      return;
+    }
+
     async function checkExistingSession() {
       try {
         const res = await fetch('/api/v1/admin/auth/me');

@@ -10,6 +10,9 @@ import { Footer } from '@/components/layout/footer';
 import { Button } from '@/components/ui/button';
 import { useCartStore } from '@/store/use-cart-store';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { useSession } from '@/lib/auth-client';
+import { useAuthStore } from '@/store/use-auth-store';
+import { AuthRequiredModal } from '@/components/auth/auth-required-modal';
 import {
   faCircleCheck,
   faCartShopping,
@@ -261,6 +264,10 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
   const [activeTab, setActiveTab] = useState<'benefit' | 'garansi' | 'deskripsi'>('deskripsi');
 
   const { items: cartItems, addItem } = useCartStore();
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const { data: session } = useSession();
+  const { user: legacyUser } = useAuthStore();
+  const isAuthenticated = Boolean(session?.user || legacyUser);
 
   const { data, isLoading, error } = useQuery<{ success: boolean; data: ProductDetailData }>({
     queryKey: ['product', id],
@@ -480,6 +487,10 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
   };
 
   const handleAddToCart = () => {
+    if (!isAuthenticated) {
+      setIsAuthModalOpen(true);
+      return;
+    }
     if (!product || isOutOfStock) {
       showNotification(`Maaf, stok produk ${variantDetails.title} saat ini habis.`);
       return;
@@ -500,6 +511,10 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
   };
 
   const handleBuyNow = () => {
+    if (!isAuthenticated) {
+      setIsAuthModalOpen(true);
+      return;
+    }
     if (!product || isOutOfStock) {
       showNotification(`Maaf, stok produk ${variantDetails.title} saat ini habis.`);
       return;
@@ -1152,6 +1167,10 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                         product={relProductItem}
                         isSelected={isSelected}
                         onAddToCart={(p) => {
+                          if (!isAuthenticated) {
+                            setIsAuthModalOpen(true);
+                            return;
+                          }
                           addItem({
                             id: p.id,
                             name: p.name,
@@ -1210,6 +1229,12 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
       )}
 
       <Footer onNotify={showNotification} />
+
+      {/* Guest Authentication Modal */}
+      <AuthRequiredModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+      />
     </div>
   );
 }

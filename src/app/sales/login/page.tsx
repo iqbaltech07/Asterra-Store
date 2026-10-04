@@ -42,6 +42,12 @@ function SalesLoginContent() {
 
   // Check if sales partner is already logged in
   useEffect(() => {
+    // If just logged out, bypass automatic session checking
+    if (typeof window !== 'undefined' && window.location.search.includes('logged_out=1')) {
+      setIsVerifyingSession(false);
+      return;
+    }
+
     async function checkExistingSession() {
       try {
         const token = typeof window !== 'undefined' ? localStorage.getItem('asterra_admin_token') : null;
