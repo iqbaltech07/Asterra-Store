@@ -291,7 +291,6 @@ function ApplicationCard({
 export default function HomePage() {
   const [activeNotification, setActiveNotification] = useState<string | null>(null);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
-  const [videoError, setVideoError] = useState(false);
 
   // Dynamic products fetched from catalog API (active products only)
   const { data: catalogResponse } = useQuery<{ success: boolean; data: ProductItem[]; total: number }>({
@@ -529,11 +528,11 @@ export default function HomePage() {
               </p>
             </div>
 
-            {/* Right Column: Planet Visual (Smooth, Cleanly Positioned in Center-Right on Mobile, Zero Collision) */}
-            <div className="absolute right-1 sm:right-2 lg:right-6 top-1/2 -translate-y-1/2 pointer-events-none select-none z-10">
+            {/* Right Column: Planet Visual (Smooth, Cleanly Centered in Right Area, Zero Lag) */}
+            <div className="absolute right-1 sm:right-3 lg:right-6 top-1/2 -translate-y-1/2 pointer-events-none select-none z-10">
               <div
                 data-gsap="hero-media"
-                className="relative w-[110px] h-[110px] sm:w-[170px] sm:h-[170px] lg:w-[250px] lg:h-[250px] flex items-center justify-center"
+                className="relative w-[115px] h-[115px] sm:w-[170px] sm:h-[170px] lg:w-[250px] lg:h-[250px] flex items-center justify-center"
                 style={{
                   transform: 'translate3d(0,0,0)',
                   WebkitTransform: 'translate3d(0,0,0)',
@@ -568,7 +567,7 @@ export default function HomePage() {
                   />
                 </svg>
 
-                {/* Ambient Soft Glow: GPU-Native Radial Gradient */}
+                {/* Ambient Soft Glow: GPU-Native Radial Gradient (Zero CPU blur calculation on iOS WebKit) */}
                 <div
                   className="absolute inset-0 rounded-full pointer-events-none"
                   style={{
@@ -576,9 +575,9 @@ export default function HomePage() {
                   }}
                 />
 
-                {/* Scaled Asterra Planet Visual: Native Smooth Hardware-Accelerated Video Animation with Fallbacks */}
+                {/* Scaled Asterra Planet Visual: Smooth Hardware-Accelerated Animation */}
                 <div
-                  className="relative z-10 w-[95px] sm:w-[150px] lg:w-[220px] flex items-center justify-center pointer-events-none select-none"
+                  className="relative z-10 w-[100px] sm:w-[150px] lg:w-[220px] flex items-center justify-center"
                   style={{
                     transform: 'translate3d(0,0,0)',
                     WebkitTransform: 'translate3d(0,0,0)',
@@ -586,59 +585,21 @@ export default function HomePage() {
                     backfaceVisibility: 'hidden',
                   }}
                 >
-                  {!videoError ? (
-                    <video
-                      autoPlay
-                      loop
-                      muted
-                      playsInline
-                      preload="auto"
-                      onError={() => setVideoError(true)}
-                      className="w-full h-auto object-contain pointer-events-none select-none"
-                      style={{
-                        transform: 'translate3d(0,0,0)',
-                        WebkitTransform: 'translate3d(0,0,0)',
-                        aspectRatio: '800 / 426',
-                      }}
-                    >
-                      <source
-                        src="/videos/hero-planet.webm"
-                        type="video/webm"
-                        onError={() => setVideoError(true)}
-                      />
-                      <img
-                        src="/assets/asterra-planet-transparent.webp"
-                        alt="Asterra Store"
-                        width={800}
-                        height={426}
-                        draggable={false}
-                        className="w-full h-auto object-contain pointer-events-none select-none"
-                        style={{
-                          aspectRatio: '800 / 426',
-                        }}
-                        onError={(e) => {
-                          e.currentTarget.src = "/images/brand/hero-planet-white.png";
-                        }}
-                      />
-                    </video>
-                  ) : (
-                    <img
-                      src="/assets/asterra-planet-transparent.webp"
-                      alt="Asterra Store"
-                      width={800}
-                      height={426}
-                      draggable={false}
-                      className="w-full h-auto object-contain pointer-events-none select-none"
-                      style={{
-                        transform: 'translate3d(0,0,0)',
-                        WebkitTransform: 'translate3d(0,0,0)',
-                        aspectRatio: '800 / 426',
-                      }}
-                      onError={(e) => {
-                        e.currentTarget.src = "/images/brand/hero-planet-white.png";
-                      }}
-                    />
-                  )}
+                  <img
+                    src="/assets/asterra-planet-transparent.webp"
+                    alt="Asterra Store"
+                    width={800}
+                    height={426}
+                    draggable={false}
+                    className="w-full h-auto object-contain pointer-events-none select-none"
+                    style={{
+                      transform: 'translate3d(0,0,0)',
+                      WebkitTransform: 'translate3d(0,0,0)',
+                    }}
+                    onError={(e) => {
+                      e.currentTarget.src = "/images/brand/hero-planet-white.png";
+                    }}
+                  />
                 </div>
               </div>
             </div>
