@@ -568,7 +568,7 @@ export default function HomePage() {
                   }}
                 />
 
-                {/* Scaled Asterra Planet Visual: Native Hardware-Accelerated Video Playback */}
+                {/* Scaled Asterra Planet Visual: Responsive Resolution-Optimized Animated WebP */}
                 <div
                   data-gsap="hero-media"
                   className="relative z-10 w-[100px] sm:w-[150px] lg:w-[220px] flex items-center justify-center translate-x-1 sm:translate-x-1.5 lg:translate-x-2.5 -translate-y-1.5 sm:-translate-y-2 lg:-translate-y-3"
@@ -580,23 +580,14 @@ export default function HomePage() {
                     willChange: 'transform',
                   }}
                 >
-                  <video
-                    autoPlay
-                    muted
-                    loop
-                    playsInline
-                    preload="auto"
-                    poster="/assets/hero-planet-poster.webp"
-                    className="w-full h-auto object-contain pointer-events-none select-none"
-                    style={{
-                      transform: 'translate3d(0,0,0)',
-                      WebkitTransform: 'translate3d(0,0,0)',
-                    }}
-                  >
-                    <source src="/videos/hero-planet.webm" type="video/webm" />
-                    <source src="/videos/hero-planet.mp4" type="video/mp4" />
-                    <source src="/videos/hero-planet.mov" type="video/quicktime" />
-                    {/* Fallback to original transparent animated WebP */}
+                  <picture className="w-full h-auto flex items-center justify-center pointer-events-none select-none">
+                    {/* Mobile: 400x213 Animated WebP (75% lower RAM & CPU decoding overhead on iPhone 12) */}
+                    <source
+                      media="(max-width: 640px)"
+                      srcSet="/assets/asterra-planet-mobile.webp"
+                      type="image/webp"
+                    />
+                    {/* Tablet & Desktop: Original 800x426 Animated WebP */}
                     <img
                       src="/assets/asterra-planet-transparent.webp"
                       alt="Asterra Store"
@@ -609,7 +600,7 @@ export default function HomePage() {
                         e.currentTarget.src = "/images/brand/hero-planet-white.png";
                       }}
                     />
-                  </video>
+                  </picture>
                 </div>
               </div>
             </div>
