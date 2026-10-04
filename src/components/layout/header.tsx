@@ -80,8 +80,6 @@ export function Header({ onNotify }: HeaderProps) {
             <AsterraLogo
               variant="navbar"
               size="md"
-              showBadge={true}
-              badgeText="Toko Digital Premium"
               linkToHome={true}
             />
           </div>
