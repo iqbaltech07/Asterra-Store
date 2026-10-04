@@ -226,6 +226,7 @@ function ApplicationCard({
       href={`/products/${app.slug}`}
       tabIndex={isDuplicate ? -1 : undefined}
       aria-hidden={isDuplicate ? true : undefined}
+      data-gsap={!isDuplicate ? 'marquee-card' : undefined}
       className="group bg-white border border-[rgba(18,26,42,0.08)] hover:border-[#C96F55]/60 hover:shadow-xs hover:-translate-y-0.5 rounded-xl sm:rounded-2xl p-3 sm:p-3.5 transition-[border-color,box-shadow,transform] duration-200 flex flex-col justify-between shrink-0 flex-none w-[240px] sm:w-[270px] lg:w-[290px] h-[152px] sm:h-[158px] mr-3 sm:mr-4 select-none cursor-pointer"
     >
       <div>
@@ -506,15 +507,15 @@ export default function HomePage() {
       {/* Main Content */}
       <main className="flex-1 max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 pt-2 sm:pt-3.5 pb-8 sm:pb-12 w-full overflow-hidden">
         {/* SECTION 2: Hero Main Banner Container (Card 1: Separated on Mobile, Unified on Desktop) */}
-        <div className="relative w-full rounded-2xl sm:rounded-t-3xl sm:rounded-b-none bg-[#101828] border border-[rgba(255,255,255,0.08)] shadow-md overflow-hidden">
+        <div data-gsap="hero-container" className="relative w-full rounded-2xl sm:rounded-t-3xl sm:rounded-b-none bg-[#101828] border border-[rgba(255,255,255,0.08)] shadow-md overflow-hidden">
           {/* Controlled Hero Area: compact & clean with balanced text spacing */}
           <div className="relative min-h-[140px] sm:min-h-[190px] lg:h-[220px] xl:h-[235px] flex items-center px-4 sm:px-8 lg:px-12 py-3.5 sm:py-6 lg:py-0 overflow-hidden">
             {/* Left Column: Headline & Subheadline (Clear max-width on mobile prevents planet collision) */}
             <div className="relative z-10 w-full max-w-[64%] sm:max-w-[70%] lg:max-w-[62%] xl:max-w-[60%] py-1">
-              {/* Editorial Headline */}
+              {/* Editorial Headline: Masked Line-by-Line Reveal */}
               <h1 data-gsap="page-title" className="text-base sm:text-2xl lg:text-[32px] xl:text-[36px] font-black tracking-tight text-white leading-[1.2] sm:leading-[1.15]">
-                Solusi Terpercaya Produk &<br />
-                <span className="text-[#E28870]">Layanan Digital Premium</span>
+                <span className="block overflow-hidden"><span data-gsap="title-line" className="block">Solusi Terpercaya Produk &</span></span>
+                <span className="block overflow-hidden"><span data-gsap="title-line" className="block text-[#E28870]">Layanan Digital Premium</span></span>
               </h1>
 
               {/* Subheadline: Refined & concise on mobile to avoid awkward clamping, full on desktop */}
@@ -602,11 +603,11 @@ export default function HomePage() {
         </div>
 
         {/* SECTION 3: Trust / Benefits Bento Container (Card 2: Separated Bento Grid on Mobile, Sleek Strip on Desktop) */}
-        <div className="mt-2.5 sm:mt-0 mb-6 sm:mb-8 rounded-2xl sm:rounded-b-3xl sm:rounded-t-none bg-[#0E1524] border border-[rgba(255,255,255,0.08)] sm:border-t sm:border-t-white/10 p-2.5 sm:px-8 lg:px-12 sm:py-3.5 shadow-sm">
+        <div data-gsap="hero-benefit-bar" className="mt-2.5 sm:mt-0 mb-6 sm:mb-8 rounded-2xl sm:rounded-b-3xl sm:rounded-t-none bg-[#0E1524] border border-[rgba(255,255,255,0.08)] sm:border-t sm:border-t-white/10 p-2.5 sm:px-8 lg:px-12 sm:py-3.5 shadow-sm">
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-6">
             {/* Bento Tile 1: 100% Legal & Bergaransi (Mobile Row 1 Col 1, Desktop Col 1) */}
             <div
-              data-gsap="benefit-card"
+              data-gsap="benefit-tile"
               className="col-span-1 order-1 sm:order-1 bg-white/[0.03] sm:bg-transparent border border-white/[0.07] sm:border-none rounded-xl sm:rounded-none p-2.5 sm:p-0 flex flex-col sm:flex-row sm:items-center justify-between sm:justify-start gap-1.5 sm:gap-3"
             >
               <div className="w-6 h-6 sm:w-9 sm:h-9 rounded-md sm:rounded-xl bg-[rgba(201,111,85,0.15)] border border-[rgba(201,111,85,0.25)] flex items-center justify-center shrink-0">
@@ -620,7 +621,7 @@ export default function HomePage() {
 
             {/* Bento Tile 2: Multi-Metode Pembayaran (Mobile Row 1 Col 2, Desktop Col 3) */}
             <div
-              data-gsap="benefit-card"
+              data-gsap="benefit-tile"
               className="col-span-1 order-2 sm:order-3 sm:border-l sm:border-white/10 sm:pl-6 bg-white/[0.03] sm:bg-transparent border border-white/[0.07] sm:border-none rounded-xl sm:rounded-none p-2.5 sm:p-0 flex flex-col sm:flex-row sm:items-center justify-between sm:justify-start gap-1.5 sm:gap-3"
             >
               <div className="w-6 h-6 sm:w-9 sm:h-9 rounded-md sm:rounded-xl bg-[rgba(201,111,85,0.15)] border border-[rgba(201,111,85,0.25)] flex items-center justify-center shrink-0">
@@ -640,7 +641,7 @@ export default function HomePage() {
 
             {/* Bento Tile 3: Proses Cepat & Otomatis (Mobile Row 2 Col-span-2: Centered, Desktop Col 2 Tengah) */}
             <div
-              data-gsap="benefit-card"
+              data-gsap="benefit-tile"
               className="col-span-2 sm:col-span-1 order-3 sm:order-2 sm:border-l sm:border-white/10 sm:pl-6 bg-white/[0.03] sm:bg-transparent border border-white/[0.07] sm:border-none rounded-xl sm:rounded-none p-2.5 sm:p-0 flex items-center justify-center sm:justify-start gap-2.5 sm:gap-3"
             >
               <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-[rgba(201,111,85,0.15)] border border-[rgba(201,111,85,0.25)] flex items-center justify-center shrink-0">
@@ -655,23 +656,24 @@ export default function HomePage() {
         </div>
 
         {/* SECTION 4: EXPLORE BY APPLICATION (KATALOG APLIKASI DIGITAL - INFINITE MARQUEE) */}
-        <section id="aplikasi" data-gsap-reveal className="mb-10 sm:mb-14 overflow-hidden">
-          {/* Section Header (Static) */}
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2.5 mb-4 sm:mb-5 pb-2.5 border-b border-[rgba(18,26,42,0.08)]">
+        <section id="aplikasi" data-gsap-section="catalog" className="mb-10 sm:mb-14 overflow-hidden">
+          {/* Section Header */}
+          <div data-gsap="catalog-header" className="flex flex-col sm:flex-row sm:items-end justify-between gap-2.5 mb-4 sm:mb-5 pb-2.5 border-b border-[rgba(18,26,42,0.08)]">
             <div>
-              <span className="text-[11px] font-bold text-[#C96F55] uppercase tracking-wider block mb-0.5">
+              <span data-gsap="catalog-item" className="text-[11px] font-bold text-[#C96F55] uppercase tracking-wider block mb-0.5">
                 Katalog Aplikasi Digital
               </span>
-              <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-[#121A2A] tracking-tight">
+              <h2 data-gsap="catalog-item" className="text-xl sm:text-2xl lg:text-3xl font-black text-[#121A2A] tracking-tight">
                 Jelajahi Layanan Digital
               </h2>
-              <p className="text-xs sm:text-sm text-[#121A2A]/65 mt-0.5">
+              <p data-gsap="catalog-item" className="text-xs sm:text-sm text-[#121A2A]/65 mt-0.5">
                 Pilih aplikasi favorit yang ingin kamu gunakan untuk kebutuhan kerja atau kreatif.
               </p>
             </div>
 
             <Link
               href="/products"
+              data-gsap="catalog-item"
               className="text-xs sm:text-sm font-bold text-[#C96F55] hover:text-[#B86047] inline-flex items-center gap-1.5 shrink-0 transition-colors"
             >
               <span>Lihat Semua Katalog</span>
@@ -710,8 +712,8 @@ export default function HomePage() {
         </section>
 
         {/* SECTION 5: WHY ASTERRA (FEATURE / BENEFIT SECTION) */}
-        <section id="keunggulan" data-gsap-reveal className="mb-10 sm:mb-14 pt-6 sm:pt-8 border-t border-[rgba(18,26,42,0.08)]">
-          <div className="max-w-2xl mb-6">
+        <section id="keunggulan" data-gsap-section="keunggulan" className="mb-10 sm:mb-14 pt-6 sm:pt-8 border-t border-[rgba(18,26,42,0.08)]">
+          <div data-gsap="keunggulan-header" className="max-w-2xl mb-6">
             <span className="text-[11px] font-bold text-[#C96F55] uppercase tracking-wider block mb-1">
               Standar Kualitas & Layanan
             </span>
@@ -726,7 +728,7 @@ export default function HomePage() {
 
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-4.5">
             {/* 1. Produk Terverifikasi */}
-            <div data-gsap="card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-3 sm:p-5 space-y-1.5 sm:space-y-2 hover:border-[rgba(18,26,42,0.2)] transition-[border-color,box-shadow,background-color] duration-200">
+            <div data-gsap="keunggulan-card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-3 sm:p-5 space-y-1.5 sm:space-y-2 hover:border-[rgba(18,26,42,0.2)] transition-[border-color,box-shadow,background-color] duration-200">
               <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.2)] flex items-center justify-center text-[#C96F55]">
                 <ShieldCheck className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
               </div>
@@ -738,7 +740,7 @@ export default function HomePage() {
             </div>
 
             {/* 2. Aktivasi Cepat */}
-            <div data-gsap="card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-3 sm:p-5 space-y-1.5 sm:space-y-2 hover:border-[rgba(18,26,42,0.2)] transition-[border-color,box-shadow,background-color] duration-200">
+            <div data-gsap="keunggulan-card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-3 sm:p-5 space-y-1.5 sm:space-y-2 hover:border-[rgba(18,26,42,0.2)] transition-[border-color,box-shadow,background-color] duration-200">
               <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.2)] flex items-center justify-center text-[#C96F55]">
                 <Zap className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
               </div>
@@ -750,7 +752,7 @@ export default function HomePage() {
             </div>
 
             {/* 3. Pilihan Lengkap */}
-            <div data-gsap="card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-3 sm:p-5 space-y-1.5 sm:space-y-2 hover:border-[rgba(18,26,42,0.2)] transition-[border-color,box-shadow,background-color] duration-200">
+            <div data-gsap="keunggulan-card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-3 sm:p-5 space-y-1.5 sm:space-y-2 hover:border-[rgba(18,26,42,0.2)] transition-[border-color,box-shadow,background-color] duration-200">
               <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.2)] flex items-center justify-center text-[#C96F55]">
                 <Layers className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
               </div>
@@ -762,7 +764,7 @@ export default function HomePage() {
             </div>
 
             {/* 4. Pembayaran Praktis */}
-            <div data-gsap="card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-3 sm:p-5 space-y-1.5 sm:space-y-2 hover:border-[rgba(18,26,42,0.2)] transition-[border-color,box-shadow,background-color] duration-200">
+            <div data-gsap="keunggulan-card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-3 sm:p-5 space-y-1.5 sm:space-y-2 hover:border-[rgba(18,26,42,0.2)] transition-[border-color,box-shadow,background-color] duration-200">
               <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.2)] flex items-center justify-center text-[#C96F55]">
                 <CreditCard className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
               </div>
@@ -774,7 +776,7 @@ export default function HomePage() {
             </div>
 
             {/* 5. Garansi Jelas */}
-            <div data-gsap="card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-3 sm:p-5 space-y-1.5 sm:space-y-2 hover:border-[rgba(18,26,42,0.2)] transition-[border-color,box-shadow,background-color] duration-200">
+            <div data-gsap="keunggulan-card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-3 sm:p-5 space-y-1.5 sm:space-y-2 hover:border-[rgba(18,26,42,0.2)] transition-[border-color,box-shadow,background-color] duration-200">
               <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.2)] flex items-center justify-center text-[#C96F55]">
                 <ShieldCheck className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
               </div>
@@ -786,7 +788,7 @@ export default function HomePage() {
             </div>
 
             {/* 6. Customer Support */}
-            <div data-gsap="card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-3 sm:p-5 space-y-1.5 sm:space-y-2 hover:border-[rgba(18,26,42,0.2)] transition-[border-color,box-shadow,background-color] duration-200">
+            <div data-gsap="keunggulan-card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-3 sm:p-5 space-y-1.5 sm:space-y-2 hover:border-[rgba(18,26,42,0.2)] transition-[border-color,box-shadow,background-color] duration-200">
               <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.2)] flex items-center justify-center text-[#C96F55]">
                 <Headphones className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
               </div>
@@ -800,8 +802,8 @@ export default function HomePage() {
         </section>
 
         {/* SECTION 6: HOW IT WORKS (Cara Pemesanan) */}
-        <section id="panduan" data-gsap-reveal className="mb-10 sm:mb-14 pt-6 sm:pt-8 border-t border-[rgba(18,26,42,0.08)]">
-          <div className="max-w-2xl mb-6">
+        <section id="panduan" data-gsap-section="panduan" className="mb-10 sm:mb-14 pt-6 sm:pt-8 border-t border-[rgba(18,26,42,0.08)]">
+          <div data-gsap="panduan-header" className="max-w-2xl mb-6">
             <span className="text-[11px] font-bold text-[#C96F55] uppercase tracking-wider block mb-1">
               Panduan Transaksi
             </span>
@@ -815,7 +817,7 @@ export default function HomePage() {
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4.5">
             {/* Step 01 */}
-            <div data-gsap="card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-3 sm:p-5 flex flex-col justify-between hover:border-[rgba(18,26,42,0.2)] transition-[border-color,box-shadow,background-color] duration-200">
+            <div data-gsap="panduan-step" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-3 sm:p-5 flex flex-col justify-between hover:border-[rgba(18,26,42,0.2)] transition-[border-color,box-shadow,background-color] duration-200">
               <div>
                 <div className="flex items-center justify-between mb-1.5 sm:mb-2">
                   <span className="text-xl sm:text-3xl font-black text-[#C96F55]/40 font-mono">
@@ -835,7 +837,7 @@ export default function HomePage() {
             </div>
 
             {/* Step 02 */}
-            <div data-gsap="card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-3 sm:p-5 flex flex-col justify-between hover:border-[rgba(18,26,42,0.2)] transition-[border-color,box-shadow,background-color] duration-200">
+            <div data-gsap="panduan-step" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-3 sm:p-5 flex flex-col justify-between hover:border-[rgba(18,26,42,0.2)] transition-[border-color,box-shadow,background-color] duration-200">
               <div>
                 <div className="flex items-center justify-between mb-1.5 sm:mb-2">
                   <span className="text-xl sm:text-3xl font-black text-[#C96F55]/40 font-mono">
@@ -855,7 +857,7 @@ export default function HomePage() {
             </div>
 
             {/* Step 03 */}
-            <div data-gsap="card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-3 sm:p-5 flex flex-col justify-between hover:border-[rgba(18,26,42,0.2)] transition-[border-color,box-shadow,background-color] duration-200">
+            <div data-gsap="panduan-step" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-3 sm:p-5 flex flex-col justify-between hover:border-[rgba(18,26,42,0.2)] transition-[border-color,box-shadow,background-color] duration-200">
               <div>
                 <div className="flex items-center justify-between mb-1.5 sm:mb-2">
                   <span className="text-xl sm:text-3xl font-black text-[#C96F55]/40 font-mono">
@@ -875,7 +877,7 @@ export default function HomePage() {
             </div>
 
             {/* Step 04 */}
-            <div data-gsap="card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-3 sm:p-5 flex flex-col justify-between hover:border-[rgba(18,26,42,0.2)] transition-[border-color,box-shadow,background-color] duration-200">
+            <div data-gsap="panduan-step" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-3 sm:p-5 flex flex-col justify-between hover:border-[rgba(18,26,42,0.2)] transition-[border-color,box-shadow,background-color] duration-200">
               <div>
                 <div className="flex items-center justify-between mb-1.5 sm:mb-2">
                   <span className="text-xl sm:text-3xl font-black text-[#C96F55]/40 font-mono">
@@ -897,8 +899,8 @@ export default function HomePage() {
         </section>
 
         {/* SECTION 7: FAQ (Pertanyaan yang Sering Ditanyakan) */}
-        <section id="faq" data-gsap-reveal className="mb-10 sm:mb-14 pt-6 sm:pt-8 border-t border-[rgba(18,26,42,0.08)]">
-          <div className="max-w-2xl mb-6">
+        <section id="faq" data-gsap-section="faq" className="mb-10 sm:mb-14 pt-6 sm:pt-8 border-t border-[rgba(18,26,42,0.08)]">
+          <div data-gsap="faq-header" className="max-w-2xl mb-6">
             <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#C96F55] uppercase tracking-wider mb-1">
               <CircleHelp className="w-3.5 h-3.5" />
               <span>Bantuan & Panduan</span>
@@ -917,6 +919,7 @@ export default function HomePage() {
               return (
                 <div
                   key={idx}
+                  data-gsap="faq-item"
                   className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl overflow-hidden transition-colors"
                 >
                   <button
@@ -947,8 +950,8 @@ export default function HomePage() {
         </section>
 
         {/* SECTION 8: FINAL CTA */}
-        <section data-gsap-reveal className="mb-6 sm:mb-8 p-5 sm:p-8 bg-[#121A2A] text-[#F7F5EF] rounded-2xl border border-white/10 shadow-editorial flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
-          <div className="space-y-1 max-w-xl">
+        <section data-gsap-section="cta" className="mb-6 sm:mb-8 p-5 sm:p-8 bg-[#121A2A] text-[#F7F5EF] rounded-2xl border border-white/10 shadow-editorial flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
+          <div data-gsap="cta-content" className="space-y-1 max-w-xl">
             <h3 className="text-base sm:text-xl lg:text-2xl font-black text-[#F7F5EF] tracking-tight">
               Siap menemukan layanan digital yang kamu butuhkan?
             </h3>
@@ -957,12 +960,14 @@ export default function HomePage() {
             </p>
           </div>
 
-          <Link href="/products">
-            <Button className="h-10 sm:h-11 px-5 sm:px-6 rounded-xl bg-[#C96F55] hover:bg-[#B86047] text-[#F7F5EF] font-bold text-xs sm:text-sm gap-2 shrink-0 active:scale-95 transition-all">
-              <span>Jelajahi Produk</span>
-              <ArrowRight className="w-4 h-4" />
-            </Button>
-          </Link>
+          <div data-gsap="cta-actions">
+            <Link href="/products">
+              <Button className="h-10 sm:h-11 px-5 sm:px-6 rounded-xl bg-[#C96F55] hover:bg-[#B86047] text-[#F7F5EF] font-bold text-xs sm:text-sm gap-2 shrink-0 active:scale-95 transition-all">
+                <span>Jelajahi Produk</span>
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            </Link>
+          </div>
         </section>
       </main>
 
