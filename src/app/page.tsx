@@ -563,7 +563,7 @@ export default function HomePage() {
                   />
                 </svg>
 
-                {/* Ambient Soft Glow: GPU-Native Radial Gradient (Zero CPU blur calculation on iOS WebKit) */}
+                {/* Ambient Soft Glow: STATIC, separated layer, zero blur/repaint */}
                 <div
                   className="absolute inset-0 rounded-full pointer-events-none"
                   style={{
@@ -571,16 +571,15 @@ export default function HomePage() {
                   }}
                 />
 
-                {/* Scaled Asterra Planet Visual: Optically Centered to Orbital Rings */}
+                {/* Scaled Asterra Planet Motion Container: Optically Centered, Exclusively animated by GSAP for initial reveal */}
                 <div
+                  data-gsap="hero-media"
                   className="relative z-10 w-[100px] sm:w-[150px] lg:w-[220px] flex items-center justify-center translate-x-1 sm:translate-x-1.5 lg:translate-x-2.5 -translate-y-1.5 sm:-translate-y-2 lg:-translate-y-3"
                 >
-                  <picture className="w-full h-auto flex items-center justify-center pointer-events-none select-none">
-                    {/* Mobile: 9KB lightweight static frame, 0 loop decode overhead, rock-solid 60 FPS */}
-                    <source media="(max-width: 639px)" srcSet="/assets/asterra-planet-static.webp" />
-                    {/* Desktop & Tablet: rich animated planet */}
+                  {/* PlanetVisual Layer: Exclusively animated by CSS (8s linear spin on desktop, STATIC on mobile <=768px) */}
+                  <div className="planet-visual-layer w-full h-auto flex items-center justify-center">
                     <img
-                      src="/assets/asterra-planet-transparent.webp"
+                      src="/assets/asterra-planet-static.webp"
                       alt="Asterra Store"
                       width={800}
                       height={426}
@@ -591,7 +590,7 @@ export default function HomePage() {
                         e.currentTarget.src = "/images/brand/hero-planet-white.png";
                       }}
                     />
-                  </picture>
+                  </div>
                 </div>
               </div>
             </div>

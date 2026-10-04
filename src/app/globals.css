@@ -135,6 +135,40 @@ body {
   animation-play-state: paused !important;
 }
 
+/* GPU-Accelerated Continuous Planet Rotation (Desktop Only, Linear, 8s Cycle) */
+@keyframes planetSpin {
+  from {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  to {
+    transform: translate3d(0, 0, 0) rotate(360deg);
+  }
+}
+
+.planet-visual-layer {
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  will-change: transform;
+  animation: planetSpin 8s linear infinite;
+}
+
+/* Mobile & Tablet Responsive Rule: Planet is completely STATIC after initial reveal */
+@media (max-width: 768px) {
+  .planet-visual-layer {
+    animation: none !important;
+    transform: none !important;
+    will-change: auto !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .planet-visual-layer {
+    animation: none !important;
+    transform: none !important;
+    will-change: auto !important;
+  }
+}
+
 /* Seamless Smooth Text & Content Transitions (Apple / Vercel style - GPU accelerated, zero blur filter overhead) */
 @keyframes tabGlideIn {
   0% {

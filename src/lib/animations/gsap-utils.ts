@@ -497,22 +497,20 @@ export function animateHeroMasterSequence(container: HTMLElement | null) {
       );
     }
 
-    // 4. PLANET VISUAL (Starts at 0.20s)
-    // MOBILE: scale 0.92 -> 1, opacity 0 -> 1, rotation 0. Static afterwards for 60fps!
-    // DESKTOP: subtle rotation -2.5deg -> 0deg and scale
+    // 4. PLANET VISUAL ENTRANCE REVEAL (Starts at 0.20s)
+    // GSAP exclusively owns initial reveal: opacity 0 -> 1, scale 0.92 -> 1 (350-420ms, power2.out)
+    // Zero rotation in GSAP to avoid any transform overwrite with CSS .planet-visual-layer!
     if (planetVisual) {
       masterTl.fromTo(
         planetVisual,
         {
           scale: 0.92,
           opacity: 0,
-          rotation: isMobile ? 0 : -2.5,
         },
         {
           scale: 1,
           opacity: 1,
-          rotation: 0,
-          duration: isMobile ? 0.35 : 0.45,
+          duration: isMobile ? 0.35 : 0.42,
           ease: 'power2.out',
           clearProps: 'transform,opacity',
         },
