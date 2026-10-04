@@ -575,14 +575,13 @@ export default function HomePage() {
                   }}
                 />
 
-                {/* Scaled Asterra Planet Visual: Smooth Hardware-Accelerated Animation */}
+                {/* Scaled Asterra Planet Visual: Optically Centered to Orbital Rings */}
                 <div
-                  className="relative z-10 w-[100px] sm:w-[150px] lg:w-[220px] flex items-center justify-center"
+                  className="relative z-10 w-[100px] sm:w-[150px] lg:w-[220px] flex items-center justify-center translate-x-1 sm:translate-x-1.5 lg:translate-x-2.5 -translate-y-1.5 sm:-translate-y-2 lg:-translate-y-3"
                   style={{
-                    transform: 'translate3d(0,0,0)',
-                    WebkitTransform: 'translate3d(0,0,0)',
                     WebkitBackfaceVisibility: 'hidden',
                     backfaceVisibility: 'hidden',
+                    willChange: 'transform',
                   }}
                 >
                   <img
@@ -592,10 +591,6 @@ export default function HomePage() {
                     height={426}
                     draggable={false}
                     className="w-full h-auto object-contain pointer-events-none select-none"
-                    style={{
-                      transform: 'translate3d(0,0,0)',
-                      WebkitTransform: 'translate3d(0,0,0)',
-                    }}
                     onError={(e) => {
                       e.currentTarget.src = "/images/brand/hero-planet-white.png";
                     }}
