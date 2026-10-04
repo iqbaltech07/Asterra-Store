@@ -9,17 +9,29 @@ import { resolveProductFamily } from './product-variant-parser';
 const ACTIVE_CATALOG_PATH = path.resolve(process.cwd(), 'data/active-catalog.json');
 const MANAGED_CATALOG_PATH = path.resolve(process.cwd(), 'data/managed-catalog.json');
 
+let cachedLocalFallback: ManagedProduct[] | null = null;
+let lastLocalCacheTime = 0;
+
 /**
- * Fallback to local clean JSON files if database connection is unreachable
+ * Fallback to local clean JSON files if database connection is unreachable.
+ * Cached in-memory to prevent synchronous file I/O on every request.
  */
 function getLocalFallbackActiveProducts(): ManagedProduct[] {
+  const now = Date.now();
+  if (cachedLocalFallback && now - lastLocalCacheTime < 60000) {
+    return cachedLocalFallback;
+  }
   try {
     if (fs.existsSync(ACTIVE_CATALOG_PATH)) {
-      return JSON.parse(fs.readFileSync(ACTIVE_CATALOG_PATH, 'utf-8'));
+      cachedLocalFallback = JSON.parse(fs.readFileSync(ACTIVE_CATALOG_PATH, 'utf-8'));
+      lastLocalCacheTime = now;
+      return cachedLocalFallback!;
     }
     if (fs.existsSync(MANAGED_CATALOG_PATH)) {
       const all: ManagedProduct[] = JSON.parse(fs.readFileSync(MANAGED_CATALOG_PATH, 'utf-8'));
-      return all.filter((p) => p.status === 'active');
+      cachedLocalFallback = all.filter((p) => p.status === 'active');
+      lastLocalCacheTime = now;
+      return cachedLocalFallback!;
     }
   } catch (err) {
     console.error('[CatalogRepository] Failed to read local fallback:', err);
@@ -57,6 +69,30 @@ export class PrismaCatalogRepository {
     limit?: number;
     offset?: number;
   }): Promise<{ products: ManagedProduct[]; total: number }> {
+    if (!process.env.DATABASE_URL) {
+      const local = getLocalFallbackActiveProducts();
+      let filtered = local;
+      if (params?.category && params.category !== 'all' && params.category !== 'cat-all') {
+        filtered = filtered.filter((p) => p.category.id === params.category);
+      }
+      if (params?.search) {
+        const query = params.search.toLowerCase();
+        filtered = filtered.filter(
+          (p) =>
+            p.name.toLowerCase().includes(query) ||
+            p.providerCode?.toLowerCase().includes(query) ||
+            p.features.some((f) => f.toLowerCase().includes(query))
+        );
+      }
+      const total = filtered.length;
+      if (params?.offset !== undefined || params?.limit !== undefined) {
+        const offset = params.offset || 0;
+        const limit = params.limit || filtered.length;
+        filtered = filtered.slice(offset, offset + limit);
+      }
+      return { products: filtered, total };
+    }
+
     try {
       const where: Prisma.ProductWhereInput = { status: 'active' };
       if (params?.category && params.category !== 'all' && params.category !== 'cat-all') {
@@ -154,6 +190,27 @@ export class PrismaCatalogRepository {
    * Get a single product by ID
    */
   static async getProductById(id: string): Promise<ManagedProduct | null> {
+    if (!process.env.DATABASE_URL) {
+      const local = getLocalFallbackActiveProducts();
+      const match = local.find((x) => x.id === id);
+      if (match) return match;
+      const { resolveProductFamily } = await import('./product-variant-parser');
+      const family = resolveProductFamily(id, local);
+      if (family) {
+        const famMatch = local.find((x) => x.id === family.selectedVariant.id) || local[0];
+        if (famMatch) {
+          return {
+            ...famMatch,
+            name: family.name,
+            imageUrl: family.imageUrl,
+            description: family.description,
+            features: family.features,
+          };
+        }
+      }
+      return null;
+    }
+
     try {
       const p = await prisma.product.findUnique({ where: { id } });
       if (!p) {

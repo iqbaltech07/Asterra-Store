@@ -534,11 +534,6 @@ export default function HomePage() {
               <div
                 data-gsap="hero-media"
                 className="relative w-[115px] h-[115px] sm:w-[170px] sm:h-[170px] lg:w-[250px] lg:h-[250px] flex items-center justify-center"
-                style={{
-                  transform: 'translate3d(0,0,0)',
-                  WebkitTransform: 'translate3d(0,0,0)',
-                  willChange: 'transform',
-                }}
               >
                 {/* Subtle SVG Orbital Background Rings (desktop & tablet only) */}
                 <svg
@@ -579,17 +574,13 @@ export default function HomePage() {
                 {/* Scaled Asterra Planet Visual: Optically Centered to Orbital Rings */}
                 <div
                   className="relative z-10 w-[100px] sm:w-[150px] lg:w-[220px] flex items-center justify-center translate-x-1 sm:translate-x-1.5 lg:translate-x-2.5 -translate-y-1.5 sm:-translate-y-2 lg:-translate-y-3"
-                  style={{
-                    WebkitBackfaceVisibility: 'hidden',
-                    backfaceVisibility: 'hidden',
-                    willChange: 'transform',
-                  }}
                 >
                   <img
                     src="/assets/asterra-planet-transparent.webp"
                     alt="Asterra Store"
                     width={800}
                     height={426}
+                    decoding="async"
                     draggable={false}
                     className="w-full h-auto object-contain pointer-events-none select-none"
                     onError={(e) => {

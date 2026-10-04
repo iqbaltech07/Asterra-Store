@@ -88,6 +88,7 @@ export function Header({ onNotify }: HeaderProps) {
           <nav className="hidden lg:flex items-center gap-6 text-xs sm:text-[13px] font-medium">
             <Link
               href="/"
+              prefetch={true}
               data-gsap="nav-link"
               className={`transition-colors py-1 ${
                 isHomeActive
@@ -99,6 +100,7 @@ export function Header({ onNotify }: HeaderProps) {
             </Link>
             <Link
               href="/products"
+              prefetch={true}
               data-gsap="nav-link"
               className={`transition-colors py-1 ${
                 isProductsActive
@@ -110,6 +112,7 @@ export function Header({ onNotify }: HeaderProps) {
             </Link>
             <Link
               href="/orders"
+              prefetch={true}
               data-gsap="nav-link"
               className={`transition-colors py-1 inline-flex items-center gap-1.5 ${
                 isOrdersActive

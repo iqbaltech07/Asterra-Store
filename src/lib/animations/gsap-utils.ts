@@ -314,7 +314,7 @@ export function animateNavbar(headerElement: HTMLElement | null) {
       tl.fromTo(
         bar,
         {
-          y: -22,
+          y: -18,
           opacity: 0,
           clipPath: 'inset(0% 0% 100% 0% round 1rem)',
         },
@@ -322,7 +322,7 @@ export function animateNavbar(headerElement: HTMLElement | null) {
           y: 0,
           opacity: 1,
           clipPath: 'inset(0% 0% 0% 0% round 1rem)',
-          duration: 0.8,
+          duration: 0.65,
           ease: 'expo.out',
           clearProps: 'transform,clipPath,opacity',
         },
@@ -330,55 +330,55 @@ export function animateNavbar(headerElement: HTMLElement | null) {
       );
     }
 
-    // 2. Logo appears right after container unfolds (0.22s)
+    // 2. Logo appears right after container starts opening (0.10s)
     if (logo) {
       tl.fromTo(
         logo,
-        { opacity: 0, scale: 0.94, y: -6 },
+        { opacity: 0, scale: 0.96, y: -4 },
         {
           opacity: 1,
           scale: 1,
           y: 0,
-          duration: 0.5,
+          duration: 0.38,
           ease: 'power2.out',
           clearProps: 'transform,opacity',
         },
-        0.22
+        0.10
       );
     }
 
-    // 3. Nav links stagger in (0.32s)
+    // 3. Nav links stagger in (0.14s)
     if (navLinks.length > 0) {
       tl.fromTo(
         navLinks,
-        { opacity: 0, y: -8 },
+        { opacity: 0, y: -6 },
         {
           opacity: 1,
           y: 0,
-          duration: 0.45,
-          stagger: 0.06,
+          duration: 0.35,
+          stagger: 0.03,
           ease: 'power2.out',
           clearProps: 'transform,opacity',
         },
-        0.32
+        0.14
       );
     }
 
-    // 4. Action buttons (Cart, User/Login, Hamburger) appear last (0.45s)
+    // 4. Action buttons (Cart, User/Login, Hamburger) appear (0.18s)
     if (actions.length > 0) {
       tl.fromTo(
         actions,
-        { opacity: 0, scale: 0.88, y: -4 },
+        { opacity: 0, scale: 0.92, y: -4 },
         {
           opacity: 1,
           scale: 1,
           y: 0,
-          duration: 0.45,
-          stagger: 0.06,
+          duration: 0.35,
+          stagger: 0.03,
           ease: 'power2.out',
           clearProps: 'transform,opacity',
         },
-        0.45
+        0.18
       );
     }
   }, headerElement);
@@ -392,12 +392,13 @@ export function animateNavbar(headerElement: HTMLElement | null) {
 
 /**
  * Master initial page load sequence for Asterra Store Homepage:
- * 0.00s -> (Navbar starts independently)
- * 0.28s -> Hero container horizontal reveal (opens from center: LEFT <--- HERO ---> RIGHT)
- * 0.72s -> Hero headline lines text reveal
- * 0.88s -> Hero description
- * 0.98s -> Planet visual (scale 0.85->1, opacity 0->1, subtle rotation -5deg->0deg)
- * 1.10s -> Hero benefits horizontal stagger (Tile 1 -> Tile 2 -> Tile 3)
+ * Continuous, fluid, zero-dead-time cascade:
+ * 0.00s -> Navbar starts
+ * 0.06s -> Hero container horizontal reveal starts immediately with fluid overlap
+ * 0.22s -> Hero headline lines text reveal
+ * 0.32s -> Hero description
+ * 0.38s -> Planet visual (Mobile: static rotation + subtle scale for 60fps; Desktop: subtle rotation)
+ * 0.44s -> Hero benefits horizontal stagger (Tile 1 -> Tile 2 -> Tile 3)
  */
 export function animateHeroMasterSequence(container: HTMLElement | null) {
   if (!container || typeof window === 'undefined') return;
@@ -405,6 +406,7 @@ export function animateHeroMasterSequence(container: HTMLElement | null) {
   const reduced = prefersReducedMotion();
 
   const ctx = gsap.context(() => {
+    const isMobile = window.innerWidth < 640;
     const heroContainer = container.querySelector('[data-gsap="hero-container"]');
     const titleLines = container.querySelectorAll('[data-gsap="title-line"]');
     const heroTitle = container.querySelector('[data-gsap="page-title"]');
@@ -417,7 +419,7 @@ export function animateHeroMasterSequence(container: HTMLElement | null) {
       gsap.fromTo(
         [heroContainer, heroTitle, heroSub, planetVisual, benefitBar, benefitTiles],
         { opacity: 0 },
-        { opacity: 1, duration: 0.35, stagger: 0.05, ease: 'power1.out', clearProps: 'opacity' }
+        { opacity: 1, duration: 0.25, stagger: 0.04, ease: 'power1.out', clearProps: 'opacity' }
       );
       return;
     }
@@ -426,26 +428,26 @@ export function animateHeroMasterSequence(container: HTMLElement | null) {
       defaults: { force3D: true },
     });
 
-    // 1. HERO HORIZONTAL REVEAL (Starts at 0.28s, duration 1.0s, power3.inOut)
+    // 1. HERO HORIZONTAL REVEAL (Starts immediately at 0.06s)
     if (heroContainer) {
       masterTl.fromTo(
         heroContainer,
         {
           clipPath: 'inset(0% 50% 0% 50% round 1.5rem)',
-          opacity: 0.15,
+          opacity: 0.3,
         },
         {
           clipPath: 'inset(0% 0% 0% 0% round 1.5rem)',
           opacity: 1,
-          duration: 1.0,
+          duration: isMobile ? 0.72 : 0.82,
           ease: 'power3.inOut',
           clearProps: 'clipPath,opacity',
         },
-        0.28
+        0.06
       );
     }
 
-    // 2. HERO HEADLINE: Line-by-line text reveal (Starts at 0.72s)
+    // 2. HERO HEADLINE: Line-by-line text reveal (Starts at 0.22s)
     if (titleLines.length > 0) {
       masterTl.fromTo(
         titleLines,
@@ -456,78 +458,80 @@ export function animateHeroMasterSequence(container: HTMLElement | null) {
         {
           yPercent: 0,
           opacity: 1,
-          duration: 0.65,
-          stagger: 0.09,
+          duration: isMobile ? 0.45 : 0.52,
+          stagger: 0.05,
           ease: 'power3.out',
           clearProps: 'transform,opacity',
         },
-        0.72
+        0.22
       );
     } else if (heroTitle) {
       masterTl.fromTo(
         heroTitle,
-        { y: 18, opacity: 0 },
-        {
-          y: 0,
-          opacity: 1,
-          duration: 0.65,
-          ease: 'power3.out',
-          clearProps: 'transform,opacity',
-        },
-        0.72
-      );
-    }
-
-    // 3. HERO DESCRIPTION (Starts at 0.88s)
-    if (heroSub) {
-      masterTl.fromTo(
-        heroSub,
         { y: 12, opacity: 0 },
         {
           y: 0,
           opacity: 1,
-          duration: 0.55,
-          ease: 'power2.out',
+          duration: 0.48,
+          ease: 'power3.out',
           clearProps: 'transform,opacity',
         },
-        0.88
+        0.22
       );
     }
 
-    // 4. PLANET VISUAL: Scale, Opacity & Subtle Rotation (-5deg -> 0deg) (Starts at 0.98s)
+    // 3. HERO DESCRIPTION (Starts at 0.32s)
+    if (heroSub) {
+      masterTl.fromTo(
+        heroSub,
+        { y: 8, opacity: 0 },
+        {
+          y: 0,
+          opacity: 1,
+          duration: 0.38,
+          ease: 'power2.out',
+          clearProps: 'transform,opacity',
+        },
+        0.32
+      );
+    }
+
+    // 4. PLANET VISUAL (Starts at 0.38s)
+    // MOBILE: NO rotation to prevent expensive re-rasterization of transparent animated WebP; subtle scale only
+    // DESKTOP: subtle rotation -3deg -> 0deg and scale
     if (planetVisual) {
       masterTl.fromTo(
         planetVisual,
         {
-          scale: 0.85,
+          scale: isMobile ? 0.96 : 0.90,
           opacity: 0,
-          rotation: -5,
+          rotation: isMobile ? 0 : -3,
         },
         {
           scale: 1,
           opacity: 1,
           rotation: 0,
-          duration: 0.7,
+          duration: isMobile ? 0.42 : 0.52,
           ease: 'power2.out',
           clearProps: 'transform,opacity',
         },
-        0.98
+        0.38
       );
     }
 
-    // 5. HERO BENEFIT BAR & TILES (Starts at 1.10s)
+    // 5. HERO BENEFIT BAR & TILES (Starts at 0.44s)
     if (benefitBar) {
       masterTl.fromTo(
         benefitBar,
-        { opacity: 0, y: 8 },
+        { opacity: 0, y: 6 },
         {
           opacity: 1,
           y: 0,
-          duration: 0.5,
+          duration: 0.38,
           ease: 'power2.out',
           clearProps: 'transform,opacity',
         },
-        1.10
+        0.44
       );
     }
 
@@ -536,19 +540,19 @@ export function animateHeroMasterSequence(container: HTMLElement | null) {
         benefitTiles,
         {
           opacity: 0,
-          x: -14,
-          scale: 0.96,
+          x: isMobile ? -6 : -10,
+          scale: 0.97,
         },
         {
           opacity: 1,
           x: 0,
           scale: 1,
-          duration: 0.5,
-          stagger: 0.08,
+          duration: 0.38,
+          stagger: 0.05,
           ease: 'power2.out',
           clearProps: 'transform,opacity',
         },
-        1.14
+        0.48
       );
     }
   }, container);
@@ -586,13 +590,13 @@ export function setupHomepageScrollReveal(root: HTMLElement | null) {
       const cards = catalogSection.querySelectorAll<HTMLElement>(
         '[data-gsap="marquee-card"], .carousel-track a'
       );
-      // We only animate the first set of visible cards (first 6) on entry so marquee keeps running
+      // Only animate the first set of visible cards (first 6) on entry so marquee keeps running
       const initialCards = Array.from(cards).slice(0, 6);
 
       const catalogTl = gsap.timeline({
         scrollTrigger: {
           trigger: catalogSection,
-          start: 'top 82%',
+          start: 'top 85%',
           once: true,
         },
       });
@@ -601,19 +605,18 @@ export function setupHomepageScrollReveal(root: HTMLElement | null) {
         catalogTl.fromTo(
           catalogSection,
           { opacity: 0 },
-          { opacity: 1, duration: 0.35, ease: 'power1.out' }
+          { opacity: 1, duration: 0.25, ease: 'power1.out' }
         );
       } else {
-        // Header clip-path reveal from bottom
         if (header) {
           catalogTl.fromTo(
             header,
-            { clipPath: 'inset(100% 0% 0% 0%)', opacity: 0, y: 14 },
+            { clipPath: 'inset(100% 0% 0% 0%)', opacity: 0, y: 10 },
             {
               clipPath: 'inset(0% 0% 0% 0%)',
               opacity: 1,
               y: 0,
-              duration: 0.7,
+              duration: 0.5,
               ease: 'power3.out',
               clearProps: 'clipPath,transform,opacity',
             },
@@ -624,34 +627,33 @@ export function setupHomepageScrollReveal(root: HTMLElement | null) {
         if (headerItems.length > 0) {
           catalogTl.fromTo(
             headerItems,
-            { opacity: 0, y: 12 },
+            { opacity: 0, y: 8 },
             {
               opacity: 1,
               y: 0,
-              duration: 0.5,
-              stagger: 0.08,
+              duration: 0.38,
+              stagger: 0.05,
               ease: 'power2.out',
               clearProps: 'transform,opacity',
             },
-            0.15
+            0.06
           );
         }
 
-        // Product cards horizontal entry stagger (subtle translateX 25px, scale 0.97)
         if (initialCards.length > 0) {
           catalogTl.fromTo(
             initialCards,
-            { x: -28, opacity: 0, scale: 0.97 },
+            { x: -20, opacity: 0, scale: 0.98 },
             {
               x: 0,
               opacity: 1,
               scale: 1,
-              duration: 0.6,
-              stagger: 0.07,
+              duration: 0.45,
+              stagger: 0.05,
               ease: 'power2.out',
               clearProps: 'transform,opacity',
             },
-            0.25
+            0.10
           );
         }
       }
@@ -668,7 +670,7 @@ export function setupHomepageScrollReveal(root: HTMLElement | null) {
       const keunggulanTl = gsap.timeline({
         scrollTrigger: {
           trigger: keunggulanSection,
-          start: 'top 80%',
+          start: 'top 85%',
           once: true,
         },
       });
@@ -677,17 +679,17 @@ export function setupHomepageScrollReveal(root: HTMLElement | null) {
         keunggulanTl.fromTo(
           keunggulanSection,
           { opacity: 0 },
-          { opacity: 1, duration: 0.35, ease: 'power1.out' }
+          { opacity: 1, duration: 0.25, ease: 'power1.out' }
         );
       } else {
         if (header) {
           keunggulanTl.fromTo(
             header,
-            { x: -20, opacity: 0 },
+            { x: -14, opacity: 0 },
             {
               x: 0,
               opacity: 1,
-              duration: 0.6,
+              duration: 0.45,
               ease: 'power2.out',
               clearProps: 'transform,opacity',
             },
@@ -698,18 +700,18 @@ export function setupHomepageScrollReveal(root: HTMLElement | null) {
         if (cards.length > 0) {
           keunggulanTl.fromTo(
             cards,
-            { x: -16, y: 16, opacity: 0, scale: 0.98 },
+            { x: -10, y: 10, opacity: 0, scale: 0.98 },
             {
               x: 0,
               y: 0,
               opacity: 1,
               scale: 1,
-              duration: 0.55,
-              stagger: 0.06,
+              duration: 0.42,
+              stagger: 0.04,
               ease: 'power2.out',
               clearProps: 'transform,opacity',
             },
-            0.12
+            0.08
           );
         }
       }
@@ -726,7 +728,7 @@ export function setupHomepageScrollReveal(root: HTMLElement | null) {
       const panduanTl = gsap.timeline({
         scrollTrigger: {
           trigger: panduanSection,
-          start: 'top 80%',
+          start: 'top 85%',
           once: true,
         },
       });
@@ -735,17 +737,17 @@ export function setupHomepageScrollReveal(root: HTMLElement | null) {
         panduanTl.fromTo(
           panduanSection,
           { opacity: 0 },
-          { opacity: 1, duration: 0.35, ease: 'power1.out' }
+          { opacity: 1, duration: 0.25, ease: 'power1.out' }
         );
       } else {
         if (header) {
           panduanTl.fromTo(
             header,
-            { scale: 0.96, opacity: 0 },
+            { scale: 0.98, opacity: 0 },
             {
               scale: 1,
               opacity: 1,
-              duration: 0.6,
+              duration: 0.45,
               ease: 'power3.out',
               clearProps: 'transform,opacity',
             },
@@ -756,17 +758,17 @@ export function setupHomepageScrollReveal(root: HTMLElement | null) {
         if (steps.length > 0) {
           panduanTl.fromTo(
             steps,
-            { y: 20, scale: 0.94, opacity: 0 },
+            { y: 14, scale: 0.96, opacity: 0 },
             {
               y: 0,
               scale: 1,
               opacity: 1,
-              duration: 0.6,
-              stagger: 0.12,
+              duration: 0.45,
+              stagger: 0.07,
               ease: 'power3.out',
               clearProps: 'transform,opacity',
             },
-            0.12
+            0.08
           );
         }
       }
@@ -783,7 +785,7 @@ export function setupHomepageScrollReveal(root: HTMLElement | null) {
       const faqTl = gsap.timeline({
         scrollTrigger: {
           trigger: faqSection,
-          start: 'top 80%',
+          start: 'top 85%',
           once: true,
         },
       });
@@ -792,17 +794,17 @@ export function setupHomepageScrollReveal(root: HTMLElement | null) {
         faqTl.fromTo(
           faqSection,
           { opacity: 0 },
-          { opacity: 1, duration: 0.35, ease: 'power1.out' }
+          { opacity: 1, duration: 0.25, ease: 'power1.out' }
         );
       } else {
         if (header) {
           faqTl.fromTo(
             header,
-            { y: 16, opacity: 0 },
+            { y: 12, opacity: 0 },
             {
               y: 0,
               opacity: 1,
-              duration: 0.6,
+              duration: 0.45,
               ease: 'power2.out',
               clearProps: 'transform,opacity',
             },
@@ -813,16 +815,16 @@ export function setupHomepageScrollReveal(root: HTMLElement | null) {
         if (items.length > 0) {
           faqTl.fromTo(
             items,
-            { y: 14, opacity: 0 },
+            { y: 10, opacity: 0 },
             {
               y: 0,
               opacity: 1,
-              duration: 0.45,
-              stagger: 0.05,
+              duration: 0.35,
+              stagger: 0.03,
               ease: 'power2.out',
               clearProps: 'transform,opacity',
             },
-            0.12
+            0.06
           );
         }
       }
@@ -839,7 +841,7 @@ export function setupHomepageScrollReveal(root: HTMLElement | null) {
       const ctaTl = gsap.timeline({
         scrollTrigger: {
           trigger: ctaSection,
-          start: 'top 82%',
+          start: 'top 85%',
           once: true,
         },
       });
@@ -848,21 +850,21 @@ export function setupHomepageScrollReveal(root: HTMLElement | null) {
         ctaTl.fromTo(
           ctaSection,
           { opacity: 0 },
-          { opacity: 1, duration: 0.35, ease: 'power1.out' }
+          { opacity: 1, duration: 0.25, ease: 'power1.out' }
         );
       } else {
         ctaTl.fromTo(
           ctaSection,
           {
-            scale: 0.97,
-            clipPath: 'inset(4% 4% 4% 4% round 1rem)',
+            scale: 0.98,
+            clipPath: 'inset(3% 3% 3% 3% round 1rem)',
             opacity: 0,
           },
           {
             scale: 1,
             clipPath: 'inset(0% 0% 0% 0% round 1rem)',
             opacity: 1,
-            duration: 0.75,
+            duration: 0.55,
             ease: 'power3.out',
             clearProps: 'transform,clipPath,opacity',
           },
@@ -872,31 +874,31 @@ export function setupHomepageScrollReveal(root: HTMLElement | null) {
         if (content) {
           ctaTl.fromTo(
             content,
-            { y: 10, opacity: 0 },
+            { y: 8, opacity: 0 },
             {
               y: 0,
               opacity: 1,
-              duration: 0.5,
+              duration: 0.4,
               ease: 'power2.out',
               clearProps: 'transform,opacity',
             },
-            0.15
+            0.08
           );
         }
 
         if (actions) {
           ctaTl.fromTo(
             actions,
-            { y: 10, opacity: 0, scale: 0.96 },
+            { y: 8, opacity: 0, scale: 0.97 },
             {
               y: 0,
               opacity: 1,
               scale: 1,
-              duration: 0.5,
+              duration: 0.4,
               ease: 'power2.out',
               clearProps: 'transform,opacity',
             },
-            0.22
+            0.14
           );
         }
       }
@@ -913,7 +915,7 @@ export function setupHomepageScrollReveal(root: HTMLElement | null) {
       const footerTl = gsap.timeline({
         scrollTrigger: {
           trigger: footer,
-          start: 'top 88%',
+          start: 'top 90%',
           once: true,
         },
       });
@@ -922,21 +924,21 @@ export function setupHomepageScrollReveal(root: HTMLElement | null) {
         footerTl.fromTo(
           footer,
           { opacity: 0 },
-          { opacity: 1, duration: 0.35, ease: 'power1.out' }
+          { opacity: 1, duration: 0.25, ease: 'power1.out' }
         );
       } else {
         footerTl.fromTo(
           footer,
           {
-            y: 24,
-            clipPath: 'inset(15% 0% 0% 0%)',
+            y: 18,
+            clipPath: 'inset(10% 0% 0% 0%)',
             opacity: 0,
           },
           {
             y: 0,
             clipPath: 'inset(0% 0% 0% 0%)',
             opacity: 1,
-            duration: 0.85,
+            duration: 0.6,
             ease: 'power3.out',
             clearProps: 'transform,clipPath,opacity',
           },
@@ -946,16 +948,16 @@ export function setupHomepageScrollReveal(root: HTMLElement | null) {
         if (columns.length > 0) {
           footerTl.fromTo(
             columns,
-            { y: 14, opacity: 0 },
+            { y: 10, opacity: 0 },
             {
               y: 0,
               opacity: 1,
-              duration: 0.5,
-              stagger: 0.08,
+              duration: 0.4,
+              stagger: 0.05,
               ease: 'power2.out',
               clearProps: 'transform,opacity',
             },
-            0.18
+            0.10
           );
         }
 
@@ -965,15 +967,18 @@ export function setupHomepageScrollReveal(root: HTMLElement | null) {
             { opacity: 0 },
             {
               opacity: 1,
-              duration: 0.5,
+              duration: 0.4,
               ease: 'power2.out',
               clearProps: 'opacity',
             },
-            0.35
+            0.20
           );
         }
       }
     }
+
+    // Refresh scroll triggers so calculations are pixel-perfect
+    ScrollTrigger.refresh();
   }, root);
 
   return () => ctx.revert();
@@ -990,7 +995,7 @@ export function animateFloatingButton(element: HTMLElement | null): (() => void)
   if (!element || typeof window === 'undefined') return;
 
   const reduced = prefersReducedMotion();
-  const dur = reduced ? 0.35 : 0.65;
+  const dur = reduced ? 0.25 : 0.45;
 
   let tween: gsap.core.Tween;
 
@@ -998,22 +1003,22 @@ export function animateFloatingButton(element: HTMLElement | null): (() => void)
     tween = gsap.fromTo(
       element,
       { opacity: 0 },
-      { opacity: 1, duration: dur, delay: 0.5, ease: 'power1.out', clearProps: 'opacity' }
+      { opacity: 1, duration: dur, delay: 0.3, ease: 'power1.out', clearProps: 'opacity' }
     );
   } else {
     tween = gsap.fromTo(
       element,
       {
-        scale: 0.7,
+        scale: 0.8,
         opacity: 0,
-        rotation: -10,
+        rotation: -8,
       },
       {
         scale: 1,
         opacity: 1,
         rotation: 0,
         duration: dur,
-        delay: 1.25, // Appears smoothly after hero master sequence completes
+        delay: 0.68, // Appears smoothly right as hero sequence completes (no 1.25s dead wait!)
         ease: 'power2.out',
         force3D: true,
         clearProps: 'transform,opacity',
@@ -1032,24 +1037,34 @@ export function animateFloatingButton(element: HTMLElement | null): (() => void)
 
 /**
  * Animate general entrance elements on subpages (titles, breadcrumbs, content)
+ * Instant start on route change with smooth, non-blocking 0.32-0.35s transition.
  */
 export function animatePageEntrance(container: HTMLElement | null) {
   if (!container || typeof window === 'undefined') return;
 
   const reduced = prefersReducedMotion();
-  const dur = reduced ? 0.35 : 0.65;
-  const dist = reduced ? 8 : 18;
+  const dur = reduced ? 0.25 : 0.35;
+  const dist = reduced ? 4 : 10;
 
   const ctx = gsap.context(() => {
+    // 1. Root page container immediate smooth fade
+    gsap.fromTo(
+      container,
+      { opacity: 0.88, y: 4 },
+      { opacity: 1, y: 0, duration: 0.3, ease: 'power2.out', clearProps: 'transform,opacity' }
+    );
+
+    // 2. Headings
     const headings = container.querySelectorAll('h1, [data-gsap="page-title"]');
     if (headings.length > 0) {
       gsap.fromTo(
         headings,
         { y: dist, opacity: 0 },
-        { y: 0, opacity: 1, duration: dur, ease: 'power3.out', stagger: 0.08, force3D: true, clearProps: 'transform,opacity' }
+        { y: 0, opacity: 1, duration: dur, ease: 'power2.out', stagger: 0.04, force3D: true, clearProps: 'transform,opacity' }
       );
     }
 
+    // 3. Subheads & leads
     const subheads = container.querySelectorAll(
       '[data-gsap="page-sub"], p[data-gsap="lead"], .hero-lead'
     );
@@ -1057,29 +1072,41 @@ export function animatePageEntrance(container: HTMLElement | null) {
       gsap.fromTo(
         subheads,
         { y: dist * 0.7, opacity: 0 },
-        { y: 0, opacity: 1, duration: dur * 0.9, ease: 'power2.out', delay: 0.1, stagger: 0.05, force3D: true, clearProps: 'transform,opacity' }
+        { y: 0, opacity: 1, duration: dur * 0.9, ease: 'power2.out', stagger: 0.03, force3D: true, clearProps: 'transform,opacity' }
       );
     }
 
+    // 4. Media
     const media = container.querySelectorAll(
       '[data-gsap="hero-media"], [data-gsap="media"]'
     );
     if (media.length > 0) {
       gsap.fromTo(
         media,
-        { scale: 0.94, opacity: 0 },
-        { scale: 1, opacity: 1, duration: dur, ease: 'power2.out', delay: 0.08, force3D: true, clearProps: 'transform,opacity' }
+        { scale: 0.96, opacity: 0 },
+        { scale: 1, opacity: 1, duration: dur, ease: 'power2.out', force3D: true, clearProps: 'transform,opacity' }
       );
     }
 
+    // 5. Initial above-the-fold cards (e.g. Catalog grid, Product cards)
     const initialCards = container.querySelectorAll(
-      '[data-gsap="hero-card"], [data-gsap="benefit-card"]'
+      '[data-gsap="card"], [data-gsap="hero-card"], [data-gsap="benefit-card"]'
     );
     if (initialCards.length > 0) {
+      // Only animate above-the-fold cards (first 8) with light stagger (0.03s)
+      const topCards = Array.from(initialCards).slice(0, 8);
       gsap.fromTo(
-        initialCards,
-        { y: dist * 0.8, opacity: 0 },
-        { y: 0, opacity: 1, duration: dur * 0.85, stagger: 0.06, ease: 'power2.out', delay: 0.18, force3D: true, clearProps: 'transform,opacity' }
+        topCards,
+        { y: dist, opacity: 0 },
+        {
+          y: 0,
+          opacity: 1,
+          duration: dur,
+          stagger: 0.03,
+          ease: 'power2.out',
+          force3D: true,
+          clearProps: 'transform,opacity',
+        }
       );
     }
   }, container);
@@ -1089,16 +1116,18 @@ export function animatePageEntrance(container: HTMLElement | null) {
 
 /**
  * General scroll reveal for subpages using lightweight IntersectionObserver.
+ * Only targets elements below the fold, completely avoiding delays or race conditions
+ * on initial above-the-fold elements.
  */
 export function setupScrollReveal(root: HTMLElement | null) {
   if (!root || typeof window === 'undefined') return;
 
   const observed = new WeakSet<Element>();
   const reduced = prefersReducedMotion();
-  const dur = reduced ? 0.35 : 0.55;
-  const dist = reduced ? 8 : 18;
+  const dur = reduced ? 0.25 : 0.42;
+  const dist = reduced ? 6 : 12;
 
-  const reveal = (target: HTMLElement, immediate = false) => {
+  const reveal = (target: HTMLElement) => {
     const headings = target.querySelectorAll<HTMLElement>(
       'h2, h3, h4, [data-gsap="section-title"]'
     );
@@ -1117,32 +1146,31 @@ export function setupScrollReveal(root: HTMLElement | null) {
 
     const tl = gsap.timeline({
       defaults: { ease: 'power2.out', force3D: true, overwrite: 'auto' },
-      delay: immediate ? 0.08 : 0,
     });
 
     if (headings.length > 0) {
       tl.fromTo(
         headings,
-        { y: dist * 0.9, opacity: 0 },
-        { y: 0, opacity: 1, duration: dur, stagger: 0.05, clearProps: 'transform,opacity' }
+        { y: dist * 0.8, opacity: 0 },
+        { y: 0, opacity: 1, duration: dur, stagger: 0.04, clearProps: 'transform,opacity' }
       );
     }
 
     if (paragraphs.length > 0) {
       tl.fromTo(
         paragraphs,
-        { y: dist * 0.6, opacity: 0 },
-        { y: 0, opacity: 1, duration: dur * 0.9, stagger: 0.04, clearProps: 'transform,opacity' },
-        headings.length > 0 ? '<0.08' : 0
+        { y: dist * 0.5, opacity: 0 },
+        { y: 0, opacity: 1, duration: dur * 0.9, stagger: 0.03, clearProps: 'transform,opacity' },
+        headings.length > 0 ? '<0.05' : 0
       );
     }
 
     if (images.length > 0) {
       tl.fromTo(
         images,
-        { scale: 0.95, opacity: 0 },
-        { scale: 1, opacity: 1, duration: dur * 0.85, stagger: 0.04, clearProps: 'transform,opacity' },
-        headings.length > 0 || paragraphs.length > 0 ? '<0.1' : 0
+        { scale: 0.97, opacity: 0 },
+        { scale: 1, opacity: 1, duration: dur * 0.85, stagger: 0.03, clearProps: 'transform,opacity' },
+        headings.length > 0 || paragraphs.length > 0 ? '<0.06' : 0
       );
     }
 
@@ -1153,11 +1181,11 @@ export function setupScrollReveal(root: HTMLElement | null) {
         {
           y: 0,
           opacity: 1,
-          duration: dur * 0.85,
-          stagger: { each: 0.04, amount: Math.min(cards.length, 12) * 0.04 },
+          duration: dur,
+          stagger: { each: 0.03, amount: Math.min(cards.length, 8) * 0.03 },
           clearProps: 'transform,opacity',
         },
-        headings.length > 0 || paragraphs.length > 0 ? '<0.12' : 0
+        headings.length > 0 || paragraphs.length > 0 ? '<0.08' : 0
       );
     } else if (headings.length === 0 && paragraphs.length === 0 && images.length === 0) {
       tl.fromTo(
@@ -1176,7 +1204,7 @@ export function setupScrollReveal(root: HTMLElement | null) {
         reveal(entry.target as HTMLElement);
       });
     },
-    { rootMargin: '0px 0px 60px 0px', threshold: 0.02 }
+    { rootMargin: '0px 0px 80px 0px', threshold: 0.01 }
   );
 
   const scan = () => {
@@ -1194,11 +1222,12 @@ export function setupScrollReveal(root: HTMLElement | null) {
       observed.add(el);
 
       const rect = el.getBoundingClientRect();
+      // Elements already visible in initial viewport on mount are handled by animatePageEntrance.
+      // Do NOT delay or re-animate them to prevent flash/stutter!
       if (rect.top < window.innerHeight && rect.bottom > 0) {
-        setTimeout(() => reveal(el, true), 120);
-      } else {
-        io.observe(el);
+        return;
       }
+      io.observe(el);
     });
   };
 
@@ -1207,7 +1236,7 @@ export function setupScrollReveal(root: HTMLElement | null) {
   let debounceTimer: NodeJS.Timeout;
   const mo = new MutationObserver(() => {
     clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(scan, 150);
+    debounceTimer = setTimeout(scan, 120);
   });
   mo.observe(root, { childList: true, subtree: true });
 
