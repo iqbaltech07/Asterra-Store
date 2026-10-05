@@ -19,6 +19,9 @@ interface HeaderProps {
   onNotify?: (message: string) => void;
 }
 
+// Persistent session-level guard: navbar animation runs once on initial site visit, never on internal route changes
+let hasNavbarEverAnimated = false;
+
 export function Header({ onNotify: _onNotify }: HeaderProps) {
   const { data: session } = useSession();
   const { user: legacyUser } = useAuthStore();
@@ -27,10 +30,13 @@ export function Header({ onNotify: _onNotify }: HeaderProps) {
   const headerRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    const cleanup = animateNavbar(headerRef.current);
-    return () => {
-      if (cleanup) cleanup();
-    };
+    if (!hasNavbarEverAnimated) {
+      hasNavbarEverAnimated = true;
+      const cleanup = animateNavbar(headerRef.current);
+      return () => {
+        if (cleanup) cleanup();
+      };
+    }
   }, []);
 
   const currentUser = session?.user || legacyUser;

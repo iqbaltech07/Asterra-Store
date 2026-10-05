@@ -285,8 +285,12 @@ export function revealScale(
  * 3. Navigation links appear with stagger
  * 4. Action buttons (Pesanan & Auth/Hamburger) appear last
  */
+let hasNavbarRunOnce = false;
+
 export function animateNavbar(headerElement: HTMLElement | null) {
   if (!headerElement || typeof window === 'undefined') return;
+  if (hasNavbarRunOnce) return;
+  hasNavbarRunOnce = true;
 
   const reduced = prefersReducedMotion();
 
@@ -400,8 +404,12 @@ export function animateNavbar(headerElement: HTMLElement | null) {
  * 0.20s -> Planet visual (Mobile: static 9KB single frame for pure 60fps; Desktop: subtle rotation)
  * 0.24s -> Hero benefits horizontal stagger (Tile 1 -> Tile 2 -> Tile 3)
  */
+let hasHeroMasterRunOnce = false;
+
 export function animateHeroMasterSequence(container: HTMLElement | null) {
   if (!container || typeof window === 'undefined') return;
+  if (hasHeroMasterRunOnce) return;
+  hasHeroMasterRunOnce = true;
 
   const reduced = prefersReducedMotion();
 

@@ -5,13 +5,13 @@ import { usePathname } from 'next/navigation';
 import {
   animateHeroMasterSequence,
   setupHomepageScrollReveal,
-  animatePageEntrance,
   setupScrollReveal,
 } from '@/lib/animations/gsap-utils';
 
 export function GsapProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const pageContainerRef = useRef<HTMLDivElement>(null);
+  const isInitialMount = useRef(true);
 
   useEffect(() => {
     let cleanupEntrance: (() => void) | undefined;
@@ -22,12 +22,22 @@ export function GsapProvider({ children }: { children: React.ReactNode }) {
       const container = pageContainerRef.current;
       if (!container) return;
 
-      if (pathname === '/') {
-        cleanupEntrance = animateHeroMasterSequence(container);
-        cleanupScroll = setupHomepageScrollReveal(container);
+      if (isInitialMount.current) {
+        isInitialMount.current = false;
+        if (pathname === '/') {
+          cleanupEntrance = animateHeroMasterSequence(container);
+          cleanupScroll = setupHomepageScrollReveal(container);
+        } else {
+          cleanupScroll = setupScrollReveal(container);
+        }
       } else {
-        cleanupEntrance = animatePageEntrance(container);
-        cleanupScroll = setupScrollReveal(container);
+        // Internal navigation: INSTANT transition without blink or white flash
+        // Never wipe out heading/card opacities or container opacities on route change
+        if (pathname === '/') {
+          cleanupScroll = setupHomepageScrollReveal(container);
+        } else {
+          cleanupScroll = setupScrollReveal(container);
+        }
       }
     });
 

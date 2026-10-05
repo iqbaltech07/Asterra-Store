@@ -100,24 +100,42 @@ export function LainnyaSidebar() {
     },
   ];
 
-  if (!isSidebarOpen) return null;
-
   return (
     <div
       role="dialog"
       aria-modal="true"
       aria-label="Menu Navigasi Lainnya"
-      className="fixed inset-0 z-50 flex justify-end animate-in fade-in duration-200"
+      aria-hidden={!isSidebarOpen}
+      style={{
+        transition: 'visibility 300ms',
+        visibility: isSidebarOpen ? 'visible' : 'hidden',
+        transitionDelay: isSidebarOpen ? '0ms' : '300ms',
+      }}
+      className={`fixed inset-0 z-50 flex justify-end ${
+        isSidebarOpen ? 'pointer-events-auto' : 'pointer-events-none'
+      }`}
     >
       {/* Backdrop Overlay */}
       <div
         onClick={closeSidebar}
-        className="fixed inset-0 bg-[#121A2A]/70 backdrop-blur-xs transition-opacity cursor-pointer"
+        style={{
+          transition: 'opacity 300ms ease-out',
+        }}
+        className={`fixed inset-0 bg-[#121A2A]/70 backdrop-blur-xs cursor-pointer ${
+          isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
         aria-hidden="true"
       />
 
       {/* Drawer Panel */}
-      <div className="relative w-full max-w-sm sm:max-w-md bg-[#121A2A] text-[#F7F5EF] border-l border-white/10 shadow-2xl flex flex-col justify-between overflow-y-auto z-10 animate-in slide-in-from-right duration-250 ease-out">
+      <div
+        style={{
+          transition: 'transform 300ms cubic-bezier(0.16, 1, 0.3, 1)',
+        }}
+        className={`relative w-full max-w-sm sm:max-w-md bg-[#121A2A] text-[#F7F5EF] border-l border-white/10 shadow-2xl flex flex-col justify-between overflow-y-auto z-10 transform ${
+          isSidebarOpen ? 'translate-x-0' : 'translate-x-full'
+        }`}
+      >
         {/* Top Header */}
         <div className="p-5 sm:p-6 border-b border-white/10 flex items-center justify-between">
           <div>
