@@ -794,7 +794,7 @@ export default function HomePage() {
       <main className="flex-1 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-2 sm:pt-3 pb-8 sm:pb-12 w-full overflow-hidden">
         {/*
           SECTION 2: HERO BANNER IMAGE (INTRINSIC ASPECT RATIO, MAXIMUM SHARPNESS)
-          Container dynamically adapts to the intrinsic aspect ratio of the image (1024/366).
+          Container dynamically adapts to the intrinsic aspect ratio of the image (1024/285).
           - No fixed h-[xxxpx] or max-h constraints
           - width: 100%, height: auto
           - unoptimized to prevent lossy Next.js downsampling/compression
@@ -811,7 +811,7 @@ export default function HomePage() {
               src="/images/banners/hero-banner-reseller.webp"
               alt="Program Reseller Asterra Store - Jadi Bagian dari AsterraStore, Dapatkan Komisi 10-15% per Produk"
               width={1024}
-              height={366}
+              height={285}
               priority
               unoptimized
               className="w-full h-auto block rounded-xl sm:rounded-2xl md:rounded-3xl object-contain transition-transform duration-300 group-hover:scale-[1.004]"
