@@ -43,8 +43,40 @@ export function AsterraLogo({
     : '/images/brand/asterra-logo-dark-text.png';
 
   const content = (
-    <div className={cn('inline-flex items-center gap-3 select-none group', className)}>
-      {variant === 'app-icon' ? (
+    <div className={cn('inline-flex items-center gap-2 sm:gap-2.5 select-none group', className)}>
+      {variant === 'navbar' ? (
+        <div className="flex items-center gap-2 sm:gap-2.5">
+          {/* Animated Asterra Planet (152 frames, 20fps, alpha, navbar-optimized) */}
+          <div className="relative shrink-0 flex items-center justify-center -my-1">
+            <picture className="flex items-center justify-center pointer-events-none select-none">
+              <source srcSet="/assets/asterra-planet-navbar.webp" type="image/webp" />
+              <img
+                src="/assets/asterra-planet-navbar.webp"
+                alt="Asterra Planet"
+                width={200}
+                height={107}
+                decoding="async"
+                draggable={false}
+                className="h-8 sm:h-9 w-auto object-contain pointer-events-none select-none transition-transform duration-200 group-hover:scale-105"
+                onError={(e) => {
+                  e.currentTarget.src = '/images/brand/asterra-mark.png';
+                }}
+              />
+            </picture>
+          </div>
+          {/* Brand Wordmark Text */}
+          <div className="relative shrink-0 flex items-center">
+            <Image
+              src="/images/brand/asterra-wordmark-light.png"
+              alt="Asterra Store"
+              width={380}
+              height={107}
+              priority
+              className="h-4.5 sm:h-5 w-auto object-contain shrink-0"
+            />
+          </div>
+        </div>
+      ) : variant === 'app-icon' ? (
         <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl overflow-hidden shadow-xs shrink-0">
           <Image
             src="/images/brand/asterra-app-icon.png"

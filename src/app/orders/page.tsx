@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
+import { MobileBottomNav } from '@/components/layout/mobile-bottom-nav';
 import { Button } from '@/components/ui/button';
 import { useCartStore } from '@/store/use-cart-store';
 import { Order } from '@/lib/orders-data';
@@ -930,6 +931,7 @@ export default function OrdersPage() {
       )}
 
       <Footer />
+      <MobileBottomNav />
     </div>
   );
 }

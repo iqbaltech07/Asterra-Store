@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCartShopping, faCheck, faArrowRight } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { ProductItem } from '@/lib/products-data';
 
 interface ProductCardProps {
@@ -157,7 +157,7 @@ export function ProductCard({
               </>
             ) : (
               <>
-                <FontAwesomeIcon icon={faCartShopping} className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-0.5 sm:mr-1" />
+                <FontAwesomeIcon icon={faArrowRight} className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-0.5 sm:mr-1" />
                 <span>Pilih</span>
               </>
             )}

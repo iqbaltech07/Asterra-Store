@@ -26,6 +26,7 @@ import {
 import { ProductCard } from '@/components/products/product-card';
 import { ProductItem } from '@/lib/products-data';
 import { ParsedVariant, cleanHtmlContent } from '@/lib/services/product-variant-parser';
+import { saveRecentlyViewed } from '@/lib/services/recently-viewed';
 
 export interface DurationOption {
   id: string;
@@ -296,6 +297,23 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
       }
     }
   }, [product, variants]);
+
+  // Persist to Recently Viewed (localStorage)
+  useEffect(() => {
+    if (product) {
+      saveRecentlyViewed({
+        id: product.id,
+        name: product.name,
+        slug: id,
+        categoryName: product.category?.name,
+        price: product.price,
+        priceFormatted: product.priceFormatted,
+        imageUrl: product.imageUrl,
+        brand: product.brand,
+        rating: product.rating,
+      });
+    }
+  }, [product, id]);
 
   // All available Pakets across all variants
   const availablePakets = useMemo(() => {
