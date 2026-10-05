@@ -79,7 +79,7 @@ export function Header({ onNotify: _onNotify }: HeaderProps) {
             Katalog Produk
           </Link>
           <Link
-            href="/orders?view=global"
+            href="/orders"
             prefetch={true}
             data-gsap="nav-link"
             className={`transition-colors py-1 inline-flex items-center gap-1.5 ${
@@ -90,14 +90,6 @@ export function Header({ onNotify: _onNotify }: HeaderProps) {
           >
             <FontAwesomeIcon icon={faBox} className="w-3.5 h-3.5 text-[#C96F55]" />
             <span>Pesanan</span>
-          </Link>
-          <Link
-            href="/seller"
-            prefetch={true}
-            data-gsap="nav-link"
-            className="text-[#F7F5EF]/80 hover:text-[#F7F5EF] transition-colors py-1"
-          >
-            Seller
           </Link>
           <Link
             href="/#keunggulan"
@@ -115,7 +107,7 @@ export function Header({ onNotify: _onNotify }: HeaderProps) {
           </Link>
         </nav>
 
-        {/* Action Buttons (Desktop & Mobile) */}
+        {/* Action Buttons (Desktop & Compact Mobile) */}
         <div className="flex items-center gap-1.5 sm:gap-2.5">
           {/* Search Icon */}
           <Link
