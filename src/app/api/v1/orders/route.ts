@@ -150,7 +150,7 @@ export async function POST(request: NextRequest) {
     let verifiedReferralCode: string | undefined = undefined;
     let salesPartnerName: string | undefined = undefined;
     if (referral_code && typeof referral_code === 'string') {
-      const partner = AffiliateService.findByCode(referral_code);
+      const partner = await AffiliateService.findByCodeAsync(referral_code);
       if (partner && partner.status === 'active') {
         verifiedReferralCode = partner.code;
         salesPartnerName = partner.name;

@@ -55,7 +55,7 @@ const GATEWAY_PAYMENT_METHODS: PaymentMethodOption[] = [
 function CheckoutPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { items, getTotalAmount, getTotalItems, clearCart } = useCartStore();
+  const { items, hasHydrated, getTotalAmount, getTotalItems, clearCart } = useCartStore();
   const { data: session, isPending: isSessionPending } = useSession();
   const { user: legacyUser } = useAuthStore();
   const isAuthenticated = Boolean(session?.user || legacyUser);
@@ -89,6 +89,16 @@ function CheckoutPageContent() {
       if (typeof window !== 'undefined') {
         try {
           localStorage.setItem('asterra_ref', cleanRef);
+          // Preserve parameter in address bar if not present
+          if (!searchParams.get('ref')) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('ref', cleanRef);
+            const campaign = localStorage.getItem('asterra_utm_campaign');
+            if (campaign && !url.searchParams.has('utm_campaign')) {
+              url.searchParams.set('utm_campaign', campaign);
+            }
+            window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
+          }
         } catch (_) {}
       }
     }
@@ -517,8 +527,13 @@ function CheckoutPageContent() {
       )}
 
       <main className="flex-1 w-full">
-        {/* Empty Cart State */}
-        {items.length === 0 && !activeManualModal ? (
+        {/* Cart Hydration & Empty Cart State Guard */}
+        {!hasHydrated ? (
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 flex flex-col items-center justify-center min-h-[400px]">
+            <div className="w-10 h-10 border-4 border-[#C96F55] border-t-transparent rounded-full animate-spin mb-4" />
+            <p className="text-sm font-medium text-foreground-muted">Memuat keranjang belanja Anda...</p>
+          </div>
+        ) : items.length === 0 && !activeManualModal ? (
           <CheckoutEmptyState />
         ) : (
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10 w-full">

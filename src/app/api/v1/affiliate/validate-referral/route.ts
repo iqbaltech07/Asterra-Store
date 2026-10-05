@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const partner = AffiliateService.findByCode(code.trim().toUpperCase());
+    const partner = await AffiliateService.findByCodeAsync(code.trim().toUpperCase());
 
     if (!partner) {
       return NextResponse.json({

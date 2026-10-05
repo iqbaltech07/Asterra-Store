@@ -19,6 +19,7 @@ import { useAuthStore } from '@/store/use-auth-store';
 import { useSession } from '@/lib/auth-client';
 import { useQueryClient } from '@tanstack/react-query';
 import { performCustomerLogout } from '@/lib/utils/auth-logout';
+import { appendReferralParams } from '@/lib/utils/referral';
 import { CartDrawer } from '@/components/cart/cart-drawer';
 import { AsterraLogo } from '@/components/ui/asterra-logo';
 import { Button } from '@/components/ui/button';
@@ -390,7 +391,7 @@ export function Header({ onNotify }: HeaderProps) {
         onClose={() => setIsCartOpen(false)}
         onCheckout={() => {
           setIsCartOpen(false);
-          router.push('/checkout');
+          router.push(appendReferralParams('/checkout'));
         }}
       />
     </>

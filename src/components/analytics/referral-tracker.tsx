@@ -1,44 +1,93 @@
 'use client';
 
 import { useEffect, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, usePathname } from 'next/navigation';
 
 function ReferralTrackerInner() {
   const searchParams = useSearchParams();
+  const pathname = usePathname();
 
   useEffect(() => {
-    const refCode = searchParams.get('ref');
-    if (!refCode || !refCode.trim()) return;
+    const urlRef = searchParams.get('ref');
+    const urlCampaign = searchParams.get('utm_campaign');
+    const urlSource = searchParams.get('utm_source');
+    const urlMedium = searchParams.get('utm_medium');
 
-    const normalizedCode = refCode.trim().toUpperCase();
+    // 1. If URL has ref parameter, store in localStorage & cookies
+    if (urlRef && urlRef.trim()) {
+      const normalizedCode = urlRef.trim().toUpperCase();
 
-    // 1. Store in localStorage and Cookie (30-day attribution window)
-    try {
-      localStorage.setItem('asterra_ref', normalizedCode);
-      document.cookie = `asterra_ref=${encodeURIComponent(
-        normalizedCode
-      )}; path=/; max-age=2592000; SameSite=Lax`;
-    } catch {
-      // ignore storage errors
+      try {
+        localStorage.setItem('asterra_ref', normalizedCode);
+        document.cookie = `asterra_ref=${encodeURIComponent(
+          normalizedCode
+        )}; path=/; max-age=2592000; SameSite=Lax`;
+
+        if (urlCampaign && urlCampaign.trim()) {
+          localStorage.setItem('asterra_utm_campaign', urlCampaign.trim());
+          document.cookie = `asterra_utm_campaign=${encodeURIComponent(
+            urlCampaign.trim()
+          )}; path=/; max-age=2592000; SameSite=Lax`;
+        }
+        if (urlSource && urlSource.trim()) {
+          localStorage.setItem('asterra_utm_source', urlSource.trim());
+          document.cookie = `asterra_utm_source=${encodeURIComponent(
+            urlSource.trim()
+          )}; path=/; max-age=2592000; SameSite=Lax`;
+        }
+        if (urlMedium && urlMedium.trim()) {
+          localStorage.setItem('asterra_utm_medium', urlMedium.trim());
+          document.cookie = `asterra_utm_medium=${encodeURIComponent(
+            urlMedium.trim()
+          )}; path=/; max-age=2592000; SameSite=Lax`;
+        }
+      } catch {
+        // ignore storage errors
+      }
+
+      // 2. Dispatch click telemetry once per session
+      const sessionTrackedKey = `asterra_tracked_${normalizedCode}`;
+      if (!sessionStorage.getItem(sessionTrackedKey)) {
+        sessionStorage.setItem(sessionTrackedKey, 'true');
+        fetch('/api/v1/affiliate/track-click', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code: normalizedCode }),
+        }).catch(() => {});
+      }
     }
 
-    // 2. Prevent duplicate tracking in the same session
-    const sessionTrackedKey = `asterra_tracked_${normalizedCode}`;
-    if (sessionStorage.getItem(sessionTrackedKey)) {
-      return;
+    // 3. Auto-Preserve URL Parameters on Navigation
+    // When customer navigates between pages, ensure parameters are not dropped from URL bar.
+    if (typeof window !== 'undefined') {
+      const isAdminOrApi = pathname?.startsWith('/admin') || pathname?.startsWith('/api');
+      if (!isAdminOrApi) {
+        let storedRef = '';
+        try {
+          storedRef = localStorage.getItem('asterra_ref') || '';
+        } catch {}
+
+        if (storedRef && !searchParams.get('ref')) {
+          const currentUrl = new URL(window.location.href);
+          currentUrl.searchParams.set('ref', storedRef);
+
+          try {
+            const storedCampaign = localStorage.getItem('asterra_utm_campaign');
+            if (storedCampaign && !currentUrl.searchParams.has('utm_campaign')) {
+              currentUrl.searchParams.set('utm_campaign', storedCampaign);
+            }
+            const storedSource = localStorage.getItem('asterra_utm_source');
+            if (storedSource && !currentUrl.searchParams.has('utm_source')) {
+              currentUrl.searchParams.set('utm_source', storedSource);
+            }
+          } catch {}
+
+          const newUrl = currentUrl.pathname + currentUrl.search + currentUrl.hash;
+          window.history.replaceState(window.history.state, '', newUrl);
+        }
+      }
     }
-
-    sessionStorage.setItem(sessionTrackedKey, 'true');
-
-    // 3. Dispatch click telemetry to server
-    fetch('/api/v1/affiliate/track-click', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code: normalizedCode }),
-    }).catch(() => {
-      // silent background fail
-    });
-  }, [searchParams]);
+  }, [searchParams, pathname]);
 
   return null;
 }

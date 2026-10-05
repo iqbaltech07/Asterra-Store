@@ -168,9 +168,80 @@ export class AffiliateService {
   }
 
   public static findByCode(code: string): AffiliatePartnerData | undefined {
+    if (!code) return undefined;
     const normalized = code.trim().toUpperCase();
     const list = this.getAllAffiliates();
-    return list.find((a) => a.code.toUpperCase() === normalized);
+    const exact = list.find((a) => a.code.toUpperCase() === normalized);
+    if (exact) return exact;
+
+    // Check loose match / alias (e.g. AST-ACELINO matching AST-ACELINO-J6VN or vice-versa)
+    const strippedTarget = normalized.replace(/[^A-Z0-9]/g, '');
+    const loose = list.find((a) => {
+      const strippedExisting = a.code.toUpperCase().replace(/[^A-Z0-9]/g, '');
+      return (
+        strippedExisting === strippedTarget ||
+        (strippedTarget.length >= 8 && strippedExisting.startsWith(strippedTarget)) ||
+        (strippedExisting.length >= 8 && strippedTarget.startsWith(strippedExisting))
+      );
+    });
+    return loose;
+  }
+
+  public static async findByCodeAsync(code: string): Promise<AffiliatePartnerData | undefined> {
+    const existing = this.findByCode(code);
+    if (existing) return existing;
+
+    try {
+      const { prisma } = await import('@/lib/prisma');
+      const normalized = code.trim().toUpperCase();
+      const stripped = normalized.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+      // Search DB for sales admin users
+      const salesUsers = await prisma.adminUser.findMany({
+        where: { role: 'sales', isActive: true },
+      });
+
+      const matchedUser = salesUsers.find((u) => {
+        const uSlug = u.username.toLowerCase().replace(/[^a-z0-9]/g, '');
+        return (
+          uSlug.includes(stripped) ||
+          stripped.includes(uSlug.replace('sales', '')) ||
+          u.email.toLowerCase().includes(stripped)
+        );
+      });
+
+      if (matchedUser) {
+        // Provision into affiliates list
+        const list = this.getAllAffiliates();
+        const newPartner: AffiliatePartnerData = {
+          id: `aff-${matchedUser.id}`,
+          name: matchedUser.name || 'Mitra Sales',
+          email: matchedUser.email,
+          whatsapp: '-',
+          code: normalized,
+          tier: 'Standard (10%)',
+          rate: 10,
+          totalClicks: 1,
+          totalOrders: 0,
+          totalRevenue: 0,
+          unpaidCommission: 0,
+          pendingCommission: 0,
+          paidCommission: 0,
+          status: 'active',
+          joinedAt: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }),
+          createdAt: new Date().toISOString(),
+          creditedOrderIds: [],
+          payoutRequests: [],
+        };
+        list.push(newPartner);
+        this.saveAffiliates(list);
+        return newPartner;
+      }
+    } catch (err) {
+      console.error('[AffiliateService] DB fallback findByCodeAsync error:', err);
+    }
+
+    return undefined;
   }
 
   public static findByEmailOrPhone(email: string, phone: string): AffiliatePartnerData | undefined {

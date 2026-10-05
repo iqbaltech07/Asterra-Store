@@ -9,6 +9,7 @@ import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { Button } from '@/components/ui/button';
 import { useCartStore } from '@/store/use-cart-store';
+import { appendReferralParams } from '@/lib/utils/referral';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useSession } from '@/lib/auth-client';
 import { useAuthStore } from '@/store/use-auth-store';
@@ -520,7 +521,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
       return;
     }
     handleAddToCart();
-    router.push('/checkout');
+    router.push(appendReferralParams('/checkout'));
   };
 
   const handleShare = () => {
