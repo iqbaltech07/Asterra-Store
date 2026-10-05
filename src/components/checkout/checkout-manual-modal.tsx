@@ -140,7 +140,7 @@ export function CheckoutManualModal({
           </div>
 
           {timeLeft.isExpired ? (
-            <span className="font-mono font-bold text-status-error animate-pulse">
+            <span className="font-mono font-bold text-status-error">
               Waktu Habis (Pesanan Dibatalkan)
             </span>
           ) : (

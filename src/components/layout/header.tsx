@@ -8,14 +8,12 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faBox,
   faMagnifyingGlass,
-  faEllipsis,
 } from '@fortawesome/free-solid-svg-icons';
 import { useAuthStore } from '@/store/use-auth-store';
 import { useSession } from '@/lib/auth-client';
 import { AsterraLogo } from '@/components/ui/asterra-logo';
 import { Button } from '@/components/ui/button';
 import { animateNavbar } from '@/lib/animations/gsap-utils';
-import { useNavigationStore } from '@/store/use-navigation-store';
 
 interface HeaderProps {
   onNotify?: (message: string) => void;
@@ -24,7 +22,6 @@ interface HeaderProps {
 export function Header({ onNotify: _onNotify }: HeaderProps) {
   const { data: session } = useSession();
   const { user: legacyUser } = useAuthStore();
-  const { openSidebar } = useNavigationStore();
 
   const pathname = usePathname();
   const headerRef = useRef<HTMLElement>(null);
@@ -82,7 +79,7 @@ export function Header({ onNotify: _onNotify }: HeaderProps) {
             Katalog Produk
           </Link>
           <Link
-            href="/orders"
+            href="/orders?view=global"
             prefetch={true}
             data-gsap="nav-link"
             className={`transition-colors py-1 inline-flex items-center gap-1.5 ${
@@ -93,6 +90,14 @@ export function Header({ onNotify: _onNotify }: HeaderProps) {
           >
             <FontAwesomeIcon icon={faBox} className="w-3.5 h-3.5 text-[#C96F55]" />
             <span>Pesanan</span>
+          </Link>
+          <Link
+            href="/seller"
+            prefetch={true}
+            data-gsap="nav-link"
+            className="text-[#F7F5EF]/80 hover:text-[#F7F5EF] transition-colors py-1"
+          >
+            Seller
           </Link>
           <Link
             href="/#keunggulan"
@@ -110,7 +115,7 @@ export function Header({ onNotify: _onNotify }: HeaderProps) {
           </Link>
         </nav>
 
-        {/* Action Buttons (Desktop & Compact Mobile) */}
+        {/* Action Buttons (Desktop & Mobile) */}
         <div className="flex items-center gap-1.5 sm:gap-2.5">
           {/* Search Icon */}
           <Link
@@ -160,18 +165,6 @@ export function Header({ onNotify: _onNotify }: HeaderProps) {
               </Link>
             </div>
           )}
-
-          {/* Lainnya Button - MOBILE ONLY (Hidden on Desktop) */}
-          <button
-            type="button"
-            onClick={openSidebar}
-            data-gsap="nav-action"
-            className="lg:hidden flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-white/10 bg-[#182235] hover:border-[#C96F55]/40 hover:bg-[#1e2a40] transition-all text-xs font-medium text-[#F7F5EF] focus:outline-none focus:ring-2 focus:ring-[#C96F55]/30 cursor-pointer"
-            aria-label="Buka Menu Lainnya"
-          >
-            <FontAwesomeIcon icon={faEllipsis} className="w-3.5 h-3.5 text-[#C96F55]" />
-            <span className="text-xs">Lainnya</span>
-          </button>
         </div>
       </div>
     </header>

@@ -672,7 +672,7 @@ export default function ProfilePage() {
                                     #{order.id.slice(0, 10).toUpperCase()}
                                   </span>
                                   <span className="text-[11px] text-slate-500">
-                                    • {formatDate(order.createdAt)}
+                                    {formatDate(order.createdAt)}
                                   </span>
                                 </div>
 

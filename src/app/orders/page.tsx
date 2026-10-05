@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
@@ -32,6 +32,7 @@ import {
   faEnvelope,
   faRightToBracket,
   faReceipt,
+  faGlobe,
 } from '@fortawesome/free-solid-svg-icons';
 import { useSession } from '@/lib/auth-client';
 import {
@@ -48,6 +49,17 @@ const STATUS_FILTERS = [
   { value: 'completed', label: 'Selesai' },
   { value: 'cancelled', label: 'Dibatalkan' },
 ];
+
+interface PublicLiveOrder {
+  id: string;
+  raw_id: string;
+  product_name: string;
+  items_summary: string;
+  items_count: number;
+  order_status: 'pending' | 'processing' | 'completed' | 'cancelled';
+  order_date: string;
+  customer_display: string;
+}
 
 function OrderCountdownBadge({
   expiresAt,
@@ -106,7 +118,28 @@ function OrderCountdownBadge({
   );
 }
 
-// --- Order Pure Helper Functions (declared at module level to avoid TDZ ReferenceError) ---
+function formatTimeAgo(isoString: string): string {
+  try {
+    const diffMs = Date.now() - new Date(isoString).getTime();
+    const diffSec = Math.floor(diffMs / 1000);
+    if (diffSec < 60) return 'Baru saja';
+    const diffMin = Math.floor(diffSec / 60);
+    if (diffMin < 60) return `${diffMin} menit yang lalu`;
+    const diffHours = Math.floor(diffMin / 60);
+    if (diffHours < 24) return `${diffHours} jam yang lalu`;
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 7) return `${diffDays} hari yang lalu`;
+    return new Date(isoString).toLocaleDateString('id-ID', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+  } catch {
+    return 'Baru saja';
+  }
+}
+
+// --- Order Pure Helper Functions ---
 function isOrderExpired(order: Order): boolean {
   if (order.order_status === 'cancelled') return true;
   if (order.order_status === 'pending' && order.expires_at) {
@@ -115,7 +148,7 @@ function isOrderExpired(order: Order): boolean {
   return false;
 }
 
-function getStatusBadge(status: Order['order_status']) {
+function getStatusBadge(status: Order['order_status'] | 'pending' | 'processing' | 'completed' | 'cancelled') {
   switch (status) {
     case 'completed':
       return (
@@ -176,6 +209,33 @@ function getTimelineStep(order: Order): number {
 
 function OrdersContent() {
   const { data: session } = useSession();
+  const searchParams = useSearchParams();
+  const viewParam = searchParams.get('view');
+
+  // Dual View: 'global' (Pesanan umum/live) vs 'my-orders' (Pesanan pribadi)
+  const [activeView, setActiveView] = useState<'global' | 'my-orders'>(
+    viewParam === 'global' ? 'global' : 'my-orders'
+  );
+
+  useEffect(() => {
+    if (viewParam === 'global') {
+      setActiveView('global');
+    } else if (viewParam === 'my-orders') {
+      setActiveView('my-orders');
+    }
+  }, [viewParam]);
+
+  const handleSwitchView = (view: 'global' | 'my-orders') => {
+    setActiveView(view);
+    if (typeof window !== 'undefined') {
+      if (view === 'global') {
+        window.history.replaceState(null, '', '/orders?view=global');
+      } else {
+        window.history.replaceState(null, '', '/orders');
+      }
+    }
+  };
+
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
@@ -211,8 +271,32 @@ function OrdersContent() {
       .catch(() => {});
   }, []);
 
-  // PERSONAL / PRIVATE ORDERS QUERY
-  const { data, isLoading, error, refetch } = useQuery<{ success: boolean; data: Order[] }>({
+  // 1. GLOBAL / LIVE ORDERS QUERY
+  const {
+    data: globalOrdersData,
+    isLoading: isGlobalLoading,
+    error: globalError,
+    refetch: refetchGlobal,
+  } = useQuery<{ success: boolean; data: PublicLiveOrder[]; total: number }>({
+    queryKey: ['global-orders', selectedStatus],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      params.append('mode', 'live');
+      if (selectedStatus !== 'all') params.append('status', selectedStatus);
+      const res = await fetch(`/api/v1/orders?${params.toString()}`);
+      if (!res.ok) throw new Error('Gagal mengambil data pesanan live');
+      return res.json();
+    },
+    enabled: activeView === 'global',
+  });
+
+  // 2. PERSONAL / PRIVATE ORDERS QUERY
+  const {
+    data: personalData,
+    isLoading: isPersonalLoading,
+    error: personalError,
+    refetch: refetchPersonal,
+  } = useQuery<{ success: boolean; data: Order[] }>({
     queryKey: ['orders', selectedStatus, activeEmail],
     queryFn: async () => {
       const params = new URLSearchParams();
@@ -222,20 +306,36 @@ function OrdersContent() {
       if (!res.ok) throw new Error('Gagal mengambil riwayat pesanan');
       return res.json();
     },
-    enabled: Boolean(activeEmail),
+    enabled: activeView === 'my-orders' && Boolean(activeEmail),
   });
 
-  // SSE Real-Time Listener for User Orders (Silent background sync)
+  const showNotification = (msg: string) => {
+    setNotification(msg);
+    setTimeout(() => {
+      setNotification((curr) => (curr === msg ? null : curr));
+    }, 3500);
+  };
+
+  // SSE Real-Time Listener (Silent background sync)
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
     const eventSource = new EventSource('/api/v1/events?role=user');
 
+    eventSource.addEventListener('order:created', () => {
+      try {
+        refetchGlobal();
+      } catch (err) {
+        console.error('SSE order:created error', err);
+      }
+    });
+
     eventSource.addEventListener('order:payment_verified', (e: MessageEvent) => {
       try {
         const payload = JSON.parse(e.data);
         notificationSound.play('payment_verified');
-        refetch();
+        refetchPersonal();
+        refetchGlobal();
         showNotification(`Pembayaran #${payload.order_id} terverifikasi! Pesanan sedang diproses.`);
       } catch (err) {
         console.error('SSE user order:payment_verified error', err);
@@ -246,7 +346,8 @@ function OrdersContent() {
       try {
         const payload = JSON.parse(e.data);
         notificationSound.play('status_updated');
-        refetch();
+        refetchPersonal();
+        refetchGlobal();
         showNotification(`Status pesanan #${payload.order_id} diperbarui: ${payload.new_status}`);
       } catch (err) {
         console.error('SSE user order:status_changed error', err);
@@ -256,16 +357,28 @@ function OrdersContent() {
     return () => {
       eventSource.close();
     };
-  }, [refetch]);
+  }, [refetchPersonal, refetchGlobal]);
 
-  const rawOrders = data?.data || [];
+  // Global Orders Filtered
+  const globalOrders = globalOrdersData?.data || [];
+  const filteredGlobalOrders = globalOrders.filter((order) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      order.id.toLowerCase().includes(q) ||
+      order.product_name.toLowerCase().includes(q) ||
+      order.items_summary.toLowerCase().includes(q) ||
+      order.customer_display.toLowerCase().includes(q)
+    );
+  });
 
-  // Strictly sort orders by order_date descending (newest first)
-  const orders = [...rawOrders].sort((a, b) => {
+  // Personal Orders Filtered
+  const rawOrders = personalData?.data || [];
+  const personalOrders = [...rawOrders].sort((a, b) => {
     return new Date(b.order_date).getTime() - new Date(a.order_date).getTime();
   });
 
-  const filteredOrders = orders.filter((order) => {
+  const filteredPersonalOrders = personalOrders.filter((order) => {
     const isExpired = isOrderExpired(order);
     const effectiveStatus =
       order.order_status === 'pending' && isExpired ? 'cancelled' : order.order_status;
@@ -281,13 +394,6 @@ function OrdersContent() {
       order.items.some((item) => item.product_name.toLowerCase().includes(q))
     );
   });
-
-  const showNotification = (msg: string) => {
-    setNotification(msg);
-    setTimeout(() => {
-      setNotification((curr) => (curr === msg ? null : curr));
-    }, 3500);
-  };
 
   const handleCopyOrderInfo = (order: Order) => {
     if (typeof window !== 'undefined') {
@@ -339,7 +445,7 @@ function OrdersContent() {
   const handlePayOrder = async (order: Order) => {
     if (isOrderExpired(order)) {
       showNotification('Batas waktu pembayaran 24 jam telah habis. Pesanan dibatalkan.');
-      fetch(`/api/v1/orders/${order.id}/cancel`, { method: 'POST' }).finally(() => refetch());
+      fetch(`/api/v1/orders/${order.id}/cancel`, { method: 'POST' }).finally(() => refetchPersonal());
       return;
     }
 
@@ -390,27 +496,68 @@ function OrdersContent() {
 
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 w-full">
         {/* Breadcrumb & Top Actions Bar */}
-        <div className="flex items-center justify-between gap-3 mb-6">
-          <div className="flex items-center gap-2 text-xs text-foreground-muted">
-            <Link href="/" className="hover:text-foreground transition-colors">
-              Beranda
-            </Link>
-            <span>/</span>
-            <span className="text-foreground font-medium">Pesanan</span>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 text-xs text-foreground-muted">
+              <Link href="/" className="hover:text-foreground transition-colors">
+                Beranda
+              </Link>
+              <span>/</span>
+              <span className="text-foreground font-medium">
+                {activeView === 'global' ? 'Pesanan' : 'Pesanan Saya'}
+              </span>
+            </div>
+            <h1 className="text-xl sm:text-2xl font-black tracking-tight text-foreground">
+              {activeView === 'global' ? 'Pesanan Pengguna' : 'Pesanan Saya'}
+            </h1>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {/* View Switcher Tabs */}
+            <div className="flex items-center p-1 bg-surface-raised border border-border rounded-xl">
+              <button
+                type="button"
+                onClick={() => handleSwitchView('global')}
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  activeView === 'global'
+                    ? 'bg-[#C96F55] text-white shadow-xs'
+                    : 'text-foreground-muted hover:text-foreground'
+                }`}
+              >
+                <FontAwesomeIcon icon={faGlobe} className="w-3.5 h-3.5" />
+                <span>Pesanan (Live)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSwitchView('my-orders')}
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  activeView === 'my-orders'
+                    ? 'bg-[#C96F55] text-white shadow-xs'
+                    : 'text-foreground-muted hover:text-foreground'
+                }`}
+              >
+                <FontAwesomeIcon icon={faReceipt} className="w-3.5 h-3.5" />
+                <span>Pesanan Saya</span>
+              </button>
+            </div>
+
             <Link href="/products">
               <Button size="sm" variant="outline" className="text-xs gap-1.5 border-border h-8">
                 <FontAwesomeIcon icon={faCartShopping} className="w-3.5 h-3.5 text-primary" />
                 <span className="hidden sm:inline">Beli Lisensi Baru</span>
               </Button>
             </Link>
+
             <button
               type="button"
               onClick={() => {
-                refetch();
-                showNotification('Data riwayat pesanan berhasil diperbarui.');
+                if (activeView === 'global') {
+                  refetchGlobal();
+                  showNotification('Data pesanan live berhasil diperbarui.');
+                } else {
+                  refetchPersonal();
+                  showNotification('Data riwayat pesanan pribadi berhasil diperbarui.');
+                }
               }}
               className="p-2 rounded-lg bg-surface-raised border border-border text-foreground-muted hover:text-foreground transition-colors cursor-pointer h-8 w-8 flex items-center justify-center"
               title="Perbarui Data"
@@ -420,487 +567,707 @@ function OrdersContent() {
           </div>
         </div>
 
-        {/* Email Entry & Lookup Card when unauthenticated or changing email */}
-        {(!activeEmail || isChangingEmail) && (
-          <div data-gsap="hero-card" className="bg-surface border border-primary/30 rounded-xl p-6 sm:p-8 max-w-xl mx-auto text-center space-y-4 mb-8 shadow-sm">
-            <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto">
-              <FontAwesomeIcon icon={faEnvelope} className="w-6 h-6" />
-            </div>
-            <div>
-              <h2 className="text-lg font-bold text-foreground">Lacak Riwayat Pesanan Anda</h2>
-              <p className="text-xs text-foreground-muted mt-1 max-w-md mx-auto">
-                Setiap pesanan di Asterra Store bersifat privat dan terisolasi untuk masing-masing pelanggan. Masukkan email yang Anda gunakan saat pemesanan untuk melihat pesanan Anda.
-              </p>
-            </div>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                const trimmed = emailInput.trim();
-                if (trimmed) {
-                  setGuestEmail(trimmed);
-                  if (typeof window !== 'undefined') {
-                    localStorage.setItem('asterra_customer_email', trimmed);
-                  }
-                  setIsChangingEmail(false);
-                  showNotification(`Memuat riwayat pesanan untuk ${trimmed}`);
-                }
-              }}
-              className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto"
-            >
-              <input
-                type="email"
-                required
-                placeholder="nama@email.com"
-                value={emailInput}
-                onChange={(e) => setEmailInput(e.target.value)}
-                className="flex-1 px-3 py-2 text-xs rounded-lg bg-surface-raised border border-border text-foreground placeholder:text-foreground-muted focus:outline-none focus:border-primary"
-              />
-              <Button type="submit" size="sm" className="text-xs shrink-0">
-                Lihat Pesanan
-              </Button>
-            </form>
-            <div className="pt-2 text-xs text-foreground-muted border-border border-t flex items-center justify-center gap-3">
-              <span>Sudah memiliki akun?</span>
-              <Link href="/login" className="text-primary font-medium hover:underline inline-flex items-center gap-1">
-                <FontAwesomeIcon icon={faRightToBracket} className="w-3 h-3" />
-                <span>Masuk Akun</span>
-              </Link>
-            </div>
-          </div>
-        )}
-
-        {/* Active Account / Tracking Banner */}
-        {activeEmail && !isChangingEmail && (
-          <div className="bg-surface border border-border rounded-xl px-4 py-3 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-            <div className="flex items-center gap-2.5">
-              <FontAwesomeIcon icon={faReceipt} className="w-3.5 h-3.5 text-primary shrink-0" />
-              <div className="text-foreground">
-                <span className="text-foreground-muted">Menampilkan riwayat pesanan untuk:{' '}</span>
-                <strong className="font-semibold text-primary">{activeEmail}</strong>
-                {session?.user?.email && (
-                  <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
-                    Akun Terverifikasi
-                  </span>
-                )}
-              </div>
-            </div>
-            <div className="flex items-center gap-3 shrink-0 self-end sm:self-auto">
-              {!session?.user?.email && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEmailInput(guestEmail);
-                    setIsChangingEmail(true);
-                  }}
-                  className="text-primary hover:underline text-[11px] font-medium cursor-pointer"
-                >
-                  Ganti Email Pelacakan
-                </button>
-              )}
-              {!session?.user && (
-                <Link
-                  href="/login"
-                  className="text-foreground-muted hover:text-foreground text-[11px] inline-flex items-center gap-1"
-                >
-                  <FontAwesomeIcon icon={faRightToBracket} className="w-3 h-3" />
-                  <span>Masuk Akun</span>
-                </Link>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Filters and Search Bar */}
-        <div className="bg-surface border border-border rounded-xl p-4 sm:p-5 mb-8 space-y-4">
-          <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
-            {/* Status Pills */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-              {STATUS_FILTERS.map((filter) => {
-                const isSelected = selectedStatus === filter.value;
-                return (
-                  <button
-                    key={filter.value}
-                    type="button"
-                    onClick={() => setSelectedStatus(filter.value)}
-                    className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all shrink-0 border ${
-                      isSelected
-                        ? 'bg-navy-900 text-white border-navy-900 shadow-xs'
-                        : 'bg-surface text-foreground-muted border-border hover:border-primary/40 hover:text-primary'
-                    }`}
-                  >
-                    {filter.label}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Search within orders */}
-            <div className="relative sm:w-72">
-              <FontAwesomeIcon icon={faMagnifyingGlass} className="w-3.5 h-3.5 text-foreground-muted absolute left-3 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder="Cari ID pesanan / nama produk..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-1.5 rounded-lg bg-surface-raised border border-border text-xs text-foreground placeholder:text-foreground-muted focus:outline-none focus:border-primary"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Loading Skeletons */}
-        {isLoading && (
-          <div className="space-y-4 animate-pulse">
-            {[1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className="bg-surface border border-border rounded-xl p-6 space-y-4"
-              >
-                <div className="flex justify-between">
-                  <div className="w-48 h-5 bg-surface-raised rounded" />
-                  <div className="w-24 h-5 bg-surface-raised rounded" />
+        {/* ============================================================== */}
+        {/* VIEW 1: PESANAN GLOBAL (LIVE ACTIVITY FOR ALL USERS)           */}
+        {/* ============================================================== */}
+        {activeView === 'global' && (
+          <div className="space-y-6">
+            {/* Banner Link to Personal Orders ("Lacak Pesanan Saya") */}
+            <div className="bg-gradient-to-r from-surface to-surface-raised border border-[#C96F55]/30 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+              <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-xl bg-[rgba(201,111,85,0.12)] text-[#C96F55] flex items-center justify-center shrink-0">
+                  <FontAwesomeIcon icon={faReceipt} className="w-5 h-5" />
                 </div>
-                <div className="w-full h-16 bg-surface-raised rounded" />
+                <div>
+                  <h3 className="text-sm font-bold text-foreground">
+                    Ingin melacak pesanan Anda sendiri?
+                  </h3>
+                  <p className="text-xs text-foreground-muted mt-0.5">
+                    Halaman ini menampilkan seluruh aktivitas pesanan sistem secara transparan. Beralih ke Pesanan Saya untuk mengakses detail lisensi pribadi Anda.
+                  </p>
+                </div>
               </div>
-            ))}
-          </div>
-        )}
 
-        {/* Error State */}
-        {error && (
-          <div className="bg-surface border border-status-error/40 rounded-xl p-8 text-center space-y-3">
-            <p className="text-sm font-semibold text-foreground">Gagal memuat riwayat pesanan</p>
-            <p className="text-xs text-foreground-muted">Silakan coba beberapa saat lagi.</p>
-            <Button size="sm" onClick={() => refetch()}>
-              Coba Lagi
-            </Button>
-          </div>
-        )}
-
-        {/* Empty State */}
-        {!isLoading && !error && filteredOrders.length === 0 && (
-          <div className="bg-surface border border-border rounded-xl p-12 text-center space-y-4 max-w-md mx-auto my-12">
-            <div className="w-12 h-12 rounded-xl bg-surface-raised border border-border flex items-center justify-center mx-auto text-foreground-muted">
-              <FontAwesomeIcon icon={faBox} className="w-6 h-6" />
-            </div>
-            <div className="space-y-1">
-              <h3 className="text-base font-bold text-foreground">Belum Ada Riwayat Pesanan</h3>
-              <p className="text-xs text-foreground-muted">
-                {selectedStatus !== 'all' || searchQuery
-                  ? 'Tidak ada transaksi yang cocok dengan filter atau kata kunci saat ini.'
-                  : activeEmail
-                  ? `Tidak ada transaksi pesanan yang ditemukan untuk email ${activeEmail}.`
-                  : 'Silakan masukkan email pesanan Anda di atas untuk melihat riwayat transaksi.'}
-              </p>
-            </div>
-            {selectedStatus !== 'all' || searchQuery ? (
               <Button
-                size="sm"
-                variant="outline"
-                onClick={() => {
-                  setSelectedStatus('all');
-                  setSearchQuery('');
-                }}
+                type="button"
+                onClick={() => handleSwitchView('my-orders')}
+                className="bg-[#C96F55] hover:bg-[#B86047] text-white font-semibold text-xs h-9 px-4 rounded-xl shrink-0 gap-2 cursor-pointer shadow-xs"
               >
-                Reset Filter
+                <span>Lacak Pesanan Saya</span>
+                <FontAwesomeIcon icon={faArrowRight} className="w-3.5 h-3.5" />
               </Button>
-            ) : (
-              <Link href="/products">
-                <Button size="sm" className="gap-2">
-                  <span>Mulai Belanja</span>
-                  <FontAwesomeIcon icon={faArrowRight} className="w-3.5 h-3.5" />
+            </div>
+
+            {/* Filters and Search Bar for Global Orders */}
+            <div className="bg-surface border border-border rounded-xl p-4 sm:p-5 space-y-4">
+              <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+                {/* Status Pills */}
+                <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+                  {STATUS_FILTERS.map((filter) => {
+                    const isSelected = selectedStatus === filter.value;
+                    return (
+                      <button
+                        key={filter.value}
+                        type="button"
+                        onClick={() => setSelectedStatus(filter.value)}
+                        className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all shrink-0 border cursor-pointer ${
+                          isSelected
+                            ? 'bg-navy-900 text-white border-navy-900 shadow-xs'
+                            : 'bg-surface text-foreground-muted border-border hover:border-primary/40 hover:text-primary'
+                        }`}
+                      >
+                        {filter.label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Search within global orders */}
+                <div className="relative sm:w-72">
+                  <FontAwesomeIcon
+                    icon={faMagnifyingGlass}
+                    className="w-3.5 h-3.5 text-foreground-muted absolute left-3 top-1/2 -translate-y-1/2"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Cari ID pesanan / nama produk..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-9 pr-3 py-1.5 rounded-lg bg-surface-raised border border-border text-xs text-foreground placeholder:text-foreground-muted focus:outline-none focus:border-primary"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Global Orders Loading State */}
+            {isGlobalLoading && (
+              <div className="space-y-4 animate-pulse">
+                {[1, 2, 3, 4].map((i) => (
+                  <div
+                    key={i}
+                    className="bg-surface border border-border rounded-xl p-5 space-y-3"
+                  >
+                    <div className="flex justify-between">
+                      <div className="w-40 h-4 bg-surface-raised rounded" />
+                      <div className="w-24 h-4 bg-surface-raised rounded" />
+                    </div>
+                    <div className="w-full h-12 bg-surface-raised rounded" />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Global Orders Error State */}
+            {globalError && (
+              <div className="bg-surface border border-status-error/40 rounded-xl p-8 text-center space-y-3">
+                <p className="text-sm font-semibold text-foreground">
+                  Gagal memuat aktivitas pesanan sistem
+                </p>
+                <p className="text-xs text-foreground-muted">
+                  Silakan periksa koneksi atau coba beberapa saat lagi.
+                </p>
+                <Button size="sm" onClick={() => refetchGlobal()}>
+                  Coba Lagi
                 </Button>
-              </Link>
+              </div>
+            )}
+
+            {/* Global Orders Empty State */}
+            {!isGlobalLoading && !globalError && filteredGlobalOrders.length === 0 && (
+              <div className="bg-surface border border-border rounded-xl p-12 text-center space-y-4 max-w-md mx-auto my-8">
+                <div className="w-12 h-12 rounded-xl bg-surface-raised border border-border flex items-center justify-center mx-auto text-foreground-muted">
+                  <FontAwesomeIcon icon={faBox} className="w-6 h-6" />
+                </div>
+                <div className="space-y-1">
+                  <h3 className="text-base font-bold text-foreground">Tidak Ada Pesanan Ditemukan</h3>
+                  <p className="text-xs text-foreground-muted">
+                    {searchQuery
+                      ? 'Tidak ada pesanan yang sesuai dengan kata kunci pencarian.'
+                      : 'Belum ada data pesanan untuk filter status yang dipilih.'}
+                  </p>
+                </div>
+                {searchQuery || selectedStatus !== 'all' ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setSelectedStatus('all');
+                      setSearchQuery('');
+                    }}
+                  >
+                    Reset Filter
+                  </Button>
+                ) : null}
+              </div>
+            )}
+
+            {/* Global Orders Listing */}
+            {!isGlobalLoading && !globalError && filteredGlobalOrders.length > 0 && (
+              <div className="space-y-3">
+                {filteredGlobalOrders.map((ord) => (
+                  <div
+                    key={ord.raw_id || ord.id}
+                    className="bg-surface border border-border rounded-xl p-4 sm:p-5 transition-all duration-150 hover:border-primary/40 space-y-3"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-border">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-surface-raised border border-border flex items-center justify-center text-[#C96F55] shrink-0">
+                          <FontAwesomeIcon icon={faBox} className="w-3.5 h-3.5" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono font-bold text-xs sm:text-sm text-foreground">
+                              {ord.id}
+                            </span>
+                          </div>
+                          <span className="text-[11px] text-foreground-muted">
+                            {formatTimeAgo(ord.order_date)}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        {getStatusBadge(ord.order_status)}
+                      </div>
+                    </div>
+
+                    <div className="bg-surface-raised rounded-lg p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                      <div>
+                        <h4 className="font-semibold text-foreground text-xs sm:text-sm">
+                          {ord.product_name}
+                        </h4>
+                        <p className="text-[11px] text-foreground-muted mt-0.5">
+                          Pemesan: <strong className="text-foreground font-medium">{ord.customer_display}</strong> / {ord.items_count} lisensi digital
+                        </p>
+                      </div>
+
+                      <span className="text-[11px] text-status-success font-medium bg-status-success/10 px-2 py-0.5 rounded border border-status-success/20 w-fit self-start sm:self-auto">
+                        Terverifikasi Sistem
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         )}
 
-        {/* Orders Listing */}
-        {!isLoading && !error && filteredOrders.length > 0 && (
+        {/* ============================================================== */}
+        {/* VIEW 2: PESANAN SAYA (PRIVATE USER ORDERS TRACKING)            */}
+        {/* ============================================================== */}
+        {activeView === 'my-orders' && (
           <div className="space-y-6">
-            {filteredOrders.map((order) => {
-              const isExpanded = expandedOrderId === order.id;
-              const isExpired = isOrderExpired(order);
-              const effectiveStatus: Order['order_status'] =
-                order.order_status === 'pending' && isExpired ? 'cancelled' : order.order_status;
-              const step = getTimelineStep({ ...order, order_status: effectiveStatus });
-              const isCancelled = effectiveStatus === 'cancelled';
+            {/* Banner Link to Global Orders */}
+            <div className="bg-surface-raised border border-border rounded-xl p-3 px-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-foreground-muted">
+              <span>Menampilkan pesanan pribadi Anda secara terisolasi dan privat.</span>
+              <button
+                type="button"
+                onClick={() => handleSwitchView('global')}
+                className="text-[#C96F55] hover:underline font-semibold shrink-0 cursor-pointer flex items-center gap-1.5 self-start sm:self-auto"
+              >
+                <span>Lihat Pesanan Live Pelanggan Lain</span>
+                <FontAwesomeIcon icon={faArrowRight} className="w-3 h-3" />
+              </button>
+            </div>
 
-              return (
-                <div
-                  key={order.id}
-                  className="bg-surface border border-border rounded-xl p-5 sm:p-6 transition-all duration-200 hover:border-primary/40 space-y-5"
+            {/* Email Entry & Lookup Card when unauthenticated or changing email */}
+            {(!activeEmail || isChangingEmail) && (
+              <div
+                data-gsap="hero-card"
+                className="bg-surface border border-primary/30 rounded-xl p-6 sm:p-8 max-w-xl mx-auto text-center space-y-4 mb-8 shadow-sm"
+              >
+                <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto">
+                  <FontAwesomeIcon icon={faEnvelope} className="w-6 h-6" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-foreground">Lacak Riwayat Pesanan Anda</h2>
+                  <p className="text-xs text-foreground-muted mt-1 max-w-md mx-auto">
+                    Setiap pesanan di Asterra Store bersifat privat dan terisolasi untuk masing-masing pelanggan. Masukkan email yang Anda gunakan saat pemesanan untuk melihat pesanan Anda.
+                  </p>
+                </div>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const trimmed = emailInput.trim();
+                    if (trimmed) {
+                      setGuestEmail(trimmed);
+                      if (typeof window !== 'undefined') {
+                        localStorage.setItem('asterra_customer_email', trimmed);
+                      }
+                      setIsChangingEmail(false);
+                      showNotification(`Memuat riwayat pesanan untuk ${trimmed}`);
+                    }
+                  }}
+                  className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto"
                 >
-                  {/* Card Header: Order ID, Date, Status */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-border">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-lg bg-surface-raised border border-border flex items-center justify-center text-primary shrink-0">
-                        <FontAwesomeIcon icon={faBox} className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono font-bold text-sm text-foreground">
-                            {order.id}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => handleCopyOrderInfo(order)}
-                            className="text-foreground-muted hover:text-foreground"
-                            title="Salin Data Pesanan"
-                          >
-                            <FontAwesomeIcon icon={faCopy} className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                        <span className="text-[11px] text-foreground-muted">
-                          Dipesan pada:{' '}
-                          {new Date(order.order_date).toLocaleDateString('id-ID', {
-                            day: 'numeric',
-                            month: 'long',
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </span>
-                      </div>
-                    </div>
+                  <input
+                    type="email"
+                    required
+                    placeholder="nama@email.com"
+                    value={emailInput}
+                    onChange={(e) => setEmailInput(e.target.value)}
+                    className="flex-1 px-3 py-2 text-xs rounded-lg bg-surface-raised border border-border text-foreground placeholder:text-foreground-muted focus:outline-none focus:border-primary"
+                  />
+                  <Button type="submit" size="sm" className="text-xs shrink-0">
+                    Lihat Pesanan
+                  </Button>
+                </form>
+                <div className="pt-2 text-xs text-foreground-muted border-border border-t flex items-center justify-center gap-3">
+                  <span>Sudah memiliki akun?</span>
+                  <Link
+                    href="/login"
+                    className="text-primary font-medium hover:underline inline-flex items-center gap-1"
+                  >
+                    <FontAwesomeIcon icon={faRightToBracket} className="w-3 h-3" />
+                    <span>Masuk Akun</span>
+                  </Link>
+                </div>
+              </div>
+            )}
 
-                    <div className="flex items-center justify-between sm:justify-end gap-2">
-                      {effectiveStatus === 'pending' && (
-                        <OrderCountdownBadge
-                          expiresAt={order.expires_at}
-                          onExpired={() => {
-                            fetch(`/api/v1/orders/${order.id}/cancel`, { method: 'POST' }).finally(() => refetch());
-                          }}
-                        />
-                      )}
-                      {getStatusBadge(effectiveStatus)}
-                      <span className="text-sm font-bold text-foreground">
-                        Rp {order.total_amount.toLocaleString('id-ID')}
+            {/* Active Account / Tracking Banner */}
+            {activeEmail && !isChangingEmail && (
+              <div className="bg-surface border border-border rounded-xl px-4 py-3 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-2.5">
+                  <FontAwesomeIcon icon={faReceipt} className="w-3.5 h-3.5 text-primary shrink-0" />
+                  <div className="text-foreground">
+                    <span className="text-foreground-muted">Menampilkan riwayat pesanan untuk:{' '}</span>
+                    <strong className="font-semibold text-primary">{activeEmail}</strong>
+                    {session?.user?.email && (
+                      <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
+                        Akun Terverifikasi
                       </span>
-                    </div>
-                  </div>
-
-                  {/* 4-Step Interactive Fulfillment Timeline */}
-                  <div className="py-2">
-                    <span className="text-[11px] font-semibold text-foreground-muted uppercase tracking-wider block mb-3">
-                      Proses Eksekusi Lisensi:
-                    </span>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                      {/* Step 1 */}
-                      <div
-                        className={`p-2.5 rounded-lg flex items-center gap-2.5 text-xs ${
-                          step >= 1
-                            ? 'bg-primary/10 text-primary'
-                            : 'bg-surface-raised text-foreground-muted'
-                        }`}
-                      >
-                        <div
-                          className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                            step >= 1 ? 'bg-primary text-white' : 'bg-surface-hover'
-                          }`}
-                        >
-                          1
-                        </div>
-                        <span className="font-medium">Pesanan Masuk</span>
-                      </div>
-
-                      {/* Step 2 */}
-                      <div
-                        className={`p-2.5 rounded-lg flex items-center gap-2.5 text-xs ${
-                          step >= 2
-                            ? 'bg-primary/10 text-primary'
-                            : 'bg-surface-raised text-foreground-muted'
-                        }`}
-                      >
-                        <div
-                          className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                            step >= 2 ? 'bg-primary text-white' : 'bg-surface-hover'
-                          }`}
-                        >
-                          2
-                        </div>
-                        <span className="font-medium">Pembayaran Terverifikasi</span>
-                      </div>
-
-                      {/* Step 3 */}
-                      <div
-                        className={`p-2.5 rounded-lg flex items-center gap-2.5 text-xs ${
-                          step >= 3
-                            ? 'bg-primary/10 text-primary'
-                            : 'bg-surface-raised text-foreground-muted'
-                        }`}
-                      >
-                        <div
-                          className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                            step >= 3 ? 'bg-primary text-white' : 'bg-surface-hover'
-                          }`}
-                        >
-                          3
-                        </div>
-                        <span className="font-medium">Di Proses</span>
-                      </div>
-
-                      {/* Step 4 */}
-                      <div
-                        className={`p-2.5 rounded-lg flex items-center gap-2.5 text-xs ${
-                          isCancelled
-                            ? 'bg-status-error/15 text-status-error'
-                            : step >= 4
-                            ? 'bg-status-success/15 text-status-success'
-                            : 'bg-surface-raised text-foreground-muted'
-                        }`}
-                      >
-                        <div
-                          className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                            isCancelled
-                              ? 'bg-status-error text-white'
-                              : step >= 4
-                              ? 'bg-status-success text-white'
-                              : 'bg-surface-hover'
-                          }`}
-                        >
-                          {isCancelled ? <FontAwesomeIcon icon={faXmark} className="w-3 h-3" /> : '4'}
-                        </div>
-                        <span className="font-medium">
-                          {isCancelled ? 'Dibatalkan' : 'Selesai'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Items List inside Order */}
-                  <div className="space-y-2">
-                    {order.items.map((item) => (
-                      <div
-                        key={item.id}
-                        className="bg-surface-raised rounded-lg p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
-                      >
-                        <div className="space-y-0.5">
-                          <h4 className="font-semibold text-foreground text-sm">
-                            {item.product_name}
-                          </h4>
-                          <div className="flex flex-wrap items-center gap-2 text-foreground-muted text-[11px]">
-                            <span>Jumlah: {item.quantity} lisensi</span>
-                            <span>•</span>
-                            <span>
-                              Target Email:{' '}
-                              <strong className="text-foreground">
-                                {item.purchased_details?.target_email || 'customer@asterra.store'}
-                              </strong>
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="text-left sm:text-right">
-                          <span className="font-bold text-foreground block">
-                            Rp {(item.unit_price * item.quantity).toLocaleString('id-ID')}
-                          </span>
-                          <span className="text-[10px] text-foreground-muted">
-                            @ Rp {item.unit_price.toLocaleString('id-ID')}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Expandable Details Section */}
-                  {isExpanded && (
-                    <div className="pt-3 border-t border-border space-y-3 text-xs animate-in fade-in duration-150">
-                      <div className="bg-surface-raised rounded-lg p-3 space-y-1.5">
-                        <span className="font-semibold text-foreground block">Rincian Pembayaran</span>
-                        <div className="flex justify-between text-foreground-muted">
-                          <span>Metode Pembayaran:</span>
-                          <span className="text-foreground uppercase font-mono">
-                            {order.payment?.payment_method || 'QRIS / Instant'}
-                          </span>
-                        </div>
-                        {order.payment?.transaction_id && (
-                          <div className="flex justify-between text-foreground-muted">
-                            <span>ID Transaksi Tripay:</span>
-                            <span className="text-foreground font-mono">
-                              {order.payment.transaction_id}
-                            </span>
-                          </div>
-                        )}
-                        {order.customer_notes && (
-                          <div className="flex justify-between text-foreground-muted">
-                            <span>Catatan Pesanan:</span>
-                            <span className="text-foreground italic">{order.customer_notes}</span>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="flex items-center gap-2 p-3 bg-surface-raised rounded-lg text-status-success">
-                        <FontAwesomeIcon icon={faShieldHalved} className="w-4 h-4 shrink-0" />
-                        <span className="text-[11px]">
-                          Lisensi ini dilindungi oleh Garansi Asterra Store 100% penggantian jika mengalami kendala akses.
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Actions Footer */}
-                  <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-border">
-                    <button
-                      type="button"
-                      onClick={() => setExpandedOrderId(isExpanded ? null : order.id)}
-                      className="text-xs text-foreground-muted hover:text-foreground inline-flex items-center gap-1"
-                    >
-                      <span>{isExpanded ? 'Tutup Rincian' : 'Lihat Rincian Lisensi'}</span>
-                      {isExpanded ? <FontAwesomeIcon icon={faChevronUp} className="w-3.5 h-3.5" /> : <FontAwesomeIcon icon={faChevronDown} className="w-3.5 h-3.5" />}
-                    </button>
-
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleCopyOrderInfo(order)}
-                        className="text-xs gap-1.5 border-border h-8"
-                      >
-                        <FontAwesomeIcon icon={faCopy} className="w-3 h-3" />
-                        <span>Salin Bukti</span>
-                      </Button>
-
-                      {effectiveStatus === 'pending' && (
-                        <Button
-                          size="sm"
-                          onClick={() => handlePayOrder(order)}
-                          className="text-xs gap-1.5 h-8 font-semibold bg-primary hover:bg-primary/90 text-white shadow-sm"
-                        >
-                          <FontAwesomeIcon icon={faCreditCard} className="w-3.5 h-3.5" />
-                          <span>Bayar</span>
-                        </Button>
-                      )}
-
-                      {(effectiveStatus === 'completed' || effectiveStatus === 'cancelled') && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleReorder(order)}
-                          className="text-xs gap-1.5 border-border h-8 font-medium"
-                        >
-                          <FontAwesomeIcon icon={faCartShopping} className="w-3 h-3 text-primary" />
-                          <span>Beli Lagi</span>
-                        </Button>
-                      )}
-
-                      <a
-                        href={`https://wa.me/6281234567890?text=${encodeURIComponent(
-                          `Halo CS Asterra Store, saya ingin menanyakan status pesanan ${order.id}`
-                        )}`}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        <Button size="sm" className="text-xs gap-1.5 h-8">
-                          <FontAwesomeIcon icon={faPhone} className="w-3 h-3" />
-                          <span>Hubungi CS</span>
-                        </Button>
-                      </a>
-                    </div>
+                    )}
                   </div>
                 </div>
-              );
-            })}
+                <div className="flex items-center gap-3 shrink-0 self-end sm:self-auto">
+                  {!session?.user?.email && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEmailInput(guestEmail);
+                        setIsChangingEmail(true);
+                      }}
+                      className="text-primary hover:underline text-[11px] font-medium cursor-pointer"
+                    >
+                      Ganti Email Pelacakan
+                    </button>
+                  )}
+                  {!session?.user && (
+                    <Link
+                      href="/login"
+                      className="text-foreground-muted hover:text-foreground text-[11px] inline-flex items-center gap-1"
+                    >
+                      <FontAwesomeIcon icon={faRightToBracket} className="w-3 h-3" />
+                      <span>Masuk Akun</span>
+                    </Link>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Filters and Search Bar */}
+            <div className="bg-surface border border-border rounded-xl p-4 sm:p-5 mb-8 space-y-4">
+              <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+                {/* Status Pills */}
+                <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+                  {STATUS_FILTERS.map((filter) => {
+                    const isSelected = selectedStatus === filter.value;
+                    return (
+                      <button
+                        key={filter.value}
+                        type="button"
+                        onClick={() => setSelectedStatus(filter.value)}
+                        className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all shrink-0 border cursor-pointer ${
+                          isSelected
+                            ? 'bg-navy-900 text-white border-navy-900 shadow-xs'
+                            : 'bg-surface text-foreground-muted border-border hover:border-primary/40 hover:text-primary'
+                        }`}
+                      >
+                        {filter.label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Search within orders */}
+                <div className="relative sm:w-72">
+                  <FontAwesomeIcon
+                    icon={faMagnifyingGlass}
+                    className="w-3.5 h-3.5 text-foreground-muted absolute left-3 top-1/2 -translate-y-1/2"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Cari ID pesanan / nama produk..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-9 pr-3 py-1.5 rounded-lg bg-surface-raised border border-border text-xs text-foreground placeholder:text-foreground-muted focus:outline-none focus:border-primary"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Loading Skeletons */}
+            {isPersonalLoading && (
+              <div className="space-y-4 animate-pulse">
+                {[1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    className="bg-surface border border-border rounded-xl p-6 space-y-4"
+                  >
+                    <div className="flex justify-between">
+                      <div className="w-48 h-5 bg-surface-raised rounded" />
+                      <div className="w-24 h-5 bg-surface-raised rounded" />
+                    </div>
+                    <div className="w-full h-16 bg-surface-raised rounded" />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Error State */}
+            {personalError && (
+              <div className="bg-surface border border-status-error/40 rounded-xl p-8 text-center space-y-3">
+                <p className="text-sm font-semibold text-foreground">Gagal memuat riwayat pesanan</p>
+                <p className="text-xs text-foreground-muted">Silakan coba beberapa saat lagi.</p>
+                <Button size="sm" onClick={() => refetchPersonal()}>
+                  Coba Lagi
+                </Button>
+              </div>
+            )}
+
+            {/* Empty State */}
+            {!isPersonalLoading && !personalError && filteredPersonalOrders.length === 0 && (
+              <div className="bg-surface border border-border rounded-xl p-12 text-center space-y-4 max-w-md mx-auto my-12">
+                <div className="w-12 h-12 rounded-xl bg-surface-raised border border-border flex items-center justify-center mx-auto text-foreground-muted">
+                  <FontAwesomeIcon icon={faBox} className="w-6 h-6" />
+                </div>
+                <div className="space-y-1">
+                  <h3 className="text-base font-bold text-foreground">Belum Ada Riwayat Pesanan</h3>
+                  <p className="text-xs text-foreground-muted">
+                    {selectedStatus !== 'all' || searchQuery
+                      ? 'Tidak ada transaksi yang cocok dengan filter atau kata kunci saat ini.'
+                      : activeEmail
+                      ? `Tidak ada transaksi pesanan yang ditemukan untuk email ${activeEmail}.`
+                      : 'Silakan masukkan email pesanan Anda di atas untuk melihat riwayat transaksi.'}
+                  </p>
+                </div>
+                {selectedStatus !== 'all' || searchQuery ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setSelectedStatus('all');
+                      setSearchQuery('');
+                    }}
+                  >
+                    Reset Filter
+                  </Button>
+                ) : (
+                  <Link href="/products">
+                    <Button size="sm" className="gap-2">
+                      <span>Mulai Belanja</span>
+                      <FontAwesomeIcon icon={faArrowRight} className="w-3.5 h-3.5" />
+                    </Button>
+                  </Link>
+                )}
+              </div>
+            )}
+
+            {/* Orders Listing */}
+            {!isPersonalLoading && !personalError && filteredPersonalOrders.length > 0 && (
+              <div className="space-y-6">
+                {filteredPersonalOrders.map((order) => {
+                  const isExpanded = expandedOrderId === order.id;
+                  const isExpired = isOrderExpired(order);
+                  const effectiveStatus: Order['order_status'] =
+                    order.order_status === 'pending' && isExpired ? 'cancelled' : order.order_status;
+                  const step = getTimelineStep({ ...order, order_status: effectiveStatus });
+                  const isCancelled = effectiveStatus === 'cancelled';
+
+                  return (
+                    <div
+                      key={order.id}
+                      className="bg-surface border border-border rounded-xl p-5 sm:p-6 transition-all duration-200 hover:border-primary/40 space-y-5"
+                    >
+                      {/* Card Header: Order ID, Date, Status */}
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-border">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-lg bg-surface-raised border border-border flex items-center justify-center text-primary shrink-0">
+                            <FontAwesomeIcon icon={faBox} className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono font-bold text-sm text-foreground">
+                                {order.id}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => handleCopyOrderInfo(order)}
+                                className="text-foreground-muted hover:text-foreground cursor-pointer"
+                                title="Salin Data Pesanan"
+                              >
+                                <FontAwesomeIcon icon={faCopy} className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                            <span className="text-[11px] text-foreground-muted">
+                              Dipesan pada:{' '}
+                              {new Date(order.order_date).toLocaleDateString('id-ID', {
+                                day: 'numeric',
+                                month: 'long',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between sm:justify-end gap-2">
+                          {effectiveStatus === 'pending' && (
+                            <OrderCountdownBadge
+                              expiresAt={order.expires_at}
+                              onExpired={() => {
+                                fetch(`/api/v1/orders/${order.id}/cancel`, { method: 'POST' }).finally(() =>
+                                  refetchPersonal()
+                                );
+                              }}
+                            />
+                          )}
+                          {getStatusBadge(effectiveStatus)}
+                          <span className="text-sm font-bold text-foreground">
+                            Rp {order.total_amount.toLocaleString('id-ID')}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* 4-Step Interactive Fulfillment Timeline */}
+                      <div className="py-2">
+                        <span className="text-[11px] font-semibold text-foreground-muted uppercase tracking-wider block mb-3">
+                          Proses Eksekusi Lisensi:
+                        </span>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                          {/* Step 1 */}
+                          <div
+                            className={`p-2.5 rounded-lg flex items-center gap-2.5 text-xs ${
+                              step >= 1
+                                ? 'bg-primary/10 text-primary'
+                                : 'bg-surface-raised text-foreground-muted'
+                            }`}
+                          >
+                            <div
+                              className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                                step >= 1 ? 'bg-primary text-white' : 'bg-surface-hover'
+                              }`}
+                            >
+                              1
+                            </div>
+                            <span className="font-medium">Pesanan Masuk</span>
+                          </div>
+
+                          {/* Step 2 */}
+                          <div
+                            className={`p-2.5 rounded-lg flex items-center gap-2.5 text-xs ${
+                              step >= 2
+                                ? 'bg-primary/10 text-primary'
+                                : 'bg-surface-raised text-foreground-muted'
+                            }`}
+                          >
+                            <div
+                              className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                                step >= 2 ? 'bg-primary text-white' : 'bg-surface-hover'
+                              }`}
+                            >
+                              2
+                            </div>
+                            <span className="font-medium">Pembayaran Terverifikasi</span>
+                          </div>
+
+                          {/* Step 3 */}
+                          <div
+                            className={`p-2.5 rounded-lg flex items-center gap-2.5 text-xs ${
+                              step >= 3
+                                ? 'bg-primary/10 text-primary'
+                                : 'bg-surface-raised text-foreground-muted'
+                            }`}
+                          >
+                            <div
+                              className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                                step >= 3 ? 'bg-primary text-white' : 'bg-surface-hover'
+                              }`}
+                            >
+                              3
+                            </div>
+                            <span className="font-medium">Di Proses</span>
+                          </div>
+
+                          {/* Step 4 */}
+                          <div
+                            className={`p-2.5 rounded-lg flex items-center gap-2.5 text-xs ${
+                              isCancelled
+                                ? 'bg-status-error/15 text-status-error'
+                                : step >= 4
+                                ? 'bg-status-success/15 text-status-success'
+                                : 'bg-surface-raised text-foreground-muted'
+                            }`}
+                          >
+                            <div
+                              className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                                isCancelled
+                                ? 'bg-status-error text-white'
+                                : step >= 4
+                                ? 'bg-status-success text-white'
+                                : 'bg-surface-hover'
+                              }`}
+                            >
+                              {isCancelled ? <FontAwesomeIcon icon={faXmark} className="w-3 h-3" /> : '4'}
+                            </div>
+                            <span className="font-medium">
+                              {isCancelled ? 'Dibatalkan' : 'Selesai'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Items List inside Order */}
+                      <div className="space-y-2">
+                        {order.items.map((item) => (
+                          <div
+                            key={item.id}
+                            className="bg-surface-raised rounded-lg p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+                          >
+                            <div className="space-y-0.5">
+                              <h4 className="font-semibold text-foreground text-sm">
+                                {item.product_name}
+                              </h4>
+                              <div className="flex flex-wrap items-center gap-2 text-foreground-muted text-[11px]">
+                                <span>Jumlah: {item.quantity} lisensi</span>
+                                <span>/</span>
+                                <span>
+                                  Target Email:{' '}
+                                  <strong className="text-foreground">
+                                    {item.purchased_details?.target_email || 'customer@asterra.store'}
+                                  </strong>
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="text-left sm:text-right">
+                              <span className="font-bold text-foreground block">
+                                Rp {(item.unit_price * item.quantity).toLocaleString('id-ID')}
+                              </span>
+                              <span className="text-[10px] text-foreground-muted">
+                                @ Rp {item.unit_price.toLocaleString('id-ID')}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Expandable Details Section */}
+                      {isExpanded && (
+                        <div className="pt-3 border-t border-border space-y-3 text-xs animate-in fade-in duration-150">
+                          <div className="bg-surface-raised rounded-lg p-3 space-y-1.5">
+                            <span className="font-semibold text-foreground block">Rincian Pembayaran</span>
+                            <div className="flex justify-between text-foreground-muted">
+                              <span>Metode Pembayaran:</span>
+                              <span className="text-foreground uppercase font-mono">
+                                {order.payment?.payment_method || 'QRIS / Instant'}
+                              </span>
+                            </div>
+                            {order.payment?.transaction_id && (
+                              <div className="flex justify-between text-foreground-muted">
+                                <span>ID Transaksi Tripay:</span>
+                                <span className="text-foreground font-mono">
+                                  {order.payment.transaction_id}
+                                </span>
+                              </div>
+                            )}
+                            {order.customer_notes && (
+                              <div className="flex justify-between text-foreground-muted">
+                                <span>Catatan Pesanan:</span>
+                                <span className="text-foreground italic">{order.customer_notes}</span>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-2 p-3 bg-surface-raised rounded-lg text-status-success">
+                            <FontAwesomeIcon icon={faShieldHalved} className="w-4 h-4 shrink-0" />
+                            <span className="text-[11px]">
+                              Lisensi ini dilindungi oleh Garansi Asterra Store 100% penggantian jika mengalami kendala akses.
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Actions Footer */}
+                      <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-border">
+                        <button
+                          type="button"
+                          onClick={() => setExpandedOrderId(isExpanded ? null : order.id)}
+                          className="text-xs text-foreground-muted hover:text-foreground inline-flex items-center gap-1 cursor-pointer"
+                        >
+                          <span>{isExpanded ? 'Tutup Rincian' : 'Lihat Rincian Lisensi'}</span>
+                          {isExpanded ? (
+                            <FontAwesomeIcon icon={faChevronUp} className="w-3.5 h-3.5" />
+                          ) : (
+                            <FontAwesomeIcon icon={faChevronDown} className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleCopyOrderInfo(order)}
+                            className="text-xs gap-1.5 border-border h-8 cursor-pointer"
+                          >
+                            <FontAwesomeIcon icon={faCopy} className="w-3 h-3" />
+                            <span>Salin Bukti</span>
+                          </Button>
+
+                          {effectiveStatus === 'pending' && (
+                            <Button
+                              size="sm"
+                              onClick={() => handlePayOrder(order)}
+                              className="text-xs gap-1.5 h-8 font-semibold bg-primary hover:bg-primary/90 text-white shadow-xs cursor-pointer"
+                            >
+                              <FontAwesomeIcon icon={faCreditCard} className="w-3.5 h-3.5" />
+                              <span>Bayar</span>
+                            </Button>
+                          )}
+
+                          {(effectiveStatus === 'completed' || effectiveStatus === 'cancelled') && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleReorder(order)}
+                              className="text-xs gap-1.5 border-border h-8 font-medium cursor-pointer"
+                            >
+                              <FontAwesomeIcon icon={faCartShopping} className="w-3 h-3 text-primary" />
+                              <span>Beli Lagi</span>
+                            </Button>
+                          )}
+
+                          <a
+                            href={`https://wa.me/6281234567890?text=${encodeURIComponent(
+                              `Halo CS Asterra Store, saya ingin menanyakan status pesanan ${order.id}`
+                            )}`}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            <Button size="sm" className="text-xs gap-1.5 h-8 cursor-pointer">
+                              <FontAwesomeIcon icon={faPhone} className="w-3 h-3" />
+                              <span>Hubungi CS</span>
+                            </Button>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
       </main>
@@ -915,7 +1282,7 @@ function OrdersContent() {
           onClose={() => {
             setActiveManualModal(null);
             setSelectedOrderForModal(null);
-            refetch();
+            refetchPersonal();
           }}
           onCopy={handleModalCopy}
           copiedKey={copiedKey}
