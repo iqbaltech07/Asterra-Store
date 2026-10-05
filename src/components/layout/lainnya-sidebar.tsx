@@ -73,7 +73,7 @@ export function LainnyaSidebar() {
     {
       title: 'Pesanan Saya',
       subtitle: 'Lacak pesanan pribadi',
-      href: '/orders',
+      href: '/order',
       icon: faReceipt,
       isExternal: false,
     },

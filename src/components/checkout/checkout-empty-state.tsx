@@ -42,7 +42,7 @@ export function CheckoutEmptyState() {
             </Button>
           </Link>
 
-          <Link href="/orders" className="w-full sm:w-auto">
+          <Link href="/order" className="w-full sm:w-auto">
             <Button variant="outline" size="sm" className="w-full sm:w-auto text-xs border-border h-9 px-4">
               <span>Riwayat Pesanan</span>
             </Button>
