@@ -69,7 +69,7 @@ export function Header({ onNotify }: HeaderProps) {
     <header ref={headerRef} className="sticky top-0 z-40 w-full px-2 sm:px-6 pt-2 pb-1.5 transition-colors duration-150">
       <div className="max-w-7xl mx-auto rounded-2xl bg-[#121A2A] border border-white/10 shadow-navbar px-3 sm:px-5 h-14 sm:h-16 flex items-center justify-between gap-3">
         {/* Brand Logo with Planet Animation */}
-        <div data-gsap="nav-logo" className="flex items-center gap-2">
+        <div data-gsap="nav-logo" className="flex items-center shrink-0">
           <AsterraLogo
             variant="navbar"
             size="md"
