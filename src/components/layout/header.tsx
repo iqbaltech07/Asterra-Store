@@ -42,7 +42,6 @@ export function Header({ onNotify: _onNotify }: HeaderProps) {
   const isHomeActive = pathname === '/';
   const isProductsActive = pathname.startsWith('/products') || pathname.startsWith('/product');
   const isOrdersActive = pathname.startsWith('/orders');
-  const isSellerActive = pathname.startsWith('/seller') || pathname.startsWith('/daftar-sales') || pathname.startsWith('/sales');
 
   return (
     <header ref={headerRef} className="sticky top-0 z-40 w-full px-2 sm:px-6 pt-2 pb-1.5 transition-colors duration-150">
@@ -96,18 +95,6 @@ export function Header({ onNotify: _onNotify }: HeaderProps) {
             <span>Pesanan</span>
           </Link>
           <Link
-            href="/seller"
-            prefetch={true}
-            data-gsap="nav-link"
-            className={`transition-colors py-1 ${
-              isSellerActive
-                ? 'text-[#C96F55] font-semibold'
-                : 'text-[#F7F5EF]/80 hover:text-[#F7F5EF]'
-            }`}
-          >
-            Seller
-          </Link>
-          <Link
             href="/#keunggulan"
             data-gsap="nav-link"
             className="text-[#F7F5EF]/80 hover:text-[#F7F5EF] transition-colors py-1"
@@ -125,7 +112,7 @@ export function Header({ onNotify: _onNotify }: HeaderProps) {
 
         {/* Action Buttons (Desktop & Compact Mobile) */}
         <div className="flex items-center gap-1.5 sm:gap-2.5">
-          {/* Mobile Search Icon */}
+          {/* Search Icon */}
           <Link
             href="/products"
             data-gsap="nav-action"
@@ -134,18 +121,6 @@ export function Header({ onNotify: _onNotify }: HeaderProps) {
           >
             <FontAwesomeIcon icon={faMagnifyingGlass} className="w-4 h-4" />
           </Link>
-
-          {/* Lainnya Button - Opens Navigation Drawer */}
-          <button
-            type="button"
-            onClick={openSidebar}
-            data-gsap="nav-action"
-            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border border-white/10 bg-[#182235] hover:border-[#C96F55]/40 hover:bg-[#1e2a40] transition-all text-xs font-medium text-[#F7F5EF] focus:outline-none focus:ring-2 focus:ring-[#C96F55]/30 cursor-pointer"
-            aria-label="Buka Menu Lainnya"
-          >
-            <FontAwesomeIcon icon={faEllipsis} className="w-3.5 h-3.5 text-[#C96F55]" />
-            <span className="hidden sm:inline">Lainnya</span>
-          </button>
 
           {/* User Profile Pill or Login Button */}
           {currentUser ? (
@@ -185,6 +160,18 @@ export function Header({ onNotify: _onNotify }: HeaderProps) {
               </Link>
             </div>
           )}
+
+          {/* Lainnya Button - MOBILE ONLY (Hidden on Desktop) */}
+          <button
+            type="button"
+            onClick={openSidebar}
+            data-gsap="nav-action"
+            className="lg:hidden flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-white/10 bg-[#182235] hover:border-[#C96F55]/40 hover:bg-[#1e2a40] transition-all text-xs font-medium text-[#F7F5EF] focus:outline-none focus:ring-2 focus:ring-[#C96F55]/30 cursor-pointer"
+            aria-label="Buka Menu Lainnya"
+          >
+            <FontAwesomeIcon icon={faEllipsis} className="w-3.5 h-3.5 text-[#C96F55]" />
+            <span className="text-xs">Lainnya</span>
+          </button>
         </div>
       </div>
     </header>

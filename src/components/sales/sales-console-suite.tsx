@@ -369,15 +369,6 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
                       : 'bg-muted border-border text-foreground-muted'
                   }`}
                 >
-                  <span
-                    className={`w-2 h-2 rounded-full ${
-                      partner?.status === 'active'
-                        ? 'bg-status-success animate-pulse'
-                        : partner?.status === 'suspended'
-                        ? 'bg-status-error'
-                        : 'bg-amber-500'
-                    }`}
-                  />
                   <span>
                     Status Akun: {
                       partner?.status === 'active'

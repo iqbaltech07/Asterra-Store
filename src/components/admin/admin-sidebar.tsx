@@ -615,8 +615,7 @@ export function AdminSidebar({
       {/* 2. Quick Live Status Bar */}
       <div className="px-4 py-2.5 bg-surface-raised/60 border-b border-border text-[11px] flex items-center justify-between">
         <div className="flex items-center gap-1.5 text-foreground-muted">
-          <span className="w-2 h-2 rounded-full bg-status-success animate-pulse" />
-          <span className="font-medium">Sistem: Online</span>
+          <span className="font-medium text-status-success">Sistem: Online</span>
         </div>
         {metrics?.vipBalance !== undefined && metrics.vipBalance !== null && (
           <div className="flex items-center gap-1 font-mono text-[10px] text-primary font-semibold">

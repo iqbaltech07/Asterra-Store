@@ -169,11 +169,6 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="flex items-center gap-2.5">
-              <span
-                className={`w-3 h-3 rounded-full animate-pulse ${
-                  mode === 'gateway' ? 'bg-status-success' : 'bg-status-warning'
-                }`}
-              />
               <span className="text-xs font-mono uppercase tracking-wider font-semibold text-foreground-muted">
                 Status Mode Pembayaran Aktif
               </span>

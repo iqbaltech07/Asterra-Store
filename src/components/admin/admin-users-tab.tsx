@@ -555,16 +555,14 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
                           title="Klik untuk mengubah status aktif/non-aktif"
                         >
                           {admin.isActive ? (
-                            <Badge className="bg-status-success/15 text-status-success border-status-success/30 text-[11px] font-medium inline-flex items-center gap-1.5 cursor-pointer hover:bg-status-success/25 transition-colors">
-                              <span className="w-1.5 h-1.5 rounded-full bg-status-success" />
+                            <Badge className="bg-status-success/15 text-status-success border-status-success/30 text-[11px] font-medium inline-flex items-center gap-1 cursor-pointer hover:bg-status-success/25 transition-colors">
                               <span>Aktif (Bisa Login)</span>
                               <span className="text-[10px] opacity-60 group-hover/status:opacity-100">
                                 ⇄
                               </span>
                             </Badge>
                           ) : (
-                            <Badge className="bg-status-error/15 text-status-error border-status-error/30 text-[11px] font-medium inline-flex items-center gap-1.5 cursor-pointer hover:bg-status-error/25 transition-colors">
-                              <span className="w-1.5 h-1.5 rounded-full bg-status-error" />
+                            <Badge className="bg-status-error/15 text-status-error border-status-error/30 text-[11px] font-medium inline-flex items-center gap-1 cursor-pointer hover:bg-status-error/25 transition-colors">
                               <span>Non-Aktif (Ditolak)</span>
                               <span className="text-[10px] opacity-60 group-hover/status:opacity-100">
                                 ⇄
@@ -764,13 +762,11 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
                   <SelectContent align="start">
                     <SelectItem value="active">
                       <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-status-success" />
                         <span className="font-medium text-status-success">Aktif (Bisa Login ke Admin)</span>
                       </div>
                     </SelectItem>
                     <SelectItem value="inactive">
                       <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-status-error" />
                         <span className="font-medium text-status-error">Non-Aktif (Akses Login Ditolak)</span>
                       </div>
                     </SelectItem>

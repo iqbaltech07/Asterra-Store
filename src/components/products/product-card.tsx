@@ -108,15 +108,10 @@ export function ProductCard({
               Status
             </span>
             <span
-              className={`font-semibold inline-flex items-center gap-1 mt-0.5 ${
+              className={`font-semibold inline-block mt-0.5 ${
                 isOutOfStock ? 'text-[#DC2626]' : 'text-[#16A34A]'
               }`}
             >
-              <span
-                className={`w-1.5 h-1.5 rounded-full ${
-                  isOutOfStock ? 'bg-[#DC2626]' : 'bg-[#16A34A]'
-                }`}
-              />
               {isOutOfStock ? 'Kosong' : 'Tersedia'}
             </span>
           </div>

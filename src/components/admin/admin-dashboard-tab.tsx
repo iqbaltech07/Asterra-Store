@@ -564,7 +564,6 @@ export function AdminDashboardTab({
                 <Server className="w-4 h-4 text-primary" />
                 <span>Status Gateway & Provider</span>
               </h3>
-              <span className="w-2 h-2 rounded-full bg-status-success animate-pulse" />
             </div>
 
             <div className="space-y-2 text-xs">

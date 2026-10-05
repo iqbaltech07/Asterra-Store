@@ -111,11 +111,6 @@ export function OrderFiltersBar({
       <div className="flex flex-wrap items-center gap-2">
         {/* SSE Status Pill */}
         <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium border border-border bg-surface-raised">
-          <span
-            className={`w-2 h-2 rounded-full ${
-              sseConnected ? 'bg-status-success animate-pulse' : 'bg-status-error'
-            }`}
-          />
           <span className={sseConnected ? 'text-status-success font-semibold' : 'text-status-error'}>
             {sseConnected ? 'SSE Live' : 'SSE Disconnected'}
           </span>

@@ -7,6 +7,7 @@ import {
   faWallet,
   faBuildingColumns,
   faCreditCard,
+  faCheck,
 } from '@fortawesome/free-solid-svg-icons';
 
 export interface PaymentMethodOption {
@@ -79,7 +80,7 @@ export function CheckoutPaymentMethods({
                     isSelected ? 'bg-[#C96F55] border-[#C96F55] text-white' : 'border-[rgba(18,26,42,0.2)] bg-white'
                   }`}
                 >
-                  {isSelected && <span className="w-2 h-2 rounded-full bg-white" />}
+                  {isSelected && <FontAwesomeIcon icon={faCheck} className="w-2.5 h-2.5 text-white" />}
                 </span>
               </div>
             </div>

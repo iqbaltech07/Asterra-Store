@@ -8,47 +8,46 @@ import {
   faHouse,
   faReceipt,
   faStore,
-  faEllipsis,
+  faUser,
 } from '@fortawesome/free-solid-svg-icons';
-import { useNavigationStore } from '@/store/use-navigation-store';
+import { useSession } from '@/lib/auth-client';
+import { useAuthStore } from '@/store/use-auth-store';
 
 export function MobileBottomNav() {
   const pathname = usePathname();
-  const { isSidebarOpen, openSidebar } = useNavigationStore();
+  const { data: session } = useSession();
+  const { user: legacyUser } = useAuthStore();
+  const currentUser = session?.user || legacyUser;
 
   const isHome = pathname === '/';
   const isOrders = pathname.startsWith('/orders');
   const isSeller = pathname.startsWith('/seller') || pathname.startsWith('/daftar-sales') || pathname.startsWith('/sales');
+  const isAccount = pathname.startsWith('/profile') || pathname.startsWith('/login') || pathname.startsWith('/register');
 
   const navItems = [
     {
       label: 'Beranda',
       href: '/',
       icon: faHouse,
-      active: isHome && !isSidebarOpen,
-      isAction: false,
+      active: isHome,
     },
     {
       label: 'Pesanan',
       href: '/orders',
       icon: faReceipt,
-      active: isOrders && !isSidebarOpen,
-      isAction: false,
+      active: isOrders,
     },
     {
       label: 'Seller',
       href: '/seller',
       icon: faStore,
-      active: isSeller && !isSidebarOpen,
-      isAction: false,
+      active: isSeller,
     },
     {
-      label: 'Lainnya',
-      href: '#',
-      icon: faEllipsis,
-      active: isSidebarOpen,
-      isAction: true,
-      onClick: () => openSidebar(),
+      label: 'Akun',
+      href: currentUser ? '/profile' : '/login',
+      icon: faUser,
+      active: isAccount,
     },
   ];
 
@@ -59,47 +58,6 @@ export function MobileBottomNav() {
     >
       <div className="flex items-center justify-around max-w-md mx-auto">
         {navItems.map((item) => {
-          const content = (
-            <>
-              <div className="relative flex items-center justify-center h-6 w-6">
-                <FontAwesomeIcon
-                  icon={item.icon}
-                  className={`w-4 h-4 transition-transform duration-150 ${
-                    item.active ? 'scale-110' : ''
-                  }`}
-                />
-                {item.active && (
-                  <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-[#C96F55] animate-pulse" />
-                )}
-              </div>
-              <span
-                className={`text-[10px] mt-0.5 leading-tight tracking-tight ${
-                  item.active ? 'font-bold' : 'font-medium'
-                }`}
-              >
-                {item.label}
-              </span>
-            </>
-          );
-
-          if (item.isAction) {
-            return (
-              <button
-                key={item.label}
-                type="button"
-                onClick={item.onClick}
-                className={`flex flex-col items-center justify-center py-1 px-3 min-w-[64px] rounded-xl transition-all duration-150 cursor-pointer ${
-                  item.active
-                    ? 'text-[#C96F55]'
-                    : 'text-[#F7F5EF]/60 hover:text-[#F7F5EF]'
-                }`}
-                aria-label="Buka Menu Lainnya"
-              >
-                {content}
-              </button>
-            );
-          }
-
           return (
             <Link
               key={item.label}
@@ -111,7 +69,21 @@ export function MobileBottomNav() {
                   : 'text-[#F7F5EF]/60 hover:text-[#F7F5EF]'
               }`}
             >
-              {content}
+              <div className="relative flex items-center justify-center h-6 w-6">
+                <FontAwesomeIcon
+                  icon={item.icon}
+                  className={`w-4 h-4 transition-transform duration-150 ${
+                    item.active ? 'scale-110' : ''
+                  }`}
+                />
+              </div>
+              <span
+                className={`text-[10px] mt-0.5 leading-tight tracking-tight ${
+                  item.active ? 'font-bold' : 'font-medium'
+                }`}
+              >
+                {item.label}
+              </span>
             </Link>
           );
         })}

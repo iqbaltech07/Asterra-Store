@@ -150,7 +150,6 @@ export function CheckoutCartSummary({
       {referralPartner && (
         <div className="p-3 rounded-xl border border-status-success/30 bg-status-success/5 text-xs flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-status-success inline-block shrink-0 animate-pulse"></span>
             <span className="text-[#121A2A] text-xs">
               Mitra Sales: <strong className="text-status-success font-semibold">{referralPartner.name}</strong>{' '}
               <span className="text-[11px] font-mono text-[#121A2A]/60">({referralPartner.code})</span>

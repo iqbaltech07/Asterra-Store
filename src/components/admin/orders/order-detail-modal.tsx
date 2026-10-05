@@ -429,20 +429,10 @@ export function OrderDetailModal({
             </h4>
 
             {order.logs && order.logs.length > 0 ? (
-              <div className="relative pl-6 space-y-4 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-border">
+              <div className="space-y-3">
                 {order.logs.map((log) => (
-                  <div key={log.id} className="relative text-xs">
-                    {/* Dot indicator */}
-                    <div
-                      className={`absolute -left-6 top-1 w-2.5 h-2.5 rounded-full border-2 border-surface ${
-                        log.actor === 'tripay_webhook'
-                          ? 'bg-status-success'
-                          : log.actor === 'admin'
-                          ? 'bg-primary'
-                          : 'bg-foreground-muted'
-                      }`}
-                    />
-                    <div className="flex items-center gap-2 mb-0.5">
+                  <div key={log.id} className="text-xs p-2.5 rounded-lg bg-surface border border-border">
+                    <div className="flex items-center gap-2 mb-1">
                       <OrderActorBadge actor={log.actor} />
                       <span className="text-[11px] text-foreground-muted">
                         {new Date(log.created_at).toLocaleTimeString('id-ID', {

@@ -905,7 +905,6 @@ export default function HomePage() {
         <section aria-label="Showcase Produk Asterra" className="mt-7 sm:mt-10 mb-6 sm:mb-8 pt-6 sm:pt-7 border-t border-[rgba(18,26,42,0.06)]">
           <div className="flex items-center justify-between mb-3 px-1">
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#C96F55]" />
               <h2 className="text-xs sm:text-sm font-black uppercase tracking-wider text-[#121A2A]/85">
                 Showcase Katalog Pilihan
               </h2>

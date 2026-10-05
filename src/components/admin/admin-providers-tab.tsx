@@ -116,8 +116,7 @@ export function AdminProvidersTab({ metrics, onNotify, onSyncVip }: AdminProvide
             <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider bg-primary/15 text-primary border border-primary/25">
               API Operations Hub
             </span>
-            <span className="flex items-center gap-1 text-[11px] text-status-success font-semibold">
-              <span className="w-2 h-2 rounded-full bg-status-success animate-pulse" />
+            <span className="text-[11px] text-status-success font-semibold">
               Semua Endpoint Upstream Sehat (Healthy)
             </span>
           </div>
