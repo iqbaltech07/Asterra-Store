@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, Suspense } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
@@ -30,6 +31,7 @@ import {
   faCreditCard,
   faEnvelope,
   faRightToBracket,
+  faReceipt,
 } from '@fortawesome/free-solid-svg-icons';
 import { useSession } from '@/lib/auth-client';
 import {
@@ -104,6 +106,33 @@ function OrderCountdownBadge({
   );
 }
 
+export interface PublicLiveOrder {
+  id: string;
+  raw_id: string;
+  product_name: string;
+  items_summary: string;
+  items_count: number;
+  order_status: 'pending' | 'processing' | 'completed' | 'cancelled';
+  order_date: string;
+  customer_display: string;
+}
+
+function formatRelativeTime(dateString: string): string {
+  try {
+    const diffMs = Date.now() - new Date(dateString).getTime();
+    const diffSec = Math.floor(diffMs / 1000);
+    if (diffSec < 60) return 'Baru saja';
+    const diffMin = Math.floor(diffSec / 60);
+    if (diffMin < 60) return `${diffMin}m yang lalu`;
+    const diffHour = Math.floor(diffMin / 60);
+    if (diffHour < 24) return `${diffHour}j yang lalu`;
+    const diffDay = Math.floor(diffHour / 24);
+    return `${diffDay}h yang lalu`;
+  } catch {
+    return 'Baru saja';
+  }
+}
+
 // --- Order Pure Helper Functions (declared at module level to avoid TDZ ReferenceError) ---
 function isOrderExpired(order: Order): boolean {
   if (order.order_status === 'cancelled') return true;
@@ -172,12 +201,25 @@ function getTimelineStep(order: Order): number {
   return 1;
 }
 
-export default function OrdersPage() {
+function OrdersContent() {
+  const searchParams = useSearchParams();
   const { data: session } = useSession();
+  const [activeTab, setActiveTab] = useState<'live' | 'my-orders'>('live');
+  const [publicStatusFilter, setPublicStatusFilter] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
   const [notification, setNotification] = useState<string | null>(null);
+
+  // Sync tab with URL search parameter (?tab=my-orders)
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam === 'my-orders' || tabParam === 'personal') {
+      setActiveTab('my-orders');
+    } else if (tabParam === 'live') {
+      setActiveTab('live');
+    }
+  }, [searchParams]);
 
   // Individual Order Scoping: Session Email or Guest Email from localStorage
   const [guestEmail, setGuestEmail] = useState<string>(() => {
@@ -209,6 +251,27 @@ export default function OrdersPage() {
       .catch(() => {});
   }, []);
 
+  // PUBLIC LIVE ORDERS ACTIVITY QUERY
+  const {
+    data: publicData,
+    isLoading: isPublicLoading,
+    refetch: refetchPublic,
+  } = useQuery<{ success: boolean; data: PublicLiveOrder[]; total: number }>({
+    queryKey: ['public-live-orders', publicStatusFilter],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      params.append('mode', 'live');
+      if (publicStatusFilter !== 'all') params.append('status', publicStatusFilter);
+      const res = await fetch(`/api/v1/orders?${params.toString()}`);
+      if (!res.ok) throw new Error('Gagal mengambil aktivitas pesanan live');
+      return res.json();
+    },
+    refetchInterval: 15000,
+  });
+
+  const rawPublicOrders = publicData?.data || [];
+
+  // PERSONAL / PRIVATE ORDERS QUERY
   const { data, isLoading, error, refetch } = useQuery<{ success: boolean; data: Order[] }>({
     queryKey: ['orders', selectedStatus, activeEmail],
     queryFn: async () => {
@@ -222,7 +285,7 @@ export default function OrdersPage() {
     enabled: Boolean(activeEmail),
   });
 
-  // SSE Real-Time Listener for User (Silent background sync)
+  // SSE Real-Time Listener for User & Public Orders (Silent background sync)
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
@@ -233,6 +296,7 @@ export default function OrdersPage() {
         const payload = JSON.parse(e.data);
         notificationSound.play('payment_verified');
         refetch();
+        refetchPublic();
         showNotification(`Pembayaran #${payload.order_id} terverifikasi! Pesanan sedang diproses.`);
       } catch (err) {
         console.error('SSE user order:payment_verified error', err);
@@ -244,6 +308,7 @@ export default function OrdersPage() {
         const payload = JSON.parse(e.data);
         notificationSound.play('status_updated');
         refetch();
+        refetchPublic();
         showNotification(`Status pesanan #${payload.order_id} diperbarui: ${payload.new_status}`);
       } catch (err) {
         console.error('SSE user order:status_changed error', err);
@@ -253,7 +318,7 @@ export default function OrdersPage() {
     return () => {
       eventSource.close();
     };
-  }, [refetch]);
+  }, [refetch, refetchPublic]);
 
   const rawOrders = data?.data || [];
 
@@ -387,45 +452,232 @@ export default function OrdersPage() {
 
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 py-8 w-full">
         {/* Breadcrumb */}
-        <div className="flex items-center gap-2 text-xs text-foreground-muted mb-6">
+        <div className="flex items-center gap-2 text-xs text-foreground-muted mb-4 sm:mb-6">
           <Link href="/" className="hover:text-foreground transition-colors">
             Beranda
           </Link>
           <span>/</span>
-          <span className="text-foreground font-medium">Pesanan Saya</span>
+          <span className="text-foreground font-medium">
+            {activeTab === 'live' ? 'Pesanan (Aktivitas Live)' : 'Pesanan Saya (Privat)'}
+          </span>
         </div>
 
-        {/* Page Title & Stats Bar */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-          <div>
-            <h1 data-gsap="page-title" className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-              Riwayat Pesanan & Pelacakan Lisensi
-            </h1>
-            <p data-gsap="page-sub" className="text-xs sm:text-sm text-foreground-muted mt-1">
-              Pantau progres aktivasi, rincian akun digital, dan unduh bukti transaksi resmi Anda.
-            </p>
-          </div>
+        {/* Primary View Switcher: Live Order Activity vs Pesanan Saya */}
+        <div className="flex items-center gap-2 mb-6 border-b border-border pb-3">
+          <button
+            type="button"
+            onClick={() => setActiveTab('live')}
+            className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+              activeTab === 'live'
+                ? 'bg-[#121A2A] text-[#F7F5EF] shadow-xs'
+                : 'text-foreground-muted hover:text-foreground hover:bg-surface-raised'
+            }`}
+          >
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span>Pesanan (Live Activity)</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('my-orders')}
+            className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+              activeTab === 'my-orders'
+                ? 'bg-[#121A2A] text-[#F7F5EF] shadow-xs'
+                : 'text-foreground-muted hover:text-foreground hover:bg-surface-raised'
+            }`}
+          >
+            <FontAwesomeIcon icon={faReceipt} className="w-3.5 h-3.5 text-[#C96F55]" />
+            <span>Pesanan Saya</span>
+            {activeEmail && (
+              <span className="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded-full font-mono">
+                Aktif
+              </span>
+            )}
+          </button>
+        </div>
 
-          <div data-gsap="hero-card" className="flex items-center gap-2">
-            <Link href="/products">
-              <Button size="sm" variant="outline" className="text-xs gap-1.5 border-border">
-                <FontAwesomeIcon icon={faCartShopping} className="w-3.5 h-3.5 text-primary" />
-                <span>Beli Lisensi Baru</span>
+        {/* ========================================================================= */}
+        {/* VIEW 1: LIVE ORDER ACTIVITY (PUBLIC, MASKED, REALTIME)                     */}
+        {/* ========================================================================= */}
+        {activeTab === 'live' && (
+          <div className="space-y-6">
+            {/* CTA Banner to Personal Orders (Section 12 Requirement) */}
+            <div className="p-4 sm:p-5 rounded-2xl bg-[#121A2A] border border-[#C96F55]/30 shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-[#F7F5EF]">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-[#C96F55] animate-ping" />
+                  <p className="text-xs sm:text-sm font-bold text-[#F7F5EF]">
+                    Ingin melihat pesanan Anda sendiri?
+                  </p>
+                </div>
+                <p className="text-[11px] sm:text-xs text-[#F7F5EF]/70">
+                  Lacak riwayat lisensi digital, status aktivasi akun, dan bukti transaksi pribadi Anda di area privat.
+                </p>
+              </div>
+              <Button
+                type="button"
+                onClick={() => setActiveTab('my-orders')}
+                className="bg-[#C96F55] hover:bg-[#B86047] text-[#F7F5EF] font-bold text-xs h-9 px-4 rounded-xl shrink-0 gap-1.5 shadow-xs transition-transform active:scale-95 cursor-pointer"
+              >
+                <FontAwesomeIcon icon={faReceipt} className="w-3 h-3" />
+                <span>Lacak Pesanan Saya</span>
+                <FontAwesomeIcon icon={faArrowRight} className="w-3 h-3" />
               </Button>
-            </Link>
-            <button
-              type="button"
-              onClick={() => {
-                refetch();
-                showNotification('Data riwayat pesanan berhasil diperbarui.');
-              }}
-              className="p-2 rounded-lg bg-surface-raised border border-border text-foreground-muted hover:text-foreground transition-colors"
-              title="Perbarui Data"
-            >
-              <FontAwesomeIcon icon={faRotateLeft} className="w-4 h-4" />
-            </button>
+            </div>
+
+            {/* Live Order Section Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[11px] font-bold mb-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>AKTIVITAS PESANAN REALTIME</span>
+                </div>
+                <h1 data-gsap="page-title" className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+                  Pesanan Pelanggan Asterra Store
+                </h1>
+                <p data-gsap="page-sub" className="text-xs sm:text-sm text-foreground-muted mt-1">
+                  Pantau pesanan produk digital dan aktivasi lisensi seluruh pelanggan secara transparan dan aman.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    refetchPublic();
+                    showNotification('Aktivitas pesanan live berhasil diperbarui.');
+                  }}
+                  className="p-2 rounded-lg bg-surface-raised border border-border text-foreground-muted hover:text-foreground transition-colors cursor-pointer"
+                  title="Perbarui Live Feed"
+                >
+                  <FontAwesomeIcon icon={faRotateLeft} className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Filter Pills for Live Orders */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-1">
+              {[
+                { id: 'all', label: 'Semua Status' },
+                { id: 'processing', label: 'Sedang Diproses' },
+                { id: 'completed', label: 'Selesai' },
+                { id: 'pending', label: 'Menunggu Pembayaran' },
+              ].map((f) => (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => setPublicStatusFilter(f.id)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
+                    publicStatusFilter === f.id
+                      ? 'bg-primary text-white shadow-xs'
+                      : 'bg-surface-raised text-foreground-muted hover:text-foreground border border-border'
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Live Orders Grid */}
+            {isPublicLoading ? (
+              <div className="py-16 text-center text-foreground-muted text-xs space-y-2">
+                <div className="w-6 h-6 rounded-full border-2 border-primary border-t-transparent animate-spin mx-auto" />
+                <p>Memuat aktivitas pesanan...</p>
+              </div>
+            ) : rawPublicOrders.length === 0 ? (
+              <div className="py-12 text-center text-foreground-muted text-xs bg-surface-raised rounded-2xl border border-border p-6">
+                Belum ada aktivitas pesanan untuk status ini.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                {rawPublicOrders.map((po) => (
+                  <div
+                    key={po.raw_id}
+                    className="p-4 rounded-2xl bg-surface border border-border hover:border-primary/40 shadow-xs hover:shadow-sm transition-all flex flex-col justify-between gap-3"
+                  >
+                    <div className="flex items-center justify-between border-b border-border/60 pb-2.5">
+                      <span className="font-mono text-xs font-bold text-foreground">
+                        {po.id}
+                      </span>
+                      {getStatusBadge(po.order_status)}
+                    </div>
+
+                    <div>
+                      <h3 className="text-sm font-bold text-foreground line-clamp-1">
+                        {po.product_name}
+                      </h3>
+                      {po.items_count > 1 && (
+                        <p className="text-[11px] text-foreground-muted line-clamp-1 mt-0.5">
+                          +{po.items_count - 1} item lainnya
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="flex items-center justify-between text-[11px] text-foreground-muted pt-1 border-t border-border/40">
+                      <span className="truncate max-w-[140px] font-medium">
+                        {po.customer_display}
+                      </span>
+                      <span className="shrink-0 font-medium">
+                        {formatRelativeTime(po.order_date)}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* VIEW 2: PESANAN SAYA (PERSONAL / PRIVATE ORDER TRACKING)                   */}
+        {/* ========================================================================= */}
+        {activeTab === 'my-orders' && (
+          <div className="space-y-6">
+            {/* Banner back to public live orders */}
+            <div className="flex items-center justify-between p-3 sm:p-4 rounded-xl bg-surface-raised border border-border text-xs">
+              <span className="text-foreground-muted">
+                Sedang menampilkan pesanan pribadi Anda.
+              </span>
+              <button
+                type="button"
+                onClick={() => setActiveTab('live')}
+                className="text-primary hover:underline font-semibold flex items-center gap-1.5 cursor-pointer"
+              >
+                <span>Lihat Live Order Semua Pelanggan</span>
+                <FontAwesomeIcon icon={faArrowRight} className="w-3 h-3" />
+              </button>
+            </div>
+
+            {/* Page Title & Stats Bar */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <h1 data-gsap="page-title" className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+                  Pesanan Saya — Riwayat & Pelacakan Lisensi
+                </h1>
+                <p data-gsap="page-sub" className="text-xs sm:text-sm text-foreground-muted mt-1">
+                  Pantau progres aktivasi, rincian akun digital, dan unduh bukti transaksi resmi Anda.
+                </p>
+              </div>
+
+              <div data-gsap="hero-card" className="flex items-center gap-2">
+                <Link href="/products">
+                  <Button size="sm" variant="outline" className="text-xs gap-1.5 border-border">
+                    <FontAwesomeIcon icon={faCartShopping} className="w-3.5 h-3.5 text-primary" />
+                    <span>Beli Lisensi Baru</span>
+                  </Button>
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => {
+                    refetch();
+                    showNotification('Data riwayat pesanan berhasil diperbarui.');
+                  }}
+                  className="p-2 rounded-lg bg-surface-raised border border-border text-foreground-muted hover:text-foreground transition-colors cursor-pointer"
+                  title="Perbarui Data"
+                >
+                  <FontAwesomeIcon icon={faRotateLeft} className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
 
         {/* Email Entry & Lookup Card when unauthenticated or changing email */}
         {(!activeEmail || isChangingEmail) && (
@@ -910,7 +1162,9 @@ export default function OrdersPage() {
             })}
           </div>
         )}
-      </main>
+      </div>
+    )}
+  </main>
 
       {/* Manual Payment Instructions Modal from Orders Page */}
       {activeManualModal && (
@@ -933,5 +1187,19 @@ export default function OrdersPage() {
       <Footer />
       <MobileBottomNav />
     </div>
+  );
+}
+
+export default function OrdersPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+        </div>
+      }
+    >
+      <OrdersContent />
+    </Suspense>
   );
 }

@@ -87,7 +87,7 @@ export function FloatingSupport() {
   return (
     <div
       ref={containerRef}
-      className="fixed bottom-5 right-5 sm:bottom-6 sm:right-6 z-40"
+      className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] sm:bottom-6 right-4 sm:right-6 z-40"
       onMouseEnter={() => setIsOpen(true)}
       onMouseLeave={() => setIsOpen(false)}
     >

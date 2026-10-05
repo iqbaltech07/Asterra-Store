@@ -7,39 +7,27 @@ import Image from 'next/image';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faBox,
-  faUser,
-  faRightFromBracket,
-  faChevronDown,
   faMagnifyingGlass,
+  faEllipsis,
 } from '@fortawesome/free-solid-svg-icons';
 import { useAuthStore } from '@/store/use-auth-store';
 import { useSession } from '@/lib/auth-client';
-import { useQueryClient } from '@tanstack/react-query';
-import { performCustomerLogout } from '@/lib/utils/auth-logout';
 import { AsterraLogo } from '@/components/ui/asterra-logo';
 import { Button } from '@/components/ui/button';
 import { animateNavbar } from '@/lib/animations/gsap-utils';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { useNavigationStore } from '@/store/use-navigation-store';
 
 interface HeaderProps {
   onNotify?: (message: string) => void;
 }
 
-export function Header({ onNotify }: HeaderProps) {
+export function Header({ onNotify: _onNotify }: HeaderProps) {
   const { data: session } = useSession();
   const { user: legacyUser } = useAuthStore();
+  const { openSidebar } = useNavigationStore();
 
   const pathname = usePathname();
   const headerRef = useRef<HTMLElement>(null);
-
-  const queryClient = useQueryClient();
 
   useEffect(() => {
     const cleanup = animateNavbar(headerRef.current);
@@ -48,24 +36,13 @@ export function Header({ onNotify }: HeaderProps) {
     };
   }, []);
 
-  const handleActionNotice = (msg: string) => {
-    if (onNotify) onNotify(msg);
-  };
-
   const currentUser = session?.user || legacyUser;
   const userImage = currentUser && 'image' in currentUser ? (currentUser as { image?: string | null }).image : null;
-
-  const handleLogout = async () => {
-    await performCustomerLogout({
-      queryClient,
-      currentPath: pathname,
-      onNotice: handleActionNotice,
-    });
-  };
 
   const isHomeActive = pathname === '/';
   const isProductsActive = pathname.startsWith('/products') || pathname.startsWith('/product');
   const isOrdersActive = pathname.startsWith('/orders');
+  const isSellerActive = pathname.startsWith('/seller') || pathname.startsWith('/daftar-sales') || pathname.startsWith('/sales');
 
   return (
     <header ref={headerRef} className="sticky top-0 z-40 w-full px-2 sm:px-6 pt-2 pb-1.5 transition-colors duration-150">
@@ -116,7 +93,19 @@ export function Header({ onNotify }: HeaderProps) {
             }`}
           >
             <FontAwesomeIcon icon={faBox} className="w-3.5 h-3.5 text-[#C96F55]" />
-            <span>Pesanan Saya</span>
+            <span>Pesanan</span>
+          </Link>
+          <Link
+            href="/seller"
+            prefetch={true}
+            data-gsap="nav-link"
+            className={`transition-colors py-1 ${
+              isSellerActive
+                ? 'text-[#C96F55] font-semibold'
+                : 'text-[#F7F5EF]/80 hover:text-[#F7F5EF]'
+            }`}
+          >
+            Seller
           </Link>
           <Link
             href="/#keunggulan"
@@ -135,7 +124,7 @@ export function Header({ onNotify }: HeaderProps) {
         </nav>
 
         {/* Action Buttons (Desktop & Compact Mobile) */}
-        <div className="flex items-center gap-1.5 sm:gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-2.5">
           {/* Mobile Search Icon */}
           <Link
             href="/products"
@@ -146,71 +135,44 @@ export function Header({ onNotify }: HeaderProps) {
             <FontAwesomeIcon icon={faMagnifyingGlass} className="w-4 h-4" />
           </Link>
 
-          {/* User Account Dropdown / Login Button */}
+          {/* Lainnya Button - Opens Navigation Drawer */}
+          <button
+            type="button"
+            onClick={openSidebar}
+            data-gsap="nav-action"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border border-white/10 bg-[#182235] hover:border-[#C96F55]/40 hover:bg-[#1e2a40] transition-all text-xs font-medium text-[#F7F5EF] focus:outline-none focus:ring-2 focus:ring-[#C96F55]/30 cursor-pointer"
+            aria-label="Buka Menu Lainnya"
+          >
+            <FontAwesomeIcon icon={faEllipsis} className="w-3.5 h-3.5 text-[#C96F55]" />
+            <span className="hidden sm:inline">Lainnya</span>
+          </button>
+
+          {/* User Profile Pill or Login Button */}
           {currentUser ? (
-            <div data-gsap="nav-action">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button
-                    type="button"
-                    className="flex items-center gap-1.5 sm:gap-2 p-1 sm:px-3 sm:py-1.5 rounded-xl border border-white/10 bg-[#182235] hover:border-[#C96F55]/40 hover:bg-[#1e2a40] transition-all text-xs font-medium text-[#F7F5EF] focus:outline-none focus:ring-2 focus:ring-[#C96F55]/30 cursor-pointer"
-                    aria-label="Menu Akun Pengguna"
-                  >
-                    {userImage ? (
-                      <Image
-                        src={userImage}
-                        alt={currentUser.name || 'Profil'}
-                        width={28}
-                        height={28}
-                        unoptimized
-                        className="w-7 h-7 rounded-full object-cover ring-1 ring-white/20"
-                      />
-                    ) : (
-                      <div className="w-7 h-7 rounded-full bg-[rgba(201,111,85,0.2)] border border-[rgba(201,111,85,0.4)] text-[#C96F55] flex items-center justify-center font-bold text-xs">
-                        {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U'}
-                      </div>
-                    )}
-                    <span className="hidden sm:inline-block max-w-[90px] truncate text-[#F7F5EF] text-xs font-medium">
-                      {currentUser.name?.split(' ')[0] || 'Profil'}
-                    </span>
-                    <FontAwesomeIcon icon={faChevronDown} className="w-3 h-3 text-[#F7F5EF]/60 hidden sm:inline-block" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 bg-white text-[#121A2A] border border-[rgba(18,26,42,0.1)] shadow-editorial">
-                  <DropdownMenuLabel className="font-normal py-2.5 px-3">
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-xs font-semibold leading-none text-[#121A2A] truncate">
-                        {currentUser.name || 'Pengguna Asterra'}
-                      </p>
-                      <p className="text-[11px] leading-none text-[#5F6C80] truncate">
-                        {currentUser.email || 'Akun Aktif'}
-                      </p>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator className="bg-[rgba(18,26,42,0.08)]" />
-                  <DropdownMenuItem asChild>
-                    <Link href="/profile" className="flex items-center gap-2 cursor-pointer w-full text-[#121A2A] hover:text-[#C96F55]">
-                      <FontAwesomeIcon icon={faUser} className="w-3.5 h-3.5 text-[#C96F55]" />
-                      <span>Profil Saya</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/orders" className="flex items-center gap-2 cursor-pointer w-full text-[#121A2A] hover:text-[#C96F55]">
-                      <FontAwesomeIcon icon={faBox} className="w-3.5 h-3.5 text-[#C96F55]" />
-                      <span>Pesanan Saya</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator className="bg-[rgba(18,26,42,0.08)]" />
-                  <DropdownMenuItem
-                    onClick={handleLogout}
-                    className="flex items-center gap-2 text-status-error focus:text-status-error focus:bg-status-error/10 cursor-pointer"
-                  >
-                    <FontAwesomeIcon icon={faRightFromBracket} className="w-3.5 h-3.5" />
-                    <span>Keluar Akun</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+            <Link
+              href="/profile"
+              data-gsap="nav-action"
+              className="flex items-center gap-1.5 sm:gap-2 p-1 sm:px-2.5 sm:py-1 rounded-xl border border-white/10 bg-[#182235] hover:border-[#C96F55]/40 hover:bg-[#1e2a40] transition-all text-xs font-medium text-[#F7F5EF] cursor-pointer"
+              title="Profil Saya"
+            >
+              {userImage ? (
+                <Image
+                  src={userImage}
+                  alt={currentUser.name || 'Profil'}
+                  width={24}
+                  height={24}
+                  unoptimized
+                  className="w-6 h-6 rounded-full object-cover ring-1 ring-white/20"
+                />
+              ) : (
+                <div className="w-6 h-6 rounded-full bg-[rgba(201,111,85,0.2)] border border-[rgba(201,111,85,0.4)] text-[#C96F55] flex items-center justify-center font-bold text-xs">
+                  {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U'}
+                </div>
+              )}
+              <span className="hidden sm:inline-block max-w-[85px] truncate text-[#F7F5EF] text-xs font-medium">
+                {currentUser.name?.split(' ')[0] || 'Profil'}
+              </span>
+            </Link>
           ) : (
             <div data-gsap="nav-action" className="flex items-center">
               <Link href="/login">

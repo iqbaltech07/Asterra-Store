@@ -4,6 +4,7 @@ import { config } from '@fortawesome/fontawesome-svg-core';
 import '@fortawesome/fontawesome-svg-core/styles.css';
 import { QueryProvider } from '@/providers/query-provider';
 import { FloatingSupport } from '@/components/layout/floating-support';
+import { LainnyaSidebar } from '@/components/layout/lainnya-sidebar';
 import { ReferralTracker } from '@/components/analytics/referral-tracker';
 import { GsapProvider } from '@/providers/gsap-provider';
 import './globals.css';
@@ -86,6 +87,7 @@ export default function RootLayout({
           <GsapProvider>
             {children}
           </GsapProvider>
+          <LainnyaSidebar />
           <FloatingSupport />
         </QueryProvider>
       </body>

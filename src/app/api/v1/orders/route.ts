@@ -13,7 +13,19 @@ import { mapDbOrderToOrder, RawDbOrder } from '@/lib/utils/order-mapper';
 import { OrderAdminService } from '@/lib/services/order-admin.service';
 import { SalesDbService } from '@/lib/services/sales-db.service';
 
-// GET /api/v1/orders - User-isolated order history
+function maskCustomerName(name?: string | null): string {
+  if (!name || !name.trim()) return 'Pelanggan Terverifikasi';
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) {
+    const first = parts[0];
+    return first.length <= 2 ? `${first}***` : `${first.slice(0, 2)}***`;
+  }
+  const first = parts[0];
+  const last = parts[parts.length - 1];
+  return `${first} ${last.charAt(0)}.***`;
+}
+
+// GET /api/v1/orders - User-isolated order history & public live order activity
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const status = searchParams.get('status');
@@ -21,11 +33,78 @@ export async function GET(request: NextRequest) {
   const limit = parseInt(searchParams.get('limit') || '10', 10);
   const emailParam = searchParams.get('email')?.trim();
   const orderIdParam = searchParams.get('order_id')?.trim();
+  const isPublicLive = searchParams.get('mode') === 'live' || searchParams.get('public') === 'true';
 
   // Auto-cancel any expired pending orders before returning lists
   await OrderAdminService.autoCancelExpiredOrders().catch((e) =>
     console.warn('[OrdersAPI] Auto-cancel runner error:', e)
   );
+
+  // PUBLIC LIVE ORDERS ACTIVITY (Masked, zero sensitive customer data)
+  if (isPublicLive) {
+    const publicList: Array<{
+      id: string;
+      raw_id: string;
+      product_name: string;
+      items_summary: string;
+      items_count: number;
+      order_status: 'pending' | 'processing' | 'completed' | 'cancelled';
+      order_date: string;
+      customer_display: string;
+    }> = [];
+
+    try {
+      const recentDbOrders = await prisma.order.findMany({
+        take: 30,
+        orderBy: { createdAt: 'desc' },
+        include: { items: true },
+      });
+      for (const d of recentDbOrders) {
+        publicList.push({
+          id: d.id.startsWith('#') ? d.id : `#AST-${d.id.replace(/\D/g, '').slice(-4) || d.id.slice(-4).toUpperCase()}`,
+          raw_id: d.id,
+          product_name: d.items[0]?.productName || 'Akun Lisensi Digital',
+          items_summary: d.items.map((i) => i.productName).join(', '),
+          items_count: d.items.length,
+          order_status: (d.status as 'pending' | 'processing' | 'completed' | 'cancelled') || 'processing',
+          order_date: d.createdAt.toISOString(),
+          customer_display: maskCustomerName(d.customerName),
+        });
+      }
+    } catch (err) {
+      console.warn('[OrdersAPI] Prisma query warning on public live orders:', err);
+    }
+
+    // Merge in-memory orders
+    const memOrders = getGlobalOrders();
+    const existingRawIds = new Set(publicList.map((p) => p.raw_id));
+    for (const m of memOrders) {
+      if (!existingRawIds.has(m.id)) {
+        publicList.push({
+          id: m.id.startsWith('#') ? m.id : `#AST-${m.id.replace(/\D/g, '').slice(-4) || m.id.slice(-4).toUpperCase()}`,
+          raw_id: m.id,
+          product_name: m.items[0]?.product_name || 'Akun Lisensi Digital',
+          items_summary: m.items.map((i) => i.product_name).join(', '),
+          items_count: m.items.length,
+          order_status: m.order_status,
+          order_date: m.order_date,
+          customer_display: maskCustomerName(m.customer_name),
+        });
+      }
+    }
+
+    publicList.sort((a, b) => new Date(b.order_date).getTime() - new Date(a.order_date).getTime());
+    let filteredPublic = publicList;
+    if (status && status !== 'all') {
+      filteredPublic = publicList.filter((o) => o.order_status === status);
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: filteredPublic.slice(0, 30),
+      total: filteredPublic.length,
+    });
+  }
 
   // Check if user is authenticated via Better Auth session
   let sessionUserEmail: string | null = null;

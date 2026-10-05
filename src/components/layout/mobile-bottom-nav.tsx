@@ -8,46 +8,47 @@ import {
   faHouse,
   faReceipt,
   faStore,
-  faUser,
+  faEllipsis,
 } from '@fortawesome/free-solid-svg-icons';
-import { useSession } from '@/lib/auth-client';
-import { useAuthStore } from '@/store/use-auth-store';
+import { useNavigationStore } from '@/store/use-navigation-store';
 
 export function MobileBottomNav() {
   const pathname = usePathname();
-  const { data: session } = useSession();
-  const { user: legacyUser } = useAuthStore();
-  const currentUser = session?.user || legacyUser;
+  const { isSidebarOpen, openSidebar } = useNavigationStore();
 
   const isHome = pathname === '/';
   const isOrders = pathname.startsWith('/orders');
   const isSeller = pathname.startsWith('/seller') || pathname.startsWith('/daftar-sales') || pathname.startsWith('/sales');
-  const isAccount = pathname.startsWith('/profile') || pathname.startsWith('/login') || pathname.startsWith('/register');
 
   const navItems = [
     {
       label: 'Beranda',
       href: '/',
       icon: faHouse,
-      active: isHome,
+      active: isHome && !isSidebarOpen,
+      isAction: false,
     },
     {
       label: 'Pesanan',
       href: '/orders',
       icon: faReceipt,
-      active: isOrders,
+      active: isOrders && !isSidebarOpen,
+      isAction: false,
     },
     {
       label: 'Seller',
       href: '/seller',
       icon: faStore,
-      active: isSeller,
+      active: isSeller && !isSidebarOpen,
+      isAction: false,
     },
     {
-      label: 'Akun',
-      href: currentUser ? '/profile' : '/login',
-      icon: faUser,
-      active: isAccount,
+      label: 'Lainnya',
+      href: '#',
+      icon: faEllipsis,
+      active: isSidebarOpen,
+      isAction: true,
+      onClick: () => openSidebar(),
     },
   ];
 
@@ -58,17 +59,8 @@ export function MobileBottomNav() {
     >
       <div className="flex items-center justify-around max-w-md mx-auto">
         {navItems.map((item) => {
-          return (
-            <Link
-              key={item.label}
-              href={item.href}
-              prefetch={true}
-              className={`flex flex-col items-center justify-center py-1 px-3 min-w-[64px] rounded-xl transition-all duration-150 ${
-                item.active
-                  ? 'text-[#C96F55]'
-                  : 'text-[#F7F5EF]/60 hover:text-[#F7F5EF]'
-              }`}
-            >
+          const content = (
+            <>
               <div className="relative flex items-center justify-center h-6 w-6">
                 <FontAwesomeIcon
                   icon={item.icon}
@@ -87,6 +79,39 @@ export function MobileBottomNav() {
               >
                 {item.label}
               </span>
+            </>
+          );
+
+          if (item.isAction) {
+            return (
+              <button
+                key={item.label}
+                type="button"
+                onClick={item.onClick}
+                className={`flex flex-col items-center justify-center py-1 px-3 min-w-[64px] rounded-xl transition-all duration-150 cursor-pointer ${
+                  item.active
+                    ? 'text-[#C96F55]'
+                    : 'text-[#F7F5EF]/60 hover:text-[#F7F5EF]'
+                }`}
+                aria-label="Buka Menu Lainnya"
+              >
+                {content}
+              </button>
+            );
+          }
+
+          return (
+            <Link
+              key={item.label}
+              href={item.href}
+              prefetch={true}
+              className={`flex flex-col items-center justify-center py-1 px-3 min-w-[64px] rounded-xl transition-all duration-150 ${
+                item.active
+                  ? 'text-[#C96F55]'
+                  : 'text-[#F7F5EF]/60 hover:text-[#F7F5EF]'
+              }`}
+            >
+              {content}
             </Link>
           );
         })}
