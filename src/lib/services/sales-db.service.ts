@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import bcrypt from 'bcryptjs';
 import { ProfitBreakdown } from './referral-profit.service';
 
 export class SalesDbService {
@@ -59,6 +60,7 @@ export class SalesDbService {
     name: string;
     email: string;
     whatsapp: string;
+    password?: string;
     referredByCode?: string;
     customCode?: string;
   }) {
@@ -86,6 +88,16 @@ export class SalesDbService {
       return {
         success: false,
         message: `Akun sales dengan email atau WhatsApp tersebut sudah terdaftar (Kode: ${existing.code}).`,
+      };
+    }
+
+    const existingAdmin = await prisma.adminUser.findUnique({
+      where: { email },
+    });
+    if (existingAdmin && existingAdmin.role !== 'sales') {
+      return {
+        success: false,
+        message: 'Alamat email ini sudah terdaftar sebagai akun administrator Asterra Store.',
       };
     }
 
@@ -159,6 +171,34 @@ export class SalesDbService {
         status: 'active',
       },
     });
+
+    // Create or update AdminUser for sales portal authentication if password provided
+    if (input.password && input.password.length >= 6) {
+      try {
+        const passwordHash = await bcrypt.hash(input.password, 10);
+        const usernameSlug = `sales-${finalCode.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+
+        await prisma.adminUser.upsert({
+          where: { email },
+          update: {
+            name,
+            role: 'sales',
+            passwordHash,
+            isActive: true,
+          },
+          create: {
+            username: usernameSlug,
+            email,
+            name,
+            passwordHash,
+            role: 'sales',
+            isActive: true,
+          },
+        });
+      } catch (adminErr) {
+        console.error('[SalesDbService] Error creating adminUser for sales partner:', adminErr);
+      }
+    }
 
     return {
       success: true,

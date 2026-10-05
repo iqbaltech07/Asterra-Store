@@ -41,6 +41,7 @@ export async function POST(req: NextRequest) {
       name: cleanName,
       email: cleanEmail,
       whatsapp: whatsapp.trim(),
+      password,
       referredByCode: typeof referralCode === 'string' ? referralCode : undefined,
       customCode: typeof customCode === 'string' ? customCode : undefined,
     });

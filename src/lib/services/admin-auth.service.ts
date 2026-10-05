@@ -51,7 +51,7 @@ export class AdminAuthService {
     const clean = identifierInput.trim().toLowerCase();
 
     // Query database for admin user by email or username
-    const admin = await prisma.adminUser.findFirst({
+    let admin = await prisma.adminUser.findFirst({
       where: {
         OR: [
           { email: { equals: clean, mode: 'insensitive' } },
@@ -60,10 +60,30 @@ export class AdminAuthService {
       },
     });
 
+    // Fallback: If not found directly, check if input matches a sales partner referral code
+    if (!admin) {
+      const partner = await prisma.salesPartner.findFirst({
+        where: {
+          OR: [
+            { code: { equals: clean.toUpperCase(), mode: 'insensitive' } },
+            { email: { equals: clean, mode: 'insensitive' } },
+          ],
+        },
+      });
+
+      if (partner) {
+        admin = await prisma.adminUser.findFirst({
+          where: {
+            email: { equals: partner.email, mode: 'insensitive' },
+          },
+        });
+      }
+    }
+
     if (!admin) {
       return {
         valid: false,
-        error: 'Kredensial administrator tidak valid atau akun tidak ditemukan.',
+        error: 'Kredensial tidak valid atau akun belum terdaftar.',
       };
     }
 
