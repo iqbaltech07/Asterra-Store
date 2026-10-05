@@ -51,7 +51,7 @@ export function AsterraLogo({
       {variant === 'navbar' ? (
         <div className="inline-flex items-center">
           {/* Animated Asterra Planet (152 frames, 20fps, alpha, navbar-optimized) */}
-          <div className="relative shrink-0 flex items-center justify-center -mr-1.5 sm:-mr-2">
+          <div className="relative shrink-0 flex items-center justify-center -mr-1.5 md:-mr-3.5 lg:-mr-4">
             <picture className="flex items-center justify-center pointer-events-none select-none">
               <source srcSet="/assets/asterra-planet-navbar.webp" type="image/webp" />
               <img

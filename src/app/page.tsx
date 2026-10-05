@@ -793,12 +793,13 @@ export default function HomePage() {
       {/* Main Content */}
       <main className="flex-1 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-2 sm:pt-3 pb-8 sm:pb-12 w-full overflow-hidden">
         {/*
-          SECTION 2: HERO BANNER IMAGE (PURE VISUAL, NO HTML OVERLAY TEXT/BADGES/BUTTONS)
-          Replaces all previous HTML hero copy. Uses the exact provided banner image.
-          Responsive behavior:
-          - Desktop: Preserves original 1024/366 composition with crisp, proportional display.
-          - Mobile: Optimized responsive height (155px - 175px) preserving character, logo, headline & CTA without microscopic shrinking.
-          - Clickable promotional banner linking to /seller program.
+          SECTION 2: HERO BANNER IMAGE (INTRINSIC ASPECT RATIO, MAXIMUM SHARPNESS)
+          Container dynamically adapts to the intrinsic aspect ratio of the image (1024/366).
+          - No fixed h-[xxxpx] or max-h constraints
+          - width: 100%, height: auto
+          - unoptimized to prevent lossy Next.js downsampling/compression
+          - priority for immediate above-the-fold LCP rendering
+          - object-contain: no stretch, no distortion, no crop
         */}
         <section aria-label="Banner Promo Asterra" className="w-full mb-3.5 sm:mb-5">
           <Link
@@ -806,16 +807,15 @@ export default function HomePage() {
             title="Program Reseller Asterra Store - Jadi Bagian dari AsterraStore"
             className="group block relative w-full overflow-hidden rounded-xl sm:rounded-2xl md:rounded-3xl border border-[rgba(18,26,42,0.08)] shadow-xs hover:shadow-md transition-shadow bg-[#f0f5ff]"
           >
-            <div className="relative w-full h-[155px] xs:h-[168px] sm:h-[210px] md:h-auto md:aspect-[1024/366] max-h-[340px]">
-              <Image
-                src="/images/banners/hero-banner-reseller.webp"
-                alt="Program Reseller Asterra Store - Jadi Bagian dari AsterraStore, Dapatkan Komisi 10-15% per Produk"
-                fill
-                priority
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 95vw, 1200px"
-                className="object-cover object-left md:object-cover w-full h-full transition-transform duration-300 group-hover:scale-[1.008]"
-              />
-            </div>
+            <Image
+              src="/images/banners/hero-banner-reseller.webp"
+              alt="Program Reseller Asterra Store - Jadi Bagian dari AsterraStore, Dapatkan Komisi 10-15% per Produk"
+              width={1024}
+              height={366}
+              priority
+              unoptimized
+              className="w-full h-auto block rounded-xl sm:rounded-2xl md:rounded-3xl object-contain transition-transform duration-300 group-hover:scale-[1.004]"
+            />
           </Link>
         </section>
 
