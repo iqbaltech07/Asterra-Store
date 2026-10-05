@@ -125,14 +125,20 @@ function CheckoutPageContent() {
         if (isCancelled) return;
 
         if (json.valid && json.data) {
-          setReferralPartner({
-            code: json.data.code,
-            name: json.data.partnerName,
-          });
-          if (json.data.discountEligible && json.data.discountAmount > 0) {
-            setReferralDiscount(json.data.discountAmount);
+          if (json.data.discountEligible === false) {
+             // Ref sudah diklaim, bersihkan dari UI dan storage
+             setReferralPartner(null);
+             setReferralDiscount(0);
+             setReferralCode('');
+             if (typeof window !== 'undefined') {
+                localStorage.removeItem('asterra_ref');
+             }
           } else {
-            setReferralDiscount(0);
+             setReferralPartner({
+               code: json.data.code,
+               name: json.data.partnerName,
+             });
+             setReferralDiscount(json.data.discountAmount);
           }
         } else {
           setReferralPartner(null);
@@ -455,11 +461,24 @@ function CheckoutPageContent() {
       const orderData = await OrdersApi.create(orderPayload);
       const createdOrder = orderData.order;
 
-      // Handle successful discount claim: clear ref if this order consumed the 1-time discount
       if (referralDiscount > 0 && typeof window !== 'undefined') {
         try {
           localStorage.removeItem('asterra_ref');
+          localStorage.removeItem('asterra_utm_campaign');
+          localStorage.removeItem('asterra_utm_source');
+          localStorage.removeItem('asterra_utm_medium');
           document.cookie = 'asterra_ref=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+          document.cookie = 'asterra_utm_campaign=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+          document.cookie = 'asterra_utm_source=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+          const url = new URL(window.location.href);
+          url.searchParams.delete('ref');
+          url.searchParams.delete('utm_campaign');
+          url.searchParams.delete('utm_source');
+          url.searchParams.delete('utm_medium');
+          window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
+          setReferralCode('');
+          setReferralPartner(null);
+          setReferralDiscount(0);
         } catch (_) {}
       }
 

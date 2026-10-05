@@ -57,8 +57,7 @@ function ReferralTrackerInner() {
       }
     }
 
-    // 3. Auto-Preserve URL Parameters on Navigation
-    // Scope: Only allowed pages (/ , /products, /products/[id], /checkout)
+    // 3. Auto-Preserve URL Parameters on Navigation (with 1-time discount check)
     if (typeof window !== 'undefined') {
       const allowedPaths = ['/', '/products', '/checkout'];
       const isAllowed =
@@ -72,22 +71,54 @@ function ReferralTrackerInner() {
         } catch {}
 
         if (storedRef && !searchParams.get('ref')) {
-          const currentUrl = new URL(window.location.href);
-          currentUrl.searchParams.set('ref', storedRef);
+          const storedEmail = (() => {
+            try {
+              return localStorage.getItem('asterra_customer_email') || '';
+            } catch { return ''; }
+          })();
+          const customerEmail = storedEmail.trim().toLowerCase();
+          const shouldValidate = Boolean(customerEmail && customerEmail.includes('@'));
 
-          try {
-            const storedCampaign = localStorage.getItem('asterra_utm_campaign');
-            if (storedCampaign && !currentUrl.searchParams.has('utm_campaign')) {
-              currentUrl.searchParams.set('utm_campaign', storedCampaign);
-            }
-            const storedSource = localStorage.getItem('asterra_utm_source');
-            if (storedSource && !currentUrl.searchParams.has('utm_source')) {
-              currentUrl.searchParams.set('utm_source', storedSource);
-            }
-          } catch {}
+          const inject = () => {
+            const currentUrl = new URL(window.location.href);
+            if (currentUrl.searchParams.get('ref')) return;
+            currentUrl.searchParams.set('ref', storedRef);
+            try {
+              const storedCampaign = localStorage.getItem('asterra_utm_campaign');
+              if (storedCampaign && !currentUrl.searchParams.has('utm_campaign')) {
+                currentUrl.searchParams.set('utm_campaign', storedCampaign);
+              }
+              const storedSource = localStorage.getItem('asterra_utm_source');
+              if (storedSource && !currentUrl.searchParams.has('utm_source')) {
+                currentUrl.searchParams.set('utm_source', storedSource);
+              }
+            } catch {}
+            const newUrl = currentUrl.pathname + currentUrl.search + currentUrl.hash;
+            window.history.replaceState(window.history.state, '', newUrl);
+          };
 
-          const newUrl = currentUrl.pathname + currentUrl.search + currentUrl.hash;
-          window.history.replaceState(window.history.state, '', newUrl);
+          if (shouldValidate) {
+            fetch(`/api/v1/affiliate/validate-referral?code=${encodeURIComponent(storedRef)}&email=${encodeURIComponent(customerEmail)}`)
+              .then((r) => r.json())
+              .then((json) => {
+                if (json.valid && json.data && json.data.discountEligible === false) {
+                  try {
+                    localStorage.removeItem('asterra_ref');
+                    document.cookie = 'asterra_ref=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+                  } catch {}
+                  const currentUrl = new URL(window.location.href);
+                  if (currentUrl.searchParams.has('ref')) {
+                    currentUrl.searchParams.delete('ref');
+                    window.history.replaceState(window.history.state, '', currentUrl.pathname + currentUrl.search + currentUrl.hash);
+                  }
+                  return;
+                }
+                inject();
+              })
+              .catch(() => inject());
+          } else {
+            inject();
+          }
         }
       }
     }
