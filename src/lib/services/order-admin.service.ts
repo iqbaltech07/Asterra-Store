@@ -9,9 +9,8 @@ import {
   OrderLog,
 } from '@/lib/orders-data';
 import { mapDbOrderToOrder, RawDbOrder } from '@/lib/utils/order-mapper';
-import { AffiliateService } from './affiliate.service';
+import { SalesDbService } from './sales-db.service';
 import { ReferralProfitService } from './referral-profit.service';
-import { ProfitLedgerService } from './profit-ledger.service';
 
 export interface OrderFilterParams {
   status?: string;
@@ -401,13 +400,12 @@ export class OrderAdminService {
         const paymentFee = ReferralProfitService.estimatePaymentFee(orderTotalAmount, paymentMode);
 
         // Check if referral partner exists
-        const partner = referralCode ? AffiliateService.findByCode(referralCode) : undefined;
-        const sponsor = partner?.referredByCode ? AffiliateService.findByCode(partner.referredByCode) : undefined;
+        const partner = referralCode ? await SalesDbService.findByCode(referralCode) : undefined;
+        let recruiterPartner = null;
 
-        // Auto-tier calculation: If partner reaches 50 orders, rate upgrades to 15% VIP rate
-        const effectiveSalesRate = partner
-          ? ((partner.totalOrders || 0) + 1 >= 50 || partner.rate >= 15 ? 0.15 : (partner.rate || 10) / 100)
-          : undefined;
+        if (partner && partner.referredById) {
+          recruiterPartner = await SalesDbService.findById(partner.referredById);
+        }
 
         // Run SSOT profit calculation
         const breakdown = ReferralProfitService.calculate({
@@ -417,8 +415,8 @@ export class OrderAdminService {
           paymentFee,
           otherDirectCost: 0,
           hasDirectReferral: Boolean(partner && partner.status === 'active'),
-          hasDirectRecruiter: Boolean(sponsor && sponsor.status === 'active'),
-          salesCommissionRate: effectiveSalesRate,
+          hasDirectRecruiter: Boolean(recruiterPartner && recruiterPartner.status === 'active'),
+          salesCommissionRate: partner ? partner.rate / 100 : undefined,
         });
 
         // Record in Profit Sharing General Ledger (SSOT §8) for ALL orders (with or without referral)
@@ -426,7 +424,7 @@ export class OrderAdminService {
         const primaryProductId = itemsList[0]?.productId || 'prod-digital';
 
         try {
-          ProfitLedgerService.recordOrderProfit({
+          await SalesDbService.recordProfitLedger({
             orderId,
             customerEmail,
             customerName,
@@ -435,8 +433,8 @@ export class OrderAdminService {
             salesId: partner?.id,
             salesName: partner?.name,
             referralCode: partner?.code,
-            recruiterSalesId: sponsor?.id,
-            recruiterSalesName: sponsor?.name,
+            recruiterSalesId: recruiterPartner?.id,
+            recruiterSalesName: recruiterPartner?.name,
             breakdown,
           });
           console.log(`[ProfitLedger] Successfully recorded financial ledger for order ${orderId}`);
@@ -444,19 +442,17 @@ export class OrderAdminService {
           console.error('[OrderAdminService] Failed to record profit ledger:', ledgerErr);
         }
 
-        // Credit to Affiliate Service if active referral
+        // Credit to SalesDb Service if active referral
         if (partner && partner.status === 'active') {
           try {
-            const creditResult = AffiliateService.recordSuccessfulOrder(
-              partner.code,
-              orderTotalAmount,
-              orderId,
-              { customerEmail, customerPhone, customerName },
+            const creditResult = await SalesDbService.recordSuccessfulOrder(
               {
-                costOfGoods: totalCOGS,
-                paymentFee,
-                customerDiscount,
-                transactionProfit: breakdown.transactionProfit,
+                orderId,
+                partnerId: partner.id,
+                recruiterId: recruiterPartner?.id,
+                breakdown,
+                customerEmail,
+                customerName,
               }
             );
 
@@ -499,7 +495,7 @@ export class OrderAdminService {
     // 4. Automatic Reversal of Affiliate Commission on Order Refund / Cancellation
     if (newStatus === 'cancelled' || (newStatus as string) === 'refunded') {
       try {
-        const refundResult = AffiliateService.handleOrderRefund(
+        const refundResult = await SalesDbService.handleOrderRefund(
           orderId,
           notes || `Status pesanan diubah ke ${newStatus}`
         );
@@ -513,9 +509,7 @@ export class OrderAdminService {
                 action: 'affiliate_commission_reversed',
                 notes: refundResult.message,
                 metadata: {
-                  partner_reversed: refundResult.partnerReversed,
                   direct_commission_reversed: refundResult.directCommissionReversed,
-                  sponsor_reversed: refundResult.sponsorReversed,
                   network_bonus_reversed: refundResult.networkBonusReversed,
                 },
               },

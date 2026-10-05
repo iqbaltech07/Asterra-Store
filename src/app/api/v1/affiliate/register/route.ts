@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import bcrypt from 'bcryptjs';
-import { prisma } from '@/lib/prisma';
-import { AffiliateService } from '@/lib/services/affiliate.service';
+import { SalesDbService } from '@/lib/services/sales-db.service';
 
 export async function POST(req: NextRequest) {
   try {
@@ -39,12 +37,11 @@ export async function POST(req: NextRequest) {
     const cleanEmail = email.toLowerCase().trim();
     const cleanName = name.trim();
 
-    // Register into Affiliate service
-    const result = AffiliateService.registerSalesPartner({
+    const result = await SalesDbService.registerSalesPartner({
       name: cleanName,
       email: cleanEmail,
       whatsapp: whatsapp.trim(),
-      referralCode: typeof referralCode === 'string' ? referralCode : undefined,
+      referredByCode: typeof referralCode === 'string' ? referralCode : undefined,
       customCode: typeof customCode === 'string' ? customCode : undefined,
     });
 
@@ -53,33 +50,6 @@ export async function POST(req: NextRequest) {
         { success: false, message: result.message },
         { status: 400 }
       );
-    }
-
-    // Create or update AdminUser in database with role: 'sales'
-    const passwordHash = await bcrypt.hash(password, 10);
-    const usernameSlug = `sales-${result.partner.code.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
-
-    try {
-      await prisma.adminUser.upsert({
-        where: { email: cleanEmail },
-        update: {
-          name: cleanName,
-          role: 'sales',
-          passwordHash,
-          isActive: true,
-        },
-        create: {
-          username: usernameSlug,
-          email: cleanEmail,
-          name: cleanName,
-          passwordHash,
-          role: 'sales',
-          isActive: true,
-        },
-      });
-    } catch (dbErr) {
-      console.error('Error creating admin_user record for sales partner:', dbErr);
-      // Fallback: don't fail whole request if DB user already exists, but log
     }
 
     return NextResponse.json(

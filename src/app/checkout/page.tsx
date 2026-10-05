@@ -455,6 +455,14 @@ function CheckoutPageContent() {
       const orderData = await OrdersApi.create(orderPayload);
       const createdOrder = orderData.order;
 
+      // Handle successful discount claim: clear ref if this order consumed the 1-time discount
+      if (referralDiscount > 0 && typeof window !== 'undefined') {
+        try {
+          localStorage.removeItem('asterra_ref');
+          document.cookie = 'asterra_ref=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+        } catch (_) {}
+      }
+
       // Save customer email to localStorage for persistent individual order tracking
       if (typeof window !== 'undefined') {
         try {

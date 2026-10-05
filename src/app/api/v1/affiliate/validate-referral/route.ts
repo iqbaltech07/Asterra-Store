@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { AffiliateService } from '@/lib/services/affiliate.service';
-import { ReferralDiscountService } from '@/lib/services/referral-discount.service';
+import { SalesDbService } from '@/lib/services/sales-db.service';
 
 export async function GET(req: NextRequest) {
   try {
@@ -16,7 +15,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const partner = await AffiliateService.findByCodeAsync(code.trim().toUpperCase());
+    const partner = await SalesDbService.findByCode(code.trim().toUpperCase());
 
     if (!partner) {
       return NextResponse.json({
@@ -34,8 +33,7 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    // Check discount eligibility if customer details are supplied
-    const discountCheck = ReferralDiscountService.checkEligibility({
+    const discountCheck = await SalesDbService.checkReferralDiscountEligibility({
       referralCode: partner.code,
       customerEmail: email || undefined,
       customerPhone: phone || undefined,

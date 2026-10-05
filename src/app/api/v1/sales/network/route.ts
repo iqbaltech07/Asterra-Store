@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AdminAuthService } from '@/lib/services/admin-auth.service';
-import { AffiliateService } from '@/lib/services/affiliate.service';
+import { SalesDbService } from '@/lib/services/sales-db.service';
 
 export async function GET(req: NextRequest) {
   try {
@@ -16,8 +16,15 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const partner = AffiliateService.findOrCreateByEmail(session.email, session.name);
-    const networkData = AffiliateService.getTeamDataForPartner(partner.code);
+    const partner = await SalesDbService.findByEmail(session.email);
+    if (!partner) {
+      return NextResponse.json({
+        success: true,
+        data: null,
+      });
+    }
+
+    const networkData = await SalesDbService.getTeamDataForPartner(partner.id);
 
     return NextResponse.json({
       success: true,

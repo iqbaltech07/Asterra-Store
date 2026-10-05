@@ -11,8 +11,7 @@ import { headers } from 'next/headers';
 import { PromoService } from '@/lib/services/promo.service';
 import { mapDbOrderToOrder, RawDbOrder } from '@/lib/utils/order-mapper';
 import { OrderAdminService } from '@/lib/services/order-admin.service';
-import { AffiliateService } from '@/lib/services/affiliate.service';
-import { ReferralDiscountService } from '@/lib/services/referral-discount.service';
+import { SalesDbService } from '@/lib/services/sales-db.service';
 
 // GET /api/v1/orders - User-isolated order history
 export async function GET(request: NextRequest) {
@@ -149,11 +148,17 @@ export async function POST(request: NextRequest) {
     // Validate referral code attribution if present
     let verifiedReferralCode: string | undefined = undefined;
     let salesPartnerName: string | undefined = undefined;
+    let salesPartnerId: string | undefined = undefined;
+    let recruiterPartner: { id: string } | null = null;
     if (referral_code && typeof referral_code === 'string') {
-      const partner = await AffiliateService.findByCodeAsync(referral_code);
+      const partner = await SalesDbService.findByCode(referral_code);
       if (partner && partner.status === 'active') {
         verifiedReferralCode = partner.code;
         salesPartnerName = partner.name;
+        salesPartnerId = partner.id;
+        if (partner.referredById) {
+          recruiterPartner = await SalesDbService.findById(partner.referredById);
+        }
       }
     }
 
@@ -320,7 +325,7 @@ export async function POST(request: NextRequest) {
     // Customer Referral 1x Discount Eligibility Check (SSOT §5, §11)
     let referralDiscount = 0;
     if (verifiedReferralCode) {
-      const refCheck = ReferralDiscountService.checkEligibility({
+      const refCheck = await SalesDbService.checkReferralDiscountEligibility({
         referralCode: verifiedReferralCode,
         customerEmail,
         customerPhone: customerWhatsapp || undefined,
@@ -377,7 +382,7 @@ export async function POST(request: NextRequest) {
     // Record 1-time referral discount usage if applied
     if (verifiedReferralCode && referralDiscount > 0) {
       try {
-        ReferralDiscountService.recordUsage({
+        await SalesDbService.recordReferralDiscountUsage({
           orderId,
           customerEmail,
           customerPhone: customerWhatsapp || undefined,
@@ -400,21 +405,6 @@ export async function POST(request: NextRequest) {
         );
       } catch (promoErr) {
         console.warn('[OrdersAPI] Error redeeming promo code:', promoErr);
-      }
-    }
-
-    // Record customer referral discount usage atomically if applied
-    if (verifiedReferralCode && referralDiscount > 0) {
-      try {
-        ReferralDiscountService.recordUsage({
-          orderId,
-          customerEmail,
-          customerPhone: customerWhatsapp || undefined,
-          referralCode: verifiedReferralCode,
-          discountAmount: referralDiscount,
-        });
-      } catch (refErr) {
-        console.warn('[OrdersAPI] Error recording referral discount usage:', refErr);
       }
     }
 
@@ -462,6 +452,9 @@ export async function POST(request: NextRequest) {
           expiresAt,
           status: 'pending',
           paymentMethod: body.payment_method || (isManualMode ? 'manual_transfer' : 'qris'),
+          referralCode: verifiedReferralCode || null,
+          salesPartnerId: salesPartnerId || null,
+          recruiterPartnerId: recruiterPartner?.id || null,
           logs: {
             create: [
               {

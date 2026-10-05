@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { AffiliateService } from '@/lib/services/affiliate.service';
+import { prisma } from '@/lib/prisma';
 
 export async function POST(req: NextRequest) {
   try {
@@ -10,13 +10,29 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, message: 'Kode tidak valid' }, { status: 400 });
     }
 
-    const recorded = AffiliateService.recordClick(code);
+    const normalized = code.trim().toUpperCase();
+    const partner = await prisma.salesPartner.findUnique({
+      where: { code: normalized },
+    });
+
+    if (!partner) {
+      return NextResponse.json({
+        success: false,
+        message: 'Kode referral tidak ditemukan',
+      });
+    }
+
+    await prisma.salesPartner.update({
+      where: { code: normalized },
+      data: { totalClicks: { increment: 1 } },
+    });
 
     return NextResponse.json({
-      success: recorded,
-      message: recorded ? 'Klik referral berhasil dicatat' : 'Kode referral tidak ditemukan',
+      success: true,
+      message: 'Klik referral berhasil dicatat',
     });
-  } catch (error) {
-    return NextResponse.json({ success: false }, { status: 500 });
+  } catch (error: unknown) {
+    console.error('Error recording click:', error);
+    return NextResponse.json({ success: false, message: 'Gagal mencatat klik referral.' }, { status: 500 });
   }
 }

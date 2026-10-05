@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
-import { AffiliateService } from '@/lib/services/affiliate.service';
+import { SalesDbService } from '@/lib/services/sales-db.service';
 
 export async function GET(_req: NextRequest) {
   try {
-    const list = AffiliateService.getAllAffiliates();
+    const list = await SalesDbService.getAllPartners();
     return NextResponse.json({
       success: true,
       data: list,
@@ -25,14 +25,11 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { name, email, password, whatsapp, code, rate, bankName, bankAccount } = body;
 
-    const result = AffiliateService.createPartnerByAdmin({
+    const result = await SalesDbService.registerSalesPartner({
       name,
       email,
       whatsapp,
-      code,
-      rate: Number(rate) || 10,
-      bankName,
-      bankAccount,
+      customCode: code,
     });
 
     if (!result.success || !result.partner) {
@@ -42,7 +39,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // If password provided, create or update AdminUser for sales portal login
     if (password && typeof password === 'string' && password.length >= 6) {
       try {
         const cleanEmail = result.partner.email.toLowerCase().trim();
@@ -68,6 +64,23 @@ export async function POST(req: NextRequest) {
         });
       } catch (dbErr) {
         console.error('Error creating admin_user record for admin-added sales partner:', dbErr);
+      }
+    }
+
+    if (rate && bankName !== undefined) {
+      try {
+        const numericRate = Number(rate) || 10;
+        await prisma.salesPartner.update({
+          where: { id: result.partner.id },
+          data: {
+            rate: numericRate,
+            tier: numericRate >= 20 ? 'Executive (20%)' : numericRate >= 15 ? 'VIP Sales (15%)' : 'Standard (10%)',
+            bankName: bankName || null,
+            bankAccount: bankAccount || null,
+          },
+        });
+      } catch (updErr) {
+        console.error('Error updating partner rate details:', updErr);
       }
     }
 

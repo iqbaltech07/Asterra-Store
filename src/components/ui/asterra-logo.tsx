@@ -39,7 +39,7 @@ export function AsterraLogo({
   }[size];
 
   const logoSrc = isDarkBg
-    ? '/images/brand/asterra-logo-light-text.png'
+    ? '/images/brand/logo-light-ntg.png'
     : '/images/brand/asterra-logo-dark-text.png';
 
   const content = (

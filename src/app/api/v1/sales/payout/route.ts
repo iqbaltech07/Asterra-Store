@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AdminAuthService } from '@/lib/services/admin-auth.service';
-import { AffiliateService } from '@/lib/services/affiliate.service';
+import { SalesDbService } from '@/lib/services/sales-db.service';
 
 export async function POST(req: NextRequest) {
   try {
@@ -16,11 +16,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const partner = AffiliateService.findOrCreateByEmail(session.email, session.name);
+    const partner = await SalesDbService.findByEmail(session.email);
+    if (!partner) {
+      return NextResponse.json(
+        { success: false, message: 'Mitra sales tidak ditemukan.' },
+        { status: 404 }
+      );
+    }
+
     const body = await req.json();
     const { amount, bankName, bankAccount, bankAccountName, notes } = body;
 
-    const result = AffiliateService.submitPayoutRequest(partner.id, {
+    const result = await SalesDbService.submitPayoutRequest({
+      partnerId: partner.id,
       amount,
       bankName,
       bankAccount,

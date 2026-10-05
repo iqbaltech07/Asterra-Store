@@ -68,7 +68,26 @@ export function AdminAffiliateTab({ onNotify }: AdminAffiliateTabProps) {
       if (res.ok) {
         const json = await res.json();
         if (json.success && Array.isArray(json.data)) {
-          setAffiliates(json.data);
+          // Map DB response schema to expected component state
+          const mappedData = json.data.map((p: any) => ({
+            id: p.id,
+            name: p.name,
+            email: p.email,
+            whatsapp: p.whatsapp,
+            code: p.code,
+            tier: p.tier,
+            rate: p.rate,
+            totalClicks: p.totalClicks,
+            totalOrders: p._count?.orders || 0,
+            status: p.status,
+            bankName: p.bankName || '-',
+            bankAccount: p.bankAccount || '-',
+            joinedAt: new Date(p.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }),
+            totalRevenue: 0, 
+            unpaidCommission: 0,
+            paidCommission: 0,
+          }));
+          setAffiliates(mappedData);
         }
       }
     } catch (err) {

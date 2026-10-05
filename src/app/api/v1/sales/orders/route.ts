@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { AdminAuthService } from '@/lib/services/admin-auth.service';
-import { AffiliateService } from '@/lib/services/affiliate.service';
-import { ProfitLedgerService } from '@/lib/services/profit-ledger.service';
+import { SalesDbService } from '@/lib/services/sales-db.service';
 
 export async function GET(req: NextRequest) {
   try {
@@ -15,28 +14,30 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const partner = AffiliateService.findOrCreateByEmail(session.email, session.name);
-    const creditedIds = partner.creditedOrderIds || [];
-
-    // Query orders matching creditedOrderIds or customerNotes containing referral code
-    const orConditions: Array<{ id?: { in: string[] }; customerNotes?: { contains: string; mode: 'insensitive' } }> = [];
-    if (creditedIds.length > 0) {
-      orConditions.push({ id: { in: creditedIds } });
+    const partner = await SalesDbService.findByEmail(session.email);
+    if (!partner) {
+      return NextResponse.json({
+        success: true,
+        data: [],
+        total: 0,
+      });
     }
-    orConditions.push({ customerNotes: { contains: partner.code, mode: 'insensitive' } });
 
     const orders = await prisma.order.findMany({
       where: {
-        OR: orConditions,
+        OR: [
+          { salesPartnerId: partner.id },
+          { referralCode: partner.code },
+        ],
       },
       include: {
         items: true,
+        commission: true,
       },
       orderBy: { createdAt: 'desc' },
       take: 50,
     });
 
-    // Mask customer email for data privacy
     const maskedOrders = orders.map((o) => {
       const emailParts = o.customerEmail.split('@');
       const maskedEmail =
@@ -44,27 +45,18 @@ export async function GET(req: NextRequest) {
           ? `${emailParts[0].substring(0, 2)}***@${emailParts[1]}`
           : 'Pelanggan';
 
-      const commissionLog = partner.commissionLogs?.find((l) => l.orderId === o.id);
-      const ledgerEntry = ProfitLedgerService.getAllEntries().find((l) => l.orderId === o.id);
-      
-      const transactionProfit = commissionLog?.transactionProfit ?? ledgerEntry?.transactionProfit ?? Math.max(0, Math.round(o.totalAmount * 0.15));
-      const effectiveRate = (partner.rate || 10) / 100;
-      const commission = commissionLog?.commission ?? ledgerEntry?.salesCommission ?? Math.round(transactionProfit * effectiveRate);
-      const commissionStatus = commissionLog?.status ?? (o.status === 'completed' ? 'final' : o.status === 'cancelled' || (o.status as string) === 'refunded' ? 'reversed' : 'pending');
-      const holdingUntil = commissionLog?.holdingUntil ?? ledgerEntry?.holdingUntil;
-
       return {
         id: o.id,
         createdAt: o.createdAt.toISOString(),
         customerEmail: maskedEmail,
         customerName: o.customerName ? `${o.customerName.charAt(0)}***` : 'Pelanggan',
         totalAmount: o.totalAmount,
-        transactionProfit,
+        transactionProfit: o.commission?.transactionProfit || 0,
         status: o.status,
         paymentStatus: o.paymentStatus || (o.status === 'completed' ? 'PAID' : 'PENDING'),
-        commission,
-        commissionStatus,
-        holdingUntil,
+        commission: o.commission?.commissionAmount || 0,
+        commissionStatus: o.commission?.status || 'pending',
+        holdingUntil: o.commission?.holdingUntil?.toISOString(),
         itemsCount: o.items.length,
         productNames: o.items.map((i) => i.productName).join(', '),
       };

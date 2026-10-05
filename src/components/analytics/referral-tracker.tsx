@@ -58,10 +58,14 @@ function ReferralTrackerInner() {
     }
 
     // 3. Auto-Preserve URL Parameters on Navigation
-    // When customer navigates between pages, ensure parameters are not dropped from URL bar.
+    // Scope: Only allowed pages (/ , /products, /products/[id], /checkout)
     if (typeof window !== 'undefined') {
-      const isAdminOrApi = pathname?.startsWith('/admin') || pathname?.startsWith('/api');
-      if (!isAdminOrApi) {
+      const allowedPaths = ['/', '/products', '/checkout'];
+      const isAllowed =
+        allowedPaths.includes(pathname || '') ||
+        (pathname || '').startsWith('/products/');
+
+      if (isAllowed) {
         let storedRef = '';
         try {
           storedRef = localStorage.getItem('asterra_ref') || '';

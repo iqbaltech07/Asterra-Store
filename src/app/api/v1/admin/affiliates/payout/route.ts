@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { AffiliateService } from '@/lib/services/affiliate.service';
+import { SalesDbService } from '@/lib/services/sales-db.service';
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const result = AffiliateService.processPayout(partnerId);
+    const result = await SalesDbService.processPayout(partnerId);
 
     if (!result.success) {
       return NextResponse.json(
@@ -28,7 +28,6 @@ export async function POST(req: NextRequest) {
       data: {
         partnerId,
         amount: result.amount,
-        partner: result.partner,
       },
     });
   } catch (error) {
