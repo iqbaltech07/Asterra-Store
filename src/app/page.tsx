@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -20,6 +21,9 @@ import {
   faBox,
   faTableCellsLarge,
   faStar,
+  faFire,
+  faEye,
+  faClock,
 } from '@fortawesome/free-solid-svg-icons';
 import {
   faYoutube,
@@ -27,6 +31,9 @@ import {
 } from '@fortawesome/free-brands-svg-icons';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
+import { MobileBottomNav } from '@/components/layout/mobile-bottom-nav';
+import { QuickViewModal, QuickViewProductData } from '@/components/products/quick-view-modal';
+import { getRecentlyViewed, RecentlyViewedItem } from '@/lib/services/recently-viewed';
 import { ProductItem } from '@/lib/products-data';
 
 // Helper to render crisp, brand-accurate badges for the top digital applications
@@ -200,7 +207,8 @@ function AppBrandBadge({ name }: { name: string }) {
   );
 }
 
-interface ApplicationGroupItem {
+export interface ApplicationGroupItem {
+  id?: string;
   name: string;
   slug: string;
   category: string;
@@ -209,42 +217,153 @@ interface ApplicationGroupItem {
   fallbackPrice: number;
   soldCount?: number;
   rating?: string;
+  badgeLabel?: string;
   items: ProductItem[];
 }
 
-function ApplicationCard({
+/**
+ * FEATURED PRODUCT CARD (STATIC GRID)
+ * Dedicated card for the Featured section grid (NO MARQUEE, NO HORIZONTAL SCROLL).
+ * Responsive: 4 columns desktop, 2 columns mobile.
+ */
+function FeaturedGridCard({
   app,
-  isDuplicate = false,
+  onQuickView,
 }: {
   app: ApplicationGroupItem;
-  isDuplicate?: boolean;
+  onQuickView?: (app: ApplicationGroupItem) => void;
 }) {
   const activePrices = app.items.map((p) => p.price).filter((p) => p > 0);
   const minPrice = activePrices.length > 0 ? Math.min(...activePrices) : app.fallbackPrice;
 
   return (
-    <Link
-      href={`/products/${app.slug}`}
+    <div className="group bg-white border border-[rgba(18,26,42,0.09)] hover:border-[#C96F55]/70 hover:shadow-card-hover hover:-translate-y-0.5 rounded-xl sm:rounded-2xl p-2.5 sm:p-3.5 transition-[border-color,box-shadow,transform] duration-200 flex flex-col justify-between w-full h-full select-none">
+      <div>
+        {/* 1. Header: Logo + Info */}
+        <div className="flex items-start gap-2 sm:gap-2.5">
+          <Link
+            href={`/products/${app.slug}`}
+            className="w-9 h-9 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-[#121A2A]/5 border border-[rgba(18,26,42,0.08)] flex items-center justify-center overflow-hidden shrink-0 group-hover:scale-105 transition-transform"
+          >
+            <AppBrandBadge name={app.name} />
+          </Link>
+
+          <div className="min-w-0 flex-1">
+            <Link
+              href={`/products/${app.slug}`}
+              className="font-bold text-xs sm:text-[13px] lg:text-sm text-[#121A2A] group-hover:text-[#C96F55] transition-colors truncate block leading-snug"
+              title={app.name}
+            >
+              {app.name}
+            </Link>
+
+            {/* Rating + Sold */}
+            <div className="flex items-center gap-1 text-[10px] sm:text-[11px] text-[#121A2A]/75 font-medium mt-0.5">
+              <FontAwesomeIcon icon={faStar} className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-amber-500 shrink-0" />
+              <span className="font-semibold text-[#121A2A]">{app.rating || '5.0'}</span>
+              <span className="text-[#121A2A]/45 truncate">
+                ({app.soldCount ? `${app.soldCount.toLocaleString('id-ID')} terjual` : 'Ready'})
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* 2. Benefit Tags */}
+        <div className="flex items-center gap-1 sm:gap-1.5 mt-2 sm:mt-2.5 pt-0.5 flex-wrap">
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200/60 leading-none">
+            Ready
+          </span>
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60 leading-none">
+            Garansi
+          </span>
+          {app.badgeLabel && (
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-bold bg-[#C96F55]/10 text-[#C96F55] border border-[#C96F55]/20 leading-none truncate max-w-[90px]">
+              {app.badgeLabel}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* 3. Pricing & Quick View */}
+      <div className="pt-2 border-t border-[rgba(18,26,42,0.06)] mt-2 sm:mt-2.5 flex items-center justify-between">
+        <Link
+          href={`/products/${app.slug}`}
+          className="font-black text-xs sm:text-sm lg:text-[15px] text-[#121A2A] tracking-tight hover:text-[#C96F55] transition-colors"
+        >
+          Rp{minPrice.toLocaleString('id-ID')}
+        </Link>
+
+        <div className="flex items-center gap-1 sm:gap-1.5">
+          {onQuickView && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onQuickView(app);
+              }}
+              title="Lihat Cepat"
+              aria-label={`Tampilan cepat ${app.name}`}
+              className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-[rgba(18,26,42,0.05)] hover:bg-[#C96F55] text-[#121A2A]/70 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+            >
+              <FontAwesomeIcon icon={faEye} className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+            </button>
+          )}
+
+          <Link
+            href={`/products/${app.slug}`}
+            className="text-[10px] sm:text-xs font-bold text-[#C96F55] hover:text-[#B86047] flex items-center gap-1 py-1 px-1.5 rounded transition-colors"
+          >
+            <span>Pilih</span>
+            <FontAwesomeIcon icon={faArrowRight} className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * SHOWCASE LOOPING CARD (VISUAL MARQUEE ONLY)
+ * Dedicated card for the Product Looping Showcase below Featured Products.
+ * Has fixed width and margins for smooth infinite horizontal loop.
+ */
+function ShowcaseLoopingCard({
+  app,
+  isDuplicate = false,
+  onQuickView,
+}: {
+  app: ApplicationGroupItem;
+  isDuplicate?: boolean;
+  onQuickView?: (app: ApplicationGroupItem) => void;
+}) {
+  const activePrices = app.items.map((p) => p.price).filter((p) => p > 0);
+  const minPrice = activePrices.length > 0 ? Math.min(...activePrices) : app.fallbackPrice;
+
+  return (
+    <div
       tabIndex={isDuplicate ? -1 : undefined}
       aria-hidden={isDuplicate ? true : undefined}
-      data-gsap={!isDuplicate ? 'marquee-card' : undefined}
-      className="group bg-white border border-[rgba(18,26,42,0.08)] hover:border-[#C96F55]/60 hover:shadow-xs hover:-translate-y-0.5 rounded-xl sm:rounded-2xl p-3 sm:p-3.5 transition-[border-color,box-shadow,transform] duration-200 flex flex-col justify-between shrink-0 flex-none w-[240px] sm:w-[270px] lg:w-[290px] h-[152px] sm:h-[158px] mr-3 sm:mr-4 select-none cursor-pointer"
+      className="group bg-white border border-[rgba(18,26,42,0.09)] hover:border-[#C96F55]/70 hover:shadow-card-hover hover:-translate-y-0.5 rounded-xl sm:rounded-2xl p-3 sm:p-3.5 transition-[border-color,box-shadow,transform] duration-200 flex flex-col justify-between shrink-0 flex-none w-[230px] sm:w-[260px] lg:w-[280px] h-[150px] sm:h-[158px] mr-3 sm:mr-4 select-none"
     >
       <div>
-        {/* 1. PRODUCT HEADER: Logo + Product Info (Name & Rating + Terjual) */}
         <div className="flex items-start gap-2.5 sm:gap-3">
-          {/* Logo / Brand Badge */}
-          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-[#121A2A]/5 border border-[rgba(18,26,42,0.08)] flex items-center justify-center overflow-hidden shrink-0">
+          <Link
+            href={`/products/${app.slug}`}
+            className="w-10 h-10 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-[#121A2A]/5 border border-[rgba(18,26,42,0.08)] flex items-center justify-center overflow-hidden shrink-0 group-hover:scale-105 transition-transform"
+          >
             <AppBrandBadge name={app.name} />
-          </div>
+          </Link>
 
-          {/* Product Info */}
           <div className="min-w-0 flex-1">
-            <h3 className="font-bold text-xs sm:text-sm text-[#121A2A] group-hover:text-[#C96F55] transition-colors truncate leading-snug">
+            <Link
+              href={`/products/${app.slug}`}
+              className="font-bold text-xs sm:text-sm text-[#121A2A] group-hover:text-[#C96F55] transition-colors truncate block leading-snug"
+              title={app.name}
+            >
               {app.name}
-            </h3>
+            </Link>
 
-            {/* Rating + Terjual: ⭐ 5.0 (Terjual 620) */}
             <div className="flex items-center gap-1 text-[11px] text-[#121A2A]/75 font-medium mt-0.5">
               <FontAwesomeIcon icon={faStar} className="w-3 h-3 text-amber-500 shrink-0" />
               <span className="font-semibold text-[#121A2A]">{app.rating || '5.0'}</span>
@@ -255,44 +374,71 @@ function ApplicationCard({
           </div>
         </div>
 
-        {/* 2. PRODUCT STATUS / BENEFIT TAGS: [Ready ⓘ] [Garansi ⓘ] [+1] */}
         <div className="flex items-center gap-1.5 mt-2.5 pt-0.5">
-          {/* Ready Tag (Blue) */}
-          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200/60 leading-none">
-            <span>Ready</span>
-            <span className="text-[9px] opacity-75">ⓘ</span>
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200/60 leading-none">
+            Ready
           </span>
-
-          {/* Garansi Tag (Green) */}
-          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60 leading-none">
-            <span>Garansi</span>
-            <span className="text-[9px] opacity-75">ⓘ</span>
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60 leading-none">
+            Garansi
           </span>
-
-          {/* Extra Tag */}
-          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#121A2A]/5 text-[#121A2A]/70 border border-[rgba(18,26,42,0.08)] leading-none">
-            +{app.items.length > 1 ? app.items.length - 1 : 1}
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#C96F55]/10 text-[#C96F55] border border-[#C96F55]/20 leading-none">
+            Unggulan
           </span>
         </div>
       </div>
 
-      {/* 3. PRICE (Strictly normal price, no crossed-out price) */}
       <div className="pt-2 border-t border-[rgba(18,26,42,0.06)] mt-2 flex items-center justify-between">
-        <span className="font-black text-sm sm:text-[15px] text-[#121A2A] tracking-tight">
+        <Link href={`/products/${app.slug}`} className="font-black text-sm sm:text-[15px] text-[#121A2A] tracking-tight hover:text-[#C96F55] transition-colors">
           Rp{minPrice.toLocaleString('id-ID')}
-        </span>
-        <span className="text-[10px] sm:text-xs font-semibold text-[#C96F55] opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5">
-          <span>Pilih</span>
-          <FontAwesomeIcon icon={faArrowRight} className="w-3 h-3" />
-        </span>
+        </Link>
+
+        <div className="flex items-center gap-1.5">
+          {onQuickView && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onQuickView(app);
+              }}
+              title="Lihat Cepat"
+              aria-label={`Tampilan cepat ${app.name}`}
+              className="w-7 h-7 rounded-lg bg-[rgba(18,26,42,0.05)] hover:bg-[#C96F55] text-[#121A2A]/70 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+            >
+              <FontAwesomeIcon icon={faEye} className="w-3.5 h-3.5" />
+            </button>
+          )}
+
+          <Link
+            href={`/products/${app.slug}`}
+            className="text-[11px] sm:text-xs font-bold text-[#C96F55] hover:text-[#B86047] flex items-center gap-1 py-1 px-1.5 rounded transition-colors"
+          >
+            <span>Pilih</span>
+            <FontAwesomeIcon icon={faArrowRight} className="w-3 h-3" />
+          </Link>
+        </div>
       </div>
-    </Link>
+    </div>
   );
 }
 
 export default function HomePage() {
   const [activeNotification, setActiveNotification] = useState<string | null>(null);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
+
+  // 1. Selector category state: ONLY PROMO, TERLARIS, TERBARU. (PROMO is default & priority)
+  const [activeCategory, setActiveCategory] = useState<'promo' | 'terlaris' | 'terbaru'>('promo');
+
+  // 2. Quick View Modal State
+  const [quickViewProduct, setQuickViewProduct] = useState<QuickViewProductData | null>(null);
+  const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
+
+  // 3. Recently Viewed Products (localStorage)
+  const [recentlyViewed, setRecentlyViewed] = useState<RecentlyViewedItem[]>([]);
+
+  useEffect(() => {
+    setRecentlyViewed(getRecentlyViewed());
+  }, []);
 
   // Dynamic products fetched from catalog API (active products only)
   const { data: catalogResponse } = useQuery<{ success: boolean; data: ProductItem[]; total: number }>({
@@ -310,9 +456,9 @@ export default function HomePage() {
     [catalogResponse?.data]
   );
 
-  // Strictly 12 priority applications explicitly ordered by user, mapped from real active catalog data
-  const marqueeApps = useMemo(() => {
-    const targetApps = [
+  // Curated Application definitions for the Featured views
+  const appConfigurations = useMemo(() => {
+    return [
       {
         name: 'Google Gemini',
         match: (t: string) => t.includes('gemini') || t.includes('google ai'),
@@ -322,6 +468,9 @@ export default function HomePage() {
         fallbackPrice: 19000,
         soldCount: 620,
         rating: '5.0',
+        isPromo: true,
+        isTerlaris: false,
+        isTerbaru: true,
       },
       {
         name: 'Canva',
@@ -332,6 +481,9 @@ export default function HomePage() {
         fallbackPrice: 4000,
         soldCount: 1420,
         rating: '5.0',
+        isPromo: true,
+        isTerlaris: true,
+        isTerbaru: false,
       },
       {
         name: 'CapCut',
@@ -342,6 +494,9 @@ export default function HomePage() {
         fallbackPrice: 9000,
         soldCount: 980,
         rating: '4.9',
+        isPromo: true,
+        isTerlaris: true,
+        isTerbaru: false,
       },
       {
         name: 'ChatGPT',
@@ -352,6 +507,9 @@ export default function HomePage() {
         fallbackPrice: 16000,
         soldCount: 850,
         rating: '5.0',
+        isPromo: true,
+        isTerlaris: true,
+        isTerbaru: false,
       },
       {
         name: 'Alight Motion',
@@ -362,6 +520,9 @@ export default function HomePage() {
         fallbackPrice: 8000,
         soldCount: 340,
         rating: '4.8',
+        isPromo: false,
+        isTerlaris: false,
+        isTerbaru: true,
       },
       {
         name: 'YouTube',
@@ -370,58 +531,89 @@ export default function HomePage() {
         tag: 'streaming' as const,
         fallbackCount: 33,
         fallbackPrice: 4000,
-        soldCount: 1890,
+        soldCount: 2100,
         rating: '5.0',
+        isPromo: true,
+        isTerlaris: true,
+        isTerbaru: false,
+      },
+      {
+        name: 'Spotify',
+        match: (t: string) => t.includes('spotify'),
+        cat: 'Music & Podcast',
+        tag: 'streaming' as const,
+        fallbackCount: 24,
+        fallbackPrice: 12000,
+        soldCount: 780,
+        rating: '5.0',
+        isPromo: true,
+        isTerlaris: true,
+        isTerbaru: false,
       },
       {
         name: 'Netflix',
         match: (t: string) => t.includes('netflix'),
-        cat: 'Movies & Series',
+        cat: 'Movie & Series HD',
         tag: 'streaming' as const,
-        fallbackCount: 1,
-        fallbackPrice: 74000,
-        soldCount: 760,
-        rating: '4.9',
+        fallbackCount: 15,
+        fallbackPrice: 25000,
+        soldCount: 1650,
+        rating: '5.0',
+        isPromo: true,
+        isTerlaris: true,
+        isTerbaru: false,
       },
       {
         name: 'Vidio',
         match: (t: string) => t.includes('vidio'),
-        cat: 'Sports & TV Streaming',
+        cat: 'Live Sports & Premier',
         tag: 'streaming' as const,
-        fallbackCount: 37,
-        fallbackPrice: 9000,
-        soldCount: 1150,
+        fallbackCount: 25,
+        fallbackPrice: 15000,
+        soldCount: 1100,
         rating: '4.9',
-      },
-      {
-        name: 'Bstation',
-        match: (t: string) => t.includes('bstation') || t.includes('bilibili'),
-        cat: 'Anime & Creator Community',
-        tag: 'streaming' as const,
-        fallbackCount: 6,
-        fallbackPrice: 7000,
-        soldCount: 480,
-        rating: '4.9',
-      },
-      {
-        name: 'iQIYI',
-        match: (t: string) => t.includes('iqiyi'),
-        cat: 'Drama & Anime Streaming',
-        tag: 'streaming' as const,
-        fallbackCount: 10,
-        fallbackPrice: 10000,
-        soldCount: 520,
-        rating: '4.9',
+        isPromo: false,
+        isTerlaris: true,
+        isTerbaru: false,
       },
       {
         name: 'WeTV',
         match: (t: string) => t.includes('wetv'),
-        cat: 'Asian Drama & Anime',
+        cat: 'Asian Drama VIP',
         tag: 'streaming' as const,
-        fallbackCount: 6,
-        fallbackPrice: 9000,
-        soldCount: 460,
-        rating: '4.9',
+        fallbackCount: 12,
+        fallbackPrice: 7000,
+        soldCount: 560,
+        rating: '4.8',
+        isPromo: false,
+        isTerlaris: false,
+        isTerbaru: true,
+      },
+      {
+        name: 'iQIYI',
+        match: (t: string) => t.includes('iqiyi'),
+        cat: 'Anime & Drama HD',
+        tag: 'streaming' as const,
+        fallbackCount: 9,
+        fallbackPrice: 10000,
+        soldCount: 420,
+        rating: '4.8',
+        isPromo: true,
+        isTerlaris: false,
+        isTerbaru: true,
+      },
+      {
+        name: 'Bstation',
+        match: (t: string) => t.includes('bstation'),
+        cat: 'Anime & Pop Culture',
+        tag: 'streaming' as const,
+        fallbackCount: 8,
+        fallbackPrice: 8000,
+        soldCount: 390,
+        rating: '4.8',
+        isPromo: false,
+        isTerlaris: false,
+        isTerbaru: true,
       },
       {
         name: 'Viu',
@@ -432,11 +624,27 @@ export default function HomePage() {
         fallbackPrice: 5000,
         soldCount: 910,
         rating: '4.9',
+        isPromo: false,
+        isTerlaris: true,
+        isTerbaru: true,
       },
     ];
+  }, []);
 
-    return targetApps.map((target) => {
-      // Find matching items from allProducts (strictly excluding any item containing "lisensi")
+  // Map to Featured Products (filtered by active category: Promo / Terlaris / Terbaru)
+  const featuredApps = useMemo(() => {
+    let filteredConfig = appConfigurations;
+
+    if (activeCategory === 'promo') {
+      filteredConfig = appConfigurations.filter((a) => a.isPromo);
+    } else if (activeCategory === 'terlaris') {
+      filteredConfig = appConfigurations.filter((a) => a.isTerlaris);
+    } else if (activeCategory === 'terbaru') {
+      filteredConfig = appConfigurations.filter((a) => a.isTerbaru);
+    }
+
+    // Limit to max 8 items so homepage remains clean and product-first
+    return filteredConfig.slice(0, 8).map((target) => {
       const items = allProducts.filter((p) => {
         const text = `${p.name} ${(p as unknown as { id?: string }).id || ''} ${(p as unknown as { providerCode?: string }).providerCode || ''}`.toLowerCase();
         if (text.includes('lisensi')) return false;
@@ -452,11 +660,88 @@ export default function HomePage() {
         fallbackPrice: target.fallbackPrice,
         soldCount: target.soldCount,
         rating: target.rating,
+        badgeLabel:
+          activeCategory === 'promo'
+            ? '🔥 Promo'
+            : activeCategory === 'terlaris'
+            ? 'Terlaris'
+            : 'Baru',
         items,
       };
     });
-  }, [allProducts]);
+  }, [allProducts, appConfigurations, activeCategory]);
 
+  // Product Looping Showcase: Curated list of popular accounts that stays completely independent of the selector
+  const showcaseApps = useMemo(() => {
+    const showcaseNames = ['Canva', 'ChatGPT', 'Netflix', 'YouTube', 'CapCut', 'Google Gemini', 'Spotify', 'Vidio', 'Alight Motion', 'iQIYI'];
+    return showcaseNames.map((name) => {
+      const conf = appConfigurations.find((a) => a.name === name) || {
+        name,
+        match: (t: string) => t.includes(name.toLowerCase()),
+        cat: 'Digital Product',
+        tag: 'other' as const,
+        fallbackCount: 10,
+        fallbackPrice: 10000,
+        soldCount: 500,
+        rating: '5.0',
+      };
+
+      const items = allProducts.filter((p) => {
+        const text = `${p.name} ${(p as unknown as { id?: string }).id || ''}`.toLowerCase();
+        return conf.match(text);
+      });
+
+      return {
+        name: conf.name,
+        slug: conf.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+        category: conf.cat,
+        categoryTag: conf.tag,
+        fallbackCount: conf.fallbackCount,
+        fallbackPrice: conf.fallbackPrice,
+        soldCount: conf.soldCount,
+        rating: conf.rating,
+        items,
+      };
+    });
+  }, [allProducts, appConfigurations]);
+
+  const handleOpenQuickView = (app: ApplicationGroupItem) => {
+    const activePrices = app.items.map((p) => p.price).filter((p) => p > 0);
+    const minPrice = activePrices.length > 0 ? Math.min(...activePrices) : app.fallbackPrice;
+
+    setQuickViewProduct({
+      id: app.slug,
+      name: app.name,
+      slug: app.slug,
+      category: app.category,
+      price: minPrice,
+      priceFormatted: `Rp ${minPrice.toLocaleString('id-ID')}`,
+      rating: app.rating,
+      soldCount: app.soldCount,
+      description: `Akses resmi dan bergaransi penuh untuk ${app.name} di Asterra Store dengan konfirmasi otomatis dan dukungan CS 24 jam.`,
+      guaranteeTitle: 'Garansi Penuh 100% Penggantian',
+      processTitle: 'Aktivasi Otomatis 1 - 15 Menit',
+      privacyTitle: 'Akun Private / Sharing Workspace Resmi',
+    });
+    setIsQuickViewOpen(true);
+  };
+
+  const handleOpenQuickViewRecent = (item: RecentlyViewedItem) => {
+    setQuickViewProduct({
+      id: item.id,
+      name: item.name,
+      slug: item.slug || item.id,
+      category: item.categoryName,
+      price: item.price,
+      priceFormatted: item.priceFormatted || `Rp ${item.price.toLocaleString('id-ID')}`,
+      rating: item.rating || '5.0',
+      description: `Akses akun digital resmi ${item.name} dengan jaminan garansi penggantian penuh.`,
+      guaranteeTitle: 'Garansi Penuh 100% Penggantian',
+      processTitle: 'Aktivasi Cepat 1 - 15 Menit',
+      privacyTitle: 'Akun Terverifikasi',
+    });
+    setIsQuickViewOpen(true);
+  };
 
   const showNotification = (message: string) => {
     setActiveNotification(message);
@@ -496,204 +781,145 @@ export default function HomePage() {
     <div className="min-h-screen bg-white text-[#121A2A] flex flex-col selection:bg-[#C96F55]/20 selection:text-[#C96F55]">
       {/* Toast Notification */}
       {activeNotification && (
-        <div className="fixed bottom-6 right-6 z-50 bg-[#121A2A] border border-white/15 text-white px-4 py-3 rounded-xl shadow-editorial flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2 duration-200">
+        <div className="fixed bottom-20 sm:bottom-6 right-6 z-50 bg-[#121A2A] border border-white/15 text-white px-4 py-3 rounded-xl shadow-editorial flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2 duration-200">
           <FontAwesomeIcon icon={faCircleCheck} className="w-4 h-4 text-[#C96F55] shrink-0" />
           <span className="text-sm font-medium">{activeNotification}</span>
         </div>
       )}
 
-      {/* SECTION 1: Header Navigation */}
+      {/* SECTION 1: Header Navigation (Desktop & Compact Mobile Top Bar with Planet in Logo) */}
       <Header onNotify={showNotification} />
 
       {/* Main Content */}
-      <main className="flex-1 max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 pt-2 sm:pt-3.5 pb-8 sm:pb-12 w-full overflow-hidden">
-        {/* SECTION 2: Hero Main Banner Container (Card 1: Separated on Mobile, Unified on Desktop) */}
-        <div data-gsap="hero-container" className="relative w-full rounded-2xl sm:rounded-t-3xl sm:rounded-b-none bg-[#101828] border border-[rgba(255,255,255,0.08)] shadow-md overflow-hidden">
-          {/* Controlled Hero Area: compact & clean with balanced text spacing */}
-          <div className="relative min-h-[140px] sm:min-h-[190px] lg:h-[220px] xl:h-[235px] flex items-center px-4 sm:px-8 lg:px-12 py-3.5 sm:py-6 lg:py-0 overflow-hidden">
-            {/* Left Column: Headline & Subheadline (Clear max-width on mobile prevents planet collision) */}
-            <div className="relative z-10 w-full max-w-[64%] sm:max-w-[70%] lg:max-w-[62%] xl:max-w-[60%] py-1">
-              {/* Editorial Headline: Masked Line-by-Line Reveal */}
-              <h1 data-gsap="page-title" className="text-base sm:text-2xl lg:text-[32px] xl:text-[36px] font-black tracking-tight text-white leading-[1.2] sm:leading-[1.15]">
-                <span className="block overflow-hidden"><span data-gsap="title-line" className="block">Solusi Terpercaya Produk &</span></span>
-                <span className="block overflow-hidden"><span data-gsap="title-line" className="block text-[#E28870]">Layanan Digital Premium</span></span>
-              </h1>
+      <main className="flex-1 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-2 sm:pt-3 pb-8 sm:pb-12 w-full overflow-hidden">
+        {/*
+          SECTION 2: HERO BANNER IMAGE (INTRINSIC ASPECT RATIO, MAXIMUM SHARPNESS)
+          Container dynamically adapts to the intrinsic aspect ratio of the image (1024/285).
+          - No fixed h-[xxxpx] or max-h constraints
+          - width: 100%, height: auto
+          - unoptimized to prevent lossy Next.js downsampling/compression
+          - priority for immediate above-the-fold LCP rendering
+          - object-contain: no stretch, no distortion, no crop
+        */}
+        <section aria-label="Banner Promo Asterra" className="w-full mb-3.5 sm:mb-5">
+          <Link
+            href="/seller"
+            title="Program Reseller Asterra Store - Jadi Bagian dari AsterraStore"
+            className="group block relative w-full overflow-hidden rounded-xl sm:rounded-2xl md:rounded-3xl border border-[rgba(18,26,42,0.08)] shadow-xs hover:shadow-md transition-shadow bg-[#f0f5ff]"
+          >
+            <Image
+              src="/images/banners/hero-banner-reseller.webp"
+              alt="Program Reseller Asterra Store - Jadi Bagian dari AsterraStore, Dapatkan Komisi 10-15% per Produk"
+              width={1024}
+              height={285}
+              priority
+              unoptimized
+              className="w-full h-auto block rounded-xl sm:rounded-2xl md:rounded-3xl object-contain transition-transform duration-300 group-hover:scale-[1.004]"
+            />
+          </Link>
+        </section>
 
-              {/* Subheadline: Refined & concise on mobile to avoid awkward clamping, full on desktop */}
-              <p data-gsap="page-sub" className="mt-1.5 sm:mt-2.5 text-[11px] sm:text-[13px] lg:text-sm text-white/75 leading-relaxed">
-                <span className="sm:hidden">
-                  Akses resmi langganan tool AI, desain, & voucher digital dengan konfirmasi instan.
-                </span>
-                <span className="hidden sm:inline">
-                  Dapatkan akses langganan resmi untuk tool AI, software desain, voucher, dan layanan digital lainnya tanpa kartu kredit dengan konfirmasi instan.
-                </span>
-              </p>
+        {/*
+          SECTION 3: FEATURED PRODUCTS (STATIC GRID: [ 🔥 Promo ] [ Terlaris ] [ Terbaru ])
+          MUST BE LOCATED IMMEDIATELY BELOW THE BANNER.
+          - Selector: ONLY Promo / Terlaris / Terbaru (Best Seller is removed).
+          - Promo is default and visually prioritized with Asterra coral accent.
+          - Cards are STATIC (NOT marquee, NOT slider, NOT looping).
+          - 4 columns on desktop, 2 columns on mobile.
+          - Immediately visible in first viewport!
+        */}
+        <section id="produk-unggulan" aria-label="Produk Unggulan Asterra" className="mb-6 sm:mb-8">
+          {/* Selector Tabs: [ 🔥 Promo ] [ Terlaris ] [ Terbaru ] */}
+          <div className="flex items-center justify-between gap-2 mb-3 sm:mb-4 pb-1 border-b border-[rgba(18,26,42,0.06)] overflow-x-auto scrollbar-none">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              {/* Tab 1: PROMO (DEFAULT & VISUALLY PROMINENT) */}
+              <button
+                type="button"
+                onClick={() => setActiveCategory('promo')}
+                className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs sm:text-[13px] font-bold transition-all cursor-pointer ${
+                  activeCategory === 'promo'
+                    ? 'bg-[#C96F55] text-white shadow-xs scale-102 ring-2 ring-[#C96F55]/30'
+                    : 'bg-white text-[#C96F55] border border-[#C96F55]/40 hover:bg-[#C96F55]/10'
+                }`}
+              >
+                <FontAwesomeIcon icon={faFire} className="w-3.5 h-3.5" />
+                <span>Promo</span>
+              </button>
+
+              {/* Tab 2: Terlaris */}
+              <button
+                type="button"
+                onClick={() => setActiveCategory('terlaris')}
+                className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs sm:text-[13px] transition-all cursor-pointer ${
+                  activeCategory === 'terlaris'
+                    ? 'bg-[#121A2A] text-white font-bold shadow-xs'
+                    : 'bg-white text-[#121A2A]/70 border border-[rgba(18,26,42,0.12)] hover:border-[#121A2A]/40 hover:text-[#121A2A] font-semibold'
+                }`}
+              >
+                <span>Terlaris</span>
+              </button>
+
+              {/* Tab 3: Terbaru */}
+              <button
+                type="button"
+                onClick={() => setActiveCategory('terbaru')}
+                className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs sm:text-[13px] transition-all cursor-pointer ${
+                  activeCategory === 'terbaru'
+                    ? 'bg-[#121A2A] text-white font-bold shadow-xs'
+                    : 'bg-white text-[#121A2A]/70 border border-[rgba(18,26,42,0.12)] hover:border-[#121A2A]/40 hover:text-[#121A2A] font-semibold'
+                }`}
+              >
+                <span>Terbaru</span>
+              </button>
             </div>
 
-            {/* Right Column: Planet Visual (Original 3-Layer Sequential Animation) */}
-            <div className="absolute right-1 sm:right-3 lg:right-6 top-1/2 -translate-y-1/2 pointer-events-none select-none z-10">
-              <div className="relative w-[115px] h-[115px] sm:w-[170px] sm:h-[170px] lg:w-[250px] lg:h-[250px] flex items-center justify-center">
-                {/* Subtle SVG Orbital Background Rings (desktop & tablet only) - 100% STATIC */}
-                <svg
-                  className="hidden sm:block absolute inset-0 w-full h-full pointer-events-none opacity-50"
-                  viewBox="0 0 500 500"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <ellipse
-                    cx="250"
-                    cy="250"
-                    rx="230"
-                    ry="115"
-                    transform="rotate(-14 250 250)"
-                    stroke="rgba(255, 255, 255, 0.12)"
-                    strokeWidth="1.5"
-                    strokeDasharray="6 8"
-                  />
-                  <ellipse
-                    cx="250"
-                    cy="250"
-                    rx="185"
-                    ry="92"
-                    transform="rotate(-14 250 250)"
-                    stroke="rgba(226, 136, 112, 0.35)"
-                    strokeWidth="1.2"
-                  />
-                </svg>
-
-                {/* Ambient Soft Glow: STATIC, separated layer, zero blur/repaint */}
-                <div
-                  className="absolute inset-0 rounded-full pointer-events-none"
-                  style={{
-                    background: 'radial-gradient(circle, rgba(201,111,85,0.25) 0%, rgba(201,111,85,0) 70%)',
-                  }}
-                />
-
-                {/* Scaled Asterra Planet Visual: Responsive Resolution-Optimized Animated WebP */}
-                <div
-                  data-gsap="hero-media"
-                  className="relative z-10 w-[100px] sm:w-[150px] lg:w-[220px] flex items-center justify-center translate-x-1 sm:translate-x-1.5 lg:translate-x-2.5 -translate-y-1.5 sm:-translate-y-2 lg:-translate-y-3"
-                  style={{
-                    transform: 'translate3d(0,0,0)',
-                    WebkitTransform: 'translate3d(0,0,0)',
-                    WebkitBackfaceVisibility: 'hidden',
-                    backfaceVisibility: 'hidden',
-                    willChange: 'transform',
-                  }}
-                >
-                  <picture className="w-full h-auto flex items-center justify-center pointer-events-none select-none">
-                    {/* Mobile: 400x213 Animated WebP (75% lower RAM & CPU decoding overhead on iPhone 12) */}
-                    <source
-                      media="(max-width: 640px)"
-                      srcSet="/assets/asterra-planet-mobile.webp"
-                      type="image/webp"
-                    />
-                    {/* Tablet & Desktop: Original 800x426 Animated WebP */}
-                    <img
-                      src="/assets/asterra-planet-transparent.webp"
-                      alt="Asterra Store"
-                      width={800}
-                      height={426}
-                      decoding="async"
-                      draggable={false}
-                      className="w-full h-auto object-contain pointer-events-none select-none"
-                      onError={(e) => {
-                        e.currentTarget.src = "/images/brand/hero-planet-white.png";
-                      }}
-                    />
-                  </picture>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* SECTION 3: Trust / Benefits Bento Container (Card 2: Separated Bento Grid on Mobile, Sleek Strip on Desktop) */}
-        <div data-gsap="hero-benefit-bar" className="mt-2.5 sm:mt-0 mb-6 sm:mb-8 rounded-2xl sm:rounded-b-3xl sm:rounded-t-none bg-[#0E1524] border border-[rgba(255,255,255,0.08)] sm:border-t sm:border-t-white/10 p-2.5 sm:px-8 lg:px-12 sm:py-3.5 shadow-sm">
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-6">
-            {/* Bento Tile 1: 100% Legal & Bergaransi (Mobile Row 1 Col 1, Desktop Col 1) */}
-            <div
-              data-gsap="benefit-tile"
-              className="col-span-1 order-1 sm:order-1 bg-white/[0.03] sm:bg-transparent border border-white/[0.07] sm:border-none rounded-xl sm:rounded-none p-2.5 sm:p-0 flex flex-col sm:flex-row sm:items-center justify-between sm:justify-start gap-1.5 sm:gap-3"
-            >
-              <div className="w-6 h-6 sm:w-9 sm:h-9 rounded-md sm:rounded-xl bg-[rgba(201,111,85,0.15)] border border-[rgba(201,111,85,0.25)] flex items-center justify-center shrink-0">
-                <FontAwesomeIcon icon={faShieldHalved} className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-[#E28870]" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <h3 className="font-bold text-[11px] sm:text-sm text-white leading-tight">100% Legal & Bergaransi</h3>
-                <p className="text-[10px] sm:text-[11px] text-white/65 leading-tight mt-0.5 truncate">Jaminan penggantian penuh</p>
-              </div>
-            </div>
-
-            {/* Bento Tile 2: Multi-Metode Pembayaran (Mobile Row 1 Col 2, Desktop Col 3) */}
-            <div
-              data-gsap="benefit-tile"
-              className="col-span-1 order-2 sm:order-3 sm:border-l sm:border-white/10 sm:pl-6 bg-white/[0.03] sm:bg-transparent border border-white/[0.07] sm:border-none rounded-xl sm:rounded-none p-2.5 sm:p-0 flex flex-col sm:flex-row sm:items-center justify-between sm:justify-start gap-1.5 sm:gap-3"
-            >
-              <div className="w-6 h-6 sm:w-9 sm:h-9 rounded-md sm:rounded-xl bg-[rgba(201,111,85,0.15)] border border-[rgba(201,111,85,0.25)] flex items-center justify-center shrink-0">
-                <FontAwesomeIcon icon={faCreditCard} className="w-3.5 h-3.5 sm:w-5 sm:h-5 text-[#E28870]" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <h3 className="font-bold text-[11px] sm:text-sm text-white leading-tight">
-                  <span className="sm:hidden">Multi-Metode Bayar</span>
-                  <span className="hidden sm:inline">Multi-Metode Pembayaran</span>
-                </h3>
-                <p className="text-[10px] sm:text-[11px] text-white/65 leading-tight mt-0.5 truncate">
-                  <span className="sm:hidden">QRIS, E-Wallet, VA</span>
-                  <span className="hidden sm:inline">QRIS, E-Wallet, Virtual Account</span>
-                </p>
-              </div>
-            </div>
-
-            {/* Bento Tile 3: Proses Cepat & Otomatis (Mobile Row 2 Col-span-2: Centered, Desktop Col 2 Tengah) */}
-            <div
-              data-gsap="benefit-tile"
-              className="col-span-2 sm:col-span-1 order-3 sm:order-2 sm:border-l sm:border-white/10 sm:pl-6 bg-white/[0.03] sm:bg-transparent border border-white/[0.07] sm:border-none rounded-xl sm:rounded-none p-2.5 sm:p-0 flex items-center justify-center sm:justify-start gap-2.5 sm:gap-3"
-            >
-              <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-[rgba(201,111,85,0.15)] border border-[rgba(201,111,85,0.25)] flex items-center justify-center shrink-0">
-                <FontAwesomeIcon icon={faBolt} className="w-4 h-4 sm:w-5 sm:h-5 text-[#E28870]" />
-              </div>
-              <div className="min-w-0 text-center sm:text-left">
-                <h3 className="font-bold text-xs sm:text-sm text-white leading-tight">Proses Cepat & Otomatis</h3>
-                <p className="text-[10px] sm:text-[11px] text-white/65 leading-tight mt-0.5">Aktivasi hitungan menit</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* SECTION 4: EXPLORE BY APPLICATION (KATALOG APLIKASI DIGITAL - INFINITE MARQUEE) */}
-        <section id="aplikasi" data-gsap-section="catalog" className="mb-10 sm:mb-14 overflow-hidden">
-          {/* Section Header */}
-          <div data-gsap="catalog-header" className="flex flex-col sm:flex-row sm:items-end justify-between gap-2.5 mb-4 sm:mb-5 pb-2.5 border-b border-[rgba(18,26,42,0.08)]">
-            <div>
-              <span data-gsap="catalog-item" className="text-[11px] font-bold text-[#C96F55] uppercase tracking-wider block mb-0.5">
-                Katalog Aplikasi Digital
-              </span>
-              <h2 data-gsap="catalog-item" className="text-xl sm:text-2xl lg:text-3xl font-black text-[#121A2A] tracking-tight">
-                Jelajahi Layanan Digital
-              </h2>
-              <p data-gsap="catalog-item" className="text-xs sm:text-sm text-[#121A2A]/65 mt-0.5">
-                Pilih aplikasi favorit yang ingin kamu gunakan untuk kebutuhan kerja atau kreatif.
-              </p>
-            </div>
-
+            {/* Quick Link to Full Catalog */}
             <Link
-              href="/products"
-              data-gsap="catalog-item"
-              className="text-xs sm:text-sm font-bold text-[#C96F55] hover:text-[#B86047] inline-flex items-center gap-1.5 shrink-0 transition-colors"
+              href="/product"
+              className="text-xs font-semibold text-[#C96F55] hover:text-[#B86047] hidden md:inline-flex items-center gap-1 shrink-0"
             >
-              <span>Lihat Semua Katalog</span>
-              <FontAwesomeIcon icon={faArrowRight} className="w-4 h-4" />
+              <span>Semua Katalog</span>
+              <FontAwesomeIcon icon={faArrowRight} className="w-3 h-3" />
             </Link>
           </div>
 
-          {/* Carousel Viewport: Single Row, No Scrollbar, Infinite Auto Track */}
-          <div className="carousel-viewport relative w-full overflow-hidden py-1">
-            {/* Subtle edge fades (clean, no large AI masks) */}
-            <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-4 sm:w-8 z-10 bg-gradient-to-r from-white to-transparent" />
-            <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-4 sm:w-8 z-10 bg-gradient-to-l from-white to-transparent" />
+          {/* STATIC PRODUCT GRID (4 columns desktop, 2 columns mobile) */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-3.5 lg:gap-4">
+            {featuredApps.map((app) => (
+              <FeaturedGridCard
+                key={`featured-${activeCategory}-${app.name}`}
+                app={app}
+                onQuickView={handleOpenQuickView}
+              />
+            ))}
+          </div>
+        </section>
 
-            {/* Carousel Track: Duplicated sets for seamless -50% loop */}
+        {/*
+          SECTION 4: PRODUCT LOOPING SHOWCASE (VISUAL PEMANIS ONLY)
+          MUST BE LOCATED BELOW FEATURED PRODUCTS.
+          - Smooth infinite horizontal marquee loop.
+          - Independent showcase: NOT affected when user switches between Promo / Terlaris / Terbaru.
+          - Clear visual separation with dedicated section heading.
+        */}
+        <section aria-label="Showcase Produk Asterra" className="mt-7 sm:mt-10 mb-6 sm:mb-8 pt-6 sm:pt-7 border-t border-[rgba(18,26,42,0.06)]">
+          <div className="flex items-center justify-between mb-3 px-1">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-[#C96F55]" />
+              <h2 className="text-xs sm:text-sm font-black uppercase tracking-wider text-[#121A2A]/85">
+                Showcase Katalog Pilihan
+              </h2>
+            </div>
+            <span className="text-[11px] text-[#121A2A]/50 font-medium hidden sm:inline">
+              Aktivasi instan 1 - 15 menit · Garansi resmi
+            </span>
+          </div>
+
+          {/* Marquee Track Container with Edge Fades */}
+          <div className="carousel-viewport relative w-full overflow-hidden py-1 animate-text-smooth">
+            <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-3 sm:w-6 z-10 bg-gradient-to-r from-white to-transparent" />
+            <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-3 sm:w-6 z-10 bg-gradient-to-l from-white to-transparent" />
+
             <div
               className="carousel-track flex flex-nowrap w-max shrink-0 items-stretch"
               style={{
@@ -704,24 +930,105 @@ export default function HomePage() {
                 animation: 'infinite-scroll 45s linear infinite',
               }}
             >
-              {/* Original 12 Cards */}
-              {marqueeApps.map((app) => (
-                <ApplicationCard key={`orig-${app.name}`} app={app} />
+              {/* Original Showcase Items */}
+              {showcaseApps.map((app) => (
+                <ShowcaseLoopingCard
+                  key={`showcase-orig-${app.name}`}
+                  app={app}
+                  onQuickView={handleOpenQuickView}
+                />
               ))}
 
-              {/* Duplicated 12 Cards (aria-hidden for accessibility) */}
-              {marqueeApps.map((app) => (
-                <ApplicationCard key={`dup-${app.name}`} app={app} isDuplicate />
+              {/* Duplicated Items for continuous -50% loop */}
+              {showcaseApps.map((app) => (
+                <ShowcaseLoopingCard
+                  key={`showcase-dup-${app.name}`}
+                  app={app}
+                  isDuplicate
+                  onQuickView={handleOpenQuickView}
+                />
               ))}
             </div>
           </div>
         </section>
 
-        {/* SECTION 5: WHY ASTERRA (FEATURE / BENEFIT SECTION) */}
+        {/* SECTION 5: TERAKHIR DILIHAT (Conditional from localStorage: Rendered ONLY if history exists) */}
+        {recentlyViewed.length > 0 && (
+          <section
+            aria-label="Produk Terakhir Dilihat"
+            className="mt-6 sm:mt-8 mb-6 p-4 sm:p-5 rounded-2xl bg-[#F8FAFC] border border-[rgba(18,26,42,0.08)]"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-md bg-[#C96F55]/10 text-[#C96F55] flex items-center justify-center">
+                  <FontAwesomeIcon icon={faClock} className="w-3.5 h-3.5" />
+                </div>
+                <h3 className="font-bold text-xs sm:text-sm text-[#121A2A]">
+                  Terakhir Dilihat
+                </h3>
+              </div>
+              <span className="text-[11px] text-[#121A2A]/50 font-medium">
+                Tersimpan di peramban Anda
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3.5">
+              {recentlyViewed.map((item) => (
+                <div
+                  key={item.id}
+                  className="p-2.5 sm:p-3 bg-white rounded-xl border border-[rgba(18,26,42,0.08)] hover:border-[#C96F55]/50 hover:shadow-xs transition-all flex flex-col justify-between"
+                >
+                  <div>
+                    <span className="text-[9px] sm:text-[10px] uppercase font-bold text-[#C96F55] block truncate">
+                      {item.categoryName || 'Akun Digital'}
+                    </span>
+                    <Link
+                      href={`/products/${item.slug || item.id}`}
+                      className="font-bold text-xs sm:text-sm text-[#121A2A] hover:text-[#C96F55] transition-colors line-clamp-1 mt-0.5"
+                      title={item.name}
+                    >
+                      {item.name}
+                    </Link>
+                  </div>
+
+                  <div className="pt-2 mt-2 border-t border-[rgba(18,26,42,0.06)] flex items-center justify-between">
+                    <span className="font-black text-xs sm:text-sm text-[#121A2A]">
+                      {item.priceFormatted || `Rp ${item.price.toLocaleString('id-ID')}`}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleOpenQuickViewRecent(item)}
+                      title="Lihat Cepat"
+                      aria-label={`Tampilan cepat ${item.name}`}
+                      className="w-6 h-6 rounded-md bg-[rgba(18,26,42,0.05)] hover:bg-[#C96F55] text-[#121A2A]/70 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+                    >
+                      <FontAwesomeIcon icon={faEye} className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* SECTION 6: LIHAT SEMUA KATALOG BUTTON */}
+        <div className="flex justify-center mt-5 mb-10 sm:mb-14">
+          <Link href="/product" className="w-full max-w-sm sm:max-w-md">
+            <Button
+              variant="outline"
+              className="w-full h-10 sm:h-11 rounded-xl border-[rgba(18,26,42,0.18)] hover:border-[#C96F55] bg-white hover:bg-[rgba(201,111,85,0.04)] text-[#121A2A] hover:text-[#C96F55] font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all shadow-subtle"
+            >
+              <span>Lihat Semua Katalog</span>
+              <FontAwesomeIcon icon={faArrowRight} className="w-3.5 h-3.5" />
+            </Button>
+          </Link>
+        </div>
+
+        {/* SECTION 7: KENAPA ASTERRA (6 COMMITMENTS) */}
         <section id="keunggulan" data-gsap-section="keunggulan" className="mb-10 sm:mb-14 pt-6 sm:pt-8 border-t border-[rgba(18,26,42,0.08)]">
           <div data-gsap="keunggulan-header" className="max-w-2xl mb-6">
             <span className="text-[11px] font-bold text-[#C96F55] uppercase tracking-wider block mb-1">
-              Standar Kualitas & Layanan
+              Standar Kualitas &amp; Layanan
             </span>
             <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-[#121A2A] tracking-tight">
               Kenapa Asterra?
@@ -807,7 +1114,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* SECTION 6: HOW IT WORKS (Cara Pemesanan) */}
+        {/* SECTION 8: CARA PEMESANAN (4 STEPS) */}
         <section id="panduan" data-gsap-section="panduan" className="mb-10 sm:mb-14 pt-6 sm:pt-8 border-t border-[rgba(18,26,42,0.08)]">
           <div data-gsap="panduan-header" className="max-w-2xl mb-6">
             <span className="text-[11px] font-bold text-[#C96F55] uppercase tracking-wider block mb-1">
@@ -904,12 +1211,12 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* SECTION 7: FAQ (Pertanyaan yang Sering Ditanyakan) */}
+        {/* SECTION 9: FAQ */}
         <section id="faq" data-gsap-section="faq" className="mb-10 sm:mb-14 pt-6 sm:pt-8 border-t border-[rgba(18,26,42,0.08)]">
           <div data-gsap="faq-header" className="max-w-2xl mb-6">
             <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#C96F55] uppercase tracking-wider mb-1">
               <FontAwesomeIcon icon={faCircleQuestion} className="w-3.5 h-3.5" />
-              <span>Bantuan & Panduan</span>
+              <span>Bantuan &amp; Panduan</span>
             </div>
             <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-[#121A2A] tracking-tight">
               Pertanyaan yang Sering Ditanyakan
@@ -931,7 +1238,7 @@ export default function HomePage() {
                   <button
                     type="button"
                     onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
-                    className="w-full p-3.5 sm:p-4 text-left flex items-center justify-between gap-4 hover:bg-[rgba(18,26,42,0.02)] transition-colors"
+                    className="w-full p-3.5 sm:p-4 text-left flex items-center justify-between gap-4 hover:bg-[rgba(18,26,42,0.02)] transition-colors cursor-pointer"
                   >
                     <span className="text-xs sm:text-sm font-bold text-[#121A2A]">
                       {faq.q}
@@ -955,11 +1262,11 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* SECTION 8: FINAL CTA */}
+        {/* SECTION 10: FINAL CTA */}
         <section data-gsap-section="cta" className="mb-6 sm:mb-8 p-5 sm:p-8 bg-[#121A2A] text-[#F7F5EF] rounded-2xl border border-white/10 shadow-editorial flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
           <div data-gsap="cta-content" className="space-y-1 max-w-xl">
             <h3 className="text-base sm:text-xl lg:text-2xl font-black text-[#F7F5EF] tracking-tight">
-              Siap menemukan layanan digital yang kamu butuhkan?
+              Dapatkan Akun Premium Pilihan Anda Hari Ini
             </h3>
             <p className="text-xs sm:text-sm text-[#F7F5EF]/70 leading-relaxed">
               Jelajahi seluruh katalog Asterra Store dengan konfirmasi otomatis dan garansi penggantian penuh.
@@ -967,7 +1274,7 @@ export default function HomePage() {
           </div>
 
           <div data-gsap="cta-actions">
-            <Link href="/products">
+            <Link href="/product">
               <Button className="h-10 sm:h-11 px-5 sm:px-6 rounded-xl bg-[#C96F55] hover:bg-[#B86047] text-[#F7F5EF] font-bold text-xs sm:text-sm gap-2 shrink-0 active:scale-95 transition-all">
                 <span>Jelajahi Produk</span>
                 <FontAwesomeIcon icon={faArrowRight} className="w-4 h-4" />
@@ -977,8 +1284,18 @@ export default function HomePage() {
         </section>
       </main>
 
-      {/* SECTION 9: Footer */}
+      {/* Quick View Modal */}
+      <QuickViewModal
+        product={quickViewProduct}
+        isOpen={isQuickViewOpen}
+        onClose={() => setIsQuickViewOpen(false)}
+      />
+
+      {/* SECTION 11: Footer (Compact on Mobile, pb-20 for MobileBottomNav) */}
       <Footer onNotify={showNotification} />
+
+      {/* SECTION 12: Mobile Bottom Navigation (Sticky Fixed on Mobile) */}
+      <MobileBottomNav />
     </div>
   );
 }

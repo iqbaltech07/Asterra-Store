@@ -42,9 +42,45 @@ export function AsterraLogo({
     ? '/images/brand/logo-light-ntg.png'
     : '/images/brand/asterra-logo-dark-text.png';
 
+  const wordmarkSrc = isDarkBg
+    ? '/images/brand/asterra-wordmark-light.png'
+    : '/images/brand/asterra-wordmark-dark.png';
+
   const content = (
-    <div className={cn('inline-flex items-center gap-3 select-none group', className)}>
-      {variant === 'app-icon' ? (
+    <div className={cn('inline-flex items-center select-none group', variant !== 'navbar' && 'gap-2 sm:gap-2.5', className)}>
+      {variant === 'navbar' ? (
+        <div className="inline-flex items-center">
+          {/* Animated Asterra Planet (152 frames, 20fps, alpha, navbar-optimized) */}
+          <div className="relative shrink-0 flex items-center justify-center -mr-1.5 md:-mr-3.5 lg:-mr-4">
+            <picture className="flex items-center justify-center pointer-events-none select-none">
+              <source srcSet="/assets/asterra-planet-navbar.webp" type="image/webp" />
+              <img
+                src="/assets/asterra-planet-navbar.webp"
+                alt="Asterra Planet"
+                width={200}
+                height={107}
+                decoding="async"
+                draggable={false}
+                className="h-8 sm:h-9 w-auto object-contain pointer-events-none select-none transition-transform duration-200 group-hover:scale-105"
+                onError={(e) => {
+                  e.currentTarget.src = '/images/brand/asterra-mark.png';
+                }}
+              />
+            </picture>
+          </div>
+          {/* Brand Wordmark Text (AsterraStore) */}
+          <div className="relative shrink-0 flex items-center">
+            <Image
+              src={wordmarkSrc}
+              alt="AsterraStore"
+              width={381}
+              height={49}
+              priority
+              className="h-[15px] sm:h-[18px] w-auto object-contain shrink-0"
+            />
+          </div>
+        </div>
+      ) : variant === 'app-icon' ? (
         <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl overflow-hidden shadow-xs shrink-0">
           <Image
             src="/images/brand/asterra-app-icon.png"
