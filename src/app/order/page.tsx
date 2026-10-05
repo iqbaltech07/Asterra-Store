@@ -172,6 +172,88 @@ function getTimelineStep(order: Order): number {
   return 1;
 }
 
+// Realistic Private Orders Skeleton matching exact order card layout
+function PrivateOrdersSkeleton() {
+  return (
+    <div className="space-y-6" aria-busy="true" aria-label="Memuat riwayat pesanan">
+      {[1, 2].map((i) => (
+        <div
+          key={i}
+          className="bg-surface border border-border rounded-xl p-5 sm:p-6 space-y-5 animate-pulse"
+        >
+          {/* Card Header Skeleton */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-border">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-surface-raised shrink-0" />
+              <div className="space-y-1.5">
+                <div className="w-28 h-4 bg-surface-raised rounded" />
+                <div className="w-40 h-3 bg-surface-raised rounded" />
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-24 h-6 rounded-full bg-surface-raised" />
+              <div className="w-20 h-5 bg-surface-raised rounded" />
+            </div>
+          </div>
+
+          {/* 4-Step Fulfillment Timeline Skeleton */}
+          <div className="py-2 space-y-3">
+            <div className="w-36 h-3 bg-surface-raised rounded" />
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {[1, 2, 3, 4].map((step) => (
+                <div key={step} className="p-2.5 rounded-lg bg-surface-raised h-10" />
+              ))}
+            </div>
+          </div>
+
+          {/* Items Row Skeleton */}
+          <div className="space-y-2">
+            <div className="bg-surface-raised rounded-lg p-3 h-16" />
+          </div>
+
+          {/* Actions Footer Skeleton */}
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-border">
+            <div className="w-28 h-4 bg-surface-raised rounded" />
+            <div className="flex items-center gap-2">
+              <div className="w-20 h-8 rounded-lg bg-surface-raised" />
+              <div className="w-24 h-8 rounded-lg bg-surface-raised" />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Full Page Skeleton used for instant Suspense fallback on /order
+function PrivateOrdersPageSkeleton() {
+  return (
+    <div className="min-h-screen bg-background text-foreground flex flex-col font-sans">
+      <Header />
+      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 w-full">
+        {/* Breadcrumb Skeleton */}
+        <div className="flex items-center justify-between gap-3 mb-6 animate-pulse">
+          <div className="w-36 h-4 bg-surface-raised rounded" />
+          <div className="w-28 h-8 bg-surface-raised rounded-lg" />
+        </div>
+
+        {/* Email Lookup Card Skeleton */}
+        <div className="bg-surface border border-primary/20 rounded-xl p-4 sm:p-5 max-w-xl mx-auto mb-8 animate-pulse">
+          <div className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto">
+            <div className="flex-1 h-9 rounded-lg bg-surface-raised" />
+            <div className="w-28 h-9 rounded-lg bg-surface-raised shrink-0" />
+          </div>
+        </div>
+
+        {/* Orders Skeleton */}
+        <PrivateOrdersSkeleton />
+      </main>
+      <Footer />
+      <MobileBottomNav />
+    </div>
+  );
+}
+
 function PrivateOrderContent() {
   const { data: session } = useSession();
   const [selectedStatus, setSelectedStatus] = useState('all');
@@ -188,29 +270,31 @@ function PrivateOrderContent() {
   });
   const [emailInput, setEmailInput] = useState('');
   const [isChangingEmail, setIsChangingEmail] = useState(false);
+  const [isSubmittingLookup, setIsSubmittingLookup] = useState(false);
 
   // Effective email to filter orders
   const activeEmail = session?.user?.email || guestEmail;
 
   // Manual payment modal states
-  const [paymentConfig, setPaymentConfig] = useState<PublicPaymentConfig | null>(null);
   const [activeManualModal, setActiveManualModal] = useState<ManualPaymentModalData | null>(null);
   const [selectedOrderForModal, setSelectedOrderForModal] = useState<Order | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
   const { addItem } = useCartStore();
 
-  // Load payment config on mount for manual modal
-  useEffect(() => {
-    PaymentConfigApi.getPublicConfig()
-      .then((res) => {
-        if (res.success && res.data) setPaymentConfig(res.data);
-      })
-      .catch(() => {});
-  }, []);
+  // Load payment config with caching (infrequently changes during a session)
+  const { data: paymentConfigData } = useQuery<PublicPaymentConfig | null>({
+    queryKey: ['public-payment-config'],
+    queryFn: async () => {
+      const res = await PaymentConfigApi.getPublicConfig();
+      return res.success && res.data ? res.data : null;
+    },
+    staleTime: 60000,
+  });
+  const paymentConfig = paymentConfigData || null;
 
   // PERSONAL / PRIVATE ORDERS QUERY
-  const { data, isLoading, error, refetch } = useQuery<{ success: boolean; data: Order[] }>({
+  const { data, isLoading, isFetching, error, refetch, isRefetching } = useQuery<{ success: boolean; data: Order[] }>({
     queryKey: ['private-orders', selectedStatus, activeEmail],
     queryFn: async () => {
       const params = new URLSearchParams();
@@ -221,7 +305,16 @@ function PrivateOrderContent() {
       return res.json();
     },
     enabled: Boolean(activeEmail),
+    staleTime: 10000,
+    placeholderData: (previousData) => previousData,
   });
+
+  // Reset lookup submitting flag once data or error arrives
+  useEffect(() => {
+    if (data || error) {
+      setIsSubmittingLookup(false);
+    }
+  }, [data, error]);
 
   // SSE Real-Time Listener for User Orders
   useEffect(() => {
@@ -371,6 +464,9 @@ function PrivateOrderContent() {
     }
   };
 
+  // Immediate loading state: actively fetching private orders for active email
+  const isInitialLoading = Boolean(activeEmail) && (isSubmittingLookup || (isLoading && !data));
+
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col font-sans selection:bg-primary/20 selection:text-primary">
       <Header onNotify={showNotification} />
@@ -409,10 +505,15 @@ function PrivateOrderContent() {
                 refetch();
                 showNotification('Data riwayat pesanan berhasil diperbarui.');
               }}
-              className="p-2 rounded-lg bg-surface-raised border border-border text-foreground-muted hover:text-foreground transition-colors cursor-pointer h-8 w-8 flex items-center justify-center"
+              className={`p-2 rounded-lg bg-surface-raised border border-border text-foreground-muted hover:text-foreground transition-colors cursor-pointer h-8 w-8 flex items-center justify-center ${
+                isRefetching ? 'opacity-50' : ''
+              }`}
               title="Perbarui Data"
             >
-              <FontAwesomeIcon icon={faRotateLeft} className="w-3.5 h-3.5" />
+              <FontAwesomeIcon
+                icon={faRotateLeft}
+                className={`w-3.5 h-3.5 ${isRefetching ? 'animate-spin text-primary' : ''}`}
+              />
             </button>
           </div>
         </div>
@@ -425,6 +526,7 @@ function PrivateOrderContent() {
                 e.preventDefault();
                 const trimmed = emailInput.trim();
                 if (trimmed) {
+                  setIsSubmittingLookup(true);
                   setGuestEmail(trimmed);
                   if (typeof window !== 'undefined') {
                     localStorage.setItem('asterra_customer_email', trimmed);
@@ -443,8 +545,8 @@ function PrivateOrderContent() {
                 onChange={(e) => setEmailInput(e.target.value)}
                 className="flex-1 px-3 py-2 text-xs rounded-lg bg-surface-raised border border-border text-foreground placeholder:text-foreground-muted focus:outline-none focus:border-primary"
               />
-              <Button type="submit" size="sm" className="text-xs shrink-0">
-                Lihat Pesanan
+              <Button type="submit" size="sm" className="text-xs shrink-0" disabled={isSubmittingLookup}>
+                {isSubmittingLookup ? 'Memuat...' : 'Lihat Pesanan'}
               </Button>
             </form>
           </div>
@@ -503,7 +605,7 @@ function PrivateOrderContent() {
                     key={filter.value}
                     type="button"
                     onClick={() => setSelectedStatus(filter.value)}
-                    className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all shrink-0 border ${
+                    className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all shrink-0 border cursor-pointer ${
                       isSelected
                         ? 'bg-navy-900 text-white border-navy-900 shadow-xs'
                         : 'bg-surface text-foreground-muted border-border hover:border-primary/40 hover:text-primary'
@@ -530,25 +632,10 @@ function PrivateOrderContent() {
         </div>
 
         {/* Loading Skeletons */}
-        {isLoading && (
-          <div className="space-y-4 animate-pulse">
-            {[1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className="bg-surface border border-border rounded-xl p-6 space-y-4"
-              >
-                <div className="flex justify-between">
-                  <div className="w-48 h-5 bg-surface-raised rounded" />
-                  <div className="w-24 h-5 bg-surface-raised rounded" />
-                </div>
-                <div className="w-full h-16 bg-surface-raised rounded" />
-              </div>
-            ))}
-          </div>
-        )}
+        {isInitialLoading && <PrivateOrdersSkeleton />}
 
         {/* Error State */}
-        {error && (
+        {error && !isInitialLoading && (
           <div className="bg-surface border border-status-error/40 rounded-xl p-8 text-center space-y-3">
             <p className="text-sm font-semibold text-foreground">Gagal memuat riwayat pesanan</p>
             <p className="text-xs text-foreground-muted">Silakan coba beberapa saat lagi.</p>
@@ -559,7 +646,7 @@ function PrivateOrderContent() {
         )}
 
         {/* Empty State */}
-        {!isLoading && !error && filteredOrders.length === 0 && (
+        {!isInitialLoading && !error && filteredOrders.length === 0 && (
           <div className="bg-surface border border-border rounded-xl p-12 text-center space-y-4 max-w-md mx-auto my-12">
             <div className="w-12 h-12 rounded-xl bg-surface-raised border border-border flex items-center justify-center mx-auto text-foreground-muted">
               <FontAwesomeIcon icon={faBox} className="w-6 h-6" />
@@ -597,8 +684,8 @@ function PrivateOrderContent() {
         )}
 
         {/* Orders Listing */}
-        {!isLoading && !error && filteredOrders.length > 0 && (
-          <div className="space-y-6">
+        {!isInitialLoading && !error && filteredOrders.length > 0 && (
+          <div className={`space-y-6 transition-opacity duration-150 ${isFetching ? 'opacity-85' : 'opacity-100'}`}>
             {filteredOrders.map((order) => {
               const isExpanded = expandedOrderId === order.id;
               const isExpired = isOrderExpired(order);
@@ -762,7 +849,7 @@ function PrivateOrderContent() {
                           </h4>
                           <div className="flex flex-wrap items-center gap-2 text-foreground-muted text-[11px]">
                             <span>Jumlah: {item.quantity} lisensi</span>
-                            <span>•</span>
+                            <span>—</span>
                             <span>
                               Target Email:{' '}
                               <strong className="text-foreground">
@@ -912,13 +999,7 @@ function PrivateOrderContent() {
 
 export default function PrivateOrderPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen bg-background flex items-center justify-center">
-          <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-        </div>
-      }
-    >
+    <Suspense fallback={<PrivateOrdersPageSkeleton />}>
       <PrivateOrderContent />
     </Suspense>
   );

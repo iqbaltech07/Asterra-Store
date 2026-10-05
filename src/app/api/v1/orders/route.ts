@@ -25,6 +25,9 @@ function maskCustomerName(name?: string | null): string {
   return `${first} ${last.charAt(0)}.***`;
 }
 
+// Global throttled background auto-cancel timestamp
+let lastAutoCancelTimestamp = 0;
+
 // GET /api/v1/orders - User-isolated order history & public live order activity
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -35,12 +38,16 @@ export async function GET(request: NextRequest) {
   const orderIdParam = searchParams.get('order_id')?.trim();
   const isPublicLive = searchParams.get('mode') === 'live' || searchParams.get('public') === 'true';
 
-  // Auto-cancel any expired pending orders before returning lists
-  await OrderAdminService.autoCancelExpiredOrders().catch((e) =>
-    console.warn('[OrdersAPI] Auto-cancel runner error:', e)
-  );
+  // Throttled background auto-cancel (non-blocking, at most once per 60s)
+  const nowMs = Date.now();
+  if (nowMs - lastAutoCancelTimestamp > 60000) {
+    lastAutoCancelTimestamp = nowMs;
+    void OrderAdminService.autoCancelExpiredOrders().catch((e) =>
+      console.warn('[OrdersAPI] Background auto-cancel error:', e)
+    );
+  }
 
-  // PUBLIC LIVE ORDERS ACTIVITY (Masked, zero sensitive customer data)
+  // PUBLIC LIVE ORDERS ACTIVITY (Masked, zero sensitive customer data, lean select)
   if (isPublicLive) {
     const publicList: Array<{
       id: string;
@@ -57,7 +64,17 @@ export async function GET(request: NextRequest) {
       const recentDbOrders = await prisma.order.findMany({
         take: 30,
         orderBy: { createdAt: 'desc' },
-        include: { items: true },
+        select: {
+          id: true,
+          status: true,
+          createdAt: true,
+          customerName: true,
+          items: {
+            select: {
+              productName: true,
+            },
+          },
+        },
       });
       for (const d of recentDbOrders) {
         publicList.push({
@@ -99,24 +116,34 @@ export async function GET(request: NextRequest) {
       filteredPublic = publicList.filter((o) => o.order_status === status);
     }
 
-    return NextResponse.json({
-      success: true,
-      data: filteredPublic.slice(0, 30),
-      total: filteredPublic.length,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        data: filteredPublic.slice(0, 30),
+        total: filteredPublic.length,
+      },
+      {
+        headers: {
+          'Cache-Control': 'public, s-maxage=5, stale-while-revalidate=15',
+        },
+      }
+    );
   }
 
-  // Check if user is authenticated via Better Auth session
+  // Check if user is authenticated via Better Auth session only if auth cookie is present
   let sessionUserEmail: string | null = null;
-  try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-    if (session?.user?.email) {
-      sessionUserEmail = session.user.email.toLowerCase().trim();
+  const cookieHeader = request.headers.get('cookie') || '';
+  if (cookieHeader.includes('better-auth') || cookieHeader.includes('session')) {
+    try {
+      const session = await auth.api.getSession({
+        headers: await headers(),
+      });
+      if (session?.user?.email) {
+        sessionUserEmail = session.user.email.toLowerCase().trim();
+      }
+    } catch (sessionErr) {
+      console.warn('[OrdersAPI] Session check skipped in GET:', sessionErr);
     }
-  } catch (sessionErr) {
-    console.warn('[OrdersAPI] Session check skipped in GET:', sessionErr);
   }
 
   // Determine effective target email (Session takes precedence for security)
@@ -159,13 +186,9 @@ export async function GET(request: NextRequest) {
 
     const dbOrders = await prisma.order.findMany({
       where: whereClause,
-      take: 100,
+      take: 50,
       include: {
         items: true,
-        logs: {
-          orderBy: { createdAt: 'desc' },
-          take: 5,
-        },
       },
       orderBy: { createdAt: 'desc' },
     });

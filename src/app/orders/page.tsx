@@ -91,12 +91,91 @@ function formatRelativeTime(dateString: string): string {
   return `${Math.floor(diffInSeconds / 86400)} hari lalu`;
 }
 
+// Realistic Order Cards Skeleton matching actual UI card structure
+function GlobalOrdersSkeleton() {
+  return (
+    <div className="space-y-3" aria-busy="true" aria-label="Memuat daftar pesanan">
+      {[1, 2, 3, 4, 5].map((i) => (
+        <div
+          key={i}
+          className="bg-surface border border-border rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-pulse"
+        >
+          <div className="flex items-start gap-3.5 flex-1">
+            <div className="w-10 h-10 rounded-xl bg-surface-raised shrink-0 mt-0.5" />
+            <div className="space-y-2 flex-1">
+              <div className="flex items-center gap-2">
+                <div className="w-24 h-4 bg-surface-raised rounded" />
+                <div className="w-1 h-3 bg-surface-raised rounded" />
+                <div className="w-28 h-4 bg-surface-raised rounded" />
+              </div>
+              <div className="w-48 sm:w-64 h-4 bg-surface-raised rounded" />
+              <div className="flex items-center gap-2">
+                <div className="w-20 h-3 bg-surface-raised rounded" />
+                <div className="w-1 h-2 bg-surface-raised rounded" />
+                <div className="w-16 h-3 bg-surface-raised rounded" />
+                <div className="w-1 h-2 bg-surface-raised rounded" />
+                <div className="w-24 h-3 bg-surface-raised rounded" />
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-border">
+            <div className="w-20 h-4 bg-surface-raised rounded" />
+            <div className="w-24 h-6 bg-surface-raised rounded-full" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Full Page Skeleton used for instant Suspense fallback (zero blank area)
+function GlobalOrdersPageSkeleton() {
+  return (
+    <div className="min-h-screen bg-background text-foreground flex flex-col font-sans">
+      <Header />
+      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 w-full">
+        {/* Breadcrumb Skeleton */}
+        <div className="flex items-center justify-between gap-3 mb-6 animate-pulse">
+          <div className="w-32 h-4 bg-surface-raised rounded" />
+          <div className="w-28 h-8 bg-surface-raised rounded-lg" />
+        </div>
+
+        {/* Page Header Skeleton */}
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-pulse">
+          <div className="space-y-2">
+            <div className="w-40 h-7 bg-surface-raised rounded-lg" />
+            <div className="w-64 h-3.5 bg-surface-raised rounded" />
+          </div>
+          <div className="w-36 h-8 bg-surface-raised rounded-xl" />
+        </div>
+
+        {/* Filters and Search Bar Skeleton */}
+        <div className="bg-surface border border-border rounded-xl p-4 sm:p-5 mb-6 space-y-4 animate-pulse">
+          <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+            <div className="flex items-center gap-2 overflow-hidden">
+              {[1, 2, 3, 4, 5].map((idx) => (
+                <div key={idx} className="w-24 h-7 rounded-full bg-surface-raised shrink-0" />
+              ))}
+            </div>
+            <div className="w-full sm:w-72 h-8 rounded-lg bg-surface-raised" />
+          </div>
+        </div>
+
+        {/* Order Cards Skeleton */}
+        <GlobalOrdersSkeleton />
+      </main>
+      <Footer />
+      <MobileBottomNav />
+    </div>
+  );
+}
+
 function GlobalOrdersContent() {
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Fetch Public / Global Orders Data from all customers
-  const { data, isLoading, error, refetch, isRefetching } = useQuery<{
+  // Fetch Public / Global Orders Data from all customers with deduplication and caching
+  const { data, isLoading, isFetching, error, refetch, isRefetching } = useQuery<{
     success: boolean;
     data: PublicOrder[];
     total: number;
@@ -112,6 +191,8 @@ function GlobalOrdersContent() {
       if (!res.ok) throw new Error('Gagal mengambil data pesanan publik');
       return res.json();
     },
+    staleTime: 10000, // 10s fresh cache prevents redundant refetches on tab focus
+    placeholderData: (previousData) => previousData, // Seamless UI during filter tab transitions
     refetchInterval: 30000, // Background sync every 30s
   });
 
@@ -130,6 +211,9 @@ function GlobalOrdersContent() {
         order.items_summary.toLowerCase().includes(q)
     );
   }, [orders, searchQuery]);
+
+  // Initial loading state (no cached data yet)
+  const isInitialLoading = isLoading && !data;
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col font-sans selection:bg-primary/20 selection:text-primary">
@@ -233,25 +317,10 @@ function GlobalOrdersContent() {
         </div>
 
         {/* Loading Skeletons */}
-        {isLoading && (
-          <div className="space-y-3 animate-pulse">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div
-                key={i}
-                className="bg-surface border border-border rounded-xl p-4 sm:p-5 flex items-center justify-between gap-4"
-              >
-                <div className="space-y-2 flex-1">
-                  <div className="w-32 h-4 bg-surface-raised rounded" />
-                  <div className="w-48 h-3 bg-surface-raised rounded" />
-                </div>
-                <div className="w-24 h-6 bg-surface-raised rounded" />
-              </div>
-            ))}
-          </div>
-        )}
+        {isInitialLoading && <GlobalOrdersSkeleton />}
 
         {/* Error State */}
-        {error && (
+        {error && !isInitialLoading && (
           <div className="bg-surface border border-status-error/40 rounded-xl p-8 text-center space-y-3">
             <p className="text-sm font-semibold text-foreground">Gagal memuat daftar pesanan publik</p>
             <p className="text-xs text-foreground-muted">Silakan coba beberapa saat lagi.</p>
@@ -262,7 +331,7 @@ function GlobalOrdersContent() {
         )}
 
         {/* Empty State */}
-        {!isLoading && !error && filteredOrders.length === 0 && (
+        {!isInitialLoading && !error && filteredOrders.length === 0 && (
           <div className="bg-surface border border-border rounded-xl p-12 text-center space-y-4 max-w-md mx-auto my-12">
             <div className="w-12 h-12 rounded-xl bg-surface-raised border border-border flex items-center justify-center mx-auto text-foreground-muted">
               <FontAwesomeIcon icon={faBox} className="w-6 h-6" />
@@ -298,8 +367,8 @@ function GlobalOrdersContent() {
         )}
 
         {/* Global Orders List */}
-        {!isLoading && !error && filteredOrders.length > 0 && (
-          <div className="space-y-3">
+        {!isInitialLoading && !error && filteredOrders.length > 0 && (
+          <div className={`space-y-3 transition-opacity duration-150 ${isFetching ? 'opacity-85' : 'opacity-100'}`}>
             {filteredOrders.map((order) => (
               <div
                 key={order.id + order.order_date}
@@ -360,13 +429,7 @@ function GlobalOrdersContent() {
 
 export default function GlobalOrdersPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen bg-background flex items-center justify-center">
-          <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-        </div>
-      }
-    >
+    <Suspense fallback={<GlobalOrdersPageSkeleton />}>
       <GlobalOrdersContent />
     </Suspense>
   );
