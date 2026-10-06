@@ -336,8 +336,23 @@ export class SalesDbService {
     const holdingUntilDate = new Date();
     holdingUntilDate.setDate(holdingUntilDate.getDate() + 3);
 
-    await prisma.commission.create({
-      data: {
+    const commission = await prisma.commission.upsert({
+      where: { orderId: params.orderId },
+      update: {
+        partnerId: params.partnerId,
+        recruiterId: params.recruiterId || null,
+        orderTotal: params.breakdown.netRevenue,
+        netRevenue: params.breakdown.netRevenue,
+        costOfGoods: params.breakdown.costOfGoods,
+        transactionProfit: params.breakdown.transactionProfit,
+        commissionRate: Math.round(params.breakdown.salesCommissionRate * 100),
+        commissionAmount: params.breakdown.salesCommission,
+        bonusRate: params.breakdown.recruitmentBonusRate > 0 ? Math.round(params.breakdown.recruitmentBonusRate * 100) : 0,
+        bonusAmount: params.breakdown.recruitmentBonus || 0,
+        status: 'pending',
+        holdingUntil: holdingUntilDate,
+      },
+      create: {
         orderId: params.orderId,
         partnerId: params.partnerId,
         recruiterId: params.recruiterId || null,
@@ -394,17 +409,41 @@ export class SalesDbService {
     recruiterSalesName?: string;
     breakdown: ProfitBreakdown;
   }) {
-    const existing = await prisma.profitLedger.findUnique({
-      where: { orderId: params.orderId },
-    });
-
-    if (existing) return existing;
-
     const holdingUntilDate = new Date();
     holdingUntilDate.setDate(holdingUntilDate.getDate() + 3);
 
-    return prisma.profitLedger.create({
-      data: {
+    return prisma.profitLedger.upsert({
+      where: { orderId: params.orderId },
+      update: {
+        customerEmail: params.customerEmail,
+        customerName: params.customerName || null,
+        productId: params.productId,
+        productNames: params.productNames,
+        salesId: params.salesId || null,
+        salesName: params.salesName || null,
+        referralCode: params.referralCode || null,
+        recruiterSalesId: params.recruiterSalesId || null,
+        recruiterSalesName: params.recruiterSalesName || null,
+        saleCommissionRate: params.breakdown.salesCommissionRate,
+        recruitmentBonusRate: params.breakdown.recruitmentBonusRate,
+        sellingPrice: params.breakdown.sellingPrice,
+        customerReferralDiscount: params.breakdown.customerDiscount,
+        netRevenue: params.breakdown.netRevenue,
+        costOfGoods: params.breakdown.costOfGoods,
+        paymentFee: params.breakdown.paymentFee,
+        otherDirectCost: params.breakdown.otherDirectCost,
+        directTransactionCost: params.breakdown.directTransactionCost,
+        transactionProfit: params.breakdown.transactionProfit,
+        salesCommission: params.breakdown.salesCommission,
+        recruitmentBonus: params.breakdown.recruitmentBonus,
+        profitDistribution: params.breakdown.profitDistribution,
+        ceoShare: params.breakdown.ceoShare,
+        cooShare: params.breakdown.cooShare,
+        businessReserve: params.breakdown.businessReserve,
+        status: 'pending',
+        holdingUntil: holdingUntilDate,
+      },
+      create: {
         orderId: params.orderId,
         customerEmail: params.customerEmail,
         customerName: params.customerName || null,

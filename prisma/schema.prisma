@@ -61,8 +61,10 @@ model Order {
   customerName      String?        @map("customer_name")
   customerNotes     String?        @map("customer_notes") @db.Text
   totalAmount       Int            @map("total_amount")
-  rawAmount         Int?           @map("raw_amount")
-  uniqueCode        Int?           @map("unique_code")
+  rawAmount         Int?         @map("raw_amount")
+  promoDiscount     Int          @default(0) @map("promo_discount")
+  referralDiscount  Int          @default(0) @map("referral_discount")
+  uniqueCode        Int?         @map("unique_code")
   paymentMode       String         @default("gateway") @map("payment_mode") // "gateway" | "manual"
   status            String         @default("pending") // "pending" | "processing" | "completed" | "cancelled"
   paymentMethod     String?        @map("payment_method")

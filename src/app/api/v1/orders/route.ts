@@ -549,6 +549,8 @@ export async function POST(request: NextRequest) {
             : customer_notes || null,
           totalAmount: finalTotalAmount,
           rawAmount: rawTotalAmount,
+          promoDiscount: discountAmount,
+          referralDiscount,
           uniqueCode: uniqueCode > 0 ? uniqueCode : null,
           paymentMode: isManualMode ? 'manual' : 'gateway',
           expiresAt,

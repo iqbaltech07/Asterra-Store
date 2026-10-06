@@ -283,7 +283,8 @@ export class OrderAdminService {
     }
 
     // 3. Attribution of Affiliate Sales Commission & Profit Ledger (SSOT §8, §15, §17)
-    if (newStatus === 'completed' || newStatus === 'processing') {
+    // Idempotent: Only credit once when status becomes processing/completed, not on repeated transitions
+    if ((newStatus === 'processing' || newStatus === 'completed') && previousStatus !== 'completed' && previousStatus !== 'processing') {
       try {
         let referralCode: string | undefined = undefined;
         let orderTotalAmount = 0;
@@ -335,7 +336,13 @@ export class OrderAdminService {
           if (dbOrder) {
             orderTotalAmount = dbOrder.totalAmount;
             rawSellingPrice = dbOrder.rawAmount || rawSellingPrice || dbOrder.totalAmount;
-            customerDiscount = customerDiscount || (dbOrder.rawAmount ? Math.max(0, dbOrder.rawAmount - dbOrder.totalAmount) : 0);
+            // Only commercial discounts reduce revenue. uniqueCode is a transfer identifier, not a discount.
+            const storedDiscount = dbOrder.promoDiscount + dbOrder.referralDiscount;
+            customerDiscount = storedDiscount > 0
+              ? storedDiscount
+              : dbOrder.rawAmount
+                ? Math.max(0, dbOrder.rawAmount - dbOrder.totalAmount + (dbOrder.uniqueCode || 0))
+                : 0;
             customerEmail = dbOrder.customerEmail || customerEmail;
             customerPhone = customerPhone || dbOrder.customerWhatsapp || (dbOrder as any).customerPhone || undefined;
             customerName = customerName || dbOrder.customerName || undefined;
@@ -351,6 +358,10 @@ export class OrderAdminService {
               }));
             }
 
+            // Prefer dedicated referral column over log metadata
+            if (!referralCode && dbOrder.referralCode) {
+              referralCode = dbOrder.referralCode;
+            }
             // Check logs metadata
             if (!referralCode) {
               for (const log of dbOrder.logs || []) {
@@ -531,6 +542,25 @@ export class OrderAdminService {
       order_date: new Date().toISOString(),
       items: [],
     };
+
+    // If order cancelled/expired after payment, release referral discount claim
+    if (newStatus === 'cancelled' && previousStatus === 'processing') {
+      try {
+        const commission = await prismaClient.commission.findUnique({ where: { orderId } });
+        if (commission && !commission.reversalReason) {
+          await prismaClient.commission.update({
+            where: { orderId },
+            data: { status: 'reversed', reversalReason: 'Order dibatalkan setelah pembayaran' },
+          });
+          const order = await prismaClient.order.findUnique({ where: { id: orderId } });
+          if (order?.referralDiscount && order.referralDiscount > 0 && order.referralCode) {
+            await prismaClient.referralDiscountUsage.deleteMany({ where: { orderId } });
+          }
+        }
+      } catch (releaseErr) {
+        console.warn('[OrderAdminService] Failed to release referral discount on cancel:', releaseErr);
+      }
+    }
 
     // Broadcast SSE update event to user and admin clients
     broadcastOrderEvent({
