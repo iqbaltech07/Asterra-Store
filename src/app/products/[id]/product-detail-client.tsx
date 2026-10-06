@@ -27,6 +27,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { ProductCard } from '@/components/products/product-card';
 import { ProductItem } from '@/lib/products-data';
+import { getDummyOriginalPrice, isPromoItem } from '@/lib/utils/promo-pricing';
 import { ParsedVariant, cleanHtmlContent } from '@/lib/services/product-variant-parser';
 import { saveRecentlyViewed } from '@/lib/services/recently-viewed';
 
@@ -855,6 +856,11 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
 
                   {/* Price Header */}
                   <div>
+                    {isPromoItem(product) && (
+                      <span className="text-xs sm:text-sm text-[#121A2A]/40 line-through font-medium block">
+                        {getDummyOriginalPrice(totalPrice).originalPriceFormatted}
+                      </span>
+                    )}
                     <div
                       key={totalPrice}
                       className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#121A2A] font-mono tracking-tight animate-text-smooth"
@@ -1214,6 +1220,11 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
             <span className="text-[10px] text-[#121A2A]/60 block leading-tight font-medium uppercase tracking-wider">
               Total Harga:
             </span>
+            {isPromoItem(product) && (
+              <span className="text-[10px] text-[#121A2A]/40 line-through font-medium block leading-none">
+                {getDummyOriginalPrice(totalPrice).originalPriceFormatted}
+              </span>
+            )}
             <span className="text-base font-black font-mono text-[#121A2A] tracking-tight block">
               Rp {totalPrice.toLocaleString('id-ID')}
             </span>

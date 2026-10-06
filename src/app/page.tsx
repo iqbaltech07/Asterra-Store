@@ -30,6 +30,7 @@ import {
   faSpotify,
 } from '@fortawesome/free-brands-svg-icons';
 import { useCatalogProducts } from '@/lib/hooks/use-catalog-products';
+import { getDummyOriginalPrice, isPromoItem } from '@/lib/utils/promo-pricing';
 import { QuickViewModal, QuickViewProductData } from '@/components/products/quick-view-modal';
 import { getRecentlyViewed, RecentlyViewedItem } from '@/lib/services/recently-viewed';
 import { ProductItem } from '@/lib/products-data';
@@ -216,6 +217,7 @@ export interface ApplicationGroupItem {
   soldCount?: number;
   rating?: string;
   badgeLabel?: string;
+  isPromo?: boolean;
   items: ProductItem[];
 }
 
@@ -233,6 +235,8 @@ function FeaturedGridCard({
 }) {
   const activePrices = app.items.map((p) => p.price).filter((p) => p > 0);
   const minPrice = activePrices.length > 0 ? Math.min(...activePrices) : app.fallbackPrice;
+  const isPromo = isPromoItem(app);
+  const dummyOriginal = getDummyOriginalPrice(minPrice);
 
   return (
     <div className="group bg-white border border-[rgba(18,26,42,0.09)] hover:border-[#C96F55]/70 hover:shadow-card-hover hover:-translate-y-0.5 rounded-xl sm:rounded-2xl p-2.5 sm:p-3.5 transition-[border-color,box-shadow,transform] duration-200 flex flex-col justify-between w-full h-full select-none">
@@ -284,12 +288,19 @@ function FeaturedGridCard({
 
       {/* 3. Pricing & Quick View */}
       <div className="pt-2 border-t border-[rgba(18,26,42,0.06)] mt-2 sm:mt-2.5 flex items-center justify-between">
-        <Link
-          href={`/products/${app.slug}`}
-          className="font-black text-xs sm:text-sm lg:text-[15px] text-[#121A2A] tracking-tight hover:text-[#C96F55] transition-colors"
-        >
-          Rp{minPrice.toLocaleString('id-ID')}
-        </Link>
+        <div className="flex flex-col min-w-0">
+          {isPromo && (
+            <span className="text-[10px] sm:text-[11px] text-[#121A2A]/40 line-through font-medium leading-none block">
+              {dummyOriginal.originalPriceFormatted}
+            </span>
+          )}
+          <Link
+            href={`/products/${app.slug}`}
+            className="font-black text-xs sm:text-sm lg:text-[15px] text-[#121A2A] tracking-tight hover:text-[#C96F55] transition-colors mt-0.5 block truncate"
+          >
+            Rp{minPrice.toLocaleString('id-ID')}
+          </Link>
+        </div>
 
         <div className="flex items-center gap-1 sm:gap-1.5">
           {onQuickView && (
@@ -337,6 +348,8 @@ function ShowcaseLoopingCard({
 }) {
   const activePrices = app.items.map((p) => p.price).filter((p) => p > 0);
   const minPrice = activePrices.length > 0 ? Math.min(...activePrices) : app.fallbackPrice;
+  const isPromo = isPromoItem(app);
+  const dummyOriginal = getDummyOriginalPrice(minPrice);
 
   return (
     <div
@@ -386,9 +399,16 @@ function ShowcaseLoopingCard({
       </div>
 
       <div className="pt-2 border-t border-[rgba(18,26,42,0.06)] mt-2 flex items-center justify-between">
-        <Link href={`/products/${app.slug}`} className="font-black text-sm sm:text-[15px] text-[#121A2A] tracking-tight hover:text-[#C96F55] transition-colors">
-          Rp{minPrice.toLocaleString('id-ID')}
-        </Link>
+        <div className="flex flex-col min-w-0">
+          {isPromo && (
+            <span className="text-[10px] sm:text-[11px] text-[#121A2A]/40 line-through font-medium leading-none block">
+              {dummyOriginal.originalPriceFormatted}
+            </span>
+          )}
+          <Link href={`/products/${app.slug}`} className="font-black text-sm sm:text-[15px] text-[#121A2A] tracking-tight hover:text-[#C96F55] transition-colors mt-0.5 block truncate">
+            Rp{minPrice.toLocaleString('id-ID')}
+          </Link>
+        </div>
 
         <div className="flex items-center gap-1.5">
           {onQuickView && (
@@ -656,6 +676,7 @@ export default function HomePage() {
             : activeCategory === 'terlaris'
             ? 'Terlaris'
             : 'Baru',
+        isPromo: activeCategory === 'promo' || target.isPromo,
         items,
       };
     });

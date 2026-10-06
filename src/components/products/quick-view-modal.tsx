@@ -12,6 +12,7 @@ import {
   faLock,
 } from '@fortawesome/free-solid-svg-icons';
 import { Button } from '@/components/ui/button';
+import { getDummyOriginalPrice, isPromoItem } from '@/lib/utils/promo-pricing';
 
 export interface QuickViewProductData {
   id: string;
@@ -28,6 +29,9 @@ export interface QuickViewProductData {
   processTitle?: string;
   privacyTitle?: string;
   brand?: string;
+  isPromo?: boolean;
+  badgeLabel?: string;
+  badge?: string;
 }
 
 interface QuickViewModalProps {
@@ -115,6 +119,11 @@ export function QuickViewModal({ product, isOpen, onClose }: QuickViewModalProps
 
         {/* Price Tag */}
         <div className="pb-3.5 mb-3.5 border-b border-[rgba(18,26,42,0.08)] flex items-baseline gap-2">
+          {isPromoItem(product) && (
+            <span className="text-xs sm:text-sm text-[#121A2A]/40 line-through font-medium">
+              {getDummyOriginalPrice(product.price).originalPriceFormatted}
+            </span>
+          )}
           <span className="text-xl sm:text-2xl font-black text-[#121A2A] tracking-tight">
             {priceDisplay}
           </span>

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { useCatalogProducts } from '@/lib/hooks/use-catalog-products';
+import { getDummyOriginalPrice, isPromoItem } from '@/lib/utils/promo-pricing';
 import { Button } from '@/components/ui/button';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -458,6 +459,11 @@ function ProductsContent() {
 
                   <div className="flex sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto gap-3 pt-3 sm:pt-0 border-t sm:border-t-0 border-[rgba(18,26,42,0.08)]">
                     <div className="text-left sm:text-right">
+                      {isPromoItem(product) && (
+                        <span className="text-[11px] sm:text-xs text-[#121A2A]/40 line-through font-medium block">
+                          {getDummyOriginalPrice(product.price).originalPriceFormatted}
+                        </span>
+                      )}
                       <span className="text-base sm:text-lg font-extrabold text-[#121A2A] block">{product.priceFormatted}</span>
                       <span className="text-[11px] text-[#121A2A]/50 block">/ akun lisensi</span>
                     </div>

@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck, faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { ProductItem } from '@/lib/products-data';
+import { getDummyOriginalPrice, isPromoItem } from '@/lib/utils/promo-pricing';
 
 interface ProductCardProps {
   product: ProductItem & { providerCode?: string };
@@ -26,6 +27,8 @@ export function ProductCard({
     (product.stock !== undefined && product.stock <= 0) ||
     product.providerStatus === 'empty' ||
     product.status === 'out_of_stock';
+  const isPromo = isPromoItem(product);
+  const dummyOriginal = getDummyOriginalPrice(product.price);
 
   return (
     <Card data-gsap="card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl shadow-card hover:shadow-card-hover hover:border-[rgba(18,26,42,0.22)] transition-[border-color,box-shadow,background-color] duration-200 overflow-hidden flex flex-col justify-between group">
@@ -121,12 +124,25 @@ export function ProductCard({
       {/* 4. Price & Compact CTA */}
       <div className="p-2.5 sm:p-3.5 pt-2 border-t border-[rgba(18,26,42,0.08)] bg-[#F8FAFC] flex items-center justify-between gap-1.5 sm:gap-2">
         <div className="min-w-0 flex-1">
-          <p className="text-[9px] sm:text-[10px] text-[#121A2A]/50 uppercase font-semibold tracking-wider leading-none">
-            Harga
-          </p>
-          <span className="text-xs sm:text-base md:text-lg font-black tracking-tight text-[#121A2A] block truncate mt-0.5">
-            {product.priceFormatted}
-          </span>
+          {isPromo ? (
+            <div className="flex flex-col">
+              <span className="text-[10px] sm:text-[11px] text-[#121A2A]/40 line-through font-medium leading-none">
+                {dummyOriginal.originalPriceFormatted}
+              </span>
+              <span className="text-xs sm:text-base md:text-lg font-black tracking-tight text-[#121A2A] block truncate mt-0.5">
+                {product.priceFormatted}
+              </span>
+            </div>
+          ) : (
+            <>
+              <p className="text-[9px] sm:text-[10px] text-[#121A2A]/50 uppercase font-semibold tracking-wider leading-none">
+                Harga
+              </p>
+              <span className="text-xs sm:text-base md:text-lg font-black tracking-tight text-[#121A2A] block truncate mt-0.5">
+                {product.priceFormatted}
+              </span>
+            </>
+          )}
         </div>
 
         <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">

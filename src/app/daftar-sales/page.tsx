@@ -3,24 +3,26 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  Wallet,
-  CheckCircle2,
-  AlertCircle,
-  Copy,
-  Check,
-  ShieldCheck,
-  Sparkles,
-  ArrowRight,
-  HelpCircle,
-  MessageSquare,
-  Gift,
-  Lock,
-  Eye,
-  EyeOff,
-  Users,
-  X,
-} from 'lucide-react';
+  faWallet,
+  faCircleCheck,
+  faCircleExclamation,
+  faCopy,
+  faCheck,
+  faShieldHalved,
+  faWandMagicSparkles,
+  faArrowRight,
+  faCircleQuestion,
+  faComments,
+  faGift,
+  faLock,
+  faEye,
+  faEyeSlash,
+  faUsers,
+  faXmark,
+  faPercent,
+} from '@fortawesome/free-solid-svg-icons';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -201,7 +203,7 @@ function DaftarSalesContent() {
           <div className="bg-surface border border-status-success/40 rounded-2xl p-6 sm:p-10 shadow-xl space-y-8 animate-in fade-in zoom-in-95">
             <div className="text-center space-y-3 max-w-lg mx-auto">
               <div className="w-16 h-16 rounded-full bg-status-success/15 text-status-success border border-status-success/30 flex items-center justify-center mx-auto shadow-sm">
-                <CheckCircle2 className="w-8 h-8" />
+                <FontAwesomeIcon icon={faCircleCheck} className="text-2xl" />
               </div>
               <Badge variant="outline" className="text-xs font-semibold text-status-success border-status-success/30 bg-status-success/10">
                 Pendaftaran Berhasil & Akun Aktif
@@ -241,12 +243,12 @@ function DaftarSalesContent() {
                   >
                     {isCopied ? (
                       <>
-                        <Check className="w-3.5 h-3.5 text-status-success" />
+                        <FontAwesomeIcon icon={faCheck} className="text-xs text-status-success" />
                         <span>Tersalin!</span>
                       </>
                     ) : (
                       <>
-                        <Copy className="w-3.5 h-3.5" />
+                        <FontAwesomeIcon icon={faCopy} className="text-xs" />
                         <span>Salin Link</span>
                       </>
                     )}
@@ -256,7 +258,7 @@ function DaftarSalesContent() {
 
               <div className="p-3 bg-primary/10 border border-primary/20 rounded-lg text-xs text-foreground space-y-1">
                 <p className="font-semibold text-primary flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5" />
+                  <FontAwesomeIcon icon={faWandMagicSparkles} className="text-xs" />
                   <span>Cara Kerja Penghasilan Anda:</span>
                 </p>
                 <p className="text-[11px] text-foreground-muted leading-relaxed">
@@ -269,7 +271,7 @@ function DaftarSalesContent() {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
               <Link href="/sales/login" className="w-full sm:w-auto">
                 <Button className="w-full sm:w-auto text-xs h-10 gap-2 bg-primary font-bold shadow-sm">
-                  <Lock className="w-3.5 h-3.5" />
+                  <FontAwesomeIcon icon={faLock} className="text-xs" />
                   <span>Masuk ke Portal Sales Saya</span>
                 </Button>
               </Link>
@@ -282,7 +284,7 @@ function DaftarSalesContent() {
                 rel="noopener noreferrer"
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-status-success hover:bg-status-success/90 text-white font-semibold text-xs transition-colors shadow-sm"
               >
-                <MessageSquare className="w-4 h-4" />
+                <FontAwesomeIcon icon={faComments} className="text-sm" />
                 <span>Hubungi Admin WhatsApp</span>
               </a>
 
@@ -301,7 +303,7 @@ function DaftarSalesContent() {
             {/* Hero Section */}
             <div className="text-center space-y-4 max-w-2xl mx-auto">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/25 text-primary text-xs font-semibold">
-                <Gift className="w-3.5 h-3.5" />
+                <FontAwesomeIcon icon={faGift} className="text-xs" />
                 <span>Program Kemitraan Sales & Affiliate Resmi</span>
               </div>
               <h1 className="text-3xl sm:text-4xl font-extrabold text-foreground tracking-tight leading-tight">
@@ -316,7 +318,7 @@ function DaftarSalesContent() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-2.5">
                 <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold">
-                  <PercentIcon />
+                  <FontAwesomeIcon icon={faPercent} className="text-base" />
                 </div>
                 <h3 className="font-bold text-sm text-foreground">Komisi Menarik 10% – 15%</h3>
                 <p className="text-xs text-foreground-muted leading-relaxed">
@@ -326,7 +328,7 @@ function DaftarSalesContent() {
 
               <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-2.5">
                 <div className="w-10 h-10 rounded-lg bg-status-success/10 text-status-success flex items-center justify-center font-bold">
-                  <Wallet className="w-5 h-5" />
+                  <FontAwesomeIcon icon={faWallet} className="text-base" />
                 </div>
                 <h3 className="font-bold text-sm text-foreground">Pencairan Dana Cepat</h3>
                 <p className="text-xs text-foreground-muted leading-relaxed">
@@ -336,7 +338,7 @@ function DaftarSalesContent() {
 
               <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-2.5">
                 <div className="w-10 h-10 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center font-bold">
-                  <ShieldCheck className="w-5 h-5" />
+                  <FontAwesomeIcon icon={faShieldHalved} className="text-base" />
                 </div>
                 <h3 className="font-bold text-sm text-foreground">Produk Resmi & Bergaransi</h3>
                 <p className="text-xs text-foreground-muted leading-relaxed">
@@ -363,7 +365,7 @@ function DaftarSalesContent() {
 
               {errorMessage && (
                 <div className="p-3.5 rounded-lg bg-status-error/15 border border-status-error/30 text-status-error text-xs flex items-center gap-2.5 animate-in fade-in">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <FontAwesomeIcon icon={faCircleExclamation} className="text-sm shrink-0" />
                   <span>{errorMessage}</span>
                 </div>
               )}
@@ -429,7 +431,7 @@ function DaftarSalesContent() {
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
                     <label htmlFor="sales-password" className="font-semibold text-foreground flex items-center gap-1.5">
-                      <Lock className="w-3.5 h-3.5 text-primary" />
+                      <FontAwesomeIcon icon={faLock} className="text-xs text-primary" />
                       <span>Kata Sandi Akun Sales</span>
                       <span className="text-status-error">*</span>
                     </label>
@@ -438,7 +440,11 @@ function DaftarSalesContent() {
                       onClick={() => setShowPassword(!showPassword)}
                       className="text-[11px] text-primary hover:underline flex items-center gap-1 font-medium cursor-pointer"
                     >
-                      {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                      {showPassword ? (
+                        <FontAwesomeIcon icon={faEyeSlash} className="text-xs" />
+                      ) : (
+                        <FontAwesomeIcon icon={faEye} className="text-xs" />
+                      )}
                       <span>{showPassword ? 'Sembunyikan' : 'Lihat Sandi'}</span>
                     </button>
                   </div>
@@ -463,7 +469,7 @@ function DaftarSalesContent() {
                 {/* 3c. Konfirmasi Kata Sandi */}
                 <div className="space-y-1.5">
                   <label htmlFor="sales-confirm-password" className="font-semibold text-foreground flex items-center gap-1.5">
-                    <Lock className="w-3.5 h-3.5 text-primary" />
+                    <FontAwesomeIcon icon={faLock} className="text-xs text-primary" />
                     <span>Konfirmasi Kata Sandi</span>
                     <span className="text-status-error">*</span>
                   </label>
@@ -516,13 +522,13 @@ function DaftarSalesContent() {
                     )}
                     {isRefValid === true && !validatingRef && (
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-status-success flex items-center gap-1">
-                        <Check className="w-3.5 h-3.5" />
+                        <FontAwesomeIcon icon={faCheck} className="text-xs" />
                         <span>Valid</span>
                       </span>
                     )}
                     {isRefValid === false && !validatingRef && (
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-status-error flex items-center gap-1">
-                        <X className="w-3.5 h-3.5" />
+                        <FontAwesomeIcon icon={faXmark} className="text-xs" />
                         <span>Tidak Valid</span>
                       </span>
                     )}
@@ -547,7 +553,7 @@ function DaftarSalesContent() {
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-start gap-2.5">
                           <div className="w-7 h-7 rounded-full bg-status-success/20 flex items-center justify-center text-status-success shrink-0 mt-0.5">
-                            <Users className="w-4 h-4" />
+                            <FontAwesomeIcon icon={faUsers} className="text-xs" />
                           </div>
                           <div>
                             <p className="text-xs font-semibold text-foreground">
@@ -630,7 +636,7 @@ function DaftarSalesContent() {
                   ) : (
                     <>
                       <span>Daftar Jadi Sales Sekarang</span>
-                      <ArrowRight className="w-4 h-4" />
+                      <FontAwesomeIcon icon={faArrowRight} className="text-xs" />
                     </>
                   )}
                 </Button>
@@ -649,7 +655,7 @@ function DaftarSalesContent() {
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="font-bold text-sm text-foreground flex items-center gap-1.5">
-                    <Sparkles className="w-4 h-4 text-primary" />
+                    <FontAwesomeIcon icon={faWandMagicSparkles} className="text-xs text-primary" />
                     <span>Kalkulator Estimasi Penghasilan Sales</span>
                   </h3>
                   <p className="text-xs text-foreground-muted">
@@ -693,7 +699,7 @@ function DaftarSalesContent() {
             {/* FAQ Section */}
             <div className="bg-surface border border-border rounded-2xl p-6 sm:p-8 shadow-xs max-w-xl mx-auto space-y-4">
               <h3 className="font-bold text-sm text-foreground flex items-center gap-1.5">
-                <HelpCircle className="w-4 h-4 text-foreground-muted" />
+                <FontAwesomeIcon icon={faCircleQuestion} className="text-xs text-foreground-muted" />
                 <span>Pertanyaan Umum (FAQ) Program Sales</span>
               </h3>
 
@@ -730,14 +736,6 @@ function DaftarSalesContent() {
         )}
       </div>
     </div>
-  );
-}
-
-function PercentIcon() {
-  return (
-    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 14l6-6m-5.5.5a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0zm11 5a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-    </svg>
   );
 }
 

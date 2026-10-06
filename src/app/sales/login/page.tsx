@@ -13,18 +13,17 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  Lock,
-  Mail,
-  ArrowLeft,
-  Loader2,
-  AlertCircle,
-  KeyRound,
-  Share2,
-  CheckCircle2,
-  TrendingUp,
-  Sparkles,
-} from 'lucide-react';
+  faLock,
+  faEnvelope,
+  faArrowLeft,
+  faSpinner,
+  faCircleExclamation,
+  faKey,
+  faShareNodes,
+  faCircleCheck,
+} from '@fortawesome/free-solid-svg-icons';
 import { AsterraLogo } from '@/components/ui/asterra-logo';
 import { Suspense } from 'react';
 
@@ -124,7 +123,7 @@ function SalesLoginContent() {
       <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-surface border border-border flex items-center justify-center shadow-subtle animate-pulse">
-            <Lock className="w-5 h-5 text-primary" />
+            <FontAwesomeIcon icon={faLock} className="text-base text-primary" />
           </div>
           <span className="text-xs text-foreground-muted tracking-widest uppercase font-mono">
             Memverifikasi Sesi Portal Sales...
@@ -142,7 +141,7 @@ function SalesLoginContent() {
           href="/"
           className="inline-flex items-center gap-2 text-xs font-medium text-foreground-muted hover:text-foreground transition-colors group"
         >
-          <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
+          <FontAwesomeIcon icon={faArrowLeft} className="text-xs group-hover:-translate-x-1 transition-transform" />
           <span>Kembali ke Beranda</span>
         </Link>
         <Link
@@ -161,7 +160,7 @@ function SalesLoginContent() {
           </div>
 
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-[11px] font-bold mx-auto">
-            <Share2 className="w-3.5 h-3.5" />
+            <FontAwesomeIcon icon={faShareNodes} className="text-xs" />
             <span>Portal Mitra Penjualan (Sales)</span>
           </div>
 
@@ -178,14 +177,14 @@ function SalesLoginContent() {
             {/* Feedback Notifications */}
             {errorMessage && (
               <div className="p-3 rounded-md bg-status-error/10 border border-status-error/20 flex items-start gap-2.5 text-xs text-status-error animate-in fade-in">
-                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-status-error" />
+                <FontAwesomeIcon icon={faCircleExclamation} className="text-sm shrink-0 mt-0.5 text-status-error" />
                 <span className="leading-relaxed">{errorMessage}</span>
               </div>
             )}
 
             {successMessage && (
               <div className="p-3 rounded-md bg-status-success/10 border border-status-success/20 flex items-center gap-2.5 text-xs text-status-success animate-in fade-in">
-                <CheckCircle2 className="w-4 h-4 shrink-0 text-status-success" />
+                <FontAwesomeIcon icon={faCircleCheck} className="text-sm shrink-0 text-status-success" />
                 <span>{successMessage}</span>
               </div>
             )}
@@ -195,7 +194,7 @@ function SalesLoginContent() {
                 htmlFor="sales-email"
                 className="text-xs font-medium text-foreground flex items-center gap-1.5"
               >
-                <Mail className="w-3.5 h-3.5 text-primary" />
+                <FontAwesomeIcon icon={faEnvelope} className="text-xs text-primary" />
                 <span>Email atau Username Sales</span>
               </label>
               <Input
@@ -216,7 +215,7 @@ function SalesLoginContent() {
                   htmlFor="sales-password"
                   className="text-xs font-medium text-foreground flex items-center gap-1.5"
                 >
-                  <KeyRound className="w-3.5 h-3.5 text-primary" />
+                  <FontAwesomeIcon icon={faKey} className="text-xs text-primary" />
                   <span>Kata Sandi Akun</span>
                 </label>
               </div>
@@ -241,12 +240,12 @@ function SalesLoginContent() {
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <FontAwesomeIcon icon={faSpinner} className="text-sm fa-spin" />
                   <span>Memverifikasi Akun...</span>
                 </>
               ) : (
                 <>
-                  <Lock className="w-4 h-4" />
+                  <FontAwesomeIcon icon={faLock} className="text-xs" />
                   <span>Buka Portal Sales</span>
                 </>
               )}
@@ -275,7 +274,7 @@ export default function SalesLoginPage() {
     <Suspense
       fallback={
         <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
-          <Loader2 className="w-6 h-6 animate-spin text-primary" />
+          <FontAwesomeIcon icon={faSpinner} className="text-xl fa-spin text-primary" />
         </div>
       }
     >

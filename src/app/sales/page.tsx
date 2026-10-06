@@ -3,7 +3,14 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Menu, LogOut, Wallet, Share2, Store, ExternalLink } from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faBars,
+  faWallet,
+  faShareNodes,
+  faStore,
+  faArrowUpRightFromSquare,
+} from '@fortawesome/free-solid-svg-icons';
 import Link from 'next/link';
 import { AdminSidebar, AdminTab } from '@/components/admin/admin-sidebar';
 import { SalesConsoleSuite } from '@/components/sales/sales-console-suite';
@@ -78,7 +85,7 @@ export default function SalesPortalPage() {
       <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-surface border border-border flex items-center justify-center shadow-subtle animate-pulse">
-            <Share2 className="w-5 h-5 text-primary" />
+            <FontAwesomeIcon icon={faShareNodes} className="text-base text-primary" />
           </div>
           <span className="text-xs text-foreground-muted tracking-widest uppercase font-mono">
             Memuat Portal Sales Asterra...
@@ -118,7 +125,7 @@ export default function SalesPortalPage() {
               className="lg:hidden p-2 rounded-lg text-foreground-muted hover:text-foreground hover:bg-surface-raised border border-border transition-colors"
               aria-label="Buka Menu Sidebar"
             >
-              <Menu className="w-5 h-5" />
+              <FontAwesomeIcon icon={faBars} className="text-base" />
             </button>
             <div className="flex flex-col">
               <div className="flex items-center gap-1.5 text-[11px] text-foreground-muted">
@@ -141,7 +148,7 @@ export default function SalesPortalPage() {
               onClick={() => setActiveTab('sales-wallet')}
               className="text-xs gap-1.5 shadow-xs font-semibold bg-status-success hover:bg-status-success/90 text-white"
             >
-              <Wallet className="w-3.5 h-3.5" />
+              <FontAwesomeIcon icon={faWallet} className="text-xs" />
               <span>Dompet Komisi</span>
             </Button>
 
@@ -151,9 +158,9 @@ export default function SalesPortalPage() {
               rel="noopener noreferrer"
               className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-surface hover:bg-surface-raised text-xs text-foreground font-medium transition-colors"
             >
-              <Store className="w-3.5 h-3.5 text-primary" />
+              <FontAwesomeIcon icon={faStore} className="text-xs text-primary" />
               <span>Lihat Toko</span>
-              <ExternalLink className="w-3 h-3 text-foreground-muted" />
+              <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="text-[10px] text-foreground-muted" />
             </Link>
           </div>
         </header>
