@@ -1,12 +1,13 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { MobileBottomNav } from '@/components/layout/mobile-bottom-nav';
 import { LainnyaSidebar } from '@/components/layout/lainnya-sidebar';
 import { FloatingSupport } from '@/components/layout/floating-support';
+import { clearChunkRecoveryFlag, tryRecoverFromChunkError } from '@/lib/utils/chunk-recovery';
 
 interface StorefrontShellProps {
   children: React.ReactNode;
@@ -14,6 +15,35 @@ interface StorefrontShellProps {
 
 export function StorefrontShell({ children }: StorefrontShellProps) {
   const pathname = usePathname();
+
+  // Self-healing Chunk Recovery: Listen for chunk load failures during runtime / rolling deployment
+  useEffect(() => {
+    // Clean up recovery flag after successful boot & hydration
+    const cleanupClearTimer = clearChunkRecoveryFlag(2500);
+
+    const handleError = (event: ErrorEvent) => {
+      const err = event.error || event.message || event;
+      if (tryRecoverFromChunkError(err)) {
+        event.preventDefault?.();
+      }
+    };
+
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      const reason = event.reason;
+      if (tryRecoverFromChunkError(reason)) {
+        event.preventDefault?.();
+      }
+    };
+
+    window.addEventListener('error', handleError);
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+
+    return () => {
+      cleanupClearTimer();
+      window.removeEventListener('error', handleError);
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+    };
+  }, []);
 
   // Non-storefront routes: Admin dashboard, Sales representative portal, and dedicated Auth pages
   const isNonStorefront =
