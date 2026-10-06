@@ -5,8 +5,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { Header } from '@/components/layout/header';
-import { Footer } from '@/components/layout/footer';
 import { Button } from '@/components/ui/button';
 import { useCartStore } from '@/store/use-cart-store';
 import { appendReferralParams } from '@/lib/utils/referral';
@@ -551,8 +549,6 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
 
   return (
     <div className="min-h-screen bg-[#FDFBF7] text-[#121A2A] flex flex-col font-sans selection:bg-[#C96F55]/20 selection:text-[#C96F55]">
-      <Header onNotify={showNotification} />
-
       {/* Floating Toast Notification */}
       {notification && (
         <div className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-50 animate-in slide-in-from-bottom-5 max-w-[90vw] sm:max-w-md">
@@ -1246,8 +1242,6 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
           </div>
         </div>
       )}
-
-      <Footer onNotify={showNotification} />
 
       {/* Guest Authentication Modal */}
       <AuthRequiredModal

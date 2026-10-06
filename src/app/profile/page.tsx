@@ -4,9 +4,6 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Header } from '@/components/layout/header';
-import { Footer } from '@/components/layout/footer';
-import { MobileBottomNav } from '@/components/layout/mobile-bottom-nav';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -257,11 +254,8 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* Header */}
-      <Header onNotify={showNotification} />
-
       {/* Main Content Area */}
-      <main className="flex-1 max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-10 w-full">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-10 w-full">
         {/* Loading State */}
         {isAuthPending ? (
           <div className="h-96 flex flex-col items-center justify-center space-y-4">
@@ -770,11 +764,7 @@ export default function ProfilePage() {
             </div>
           </div>
         )}
-      </main>
-
-      {/* Footer */}
-      <Footer onNotify={showNotification} />
-      <MobileBottomNav />
+      </div>
     </div>
   );
 }

@@ -4,10 +4,7 @@ import React, { useState, useMemo, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
-import { useQuery } from '@tanstack/react-query';
-import { Header } from '@/components/layout/header';
-import { Footer } from '@/components/layout/footer';
-import { MobileBottomNav } from '@/components/layout/mobile-bottom-nav';
+import { useCatalogProducts } from '@/lib/hooks/use-catalog-products';
 import { Button } from '@/components/ui/button';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -74,20 +71,12 @@ function ProductsContent() {
     }, 3500);
   };
 
-  // Fetch real-time products from VIP Reseller via internal API
+  // Fetch real-time products from catalog via shared query cache
   const {
     data: catalogResponse,
     isLoading,
     error,
-  } = useQuery<{ success: boolean; data: ProductItem[]; total: number }>({
-    queryKey: ['products'],
-    queryFn: async () => {
-      const res = await fetch('/api/v1/products');
-      if (!res.ok) throw new Error('Gagal memuat produk dari VIP Reseller');
-      return res.json();
-    },
-    staleTime: 5 * 60 * 1000,
-  });
+  } = useCatalogProducts();
 
   const allProducts = useMemo(
     () => catalogResponse?.data || [],
@@ -187,8 +176,6 @@ function ProductsContent() {
 
   return (
     <div className="min-h-screen bg-white text-[#121A2A] flex flex-col font-sans selection:bg-[#C96F55]/20 selection:text-[#C96F55]">
-      <Header onNotify={showNotification} />
-
       {/* Floating Notification */}
       {notification && (
         <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-5">
@@ -201,7 +188,7 @@ function ProductsContent() {
         </div>
       )}
 
-      <main className="flex-1 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-10 w-full overflow-hidden">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-10 w-full overflow-hidden">
         {/* Breadcrumb & Title */}
         <div className="mb-8">
           <div className="flex items-center gap-2 text-xs text-[#121A2A]/60 mb-2">
@@ -546,11 +533,7 @@ function ProductsContent() {
             </div>
           </div>
         )}
-      </main>
-
-      <Footer onNotify={showNotification} />
-
-      <MobileBottomNav />
+      </div>
 
       {/* Guest Authentication Modal */}
       <AuthRequiredModal

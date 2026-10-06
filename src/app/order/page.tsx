@@ -3,9 +3,6 @@
 import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
-import { Header } from '@/components/layout/header';
-import { Footer } from '@/components/layout/footer';
-import { MobileBottomNav } from '@/components/layout/mobile-bottom-nav';
 import { Button } from '@/components/ui/button';
 import { useCartStore } from '@/store/use-cart-store';
 import { Order } from '@/lib/orders-data';
@@ -225,31 +222,26 @@ function PrivateOrdersSkeleton() {
   );
 }
 
-// Full Page Skeleton used for instant Suspense fallback on /order
+// Content Skeleton used for instant Suspense fallback on /order (skeleton confined to content area)
 function PrivateOrdersPageSkeleton() {
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col font-sans">
-      <Header />
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 w-full">
-        {/* Breadcrumb Skeleton */}
-        <div className="flex items-center justify-between gap-3 mb-6 animate-pulse">
-          <div className="w-36 h-4 bg-surface-raised rounded" />
-          <div className="w-28 h-8 bg-surface-raised rounded-lg" />
-        </div>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 w-full animate-in fade-in duration-150">
+      {/* Breadcrumb Skeleton */}
+      <div className="flex items-center justify-between gap-3 mb-6 animate-pulse">
+        <div className="w-36 h-4 bg-surface-raised rounded" />
+        <div className="w-28 h-8 bg-surface-raised rounded-lg" />
+      </div>
 
-        {/* Email Lookup Card Skeleton */}
-        <div className="bg-surface border border-primary/20 rounded-xl p-4 sm:p-5 max-w-xl mx-auto mb-8 animate-pulse">
-          <div className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto">
-            <div className="flex-1 h-9 rounded-lg bg-surface-raised" />
-            <div className="w-28 h-9 rounded-lg bg-surface-raised shrink-0" />
-          </div>
+      {/* Email Lookup Card Skeleton */}
+      <div className="bg-surface border border-primary/20 rounded-xl p-4 sm:p-5 max-w-xl mx-auto mb-8 animate-pulse">
+        <div className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto">
+          <div className="flex-1 h-9 rounded-lg bg-surface-raised" />
+          <div className="w-28 h-9 rounded-lg bg-surface-raised shrink-0" />
         </div>
+      </div>
 
-        {/* Orders Skeleton */}
-        <PrivateOrdersSkeleton />
-      </main>
-      <Footer />
-      <MobileBottomNav />
+      {/* Orders Skeleton */}
+      <PrivateOrdersSkeleton />
     </div>
   );
 }
@@ -469,8 +461,6 @@ function PrivateOrderContent() {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col font-sans selection:bg-primary/20 selection:text-primary">
-      <Header onNotify={showNotification} />
-
       {/* Floating Notification */}
       {notification && (
         <div className="fixed bottom-6 right-6 z-50 bg-surface-raised border border-primary/40 text-foreground px-4 py-3 rounded-lg shadow-xl flex items-center gap-3 animate-in slide-in-from-bottom-5">
@@ -481,7 +471,7 @@ function PrivateOrderContent() {
         </div>
       )}
 
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 w-full">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 w-full">
         {/* Breadcrumb & Top Actions Bar */}
         <div className="flex items-center justify-between gap-3 mb-6">
           <div className="flex items-center gap-2 text-xs text-foreground-muted">
@@ -971,7 +961,7 @@ function PrivateOrderContent() {
             })}
           </div>
         )}
-      </main>
+      </div>
 
       {/* Manual Payment Instructions Modal from Orders Page */}
       {activeManualModal && (
@@ -990,9 +980,6 @@ function PrivateOrderContent() {
           getMethodName={getMethodName}
         />
       )}
-
-      <Footer />
-      <MobileBottomNav />
     </div>
   );
 }

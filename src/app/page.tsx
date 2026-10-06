@@ -29,9 +29,7 @@ import {
   faYoutube,
   faSpotify,
 } from '@fortawesome/free-brands-svg-icons';
-import { Header } from '@/components/layout/header';
-import { Footer } from '@/components/layout/footer';
-import { MobileBottomNav } from '@/components/layout/mobile-bottom-nav';
+import { useCatalogProducts } from '@/lib/hooks/use-catalog-products';
 import { QuickViewModal, QuickViewProductData } from '@/components/products/quick-view-modal';
 import { getRecentlyViewed, RecentlyViewedItem } from '@/lib/services/recently-viewed';
 import { ProductItem } from '@/lib/products-data';
@@ -440,16 +438,8 @@ export default function HomePage() {
     setRecentlyViewed(getRecentlyViewed());
   }, []);
 
-  // Dynamic products fetched from catalog API (active products only)
-  const { data: catalogResponse } = useQuery<{ success: boolean; data: ProductItem[]; total: number }>({
-    queryKey: ['products'],
-    queryFn: async () => {
-      const res = await fetch('/api/v1/products');
-      if (!res.ok) throw new Error('Gagal memuat produk dari katalog.');
-      return res.json();
-    },
-    staleTime: 10 * 60 * 1000,
-  });
+  // Dynamic products fetched from catalog API (cached via shared query)
+  const { data: catalogResponse } = useCatalogProducts();
 
   const allProducts = useMemo(
     () => catalogResponse?.data || [],
@@ -787,11 +777,8 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* SECTION 1: Header Navigation (Desktop & Compact Mobile Top Bar with Planet in Logo) */}
-      <Header onNotify={showNotification} />
-
-      {/* Main Content */}
-      <main className="flex-1 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-2 sm:pt-3 pb-8 sm:pb-12 w-full overflow-hidden">
+      {/* Main Content Container */}
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-2 sm:pt-3 pb-8 sm:pb-12 w-full overflow-hidden">
         {/*
           SECTION 2: HERO BANNER IMAGE (HIGH RESOLUTION RETINA 2X, MAXIMUM SHARPNESS)
           Master source resolution is 2640x882 (intrinsic aspect ratio 2.993:1).
@@ -1281,7 +1268,7 @@ export default function HomePage() {
             </Link>
           </div>
         </section>
-      </main>
+      </div>
 
       {/* Quick View Modal */}
       <QuickViewModal
@@ -1289,12 +1276,6 @@ export default function HomePage() {
         isOpen={isQuickViewOpen}
         onClose={() => setIsQuickViewOpen(false)}
       />
-
-      {/* SECTION 11: Footer (Compact on Mobile, pb-20 for MobileBottomNav) */}
-      <Footer onNotify={showNotification} />
-
-      {/* SECTION 12: Mobile Bottom Navigation (Sticky Fixed on Mobile) */}
-      <MobileBottomNav />
     </div>
   );
 }

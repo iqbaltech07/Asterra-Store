@@ -3,8 +3,6 @@
 import { useState, useEffect, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Header } from '@/components/layout/header';
-import { Footer } from '@/components/layout/footer';
 import { useCartStore } from '@/store/use-cart-store';
 import { useAuthStore } from '@/store/use-auth-store';
 import { useSession } from '@/lib/auth-client';
@@ -539,8 +537,6 @@ function CheckoutPageContent() {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col font-sans selection:bg-primary/20 selection:text-primary">
-      <Header onNotify={showNotification} />
-
       {/* Floating Notification */}
       {notification && (
         <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-5">
@@ -668,8 +664,6 @@ function CheckoutPageContent() {
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
       />
-
-      <Footer />
     </div>
   );
 }

@@ -3,8 +3,7 @@ import { Plus_Jakarta_Sans } from 'next/font/google';
 import { config } from '@fortawesome/fontawesome-svg-core';
 import '@fortawesome/fontawesome-svg-core/styles.css';
 import { QueryProvider } from '@/providers/query-provider';
-import { FloatingSupport } from '@/components/layout/floating-support';
-import { LainnyaSidebar } from '@/components/layout/lainnya-sidebar';
+import { StorefrontShell } from '@/components/layout/storefront-shell';
 import { ReferralTracker } from '@/components/analytics/referral-tracker';
 import { GsapProvider } from '@/providers/gsap-provider';
 import './globals.css';
@@ -85,10 +84,10 @@ export default function RootLayout({
         <QueryProvider>
           <ReferralTracker />
           <GsapProvider>
-            {children}
+            <StorefrontShell>
+              {children}
+            </StorefrontShell>
           </GsapProvider>
-          <LainnyaSidebar />
-          <FloatingSupport />
         </QueryProvider>
       </body>
     </html>

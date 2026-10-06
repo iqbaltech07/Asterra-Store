@@ -16,17 +16,12 @@ import {
   faBolt,
   faHeadphones,
 } from '@fortawesome/free-solid-svg-icons';
-import { Header } from '@/components/layout/header';
-import { Footer } from '@/components/layout/footer';
-import { MobileBottomNav } from '@/components/layout/mobile-bottom-nav';
 import { Button } from '@/components/ui/button';
 
 export default function SellerPage() {
   return (
     <div className="min-h-screen bg-white text-[#121A2A] flex flex-col selection:bg-[#C96F55]/20 selection:text-[#C96F55]">
-      <Header />
-
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 w-full space-y-12 sm:space-y-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 w-full space-y-12 sm:space-y-16">
         {/* HERO BANNER SECTION */}
         <section aria-label="Banner Program Seller Asterra" className="w-full">
           <Link
@@ -211,10 +206,7 @@ export default function SellerPage() {
             </Link>
           </div>
         </section>
-      </main>
-
-      <Footer />
-      <MobileBottomNav />
+      </div>
     </div>
   );
 }

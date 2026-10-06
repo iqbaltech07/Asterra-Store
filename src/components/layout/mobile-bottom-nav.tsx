@@ -17,8 +17,12 @@ export function MobileBottomNav() {
   const { openSidebar, isSidebarOpen } = useNavigationStore();
 
   const isHome = pathname === '/';
-  const isOrders = pathname.startsWith('/orders');
+  const isOrders = pathname.startsWith('/orders') || pathname.startsWith('/order');
   const isSeller = pathname.startsWith('/seller') || pathname.startsWith('/daftar-sales') || pathname.startsWith('/sales');
+
+  const isDetailPage = pathname.startsWith('/products/') && pathname !== '/products';
+  const isCheckout = pathname.startsWith('/checkout');
+  const isHidden = isDetailPage || isCheckout;
 
   const navItems = [
     {
@@ -51,7 +55,9 @@ export function MobileBottomNav() {
   return (
     <nav
       aria-label="Navigasi Bawah Seluler"
-      className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-[#121A2A]/95 backdrop-blur-md border-t border-white/10 px-2 pt-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] shadow-[0_-4px_20px_rgba(0,0,0,0.3)] transition-transform duration-200"
+      className={`fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-[#121A2A]/95 backdrop-blur-md border-t border-white/10 px-2 pt-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] shadow-[0_-4px_20px_rgba(0,0,0,0.3)] transition-all duration-300 transform ${
+        isHidden ? 'translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'
+      }`}
     >
       <div className="flex items-center justify-around max-w-md mx-auto">
         {navItems.map((item) => {

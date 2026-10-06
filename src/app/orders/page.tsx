@@ -3,9 +3,6 @@
 import { useState, useMemo, Suspense } from 'react';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
-import { Header } from '@/components/layout/header';
-import { Footer } from '@/components/layout/footer';
-import { MobileBottomNav } from '@/components/layout/mobile-bottom-nav';
 import { Button } from '@/components/ui/button';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -128,44 +125,39 @@ function GlobalOrdersSkeleton() {
   );
 }
 
-// Full Page Skeleton used for instant Suspense fallback (zero blank area)
+// Content Skeleton used for instant Suspense fallback (skeleton confined to content area)
 function GlobalOrdersPageSkeleton() {
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col font-sans">
-      <Header />
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 w-full">
-        {/* Breadcrumb Skeleton */}
-        <div className="flex items-center justify-between gap-3 mb-6 animate-pulse">
-          <div className="w-32 h-4 bg-surface-raised rounded" />
-          <div className="w-28 h-8 bg-surface-raised rounded-lg" />
-        </div>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 w-full animate-in fade-in duration-150">
+      {/* Breadcrumb Skeleton */}
+      <div className="flex items-center justify-between gap-3 mb-6 animate-pulse">
+        <div className="w-32 h-4 bg-surface-raised rounded" />
+        <div className="w-28 h-8 bg-surface-raised rounded-lg" />
+      </div>
 
-        {/* Page Header Skeleton */}
-        <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-pulse">
-          <div className="space-y-2">
-            <div className="w-40 h-7 bg-surface-raised rounded-lg" />
-            <div className="w-64 h-3.5 bg-surface-raised rounded" />
+      {/* Page Header Skeleton */}
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-pulse">
+        <div className="space-y-2">
+          <div className="w-40 h-7 bg-surface-raised rounded-lg" />
+          <div className="w-64 h-3.5 bg-surface-raised rounded" />
+        </div>
+        <div className="w-36 h-8 bg-surface-raised rounded-xl" />
+      </div>
+
+      {/* Filters and Search Bar Skeleton */}
+      <div className="bg-surface border border-border rounded-xl p-4 sm:p-5 mb-6 space-y-4 animate-pulse">
+        <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+          <div className="flex items-center gap-2 overflow-hidden">
+            {[1, 2, 3, 4, 5].map((idx) => (
+              <div key={idx} className="w-24 h-7 rounded-full bg-surface-raised shrink-0" />
+            ))}
           </div>
-          <div className="w-36 h-8 bg-surface-raised rounded-xl" />
+          <div className="w-full sm:w-72 h-8 rounded-lg bg-surface-raised" />
         </div>
+      </div>
 
-        {/* Filters and Search Bar Skeleton */}
-        <div className="bg-surface border border-border rounded-xl p-4 sm:p-5 mb-6 space-y-4 animate-pulse">
-          <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
-            <div className="flex items-center gap-2 overflow-hidden">
-              {[1, 2, 3, 4, 5].map((idx) => (
-                <div key={idx} className="w-24 h-7 rounded-full bg-surface-raised shrink-0" />
-              ))}
-            </div>
-            <div className="w-full sm:w-72 h-8 rounded-lg bg-surface-raised" />
-          </div>
-        </div>
-
-        {/* Order Cards Skeleton */}
-        <GlobalOrdersSkeleton />
-      </main>
-      <Footer />
-      <MobileBottomNav />
+      {/* Order Cards Skeleton */}
+      <GlobalOrdersSkeleton />
     </div>
   );
 }
@@ -217,9 +209,7 @@ function GlobalOrdersContent() {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col font-sans selection:bg-primary/20 selection:text-primary">
-      <Header />
-
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 w-full">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 w-full">
         {/* Breadcrumb & Top Actions Bar */}
         <div className="flex items-center justify-between gap-3 mb-6">
           <div className="flex items-center gap-2 text-xs text-foreground-muted">
@@ -419,10 +409,7 @@ function GlobalOrdersContent() {
             ))}
           </div>
         )}
-      </main>
-
-      <Footer />
-      <MobileBottomNav />
+      </div>
     </div>
   );
 }
