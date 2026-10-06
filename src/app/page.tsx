@@ -239,7 +239,10 @@ function FeaturedGridCard({
   const dummyOriginal = getDummyOriginalPrice(minPrice);
 
   return (
-    <div className="group bg-white border border-[rgba(18,26,42,0.09)] hover:border-[#C96F55]/70 hover:shadow-card-hover hover:-translate-y-0.5 rounded-xl sm:rounded-2xl p-2.5 sm:p-3.5 transition-[border-color,box-shadow,transform] duration-200 flex flex-col justify-between w-full h-full select-none">
+    <div
+      data-gsap="featured-card"
+      className="group bg-white border border-[rgba(18,26,42,0.09)] hover:border-[#C96F55]/70 hover:shadow-card-hover hover:-translate-y-0.5 rounded-xl sm:rounded-2xl p-2.5 sm:p-3.5 transition-[border-color,box-shadow,transform] duration-200 flex flex-col justify-between w-full h-full select-none"
+    >
       <div>
         {/* 1. Header: Logo + Info */}
         <div className="flex items-start gap-2 sm:gap-2.5">
@@ -808,7 +811,7 @@ export default function HomePage() {
           - quality 95 for visually lossless crisp typography and logo linework
           - priority for immediate above-the-fold LCP preloading
         */}
-        <section aria-label="Banner Promo Asterra" className="w-full mb-3.5 sm:mb-5">
+        <section aria-label="Banner Promo Asterra" data-gsap="hero-banner" className="w-full mb-3.5 sm:mb-5">
           <Link
             href="/seller"
             title="Program Reseller Asterra Store - Jadi Bagian dari AsterraStore"
@@ -836,9 +839,9 @@ export default function HomePage() {
           - 4 columns on desktop, 2 columns on mobile.
           - Immediately visible in first viewport!
         */}
-        <section id="produk-unggulan" aria-label="Produk Unggulan Asterra" className="mb-6 sm:mb-8">
+        <section id="produk-unggulan" aria-label="Produk Unggulan Asterra" data-gsap="featured-section" className="mb-6 sm:mb-8">
           {/* Selector Tabs: [ 🔥 Promo ] [ Terlaris ] [ Terbaru ] */}
-          <div className="flex items-center justify-between gap-2 mb-3 sm:mb-4 pb-1 border-b border-[rgba(18,26,42,0.06)] overflow-x-auto scrollbar-none">
+          <div data-gsap="featured-tabs" className="flex items-center justify-between gap-2 mb-3 sm:mb-4 pb-1 border-b border-[rgba(18,26,42,0.06)] overflow-x-auto scrollbar-none">
             <div className="flex items-center gap-1.5 sm:gap-2">
               {/* Tab 1: PROMO (DEFAULT & VISUALLY PROMINENT) */}
               <button
@@ -1270,7 +1273,7 @@ export default function HomePage() {
         </section>
 
         {/* SECTION 10: FINAL CTA */}
-        <section data-gsap-section="cta" className="mb-6 sm:mb-8 p-5 sm:p-8 bg-[#121A2A] text-[#F7F5EF] rounded-2xl border border-white/10 shadow-editorial flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
+        <section id="cta" data-gsap-section="cta" className="mb-6 sm:mb-8 p-5 sm:p-8 bg-[#121A2A] text-[#F7F5EF] rounded-2xl border border-white/10 shadow-editorial flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
           <div data-gsap="cta-content" className="space-y-1 max-w-xl">
             <h3 className="text-base sm:text-xl lg:text-2xl font-black text-[#F7F5EF] tracking-tight">
               Dapatkan Akun Premium Pilihan Anda Hari Ini

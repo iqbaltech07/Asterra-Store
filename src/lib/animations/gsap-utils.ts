@@ -287,12 +287,12 @@ export function revealScale(
  */
 let hasNavbarRunOnce = false;
 
-export function animateNavbar(headerElement: HTMLElement | null) {
+export function animateNavbar(headerElement: HTMLElement | null): (() => void) | undefined {
   if (!headerElement || typeof window === 'undefined') return;
   if (hasNavbarRunOnce) return;
   hasNavbarRunOnce = true;
 
-  const reduced = prefersReducedMotion();
+  if (prefersReducedMotion()) return;
 
   const ctx = gsap.context(() => {
     const bar = headerElement.querySelector('div.max-w-7xl');
@@ -300,89 +300,47 @@ export function animateNavbar(headerElement: HTMLElement | null) {
     const navLinks = headerElement.querySelectorAll('[data-gsap="nav-link"], nav a');
     const actions = headerElement.querySelectorAll('[data-gsap="nav-action"], header button');
 
-    if (reduced) {
-      gsap.fromTo(
-        headerElement,
-        { opacity: 0 },
-        { opacity: 1, duration: 0.25, ease: 'power1.out', clearProps: 'opacity' }
-      );
-      return;
-    }
-
     const tl = gsap.timeline({
-      defaults: { force3D: true },
+      defaults: { ease: 'power2.out', force3D: true },
     });
 
-    // 1. Container opens downward from top (0.00s)
+    // 1. Container glides in from top cleanly without clipPath polygon recalculations
     if (bar) {
       tl.fromTo(
         bar,
-        {
-          y: -14,
-          opacity: 0,
-          clipPath: 'inset(0% 0% 100% 0% round 1rem)',
-        },
-        {
-          y: 0,
-          opacity: 1,
-          clipPath: 'inset(0% 0% 0% 0% round 1rem)',
-          duration: 0.52,
-          ease: 'expo.out',
-          clearProps: 'transform,clipPath,opacity',
-        },
+        { y: -8, opacity: 0.7 },
+        { y: 0, opacity: 1, duration: 0.36, clearProps: 'all' },
         0
       );
     }
 
-    // 2. Logo appears right as container opens (0.06s)
+    // 2. Logo appears right as container glides in
     if (logo) {
       tl.fromTo(
         logo,
-        { opacity: 0, scale: 0.96, y: -3 },
-        {
-          opacity: 1,
-          scale: 1,
-          y: 0,
-          duration: 0.32,
-          ease: 'power2.out',
-          clearProps: 'transform,opacity',
-        },
+        { opacity: 0.7, y: -2 },
+        { opacity: 1, y: 0, duration: 0.28, clearProps: 'all' },
+        0.04
+      );
+    }
+
+    // 3. Nav links stagger in cleanly
+    if (navLinks.length > 0) {
+      tl.fromTo(
+        navLinks,
+        { opacity: 0.7, y: -2 },
+        { opacity: 1, y: 0, duration: 0.26, stagger: 0.02, clearProps: 'all' },
         0.06
       );
     }
 
-    // 3. Nav links stagger in (0.09s)
-    if (navLinks.length > 0) {
-      tl.fromTo(
-        navLinks,
-        { opacity: 0, y: -4 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.30,
-          stagger: 0.02,
-          ease: 'power2.out',
-          clearProps: 'transform,opacity',
-        },
-        0.09
-      );
-    }
-
-    // 4. Action buttons (Cart, User/Login, Hamburger) appear (0.12s)
+    // 4. Action buttons appear
     if (actions.length > 0) {
       tl.fromTo(
         actions,
-        { opacity: 0, scale: 0.94, y: -3 },
-        {
-          opacity: 1,
-          scale: 1,
-          y: 0,
-          duration: 0.30,
-          stagger: 0.02,
-          ease: 'power2.out',
-          clearProps: 'transform,opacity',
-        },
-        0.12
+        { opacity: 0.7, y: -2 },
+        { opacity: 1, y: 0, duration: 0.26, stagger: 0.02, clearProps: 'all' },
+        0.08
       );
     }
   }, headerElement);
@@ -404,185 +362,72 @@ export function animateNavbar(headerElement: HTMLElement | null) {
  * 0.20s -> Planet visual (Mobile: static 9KB single frame for pure 60fps; Desktop: subtle rotation)
  * 0.24s -> Hero benefits horizontal stagger (Tile 1 -> Tile 2 -> Tile 3)
  */
-let hasHeroMasterRunOnce = false;
-
-export function animateHeroMasterSequence(container: HTMLElement | null): (() => void) | undefined {
+/**
+ * Editorial Homepage Entrance:
+ * Animates the actual banner and featured product section hierarchically:
+ * 1. Hero banner: Smooth micro-rise + subtle scale settle (360ms)
+ * 2. Category selector tabs: Settle at 80ms (280ms)
+ * 3. Featured initial cards: Staggered entry at 120ms (300ms)
+ */
+export function animateHomepageHero(container: HTMLElement | null): (() => void) | undefined {
   if (!container || typeof window === 'undefined') return;
-  if (hasHeroMasterRunOnce) return;
-
-  const heroContainer = container.querySelector('[data-gsap="hero-container"]');
-  // If heroContainer does not exist (e.g. replaced by static high-res banner image), skip sequence safely
-  if (!heroContainer) {
-    return;
-  }
-
-  hasHeroMasterRunOnce = true;
-
-  const reduced = prefersReducedMotion();
+  if (prefersReducedMotion()) return;
 
   const ctx = gsap.context(() => {
-    const isMobile = window.innerWidth < 640;
-    const titleLines = container.querySelectorAll('[data-gsap="title-line"]');
-    const heroTitle = container.querySelector('[data-gsap="page-title"]');
-    const heroSub = container.querySelector('[data-gsap="page-sub"]');
-    const planetVisual = container.querySelector('[data-gsap="hero-media"]');
-    const benefitBar = container.querySelector('[data-gsap="hero-benefit-bar"]');
-    const benefitTiles = container.querySelectorAll('[data-gsap="benefit-tile"], [data-gsap="benefit-card"]');
+    const banner = container.querySelector(
+      '[data-gsap="hero-banner"], section[aria-label="Banner Promo Asterra"]'
+    );
+    const featuredSection = container.querySelector(
+      '[data-gsap="featured-section"], #produk-unggulan'
+    );
+    const featuredTabs = featuredSection?.querySelector('[data-gsap="featured-tabs"]');
+    const featuredCards = featuredSection?.querySelectorAll(
+      '[data-gsap="featured-card"], [data-gsap="card"]'
+    );
 
-    const validTargets = [
-      heroContainer,
-      heroTitle,
-      heroSub,
-      planetVisual,
-      benefitBar,
-      ...Array.from(benefitTiles),
-    ].filter((element): element is Element => element instanceof Element);
-
-    if (reduced) {
-      if (validTargets.length > 0) {
-        gsap.fromTo(
-          validTargets,
-          { opacity: 0 },
-          { opacity: 1, duration: 0.20, stagger: 0.03, ease: 'power1.out', clearProps: 'opacity' }
-        );
-      }
-      return;
-    }
-
-    const masterTl = gsap.timeline({
-      defaults: { force3D: true },
+    const tl = gsap.timeline({
+      defaults: { ease: 'power2.out', force3D: true },
     });
 
-    // 1. HERO HORIZONTAL REVEAL (Starts immediately at 0.04s, overlapping with navbar)
-    // Avoids bezier radius calculation inside clipPath since CSS overflow-hidden handles rounded corners natively
-    if (heroContainer) {
-      masterTl.fromTo(
-        heroContainer,
-        {
-          clipPath: isMobile ? 'inset(0% 35% 0% 35%)' : 'inset(0% 50% 0% 50%)',
-          opacity: 0.4,
-        },
-        {
-          clipPath: 'inset(0% 0% 0% 0%)',
-          opacity: 1,
-          duration: isMobile ? 0.48 : 0.62,
-          ease: 'power2.out',
-          clearProps: 'clipPath,opacity',
-        },
-        0.04
+    // 1. Hero banner entrance
+    if (banner) {
+      tl.fromTo(
+        banner,
+        { opacity: 0.88, y: 8, scale: 0.995 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.36, clearProps: 'all' },
+        0
       );
     }
 
-    // 2. HERO HEADLINE: Line-by-line text reveal (Starts at 0.12s)
-    if (titleLines.length > 0) {
-      masterTl.fromTo(
-        titleLines,
-        {
-          yPercent: 100,
-          opacity: 0,
-        },
-        {
-          yPercent: 0,
-          opacity: 1,
-          duration: isMobile ? 0.36 : 0.44,
-          stagger: 0.035,
-          ease: 'power2.out',
-          clearProps: 'transform,opacity',
-        },
+    // 2. Featured Category Tabs
+    if (featuredTabs) {
+      tl.fromTo(
+        featuredTabs,
+        { opacity: 0.85, y: 6 },
+        { opacity: 1, y: 0, duration: 0.28, clearProps: 'all' },
+        0.08
+      );
+    }
+
+    // 3. Initial Featured Cards (First 4 cards with tight stagger)
+    if (featuredCards && featuredCards.length > 0) {
+      const topCards = Array.from(featuredCards).slice(0, 4);
+      tl.fromTo(
+        topCards,
+        { opacity: 0.85, y: 8 },
+        { opacity: 1, y: 0, duration: 0.30, stagger: 0.035, clearProps: 'all' },
         0.12
-      );
-    } else if (heroTitle) {
-      masterTl.fromTo(
-        heroTitle,
-        { y: 10, opacity: 0 },
-        {
-          y: 0,
-          opacity: 1,
-          duration: 0.40,
-          ease: 'power2.out',
-          clearProps: 'transform,opacity',
-        },
-        0.12
-      );
-    }
-
-    // 3. HERO DESCRIPTION (Starts at 0.18s)
-    if (heroSub) {
-      masterTl.fromTo(
-        heroSub,
-        { y: 6, opacity: 0 },
-        {
-          y: 0,
-          opacity: 1,
-          duration: 0.32,
-          ease: 'power2.out',
-          clearProps: 'transform,opacity',
-        },
-        0.18
-      );
-    }
-
-    // 4. PLANET VISUAL ENTRANCE REVEAL (Starts at 0.20s)
-    // GSAP exclusively owns initial reveal: opacity 0 -> 1, scale 0.92 -> 1 (350-420ms, power2.out)
-    // Zero rotation in GSAP to avoid any transform overwrite with CSS .planet-visual-layer!
-    if (planetVisual) {
-      masterTl.fromTo(
-        planetVisual,
-        {
-          scale: 0.92,
-          opacity: 0,
-        },
-        {
-          scale: 1,
-          opacity: 1,
-          duration: isMobile ? 0.35 : 0.42,
-          ease: 'power2.out',
-          clearProps: 'transform,opacity',
-        },
-        0.20
-      );
-    }
-
-    // 5. HERO BENEFIT BAR & TILES (Starts at 0.24s)
-    if (benefitBar) {
-      masterTl.fromTo(
-        benefitBar,
-        { opacity: 0, y: 5 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.30,
-          ease: 'power2.out',
-          clearProps: 'transform,opacity',
-        },
-        0.24
-      );
-    }
-
-    if (benefitTiles.length > 0) {
-      masterTl.fromTo(
-        benefitTiles,
-        {
-          opacity: 0,
-          x: isMobile ? -5 : -8,
-          scale: 0.98,
-        },
-        {
-          opacity: 1,
-          x: 0,
-          scale: 1,
-          duration: 0.30,
-          stagger: 0.03,
-          ease: 'power2.out',
-          clearProps: 'transform,opacity',
-        },
-        0.26
       );
     }
   }, container);
 
   return () => ctx.revert();
 }
+
+/**
+ * Backward-compatible alias for existing imports
+ */
+export const animateHeroMasterSequence = animateHomepageHero;
 
 /* ==========================================================================
    3. HOMEPAGE SCROLL REVEAL (BELOW THE FOLD SECTIONS)
@@ -598,411 +443,99 @@ export function animateHeroMasterSequence(container: HTMLElement | null): (() =>
  * - CTA Banner: Expand inset / soft zoom reveal
  * - Footer: Vertical bottom reveal + column stagger
  */
-export function setupHomepageScrollReveal(root: HTMLElement | null) {
+/**
+ * Set up distinct, lightweight scroll-triggered reveals for below-the-fold sections:
+ * - Keunggulan (#keunggulan)
+ * - Panduan (#panduan)
+ * - FAQ (#faq)
+ * - CTA Banner
+ * - Footer
+ */
+export function setupHomepageScrollReveal(root: HTMLElement | null): (() => void) | undefined {
   if (!root || typeof window === 'undefined') return;
-
-  const reduced = prefersReducedMotion();
+  if (prefersReducedMotion()) return;
 
   const ctx = gsap.context(() => {
-    // ------------------------------------------------------------------------
-    // SECTION 1: Catalog / Jelajahi Layanan Digital
-    // ------------------------------------------------------------------------
-    const catalogSection = root.querySelector('[data-gsap-section="catalog"], #aplikasi');
-    if (catalogSection) {
-      const header = catalogSection.querySelector('[data-gsap="catalog-header"], div:first-child');
-      const headerItems = catalogSection.querySelectorAll('[data-gsap="catalog-item"]');
-      const cards = catalogSection.querySelectorAll<HTMLElement>(
-        '[data-gsap="marquee-card"], .carousel-track a'
+    const sections = [
+      { id: 'keunggulan', selector: '[data-gsap-section="keunggulan"], #keunggulan' },
+      { id: 'panduan', selector: '[data-gsap-section="panduan"], #panduan' },
+      { id: 'faq', selector: '[data-gsap-section="faq"], #faq' },
+      { id: 'cta', selector: '[data-gsap-section="cta"]' },
+    ];
+
+    sections.forEach(({ selector }) => {
+      const sec = root.querySelector(selector);
+      if (!sec) return;
+
+      const header = sec.querySelector(
+        '[data-gsap$="-header"], [data-gsap="cta-content"], div:first-child'
       );
-      // Only animate the first set of visible cards (first 6) on entry so marquee keeps running
-      const initialCards = Array.from(cards).slice(0, 6);
+      const items = sec.querySelectorAll(
+        '[data-gsap$="-card"], [data-gsap$="-step"], [data-gsap="faq-item"], [data-gsap="cta-actions"], [data-gsap="card"]'
+      );
 
-      const catalogTl = gsap.timeline({
+      const tl = gsap.timeline({
         scrollTrigger: {
-          trigger: catalogSection,
-          start: 'top 85%',
+          trigger: sec,
+          start: 'top 88%',
           once: true,
         },
+        defaults: { ease: 'power2.out', force3D: true },
       });
 
-      if (reduced) {
-        catalogTl.fromTo(
-          catalogSection,
-          { opacity: 0 },
-          { opacity: 1, duration: 0.25, ease: 'power1.out' }
-        );
-      } else {
-        if (header) {
-          catalogTl.fromTo(
-            header,
-            { clipPath: 'inset(100% 0% 0% 0%)', opacity: 0, y: 10 },
-            {
-              clipPath: 'inset(0% 0% 0% 0%)',
-              opacity: 1,
-              y: 0,
-              duration: 0.5,
-              ease: 'power3.out',
-              clearProps: 'clipPath,transform,opacity',
-            },
-            0
-          );
-        }
-
-        if (headerItems.length > 0) {
-          catalogTl.fromTo(
-            headerItems,
-            { opacity: 0, y: 8 },
-            {
-              opacity: 1,
-              y: 0,
-              duration: 0.38,
-              stagger: 0.05,
-              ease: 'power2.out',
-              clearProps: 'transform,opacity',
-            },
-            0.06
-          );
-        }
-
-        if (initialCards.length > 0) {
-          catalogTl.fromTo(
-            initialCards,
-            { x: -20, opacity: 0, scale: 0.98 },
-            {
-              x: 0,
-              opacity: 1,
-              scale: 1,
-              duration: 0.45,
-              stagger: 0.05,
-              ease: 'power2.out',
-              clearProps: 'transform,opacity',
-            },
-            0.10
-          );
-        }
-      }
-    }
-
-    // ------------------------------------------------------------------------
-    // SECTION 2: Kenapa Asterra? (#keunggulan) - Side / Angled Reveal
-    // ------------------------------------------------------------------------
-    const keunggulanSection = root.querySelector('[data-gsap-section="keunggulan"], #keunggulan');
-    if (keunggulanSection) {
-      const header = keunggulanSection.querySelector('[data-gsap="keunggulan-header"], div:first-child');
-      const cards = keunggulanSection.querySelectorAll('[data-gsap="keunggulan-card"], [data-gsap="card"]');
-
-      const keunggulanTl = gsap.timeline({
-        scrollTrigger: {
-          trigger: keunggulanSection,
-          start: 'top 85%',
-          once: true,
-        },
-      });
-
-      if (reduced) {
-        keunggulanTl.fromTo(
-          keunggulanSection,
-          { opacity: 0 },
-          { opacity: 1, duration: 0.25, ease: 'power1.out' }
-        );
-      } else {
-        if (header) {
-          keunggulanTl.fromTo(
-            header,
-            { x: -14, opacity: 0 },
-            {
-              x: 0,
-              opacity: 1,
-              duration: 0.45,
-              ease: 'power2.out',
-              clearProps: 'transform,opacity',
-            },
-            0
-          );
-        }
-
-        if (cards.length > 0) {
-          keunggulanTl.fromTo(
-            cards,
-            { x: -10, y: 10, opacity: 0, scale: 0.98 },
-            {
-              x: 0,
-              y: 0,
-              opacity: 1,
-              scale: 1,
-              duration: 0.42,
-              stagger: 0.04,
-              ease: 'power2.out',
-              clearProps: 'transform,opacity',
-            },
-            0.08
-          );
-        }
-      }
-    }
-
-    // ------------------------------------------------------------------------
-    // SECTION 3: Alur Pemesanan (#panduan) - Sequential Step Progression
-    // ------------------------------------------------------------------------
-    const panduanSection = root.querySelector('[data-gsap-section="panduan"], #panduan');
-    if (panduanSection) {
-      const header = panduanSection.querySelector('[data-gsap="panduan-header"], div:first-child');
-      const steps = panduanSection.querySelectorAll('[data-gsap="panduan-step"], [data-gsap="card"]');
-
-      const panduanTl = gsap.timeline({
-        scrollTrigger: {
-          trigger: panduanSection,
-          start: 'top 85%',
-          once: true,
-        },
-      });
-
-      if (reduced) {
-        panduanTl.fromTo(
-          panduanSection,
-          { opacity: 0 },
-          { opacity: 1, duration: 0.25, ease: 'power1.out' }
-        );
-      } else {
-        if (header) {
-          panduanTl.fromTo(
-            header,
-            { scale: 0.98, opacity: 0 },
-            {
-              scale: 1,
-              opacity: 1,
-              duration: 0.45,
-              ease: 'power3.out',
-              clearProps: 'transform,opacity',
-            },
-            0
-          );
-        }
-
-        if (steps.length > 0) {
-          panduanTl.fromTo(
-            steps,
-            { y: 14, scale: 0.96, opacity: 0 },
-            {
-              y: 0,
-              scale: 1,
-              opacity: 1,
-              duration: 0.45,
-              stagger: 0.07,
-              ease: 'power3.out',
-              clearProps: 'transform,opacity',
-            },
-            0.08
-          );
-        }
-      }
-    }
-
-    // ------------------------------------------------------------------------
-    // SECTION 4: FAQ (#faq) - Vertical Cascade Unfold
-    // ------------------------------------------------------------------------
-    const faqSection = root.querySelector('[data-gsap-section="faq"], #faq');
-    if (faqSection) {
-      const header = faqSection.querySelector('[data-gsap="faq-header"], div:first-child');
-      const items = faqSection.querySelectorAll('[data-gsap="faq-item"], .space-y-2\\.5 > div');
-
-      const faqTl = gsap.timeline({
-        scrollTrigger: {
-          trigger: faqSection,
-          start: 'top 85%',
-          once: true,
-        },
-      });
-
-      if (reduced) {
-        faqTl.fromTo(
-          faqSection,
-          { opacity: 0 },
-          { opacity: 1, duration: 0.25, ease: 'power1.out' }
-        );
-      } else {
-        if (header) {
-          faqTl.fromTo(
-            header,
-            { y: 12, opacity: 0 },
-            {
-              y: 0,
-              opacity: 1,
-              duration: 0.45,
-              ease: 'power2.out',
-              clearProps: 'transform,opacity',
-            },
-            0
-          );
-        }
-
-        if (items.length > 0) {
-          faqTl.fromTo(
-            items,
-            { y: 10, opacity: 0 },
-            {
-              y: 0,
-              opacity: 1,
-              duration: 0.35,
-              stagger: 0.03,
-              ease: 'power2.out',
-              clearProps: 'transform,opacity',
-            },
-            0.06
-          );
-        }
-      }
-    }
-
-    // ------------------------------------------------------------------------
-    // SECTION 5: CTA Banner - Expand Inset / Soft Zoom Reveal
-    // ------------------------------------------------------------------------
-    const ctaSection = root.querySelector('[data-gsap-section="cta"]');
-    if (ctaSection) {
-      const content = ctaSection.querySelector('[data-gsap="cta-content"]');
-      const actions = ctaSection.querySelector('[data-gsap="cta-actions"]');
-
-      const ctaTl = gsap.timeline({
-        scrollTrigger: {
-          trigger: ctaSection,
-          start: 'top 85%',
-          once: true,
-        },
-      });
-
-      if (reduced) {
-        ctaTl.fromTo(
-          ctaSection,
-          { opacity: 0 },
-          { opacity: 1, duration: 0.25, ease: 'power1.out' }
-        );
-      } else {
-        ctaTl.fromTo(
-          ctaSection,
-          {
-            scale: 0.98,
-            clipPath: 'inset(3% 3% 3% 3% round 1rem)',
-            opacity: 0,
-          },
-          {
-            scale: 1,
-            clipPath: 'inset(0% 0% 0% 0% round 1rem)',
-            opacity: 1,
-            duration: 0.55,
-            ease: 'power3.out',
-            clearProps: 'transform,clipPath,opacity',
-          },
+      if (header) {
+        tl.fromTo(
+          header,
+          { opacity: 0.3, y: 10 },
+          { opacity: 1, y: 0, duration: 0.35, clearProps: 'all' },
           0
         );
-
-        if (content) {
-          ctaTl.fromTo(
-            content,
-            { y: 8, opacity: 0 },
-            {
-              y: 0,
-              opacity: 1,
-              duration: 0.4,
-              ease: 'power2.out',
-              clearProps: 'transform,opacity',
-            },
-            0.08
-          );
-        }
-
-        if (actions) {
-          ctaTl.fromTo(
-            actions,
-            { y: 8, opacity: 0, scale: 0.97 },
-            {
-              y: 0,
-              opacity: 1,
-              scale: 1,
-              duration: 0.4,
-              ease: 'power2.out',
-              clearProps: 'transform,opacity',
-            },
-            0.14
-          );
-        }
       }
-    }
 
-    // ------------------------------------------------------------------------
-    // SECTION 6: Footer - Vertical Bottom Reveal + Column Stagger
-    // ------------------------------------------------------------------------
+      if (items.length > 0) {
+        const limitedItems = Array.from(items).slice(0, 8);
+        tl.fromTo(
+          limitedItems,
+          { opacity: 0.3, y: 12 },
+          { opacity: 1, y: 0, duration: 0.36, stagger: 0.035, clearProps: 'all' },
+          header ? 0.06 : 0
+        );
+      }
+    });
+
+    // Footer Scroll Reveal
     const footer = document.querySelector('footer[data-gsap="footer"], footer');
     if (footer) {
-      const columns = footer.querySelectorAll('[data-gsap="footer-col"], .grid > div');
-      const bottom = footer.querySelector('[data-gsap="footer-bottom"], .border-t');
+      const cols = footer.querySelectorAll('[data-gsap="footer-col"]');
+      const bottom = footer.querySelector('[data-gsap="footer-bottom"]');
 
       const footerTl = gsap.timeline({
         scrollTrigger: {
           trigger: footer,
-          start: 'top 90%',
+          start: 'top 92%',
           once: true,
         },
+        defaults: { ease: 'power2.out', force3D: true },
       });
 
-      if (reduced) {
+      if (cols.length > 0) {
         footerTl.fromTo(
-          footer,
-          { opacity: 0 },
-          { opacity: 1, duration: 0.25, ease: 'power1.out' }
-        );
-      } else {
-        footerTl.fromTo(
-          footer,
-          {
-            y: 18,
-            clipPath: 'inset(10% 0% 0% 0%)',
-            opacity: 0,
-          },
-          {
-            y: 0,
-            clipPath: 'inset(0% 0% 0% 0%)',
-            opacity: 1,
-            duration: 0.6,
-            ease: 'power3.out',
-            clearProps: 'transform,clipPath,opacity',
-          },
+          Array.from(cols),
+          { opacity: 0.3, y: 10 },
+          { opacity: 1, y: 0, duration: 0.35, stagger: 0.03, clearProps: 'all' },
           0
         );
+      }
 
-        if (columns.length > 0) {
-          footerTl.fromTo(
-            columns,
-            { y: 10, opacity: 0 },
-            {
-              y: 0,
-              opacity: 1,
-              duration: 0.4,
-              stagger: 0.05,
-              ease: 'power2.out',
-              clearProps: 'transform,opacity',
-            },
-            0.10
-          );
-        }
-
-        if (bottom) {
-          footerTl.fromTo(
-            bottom,
-            { opacity: 0 },
-            {
-              opacity: 1,
-              duration: 0.4,
-              ease: 'power2.out',
-              clearProps: 'opacity',
-            },
-            0.20
-          );
-        }
+      if (bottom) {
+        footerTl.fromTo(
+          bottom,
+          { opacity: 0.3, y: 6 },
+          { opacity: 1, y: 0, duration: 0.30, clearProps: 'all' },
+          0.1
+        );
       }
     }
-
-    // Refresh scroll triggers so calculations are pixel-perfect
-    ScrollTrigger.refresh();
   }, root);
 
   return () => ctx.revert();
@@ -1013,42 +546,30 @@ export function setupHomepageScrollReveal(root: HTMLElement | null) {
    ========================================================================== */
 
 /**
- * Animate the floating support button with subtle scale & slight rotation entry.
+ * Animate the floating support button with smooth micro-rise.
  */
 export function animateFloatingButton(element: HTMLElement | null): (() => void) | undefined {
   if (!element || typeof window === 'undefined') return;
+  if (prefersReducedMotion()) return;
 
-  const reduced = prefersReducedMotion();
-  const dur = reduced ? 0.25 : 0.45;
-
-  let tween: gsap.core.Tween;
-
-  if (reduced) {
-    tween = gsap.fromTo(
-      element,
-      { opacity: 0 },
-      { opacity: 1, duration: dur, delay: 0.3, ease: 'power1.out', clearProps: 'opacity' }
-    );
-  } else {
-    tween = gsap.fromTo(
-      element,
-      {
-        scale: 0.8,
-        opacity: 0,
-        rotation: -8,
-      },
-      {
-        scale: 1,
-        opacity: 1,
-        rotation: 0,
-        duration: dur,
-        delay: 0.42, // Appears smoothly right as hero sequence completes (no dead wait!)
-        ease: 'power2.out',
-        force3D: true,
-        clearProps: 'transform,opacity',
-      }
-    );
-  }
+  const tween = gsap.fromTo(
+    element,
+    {
+      y: 10,
+      opacity: 0,
+      scale: 0.95,
+    },
+    {
+      y: 0,
+      opacity: 1,
+      scale: 1,
+      duration: 0.32,
+      delay: 0.2,
+      ease: 'power2.out',
+      force3D: true,
+      clearProps: 'all',
+    }
+  );
 
   return () => {
     tween.kill();
@@ -1061,77 +582,60 @@ export function animateFloatingButton(element: HTMLElement | null): (() => void)
 
 /**
  * Animate general entrance elements on subpages (titles, breadcrumbs, content)
- * Instant start on route change with lightning-fast 200-260ms transition.
+ * Fast, buttery 240-280ms transition with clear hierarchy.
  */
-export function animatePageEntrance(container: HTMLElement | null) {
+export function animatePageEntrance(container: HTMLElement | null): (() => void) | undefined {
   if (!container || typeof window === 'undefined') return;
-
-  const reduced = prefersReducedMotion();
-  const dur = reduced ? 0.18 : 0.24;
-  const dist = reduced ? 3 : 8;
+  if (prefersReducedMotion()) return;
 
   const ctx = gsap.context(() => {
+    const tl = gsap.timeline({
+      defaults: { ease: 'power2.out', force3D: true },
+    });
+
     // 1. Root page container immediate smooth fade
-    gsap.fromTo(
+    tl.fromTo(
       container,
-      { opacity: 0.94, y: 3 },
-      { opacity: 1, y: 0, duration: 0.18, ease: 'power2.out', clearProps: 'transform,opacity' }
+      { opacity: 0.9, y: 6 },
+      { opacity: 1, y: 0, duration: 0.24, clearProps: 'all' },
+      0
     );
 
-    // 2. Headings
+    // 2. Headings & Titles
     const headings = container.querySelectorAll('h1, [data-gsap="page-title"]');
     if (headings.length > 0) {
-      gsap.fromTo(
+      tl.fromTo(
         headings,
-        { y: dist, opacity: 0 },
-        { y: 0, opacity: 1, duration: dur, ease: 'power2.out', stagger: 0.025, force3D: true, clearProps: 'transform,opacity' }
+        { opacity: 0.85, y: 5 },
+        { opacity: 1, y: 0, duration: 0.26, stagger: 0.025, clearProps: 'all' },
+        0.02
       );
     }
 
-    // 3. Subheads & leads
+    // 3. Subtitles & Leads
     const subheads = container.querySelectorAll(
       '[data-gsap="page-sub"], p[data-gsap="lead"], .hero-lead'
     );
     if (subheads.length > 0) {
-      gsap.fromTo(
+      tl.fromTo(
         subheads,
-        { y: dist * 0.6, opacity: 0 },
-        { y: 0, opacity: 1, duration: dur * 0.9, ease: 'power2.out', stagger: 0.02, force3D: true, clearProps: 'transform,opacity' }
+        { opacity: 0.85, y: 4 },
+        { opacity: 1, y: 0, duration: 0.26, stagger: 0.02, clearProps: 'all' },
+        0.04
       );
     }
 
-    // 4. Media
-    const media = container.querySelectorAll(
-      '[data-gsap="hero-media"], [data-gsap="media"]'
-    );
-    if (media.length > 0) {
-      gsap.fromTo(
-        media,
-        { scale: 0.98, opacity: 0 },
-        { scale: 1, opacity: 1, duration: dur, ease: 'power2.out', force3D: true, clearProps: 'transform,opacity' }
-      );
-    }
-
-    // 5. Initial above-the-fold cards (e.g. Catalog grid, Product cards)
-    const initialCards = container.querySelectorAll(
+    // 4. Above-the-fold Cards (First 6 cards only)
+    const cards = container.querySelectorAll(
       '[data-gsap="card"], [data-gsap="hero-card"], [data-gsap="benefit-card"]'
     );
-    if (initialCards.length > 0) {
-      // Only animate above-the-fold cards (first 8) with light stagger (0.025s)
-      const topCards = Array.from(initialCards).slice(0, 8);
-      gsap.fromTo(
+    if (cards.length > 0) {
+      const topCards = Array.from(cards).slice(0, 6);
+      tl.fromTo(
         topCards,
-        { y: dist, opacity: 0, scale: 0.98 },
-        {
-          y: 0,
-          opacity: 1,
-          scale: 1,
-          duration: dur,
-          stagger: 0.025,
-          ease: 'power2.out',
-          force3D: true,
-          clearProps: 'transform,opacity',
-        }
+        { opacity: 0.88, y: 6 },
+        { opacity: 1, y: 0, duration: 0.28, stagger: 0.03, clearProps: 'all' },
+        0.06
       );
     }
   }, container);
@@ -1139,11 +643,10 @@ export function animatePageEntrance(container: HTMLElement | null) {
   return () => ctx.revert();
 }
 
-/**
- * General scroll reveal for subpages using lightweight IntersectionObserver.
- * Only targets elements below the fold, completely avoiding delays or race conditions
- * on initial above-the-fold elements.
- */
+/* ==========================================================================
+   6. COMPONENT-LEVEL SCROLL TRIGGERS & HOVER MICRO-INTERACTIONS
+   ========================================================================== */
+
 export function setupScrollReveal(root: HTMLElement | null) {
   if (!root || typeof window === 'undefined') return;
 

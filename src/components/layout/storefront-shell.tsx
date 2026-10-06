@@ -7,6 +7,7 @@ import { Footer } from '@/components/layout/footer';
 import { MobileBottomNav } from '@/components/layout/mobile-bottom-nav';
 import { LainnyaSidebar } from '@/components/layout/lainnya-sidebar';
 import { FloatingSupport } from '@/components/layout/floating-support';
+import { PageTransition } from '@/components/layout/page-transition';
 import { clearChunkRecoveryFlag, tryRecoverFromChunkError } from '@/lib/utils/chunk-recovery';
 
 interface StorefrontShellProps {
@@ -53,7 +54,11 @@ export function StorefrontShell({ children }: StorefrontShellProps) {
     pathname === '/register';
 
   if (isNonStorefront) {
-    return <main className="w-full min-h-screen">{children}</main>;
+    return (
+      <main className="w-full min-h-screen">
+        <PageTransition>{children}</PageTransition>
+      </main>
+    );
   }
 
   return (
@@ -61,9 +66,9 @@ export function StorefrontShell({ children }: StorefrontShellProps) {
       {/* Persistent Desktop & Mobile Header Bar */}
       <Header />
 
-      {/* Main Content Area */}
+      {/* Main Content Area with Buttery Editorial Page Transition */}
       <main className="flex-1 w-full" id="main-content">
-        {children}
+        <PageTransition>{children}</PageTransition>
       </main>
 
       {/* Persistent Footer */}
