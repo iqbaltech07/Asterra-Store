@@ -38,8 +38,8 @@ export class OrderAdminService {
     const status = params.status;
     const search = params.search?.trim().toLowerCase();
 
-    // Auto-cancel any expired pending orders before returning lists
-    await this.autoCancelExpiredOrders().catch((e) =>
+    // Non-blocking auto-cancel runner for expired pending orders
+    void this.autoCancelExpiredOrders().catch((e) =>
       console.warn('[OrderAdminService] Auto-cancel runner error:', e)
     );
 
@@ -97,10 +97,10 @@ export class OrderAdminService {
             if (o.status === 'pending') pending++;
             else if (o.status === 'processing') {
               processing++;
-              totalRevenue += o.totalAmount;
+              totalRevenue += Number(o.totalAmount || 0);
             } else if (o.status === 'completed') {
               completed++;
-              totalRevenue += o.totalAmount;
+              totalRevenue += Number(o.totalAmount || 0);
             } else if (o.status === 'cancelled') cancelled++;
           });
 

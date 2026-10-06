@@ -178,7 +178,7 @@ export function AdminOrdersTab() {
       )}
 
       {/* Top Metrics Cards */}
-      <OrderMetricsCards metrics={metrics} />
+      <OrderMetricsCards metrics={metrics} totalRevenue={metrics?.totalRevenue} />
 
       {/* Filter, Search & SSE Bar */}
       <OrderFiltersBar

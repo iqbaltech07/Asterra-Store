@@ -10,6 +10,7 @@ export interface OrderMetrics {
   processing: number;
   completed: number;
   cancelled: number;
+  totalRevenue?: number;
 }
 
 interface OrderMetricsCardsProps {
@@ -18,6 +19,8 @@ interface OrderMetricsCardsProps {
 }
 
 export function OrderMetricsCards({ metrics, totalRevenue }: OrderMetricsCardsProps) {
+  const effectiveRevenue = totalRevenue ?? metrics?.totalRevenue ?? 0;
+
   return (
     <div className="grid grid-cols-2 lg:grid-cols-5 gap-3.5">
       <div className="bg-surface border border-border rounded-xl p-4">
@@ -62,7 +65,7 @@ export function OrderMetricsCards({ metrics, totalRevenue }: OrderMetricsCardsPr
           <FontAwesomeIcon icon={faDollarSign} className="w-4 h-4 text-status-success" />
         </div>
         <div className="text-xl sm:text-2xl font-bold text-foreground truncate">
-          Rp {(totalRevenue ?? 0).toLocaleString('id-ID')}
+          Rp {effectiveRevenue.toLocaleString('id-ID')}
         </div>
         <span className="text-[11px] text-status-success font-medium">Transaksi tervalidasi</span>
       </div>

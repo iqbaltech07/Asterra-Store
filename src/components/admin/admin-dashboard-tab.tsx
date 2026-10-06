@@ -55,6 +55,16 @@ export function AdminDashboardTab({
 }: AdminDashboardTabProps) {
   const [salesPeriod, setSalesPeriod] = useState<'daily' | 'weekly' | 'monthly'>('weekly');
   const [liveAffiliates, setLiveAffiliates] = useState<any[]>([]);
+  const [liveOrders, setLiveOrders] = useState<any[]>([]);
+  const [liveOrderMetrics, setLiveOrderMetrics] = useState<{
+    total?: number;
+    completed?: number;
+    processing?: number;
+    pending?: number;
+    cancelled?: number;
+    failed?: number;
+    totalRevenue?: number;
+  } | null>(null);
 
   useEffect(() => {
     fetch('/api/v1/admin/affiliates')
@@ -65,6 +75,20 @@ export function AdminDashboardTab({
         }
       })
       .catch((err) => console.warn('Failed to fetch affiliates for dashboard:', err));
+
+    fetch('/api/v1/admin/orders?limit=5')
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.success) {
+          if (json.metrics) {
+            setLiveOrderMetrics(json.metrics);
+          }
+          if (Array.isArray(json.data)) {
+            setLiveOrders(json.data);
+          }
+        }
+      })
+      .catch((err) => console.warn('Failed to fetch orders for dashboard:', err));
   }, []);
 
   const totalReferralRevenue = liveAffiliates.reduce((acc, a) => acc + (a.totalRevenue || 0), 0);
@@ -218,10 +242,10 @@ export function AdminDashboardTab({
             <TrendingUp className="w-4 h-4 text-status-success group-hover:scale-110 transition-transform" />
           </div>
           <div className="text-xl font-bold text-foreground">
-            Rp 18.45M
+            {liveOrderMetrics ? `Rp ${(liveOrderMetrics.totalRevenue || 0).toLocaleString('id-ID')}` : 'Rp 0'}
           </div>
           <span className="text-[10px] text-status-success font-semibold flex items-center gap-1 mt-1">
-            ↑ +14.2% bulan ini
+            ↑ Terverifikasi Sistem
           </span>
         </div>
 
@@ -235,10 +259,10 @@ export function AdminDashboardTab({
             <ShoppingBag className="w-4 h-4 text-primary group-hover:scale-110 transition-transform" />
           </div>
           <div className="text-xl font-bold text-foreground">
-            1.105
+            {(liveOrderMetrics?.total ?? 0).toLocaleString('id-ID')}
           </div>
           <span className="text-[10px] text-foreground-muted block mt-1">
-            98.2% Lunas terkirim
+            {liveOrderMetrics?.completed ?? 0} Selesai diproses
           </span>
         </div>
 
@@ -269,10 +293,10 @@ export function AdminDashboardTab({
             <Coins className="w-4 h-4 text-status-success group-hover:scale-110 transition-transform" />
           </div>
           <div className="text-xl font-bold text-status-success">
-            Rp 7.22M
+            {liveOrderMetrics ? `Rp ${Math.round((liveOrderMetrics.totalRevenue || 0) * 0.35).toLocaleString('id-ID')}` : 'Rp 0'}
           </div>
           <span className="text-[10px] text-foreground-muted block mt-1">
-            Margin 39.1%
+            Estimasi Margin 35%
           </span>
         </div>
 
@@ -286,9 +310,9 @@ export function AdminDashboardTab({
             <Clock className="w-4 h-4 text-status-warning group-hover:scale-110 transition-transform" />
           </div>
           <div className="text-xl font-bold text-status-warning">
-            3
+            {(liveOrderMetrics?.pending ?? 0).toLocaleString('id-ID')}
           </div>
-          <span className="text-[10px] text-foreground-muted block mt-1">
+          <span className="text-[10px] text-status-warning block mt-1">
             Menunggu pembayaran
           </span>
         </div>
@@ -480,35 +504,46 @@ export function AdminDashboardTab({
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {recentTransactions.map((tx) => (
-                  <tr key={tx.id} className="hover:bg-surface-raised/40">
-                    <td className="py-2.5 pr-2">
-                      <span className="font-mono font-bold text-foreground block">{tx.id}</span>
-                      <span className="text-[10px] text-foreground-muted">{tx.customer} • {tx.time}</span>
-                    </td>
-                    <td className="py-2.5 pr-2 font-medium text-foreground truncate max-w-[160px]">
-                      {tx.product}
-                    </td>
-                    <td className="py-2.5 pr-2 text-foreground-muted text-[11px]">
-                      {tx.paymentMethod}
-                    </td>
-                    <td className="py-2.5 pr-2 text-right font-bold text-foreground">
-                      Rp {tx.amount.toLocaleString('id-ID')}
-                    </td>
-                    <td className="py-2.5 text-right">
-                      <Badge
-                        variant="outline"
-                        className={`text-[10px] font-semibold ${
-                          tx.status === 'completed'
-                            ? 'bg-status-success/15 text-status-success border-status-success/30'
-                            : 'bg-status-warning/15 text-status-warning border-status-warning/30'
-                        }`}
-                      >
-                        {tx.status === 'completed' ? 'Lunas' : 'Pending'}
-                      </Badge>
-                    </td>
-                  </tr>
-                ))}
+                {(liveOrders.length > 0 ? liveOrders.slice(0, 5) : recentTransactions).map((tx) => {
+                  const id = tx.id || tx.orderId;
+                  const customer = tx.customer || tx.customerName || 'Pelanggan';
+                  const product = tx.product || (tx.items?.[0]?.productName) || 'Produk Digital';
+                  const paymentMethod = tx.paymentMethod || 'QRIS';
+                  const amount = typeof tx.amount === 'number' ? tx.amount : (tx.totalAmount || 0);
+                  const status = tx.status;
+                  const time = tx.time || (tx.createdAt ? new Date(tx.createdAt).toLocaleDateString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '-');
+                  return (
+                    <tr key={id} className="hover:bg-surface-raised/40">
+                      <td className="py-2.5 pr-2">
+                        <span className="font-mono font-bold text-foreground block">{id}</span>
+                        <span className="text-[10px] text-foreground-muted">{customer} • {time}</span>
+                      </td>
+                      <td className="py-2.5 pr-2 font-medium text-foreground truncate max-w-[160px]">
+                        {product}
+                      </td>
+                      <td className="py-2.5 pr-2 text-foreground-muted text-[11px]">
+                        {paymentMethod}
+                      </td>
+                      <td className="py-2.5 pr-2 text-right font-bold text-foreground">
+                        Rp {amount.toLocaleString('id-ID')}
+                      </td>
+                      <td className="py-2.5 text-right">
+                        <Badge
+                          variant="outline"
+                          className={`text-[10px] font-semibold ${
+                            status === 'completed'
+                              ? 'bg-status-success/15 text-status-success border-status-success/30'
+                              : status === 'processing'
+                              ? 'bg-primary/15 text-primary border-primary/30'
+                              : 'bg-status-warning/15 text-status-warning border-status-warning/30'
+                          }`}
+                        >
+                          {status === 'completed' ? 'Lunas' : status === 'processing' ? 'Diproses' : status === 'pending' ? 'Pending' : status}
+                        </Badge>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
