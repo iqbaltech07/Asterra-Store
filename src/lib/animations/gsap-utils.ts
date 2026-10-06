@@ -406,16 +406,22 @@ export function animateNavbar(headerElement: HTMLElement | null) {
  */
 let hasHeroMasterRunOnce = false;
 
-export function animateHeroMasterSequence(container: HTMLElement | null) {
+export function animateHeroMasterSequence(container: HTMLElement | null): (() => void) | undefined {
   if (!container || typeof window === 'undefined') return;
   if (hasHeroMasterRunOnce) return;
+
+  const heroContainer = container.querySelector('[data-gsap="hero-container"]');
+  // If heroContainer does not exist (e.g. replaced by static high-res banner image), skip sequence safely
+  if (!heroContainer) {
+    return;
+  }
+
   hasHeroMasterRunOnce = true;
 
   const reduced = prefersReducedMotion();
 
   const ctx = gsap.context(() => {
     const isMobile = window.innerWidth < 640;
-    const heroContainer = container.querySelector('[data-gsap="hero-container"]');
     const titleLines = container.querySelectorAll('[data-gsap="title-line"]');
     const heroTitle = container.querySelector('[data-gsap="page-title"]');
     const heroSub = container.querySelector('[data-gsap="page-sub"]');
@@ -423,12 +429,23 @@ export function animateHeroMasterSequence(container: HTMLElement | null) {
     const benefitBar = container.querySelector('[data-gsap="hero-benefit-bar"]');
     const benefitTiles = container.querySelectorAll('[data-gsap="benefit-tile"], [data-gsap="benefit-card"]');
 
+    const validTargets = [
+      heroContainer,
+      heroTitle,
+      heroSub,
+      planetVisual,
+      benefitBar,
+      ...Array.from(benefitTiles),
+    ].filter((element): element is Element => element instanceof Element);
+
     if (reduced) {
-      gsap.fromTo(
-        [heroContainer, heroTitle, heroSub, planetVisual, benefitBar, benefitTiles],
-        { opacity: 0 },
-        { opacity: 1, duration: 0.20, stagger: 0.03, ease: 'power1.out', clearProps: 'opacity' }
-      );
+      if (validTargets.length > 0) {
+        gsap.fromTo(
+          validTargets,
+          { opacity: 0 },
+          { opacity: 1, duration: 0.20, stagger: 0.03, ease: 'power1.out', clearProps: 'opacity' }
+        );
+      }
       return;
     }
 
