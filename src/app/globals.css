@@ -147,46 +147,40 @@ body {
 @keyframes pageEditorialEnter {
   0% {
     opacity: 0.94;
-    transform: translate3d(0, 4px, 0);
   }
   100% {
     opacity: 1;
-    transform: translate3d(0, 0, 0);
   }
 }
 
 .animate-page-enter {
-  animation: pageEditorialEnter 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: pageEditorialEnter 0.18s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes tabGlideIn {
   0% {
-    opacity: 0.88;
-    transform: translate3d(0, 3px, 0);
+    opacity: 0.90;
   }
   100% {
     opacity: 1;
-    transform: translate3d(0, 0, 0);
   }
 }
 
 .animate-tab-glide {
-  animation: tabGlideIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: tabGlideIn 0.16s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes textMorphSmooth {
   0% {
-    opacity: 0.90;
-    transform: translate3d(0, 2px, 0);
+    opacity: 0.92;
   }
   100% {
     opacity: 1;
-    transform: translate3d(0, 0, 0);
   }
 }
 
 .animate-text-smooth {
-  animation: textMorphSmooth 0.18s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: textMorphSmooth 0.16s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @media (prefers-reduced-motion: reduce) {

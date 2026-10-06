@@ -240,9 +240,9 @@ function FeaturedGridCard({
 
   return (
     <div
-      data-gsap="featured-card product-card"
+      data-gsap="product-card"
       data-card-wrapper
-      className="group bg-white border border-[rgba(18,26,42,0.09)] hover:border-[#C96F55]/70 hover:shadow-card-hover hover:-translate-y-0.5 rounded-xl sm:rounded-2xl p-2.5 sm:p-3.5 transition-[border-color,box-shadow,transform] duration-200 flex flex-col justify-between w-full h-full select-none"
+      className="group bg-white border border-[rgba(18,26,42,0.09)] hover:border-[#C96F55]/70 hover:shadow-card-hover hover:-translate-y-0.5 rounded-xl sm:rounded-2xl p-2.5 sm:p-3.5 transition-[border-color,box-shadow] duration-200 flex flex-col justify-between w-full h-full select-none"
     >
       <div>
         {/* 1. Header: Logo + Info */}
@@ -846,8 +846,18 @@ export default function HomePage() {
           - Immediately visible in first viewport!
         */}
         <section id="produk-unggulan" aria-label="Produk Unggulan Asterra" data-gsap="featured-section" className="mb-6 sm:mb-8">
+          {/* Section Heading & Subtitle */}
+          <div className="flex items-center justify-between mb-2.5 sm:mb-3 px-0.5">
+            <h2 data-gsap="section-heading" className="text-sm sm:text-base md:text-lg font-black tracking-tight text-[#121A2A]">
+              Produk Unggulan & Lisensi Resmi
+            </h2>
+            <span data-gsap="hero-text" className="text-[11px] sm:text-xs text-[#121A2A]/55 font-medium hidden sm:inline">
+              Garansi 100% Penggantian · Aktivasi Instan
+            </span>
+          </div>
+
           {/* Selector Tabs: [ 🔥 Promo ] [ Terlaris ] [ Terbaru ] */}
-          <div data-gsap="featured-tabs category-tabs" className="flex items-center justify-between gap-2 mb-3 sm:mb-4 pb-1 border-b border-[rgba(18,26,42,0.06)] overflow-x-auto scrollbar-none">
+          <div data-gsap="category-tabs" className="flex items-center justify-between gap-2 mb-3 sm:mb-4 pb-1 border-b border-[rgba(18,26,42,0.06)] overflow-x-auto scrollbar-none">
             <div className="flex items-center gap-1.5 sm:gap-2">
               {/* Tab 1: PROMO (DEFAULT & VISUALLY PROMINENT) */}
               <button

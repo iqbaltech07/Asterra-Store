@@ -500,6 +500,7 @@ export function animateNavbar(headerElement: HTMLElement | null): (() => void) |
       {
         yPercent: -100,
         opacity: 0,
+        immediateRender: true,
       },
       {
         yPercent: 0,
@@ -512,7 +513,9 @@ export function animateNavbar(headerElement: HTMLElement | null): (() => void) |
     );
   }, headerElement);
 
-  return () => ctx.revert();
+  return () => {
+    ctx.revert();
+  };
 }
 
 /* ==========================================================================
@@ -523,10 +526,10 @@ export function animateNavbar(headerElement: HTMLElement | null): (() => void) |
  * AsterraStore Homepage Master Sequence:
  * - Hero banner: clip-path inset(0 100% 0 0) → inset(0 0 0 0), 0.75-0.85s, power3.inOut
  * - Inner visual: y: 15px → 0, opacity 0.92 → 1, 0.5s
- * - Text hero: y: 30px → 0, opacity: 0 → 1, delay: 0.25-0.35s
- * - Hero button: y: 20px → 0, opacity: 0 → 1, scale: 0.97 → 1, delay: 0.4s
- * - Section heading: y: 25px → 0, opacity: 0 → 1
- * - Category tabs: y: 15px → 0, opacity: 0 → 1
+ * - Text hero: y: 30px → 0, opacity: 0 → 1, delay: 0.15s
+ * - Section heading: y: 25px → 0, opacity: 0 → 1, delay: 0.18s
+ * - Category tabs: y: 15px → 0, opacity: 0 → 1, delay: 0.22s
+ * - Hero button: y: 20px → 0, opacity: 0 → 1, scale: 0.97 → 1, delay: 0.25s
  * - Product cards: y: 25px → 0, opacity: 0 → 1, stagger: 40-60ms (desktop), 30-50ms (tablet), 30-40ms (mobile)
  * - Product card inner: name y: 8px → 0, price y: 10px → 0, CTA y: 8px → 0
  */
@@ -590,6 +593,7 @@ export function animateHomepageHero(container: HTMLElement | null): (() => void)
         {
           clipPath: 'inset(0% 100% 0% 0%)',
           opacity: 0,
+          immediateRender: true,
         },
         {
           clipPath: 'inset(0% 0% 0% 0%)',
@@ -598,7 +602,7 @@ export function animateHomepageHero(container: HTMLElement | null): (() => void)
           ease: 'power3.inOut',
           clearProps: 'clipPath,opacity',
         },
-        0.05
+        0
       );
     }
 
@@ -609,6 +613,7 @@ export function animateHomepageHero(container: HTMLElement | null): (() => void)
         {
           y: isDesktop ? 15 : 10,
           opacity: 0.92,
+          immediateRender: true,
         },
         {
           y: 0,
@@ -617,7 +622,7 @@ export function animateHomepageHero(container: HTMLElement | null): (() => void)
           ease: 'power3.out',
           clearProps: 'transform,opacity',
         },
-        0.2
+        0.1
       );
     }
 
@@ -628,6 +633,7 @@ export function animateHomepageHero(container: HTMLElement | null): (() => void)
         {
           y: isDesktop ? 30 : 20,
           opacity: 0,
+          immediateRender: true,
         },
         {
           y: 0,
@@ -637,7 +643,7 @@ export function animateHomepageHero(container: HTMLElement | null): (() => void)
           stagger: 0.05,
           clearProps: 'transform,opacity',
         },
-        0.28
+        0.15
       );
     }
 
@@ -648,6 +654,7 @@ export function animateHomepageHero(container: HTMLElement | null): (() => void)
         {
           y: isDesktop ? 25 : 18,
           opacity: 0,
+          immediateRender: true,
         },
         {
           y: 0,
@@ -656,7 +663,7 @@ export function animateHomepageHero(container: HTMLElement | null): (() => void)
           ease: 'power3.out',
           clearProps: 'transform,opacity',
         },
-        0.3
+        0.18
       );
     }
 
@@ -667,6 +674,7 @@ export function animateHomepageHero(container: HTMLElement | null): (() => void)
         {
           y: isDesktop ? 15 : 10,
           opacity: 0,
+          immediateRender: true,
         },
         {
           y: 0,
@@ -675,7 +683,7 @@ export function animateHomepageHero(container: HTMLElement | null): (() => void)
           ease: 'power3.out',
           clearProps: 'transform,opacity',
         },
-        0.32
+        0.22
       );
     }
 
@@ -687,6 +695,7 @@ export function animateHomepageHero(container: HTMLElement | null): (() => void)
           y: isDesktop ? 20 : 12,
           opacity: 0,
           scale: 0.97,
+          immediateRender: true,
         },
         {
           y: 0,
@@ -697,7 +706,7 @@ export function animateHomepageHero(container: HTMLElement | null): (() => void)
           stagger: 0.03,
           clearProps: 'transform,opacity',
         },
-        0.36
+        0.25
       );
     }
 
@@ -709,6 +718,7 @@ export function animateHomepageHero(container: HTMLElement | null): (() => void)
         {
           y: cardDistance,
           opacity: 0,
+          immediateRender: true,
         },
         {
           y: 0,
@@ -718,7 +728,7 @@ export function animateHomepageHero(container: HTMLElement | null): (() => void)
           stagger: cardStagger,
           clearProps: 'transform,opacity',
         },
-        0.4
+        0.28
       );
 
       // Micro elements inside top cards
@@ -729,25 +739,25 @@ export function animateHomepageHero(container: HTMLElement | null): (() => void)
       if (names.length > 0) {
         tl.fromTo(
           Array.from(names).slice(0, 8),
-          { y: 8 },
+          { y: 8, immediateRender: true },
           { y: 0, duration: 0.28, stagger: 0.02, clearProps: 'transform' },
-          0.48
+          0.36
         );
       }
       if (prices.length > 0) {
         tl.fromTo(
           Array.from(prices).slice(0, 8),
-          { y: 10 },
+          { y: 10, immediateRender: true },
           { y: 0, duration: 0.28, stagger: 0.02, clearProps: 'transform' },
-          0.5
+          0.38
         );
       }
       if (cardBtns.length > 0) {
         tl.fromTo(
           Array.from(cardBtns).slice(0, 8),
-          { y: 8 },
+          { y: 8, immediateRender: true },
           { y: 0, duration: 0.28, stagger: 0.02, clearProps: 'transform' },
-          0.52
+          0.4
         );
       }
     }
@@ -868,62 +878,80 @@ export function animateProductsPage(container: HTMLElement | null): (() => void)
   const cardDistance = isDesktop ? 25 : isTablet ? 20 : 16;
   const cardDuration = isDesktop ? 0.42 : isTablet ? 0.38 : 0.34;
 
+  let observer: MutationObserver | null = null;
+
   const ctx = gsap.context(() => {
     const tl = gsap.timeline({ defaults: { ease: 'power3.out', force3D: true } });
 
     // Breadcrumb: x: -15px → 0, opacity 0 → 1
     if (breadcrumb) {
-      tl.fromTo(breadcrumb, { x: -15, opacity: 0 }, { x: 0, opacity: 1, duration: 0.35, clearProps: 'all' }, 0);
+      tl.fromTo(breadcrumb, { x: -15, opacity: 0, immediateRender: true }, { x: 0, opacity: 1, duration: 0.35, clearProps: 'all' }, 0);
     }
 
     // Page title: y: 30px → 0, opacity 0 → 1
     if (title) {
-      tl.fromTo(title, { y: isDesktop ? 30 : 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.42, clearProps: 'all' }, 0.04);
+      tl.fromTo(title, { y: isDesktop ? 30 : 20, opacity: 0, immediateRender: true }, { y: 0, opacity: 1, duration: 0.42, clearProps: 'all' }, 0.04);
     }
 
     // Description: y: 15px → 0, opacity 0 → 1
     if (desc) {
-      tl.fromTo(desc, { y: 15, opacity: 0 }, { y: 0, opacity: 1, duration: 0.38, clearProps: 'all' }, 0.08);
+      tl.fromTo(desc, { y: 15, opacity: 0, immediateRender: true }, { y: 0, opacity: 1, duration: 0.38, clearProps: 'all' }, 0.08);
     }
 
     // Badge
     if (badge) {
-      tl.fromTo(badge, { y: 12, opacity: 0, scale: 0.96 }, { y: 0, opacity: 1, scale: 1, duration: 0.36, clearProps: 'all' }, 0.1);
+      tl.fromTo(badge, { y: 12, opacity: 0, scale: 0.96, immediateRender: true }, { y: 0, opacity: 1, scale: 1, duration: 0.36, clearProps: 'all' }, 0.1);
     }
 
     // Search: x: 20px → 0, opacity 0 → 1
     if (search) {
-      tl.fromTo(search, { x: 20, opacity: 0 }, { x: 0, opacity: 1, duration: 0.4, clearProps: 'all' }, 0.12);
+      tl.fromTo(search, { x: 20, opacity: 0, immediateRender: true }, { x: 0, opacity: 1, duration: 0.4, clearProps: 'all' }, 0.12);
     }
 
     // Filter controls: y: 15px → 0, opacity 0 → 1
     if (filters) {
-      tl.fromTo(filters, { y: 15, opacity: 0 }, { y: 0, opacity: 1, duration: 0.38, clearProps: 'all' }, 0.14);
+      tl.fromTo(filters, { y: 15, opacity: 0, immediateRender: true }, { y: 0, opacity: 1, duration: 0.38, clearProps: 'all' }, 0.14);
     }
 
     // Category tabs: y: 15px → 0
     if (categoryTabs) {
-      tl.fromTo(categoryTabs, { y: 15, opacity: 0 }, { y: 0, opacity: 1, duration: 0.36, clearProps: 'all' }, 0.16);
+      tl.fromTo(categoryTabs, { y: 15, opacity: 0, immediateRender: true }, { y: 0, opacity: 1, duration: 0.36, clearProps: 'all' }, 0.16);
     }
 
-    // Product cards: y: cardDistance → 0, opacity 0 → 1, stagger
-    if (cards.length > 0) {
-      const topCards = Array.from(cards).slice(0, 9);
-      tl.fromTo(
+    const animateCards = (targets: NodeListOf<Element> | Element[]) => {
+      const topCards = Array.from(targets).slice(0, 9);
+      if (topCards.length === 0) return;
+      gsap.fromTo(
         topCards,
-        { y: cardDistance, opacity: 0 },
-        { y: 0, opacity: 1, duration: cardDuration, stagger: cardStagger, clearProps: 'all' },
-        0.2
+        { y: cardDistance, opacity: 0, immediateRender: true },
+        { y: 0, opacity: 1, duration: cardDuration, stagger: cardStagger, clearProps: 'all', ease: 'power3.out' }
       );
+    };
+
+    if (cards.length > 0) {
+      animateCards(cards);
+    } else {
+      observer = new MutationObserver(() => {
+        const found = container.querySelectorAll('[data-gsap="product-card"], [data-gsap="card"]');
+        if (found.length > 0) {
+          observer?.disconnect();
+          observer = null;
+          animateCards(found);
+        }
+      });
+      observer.observe(container, { childList: true, subtree: true });
     }
 
     // Pagination: y: 15px → 0
     if (pagination) {
-      tl.fromTo(pagination, { y: 15, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35, clearProps: 'all' }, 0.32);
+      tl.fromTo(pagination, { y: 15, opacity: 0, immediateRender: true }, { y: 0, opacity: 1, duration: 0.35, clearProps: 'all' }, 0.28);
     }
   }, container);
 
-  return () => ctx.revert();
+  return () => {
+    observer?.disconnect();
+    ctx.revert();
+  };
 }
 
 /* ==========================================================================
@@ -954,14 +982,14 @@ export function animateProductDetailPage(container: HTMLElement | null): (() => 
 
     // Breadcrumb: x: -15 → 0
     if (breadcrumb) {
-      tl.fromTo(breadcrumb, { x: -15, opacity: 0 }, { x: 0, opacity: 1, duration: 0.35, clearProps: 'all' }, 0);
+      tl.fromTo(breadcrumb, { x: -15, opacity: 0, immediateRender: true }, { x: 0, opacity: 1, duration: 0.35, clearProps: 'all' }, 0);
     }
 
     // Product image: clip/reveal from left
     if (imageBanner) {
       tl.fromTo(
         imageBanner,
-        { clipPath: 'inset(0% 100% 0% 0%)', opacity: 0.4 },
+        { clipPath: 'inset(0% 100% 0% 0%)', opacity: 0.4, immediateRender: true },
         { clipPath: 'inset(0% 0% 0% 0%)', opacity: 1, duration: 0.72, ease: 'power3.inOut', clearProps: 'clipPath,opacity' },
         0.04
       );
@@ -969,47 +997,47 @@ export function animateProductDetailPage(container: HTMLElement | null): (() => 
 
     // Product title: y: 25 → 0
     if (title) {
-      tl.fromTo(title, { y: 25, opacity: 0 }, { y: 0, opacity: 1, duration: 0.42, clearProps: 'all' }, 0.12);
+      tl.fromTo(title, { y: 25, opacity: 0, immediateRender: true }, { y: 0, opacity: 1, duration: 0.42, clearProps: 'all' }, 0.12);
     }
 
     // Brand / category: y: 12 → 0
     if (badge) {
-      tl.fromTo(badge, { y: 12, opacity: 0 }, { y: 0, opacity: 1, duration: 0.36, clearProps: 'all' }, 0.15);
+      tl.fromTo(badge, { y: 12, opacity: 0, immediateRender: true }, { y: 0, opacity: 1, duration: 0.36, clearProps: 'all' }, 0.15);
     }
 
     // Rating / benefits: y: 10 → 0
     if (benefits) {
-      tl.fromTo(benefits, { y: 10, opacity: 0 }, { y: 0, opacity: 1, duration: 0.38, clearProps: 'all' }, 0.18);
+      tl.fromTo(benefits, { y: 10, opacity: 0, immediateRender: true }, { y: 0, opacity: 1, duration: 0.38, clearProps: 'all' }, 0.18);
     }
 
     // Order box container
     if (orderBox) {
-      tl.fromTo(orderBox, { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.44, clearProps: 'all' }, 0.1);
+      tl.fromTo(orderBox, { y: 20, opacity: 0, immediateRender: true }, { y: 0, opacity: 1, duration: 0.44, clearProps: 'all' }, 0.1);
     }
 
     // Price: y: 20 → 0
     if (price) {
-      tl.fromTo(price, { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, clearProps: 'all' }, 0.18);
+      tl.fromTo(price, { y: 20, opacity: 0, immediateRender: true }, { y: 0, opacity: 1, duration: 0.4, clearProps: 'all' }, 0.18);
     }
 
     // Variant selector: y: 15 → 0
     if (variants) {
-      tl.fromTo(variants, { y: 15, opacity: 0 }, { y: 0, opacity: 1, duration: 0.38, clearProps: 'all' }, 0.22);
+      tl.fromTo(variants, { y: 15, opacity: 0, immediateRender: true }, { y: 0, opacity: 1, duration: 0.38, clearProps: 'all' }, 0.22);
     }
 
     // Quantity: y: 10 → 0
     if (quantity) {
-      tl.fromTo(quantity, { y: 10, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35, clearProps: 'all' }, 0.26);
+      tl.fromTo(quantity, { y: 10, opacity: 0, immediateRender: true }, { y: 0, opacity: 1, duration: 0.35, clearProps: 'all' }, 0.26);
     }
 
     // CTA: y: 20 → 0, opacity 0 → 1, scale 0.97 → 1
     if (cta) {
-      tl.fromTo(cta, { y: 20, opacity: 0, scale: 0.97 }, { y: 0, opacity: 1, scale: 1, duration: 0.4, clearProps: 'all' }, 0.3);
+      tl.fromTo(cta, { y: 20, opacity: 0, scale: 0.97, immediateRender: true }, { y: 0, opacity: 1, scale: 1, duration: 0.4, clearProps: 'all' }, 0.3);
     }
 
     // Description: y: 20 → 0
     if (desc) {
-      tl.fromTo(desc, { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.42, clearProps: 'all' }, 0.25);
+      tl.fromTo(desc, { y: 20, opacity: 0, immediateRender: true }, { y: 0, opacity: 1, duration: 0.42, clearProps: 'all' }, 0.25);
     }
 
     // Related products: stagger
@@ -1017,7 +1045,7 @@ export function animateProductDetailPage(container: HTMLElement | null): (() => 
       const topRelated = Array.from(related).slice(0, 6);
       tl.fromTo(
         topRelated,
-        { y: 20, opacity: 0 },
+        { y: 20, opacity: 0, immediateRender: true },
         { y: 0, opacity: 1, duration: 0.4, stagger: 0.04, clearProps: 'all' },
         0.35
       );
@@ -1058,65 +1086,83 @@ export function animateOrdersPage(container: HTMLElement | null): (() => void) |
   const cardStagger = isDesktop ? 0.05 : isTablet ? 0.04 : 0.035;
   const cardDuration = isDesktop ? 0.42 : isTablet ? 0.38 : 0.35;
 
+  let observer: MutationObserver | null = null;
+
   const ctx = gsap.context(() => {
     const tl = gsap.timeline({ defaults: { ease: 'power3.out', force3D: true } });
 
     if (breadcrumb) {
-      tl.fromTo(breadcrumb, { x: -15, opacity: 0 }, { x: 0, opacity: 1, duration: 0.32, clearProps: 'all' }, 0);
+      tl.fromTo(breadcrumb, { x: -15, opacity: 0, immediateRender: true }, { x: 0, opacity: 1, duration: 0.32, clearProps: 'all' }, 0);
     }
 
     // Heading: y: 25 → 0
     if (heading) {
-      tl.fromTo(heading, { y: isDesktop ? 25 : 18, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, clearProps: 'all' }, 0.04);
+      tl.fromTo(heading, { y: isDesktop ? 25 : 18, opacity: 0, immediateRender: true }, { y: 0, opacity: 1, duration: 0.4, clearProps: 'all' }, 0.04);
     }
 
     if (desc) {
-      tl.fromTo(desc, { y: 15, opacity: 0 }, { y: 0, opacity: 1, duration: 0.36, clearProps: 'all' }, 0.08);
+      tl.fromTo(desc, { y: 15, opacity: 0, immediateRender: true }, { y: 0, opacity: 1, duration: 0.36, clearProps: 'all' }, 0.08);
     }
 
     // Tabs: y: 15 → 0
     if (tabs) {
-      tl.fromTo(tabs, { y: 15, opacity: 0 }, { y: 0, opacity: 1, duration: 0.38, clearProps: 'all' }, 0.12);
+      tl.fromTo(tabs, { y: 15, opacity: 0, immediateRender: true }, { y: 0, opacity: 1, duration: 0.38, clearProps: 'all' }, 0.12);
     }
 
     // Button: y: 10 → 0
     if (buttons.length > 0) {
-      tl.fromTo(buttons, { y: 10, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35, clearProps: 'all' }, 0.14);
+      tl.fromTo(buttons, { y: 10, opacity: 0, immediateRender: true }, { y: 0, opacity: 1, duration: 0.35, clearProps: 'all' }, 0.14);
     }
 
-    // Order cards: y: 25 → 0, stagger
-    if (cards.length > 0) {
-      const topCards = Array.from(cards).slice(0, 8);
-      tl.fromTo(
+    const animateOrderCards = (targets: NodeListOf<Element> | Element[]) => {
+      const topCards = Array.from(targets).slice(0, 8);
+      if (topCards.length === 0) return;
+      gsap.fromTo(
         topCards,
-        { y: isDesktop ? 25 : 18, opacity: 0 },
-        { y: 0, opacity: 1, duration: cardDuration, stagger: cardStagger, clearProps: 'all' },
-        0.18
+        { y: isDesktop ? 25 : 18, opacity: 0, immediateRender: true },
+        { y: 0, opacity: 1, duration: cardDuration, stagger: cardStagger, clearProps: 'all', ease: 'power3.out' }
       );
+    };
 
-      // Status badge: opacity 0 → 1, scale 0.95 → 1
-      if (badges.length > 0) {
-        tl.fromTo(
-          Array.from(badges).slice(0, 8),
-          { opacity: 0, scale: 0.95 },
-          { opacity: 1, scale: 1, duration: 0.35, stagger: 0.03, clearProps: 'all' },
-          0.26
-        );
-      }
+    if (cards.length > 0) {
+      animateOrderCards(cards);
+    } else {
+      observer = new MutationObserver(() => {
+        const found = container.querySelectorAll('[data-gsap="order-card"]');
+        if (found.length > 0) {
+          observer?.disconnect();
+          observer = null;
+          animateOrderCards(found);
+        }
+      });
+      observer.observe(container, { childList: true, subtree: true });
+    }
 
-      // Order information: y: 8 → 0
-      if (info.length > 0) {
-        tl.fromTo(
-          Array.from(info).slice(0, 8),
-          { y: 8, opacity: 0 },
-          { y: 0, opacity: 1, duration: 0.32, stagger: 0.03, clearProps: 'all' },
-          0.24
-        );
-      }
+    // Status badge: opacity 0 → 1, scale 0.95 → 1
+    if (badges.length > 0) {
+      tl.fromTo(
+        Array.from(badges).slice(0, 8),
+        { opacity: 0, scale: 0.95, immediateRender: true },
+        { opacity: 1, scale: 1, duration: 0.35, stagger: 0.03, clearProps: 'all' },
+        0.22
+      );
+    }
+
+    // Order information: y: 8 → 0
+    if (info.length > 0) {
+      tl.fromTo(
+        Array.from(info).slice(0, 8),
+        { y: 8, opacity: 0, immediateRender: true },
+        { y: 0, opacity: 1, duration: 0.32, stagger: 0.03, clearProps: 'all' },
+        0.2
+      );
     }
   }, container);
 
-  return () => ctx.revert();
+  return () => {
+    observer?.disconnect();
+    ctx.revert();
+  };
 }
 
 /* ==========================================================================
@@ -1149,17 +1195,17 @@ export function animateSellerPage(container: HTMLElement | null): (() => void) |
     const tl = gsap.timeline({ defaults: { ease: 'power3.out', force3D: true } });
 
     if (hero) {
-      tl.fromTo(hero, { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, clearProps: 'all' }, 0);
+      tl.fromTo(hero, { y: 20, opacity: 0, immediateRender: true }, { y: 0, opacity: 1, duration: 0.5, clearProps: 'all' }, 0);
     }
 
     // Heading: y: 25 → 0
     if (title) {
-      tl.fromTo(title, { y: isDesktop ? 25 : 18, opacity: 0 }, { y: 0, opacity: 1, duration: 0.42, clearProps: 'all' }, 0.08);
+      tl.fromTo(title, { y: isDesktop ? 25 : 18, opacity: 0, immediateRender: true }, { y: 0, opacity: 1, duration: 0.42, clearProps: 'all' }, 0.08);
     }
 
     // Description: y: 15 → 0
     if (desc) {
-      tl.fromTo(desc, { y: 15, opacity: 0 }, { y: 0, opacity: 1, duration: 0.38, clearProps: 'all' }, 0.12);
+      tl.fromTo(desc, { y: 15, opacity: 0, immediateRender: true }, { y: 0, opacity: 1, duration: 0.38, clearProps: 'all' }, 0.12);
     }
 
     // Stats / benefit cards: y: 20 → 0, stagger
@@ -1167,7 +1213,7 @@ export function animateSellerPage(container: HTMLElement | null): (() => void) |
       const topCards = Array.from(cards).slice(0, 8);
       tl.fromTo(
         topCards,
-        { y: isDesktop ? 20 : 15, opacity: 0 },
+        { y: isDesktop ? 20 : 15, opacity: 0, immediateRender: true },
         { y: 0, opacity: 1, duration: 0.4, stagger: isDesktop ? 0.045 : isTablet ? 0.038 : 0.03, clearProps: 'all' },
         0.16
       );
@@ -1175,12 +1221,12 @@ export function animateSellerPage(container: HTMLElement | null): (() => void) |
 
     // Form / sales information: y: 20 → 0
     if (info) {
-      tl.fromTo(info, { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.42, clearProps: 'all' }, 0.2);
+      tl.fromTo(info, { y: 20, opacity: 0, immediateRender: true }, { y: 0, opacity: 1, duration: 0.42, clearProps: 'all' }, 0.2);
     }
 
     // CTA: y: 15 → 0, scale 0.97 → 1
     if (cta) {
-      tl.fromTo(cta, { y: 15, opacity: 0, scale: 0.97 }, { y: 0, opacity: 1, scale: 1, duration: 0.38, clearProps: 'all' }, 0.25);
+      tl.fromTo(cta, { y: 15, opacity: 0, scale: 0.97, immediateRender: true }, { y: 0, opacity: 1, scale: 1, duration: 0.38, clearProps: 'all' }, 0.25);
     }
   }, container);
 
@@ -1218,19 +1264,19 @@ export function animateDaftarSalesPage(container: HTMLElement | null): (() => vo
 
     // Heading: y: 25 → 0
     if (heading) {
-      tl.fromTo(heading, { y: isDesktop ? 25 : 18, opacity: 0 }, { y: 0, opacity: 1, duration: 0.42, clearProps: 'all' }, 0);
+      tl.fromTo(heading, { y: isDesktop ? 25 : 18, opacity: 0, immediateRender: true }, { y: 0, opacity: 1, duration: 0.42, clearProps: 'all' }, 0);
     }
 
     // Description: y: 15 → 0
     if (desc) {
-      tl.fromTo(desc, { y: 15, opacity: 0 }, { y: 0, opacity: 1, duration: 0.38, clearProps: 'all' }, 0.06);
+      tl.fromTo(desc, { y: 15, opacity: 0, immediateRender: true }, { y: 0, opacity: 1, duration: 0.38, clearProps: 'all' }, 0.06);
     }
 
     // Form sections / feature cards: y: 20 → 0, stagger
     if (featureCards.length > 0) {
       tl.fromTo(
         Array.from(featureCards),
-        { y: isDesktop ? 20 : 15, opacity: 0 },
+        { y: isDesktop ? 20 : 15, opacity: 0, immediateRender: true },
         { y: 0, opacity: 1, duration: 0.4, stagger: isDesktop ? 0.05 : isTablet ? 0.04 : 0.03, clearProps: 'all' },
         0.12
       );
@@ -1238,7 +1284,7 @@ export function animateDaftarSalesPage(container: HTMLElement | null): (() => vo
 
     // Form container: y: 20 → 0
     if (form) {
-      tl.fromTo(form, { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.44, clearProps: 'all' }, 0.18);
+      tl.fromTo(form, { y: 20, opacity: 0, immediateRender: true }, { y: 0, opacity: 1, duration: 0.44, clearProps: 'all' }, 0.18);
     }
 
     // Inputs: opacity 0 → 1, y: 8 → 0
@@ -1246,7 +1292,7 @@ export function animateDaftarSalesPage(container: HTMLElement | null): (() => vo
       const topInputs = Array.from(inputs).slice(0, 6);
       tl.fromTo(
         topInputs,
-        { y: 8, opacity: 0 },
+        { y: 8, opacity: 0, immediateRender: true },
         { y: 0, opacity: 1, duration: 0.32, stagger: 0.03, clearProps: 'all' },
         0.24
       );
@@ -1254,7 +1300,7 @@ export function animateDaftarSalesPage(container: HTMLElement | null): (() => vo
 
     // Button: y: 15 → 0, scale 0.97 → 1
     if (button) {
-      tl.fromTo(button, { y: 15, opacity: 0, scale: 0.97 }, { y: 0, opacity: 1, scale: 1, duration: 0.38, clearProps: 'all' }, 0.32);
+      tl.fromTo(button, { y: 15, opacity: 0, scale: 0.97, immediateRender: true }, { y: 0, opacity: 1, scale: 1, duration: 0.38, clearProps: 'all' }, 0.32);
     }
   }, container);
 
@@ -1290,24 +1336,24 @@ export function animateSalesLoginPage(container: HTMLElement | null): (() => voi
 
     // Card: y: 30 → 0, opacity 0 → 1
     if (card) {
-      tl.fromTo(card, { y: isDesktop ? 30 : 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.48, clearProps: 'all' }, 0);
+      tl.fromTo(card, { y: isDesktop ? 30 : 20, opacity: 0, immediateRender: true }, { y: 0, opacity: 1, duration: 0.48, clearProps: 'all' }, 0);
     }
 
     // Logo: y: -10 → 0, opacity 0 → 1
     if (logo) {
-      tl.fromTo(logo, { y: -10, opacity: 0 }, { y: 0, opacity: 1, duration: 0.36, clearProps: 'all' }, 0.1);
+      tl.fromTo(logo, { y: -10, opacity: 0, immediateRender: true }, { y: 0, opacity: 1, duration: 0.36, clearProps: 'all' }, 0.1);
     }
 
     // Heading: y: 15 → 0
     if (heading) {
-      tl.fromTo(heading, { y: 15, opacity: 0 }, { y: 0, opacity: 1, duration: 0.38, clearProps: 'all' }, 0.14);
+      tl.fromTo(heading, { y: 15, opacity: 0, immediateRender: true }, { y: 0, opacity: 1, duration: 0.38, clearProps: 'all' }, 0.14);
     }
 
     // Inputs: y: 10 → 0, stagger
     if (inputs.length > 0) {
       tl.fromTo(
         Array.from(inputs),
-        { y: 10, opacity: 0 },
+        { y: 10, opacity: 0, immediateRender: true },
         { y: 0, opacity: 1, duration: 0.34, stagger: 0.04, clearProps: 'all' },
         0.18
       );
@@ -1315,7 +1361,7 @@ export function animateSalesLoginPage(container: HTMLElement | null): (() => voi
 
     // Button: y: 12 → 0, opacity 0 → 1, scale 0.97 → 1
     if (button) {
-      tl.fromTo(button, { y: 12, opacity: 0, scale: 0.97 }, { y: 0, opacity: 1, scale: 1, duration: 0.38, clearProps: 'all' }, 0.26);
+      tl.fromTo(button, { y: 12, opacity: 0, scale: 0.97, immediateRender: true }, { y: 0, opacity: 1, scale: 1, duration: 0.38, clearProps: 'all' }, 0.26);
     }
   }, container);
 
@@ -1328,7 +1374,7 @@ export function animateSalesLoginPage(container: HTMLElement | null): (() => voi
 
 /**
  * Footer bottom reveal triggered when footer enters viewport.
- * footer inner: yPercent: 100 → 0, opacity: 0 → 1, duration: 0.65-0.75s, power3.out.
+ * footer inner: y: 25 → 0, opacity: 0 → 1, duration: 0.6-0.7s, power3.out.
  * Child: logo, columns stagger, copyright fade.
  */
 export function setupFooterReveal(footerElement: HTMLElement | null): (() => void) | undefined {
@@ -1339,7 +1385,7 @@ export function setupFooterReveal(footerElement: HTMLElement | null): (() => voi
   const bottom = footerElement.querySelector('[data-gsap="footer-bottom"]');
 
   if (prefersReducedMotion()) {
-    gsap.set([footerContent, cols, bottom].filter(Boolean), { opacity: 1, yPercent: 0, clearProps: 'all' });
+    gsap.set([footerContent, cols, bottom].filter(Boolean), { opacity: 1, y: 0, clearProps: 'all' });
     return;
   }
 
@@ -1357,11 +1403,11 @@ export function setupFooterReveal(footerElement: HTMLElement | null): (() => voi
       defaults: { ease: 'power3.out', force3D: true },
     });
 
-    // Footer inner: yPercent: 100 → 0, opacity: 0 → 1, duration: 0.7s
+    // Footer inner: y: 25 → 0, opacity: 0 → 1, duration: 0.65s (smooth without whole footer displacement)
     tl.fromTo(
       footerContent,
-      { yPercent: 100, opacity: 0 },
-      { yPercent: 0, opacity: 1, duration: isDesktop ? 0.7 : isTablet ? 0.65 : 0.6, clearProps: 'transform,opacity' },
+      { y: isDesktop ? 25 : 18, opacity: 0, immediateRender: true },
+      { y: 0, opacity: 1, duration: isDesktop ? 0.65 : isTablet ? 0.6 : 0.55, clearProps: 'transform,opacity' },
       0
     );
 
@@ -1369,9 +1415,9 @@ export function setupFooterReveal(footerElement: HTMLElement | null): (() => voi
     if (cols.length > 0) {
       tl.fromTo(
         Array.from(cols),
-        { y: isDesktop ? 16 : 12, opacity: 0 },
+        { y: isDesktop ? 16 : 12, opacity: 0, immediateRender: true },
         { y: 0, opacity: 1, duration: 0.45, stagger: isDesktop ? 0.05 : 0.035, clearProps: 'all' },
-        0.2
+        0.15
       );
     }
 
@@ -1379,9 +1425,9 @@ export function setupFooterReveal(footerElement: HTMLElement | null): (() => voi
     if (bottom) {
       tl.fromTo(
         bottom,
-        { opacity: 0 },
+        { opacity: 0, immediateRender: true },
         { opacity: 1, duration: 0.4, clearProps: 'opacity' },
-        0.35
+        0.25
       );
     }
   }, footerElement);
@@ -1413,19 +1459,19 @@ export function animateGeneralSubpage(container: HTMLElement | null): (() => voi
     const tl = gsap.timeline({ defaults: { ease: 'power3.out', force3D: true } });
 
     if (breadcrumb) {
-      tl.fromTo(breadcrumb, { x: -15, opacity: 0 }, { x: 0, opacity: 1, duration: 0.35, clearProps: 'all' }, 0);
+      tl.fromTo(breadcrumb, { x: -15, opacity: 0, immediateRender: true }, { x: 0, opacity: 1, duration: 0.35, clearProps: 'all' }, 0);
     }
     if (heading) {
-      tl.fromTo(heading, { y: isDesktop ? 25 : 18, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, clearProps: 'all' }, 0.04);
+      tl.fromTo(heading, { y: isDesktop ? 25 : 18, opacity: 0, immediateRender: true }, { y: 0, opacity: 1, duration: 0.4, clearProps: 'all' }, 0.04);
     }
     if (desc) {
-      tl.fromTo(desc, { y: 15, opacity: 0 }, { y: 0, opacity: 1, duration: 0.38, clearProps: 'all' }, 0.08);
+      tl.fromTo(desc, { y: 15, opacity: 0, immediateRender: true }, { y: 0, opacity: 1, duration: 0.38, clearProps: 'all' }, 0.08);
     }
     if (cards.length > 0) {
       const topCards = Array.from(cards).slice(0, 8);
       tl.fromTo(
         topCards,
-        { y: isDesktop ? 20 : 15, opacity: 0 },
+        { y: isDesktop ? 20 : 15, opacity: 0, immediateRender: true },
         { y: 0, opacity: 1, duration: 0.42, stagger: isDesktop ? 0.04 : 0.03, clearProps: 'all' },
         0.12
       );
