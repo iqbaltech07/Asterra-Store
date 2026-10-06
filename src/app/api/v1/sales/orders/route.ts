@@ -27,23 +27,34 @@ export async function GET(req: NextRequest) {
       where: {
         OR: [
           { salesPartnerId: partner.id },
+          { recruiterPartnerId: partner.id },
           { referralCode: partner.code },
         ],
       },
-      include: {
-        items: true,
-        commission: true,
-      },
+      include: { items: true },
       orderBy: { createdAt: 'desc' },
       take: 50,
     });
 
+    const commissions = await prisma.commission.findMany({
+      where: { orderId: { in: orders.map((o) => o.id) } },
+    });
+    const commissionMap = new Map(commissions.map((c) => [c.orderId, c]));
+
     const maskedOrders = orders.map((o) => {
       const emailParts = o.customerEmail.split('@');
-      const maskedEmail =
-        emailParts.length === 2
-          ? `${emailParts[0].substring(0, 2)}***@${emailParts[1]}`
-          : 'Pelanggan';
+      const maskedEmail = emailParts.length === 2 ? `${emailParts[0].substring(0, 2)}***@${emailParts[1]}` : 'Pelanggan';
+      const commission = commissionMap.get(o.id);
+      
+      let earnedAmount = 0;
+      if (commission) {
+        if (commission.partnerId === partner.id) {
+          earnedAmount += commission.commissionAmount;
+        }
+        if (commission.recruiterId === partner.id) {
+          earnedAmount += commission.bonusAmount;
+        }
+      }
 
       return {
         id: o.id,
@@ -51,12 +62,12 @@ export async function GET(req: NextRequest) {
         customerEmail: maskedEmail,
         customerName: o.customerName ? `${o.customerName.charAt(0)}***` : 'Pelanggan',
         totalAmount: o.totalAmount,
-        transactionProfit: o.commission?.transactionProfit || 0,
+        transactionProfit: commission?.transactionProfit ?? 0,
         status: o.status,
         paymentStatus: o.paymentStatus || (o.status === 'completed' ? 'PAID' : 'PENDING'),
-        commission: o.commission?.commissionAmount || 0,
-        commissionStatus: o.commission?.status || 'pending',
-        holdingUntil: o.commission?.holdingUntil?.toISOString(),
+        commission: earnedAmount,
+        commissionStatus: commission?.status ?? 'pending',
+        holdingUntil: commission?.holdingUntil?.toISOString(),
         itemsCount: o.items.length,
         productNames: o.items.map((i) => i.productName).join(', '),
       };
