@@ -189,6 +189,9 @@ export async function GET(request: NextRequest) {
       take: 50,
       include: {
         items: true,
+        logs: {
+          orderBy: { createdAt: 'desc' },
+        },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -197,7 +200,7 @@ export async function GET(request: NextRequest) {
       dbOrdersList.push(mapDbOrderToOrder(d as unknown as RawDbOrder));
     }
   } catch (err) {
-    console.warn('[OrdersAPI] Prisma query warning on GET:', err);
+    console.error('[OrdersAPI] Prisma query error on GET:', err);
   }
 
   // Filter in-memory orders strictly for this user
@@ -622,7 +625,7 @@ export async function POST(request: NextRequest) {
         }
       }
     } catch (dbErr) {
-      console.warn('[OrdersAPI] Prisma order & items persistence error:', dbErr);
+      console.error('[OrdersAPI] Prisma order & items persistence error:', dbErr);
     }
 
     // Broadcast Realtime SSE Event to Admin (sound + toast alert)

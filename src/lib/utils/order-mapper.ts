@@ -88,8 +88,15 @@ export function mapDbOrderToOrder(d: RawDbOrder): Order {
     undefined;
 
   // Extract discount amount
+  const directDiscounts =
+    typeof rawObj.promoDiscount === 'number' || typeof rawObj.referralDiscount === 'number'
+      ? Number(rawObj.promoDiscount || 0) + Number(rawObj.referralDiscount || 0)
+      : 0;
+
   const discountAmount =
-    typeof rawObj.discountAmount === 'number'
+    directDiscounts > 0
+      ? directDiscounts
+      : typeof rawObj.discountAmount === 'number'
       ? (rawObj.discountAmount as number)
       : typeof promoLogMeta?.discount_amount === 'number'
       ? (promoLogMeta.discount_amount as number)

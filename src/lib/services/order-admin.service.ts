@@ -71,7 +71,7 @@ export class OrderAdminService {
               items: true,
               logs: {
                 orderBy: { createdAt: 'desc' },
-                take: 5,
+                take: 10,
               },
             },
             orderBy: { createdAt: 'desc' },
@@ -84,7 +84,7 @@ export class OrderAdminService {
           }),
         ]);
 
-        if (dbOrders && dbOrders.length > 0) {
+        if (Array.isArray(dbOrders)) {
           // Calculate metrics from database
           let pending = 0;
           let processing = 0;
@@ -232,14 +232,18 @@ export class OrderAdminService {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const prismaClient = prisma as any;
     let previousStatus: string = 'pending';
+    let dbOrderExists = false;
+    let existingOrderData: any = null;
     try {
       if (prismaClient?.order) {
         const existing = await prismaClient.order.findUnique({
           where: { id: orderId },
-          select: { status: true },
+          select: { status: true, paidAt: true },
         });
-        if (existing?.status) {
+        if (existing) {
           previousStatus = existing.status;
+          dbOrderExists = true;
+          existingOrderData = existing;
         }
       }
     } catch {
@@ -247,19 +251,53 @@ export class OrderAdminService {
       previousStatus = currentMemoryOrder?.order_status || 'pending';
     }
 
-    updateGlobalOrderStatus(orderId, newStatus, actor, notes);
-
     // 2. Persist update and create audit log in Prisma database
     try {
       if (prismaClient?.order) {
         const isPaid = newStatus === 'completed' || newStatus === 'processing';
+
+        // If order exists in memory but missing in DB, sync from memory first so update won't fail
+        if (!dbOrderExists) {
+          const memOrder = getGlobalOrders().find((o) => o.id === orderId);
+          if (memOrder) {
+            await prismaClient.order.create({
+              data: {
+                id: memOrder.id,
+                customerEmail: memOrder.customer_email || 'customer@asterra.store',
+                customerName: memOrder.customer_name || null,
+                customerWhatsapp: memOrder.customer_whatsapp || null,
+                customerNotes: memOrder.customer_notes || null,
+                totalAmount: memOrder.total_amount,
+                rawAmount: memOrder.raw_amount || memOrder.total_amount,
+                promoDiscount: 0,
+                referralDiscount: 0,
+                uniqueCode: memOrder.unique_code || null,
+                paymentMode: memOrder.payment_mode || 'gateway',
+                status: previousStatus,
+                paymentMethod: memOrder.payment?.payment_method || 'qris',
+                paymentStatus: isPaid ? 'settlement' : previousStatus,
+                items: {
+                  create: (memOrder.items || []).map((i) => ({
+                    productId: i.product_id || 'prod-digital',
+                    productName: i.product_name,
+                    price: i.unit_price,
+                    quantity: i.quantity,
+                    targetEmail: i.purchased_details?.target_email || memOrder.customer_email,
+                    targetPhone: i.purchased_details?.phone || memOrder.customer_whatsapp || null,
+                    duration: i.purchased_details?.duration || 'standard',
+                  })),
+                },
+              },
+            }).catch((syncErr: any) => console.warn('[OrderAdminService] Auto-sync mem order error:', syncErr));
+          }
+        }
 
         await prismaClient.order.update({
           where: { id: orderId },
           data: {
             status: newStatus,
             paymentStatus: isPaid ? 'settlement' : newStatus,
-            ...(isPaid ? { paidAt: new Date() } : {}),
+            ...(isPaid ? { paidAt: existingOrderData?.paidAt || new Date() } : {}),
           },
         });
 
@@ -279,8 +317,11 @@ export class OrderAdminService {
         }
       }
     } catch (dbErr) {
-      console.warn('[OrderAdminService] Prisma status update warning:', dbErr);
+      console.error('[OrderAdminService] Prisma status update error:', dbErr);
     }
+
+    // Synchronize in-memory store as well
+    updateGlobalOrderStatus(orderId, newStatus, actor, notes);
 
     // 3. Attribution of Affiliate Sales Commission & Profit Ledger (SSOT §8, §15, §17)
     // Idempotent: Only credit once when status becomes processing/completed, not on repeated transitions
@@ -337,7 +378,7 @@ export class OrderAdminService {
             orderTotalAmount = dbOrder.totalAmount;
             rawSellingPrice = dbOrder.rawAmount || rawSellingPrice || dbOrder.totalAmount;
             // Only commercial discounts reduce revenue. uniqueCode is a transfer identifier, not a discount.
-            const storedDiscount = dbOrder.promoDiscount + dbOrder.referralDiscount;
+            const storedDiscount = (dbOrder.promoDiscount || 0) + (dbOrder.referralDiscount || 0);
             customerDiscount = storedDiscount > 0
               ? storedDiscount
               : dbOrder.rawAmount
