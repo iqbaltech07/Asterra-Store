@@ -31,10 +31,10 @@ export function ProductCard({
   const dummyOriginal = getDummyOriginalPrice(product.price);
 
   return (
-    <Card data-gsap="card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl shadow-card hover:shadow-card-hover hover:border-[rgba(18,26,42,0.22)] transition-[border-color,box-shadow,background-color] duration-200 overflow-hidden flex flex-col justify-between group">
+    <Card data-gsap="product-card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl shadow-card hover:shadow-card-hover hover:border-[rgba(18,26,42,0.22)] transition-[border-color,box-shadow,background-color] duration-200 overflow-hidden flex flex-col justify-between group">
       <div>
         {/* 1. Product Image / Banner with fixed 16/7 aspect ratio */}
-        <div className="relative w-full aspect-[16/7] bg-[#121A2A]/5 overflow-hidden border-b border-[rgba(18,26,42,0.06)]">
+        <div data-gsap="product-image" className="relative w-full aspect-[16/7] bg-[#121A2A]/5 overflow-hidden border-b border-[rgba(18,26,42,0.06)]">
           <Link href={`/products/${product.id}`} prefetch={true} className="block w-full h-full relative">
             <Image
               src={product.imageUrl}
@@ -76,6 +76,7 @@ export function ProductCard({
           <Link
             href={`/products/${product.id}`}
             prefetch={true}
+            data-gsap="product-title"
             className="block font-bold text-xs sm:text-sm md:text-base text-[#121A2A] group-hover:text-[#C96F55] transition-colors line-clamp-1 leading-snug pt-0.5"
             title={product.name}
           >
@@ -129,7 +130,7 @@ export function ProductCard({
               <span className="text-[10px] sm:text-[11px] text-[#121A2A]/40 line-through font-medium leading-none">
                 {dummyOriginal.originalPriceFormatted}
               </span>
-              <span className="text-xs sm:text-base md:text-lg font-black tracking-tight text-[#121A2A] block truncate mt-0.5">
+              <span data-gsap="product-price" className="text-xs sm:text-base md:text-lg font-black tracking-tight text-[#121A2A] block truncate mt-0.5">
                 {product.priceFormatted}
               </span>
             </div>
@@ -138,7 +139,7 @@ export function ProductCard({
               <p className="text-[9px] sm:text-[10px] text-[#121A2A]/50 uppercase font-semibold tracking-wider leading-none">
                 Harga
               </p>
-              <span className="text-xs sm:text-base md:text-lg font-black tracking-tight text-[#121A2A] block truncate mt-0.5">
+              <span data-gsap="product-price" className="text-xs sm:text-base md:text-lg font-black tracking-tight text-[#121A2A] block truncate mt-0.5">
                 {product.priceFormatted}
               </span>
             </>
@@ -148,6 +149,7 @@ export function ProductCard({
         <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
           <Button
             size="sm"
+            data-gsap="product-button"
             variant={isOutOfStock ? 'outline' : isSelected ? 'secondary' : 'default'}
             className={`h-7 sm:h-8.5 px-2 sm:px-3 text-[11px] sm:text-xs font-semibold rounded-lg sm:rounded-xl transition-all active:scale-95 ${
               isSelected

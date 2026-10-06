@@ -241,6 +241,7 @@ function FeaturedGridCard({
   return (
     <div
       data-gsap="featured-card"
+      data-card-wrapper
       className="group bg-white border border-[rgba(18,26,42,0.09)] hover:border-[#C96F55]/70 hover:shadow-card-hover hover:-translate-y-0.5 rounded-xl sm:rounded-2xl p-2.5 sm:p-3.5 transition-[border-color,box-shadow,transform] duration-200 flex flex-col justify-between w-full h-full select-none"
     >
       <div>
@@ -248,6 +249,7 @@ function FeaturedGridCard({
         <div className="flex items-start gap-2 sm:gap-2.5">
           <Link
             href={`/products/${app.slug}`}
+            data-gsap="product-image"
             className="w-9 h-9 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-[#121A2A]/5 border border-[rgba(18,26,42,0.08)] flex items-center justify-center overflow-hidden shrink-0 group-hover:scale-105 transition-transform"
           >
             <AppBrandBadge name={app.name} />
@@ -256,6 +258,7 @@ function FeaturedGridCard({
           <div className="min-w-0 flex-1">
             <Link
               href={`/products/${app.slug}`}
+              data-gsap="product-title"
               className="font-bold text-xs sm:text-[13px] lg:text-sm text-[#121A2A] group-hover:text-[#C96F55] transition-colors truncate block leading-snug"
               title={app.name}
             >
@@ -299,6 +302,7 @@ function FeaturedGridCard({
           )}
           <Link
             href={`/products/${app.slug}`}
+            data-gsap="product-price"
             className="font-black text-xs sm:text-sm lg:text-[15px] text-[#121A2A] tracking-tight hover:text-[#C96F55] transition-colors mt-0.5 block truncate"
           >
             Rp{minPrice.toLocaleString('id-ID')}
@@ -324,6 +328,7 @@ function FeaturedGridCard({
 
           <Link
             href={`/products/${app.slug}`}
+            data-gsap="product-button"
             className="text-[10px] sm:text-xs font-bold text-[#C96F55] hover:text-[#B86047] flex items-center gap-1 py-1 px-1.5 rounded transition-colors"
           >
             <span>Pilih</span>

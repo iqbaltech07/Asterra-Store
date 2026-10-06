@@ -153,9 +153,9 @@ function SalesLoginContent() {
         </Link>
       </div>
 
-      <Card className="w-full max-w-md border-border bg-surface shadow-editorial">
+      <Card data-gsap="login-card" className="w-full max-w-md border-border bg-surface shadow-editorial">
         <CardHeader className="space-y-2 text-center pb-6 pt-6">
-          <div className="flex justify-center mb-2">
+          <div data-gsap="login-logo" className="flex justify-center mb-2">
             <AsterraLogo variant="light-bg" size="md" />
           </div>
 
@@ -164,7 +164,7 @@ function SalesLoginContent() {
             <span>Portal Mitra Penjualan (Sales)</span>
           </div>
 
-          <CardTitle className="text-2xl font-bold tracking-tight text-foreground">
+          <CardTitle data-gsap="login-heading" className="text-2xl font-bold tracking-tight text-foreground">
             Masuk Portal Sales
           </CardTitle>
           <CardDescription className="text-xs text-foreground-muted max-w-xs mx-auto">
@@ -189,7 +189,7 @@ function SalesLoginContent() {
               </div>
             )}
 
-            <div className="space-y-1.5">
+            <div data-gsap="login-input" className="space-y-1.5">
               <label
                 htmlFor="sales-email"
                 className="text-xs font-medium text-foreground flex items-center gap-1.5"
@@ -209,7 +209,7 @@ function SalesLoginContent() {
               />
             </div>
 
-            <div className="space-y-1.5">
+            <div data-gsap="login-input" className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <label
                   htmlFor="sales-password"
@@ -235,6 +235,7 @@ function SalesLoginContent() {
           <CardFooter className="flex flex-col space-y-4 pt-2 pb-6">
             <Button
               type="submit"
+              data-gsap="login-button"
               className="w-full gap-2 font-bold h-10 text-xs"
               disabled={isLoading}
             >

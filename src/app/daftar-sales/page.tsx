@@ -306,17 +306,17 @@ function DaftarSalesContent() {
                 <FontAwesomeIcon icon={faGift} className="text-xs" />
                 <span>Program Kemitraan Sales & Affiliate Resmi</span>
               </div>
-              <h1 className="text-3xl sm:text-4xl font-extrabold text-foreground tracking-tight leading-tight">
+              <h1 data-gsap="daftar-title" className="text-3xl sm:text-4xl font-extrabold text-foreground tracking-tight leading-tight">
                 Daftar Jadi Mitra Sales Asterra Store
               </h1>
-              <p className="text-xs sm:text-sm text-foreground-muted leading-relaxed">
+              <p data-gsap="daftar-desc" className="text-xs sm:text-sm text-foreground-muted leading-relaxed">
                 Dapatkan komisi <strong className="text-foreground">10% hingga 15% per transaksi</strong> hanya dengan membagikan link produk digital bergaransi kami ke teman, komunitas, atau media sosial Anda.
               </p>
             </div>
 
             {/* 3 Benefit Feature Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-2.5">
+              <div data-gsap="daftar-feature-card" className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-2.5">
                 <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold">
                   <FontAwesomeIcon icon={faPercent} className="text-base" />
                 </div>
@@ -326,7 +326,7 @@ function DaftarSalesContent() {
                 </p>
               </div>
 
-              <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-2.5">
+              <div data-gsap="daftar-feature-card" className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-2.5">
                 <div className="w-10 h-10 rounded-lg bg-status-success/10 text-status-success flex items-center justify-center font-bold">
                   <FontAwesomeIcon icon={faWallet} className="text-base" />
                 </div>
@@ -336,7 +336,7 @@ function DaftarSalesContent() {
                 </p>
               </div>
 
-              <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-2.5">
+              <div data-gsap="daftar-feature-card" className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-2.5">
                 <div className="w-10 h-10 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center font-bold">
                   <FontAwesomeIcon icon={faShieldHalved} className="text-base" />
                 </div>
@@ -348,7 +348,7 @@ function DaftarSalesContent() {
             </div>
 
             {/* Registration Form Card */}
-            <div className="bg-surface border border-border rounded-2xl p-6 sm:p-10 shadow-sm max-w-xl mx-auto space-y-6">
+            <div data-gsap="daftar-form" className="bg-surface border border-border rounded-2xl p-6 sm:p-10 shadow-sm max-w-xl mx-auto space-y-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-border pb-4 gap-2">
                 <div className="space-y-1">
                   <h2 className="text-lg font-bold text-foreground">Formulir Pendaftaran Mitra Sales</h2>
@@ -628,6 +628,7 @@ function DaftarSalesContent() {
                 {/* Submit Button */}
                 <Button
                   type="submit"
+                  data-gsap="daftar-button"
                   disabled={isSubmitting}
                   className="w-full text-xs font-bold h-11 gap-2 shadow-md mt-2"
                 >

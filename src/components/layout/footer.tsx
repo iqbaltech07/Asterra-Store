@@ -1,5 +1,6 @@
 'use client';
 
+import React, { useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -9,18 +10,28 @@ import {
   faArrowUpRightFromSquare,
 } from '@fortawesome/free-solid-svg-icons';
 import { AsterraLogo } from '@/components/ui/asterra-logo';
+import { setupFooterReveal } from '@/lib/animations/gsap-utils';
 
 interface FooterProps {
   onNotify?: (message: string) => void;
 }
 
 export function Footer({ onNotify }: FooterProps) {
+  const footerRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const cleanup = setupFooterReveal(footerRef.current);
+    return () => {
+      cleanup?.();
+    };
+  }, []);
+
   const handleAction = (msg: string) => {
     if (onNotify) onNotify(msg);
   };
 
   return (
-    <footer data-gsap="footer" className="border-t border-white/10 bg-[#121A2A] text-[#F7F5EF] mt-10 sm:mt-24 pt-8 sm:pt-14 pb-20 sm:pb-12 overflow-hidden">
+    <footer ref={footerRef} data-gsap="footer" className="border-t border-white/10 bg-[#121A2A] text-[#F7F5EF] mt-10 sm:mt-24 pt-8 sm:pt-14 pb-20 sm:pb-12 overflow-hidden">
       <div data-gsap="footer-content" className="max-w-7xl mx-auto px-4 sm:px-6">
         <div data-gsap="footer-columns" className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-10 pb-8 sm:pb-12 border-b border-white/10">
           {/* Brand Col */}

@@ -192,7 +192,7 @@ function ProductsContent() {
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-10 w-full overflow-hidden">
         {/* Breadcrumb & Title */}
         <div className="mb-8">
-          <div className="flex items-center gap-2 text-xs text-[#121A2A]/60 mb-2">
+          <div data-gsap="breadcrumb" className="flex items-center gap-2 text-xs text-[#121A2A]/60 mb-2">
             <Link href="/" className="hover:text-[#121A2A] transition-colors">
               Beranda
             </Link>
@@ -208,7 +208,7 @@ function ProductsContent() {
                 Jelajahi seluruh perangkat lunak, AI tools, dan platform kreatif resmi dengan aktivasi instan.
               </p>
             </div>
-            <div data-gsap="hero-card" className="flex items-center gap-2 text-xs bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.25)] px-3 py-1.5 rounded-md text-[#C96F55] font-semibold w-fit">
+            <div data-gsap="hero-badge" className="flex items-center gap-2 text-xs bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.25)] px-3 py-1.5 rounded-md text-[#C96F55] font-semibold w-fit">
               <FontAwesomeIcon icon={faBolt} className="w-3.5 h-3.5 text-[#C96F55]" />
               <span>Aktivasi 100% Cepat & Bergaransi</span>
             </div>
@@ -216,10 +216,10 @@ function ProductsContent() {
         </div>
 
         {/* Filter & Search Bar Controls */}
-        <div data-gsap="hero-card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-2xl p-4 sm:p-5 mb-8 space-y-4 shadow-card">
+        <div data-gsap="filter-controls" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-2xl p-4 sm:p-5 mb-8 space-y-4 shadow-card">
           <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
             {/* Search Input */}
-            <div className="relative flex-1">
+            <div data-gsap="search-bar" className="relative flex-1">
               <FontAwesomeIcon icon={faMagnifyingGlass} className="w-4 h-4 text-[#121A2A]/40 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="text"
@@ -289,7 +289,7 @@ function ProductsContent() {
           </div>
 
           {/* Category Filter Tabs */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-1 scrollbar-none">
+          <div data-gsap="category-tabs" className="flex items-center gap-2 overflow-x-auto pb-1 pt-1 scrollbar-none">
             <span className="text-xs font-semibold text-[#121A2A]/60 shrink-0 mr-1">
               Kategori:
             </span>
@@ -387,7 +387,7 @@ function ProductsContent() {
 
         {/* Products Listing Grid */}
         {!isLoading && !error && products.length > 0 && viewMode === 'grid' && (
-          <div key={`grid-${selectedCategory}-${sortBy}`} className="grid grid-cols-2 gap-3 md:gap-5 lg:grid-cols-3">
+          <div data-gsap="product-grid" key={`grid-${selectedCategory}-${sortBy}`} className="grid grid-cols-2 gap-3 md:gap-5 lg:grid-cols-3">
             {products.map((product, idx) => {
               const isSelected = cartItems.some((item) => item.id === product.id);
               return (

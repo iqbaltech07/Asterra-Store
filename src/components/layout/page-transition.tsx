@@ -5,8 +5,14 @@ import { usePathname } from 'next/navigation';
 import {
   prefersReducedMotion,
   animateHomepageHero,
-  animatePageEntrance,
   setupHomepageScrollReveal,
+  animateProductsPage,
+  animateProductDetailPage,
+  animateOrdersPage,
+  animateSellerPage,
+  animateDaftarSalesPage,
+  animateSalesLoginPage,
+  animateGeneralSubpage,
 } from '@/lib/animations/gsap-utils';
 
 interface PageTransitionProps {
@@ -14,12 +20,12 @@ interface PageTransitionProps {
 }
 
 /**
- * Editorial Page Transition & Entrance Orchestrator.
+ * Editorial Page Transition & Motion Design System Orchestrator.
  *
  * Single Source of Truth for AsterraStore page motion:
  * - Persistent shells (Navbar, Footer, MobileNav) remain untouched.
- * - Only the content area executes the buttery smooth 240ms editorial entrance.
- * - Starts at opacity 0.88-0.90 so there is NEVER a white flash or blank screen.
+ * - Each route executes its own dedicated component choreography.
+ * - Route navigation triggers specific component entrance sequences.
  * - Kills prior route timelines and reverts GSAP context on route unmount.
  * - Reduced-motion returns instantly with zero animation delay.
  */
@@ -49,8 +55,20 @@ export function PageTransition({ children }: PageTransitionProps) {
     if (pathname === '/') {
       cleanupEntrance = animateHomepageHero(container);
       cleanupScroll = setupHomepageScrollReveal(container);
+    } else if (pathname === '/products') {
+      cleanupEntrance = animateProductsPage(container);
+    } else if (pathname.startsWith('/products/')) {
+      cleanupEntrance = animateProductDetailPage(container);
+    } else if (pathname === '/orders' || pathname.startsWith('/orders') || pathname === '/order') {
+      cleanupEntrance = animateOrdersPage(container);
+    } else if (pathname === '/seller') {
+      cleanupEntrance = animateSellerPage(container);
+    } else if (pathname === '/daftar-sales') {
+      cleanupEntrance = animateDaftarSalesPage(container);
+    } else if (pathname === '/sales/login' || pathname === '/login') {
+      cleanupEntrance = animateSalesLoginPage(container);
     } else {
-      cleanupEntrance = animatePageEntrance(container);
+      cleanupEntrance = animateGeneralSubpage(container);
     }
 
     const cleanup = () => {

@@ -42,35 +42,35 @@ function getStatusBadge(status: PublicOrder['order_status']) {
   switch (status) {
     case 'completed':
       return (
-        <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-status-success/15 text-status-success font-medium inline-flex items-center gap-1">
+        <span data-gsap="order-status" className="text-[11px] px-2.5 py-0.5 rounded-full bg-status-success/15 text-status-success font-medium inline-flex items-center gap-1">
           <FontAwesomeIcon icon={faCircleCheck} className="w-3 h-3" />
           <span>Selesai</span>
         </span>
       );
     case 'processing':
       return (
-        <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-status-info/15 text-status-info font-medium inline-flex items-center gap-1">
+        <span data-gsap="order-status" className="text-[11px] px-2.5 py-0.5 rounded-full bg-status-info/15 text-status-info font-medium inline-flex items-center gap-1">
           <FontAwesomeIcon icon={faClock} className="w-3 h-3" />
           <span>Di Proses</span>
         </span>
       );
     case 'pending':
       return (
-        <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-status-warning/15 text-status-warning font-medium inline-flex items-center gap-1">
+        <span data-gsap="order-status" className="text-[11px] px-2.5 py-0.5 rounded-full bg-status-warning/15 text-status-warning font-medium inline-flex items-center gap-1">
           <FontAwesomeIcon icon={faCircleExclamation} className="w-3 h-3" />
           <span>Menunggu Pembayaran</span>
         </span>
       );
     case 'cancelled':
       return (
-        <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-status-error/15 text-status-error font-medium inline-flex items-center gap-1">
+        <span data-gsap="order-status" className="text-[11px] px-2.5 py-0.5 rounded-full bg-status-error/15 text-status-error font-medium inline-flex items-center gap-1">
           <FontAwesomeIcon icon={faCircleExclamation} className="w-3 h-3" />
           <span>Dibatalkan</span>
         </span>
       );
     default:
       return (
-        <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-surface-raised text-foreground-muted font-medium">
+        <span data-gsap="order-status" className="text-[11px] px-2.5 py-0.5 rounded-full bg-surface-raised text-foreground-muted font-medium">
           {status}
         </span>
       );
@@ -212,7 +212,7 @@ function GlobalOrdersContent() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 w-full">
         {/* Breadcrumb & Top Actions Bar */}
         <div className="flex items-center justify-between gap-3 mb-6">
-          <div className="flex items-center gap-2 text-xs text-foreground-muted">
+          <div data-gsap="breadcrumb" className="flex items-center gap-2 text-xs text-foreground-muted">
             <Link href="/" className="hover:text-foreground transition-colors">
               Beranda
             </Link>
@@ -246,10 +246,10 @@ function GlobalOrdersContent() {
         {/* Page Header */}
         <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-xl sm:text-2xl font-black text-foreground tracking-tight">
+            <h1 data-gsap="orders-title" className="text-xl sm:text-2xl font-black text-foreground tracking-tight">
               Daftar Pesanan
             </h1>
-            <p className="text-xs text-foreground-muted mt-1">
+            <p data-gsap="orders-desc" className="text-xs text-foreground-muted mt-1">
               Daftar transaksi lisensi dan akun digital pelanggan Asterra Store.
             </p>
           </div>
@@ -257,6 +257,7 @@ function GlobalOrdersContent() {
           {/* Quick link to private orders (/order) */}
           <Link
             href="/order"
+            data-gsap="orders-button"
             className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-surface border border-border hover:border-primary/40 text-xs font-medium text-foreground transition-colors shrink-0 self-start sm:self-auto"
           >
             <FontAwesomeIcon icon={faReceipt} className="w-3.5 h-3.5 text-primary" />
@@ -269,7 +270,7 @@ function GlobalOrdersContent() {
         <div className="bg-surface border border-border rounded-xl p-4 sm:p-5 mb-6 space-y-4">
           <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
             {/* Status Filter Pills */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+            <div data-gsap="orders-tabs" className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
               {STATUS_FILTERS.map((filter) => {
                 const isSelected = selectedStatus === filter.value;
                 return (
@@ -362,13 +363,14 @@ function GlobalOrdersContent() {
             {filteredOrders.map((order) => (
               <div
                 key={order.id + order.order_date}
+                data-gsap="order-card"
                 className="bg-surface border border-border rounded-xl p-4 sm:p-5 transition-all duration-150 hover:border-primary/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
               >
                 <div className="flex items-start gap-3.5">
                   <div className="w-10 h-10 rounded-xl bg-surface-raised border border-border flex items-center justify-center text-primary shrink-0 mt-0.5">
                     <FontAwesomeIcon icon={faBox} className="w-4 h-4" />
                   </div>
-                  <div className="space-y-1">
+                  <div data-gsap="order-info" className="space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="font-mono font-bold text-sm text-foreground">
                         {order.id}

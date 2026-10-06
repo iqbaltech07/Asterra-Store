@@ -565,7 +565,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
       {/* Main Container - responsive mobile & desktop padding */}
       <main className="flex-1 max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 py-4 sm:py-8 w-full overflow-x-hidden pb-24 sm:pb-12">
         {/* Breadcrumb Navigation - horizontally scrollable on small screens */}
-        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs text-[#121A2A]/60 mb-4 sm:mb-6 overflow-x-auto whitespace-nowrap scrollbar-none pb-1">
+        <nav aria-label="Breadcrumb" data-gsap="breadcrumb" className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs text-[#121A2A]/60 mb-4 sm:mb-6 overflow-x-auto whitespace-nowrap scrollbar-none pb-1">
           <Link href="/" className="hover:text-[#121A2A] transition-colors shrink-0">
             Beranda
           </Link>
@@ -610,7 +610,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
               {/* LEFT COLUMN: Large Product Banner + 3 Chips + Description/Tabs (lg:col-span-7) */}
               <div className="lg:col-span-7 space-y-4 sm:space-y-6">
                 {/* Large Product Banner Card (Matching user Image 1) */}
-                <div className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl overflow-hidden relative shadow-card group">
+                <div data-gsap="product-detail-image" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl overflow-hidden relative shadow-card group">
                   <div className="relative h-56 sm:h-72 md:h-96 w-full bg-[#121A2A]/5 overflow-hidden">
                     <Image
                       src={activeVariant?.imageUrl || product.imageUrl}
@@ -626,7 +626,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
 
                     {/* Top Action Badges */}
                     <div className="absolute top-3 left-3 sm:top-4 sm:left-4 flex gap-1.5 sm:gap-2 flex-wrap z-10">
-                      <span className="bg-white/95 backdrop-blur-xs text-[#121A2A] text-[10px] sm:text-xs font-semibold px-2.5 py-0.5 sm:py-1 rounded-md sm:rounded-lg border border-[rgba(18,26,42,0.08)] shadow-xs">
+                      <span data-gsap="product-detail-badge" className="bg-white/95 backdrop-blur-xs text-[#121A2A] text-[10px] sm:text-xs font-semibold px-2.5 py-0.5 sm:py-1 rounded-md sm:rounded-lg border border-[rgba(18,26,42,0.08)] shadow-xs">
                         {product.category?.name || 'Apps & Streaming'}
                       </span>
                       <span className="bg-[#C96F55] text-white text-[10px] sm:text-xs font-bold px-2.5 py-0.5 sm:py-1 rounded-md sm:rounded-lg shadow-xs">
@@ -675,6 +675,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                       </span>
                       <h1
                         key={variantDetails.title}
+                        data-gsap="product-detail-title"
                         className="text-base sm:text-2xl lg:text-3xl font-black text-white tracking-tight line-clamp-2 drop-shadow-xs leading-snug animate-text-smooth"
                       >
                         {variantDetails.title}
@@ -686,6 +687,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                 {/* 3 Benefit Highlights (Under Image - Responsive for mobile) */}
                 <div
                   key={variantDetails.title}
+                  data-gsap="product-detail-benefits"
                   className="grid grid-cols-3 gap-2 sm:gap-3 animate-text-smooth"
                 >
                   <div className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl p-2.5 sm:p-3.5 space-y-0.5 sm:space-y-1 shadow-2xs">
@@ -726,7 +728,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                 </div>
 
                 {/* DESKRIPSI LAYANAN & FITUR UNGGULAN CARD (Dynamic per variant + Capsule Tabs) */}
-                <div className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-4 sm:p-8 space-y-5 sm:space-y-6 shadow-card">
+                <div data-gsap="product-detail-desc" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-4 sm:p-8 space-y-5 sm:space-y-6 shadow-card">
                   {/* Capsule Tabs: 3 Grid columns on mobile, inline on desktop */}
                   <div className="bg-[#F1F3F5] rounded-full p-1 grid grid-cols-3 sm:inline-flex items-center gap-1 w-full sm:w-auto">
                     <button
@@ -836,7 +838,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
 
               {/* RIGHT COLUMN: PILIHAN PAKET BERLANGGANAN & VARIAN PILLS (Matching user Image 1 & 2) (lg:col-span-5) */}
               <div className="lg:col-span-5 space-y-4 sm:space-y-6">
-                <div className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-4 sm:p-7 shadow-card space-y-4 sm:space-y-5 lg:sticky lg:top-24">
+                <div data-gsap="product-detail-order-box" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-4 sm:p-7 shadow-card space-y-4 sm:space-y-5 lg:sticky lg:top-24">
                   {/* Top Header: PILIHAN PAKET BERLANGGANAN & Stok Badge */}
                   <div className="flex items-center justify-between pb-3 sm:pb-3.5 border-b border-[rgba(18,26,42,0.08)]">
                     <span className="text-[11px] sm:text-xs font-bold text-[#C96F55] uppercase tracking-wider">
@@ -863,6 +865,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                     )}
                     <div
                       key={totalPrice}
+                      data-gsap="product-detail-price"
                       className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#121A2A] font-mono tracking-tight animate-text-smooth"
                     >
                       Rp {totalPrice.toLocaleString('id-ID')}
@@ -874,7 +877,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
 
                   {/* FEATURE FROM IMAGE 2: (1) PILIH NOMINAL / VARIAN WITH CAPSULE PILLS */}
                   {variants.length > 0 && (
-                    <div className="pt-2 border-t border-[rgba(18,26,42,0.08)] space-y-3.5 sm:space-y-4">
+                    <div data-gsap="product-detail-variants" className="pt-2 border-t border-[rgba(18,26,42,0.08)] space-y-3.5 sm:space-y-4">
                       {/* Section Title with Circle 1 & SKU Badge */}
                       <div className="flex items-center justify-between gap-2 flex-wrap">
                         <div className="flex items-center gap-2">
@@ -1007,7 +1010,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                   )}
 
                   {/* Quantity Selector */}
-                  <div className="flex items-center justify-between py-2.5 sm:py-3 border-t border-b border-[rgba(18,26,42,0.08)]">
+                  <div data-gsap="product-detail-quantity" className="flex items-center justify-between py-2.5 sm:py-3 border-t border-b border-[rgba(18,26,42,0.08)]">
                     <span className="text-xs font-bold text-[#121A2A]">Jumlah Pesanan:</span>
                     <div className="flex items-center gap-2.5 sm:gap-3">
                       <Button
@@ -1037,7 +1040,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                   </div>
 
                   {/* Order Actions */}
-                  <div className="space-y-2.5 pt-1">
+                  <div data-gsap="product-detail-cta" className="space-y-2.5 pt-1">
                     <Button
                       type="button"
                       onClick={handleBuyNow}
@@ -1164,7 +1167,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                 </div>
 
                 {/* 3 cards per row desktop, 2 cards per row mobile */}
-                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-6">
+                <div data-gsap="product-detail-related" className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-6">
                   {product.relatedProducts.map((rel) => {
                     const isSelected = cartItems.some((item) => item.id === rel.id);
                     const relProductItem: ProductItem = {

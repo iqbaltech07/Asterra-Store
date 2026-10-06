@@ -20,7 +20,7 @@ export default function SellerPage() {
     <div className="min-h-screen bg-white text-[#121A2A] flex flex-col selection:bg-[#C96F55]/20 selection:text-[#C96F55] w-full max-w-full overflow-x-hidden">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-10 w-full space-y-8 sm:space-y-16">
         {/* HERO BANNER SECTION */}
-        <section aria-label="Banner Program Seller Asterra" className="w-full overflow-hidden">
+        <section data-gsap="seller-hero" aria-label="Banner Program Seller Asterra" className="w-full overflow-hidden">
           <Link
             href="/daftar-sales"
             title="Daftar Program Seller Asterra Store - Bergabung Jadi Seller AsterraStore Mulai dari Sekarang!"
@@ -40,18 +40,18 @@ export default function SellerPage() {
         </section>
 
         {/* QUICK ACTION BAR */}
-        <section className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 p-4 sm:p-6 rounded-2xl bg-[#F8FAFC] border border-[rgba(18,26,42,0.08)] shadow-xs w-full">
+        <section data-gsap="seller-cta-bar" className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 p-4 sm:p-6 rounded-2xl bg-[#F8FAFC] border border-[rgba(18,26,42,0.08)] shadow-xs w-full">
           <div className="space-y-1 text-center sm:text-left flex-1 min-w-0">
-            <h2 className="text-base sm:text-lg font-bold text-[#121A2A] leading-snug">
+            <h2 data-gsap="seller-title" className="text-base sm:text-lg font-bold text-[#121A2A] leading-snug">
               Siap Menghasilkan dari Produk Digital?
             </h2>
-            <p className="text-xs sm:text-sm text-[#121A2A]/70 leading-relaxed">
+            <p data-gsap="seller-desc" className="text-xs sm:text-sm text-[#121A2A]/70 leading-relaxed">
               Daftar sekarang gratis tanpa modal stok, atau masuk ke dashboard jika sudah memiliki akun sales.
             </p>
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 w-full sm:w-auto shrink-0">
             <Link href="/daftar-sales" className="w-full sm:w-auto block">
-              <Button className="w-full sm:w-auto h-11 px-5 sm:px-6 rounded-xl bg-[#C96F55] hover:bg-[#B86047] text-white font-bold text-xs sm:text-sm gap-2 shadow-xs transition-transform active:scale-95 justify-center">
+              <Button data-gsap="seller-cta" className="w-full sm:w-auto h-11 px-5 sm:px-6 rounded-xl bg-[#C96F55] hover:bg-[#B86047] text-white font-bold text-xs sm:text-sm gap-2 shadow-xs transition-transform active:scale-95 justify-center">
                 <span>Daftar Jadi Seller</span>
                 <FontAwesomeIcon icon={faArrowRight} className="w-3.5 h-3.5" />
               </Button>
@@ -69,7 +69,7 @@ export default function SellerPage() {
 
         {/* SECTION: APA ITU SELLER ASTERRA */}
         <section className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 items-center pt-2">
-          <div className="space-y-2.5 sm:space-y-3">
+          <div data-gsap="seller-info" className="space-y-2.5 sm:space-y-3">
             <span className="text-[11px] sm:text-xs font-bold text-[#C96F55] uppercase tracking-wider block">
               Tentang Program
             </span>
@@ -85,7 +85,7 @@ export default function SellerPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-            <div className="p-3.5 sm:p-5 rounded-2xl bg-[#F8FAFC] border border-[rgba(18,26,42,0.08)] space-y-1.5 sm:space-y-2">
+            <div data-gsap="seller-card" className="p-3.5 sm:p-5 rounded-2xl bg-[#F8FAFC] border border-[rgba(18,26,42,0.08)] space-y-1.5 sm:space-y-2">
               <div className="w-8 h-8 rounded-lg bg-[#C96F55]/10 text-[#C96F55] flex items-center justify-center">
                 <FontAwesomeIcon icon={faBolt} className="w-4 h-4" />
               </div>
@@ -95,7 +95,7 @@ export default function SellerPage() {
               </p>
             </div>
 
-            <div className="p-3.5 sm:p-5 rounded-2xl bg-[#F8FAFC] border border-[rgba(18,26,42,0.08)] space-y-1.5 sm:space-y-2">
+            <div data-gsap="seller-card" className="p-3.5 sm:p-5 rounded-2xl bg-[#F8FAFC] border border-[rgba(18,26,42,0.08)] space-y-1.5 sm:space-y-2">
               <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
                 <FontAwesomeIcon icon={faShieldHalved} className="w-4 h-4" />
               </div>
@@ -105,7 +105,7 @@ export default function SellerPage() {
               </p>
             </div>
 
-            <div className="p-3.5 sm:p-5 rounded-2xl bg-[#F8FAFC] border border-[rgba(18,26,42,0.08)] space-y-1.5 sm:space-y-2">
+            <div data-gsap="seller-card" className="p-3.5 sm:p-5 rounded-2xl bg-[#F8FAFC] border border-[rgba(18,26,42,0.08)] space-y-1.5 sm:space-y-2">
               <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
                 <FontAwesomeIcon icon={faChartLine} className="w-4 h-4" />
               </div>
@@ -115,7 +115,7 @@ export default function SellerPage() {
               </p>
             </div>
 
-            <div className="p-3.5 sm:p-5 rounded-2xl bg-[#F8FAFC] border border-[rgba(18,26,42,0.08)] space-y-1.5 sm:space-y-2">
+            <div data-gsap="seller-card" className="p-3.5 sm:p-5 rounded-2xl bg-[#F8FAFC] border border-[rgba(18,26,42,0.08)] space-y-1.5 sm:space-y-2">
               <div className="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center">
                 <FontAwesomeIcon icon={faWallet} className="w-4 h-4" />
               </div>
