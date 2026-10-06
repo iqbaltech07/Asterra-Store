@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
@@ -19,6 +19,9 @@ interface HeaderProps {
   onNotify?: (message: string) => void;
 }
 
+// Isomorphic Layout Effect for zero-FOUC initial client boot
+const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? React.useLayoutEffect : React.useEffect;
+
 // Persistent session-level guard: navbar animation runs once on initial site visit, never on internal route changes
 let hasNavbarEverAnimated = false;
 
@@ -29,7 +32,7 @@ export function Header({ onNotify: _onNotify }: HeaderProps) {
   const pathname = usePathname();
   const headerRef = useRef<HTMLElement>(null);
 
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     if (!hasNavbarEverAnimated) {
       hasNavbarEverAnimated = true;
       const cleanup = animateNavbar(headerRef.current);
@@ -48,7 +51,7 @@ export function Header({ onNotify: _onNotify }: HeaderProps) {
 
   return (
     <header ref={headerRef} className="sticky top-0 z-40 w-full px-2 sm:px-6 pt-2 pb-1.5 transition-colors duration-150">
-      <div className="max-w-7xl mx-auto rounded-2xl bg-[#121A2A] border border-white/10 shadow-navbar px-3 sm:px-5 h-14 sm:h-16 flex items-center justify-between gap-3">
+      <div data-gsap="nav-bar" className="max-w-7xl mx-auto rounded-2xl bg-[#121A2A] border border-white/10 shadow-navbar px-3 sm:px-5 h-14 sm:h-16 flex items-center justify-between gap-3">
         {/* Brand Logo with Planet Animation */}
         <div data-gsap="nav-logo" className="flex items-center shrink-0">
           <AsterraLogo

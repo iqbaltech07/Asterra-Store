@@ -119,7 +119,7 @@ export function LainnyaSidebar() {
       <div
         onClick={closeSidebar}
         style={{
-          transition: 'opacity 300ms ease-out',
+          transition: 'opacity 200ms ease-out',
         }}
         className={`fixed inset-0 bg-[#121A2A]/70 backdrop-blur-xs cursor-pointer ${
           isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
@@ -130,7 +130,7 @@ export function LainnyaSidebar() {
       {/* Drawer Panel */}
       <div
         style={{
-          transition: 'transform 300ms cubic-bezier(0.16, 1, 0.3, 1)',
+          transition: 'transform 260ms cubic-bezier(0.16, 1, 0.3, 1)',
         }}
         className={`relative w-full max-w-sm sm:max-w-md bg-[#121A2A] text-[#F7F5EF] border-l border-white/10 shadow-2xl flex flex-col justify-between overflow-y-auto z-10 transform ${
           isSidebarOpen ? 'translate-x-0' : 'translate-x-full'

@@ -63,7 +63,11 @@
   --accent-foreground: #ffffff;
 }
 
+html,
 body {
+  overflow-x: clip;
+  max-width: 100vw;
+  width: 100%;
   background-color: #ffffff;
   color: #121a2a;
   font-family:
@@ -110,6 +114,8 @@ body {
 .carousel-viewport {
   overflow: hidden !important;
   width: 100%;
+  max-width: 100%;
+  contain: paint;
   scrollbar-width: none !important;
   -ms-overflow-style: none !important;
 }
@@ -137,10 +143,25 @@ body {
 
 
 
-/* Seamless Smooth Text & Content Transitions (Apple / Vercel style - GPU accelerated, zero blur filter overhead) */
+/* Editorial Transitions & GPU Compositing (Apple / Vercel style - smooth, zero blink, zero layout reflow) */
+@keyframes pageEditorialEnter {
+  0% {
+    opacity: 0.94;
+    transform: translate3d(0, 4px, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.animate-page-enter {
+  animation: pageEditorialEnter 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 @keyframes tabGlideIn {
   0% {
-    opacity: 0.2;
+    opacity: 0.88;
     transform: translate3d(0, 3px, 0);
   }
   100% {
@@ -150,12 +171,12 @@ body {
 }
 
 .animate-tab-glide {
-  animation: tabGlideIn 0.16s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: tabGlideIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @keyframes textMorphSmooth {
   0% {
-    opacity: 0.3;
+    opacity: 0.90;
     transform: translate3d(0, 2px, 0);
   }
   100% {
@@ -165,7 +186,17 @@ body {
 }
 
 .animate-text-smooth {
-  animation: textMorphSmooth 0.14s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: textMorphSmooth 0.18s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-page-enter,
+  .animate-tab-glide,
+  .animate-text-smooth {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
 }
 
 

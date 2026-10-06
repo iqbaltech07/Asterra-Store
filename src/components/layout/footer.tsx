@@ -20,8 +20,8 @@ export function Footer({ onNotify }: FooterProps) {
   };
 
   return (
-    <footer data-gsap="footer" className="border-t border-white/10 bg-[#121A2A] text-[#F7F5EF] mt-10 sm:mt-24 pt-8 sm:pt-14 pb-20 sm:pb-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+    <footer data-gsap="footer" className="border-t border-white/10 bg-[#121A2A] text-[#F7F5EF] mt-10 sm:mt-24 pt-8 sm:pt-14 pb-20 sm:pb-12 overflow-hidden">
+      <div data-gsap="footer-content" className="max-w-7xl mx-auto px-4 sm:px-6">
         <div data-gsap="footer-columns" className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-10 pb-8 sm:pb-12 border-b border-white/10">
           {/* Brand Col */}
           <div data-gsap="footer-col" className="col-span-2 md:col-span-1 space-y-3">

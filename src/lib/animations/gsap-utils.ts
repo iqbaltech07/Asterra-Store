@@ -278,12 +278,9 @@ export function revealScale(
    ========================================================================== */
 
 /**
- * Animate Header & Navbar components smoothly on mount
- * Sequence:
- * 1. Navbar container reveals from top to bottom (transform + clipPath)
- * 2. Logo appears
- * 3. Navigation links appear with stagger
- * 4. Action buttons (Pesanan & Auth/Hamburger) appear last
+ * Animate Header & Navbar components on INITIAL LOAD / REFRESH only.
+ * Visual Feel: Top -> Down Reveal (yPercent: -100 -> 0, opacity: 0 -> 1).
+ * Persistent: Never re-triggers on client-side route changes.
  */
 let hasNavbarRunOnce = false;
 
@@ -295,54 +292,23 @@ export function animateNavbar(headerElement: HTMLElement | null): (() => void) |
   if (prefersReducedMotion()) return;
 
   const ctx = gsap.context(() => {
-    const bar = headerElement.querySelector('div.max-w-7xl');
-    const logo = headerElement.querySelector('[data-gsap="nav-logo"], .nav-logo');
-    const navLinks = headerElement.querySelectorAll('[data-gsap="nav-link"], nav a');
-    const actions = headerElement.querySelectorAll('[data-gsap="nav-action"], header button');
+    const bar = headerElement.querySelector('[data-gsap="nav-bar"], div.max-w-7xl') || headerElement;
 
-    const tl = gsap.timeline({
-      defaults: { ease: 'power2.out', force3D: true },
-    });
-
-    // 1. Container glides in from top cleanly without clipPath polygon recalculations
-    if (bar) {
-      tl.fromTo(
-        bar,
-        { y: -8, opacity: 0.7 },
-        { y: 0, opacity: 1, duration: 0.36, clearProps: 'all' },
-        0
-      );
-    }
-
-    // 2. Logo appears right as container glides in
-    if (logo) {
-      tl.fromTo(
-        logo,
-        { opacity: 0.7, y: -2 },
-        { opacity: 1, y: 0, duration: 0.28, clearProps: 'all' },
-        0.04
-      );
-    }
-
-    // 3. Nav links stagger in cleanly
-    if (navLinks.length > 0) {
-      tl.fromTo(
-        navLinks,
-        { opacity: 0.7, y: -2 },
-        { opacity: 1, y: 0, duration: 0.26, stagger: 0.02, clearProps: 'all' },
-        0.06
-      );
-    }
-
-    // 4. Action buttons appear
-    if (actions.length > 0) {
-      tl.fromTo(
-        actions,
-        { opacity: 0.7, y: -2 },
-        { opacity: 1, y: 0, duration: 0.26, stagger: 0.02, clearProps: 'all' },
-        0.08
-      );
-    }
+    gsap.fromTo(
+      bar,
+      {
+        yPercent: -100,
+        opacity: 0,
+      },
+      {
+        yPercent: 0,
+        opacity: 1,
+        duration: 0.72,
+        ease: 'power3.out',
+        force3D: true,
+        clearProps: 'transform,opacity',
+      }
+    );
   }, headerElement);
 
   return () => ctx.revert();
@@ -353,21 +319,14 @@ export function animateNavbar(headerElement: HTMLElement | null): (() => void) |
    ========================================================================== */
 
 /**
- * Master initial page load sequence for Asterra Store Homepage:
- * Continuous, fluid, zero-dead-time cascade:
- * 0.00s -> Navbar starts
- * 0.04s -> Hero container horizontal reveal starts immediately with fluid overlap
- * 0.12s -> Hero headline lines text reveal
- * 0.18s -> Hero description
- * 0.20s -> Planet visual (Mobile: static 9KB single frame for pure 60fps; Desktop: subtle rotation)
- * 0.24s -> Hero benefits horizontal stagger (Tile 1 -> Tile 2 -> Tile 3)
- */
-/**
- * Editorial Homepage Entrance:
- * Animates the actual banner and featured product section hierarchically:
- * 1. Hero banner: Smooth micro-rise + subtle scale settle (360ms)
- * 2. Category selector tabs: Settle at 80ms (280ms)
- * 3. Featured initial cards: Staggered entry at 120ms (300ms)
+ * AsterraStore Homepage Entrance:
+ * Directional choreography restored:
+ * 1. Navbar slides down from above (0ms - 720ms)
+ * 2. Hero Banner CapCut-Style horizontal reveal (80ms - 830ms)
+ * 3. Hero Banner Inner subtle visual settle (220ms - 720ms)
+ * 4. Hero / Referral Text reveal rising bottom -> up (260ms - 740ms)
+ * 5. Category Selector tabs settle bottom -> up (320ms - 740ms)
+ * 6. Initial Featured Cards stagger bottom -> up (360ms - 740ms)
  */
 export function animateHomepageHero(container: HTMLElement | null): (() => void) | undefined {
   if (!container || typeof window === 'undefined') return;
@@ -376,6 +335,12 @@ export function animateHomepageHero(container: HTMLElement | null): (() => void)
   const ctx = gsap.context(() => {
     const banner = container.querySelector(
       '[data-gsap="hero-banner"], section[aria-label="Banner Promo Asterra"]'
+    );
+    const bannerInner = banner?.querySelector(
+      '[data-gsap="hero-banner-inner"], a, img'
+    );
+    const heroTexts = container.querySelectorAll(
+      '[data-gsap="hero-text"], [data-gsap="referral-text"]'
     );
     const featuredSection = container.querySelector(
       '[data-gsap="featured-section"], #produk-unggulan'
@@ -386,37 +351,104 @@ export function animateHomepageHero(container: HTMLElement | null): (() => void)
     );
 
     const tl = gsap.timeline({
-      defaults: { ease: 'power2.out', force3D: true },
+      defaults: { ease: 'power3.out', force3D: true },
     });
 
-    // 1. Hero banner entrance
+    // 1. Hero banner: CapCut-style horizontal wipe reveal
     if (banner) {
       tl.fromTo(
         banner,
-        { opacity: 0.88, y: 8, scale: 0.995 },
-        { opacity: 1, y: 0, scale: 1, duration: 0.36, clearProps: 'all' },
-        0
-      );
-    }
-
-    // 2. Featured Category Tabs
-    if (featuredTabs) {
-      tl.fromTo(
-        featuredTabs,
-        { opacity: 0.85, y: 6 },
-        { opacity: 1, y: 0, duration: 0.28, clearProps: 'all' },
+        {
+          clipPath: 'inset(0% 100% 0% 0%)',
+          opacity: 0,
+        },
+        {
+          clipPath: 'inset(0% 0% 0% 0%)',
+          opacity: 1,
+          duration: 0.75,
+          ease: 'power3.out',
+          clearProps: 'clipPath,opacity',
+        },
         0.08
       );
     }
 
-    // 3. Initial Featured Cards (First 4 cards with tight stagger)
+    // 2. Banner inner subtle settle
+    if (bannerInner) {
+      tl.fromTo(
+        bannerInner,
+        {
+          y: 10,
+          opacity: 0.96,
+        },
+        {
+          y: 0,
+          opacity: 1,
+          duration: 0.50,
+          ease: 'power3.out',
+          clearProps: 'transform,opacity',
+        },
+        0.22
+      );
+    }
+
+    // 3. Hero / Referral Text reveal (Bottom -> Up)
+    if (heroTexts.length > 0) {
+      tl.fromTo(
+        heroTexts,
+        {
+          y: 24,
+          opacity: 0,
+        },
+        {
+          y: 0,
+          opacity: 1,
+          duration: 0.48,
+          ease: 'power3.out',
+          stagger: 0.05,
+          clearProps: 'transform,opacity',
+        },
+        0.26
+      );
+    }
+
+    // 4. Featured Category Tabs (Bottom -> Up)
+    if (featuredTabs) {
+      tl.fromTo(
+        featuredTabs,
+        {
+          y: 12,
+          opacity: 0,
+        },
+        {
+          y: 0,
+          opacity: 1,
+          duration: 0.42,
+          ease: 'power3.out',
+          clearProps: 'transform,opacity',
+        },
+        0.32
+      );
+    }
+
+    // 5. Featured Cards (Bottom -> Up, tight stagger)
     if (featuredCards && featuredCards.length > 0) {
-      const topCards = Array.from(featuredCards).slice(0, 4);
+      const topCards = Array.from(featuredCards).slice(0, 8);
       tl.fromTo(
         topCards,
-        { opacity: 0.85, y: 8 },
-        { opacity: 1, y: 0, duration: 0.30, stagger: 0.035, clearProps: 'all' },
-        0.12
+        {
+          y: 16,
+          opacity: 0,
+        },
+        {
+          y: 0,
+          opacity: 1,
+          duration: 0.38,
+          ease: 'power3.out',
+          stagger: 0.03,
+          clearProps: 'transform,opacity',
+        },
+        0.36
       );
     }
   }, container);
@@ -503,38 +535,31 @@ export function setupHomepageScrollReveal(root: HTMLElement | null): (() => void
       }
     });
 
-    // Footer Scroll Reveal
+    // Footer Scroll Reveal — BOTTOM -> UP (Inverse of Navbar)
     const footer = document.querySelector('footer[data-gsap="footer"], footer');
     if (footer) {
-      const cols = footer.querySelectorAll('[data-gsap="footer-col"]');
-      const bottom = footer.querySelector('[data-gsap="footer-bottom"]');
+      const footerContent = footer.querySelector('[data-gsap="footer-content"], div.max-w-7xl') || footer;
 
-      const footerTl = gsap.timeline({
-        scrollTrigger: {
-          trigger: footer,
-          start: 'top 92%',
-          once: true,
+      gsap.fromTo(
+        footerContent,
+        {
+          yPercent: 100,
+          opacity: 0,
         },
-        defaults: { ease: 'power2.out', force3D: true },
-      });
-
-      if (cols.length > 0) {
-        footerTl.fromTo(
-          Array.from(cols),
-          { opacity: 0.3, y: 10 },
-          { opacity: 1, y: 0, duration: 0.35, stagger: 0.03, clearProps: 'all' },
-          0
-        );
-      }
-
-      if (bottom) {
-        footerTl.fromTo(
-          bottom,
-          { opacity: 0.3, y: 6 },
-          { opacity: 1, y: 0, duration: 0.30, clearProps: 'all' },
-          0.1
-        );
-      }
+        {
+          yPercent: 0,
+          opacity: 1,
+          duration: 0.68,
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: footer,
+            start: 'top 92%',
+            once: true,
+          },
+          force3D: true,
+          clearProps: 'transform,opacity',
+        }
+      );
     }
   }, root);
 
@@ -555,16 +580,16 @@ export function animateFloatingButton(element: HTMLElement | null): (() => void)
   const tween = gsap.fromTo(
     element,
     {
-      y: 10,
+      y: 8,
       opacity: 0,
-      scale: 0.95,
+      scale: 0.96,
     },
     {
       y: 0,
       opacity: 1,
       scale: 1,
-      duration: 0.32,
-      delay: 0.2,
+      duration: 0.28,
+      delay: 0.15,
       ease: 'power2.out',
       force3D: true,
       clearProps: 'all',
@@ -577,12 +602,16 @@ export function animateFloatingButton(element: HTMLElement | null): (() => void)
 }
 
 /* ==========================================================================
-   5. GENERAL SUBPAGE ENTRANCE & SCROLL REVEAL (FOR /products, /profile, ETC.)
+   5. GENERAL SUBPAGE ENTRANCE & SCROLL REVEAL (FOR /products, /orders, /seller, ETC.)
    ========================================================================== */
 
 /**
- * Animate general entrance elements on subpages (titles, breadcrumbs, content)
- * Fast, buttery 240-280ms transition with clear hierarchy.
+ * Editorial Subpage Entrance Hierarchy:
+ * - Breadcrumbs / Controls: Bottom -> Up (y: 12px -> 0)
+ * - Page Headings: Bottom -> Up (y: 18px -> 0)
+ * - Descriptions / Filters: Bottom -> Up (y: 12px -> 0)
+ * - Product Detail Media: Left -> Right horizontal reveal (x: -16px -> 0)
+ * - Cards & Content: Bottom -> Up (y: 18px -> 0, stagger 0.03s)
  */
 export function animatePageEntrance(container: HTMLElement | null): (() => void) | undefined {
   if (!container || typeof window === 'undefined') return;
@@ -590,52 +619,68 @@ export function animatePageEntrance(container: HTMLElement | null): (() => void)
 
   const ctx = gsap.context(() => {
     const tl = gsap.timeline({
-      defaults: { ease: 'power2.out', force3D: true },
+      defaults: { ease: 'power3.out', force3D: true },
     });
 
-    // 1. Root page container immediate smooth fade
-    tl.fromTo(
-      container,
-      { opacity: 0.9, y: 6 },
-      { opacity: 1, y: 0, duration: 0.24, clearProps: 'all' },
-      0
-    );
+    // 1. Breadcrumbs (Bottom -> Up, fast)
+    const breadcrumbs = container.querySelectorAll('nav[aria-label="Breadcrumb"], .breadcrumb');
+    if (breadcrumbs.length > 0) {
+      tl.fromTo(
+        breadcrumbs,
+        { opacity: 0, y: 12 },
+        { opacity: 1, y: 0, duration: 0.32, clearProps: 'all' },
+        0
+      );
+    }
 
-    // 2. Headings & Titles
+    // 2. Headings & Titles (Bottom -> Up)
     const headings = container.querySelectorAll('h1, [data-gsap="page-title"]');
     if (headings.length > 0) {
       tl.fromTo(
         headings,
-        { opacity: 0.85, y: 5 },
-        { opacity: 1, y: 0, duration: 0.26, stagger: 0.025, clearProps: 'all' },
+        { opacity: 0, y: 18 },
+        { opacity: 1, y: 0, duration: 0.38, stagger: 0.03, clearProps: 'all' },
         0.02
       );
     }
 
-    // 3. Subtitles & Leads
+    // 3. Subtitles, Leads, Descriptions & Controls (Bottom -> Up)
     const subheads = container.querySelectorAll(
-      '[data-gsap="page-sub"], p[data-gsap="lead"], .hero-lead'
+      '[data-gsap="page-sub"], p[data-gsap="lead"], .hero-lead, [data-gsap="controls"], [data-gsap="filters"]'
     );
     if (subheads.length > 0) {
       tl.fromTo(
         subheads,
-        { opacity: 0.85, y: 4 },
-        { opacity: 1, y: 0, duration: 0.26, stagger: 0.02, clearProps: 'all' },
+        { opacity: 0, y: 12 },
+        { opacity: 1, y: 0, duration: 0.36, stagger: 0.025, clearProps: 'all' },
         0.04
       );
     }
 
-    // 4. Above-the-fold Cards (First 6 cards only)
+    // 4. Product Detail Split Media (Horizontal reveal from left)
+    const productMedia = container.querySelector(
+      '[data-gsap="product-detail-media"], [data-gsap="product-media"], .lg\\:col-span-7 .rounded-2xl'
+    );
+    if (productMedia) {
+      tl.fromTo(
+        productMedia,
+        { opacity: 0, x: -16 },
+        { opacity: 1, x: 0, duration: 0.45, ease: 'power3.out', clearProps: 'all' },
+        0.06
+      );
+    }
+
+    // 5. Above-the-fold Cards & Content (Bottom -> Up, tight stagger)
     const cards = container.querySelectorAll(
-      '[data-gsap="card"], [data-gsap="hero-card"], [data-gsap="benefit-card"]'
+      '[data-gsap="card"], [data-gsap="product-card"], [data-gsap="order-card"], [data-gsap="seller-card"], form, .grid > div:not(.col-span-12)'
     );
     if (cards.length > 0) {
-      const topCards = Array.from(cards).slice(0, 6);
+      const topCards = Array.from(cards).slice(0, 8);
       tl.fromTo(
         topCards,
-        { opacity: 0.88, y: 6 },
-        { opacity: 1, y: 0, duration: 0.28, stagger: 0.03, clearProps: 'all' },
-        0.06
+        { opacity: 0, y: 18 },
+        { opacity: 1, y: 0, duration: 0.40, stagger: 0.03, clearProps: 'all' },
+        0.08
       );
     }
   }, container);

@@ -67,7 +67,7 @@ export function PageTransition({ children }: PageTransitionProps) {
   }, [pathname]);
 
   return (
-    <div ref={containerRef} className="w-full">
+    <div key={pathname} ref={containerRef} className="w-full animate-page-enter">
       {children}
     </div>
   );

@@ -811,11 +811,12 @@ export default function HomePage() {
           - quality 95 for visually lossless crisp typography and logo linework
           - priority for immediate above-the-fold LCP preloading
         */}
-        <section aria-label="Banner Promo Asterra" data-gsap="hero-banner" className="w-full mb-3.5 sm:mb-5">
+        <section aria-label="Banner Promo Asterra" data-gsap="hero-banner" className="w-full max-w-full mb-3.5 sm:mb-5 overflow-hidden">
           <Link
             href="/seller"
             title="Program Reseller Asterra Store - Jadi Bagian dari AsterraStore"
-            className="group block relative w-full overflow-hidden rounded-xl sm:rounded-2xl md:rounded-3xl border border-[rgba(18,26,42,0.08)] shadow-xs hover:shadow-md transition-shadow bg-[#f0f5ff]"
+            data-gsap="hero-banner-inner"
+            className="group block relative w-full max-w-full overflow-hidden rounded-xl sm:rounded-2xl md:rounded-3xl border border-[rgba(18,26,42,0.08)] shadow-xs hover:shadow-md transition-shadow bg-[#f0f5ff]"
           >
             <Image
               src="/images/banners/hero-banner-reseller.webp"
@@ -825,7 +826,7 @@ export default function HomePage() {
               priority
               quality={95}
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 1320px"
-              className="w-full h-auto block rounded-xl sm:rounded-2xl md:rounded-3xl object-contain transition-transform duration-300 group-hover:scale-[1.004]"
+              className="w-full max-w-full h-auto block rounded-xl sm:rounded-2xl md:rounded-3xl object-contain transition-transform duration-300 group-hover:scale-[1.004]"
             />
           </Link>
         </section>
@@ -895,7 +896,7 @@ export default function HomePage() {
           </div>
 
           {/* STATIC PRODUCT GRID (4 columns desktop, 2 columns mobile) */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-3.5 lg:gap-4">
+          <div key={activeCategory} className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-3.5 lg:gap-4 animate-tab-glide">
             {featuredApps.map((app) => (
               <FeaturedGridCard
                 key={`featured-${activeCategory}-${app.name}`}
@@ -926,7 +927,7 @@ export default function HomePage() {
           </div>
 
           {/* Marquee Track Container with Edge Fades */}
-          <div className="carousel-viewport relative w-full overflow-hidden py-1 animate-text-smooth">
+          <div className="carousel-viewport relative w-full overflow-hidden py-1">
             <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-3 sm:w-6 z-10 bg-gradient-to-r from-white to-transparent" />
             <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-3 sm:w-6 z-10 bg-gradient-to-l from-white to-transparent" />
 
