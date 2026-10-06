@@ -1041,7 +1041,12 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
                           Rp {o.totalAmount.toLocaleString('id-ID')}
                         </td>
                         <td className="py-3 px-4 font-mono font-semibold text-primary">
-                          Rp {(o.transactionProfit || Math.max(0, Math.round(o.totalAmount * 0.15))).toLocaleString('id-ID')}
+                          Rp {(typeof o.transactionProfit === 'number' ? o.transactionProfit : 0).toLocaleString('id-ID')}
+                          {o.transactionProfit === 0 && (
+                            <span className="block text-[10px] text-foreground-muted font-normal">
+                              (Margin tergerus promo)
+                            </span>
+                          )}
                         </td>
                         <td className="py-3 px-4">
                           <div className="font-bold text-status-success">
@@ -1477,7 +1482,12 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
                           Rp {log.orderTotal.toLocaleString('id-ID')}
                         </td>
                         <td className="py-3 px-4 font-mono font-semibold text-primary">
-                          Rp {(log.transactionProfit || Math.max(0, Math.round(log.orderTotal * 0.15))).toLocaleString('id-ID')}
+                          Rp {(typeof log.transactionProfit === 'number' ? log.transactionProfit : 0).toLocaleString('id-ID')}
+                          {log.transactionProfit === 0 && (
+                            <span className="block text-[10px] text-foreground-muted font-normal">
+                              (Margin tergerus promo)
+                            </span>
+                          )}
                         </td>
                         <td className="py-3 px-4 font-bold text-status-success">
                           + Rp {log.bonusAmount.toLocaleString('id-ID')}
