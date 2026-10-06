@@ -793,13 +793,12 @@ export default function HomePage() {
       {/* Main Content */}
       <main className="flex-1 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-2 sm:pt-3 pb-8 sm:pb-12 w-full overflow-hidden">
         {/*
-          SECTION 2: HERO BANNER IMAGE (INTRINSIC ASPECT RATIO, MAXIMUM SHARPNESS)
-          Container dynamically adapts to the intrinsic aspect ratio of the image (1024/342).
-          - No fixed h-[xxxpx] or max-h constraints
-          - width: 100%, height: auto
-          - unoptimized to prevent lossy Next.js downsampling/compression
-          - priority for immediate above-the-fold LCP rendering
-          - object-contain: no stretch, no distortion, no crop
+          SECTION 2: HERO BANNER IMAGE (HIGH RESOLUTION RETINA 2X, MAXIMUM SHARPNESS)
+          Master source resolution is 2640x882 (intrinsic aspect ratio 2.993:1).
+          - Desktop container slot: ~1320px (exact 1:1 pixel fidelity for 2x Retina)
+          - Responsive sizes ensures mobile receives light payload while desktop receives razor-sharp high-res
+          - quality 95 for visually lossless crisp typography and logo linework
+          - priority for immediate above-the-fold LCP preloading
         */}
         <section aria-label="Banner Promo Asterra" className="w-full mb-3.5 sm:mb-5">
           <Link
@@ -810,10 +809,11 @@ export default function HomePage() {
             <Image
               src="/images/banners/hero-banner-reseller.webp"
               alt="Program Reseller Asterra Store - Jadi Bagian dari AsterraStore, Dapatkan Komisi 10-15% per Produk"
-              width={1024}
-              height={342}
+              width={2640}
+              height={882}
               priority
-              unoptimized
+              quality={95}
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 1320px"
               className="w-full h-auto block rounded-xl sm:rounded-2xl md:rounded-3xl object-contain transition-transform duration-300 group-hover:scale-[1.004]"
             />
           </Link>

@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faStore,
@@ -26,46 +27,51 @@ export default function SellerPage() {
       <Header />
 
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 w-full space-y-12 sm:space-y-16">
-        {/* HERO SECTION */}
-        <section className="relative rounded-3xl bg-[#121A2A] text-white p-6 sm:p-12 border border-white/10 shadow-editorial overflow-hidden">
-          {/* Subtle ambient accent glow */}
-          <div
-            className="absolute top-0 right-0 w-96 h-96 rounded-full pointer-events-none opacity-20"
-            style={{
-              background: 'radial-gradient(circle, #C96F55 0%, transparent 70%)',
-            }}
-          />
+        {/* HERO BANNER SECTION */}
+        <section aria-label="Banner Program Seller Asterra" className="w-full">
+          <Link
+            href="/daftar-sales"
+            title="Daftar Program Seller Asterra Store - Bergabung Jadi Seller AsterraStore Mulai dari Sekarang!"
+            className="group block relative w-full overflow-hidden rounded-xl sm:rounded-2xl md:rounded-3xl border border-[rgba(18,26,42,0.08)] shadow-xs hover:shadow-md transition-shadow bg-[#f0f5ff]"
+          >
+            <Image
+              src="/images/banners/hero-banner-seller.webp"
+              alt="Program Seller Asterra Store - Bergabung Jadi Seller AsterraStore Mulai dari Sekarang!"
+              width={2640}
+              height={882}
+              priority
+              quality={95}
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 1320px"
+              className="w-full h-auto block rounded-xl sm:rounded-2xl md:rounded-3xl object-contain transition-transform duration-300 group-hover:scale-[1.004]"
+            />
+          </Link>
+        </section>
 
-          <div className="relative z-10 max-w-2xl space-y-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-[#C96F55]/20 text-[#E28870] border border-[#C96F55]/30">
-              <FontAwesomeIcon icon={faStore} className="w-3.5 h-3.5" />
-              <span>Program Resmi Mitra Seller Asterra</span>
-            </div>
-
-            <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-tight">
-              Mulai Jual Produk Digital Premium & Dapatkan Komisi.
-            </h1>
-
-            <p className="text-xs sm:text-base text-white/75 leading-relaxed">
-              Bergabung bersama ribuan mitra penjual Asterra Store. Dapatkan tautan referral unik untuk akun populer seperti Canva Pro, ChatGPT Plus, YouTube Premium, dan nikmati komisi langsung dari setiap transaksi terverifikasi.
+        {/* QUICK ACTION BAR */}
+        <section className="flex flex-col sm:flex-row items-center justify-between gap-4 p-5 sm:p-6 rounded-2xl bg-[#F8FAFC] border border-[rgba(18,26,42,0.08)] shadow-xs">
+          <div className="space-y-1 text-center sm:text-left">
+            <h2 className="text-base sm:text-lg font-bold text-[#121A2A]">
+              Siap Menghasilkan dari Produk Digital?
+            </h2>
+            <p className="text-xs sm:text-sm text-[#121A2A]/70">
+              Daftar sekarang gratis tanpa modal stok, atau masuk ke dashboard jika sudah memiliki akun sales.
             </p>
-
-            <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-              <Link href="/daftar-sales">
-                <Button className="w-full sm:w-auto h-11 px-6 rounded-xl bg-[#C96F55] hover:bg-[#B86047] text-white font-bold text-sm gap-2 shadow-xs transition-transform active:scale-95">
-                  <span>Daftar Jadi Seller</span>
-                  <FontAwesomeIcon icon={faArrowRight} className="w-4 h-4" />
-                </Button>
-              </Link>
-              <Link href="/sales">
-                <Button
-                  variant="outline"
-                  className="w-full sm:w-auto h-11 px-6 rounded-xl border-white/20 bg-white/5 hover:bg-white/10 text-white font-semibold text-sm"
-                >
-                  Masuk Dashboard Sales
-                </Button>
-              </Link>
-            </div>
+          </div>
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            <Link href="/daftar-sales" className="flex-1 sm:flex-initial">
+              <Button className="w-full sm:w-auto h-11 px-6 rounded-xl bg-[#C96F55] hover:bg-[#B86047] text-white font-bold text-sm gap-2 shadow-xs transition-transform active:scale-95">
+                <span>Daftar Jadi Seller</span>
+                <FontAwesomeIcon icon={faArrowRight} className="w-4 h-4" />
+              </Button>
+            </Link>
+            <Link href="/sales" className="flex-1 sm:flex-initial">
+              <Button
+                variant="outline"
+                className="w-full sm:w-auto h-11 px-6 rounded-xl border-[#121A2A]/20 bg-white hover:bg-slate-50 text-[#121A2A] font-semibold text-sm"
+              >
+                Masuk Dashboard Sales
+              </Button>
+            </Link>
           </div>
         </section>
 
