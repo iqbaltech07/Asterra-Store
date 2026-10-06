@@ -22,22 +22,20 @@ interface HeaderProps {
 // Isomorphic Layout Effect for zero-FOUC initial client boot
 const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? React.useLayoutEffect : React.useEffect;
 
-// Persistent session-level guard: navbar animation runs once on initial site visit, never on internal route changes
-let hasNavbarEverAnimated = false;
-
 export function Header({ onNotify: _onNotify }: HeaderProps) {
   const { data: session } = useSession();
   const { user: legacyUser } = useAuthStore();
 
   const pathname = usePathname();
   const headerRef = useRef<HTMLElement>(null);
+  const animatedRef = useRef(false);
 
   useIsomorphicLayoutEffect(() => {
-    if (!hasNavbarEverAnimated) {
-      hasNavbarEverAnimated = true;
+    if (!animatedRef.current) {
+      animatedRef.current = true;
       const cleanup = animateNavbar(headerRef.current);
       return () => {
-        if (cleanup) cleanup();
+        cleanup?.();
       };
     }
   }, []);

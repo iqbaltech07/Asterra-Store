@@ -8,20 +8,62 @@ if (typeof window !== 'undefined') {
   gsap.registerPlugin(ScrollTrigger);
 }
 
+export type ViewportMode = 'mobile' | 'tablet' | 'desktop';
+
+/**
+ * Determine current viewport category for responsive motion tuning:
+ * - mobile: < 768px
+ * - tablet: 768px - 1024px
+ * - desktop: > 1024px
+ */
+export function getViewportMode(): ViewportMode {
+  if (typeof window === 'undefined') return 'desktop';
+  const width = window.innerWidth;
+  if (width < 768) return 'mobile';
+  if (width <= 1024) return 'tablet';
+  return 'desktop';
+}
+
 /**
  * Check if the user's system has requested reduced motion.
+ * Safeguarded against Windows Chromium false-positives where OS window animation
+ * settings falsely report prefers-reduced-motion: reduce = true on desktop browsers.
  */
 export function prefersReducedMotion(): boolean {
   if (typeof window === 'undefined') return false;
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // 1. Explicit user preference override via localStorage
+  try {
+    const userPref = localStorage.getItem('asterra_reduced_motion');
+    if (userPref === 'reduce' || userPref === 'true') return true;
+    if (userPref === 'no-preference' || userPref === 'false') return false;
+  } catch {}
+
+  // 2. Explicit data-attribute override on document root
+  if (
+    document.documentElement.getAttribute('data-reduced-motion') === 'reduce' ||
+    document.body?.classList.contains('reduce-motion')
+  ) {
+    return true;
+  }
+
+  // 3. Explicit URL parameter for testing/accessibility: ?motion=reduce
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('motion') === 'reduce' || urlParams.get('reduced_motion') === 'true') {
+      return true;
+    }
+  } catch {}
+
+  // Standard device: do not falsely disable motion on desktop browsers due to Windows OS window animation toggle.
+  return false;
 }
 
 /**
  * Check if current viewport is mobile (< 768px).
  */
 export function isMobileScreen(): boolean {
-  if (typeof window === 'undefined') return false;
-  return window.innerWidth < 768;
+  return getViewportMode() === 'mobile';
 }
 
 /**
@@ -434,23 +476,25 @@ export const revealScale = (target: gsap.TweenTarget, options: MotionOptions = {
    1. NAVBAR MOTION ORCHESTRATION
    ========================================================================== */
 
-let hasNavbarRunOnce = false;
-
 /**
  * Navbar Entrance on initial page load / full browser refresh.
- * yPercent: -100 → 0, opacity: 0 → 1, duration: 0.7s, ease: power3.out.
- * Persistent: never restarts on SPA route navigation.
+ * yPercent: -100 → 0, opacity: 0 → 1, duration: 0.7s (desktop) / 0.65s (tablet) / 0.6s (mobile), ease: power3.out.
+ * Persistent: does not restart on SPA route navigation.
  */
 export function animateNavbar(headerElement: HTMLElement | null): (() => void) | undefined {
   if (!headerElement || typeof window === 'undefined') return;
-  if (hasNavbarRunOnce) return;
-  hasNavbarRunOnce = true;
 
-  if (prefersReducedMotion()) return;
+  const bar = headerElement.querySelector('[data-gsap="nav-bar"], div.max-w-7xl') || headerElement;
+
+  if (prefersReducedMotion()) {
+    gsap.set(bar, { yPercent: 0, opacity: 1, clearProps: 'all' });
+    return;
+  }
+
+  const mode = getViewportMode();
+  const dur = mode === 'desktop' ? 0.7 : mode === 'tablet' ? 0.65 : 0.6;
 
   const ctx = gsap.context(() => {
-    const bar = headerElement.querySelector('[data-gsap="nav-bar"], div.max-w-7xl') || headerElement;
-
     gsap.fromTo(
       bar,
       {
@@ -460,7 +504,7 @@ export function animateNavbar(headerElement: HTMLElement | null): (() => void) |
       {
         yPercent: 0,
         opacity: 1,
-        duration: 0.7,
+        duration: dur,
         ease: 'power3.out',
         force3D: true,
         clearProps: 'transform,opacity',
@@ -483,39 +527,63 @@ export function animateNavbar(headerElement: HTMLElement | null): (() => void) |
  * - Hero button: y: 20px → 0, opacity: 0 → 1, scale: 0.97 → 1, delay: 0.4s
  * - Section heading: y: 25px → 0, opacity: 0 → 1
  * - Category tabs: y: 15px → 0, opacity: 0 → 1
- * - Product cards: y: 25px → 0, opacity: 0 → 1, stagger: 0.04-0.06s
+ * - Product cards: y: 25px → 0, opacity: 0 → 1, stagger: 40-60ms (desktop), 30-50ms (tablet), 30-40ms (mobile)
  * - Product card inner: name y: 8px → 0, price y: 10px → 0, CTA y: 8px → 0
  */
 export function animateHomepageHero(container: HTMLElement | null): (() => void) | undefined {
   if (!container || typeof window === 'undefined') return;
-  if (prefersReducedMotion()) return;
+
+  const banner = container.querySelector(
+    '[data-gsap="hero-banner"], section[aria-label="Banner Promo Asterra"]'
+  );
+  const bannerInner = banner?.querySelector(
+    '[data-gsap="hero-banner-inner"], a, img'
+  );
+  const heroTexts = container.querySelectorAll(
+    '[data-gsap="hero-text"], [data-gsap="referral-text"]'
+  );
+  const heroButtons = container.querySelectorAll('[data-gsap="hero-button"]');
+  const heading = container.querySelector(
+    '[data-gsap="section-heading"], [data-gsap="featured-heading"]'
+  );
+  const categoryTabs = container.querySelector(
+    '[data-gsap="category-tabs"], [data-gsap="featured-tabs"]'
+  );
+  const productCards = container.querySelectorAll(
+    '[data-gsap~="product-card"], [data-gsap="featured-card"], [data-gsap="product-card"]'
+  );
+
+  if (prefersReducedMotion()) {
+    gsap.set(
+      [
+        banner,
+        bannerInner,
+        heroTexts,
+        heroButtons,
+        heading,
+        categoryTabs,
+        productCards,
+      ].filter(Boolean),
+      { opacity: 1, y: 0, x: 0, scale: 1, clipPath: 'none', clearProps: 'all' }
+    );
+    return;
+  }
+
+  const mode = getViewportMode();
+  const isDesktop = mode === 'desktop';
+  const isTablet = mode === 'tablet';
+
+  const wipeDuration = isDesktop ? 0.8 : isTablet ? 0.75 : 0.7;
+  const cardStagger = isDesktop ? 0.05 : isTablet ? 0.04 : 0.035;
+  const cardDistance = isDesktop ? 25 : isTablet ? 22 : 18;
+  const cardDuration = isDesktop ? 0.44 : isTablet ? 0.4 : 0.36;
 
   const ctx = gsap.context(() => {
-    const banner = container.querySelector(
-      '[data-gsap="hero-banner"], section[aria-label="Banner Promo Asterra"]'
-    );
-    const bannerInner = banner?.querySelector(
-      '[data-gsap="hero-banner-inner"], a, img'
-    );
-    const heroTexts = container.querySelectorAll(
-      '[data-gsap="hero-text"], [data-gsap="referral-text"]'
-    );
-    const heroButtons = container.querySelectorAll('[data-gsap="hero-button"]');
-
-    // Homepage product section
-    const heading = container.querySelector('[data-gsap="section-heading"]');
-    const categoryTabs = container.querySelector(
-      '[data-gsap="category-tabs"], [data-gsap="featured-tabs"]'
-    );
-    const productCards = container.querySelectorAll(
-      '[data-gsap="featured-card"], [data-gsap="product-card"], [data-gsap="card"]'
-    );
-
     const tl = gsap.timeline({
       defaults: { ease: 'power3.out', force3D: true },
     });
 
-    // 1. Hero banner: CapCut-style horizontal wipe reveal
+    // 1. Hero banner: horizontal wipe reveal
     if (banner) {
       tl.fromTo(
         banner,
@@ -526,7 +594,7 @@ export function animateHomepageHero(container: HTMLElement | null): (() => void)
         {
           clipPath: 'inset(0% 0% 0% 0%)',
           opacity: 1,
-          duration: 0.8,
+          duration: wipeDuration,
           ease: 'power3.inOut',
           clearProps: 'clipPath,opacity',
         },
@@ -539,13 +607,13 @@ export function animateHomepageHero(container: HTMLElement | null): (() => void)
       tl.fromTo(
         bannerInner,
         {
-          y: 15,
+          y: isDesktop ? 15 : 10,
           opacity: 0.92,
         },
         {
           y: 0,
           opacity: 1,
-          duration: 0.5,
+          duration: isDesktop ? 0.5 : 0.45,
           ease: 'power3.out',
           clearProps: 'transform,opacity',
         },
@@ -553,12 +621,12 @@ export function animateHomepageHero(container: HTMLElement | null): (() => void)
       );
     }
 
-    // 3. Hero text rise
+    // 3. Hero text rise (if present)
     if (heroTexts.length > 0) {
       tl.fromTo(
         heroTexts,
         {
-          y: 30,
+          y: isDesktop ? 30 : 20,
           opacity: 0,
         },
         {
@@ -573,33 +641,12 @@ export function animateHomepageHero(container: HTMLElement | null): (() => void)
       );
     }
 
-    // 4. Hero button settle
-    if (heroButtons.length > 0) {
-      tl.fromTo(
-        heroButtons,
-        {
-          y: 20,
-          opacity: 0,
-          scale: 0.97,
-        },
-        {
-          y: 0,
-          opacity: 1,
-          scale: 1,
-          duration: 0.4,
-          ease: 'power3.out',
-          clearProps: 'transform,opacity',
-        },
-        0.38
-      );
-    }
-
-    // 5. Section heading
+    // 4. Section heading
     if (heading) {
       tl.fromTo(
         heading,
         {
-          y: 25,
+          y: isDesktop ? 25 : 18,
           opacity: 0,
         },
         {
@@ -609,16 +656,16 @@ export function animateHomepageHero(container: HTMLElement | null): (() => void)
           ease: 'power3.out',
           clearProps: 'transform,opacity',
         },
-        0.34
+        0.3
       );
     }
 
-    // 6. Category tabs
+    // 5. Category tabs
     if (categoryTabs) {
       tl.fromTo(
         categoryTabs,
         {
-          y: 15,
+          y: isDesktop ? 15 : 10,
           opacity: 0,
         },
         {
@@ -628,7 +675,29 @@ export function animateHomepageHero(container: HTMLElement | null): (() => void)
           ease: 'power3.out',
           clearProps: 'transform,opacity',
         },
-        0.38
+        0.32
+      );
+    }
+
+    // 6. Hero / tab buttons
+    if (heroButtons.length > 0) {
+      tl.fromTo(
+        heroButtons,
+        {
+          y: isDesktop ? 20 : 12,
+          opacity: 0,
+          scale: 0.97,
+        },
+        {
+          y: 0,
+          opacity: 1,
+          scale: 1,
+          duration: 0.38,
+          ease: 'power3.out',
+          stagger: 0.03,
+          clearProps: 'transform,opacity',
+        },
+        0.36
       );
     }
 
@@ -638,18 +707,18 @@ export function animateHomepageHero(container: HTMLElement | null): (() => void)
       tl.fromTo(
         topCards,
         {
-          y: 25,
+          y: cardDistance,
           opacity: 0,
         },
         {
           y: 0,
           opacity: 1,
-          duration: 0.42,
+          duration: cardDuration,
           ease: 'power3.out',
-          stagger: isMobileScreen() ? 0.03 : 0.05,
+          stagger: cardStagger,
           clearProps: 'transform,opacity',
         },
-        0.42
+        0.4
       );
 
       // Micro elements inside top cards
@@ -659,26 +728,26 @@ export function animateHomepageHero(container: HTMLElement | null): (() => void)
 
       if (names.length > 0) {
         tl.fromTo(
-          Array.from(names).slice(0, 6),
+          Array.from(names).slice(0, 8),
           { y: 8 },
           { y: 0, duration: 0.28, stagger: 0.02, clearProps: 'transform' },
-          0.5
+          0.48
         );
       }
       if (prices.length > 0) {
         tl.fromTo(
-          Array.from(prices).slice(0, 6),
+          Array.from(prices).slice(0, 8),
           { y: 10 },
           { y: 0, duration: 0.28, stagger: 0.02, clearProps: 'transform' },
-          0.52
+          0.5
         );
       }
       if (cardBtns.length > 0) {
         tl.fromTo(
-          Array.from(cardBtns).slice(0, 6),
+          Array.from(cardBtns).slice(0, 8),
           { y: 8 },
           { y: 0, duration: 0.28, stagger: 0.02, clearProps: 'transform' },
-          0.54
+          0.52
         );
       }
     }
@@ -695,7 +764,18 @@ export const animateHeroMasterSequence = animateHomepageHero;
 
 export function setupHomepageScrollReveal(root: HTMLElement | null): (() => void) | undefined {
   if (!root || typeof window === 'undefined') return;
-  if (prefersReducedMotion()) return;
+
+  if (prefersReducedMotion()) {
+    const allItems = root.querySelectorAll(
+      '[data-gsap-section], [data-gsap$="-header"], [data-gsap$="-card"], [data-gsap$="-step"], [data-gsap="faq-item"]'
+    );
+    gsap.set(allItems, { opacity: 1, y: 0, clearProps: 'all' });
+    return;
+  }
+
+  const mode = getViewportMode();
+  const isDesktop = mode === 'desktop';
+  const isTablet = mode === 'tablet';
 
   const ctx = gsap.context(() => {
     const sections = [
@@ -710,7 +790,7 @@ export function setupHomepageScrollReveal(root: HTMLElement | null): (() => void
       if (!sec) return;
 
       const header = sec.querySelector(
-        '[data-gsap$="-header"], [data-gsap="cta-content"], div:first-child'
+        '[data-gsap$="-header"], [data-gsap="section-heading"], [data-gsap="cta-content"], div:first-child'
       );
       const items = sec.querySelectorAll(
         '[data-gsap$="-card"], [data-gsap$="-step"], [data-gsap="faq-item"], [data-gsap="cta-actions"], [data-gsap="card"]'
@@ -719,7 +799,7 @@ export function setupHomepageScrollReveal(root: HTMLElement | null): (() => void
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: sec,
-          start: 'top 88%',
+          start: isDesktop ? 'top 85%' : 'top 90%',
           once: true,
         },
         defaults: { ease: 'power2.out', force3D: true },
@@ -728,8 +808,8 @@ export function setupHomepageScrollReveal(root: HTMLElement | null): (() => void
       if (header) {
         tl.fromTo(
           header,
-          { opacity: 0.3, y: 10 },
-          { opacity: 1, y: 0, duration: 0.35, clearProps: 'all' },
+          { opacity: 0.3, y: isDesktop ? 16 : 10 },
+          { opacity: 1, y: 0, duration: isDesktop ? 0.42 : 0.35, clearProps: 'all' },
           0
         );
       }
@@ -738,8 +818,14 @@ export function setupHomepageScrollReveal(root: HTMLElement | null): (() => void
         const limitedItems = Array.from(items).slice(0, 8);
         tl.fromTo(
           limitedItems,
-          { opacity: 0.3, y: 12 },
-          { opacity: 1, y: 0, duration: 0.36, stagger: 0.035, clearProps: 'all' },
+          { opacity: 0.3, y: isDesktop ? 18 : 12 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: isDesktop ? 0.4 : 0.36,
+            stagger: isDesktop ? 0.045 : isTablet ? 0.038 : 0.03,
+            clearProps: 'all',
+          },
           header ? 0.06 : 0
         );
       }
@@ -755,19 +841,34 @@ export function setupHomepageScrollReveal(root: HTMLElement | null): (() => void
 
 export function animateProductsPage(container: HTMLElement | null): (() => void) | undefined {
   if (!container || typeof window === 'undefined') return;
-  if (prefersReducedMotion()) return;
+
+  const breadcrumb = container.querySelector('[data-gsap="breadcrumb"]');
+  const title = container.querySelector('[data-gsap="page-title"], h1');
+  const desc = container.querySelector('[data-gsap="page-desc"], [data-gsap="page-sub"], p[data-gsap="lead"], p.text-xs');
+  const badge = container.querySelector('[data-gsap="hero-badge"]');
+  const search = container.querySelector('[data-gsap="search-bar"]');
+  const filters = container.querySelector('[data-gsap="filter-controls"]');
+  const categoryTabs = container.querySelector('[data-gsap="category-tabs"]');
+  const cards = container.querySelectorAll('[data-gsap="product-card"], [data-gsap="card"]');
+  const pagination = container.querySelector('[data-gsap="pagination"], nav[aria-label="Pagination"]');
+
+  if (prefersReducedMotion()) {
+    gsap.set(
+      [breadcrumb, title, desc, badge, search, filters, categoryTabs, cards, pagination].filter(Boolean),
+      { opacity: 1, y: 0, x: 0, scale: 1, clearProps: 'all' }
+    );
+    return;
+  }
+
+  const mode = getViewportMode();
+  const isDesktop = mode === 'desktop';
+  const isTablet = mode === 'tablet';
+
+  const cardStagger = isDesktop ? 0.045 : isTablet ? 0.038 : 0.03;
+  const cardDistance = isDesktop ? 25 : isTablet ? 20 : 16;
+  const cardDuration = isDesktop ? 0.42 : isTablet ? 0.38 : 0.34;
 
   const ctx = gsap.context(() => {
-    const breadcrumb = container.querySelector('[data-gsap="breadcrumb"]');
-    const title = container.querySelector('[data-gsap="page-title"], h1');
-    const desc = container.querySelector('[data-gsap="page-desc"], p[data-gsap="lead"], p.text-xs');
-    const badge = container.querySelector('[data-gsap="hero-badge"]');
-    const search = container.querySelector('[data-gsap="search-bar"]');
-    const filters = container.querySelector('[data-gsap="filter-controls"]');
-    const categoryTabs = container.querySelector('[data-gsap="category-tabs"]');
-    const cards = container.querySelectorAll('[data-gsap="product-card"], [data-gsap="card"]');
-    const pagination = container.querySelector('[data-gsap="pagination"], nav[aria-label="Pagination"]');
-
     const tl = gsap.timeline({ defaults: { ease: 'power3.out', force3D: true } });
 
     // Breadcrumb: x: -15px → 0, opacity 0 → 1
@@ -777,7 +878,7 @@ export function animateProductsPage(container: HTMLElement | null): (() => void)
 
     // Page title: y: 30px → 0, opacity 0 → 1
     if (title) {
-      tl.fromTo(title, { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.42, clearProps: 'all' }, 0.04);
+      tl.fromTo(title, { y: isDesktop ? 30 : 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.42, clearProps: 'all' }, 0.04);
     }
 
     // Description: y: 15px → 0, opacity 0 → 1
@@ -805,13 +906,13 @@ export function animateProductsPage(container: HTMLElement | null): (() => void)
       tl.fromTo(categoryTabs, { y: 15, opacity: 0 }, { y: 0, opacity: 1, duration: 0.36, clearProps: 'all' }, 0.16);
     }
 
-    // Product cards: y: 25px → 0, opacity 0 → 1, stagger 40ms
+    // Product cards: y: cardDistance → 0, opacity 0 → 1, stagger
     if (cards.length > 0) {
       const topCards = Array.from(cards).slice(0, 9);
       tl.fromTo(
         topCards,
-        { y: 25, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.4, stagger: 0.04, clearProps: 'all' },
+        { y: cardDistance, opacity: 0 },
+        { y: 0, opacity: 1, duration: cardDuration, stagger: cardStagger, clearProps: 'all' },
         0.2
       );
     }
@@ -932,18 +1033,32 @@ export function animateProductDetailPage(container: HTMLElement | null): (() => 
 
 export function animateOrdersPage(container: HTMLElement | null): (() => void) | undefined {
   if (!container || typeof window === 'undefined') return;
-  if (prefersReducedMotion()) return;
+
+  const breadcrumb = container.querySelector('[data-gsap="breadcrumb"]');
+  const heading = container.querySelector('[data-gsap="orders-title"]');
+  const desc = container.querySelector('[data-gsap="orders-desc"]');
+  const tabs = container.querySelector('[data-gsap="orders-tabs"]');
+  const buttons = container.querySelectorAll('[data-gsap="orders-button"]');
+  const cards = container.querySelectorAll('[data-gsap="order-card"]');
+  const badges = container.querySelectorAll('[data-gsap="order-status"]');
+  const info = container.querySelectorAll('[data-gsap="order-info"]');
+
+  if (prefersReducedMotion()) {
+    gsap.set(
+      [breadcrumb, heading, desc, tabs, buttons, cards, badges, info].filter(Boolean),
+      { opacity: 1, y: 0, x: 0, scale: 1, clearProps: 'all' }
+    );
+    return;
+  }
+
+  const mode = getViewportMode();
+  const isDesktop = mode === 'desktop';
+  const isTablet = mode === 'tablet';
+
+  const cardStagger = isDesktop ? 0.05 : isTablet ? 0.04 : 0.035;
+  const cardDuration = isDesktop ? 0.42 : isTablet ? 0.38 : 0.35;
 
   const ctx = gsap.context(() => {
-    const breadcrumb = container.querySelector('[data-gsap="breadcrumb"]');
-    const heading = container.querySelector('[data-gsap="orders-title"]');
-    const desc = container.querySelector('[data-gsap="orders-desc"]');
-    const tabs = container.querySelector('[data-gsap="orders-tabs"]');
-    const buttons = container.querySelectorAll('[data-gsap="orders-button"]');
-    const cards = container.querySelectorAll('[data-gsap="order-card"]');
-    const badges = container.querySelectorAll('[data-gsap="order-status"]');
-    const info = container.querySelectorAll('[data-gsap="order-info"]');
-
     const tl = gsap.timeline({ defaults: { ease: 'power3.out', force3D: true } });
 
     if (breadcrumb) {
@@ -952,7 +1067,7 @@ export function animateOrdersPage(container: HTMLElement | null): (() => void) |
 
     // Heading: y: 25 → 0
     if (heading) {
-      tl.fromTo(heading, { y: 25, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, clearProps: 'all' }, 0.04);
+      tl.fromTo(heading, { y: isDesktop ? 25 : 18, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, clearProps: 'all' }, 0.04);
     }
 
     if (desc) {
@@ -969,13 +1084,13 @@ export function animateOrdersPage(container: HTMLElement | null): (() => void) |
       tl.fromTo(buttons, { y: 10, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35, clearProps: 'all' }, 0.14);
     }
 
-    // Order cards: y: 25 → 0, stagger 50ms
+    // Order cards: y: 25 → 0, stagger
     if (cards.length > 0) {
       const topCards = Array.from(cards).slice(0, 8);
       tl.fromTo(
         topCards,
-        { y: 25, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.42, stagger: 0.05, clearProps: 'all' },
+        { y: isDesktop ? 25 : 18, opacity: 0 },
+        { y: 0, opacity: 1, duration: cardDuration, stagger: cardStagger, clearProps: 'all' },
         0.18
       );
 
@@ -1010,16 +1125,27 @@ export function animateOrdersPage(container: HTMLElement | null): (() => void) |
 
 export function animateSellerPage(container: HTMLElement | null): (() => void) | undefined {
   if (!container || typeof window === 'undefined') return;
-  if (prefersReducedMotion()) return;
+
+  const hero = container.querySelector('[data-gsap="seller-hero"]');
+  const title = container.querySelector('[data-gsap="seller-title"]');
+  const desc = container.querySelector('[data-gsap="seller-desc"]');
+  const cards = container.querySelectorAll('[data-gsap="seller-card"]');
+  const info = container.querySelector('[data-gsap="seller-info"]');
+  const cta = container.querySelector('[data-gsap="seller-cta"]');
+
+  if (prefersReducedMotion()) {
+    gsap.set(
+      [hero, title, desc, cards, info, cta].filter(Boolean),
+      { opacity: 1, y: 0, scale: 1, clearProps: 'all' }
+    );
+    return;
+  }
+
+  const mode = getViewportMode();
+  const isDesktop = mode === 'desktop';
+  const isTablet = mode === 'tablet';
 
   const ctx = gsap.context(() => {
-    const hero = container.querySelector('[data-gsap="seller-hero"]');
-    const title = container.querySelector('[data-gsap="seller-title"]');
-    const desc = container.querySelector('[data-gsap="seller-desc"]');
-    const cards = container.querySelectorAll('[data-gsap="seller-card"]');
-    const info = container.querySelector('[data-gsap="seller-info"]');
-    const cta = container.querySelector('[data-gsap="seller-cta"]');
-
     const tl = gsap.timeline({ defaults: { ease: 'power3.out', force3D: true } });
 
     if (hero) {
@@ -1028,7 +1154,7 @@ export function animateSellerPage(container: HTMLElement | null): (() => void) |
 
     // Heading: y: 25 → 0
     if (title) {
-      tl.fromTo(title, { y: 25, opacity: 0 }, { y: 0, opacity: 1, duration: 0.42, clearProps: 'all' }, 0.08);
+      tl.fromTo(title, { y: isDesktop ? 25 : 18, opacity: 0 }, { y: 0, opacity: 1, duration: 0.42, clearProps: 'all' }, 0.08);
     }
 
     // Description: y: 15 → 0
@@ -1041,8 +1167,8 @@ export function animateSellerPage(container: HTMLElement | null): (() => void) |
       const topCards = Array.from(cards).slice(0, 8);
       tl.fromTo(
         topCards,
-        { y: 20, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.4, stagger: 0.045, clearProps: 'all' },
+        { y: isDesktop ? 20 : 15, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.4, stagger: isDesktop ? 0.045 : isTablet ? 0.038 : 0.03, clearProps: 'all' },
         0.16
       );
     }
@@ -1067,21 +1193,32 @@ export function animateSellerPage(container: HTMLElement | null): (() => void) |
 
 export function animateDaftarSalesPage(container: HTMLElement | null): (() => void) | undefined {
   if (!container || typeof window === 'undefined') return;
-  if (prefersReducedMotion()) return;
+
+  const heading = container.querySelector('[data-gsap="daftar-title"]');
+  const desc = container.querySelector('[data-gsap="daftar-desc"]');
+  const featureCards = container.querySelectorAll('[data-gsap="daftar-feature-card"]');
+  const form = container.querySelector('[data-gsap="daftar-form"]');
+  const inputs = container.querySelectorAll('[data-gsap="daftar-input"], form > div');
+  const button = container.querySelector('[data-gsap="daftar-button"]');
+
+  if (prefersReducedMotion()) {
+    gsap.set(
+      [heading, desc, featureCards, form, inputs, button].filter(Boolean),
+      { opacity: 1, y: 0, scale: 1, clearProps: 'all' }
+    );
+    return;
+  }
+
+  const mode = getViewportMode();
+  const isDesktop = mode === 'desktop';
+  const isTablet = mode === 'tablet';
 
   const ctx = gsap.context(() => {
-    const heading = container.querySelector('[data-gsap="daftar-title"]');
-    const desc = container.querySelector('[data-gsap="daftar-desc"]');
-    const featureCards = container.querySelectorAll('[data-gsap="daftar-feature-card"]');
-    const form = container.querySelector('[data-gsap="daftar-form"]');
-    const inputs = container.querySelectorAll('[data-gsap="daftar-input"], form > div');
-    const button = container.querySelector('[data-gsap="daftar-button"]');
-
     const tl = gsap.timeline({ defaults: { ease: 'power3.out', force3D: true } });
 
     // Heading: y: 25 → 0
     if (heading) {
-      tl.fromTo(heading, { y: 25, opacity: 0 }, { y: 0, opacity: 1, duration: 0.42, clearProps: 'all' }, 0);
+      tl.fromTo(heading, { y: isDesktop ? 25 : 18, opacity: 0 }, { y: 0, opacity: 1, duration: 0.42, clearProps: 'all' }, 0);
     }
 
     // Description: y: 15 → 0
@@ -1093,8 +1230,8 @@ export function animateDaftarSalesPage(container: HTMLElement | null): (() => vo
     if (featureCards.length > 0) {
       tl.fromTo(
         Array.from(featureCards),
-        { y: 20, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.4, stagger: 0.05, clearProps: 'all' },
+        { y: isDesktop ? 20 : 15, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.4, stagger: isDesktop ? 0.05 : isTablet ? 0.04 : 0.03, clearProps: 'all' },
         0.12
       );
     }
@@ -1130,20 +1267,30 @@ export function animateDaftarSalesPage(container: HTMLElement | null): (() => vo
 
 export function animateSalesLoginPage(container: HTMLElement | null): (() => void) | undefined {
   if (!container || typeof window === 'undefined') return;
-  if (prefersReducedMotion()) return;
+
+  const card = container.querySelector('[data-gsap="login-card"], .card');
+  const logo = container.querySelector('[data-gsap="login-logo"]');
+  const heading = container.querySelector('[data-gsap="login-heading"], h2, h3');
+  const inputs = container.querySelectorAll('[data-gsap="login-input"]');
+  const button = container.querySelector('[data-gsap="login-button"]');
+
+  if (prefersReducedMotion()) {
+    gsap.set(
+      [card, logo, heading, inputs, button].filter(Boolean),
+      { opacity: 1, y: 0, scale: 1, clearProps: 'all' }
+    );
+    return;
+  }
+
+  const mode = getViewportMode();
+  const isDesktop = mode === 'desktop';
 
   const ctx = gsap.context(() => {
-    const card = container.querySelector('[data-gsap="login-card"], .card');
-    const logo = container.querySelector('[data-gsap="login-logo"]');
-    const heading = container.querySelector('[data-gsap="login-heading"], h2, h3');
-    const inputs = container.querySelectorAll('[data-gsap="login-input"]');
-    const button = container.querySelector('[data-gsap="login-button"]');
-
     const tl = gsap.timeline({ defaults: { ease: 'power3.out', force3D: true } });
 
     // Card: y: 30 → 0, opacity 0 → 1
     if (card) {
-      tl.fromTo(card, { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.48, clearProps: 'all' }, 0);
+      tl.fromTo(card, { y: isDesktop ? 30 : 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.48, clearProps: 'all' }, 0);
     }
 
     // Logo: y: -10 → 0, opacity 0 → 1
@@ -1186,17 +1333,25 @@ export function animateSalesLoginPage(container: HTMLElement | null): (() => voi
  */
 export function setupFooterReveal(footerElement: HTMLElement | null): (() => void) | undefined {
   if (!footerElement || typeof window === 'undefined') return;
-  if (prefersReducedMotion()) return;
+
+  const footerContent = footerElement.querySelector('[data-gsap="footer-content"], div.max-w-7xl') || footerElement;
+  const cols = footerElement.querySelectorAll('[data-gsap="footer-col"]');
+  const bottom = footerElement.querySelector('[data-gsap="footer-bottom"]');
+
+  if (prefersReducedMotion()) {
+    gsap.set([footerContent, cols, bottom].filter(Boolean), { opacity: 1, yPercent: 0, clearProps: 'all' });
+    return;
+  }
+
+  const mode = getViewportMode();
+  const isDesktop = mode === 'desktop';
+  const isTablet = mode === 'tablet';
 
   const ctx = gsap.context(() => {
-    const footerContent = footerElement.querySelector('[data-gsap="footer-content"], div.max-w-7xl') || footerElement;
-    const cols = footerElement.querySelectorAll('[data-gsap="footer-col"]');
-    const bottom = footerElement.querySelector('[data-gsap="footer-bottom"]');
-
     const tl = gsap.timeline({
       scrollTrigger: {
         trigger: footerElement,
-        start: 'top 92%',
+        start: isDesktop ? 'top 92%' : 'top 96%',
         once: true,
       },
       defaults: { ease: 'power3.out', force3D: true },
@@ -1206,7 +1361,7 @@ export function setupFooterReveal(footerElement: HTMLElement | null): (() => voi
     tl.fromTo(
       footerContent,
       { yPercent: 100, opacity: 0 },
-      { yPercent: 0, opacity: 1, duration: 0.7, clearProps: 'transform,opacity' },
+      { yPercent: 0, opacity: 1, duration: isDesktop ? 0.7 : isTablet ? 0.65 : 0.6, clearProps: 'transform,opacity' },
       0
     );
 
@@ -1214,8 +1369,8 @@ export function setupFooterReveal(footerElement: HTMLElement | null): (() => voi
     if (cols.length > 0) {
       tl.fromTo(
         Array.from(cols),
-        { y: 16, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.45, stagger: 0.04, clearProps: 'all' },
+        { y: isDesktop ? 16 : 12, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.45, stagger: isDesktop ? 0.05 : 0.035, clearProps: 'all' },
         0.2
       );
     }
@@ -1240,21 +1395,28 @@ export function setupFooterReveal(footerElement: HTMLElement | null): (() => voi
 
 export function animateGeneralSubpage(container: HTMLElement | null): (() => void) | undefined {
   if (!container || typeof window === 'undefined') return;
-  if (prefersReducedMotion()) return;
+
+  const breadcrumb = container.querySelector('nav[aria-label="Breadcrumb"], [data-gsap="breadcrumb"]');
+  const heading = container.querySelector('h1, [data-gsap="page-title"]');
+  const desc = container.querySelector('p[data-gsap="page-sub"], p[data-gsap="lead"], [data-gsap="page-desc"]');
+  const cards = container.querySelectorAll('[data-gsap="card"], [data-gsap="product-card"], form, .grid > div:not(.col-span-12)');
+
+  if (prefersReducedMotion()) {
+    gsap.set([breadcrumb, heading, desc, cards].filter(Boolean), { opacity: 1, y: 0, clearProps: 'all' });
+    return;
+  }
+
+  const mode = getViewportMode();
+  const isDesktop = mode === 'desktop';
 
   const ctx = gsap.context(() => {
-    const breadcrumb = container.querySelector('nav[aria-label="Breadcrumb"], [data-gsap="breadcrumb"]');
-    const heading = container.querySelector('h1, [data-gsap="page-title"]');
-    const desc = container.querySelector('p[data-gsap="page-sub"], p[data-gsap="lead"], [data-gsap="page-desc"]');
-    const cards = container.querySelectorAll('[data-gsap="card"], [data-gsap="product-card"], form, .grid > div:not(.col-span-12)');
-
     const tl = gsap.timeline({ defaults: { ease: 'power3.out', force3D: true } });
 
     if (breadcrumb) {
       tl.fromTo(breadcrumb, { x: -15, opacity: 0 }, { x: 0, opacity: 1, duration: 0.35, clearProps: 'all' }, 0);
     }
     if (heading) {
-      tl.fromTo(heading, { y: 25, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, clearProps: 'all' }, 0.04);
+      tl.fromTo(heading, { y: isDesktop ? 25 : 18, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, clearProps: 'all' }, 0.04);
     }
     if (desc) {
       tl.fromTo(desc, { y: 15, opacity: 0 }, { y: 0, opacity: 1, duration: 0.38, clearProps: 'all' }, 0.08);
@@ -1263,8 +1425,8 @@ export function animateGeneralSubpage(container: HTMLElement | null): (() => voi
       const topCards = Array.from(cards).slice(0, 8);
       tl.fromTo(
         topCards,
-        { y: 20, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.42, stagger: 0.035, clearProps: 'all' },
+        { y: isDesktop ? 20 : 15, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.42, stagger: isDesktop ? 0.04 : 0.03, clearProps: 'all' },
         0.12
       );
     }
@@ -1281,7 +1443,10 @@ export const animatePageEntrance = animateGeneralSubpage;
 
 export function animateFloatingButton(element: HTMLElement | null): (() => void) | undefined {
   if (!element || typeof window === 'undefined') return;
-  if (prefersReducedMotion()) return;
+  if (prefersReducedMotion()) {
+    gsap.set(element, { y: 0, opacity: 1, scale: 1, clearProps: 'all' });
+    return;
+  }
 
   const tween = gsap.fromTo(
     element,

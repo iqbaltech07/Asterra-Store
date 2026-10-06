@@ -3,7 +3,6 @@
 import React, { useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import {
-  prefersReducedMotion,
   animateHomepageHero,
   setupHomepageScrollReveal,
   animateProductsPage,
@@ -43,11 +42,6 @@ export function PageTransition({ children }: PageTransitionProps) {
 
     const container = containerRef.current;
     if (!container || typeof window === 'undefined') return;
-
-    // Reduced motion accessibility guard: instantaneous 100% visible display, zero motion delay
-    if (prefersReducedMotion()) {
-      return;
-    }
 
     let cleanupEntrance: (() => void) | undefined;
     let cleanupScroll: (() => void) | undefined;

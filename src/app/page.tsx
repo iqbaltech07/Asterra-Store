@@ -240,7 +240,7 @@ function FeaturedGridCard({
 
   return (
     <div
-      data-gsap="featured-card"
+      data-gsap="featured-card product-card"
       data-card-wrapper
       className="group bg-white border border-[rgba(18,26,42,0.09)] hover:border-[#C96F55]/70 hover:shadow-card-hover hover:-translate-y-0.5 rounded-xl sm:rounded-2xl p-2.5 sm:p-3.5 transition-[border-color,box-shadow,transform] duration-200 flex flex-col justify-between w-full h-full select-none"
     >
@@ -847,11 +847,12 @@ export default function HomePage() {
         */}
         <section id="produk-unggulan" aria-label="Produk Unggulan Asterra" data-gsap="featured-section" className="mb-6 sm:mb-8">
           {/* Selector Tabs: [ 🔥 Promo ] [ Terlaris ] [ Terbaru ] */}
-          <div data-gsap="featured-tabs" className="flex items-center justify-between gap-2 mb-3 sm:mb-4 pb-1 border-b border-[rgba(18,26,42,0.06)] overflow-x-auto scrollbar-none">
+          <div data-gsap="featured-tabs category-tabs" className="flex items-center justify-between gap-2 mb-3 sm:mb-4 pb-1 border-b border-[rgba(18,26,42,0.06)] overflow-x-auto scrollbar-none">
             <div className="flex items-center gap-1.5 sm:gap-2">
               {/* Tab 1: PROMO (DEFAULT & VISUALLY PROMINENT) */}
               <button
                 type="button"
+                data-gsap="hero-button"
                 onClick={() => setActiveCategory('promo')}
                 className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs sm:text-[13px] font-bold transition-all cursor-pointer ${
                   activeCategory === 'promo'
@@ -866,6 +867,7 @@ export default function HomePage() {
               {/* Tab 2: Terlaris */}
               <button
                 type="button"
+                data-gsap="hero-button"
                 onClick={() => setActiveCategory('terlaris')}
                 className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs sm:text-[13px] transition-all cursor-pointer ${
                   activeCategory === 'terlaris'
@@ -879,6 +881,7 @@ export default function HomePage() {
               {/* Tab 3: Terbaru */}
               <button
                 type="button"
+                data-gsap="hero-button"
                 onClick={() => setActiveCategory('terbaru')}
                 className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs sm:text-[13px] transition-all cursor-pointer ${
                   activeCategory === 'terbaru'
@@ -893,6 +896,7 @@ export default function HomePage() {
             {/* Quick Link to Full Catalog */}
             <Link
               href="/product"
+              data-gsap="hero-button"
               className="text-xs font-semibold text-[#C96F55] hover:text-[#B86047] hidden md:inline-flex items-center gap-1 shrink-0"
             >
               <span>Semua Katalog</span>
@@ -901,7 +905,7 @@ export default function HomePage() {
           </div>
 
           {/* STATIC PRODUCT GRID (4 columns desktop, 2 columns mobile) */}
-          <div key={activeCategory} className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-3.5 lg:gap-4 animate-tab-glide">
+          <div key={activeCategory} data-gsap="product-grid" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-3.5 lg:gap-4 animate-tab-glide">
             {featuredApps.map((app) => (
               <FeaturedGridCard
                 key={`featured-${activeCategory}-${app.name}`}
@@ -922,7 +926,7 @@ export default function HomePage() {
         <section aria-label="Showcase Produk Asterra" className="mt-7 sm:mt-10 mb-6 sm:mb-8 pt-6 sm:pt-7 border-t border-[rgba(18,26,42,0.06)]">
           <div className="flex items-center justify-between mb-3 px-1">
             <div className="flex items-center gap-2">
-              <h2 className="text-xs sm:text-sm font-black uppercase tracking-wider text-[#121A2A]/85">
+              <h2 data-gsap="section-heading" className="text-xs sm:text-sm font-black uppercase tracking-wider text-[#121A2A]/85">
                 Showcase Katalog Pilihan
               </h2>
             </div>
