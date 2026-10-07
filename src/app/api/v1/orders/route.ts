@@ -412,20 +412,26 @@ export async function POST(request: NextRequest) {
       };
     });
 
-    // 3. Strict Server-Side Promo Code Validation & Discount Deduction (Anti-Fraud)
-    let discountAmount = 0;
-    let appliedPromoCode: string | null = null;
-    if (body.promo_code && typeof body.promo_code === 'string' && body.promo_code.trim()) {
-      const promoValidation = await PromoService.validatePromo(
-        body.promo_code,
-        rawTotalAmount,
-        customerEmail
+    // Calculate total COGS to enforce Floor Price Protection (Anti-Loss Guard)
+    let totalEstimatedCOGS = 0;
+    for (const item of orderItems) {
+      const dbProduct = dbProductMap.get(item.product_id) || dbProductMap.get(
+        item.product_id.lastIndexOf('-') > 0 ? item.product_id.substring(0, item.product_id.lastIndexOf('-')) : item.product_id
       );
-      if (promoValidation.valid && promoValidation.discountAmount) {
-        discountAmount = promoValidation.discountAmount;
-        appliedPromoCode = promoValidation.code || body.promo_code.trim().toUpperCase();
-      }
+      const unitCost = dbProduct?.providerPrice && dbProduct.providerPrice > 0
+        ? dbProduct.providerPrice
+        : Math.round(item.unit_price * 0.85);
+      totalEstimatedCOGS += unitCost * item.quantity;
     }
+
+    // ==========================================
+    // FLOOR PRICE PROTECTION (ANTI-LOSS GUARD)
+    // Ensures total discounts NEVER force selling below supplier cost
+    // and guarantees minimum transaction profit for store & sales commission
+    // ==========================================
+    const rawMargin = Math.max(0, rawTotalAmount - totalEstimatedCOGS);
+    const minProfitTarget = rawMargin <= 3000 ? Math.round(rawMargin * 0.4) : 1500;
+    const maxAllowedTotalDiscount = Math.max(0, rawMargin - minProfitTarget);
 
     // Customer Referral 1x Discount Eligibility Check (SSOT §5, §11)
     let referralDiscount = 0;
@@ -436,7 +442,25 @@ export async function POST(request: NextRequest) {
         customerPhone: customerWhatsapp || undefined,
       });
       if (refCheck.eligible && refCheck.discountAmount > 0) {
-        referralDiscount = refCheck.discountAmount;
+        // Referral discount capped by floor price
+        referralDiscount = Math.min(refCheck.discountAmount, maxAllowedTotalDiscount);
+      }
+    }
+
+    // 3. Strict Server-Side Promo Code Validation & Discount Deduction (Anti-Fraud + Floor Price Guard)
+    let discountAmount = 0;
+    let appliedPromoCode: string | null = null;
+    if (body.promo_code && typeof body.promo_code === 'string' && body.promo_code.trim()) {
+      const remainingDiscountQuota = Math.max(0, maxAllowedTotalDiscount - referralDiscount);
+      const promoValidation = await PromoService.validatePromo(
+        body.promo_code,
+        rawTotalAmount,
+        customerEmail,
+        { maxAllowedDiscount: remainingDiscountQuota }
+      );
+      if (promoValidation.valid && promoValidation.discountAmount) {
+        discountAmount = Math.min(promoValidation.discountAmount, remainingDiscountQuota);
+        appliedPromoCode = promoValidation.code || body.promo_code.trim().toUpperCase();
       }
     }
 

@@ -341,7 +341,13 @@ function CheckoutPageContent() {
 
     try {
       setIsCheckingPromo(true);
-      const res = await PromosApi.validate(code, getTotalAmount(), targetEmail.trim() || undefined);
+      const res = await PromosApi.validate(
+        code,
+        getTotalAmount(),
+        targetEmail.trim() || undefined,
+        items.map((i) => ({ product_id: i.id, quantity: i.quantity, price: i.priceNumeric })),
+        referralDiscount
+      );
 
       if (!res || !res.valid) {
         setAppliedPromo(null);

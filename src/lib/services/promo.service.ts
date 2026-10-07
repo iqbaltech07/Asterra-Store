@@ -253,7 +253,10 @@ export class PromoService {
   public static async validatePromo(
     code: string,
     subtotal: number,
-    userEmail?: string | null
+    userEmail?: string | null,
+    options?: {
+      maxAllowedDiscount?: number;
+    }
   ): Promise<PromoValidationResult> {
     const cleanCode = (code || '').trim().toUpperCase();
     if (!cleanCode) {
@@ -323,6 +326,21 @@ export class PromoService {
       discountAmount = Math.min(numericSubtotal, promo.discountValue);
     }
 
+    // Floor price protection guard: Capped if options.maxAllowedDiscount is provided
+    let isCappedByFloorPrice = false;
+    if (options?.maxAllowedDiscount !== undefined) {
+      if (options.maxAllowedDiscount <= 0) {
+        return {
+          valid: false,
+          error: `Produk dalam pesanan ini memiliki batas margin minimum sehingga tidak dapat dipotong voucher promo.`,
+        };
+      }
+      if (discountAmount > options.maxAllowedDiscount) {
+        discountAmount = options.maxAllowedDiscount;
+        isCappedByFloorPrice = true;
+      }
+    }
+
     // Discount cannot exceed subtotal
     discountAmount = Math.max(0, Math.min(discountAmount, numericSubtotal));
     const finalTotal = Math.max(0, numericSubtotal - discountAmount);
@@ -342,7 +360,9 @@ export class PromoService {
       finalTotal,
       minOrderAmount: promo.minOrderAmount,
       maxDiscount: promo.maxDiscount,
-      message: `Voucher ${promo.code} berhasil digunakan! Potongan harga ${discountSummary}.`,
+      message: isCappedByFloorPrice
+        ? `Voucher ${promo.code} diterapkan! Diskon disesuaikan maksimal Rp ${discountAmount.toLocaleString('id-ID')} (Proteksi batas modal produk).`
+        : `Voucher ${promo.code} berhasil digunakan! Potongan harga ${discountSummary}.`,
     };
   }
 

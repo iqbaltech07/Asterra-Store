@@ -180,7 +180,13 @@ export const OrdersApi = {
  * Centralized Promo Codes API
  */
 export const PromosApi = {
-  async validate(code: string, subtotal: number, userEmail?: string): Promise<PromoValidationResponse> {
+  async validate(
+    code: string,
+    subtotal: number,
+    userEmail?: string,
+    items?: Array<{ id?: string; product_id?: string; quantity?: number; price?: number; priceNumeric?: number }>,
+    referralDiscount?: number
+  ): Promise<PromoValidationResponse> {
     const json = await requestJson<{ success: boolean; data: PromoValidationResponse }>('/api/v1/promos/validate', {
       method: 'POST',
       body: JSON.stringify({
@@ -188,6 +194,8 @@ export const PromosApi = {
         subtotal,
         email: userEmail,
         user_email: userEmail,
+        items,
+        referral_discount: referralDiscount,
       }),
     });
     return json.data;
