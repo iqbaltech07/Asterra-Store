@@ -27,7 +27,6 @@ export async function GET(req: NextRequest) {
       where: {
         OR: [
           { salesPartnerId: partner.id },
-          { recruiterPartnerId: partner.id },
           { referralCode: partner.code },
         ],
       },
@@ -47,13 +46,8 @@ export async function GET(req: NextRequest) {
       const commission = commissionMap.get(o.id);
       
       let earnedAmount = 0;
-      if (commission) {
-        if (commission.partnerId === partner.id) {
-          earnedAmount += commission.commissionAmount;
-        }
-        if (commission.recruiterId === partner.id) {
-          earnedAmount += commission.bonusAmount;
-        }
+      if (commission && commission.partnerId === partner.id) {
+        earnedAmount = commission.commissionAmount;
       }
 
       return {
