@@ -250,7 +250,54 @@ export const animateSlideLeft = animateSlideFromLeft;
 export const animateSlideRight = animateSlideFromRight;
 
 /**
- * 4. Vertical Mask Reveal (CapCut / Editorial style):
+ * 4. Center → Out Horizontal Reveal:
+ * clip-path: inset(0 50% 0 50%) → inset(0 0% 0 0%), GPU-friendly, duration 0.75–0.95s, power3.inOut
+ * The banner starts from a narrow center slit and opens horizontally outward to both left and right sides.
+ */
+export function animateCenterReveal(
+  target: gsap.TweenTarget,
+  options: MotionOptions = {}
+) {
+  const elements = toSafeTargets(target);
+  if (elements.length === 0) return;
+
+  const reduced = prefersReducedMotion();
+  if (reduced) {
+    return gsap.fromTo(
+      elements,
+      { opacity: 0 },
+      {
+        opacity: 1,
+        duration: options.duration ?? 0.25,
+        delay: options.delay ?? 0,
+        ease: 'power1.out',
+        clearProps: 'opacity',
+        onComplete: options.onComplete,
+      }
+    );
+  }
+
+  const dur = options.duration ?? (isMobileScreen() ? 0.78 : 0.88);
+  return gsap.fromTo(
+    elements,
+    { clipPath: 'inset(0% 50% 0% 50%)', opacity: 0.96, immediateRender: true },
+    {
+      clipPath: 'inset(0% 0% 0% 0%)',
+      opacity: 1,
+      duration: dur,
+      delay: options.delay ?? 0,
+      ease: options.ease ?? 'power3.inOut',
+      force3D: true,
+      clearProps: 'clipPath,opacity',
+      onComplete: options.onComplete,
+    }
+  );
+}
+
+export const animateHorizontalSplitReveal = animateCenterReveal;
+
+/**
+ * 4b. Vertical Mask Reveal (legacy & editorial top-bottom):
  * clip-path: inset(0 0 100% 0) → inset(0 0 0 0), GPU-friendly, duration 0.75-1.0s, power3.inOut
  */
 export function animateVerticalReveal(
@@ -434,17 +481,28 @@ export function animateScaleIn(
 }
 
 /**
- * 8. Clip-path or Vertical reveal (legacy & multi-type)
- * Types: 'vertical-reveal' | 'clip-horizontal' | 'top-reveal' | 'bottom-reveal'
+ * 8. Clip-path or Split/Vertical reveal (multi-type)
+ * Types: 'center-reveal' | 'horizontal-split' | 'vertical-reveal' | 'clip-horizontal' | 'top-reveal' | 'bottom-reveal'
  */
 export function animateReveal(
   target: gsap.TweenTarget,
-  options: MotionOptions & { type?: 'vertical-reveal' | 'clip-horizontal' | 'top-reveal' | 'bottom-reveal' } = {}
+  options: MotionOptions & {
+    type?:
+      | 'center-reveal'
+      | 'horizontal-split'
+      | 'vertical-reveal'
+      | 'clip-horizontal'
+      | 'top-reveal'
+      | 'bottom-reveal';
+  } = {}
 ) {
   const elements = toSafeTargets(target);
   if (elements.length === 0) return;
 
-  const type = options.type ?? 'vertical-reveal';
+  const type = options.type ?? 'center-reveal';
+  if (type === 'center-reveal' || type === 'horizontal-split') {
+    return animateCenterReveal(target, options);
+  }
   if (type === 'vertical-reveal') {
     return animateVerticalReveal(target, options);
   }
@@ -714,8 +772,8 @@ export function animateNavbar(headerElement: HTMLElement | null): (() => void) |
 
 /**
  * AsterraStore Homepage Master Sequence:
- * - Hero banner: clip-path inset(0 100% 0 0) → inset(0 0 0 0), 0.75-0.85s, power3.inOut
- * - Inner visual: y: 15px → 0, opacity 0.92 → 1, 0.5s
+ * - Hero banner: Center → Out Horizontal Reveal, clip-path inset(0 50% 0 50%) → inset(0 0% 0 0%), 0.78-0.92s, power3.inOut
+ * - Inner visual: stationary artwork, subtle y: 4px → 0, opacity 0.96 → 1, 0.65-0.75s
  * - Text hero: y: 30px → 0, opacity: 0 → 1, delay: 0.15s
  * - Section heading: y: 25px → 0, opacity: 0 → 1, delay: 0.18s
  * - Category tabs: y: 15px → 0, opacity: 0 → 1, delay: 0.22s
@@ -766,7 +824,7 @@ export function animateHomepageHero(container: HTMLElement | null): (() => void)
   const isDesktop = mode === 'desktop';
   const isTablet = mode === 'tablet';
 
-  const verticalDuration = isDesktop ? 0.9 : isTablet ? 0.85 : 0.78;
+  const bannerDuration = isDesktop ? 0.92 : isTablet ? 0.85 : 0.78;
   const cardStagger = isDesktop ? 0.05 : isTablet ? 0.04 : 0.035;
   const cardDistance = isDesktop ? 25 : isTablet ? 22 : 18;
   const cardDuration = isDesktop ? 0.44 : isTablet ? 0.4 : 0.36;
@@ -776,19 +834,21 @@ export function animateHomepageHero(container: HTMLElement | null): (() => void)
       defaults: { ease: 'power3.out', force3D: true },
     });
 
-    // 1. Hero banner: CapCut-style vertical mask reveal
+    // 1. Hero banner: Center → Out Horizontal Reveal (CapCut-style split reveal)
+    // Starts from a very narrow slit in the center and opens horizontally outward to both left and right sides
+    // clip-path: inset(0 50% 0 50%) → inset(0 0% 0 0%)
     if (banner) {
       tl.fromTo(
         banner,
         {
-          clipPath: 'inset(0% 0% 100% 0%)',
-          opacity: 0.2,
+          clipPath: 'inset(0% 50% 0% 50%)',
+          opacity: 0.96,
           immediateRender: true,
         },
         {
           clipPath: 'inset(0% 0% 0% 0%)',
           opacity: 1,
-          duration: verticalDuration,
+          duration: bannerDuration,
           ease: 'power3.inOut',
           clearProps: 'clipPath,opacity',
         },
@@ -796,23 +856,23 @@ export function animateHomepageHero(container: HTMLElement | null): (() => void)
       );
     }
 
-    // 2. Banner inner visual settle: y: 10 → 0, opacity: 0.94 → 1
+    // 2. Banner inner visual settle: stationary image, subtle y: 4 → 0, opacity: 0.96 → 1
     if (bannerInner) {
       tl.fromTo(
         bannerInner,
         {
-          y: 10,
-          opacity: 0.94,
+          y: 4,
+          opacity: 0.96,
           immediateRender: true,
         },
         {
           y: 0,
           opacity: 1,
-          duration: isDesktop ? 0.65 : 0.55,
+          duration: isDesktop ? 0.75 : 0.65,
           ease: 'power3.out',
           clearProps: 'transform,opacity',
         },
-        0.08
+        0.04
       );
     }
 
@@ -1630,18 +1690,18 @@ export function animateSellerPage(container: HTMLElement | null): (() => void) |
     const tl = gsap.timeline({ defaults: { ease: 'power3.out', force3D: true } });
 
     if (hero) {
-      const verticalDuration = isDesktop ? 0.92 : isTablet ? 0.85 : 0.78;
+      const bannerDuration = isDesktop ? 0.92 : isTablet ? 0.85 : 0.78;
       tl.fromTo(
         hero,
         {
-          clipPath: 'inset(0% 0% 100% 0%)',
-          opacity: 0.4,
+          clipPath: 'inset(0% 50% 0% 50%)',
+          opacity: 0.96,
           immediateRender: true,
         },
         {
           clipPath: 'inset(0% 0% 0% 0%)',
           opacity: 1,
-          duration: verticalDuration,
+          duration: bannerDuration,
           ease: 'power3.inOut',
           clearProps: 'clipPath,opacity',
         },
@@ -1651,7 +1711,7 @@ export function animateSellerPage(container: HTMLElement | null): (() => void) |
       if (heroInner) {
         tl.fromTo(
           heroInner,
-          { y: 10, opacity: 0.94, immediateRender: true },
+          { y: 4, opacity: 0.96, immediateRender: true },
           {
             y: 0,
             opacity: 1,
@@ -1659,7 +1719,7 @@ export function animateSellerPage(container: HTMLElement | null): (() => void) |
             ease: 'power3.out',
             clearProps: 'transform,opacity',
           },
-          0.08
+          0.04
         );
       }
     }
