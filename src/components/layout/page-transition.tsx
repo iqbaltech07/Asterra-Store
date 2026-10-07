@@ -6,7 +6,6 @@ import {
   animateHomepageHero,
   setupHomepageScrollReveal,
   animateProductsPage,
-  animateProductDetailPage,
   animateOrdersPage,
   animateSellerPage,
   animateDaftarSalesPage,
@@ -52,7 +51,8 @@ export function PageTransition({ children }: PageTransitionProps) {
     } else if (pathname === '/products') {
       cleanupEntrance = animateProductsPage(container);
     } else if (pathname.startsWith('/products/')) {
-      cleanupEntrance = animateProductDetailPage(container);
+      // Product detail choreography is orchestrated directly by ProductDetailClient
+      // to strictly sync with React data lifecycle, variant changes, and avoid race conditions.
     } else if (pathname === '/orders' || pathname.startsWith('/orders') || pathname === '/order') {
       cleanupEntrance = animateOrdersPage(container);
     } else if (pathname === '/seller') {

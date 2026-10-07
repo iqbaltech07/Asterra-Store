@@ -50,12 +50,12 @@ export default function LoginPage() {
         </Link>
       </div>
 
-      <Card data-gsap="hero-card" className="w-full max-w-md border border-[rgba(18,26,42,0.08)] bg-white rounded-2xl shadow-card">
+      <Card data-gsap="login-card" className="w-full max-w-md border border-[rgba(18,26,42,0.08)] bg-white rounded-2xl shadow-card">
         <CardHeader className="space-y-3 text-center pb-6 pt-7">
-          <div className="flex justify-center mb-1">
+          <div data-gsap="login-logo" className="flex justify-center mb-1">
             <AsterraLogo variant="light-bg" size="lg" linkToHome={true} />
           </div>
-          <CardTitle data-gsap="page-title" className="text-2xl font-extrabold tracking-tight text-[#121A2A]">
+          <CardTitle data-gsap="login-heading" className="text-2xl font-extrabold tracking-tight text-[#121A2A]">
             Masuk ke Akun Anda
           </CardTitle>
           <CardDescription data-gsap="page-sub" className="text-xs text-[#121A2A]/60 max-w-xs mx-auto">
@@ -76,6 +76,7 @@ export default function LoginPage() {
           <div className="space-y-3">
             <button
               type="button"
+              data-gsap="login-button"
               onClick={handleGoogleLogin}
               disabled={isLoading}
               className="w-full h-12 rounded-xl bg-white border border-[rgba(18,26,42,0.12)] hover:border-[#C96F55] hover:bg-[rgba(201,111,85,0.06)] text-[#121A2A] font-semibold text-sm flex items-center justify-center gap-3 shadow-xs transition-all duration-200 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed group cursor-pointer"

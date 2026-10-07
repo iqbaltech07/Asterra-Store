@@ -30,6 +30,7 @@ import { ProductItem } from '@/lib/products-data';
 import { getDummyOriginalPrice, isPromoItem } from '@/lib/utils/promo-pricing';
 import { ParsedVariant, cleanHtmlContent } from '@/lib/services/product-variant-parser';
 import { saveRecentlyViewed } from '@/lib/services/recently-viewed';
+import { animateProductDetailPage } from '@/lib/animations/gsap-utils';
 
 export interface DurationOption {
   id: string;
@@ -322,6 +323,20 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
     }
   }, [product, id]);
 
+  const productContainerRef = useRef<HTMLDivElement>(null);
+
+  // Isomorphic layout effect executes synchronously before paint, eliminating FOUC / flash of content
+  const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? React.useLayoutEffect : React.useEffect;
+
+  // Synchronize 15-phase GSAP choreography with React data availability & route changes
+  useIsomorphicLayoutEffect(() => {
+    if (!product || !productContainerRef.current) return;
+    const cleanup = animateProductDetailPage(productContainerRef.current);
+    return () => {
+      cleanup?.();
+    };
+  }, [id, product?.id]);
+
   // All available Pakets across all variants
   const availablePakets = useMemo(() => {
     return Array.from(new Set(variants.map((v) => v.paket)));
@@ -549,7 +564,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
   };
 
   return (
-    <div className="min-h-screen bg-[#FDFBF7] text-[#121A2A] flex flex-col font-sans selection:bg-[#C96F55]/20 selection:text-[#C96F55]">
+    <div ref={productContainerRef} className="min-h-screen bg-[#FDFBF7] text-[#121A2A] flex flex-col font-sans selection:bg-[#C96F55]/20 selection:text-[#C96F55]">
       {/* Floating Toast Notification */}
       {notification && (
         <div className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-50 animate-in slide-in-from-bottom-5 max-w-[90vw] sm:max-w-md">
@@ -565,7 +580,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
       {/* Main Container - responsive mobile & desktop padding */}
       <main className="flex-1 max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8 py-4 sm:py-8 w-full overflow-x-hidden pb-24 sm:pb-12">
         {/* Breadcrumb Navigation - horizontally scrollable on small screens */}
-        <nav aria-label="Breadcrumb" data-gsap="breadcrumb" className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs text-[#121A2A]/60 mb-4 sm:mb-6 overflow-x-auto whitespace-nowrap scrollbar-none pb-1">
+        <nav aria-label="Breadcrumb" data-gsap="product-breadcrumb" className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs text-[#121A2A]/60 mb-4 sm:mb-6 overflow-x-auto whitespace-nowrap scrollbar-none pb-1">
           <Link href="/" className="hover:text-[#121A2A] transition-colors shrink-0">
             Beranda
           </Link>
@@ -610,7 +625,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
               {/* LEFT COLUMN: Large Product Banner + 3 Chips + Description/Tabs (lg:col-span-7) */}
               <div className="lg:col-span-7 space-y-4 sm:space-y-6">
                 {/* Large Product Banner Card (Matching user Image 1) */}
-                <div data-gsap="product-detail-image" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl overflow-hidden relative shadow-card group">
+                <div data-gsap="product-image" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl overflow-hidden relative shadow-card group">
                   <div className="relative h-56 sm:h-72 md:h-96 w-full bg-[#121A2A]/5 overflow-hidden">
                     <Image
                       src={activeVariant?.imageUrl || product.imageUrl}
@@ -626,7 +641,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
 
                     {/* Top Action Badges */}
                     <div className="absolute top-3 left-3 sm:top-4 sm:left-4 flex gap-1.5 sm:gap-2 flex-wrap z-10">
-                      <span data-gsap="product-detail-badge" className="bg-white/95 backdrop-blur-xs text-[#121A2A] text-[10px] sm:text-xs font-semibold px-2.5 py-0.5 sm:py-1 rounded-md sm:rounded-lg border border-[rgba(18,26,42,0.08)] shadow-xs">
+                      <span data-gsap="product-category" className="bg-white/95 backdrop-blur-xs text-[#121A2A] text-[10px] sm:text-xs font-semibold px-2.5 py-0.5 sm:py-1 rounded-md sm:rounded-lg border border-[rgba(18,26,42,0.08)] shadow-xs">
                         {product.category?.name || 'Apps & Streaming'}
                       </span>
                       <span className="bg-[#C96F55] text-white text-[10px] sm:text-xs font-bold px-2.5 py-0.5 sm:py-1 rounded-md sm:rounded-lg shadow-xs">
@@ -670,12 +685,12 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
 
                     {/* Banner Title & Category Subtitle */}
                     <div className="absolute bottom-3 sm:bottom-6 left-3 sm:left-6 right-3 sm:right-6 z-10">
-                      <span className="text-[10px] sm:text-xs font-bold text-[#C96F55] uppercase tracking-wider block mb-0.5 sm:mb-1">
+                      <span data-gsap="product-category" className="text-[10px] sm:text-xs font-bold text-[#C96F55] uppercase tracking-wider block mb-0.5 sm:mb-1">
                         LISENSI DIGITAL RESMI
                       </span>
                       <h1
                         key={variantDetails.title}
-                        data-gsap="product-detail-title"
+                        data-gsap="product-title"
                         className="text-base sm:text-2xl lg:text-3xl font-black text-white tracking-tight line-clamp-2 drop-shadow-xs leading-snug animate-text-smooth"
                       >
                         {variantDetails.title}
@@ -687,10 +702,9 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                 {/* 3 Benefit Highlights (Under Image - Responsive for mobile) */}
                 <div
                   key={variantDetails.title}
-                  data-gsap="product-detail-benefits"
                   className="grid grid-cols-3 gap-2 sm:gap-3 animate-text-smooth"
                 >
-                  <div className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl p-2.5 sm:p-3.5 space-y-0.5 sm:space-y-1 shadow-2xs">
+                  <div data-gsap="product-meta" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl p-2.5 sm:p-3.5 space-y-0.5 sm:space-y-1 shadow-2xs">
                     <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-md sm:rounded-lg bg-[rgba(201,111,85,0.08)] flex items-center justify-center text-[#C96F55] mb-1 sm:mb-2">
                       <FontAwesomeIcon icon={faShieldHalved} className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </div>
@@ -702,7 +716,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                     </span>
                   </div>
 
-                  <div className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl p-2.5 sm:p-3.5 space-y-0.5 sm:space-y-1 shadow-2xs">
+                  <div data-gsap="product-meta" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl p-2.5 sm:p-3.5 space-y-0.5 sm:space-y-1 shadow-2xs">
                     <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-md sm:rounded-lg bg-[rgba(201,111,85,0.08)] flex items-center justify-center text-[#C96F55] mb-1 sm:mb-2">
                       <FontAwesomeIcon icon={faClock} className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </div>
@@ -714,7 +728,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                     </span>
                   </div>
 
-                  <div className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl p-2.5 sm:p-3.5 space-y-0.5 sm:space-y-1 shadow-2xs">
+                  <div data-gsap="product-meta" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl p-2.5 sm:p-3.5 space-y-0.5 sm:space-y-1 shadow-2xs">
                     <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-md sm:rounded-lg bg-[rgba(201,111,85,0.08)] flex items-center justify-center text-[#C96F55] mb-1 sm:mb-2">
                       <FontAwesomeIcon icon={faBolt} className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </div>
@@ -728,11 +742,12 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                 </div>
 
                 {/* DESKRIPSI LAYANAN & FITUR UNGGULAN CARD (Dynamic per variant + Capsule Tabs) */}
-                <div data-gsap="product-detail-desc" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-4 sm:p-8 space-y-5 sm:space-y-6 shadow-card">
+                <div data-gsap="product-description" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-4 sm:p-8 space-y-5 sm:space-y-6 shadow-card">
                   {/* Capsule Tabs: 3 Grid columns on mobile, inline on desktop */}
-                  <div className="bg-[#F1F3F5] rounded-full p-1 grid grid-cols-3 sm:inline-flex items-center gap-1 w-full sm:w-auto">
+                  <div data-gsap="product-tabs" className="bg-[#F1F3F5] rounded-full p-1 grid grid-cols-3 sm:inline-flex items-center gap-1 w-full sm:w-auto">
                     <button
                       type="button"
+                      data-active={activeTab === 'deskripsi'}
                       onClick={() => setActiveTab('deskripsi')}
                       className={`rounded-full py-1.5 sm:py-2 px-3 sm:px-6 text-xs transition-all duration-200 cursor-pointer text-center ${
                         activeTab === 'deskripsi'
@@ -744,6 +759,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                     </button>
                     <button
                       type="button"
+                      data-active={activeTab === 'benefit'}
                       onClick={() => setActiveTab('benefit')}
                       className={`rounded-full py-1.5 sm:py-2 px-3 sm:px-6 text-xs transition-all duration-200 cursor-pointer text-center ${
                         activeTab === 'benefit'
@@ -755,6 +771,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                     </button>
                     <button
                       type="button"
+                      data-active={activeTab === 'garansi'}
                       onClick={() => setActiveTab('garansi')}
                       className={`rounded-full py-1.5 sm:py-2 px-3 sm:px-6 text-xs transition-all duration-200 cursor-pointer text-center ${
                         activeTab === 'garansi'
@@ -789,7 +806,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                           </h3>
                           <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                             {variantDetails.features.map((feature, idx) => (
-                              <li key={idx} className="flex items-start gap-2 text-xs sm:text-sm text-[#121A2A]/85">
+                              <li key={idx} data-gsap="product-feature" className="flex items-start gap-2 text-xs sm:text-sm text-[#121A2A]/85">
                                 <FontAwesomeIcon icon={faCircleCheck} className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#C96F55] shrink-0 mt-0.5" />
                                 <span>{feature}</span>
                               </li>
@@ -811,7 +828,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                         </div>
                         <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                           {variantDetails.features.map((feature, idx) => (
-                            <li key={idx} className="flex items-start gap-2 text-xs sm:text-sm text-[#121A2A]/85 leading-relaxed">
+                            <li key={idx} data-gsap="product-feature" className="flex items-start gap-2 text-xs sm:text-sm text-[#121A2A]/85 leading-relaxed">
                               <FontAwesomeIcon icon={faCircleCheck} className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#C96F55] shrink-0 mt-0.5" />
                               <span>{feature}</span>
                             </li>
@@ -838,7 +855,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
 
               {/* RIGHT COLUMN: PILIHAN PAKET BERLANGGANAN & VARIAN PILLS (Matching user Image 1 & 2) (lg:col-span-5) */}
               <div className="lg:col-span-5 space-y-4 sm:space-y-6">
-                <div data-gsap="product-detail-order-box" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-4 sm:p-7 shadow-card space-y-4 sm:space-y-5 lg:sticky lg:top-24">
+                <div data-gsap="product-order-box" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-4 sm:p-7 shadow-card space-y-4 sm:space-y-5 lg:sticky lg:top-24">
                   {/* Top Header: PILIHAN PAKET BERLANGGANAN & Stok Badge */}
                   <div className="flex items-center justify-between pb-3 sm:pb-3.5 border-b border-[rgba(18,26,42,0.08)]">
                     <span className="text-[11px] sm:text-xs font-bold text-[#C96F55] uppercase tracking-wider">
@@ -865,7 +882,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                     )}
                     <div
                       key={totalPrice}
-                      data-gsap="product-detail-price"
+                      data-gsap="product-price"
                       className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#121A2A] font-mono tracking-tight animate-text-smooth"
                     >
                       Rp {totalPrice.toLocaleString('id-ID')}
@@ -877,7 +894,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
 
                   {/* FEATURE FROM IMAGE 2: (1) PILIH NOMINAL / VARIAN WITH CAPSULE PILLS */}
                   {variants.length > 0 && (
-                    <div data-gsap="product-detail-variants" className="pt-2 border-t border-[rgba(18,26,42,0.08)] space-y-3.5 sm:space-y-4">
+                    <div data-gsap="product-variant" className="pt-2 border-t border-[rgba(18,26,42,0.08)] space-y-3.5 sm:space-y-4">
                       {/* Section Title with Circle 1 & SKU Badge */}
                       <div className="flex items-center justify-between gap-2 flex-wrap">
                         <div className="flex items-center gap-2">
@@ -908,6 +925,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                                 <button
                                   key={pkt}
                                   type="button"
+                                  data-gsap="product-variant-btn"
                                   onClick={() => handleSelectPaket(pkt)}
                                   className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs transition-all cursor-pointer select-none active:scale-95 ${
                                     isSelected
@@ -936,6 +954,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                                 <button
                                   key={tp}
                                   type="button"
+                                  data-gsap="product-variant-btn"
                                   onClick={() => handleSelectType(tp)}
                                   className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs transition-all cursor-pointer select-none active:scale-95 ${
                                     isSelected
@@ -964,6 +983,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                                 <button
                                   key={dur}
                                   type="button"
+                                  data-gsap="product-variant-btn"
                                   onClick={() => handleSelectDuration(dur)}
                                   className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs transition-all cursor-pointer select-none active:scale-95 ${
                                     isSelected
@@ -992,6 +1012,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                                 <button
                                   key={war}
                                   type="button"
+                                  data-gsap="product-variant-btn"
                                   onClick={() => handleSelectWarranty(war)}
                                   className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs transition-all cursor-pointer select-none active:scale-95 ${
                                     isSelected
@@ -1010,7 +1031,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                   )}
 
                   {/* Quantity Selector */}
-                  <div data-gsap="product-detail-quantity" className="flex items-center justify-between py-2.5 sm:py-3 border-t border-b border-[rgba(18,26,42,0.08)]">
+                  <div data-gsap="product-quantity" className="flex items-center justify-between py-2.5 sm:py-3 border-t border-b border-[rgba(18,26,42,0.08)]">
                     <span className="text-xs font-bold text-[#121A2A]">Jumlah Pesanan:</span>
                     <div className="flex items-center gap-2.5 sm:gap-3">
                       <Button
@@ -1040,7 +1061,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                   </div>
 
                   {/* Order Actions */}
-                  <div data-gsap="product-detail-cta" className="space-y-2.5 pt-1">
+                  <div data-gsap="product-cta" className="space-y-2.5 pt-1">
                     <Button
                       type="button"
                       onClick={handleBuyNow}
@@ -1064,12 +1085,12 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                   </div>
 
                   {/* Trust Badges matching Image 1 */}
-                  <div className="pt-2.5 sm:pt-3 border-t border-[rgba(18,26,42,0.08)] space-y-1.5 sm:space-y-2 text-[11px] sm:text-xs text-[#121A2A]/70">
-                    <div className="flex items-center gap-2">
+                  <div data-gsap="product-trust" className="pt-2.5 sm:pt-3 border-t border-[rgba(18,26,42,0.08)] space-y-1.5 sm:space-y-2 text-[11px] sm:text-xs text-[#121A2A]/70">
+                    <div data-gsap="product-trust-item" className="flex items-center gap-2">
                       <FontAwesomeIcon icon={faCheck} className="w-3.5 h-3.5 text-[#16A34A] shrink-0" />
                       <span>Aktivasi otomatis & garansi uang kembali jika terkendala</span>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div data-gsap="product-trust-item" className="flex items-center gap-2">
                       <FontAwesomeIcon icon={faCheck} className="w-3.5 h-3.5 text-[#16A34A] shrink-0" />
                       <span>Dukungan WhatsApp Customer Service ramah & responsif</span>
                     </div>
@@ -1079,7 +1100,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
             </div>
 
             {/* SPECIFICATION SECTION: INFORMASI & SPESIFIKASI LISENSI (Dynamic per variant) */}
-            <div className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-4 sm:p-8 shadow-card space-y-3.5 sm:space-y-4">
+            <div data-gsap="product-specification" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-4 sm:p-8 shadow-card space-y-3.5 sm:space-y-4">
               <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#121A2A]/70 pb-2.5 sm:pb-3 border-b border-[rgba(18,26,42,0.08)]">
                 Informasi & Spesifikasi Lisensi
               </h3>
@@ -1088,6 +1109,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                 {variantDetails.specifications.map((spec, idx) => (
                   <div
                     key={idx}
+                    data-gsap="product-spec-row"
                     className="py-2 flex justify-between items-center text-xs sm:text-sm border-b border-[rgba(18,26,42,0.06)]"
                   >
                     <span className="text-[#121A2A]/60 font-medium">{spec.label}</span>
@@ -1099,7 +1121,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
 
             {/* FAQ SECTION: ACCORDION WITH PLUS/MINUS ICONS */}
             {product.faqs && product.faqs.length > 0 && (
-              <div className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-4 sm:p-8 shadow-card space-y-3.5 sm:space-y-4">
+              <div data-gsap="product-faq" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-4 sm:p-8 shadow-card space-y-3.5 sm:space-y-4">
                 <div className="pb-2.5 sm:pb-3 border-b border-[rgba(18,26,42,0.08)]">
                   <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#C96F55]">
                     Pusat Informasi
@@ -1115,6 +1137,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                     return (
                       <div
                         key={idx}
+                        data-gsap="product-faq-item"
                         className="border border-[rgba(18,26,42,0.08)] rounded-xl overflow-hidden transition-colors"
                       >
                         <button
@@ -1134,7 +1157,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                           </span>
                         </button>
                         {isOpen && (
-                          <div className="px-3.5 sm:px-4 pb-3.5 sm:pb-4 pt-1 text-xs sm:text-sm text-[#121A2A]/70 border-t border-[rgba(18,26,42,0.06)] leading-relaxed">
+                          <div className="px-3.5 sm:px-4 pb-3.5 sm:pb-4 pt-1 text-xs sm:text-sm text-[#121A2A]/70 border-t border-[rgba(18,26,42,0.06)] leading-relaxed animate-faq-open">
                             {faq.answer}
                           </div>
                         )}
@@ -1147,7 +1170,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
 
             {/* RECOMMENDED PRODUCTS SECTION (3 DESKTOP, 2 MOBILE) */}
             {product.relatedProducts && product.relatedProducts.length > 0 && (
-              <div className="space-y-4 sm:space-y-6 pt-2 sm:pt-4">
+              <div data-gsap="related-products" className="space-y-4 sm:space-y-6 pt-2 sm:pt-4">
                 <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 pb-2.5 sm:pb-3 border-b border-[rgba(18,26,42,0.1)]">
                   <div>
                     <h2 className="text-base sm:text-2xl font-black text-[#121A2A] tracking-tight">
@@ -1186,27 +1209,28 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                     };
 
                     return (
-                      <ProductCard
-                        key={rel.id}
-                        product={relProductItem}
-                        isSelected={isSelected}
-                        onAddToCart={(p) => {
-                          if (!isAuthenticated) {
-                            setIsAuthModalOpen(true);
-                            return;
-                          }
-                          addItem({
-                            id: p.id,
-                            name: p.name,
-                            category: p.category.name,
-                            priceFormatted: p.priceFormatted,
-                            priceNumeric: p.price,
-                            stock: p.stock,
-                            isOutOfStock: false,
-                          });
-                          showNotification(`${p.name} ditambahkan ke keranjang.`);
-                        }}
-                      />
+                      <div key={rel.id} data-gsap="related-product-card">
+                        <ProductCard
+                          product={relProductItem}
+                          isSelected={isSelected}
+                          onAddToCart={(p) => {
+                            if (!isAuthenticated) {
+                              setIsAuthModalOpen(true);
+                              return;
+                            }
+                            addItem({
+                              id: p.id,
+                              name: p.name,
+                              category: p.category.name,
+                              priceFormatted: p.priceFormatted,
+                              priceNumeric: p.price,
+                              stock: p.stock,
+                              isOutOfStock: false,
+                            });
+                            showNotification(`${p.name} ditambahkan ke keranjang.`);
+                          }}
+                        />
+                      </div>
                     );
                   })}
                 </div>

@@ -246,18 +246,208 @@ export function animateSlideFromRight(
   );
 }
 
+export const animateSlideLeft = animateSlideFromLeft;
+export const animateSlideRight = animateSlideFromRight;
+
 /**
- * 4. Clip-path or Vertical reveal
- * Types: 'clip-horizontal' | 'top-reveal' | 'bottom-reveal'
+ * 4. Vertical Mask Reveal (CapCut / Editorial style):
+ * clip-path: inset(0 0 100% 0) → inset(0 0 0 0), GPU-friendly, duration 0.75-1.0s, power3.inOut
  */
-export function animateReveal(
+export function animateVerticalReveal(
   target: gsap.TweenTarget,
-  options: MotionOptions & { type?: 'clip-horizontal' | 'top-reveal' | 'bottom-reveal' } = {}
+  options: MotionOptions = {}
 ) {
   const elements = toSafeTargets(target);
   if (elements.length === 0) return;
 
-  const type = options.type ?? 'clip-horizontal';
+  const reduced = prefersReducedMotion();
+  if (reduced) {
+    return gsap.fromTo(
+      elements,
+      { opacity: 0 },
+      {
+        opacity: 1,
+        duration: options.duration ?? 0.25,
+        delay: options.delay ?? 0,
+        ease: 'power1.out',
+        clearProps: 'opacity',
+        onComplete: options.onComplete,
+      }
+    );
+  }
+
+  const dur = options.duration ?? (isMobileScreen() ? 0.78 : 0.88);
+  return gsap.fromTo(
+    elements,
+    { clipPath: 'inset(0% 0% 100% 0%)', opacity: 0.2, immediateRender: true },
+    {
+      clipPath: 'inset(0% 0% 0% 0%)',
+      opacity: 1,
+      duration: dur,
+      delay: options.delay ?? 0,
+      ease: options.ease ?? 'power3.inOut',
+      force3D: true,
+      clearProps: 'clipPath,opacity',
+      onComplete: options.onComplete,
+    }
+  );
+}
+
+/**
+ * 5. Product Image Reveal:
+ * clip-path: inset(8% 0 8% 0) → inset(0 0 0 0), y: 14 → 0, opacity: 0 → 1, settle effect ~0.65s
+ */
+export function animateImageReveal(
+  target: gsap.TweenTarget,
+  options: MotionOptions = {}
+) {
+  const elements = toSafeTargets(target);
+  if (elements.length === 0) return;
+
+  const reduced = prefersReducedMotion();
+  if (reduced) {
+    return gsap.fromTo(
+      elements,
+      { opacity: 0 },
+      {
+        opacity: 1,
+        duration: options.duration ?? 0.25,
+        delay: options.delay ?? 0,
+        ease: 'power1.out',
+        clearProps: 'opacity',
+        onComplete: options.onComplete,
+      }
+    );
+  }
+
+  const dur = options.duration ?? (isMobileScreen() ? 0.55 : 0.65);
+  return gsap.fromTo(
+    elements,
+    { clipPath: 'inset(8% 0% 8% 0%)', y: 14, opacity: 0, immediateRender: true },
+    {
+      clipPath: 'inset(0% 0% 0% 0%)',
+      y: 0,
+      opacity: 1,
+      duration: dur,
+      delay: options.delay ?? 0,
+      ease: options.ease ?? 'power3.out',
+      force3D: true,
+      clearProps: 'clipPath,transform,opacity',
+      onComplete: options.onComplete,
+    }
+  );
+}
+
+/**
+ * 6. Title / Text Focal Point Reveal:
+ * y: 24 → 0, opacity: 0 → 1, subtle letter-spacing settle
+ */
+export function animateTextReveal(
+  target: gsap.TweenTarget,
+  options: MotionOptions = {}
+) {
+  const elements = toSafeTargets(target);
+  if (elements.length === 0) return;
+
+  const reduced = prefersReducedMotion();
+  if (reduced) {
+    return gsap.fromTo(
+      elements,
+      { opacity: 0 },
+      {
+        opacity: 1,
+        duration: options.duration ?? 0.25,
+        delay: options.delay ?? 0,
+        ease: 'power1.out',
+        clearProps: 'opacity',
+        onComplete: options.onComplete,
+      }
+    );
+  }
+
+  const dur = options.duration ?? (isMobileScreen() ? 0.42 : 0.5);
+  const dist = options.dist ?? 24;
+
+  return gsap.fromTo(
+    elements,
+    { y: dist, opacity: 0, letterSpacing: '0.02em', immediateRender: true },
+    {
+      y: 0,
+      opacity: 1,
+      letterSpacing: 'normal',
+      duration: dur,
+      delay: options.delay ?? 0,
+      ease: options.ease ?? 'power3.out',
+      force3D: true,
+      clearProps: 'transform,opacity,letterSpacing',
+      onComplete: options.onComplete,
+    }
+  );
+}
+
+/**
+ * 7. Scale & Rise Entrance (Buttons / Price / Focal UI):
+ * scale: 0.97 → 1, y: 16 → 0, opacity: 0 → 1
+ */
+export function animateScaleIn(
+  target: gsap.TweenTarget,
+  options: MotionOptions = {}
+) {
+  const elements = toSafeTargets(target);
+  if (elements.length === 0) return;
+
+  const reduced = prefersReducedMotion();
+  if (reduced) {
+    return gsap.fromTo(
+      elements,
+      { opacity: 0 },
+      {
+        opacity: 1,
+        duration: options.duration ?? 0.2,
+        delay: options.delay ?? 0,
+        ease: 'power1.out',
+        clearProps: 'opacity',
+        onComplete: options.onComplete,
+      }
+    );
+  }
+
+  const dur = options.duration ?? (isMobileScreen() ? 0.38 : 0.45);
+  const scaleFrom = options.scale ?? 0.97;
+  const dist = options.dist ?? 16;
+
+  return gsap.fromTo(
+    elements,
+    { scale: scaleFrom, y: dist, opacity: 0, immediateRender: true },
+    {
+      scale: 1,
+      y: 0,
+      opacity: 1,
+      duration: dur,
+      delay: options.delay ?? 0,
+      ease: options.ease ?? 'power3.out',
+      force3D: true,
+      clearProps: 'transform,opacity',
+      onComplete: options.onComplete,
+    }
+  );
+}
+
+/**
+ * 8. Clip-path or Vertical reveal (legacy & multi-type)
+ * Types: 'vertical-reveal' | 'clip-horizontal' | 'top-reveal' | 'bottom-reveal'
+ */
+export function animateReveal(
+  target: gsap.TweenTarget,
+  options: MotionOptions & { type?: 'vertical-reveal' | 'clip-horizontal' | 'top-reveal' | 'bottom-reveal' } = {}
+) {
+  const elements = toSafeTargets(target);
+  if (elements.length === 0) return;
+
+  const type = options.type ?? 'vertical-reveal';
+  if (type === 'vertical-reveal') {
+    return animateVerticalReveal(target, options);
+  }
   const reduced = prefersReducedMotion();
 
   if (reduced) {
@@ -576,7 +766,7 @@ export function animateHomepageHero(container: HTMLElement | null): (() => void)
   const isDesktop = mode === 'desktop';
   const isTablet = mode === 'tablet';
 
-  const wipeDuration = isDesktop ? 0.8 : isTablet ? 0.75 : 0.7;
+  const verticalDuration = isDesktop ? 0.9 : isTablet ? 0.85 : 0.78;
   const cardStagger = isDesktop ? 0.05 : isTablet ? 0.04 : 0.035;
   const cardDistance = isDesktop ? 25 : isTablet ? 22 : 18;
   const cardDuration = isDesktop ? 0.44 : isTablet ? 0.4 : 0.36;
@@ -586,19 +776,19 @@ export function animateHomepageHero(container: HTMLElement | null): (() => void)
       defaults: { ease: 'power3.out', force3D: true },
     });
 
-    // 1. Hero banner: horizontal wipe reveal
+    // 1. Hero banner: CapCut-style vertical mask reveal
     if (banner) {
       tl.fromTo(
         banner,
         {
-          clipPath: 'inset(0% 100% 0% 0%)',
-          opacity: 0,
+          clipPath: 'inset(0% 0% 100% 0%)',
+          opacity: 0.2,
           immediateRender: true,
         },
         {
           clipPath: 'inset(0% 0% 0% 0%)',
           opacity: 1,
-          duration: wipeDuration,
+          duration: verticalDuration,
           ease: 'power3.inOut',
           clearProps: 'clipPath,opacity',
         },
@@ -606,23 +796,23 @@ export function animateHomepageHero(container: HTMLElement | null): (() => void)
       );
     }
 
-    // 2. Banner inner visual settle
+    // 2. Banner inner visual settle: y: 10 → 0, opacity: 0.94 → 1
     if (bannerInner) {
       tl.fromTo(
         bannerInner,
         {
-          y: isDesktop ? 15 : 10,
-          opacity: 0.92,
+          y: 10,
+          opacity: 0.94,
           immediateRender: true,
         },
         {
           y: 0,
           opacity: 1,
-          duration: isDesktop ? 0.5 : 0.45,
+          duration: isDesktop ? 0.65 : 0.55,
           ease: 'power3.out',
           clearProps: 'transform,opacity',
         },
-        0.1
+        0.08
       );
     }
 
@@ -960,99 +1150,344 @@ export function animateProductsPage(container: HTMLElement | null): (() => void)
 
 export function animateProductDetailPage(container: HTMLElement | null): (() => void) | undefined {
   if (!container || typeof window === 'undefined') return;
-  if (prefersReducedMotion()) return;
+
+  const breadcrumb = container.querySelector('[data-gsap="product-breadcrumb"], nav[aria-label="Breadcrumb"]');
+  const imageBanner = container.querySelector('[data-gsap="product-image"]');
+  const categories = container.querySelectorAll('[data-gsap="product-category"]');
+  const title = container.querySelector('[data-gsap="product-title"], h1');
+  const metaItems = container.querySelectorAll('[data-gsap="product-meta"]');
+  const tabs = container.querySelector('[data-gsap="product-tabs"]');
+  const descCard = container.querySelector('[data-gsap="product-description"]');
+  const features = container.querySelectorAll('[data-gsap="product-feature"]');
+  const orderBox = container.querySelector('[data-gsap="product-order-box"]');
+  const variantContainer = container.querySelector('[data-gsap="product-variant"]');
+  const variantBtns = container.querySelectorAll('[data-gsap="product-variant-btn"]');
+  const price = container.querySelector('[data-gsap="product-price"]');
+  const quantity = container.querySelector('[data-gsap="product-quantity"]');
+  const cta = container.querySelector('[data-gsap="product-cta"]');
+  const ctaButtons = container.querySelectorAll('[data-gsap="product-cta"] button');
+  const trustItems = container.querySelectorAll('[data-gsap="product-trust-item"], [data-gsap="product-trust"] > div');
+  const specSection = container.querySelector('[data-gsap="product-specification"]');
+  const specHeading = specSection?.querySelector('h3');
+  const specRows = container.querySelectorAll('[data-gsap="product-spec-row"]');
+  const faqSection = container.querySelector('[data-gsap="product-faq"]');
+  const faqItems = container.querySelectorAll('[data-gsap="product-faq-item"]');
+  const relatedSection = container.querySelector('[data-gsap="related-products"]');
+  const relatedHeading = relatedSection?.querySelector('h2');
+  const relatedCards = container.querySelectorAll(
+    '[data-gsap="related-product-card"], [data-gsap="product-detail-related"] [data-gsap="product-card"]'
+  );
+
+  if (prefersReducedMotion()) {
+    gsap.set(
+      [
+        breadcrumb,
+        imageBanner,
+        categories,
+        title,
+        metaItems,
+        tabs,
+        descCard,
+        features,
+        orderBox,
+        variantContainer,
+        variantBtns,
+        price,
+        quantity,
+        cta,
+        ctaButtons,
+        trustItems,
+        specSection,
+        specRows,
+        faqSection,
+        faqItems,
+        relatedSection,
+        relatedCards,
+      ].filter(Boolean),
+      { opacity: 1, y: 0, x: 0, scale: 1, clipPath: 'none', clearProps: 'all' }
+    );
+    return;
+  }
+
+  const mode = getViewportMode();
+  const isDesktop = mode === 'desktop';
+  const isTablet = mode === 'tablet';
+
+  // Responsive timing multipliers: desktop base, tablet 0.88x, mobile 0.76x
+  const tScale = isDesktop ? 1.0 : isTablet ? 0.88 : 0.76;
+  const tBreadcrumb = 0;
+  const tImage = 0.08 * tScale;
+  const tCategory = 0.18 * tScale;
+  const tTitle = 0.26 * tScale;
+  const tMeta = 0.36 * tScale;
+  const tTabs = 0.46 * tScale;
+  const tDesc = 0.52 * tScale;
+  const tOrderBox = 0.66 * tScale;
+  const tVariant = 0.70 * tScale;
+  const tPrice = 0.78 * tScale;
+  const tQuantity = 0.86 * tScale;
+  const tCta = 0.92 * tScale;
+  const tTrust = 1.02 * tScale;
+  const tSpec = 1.10 * tScale;
+  const tFaq = 1.22 * tScale;
+  const tRelated = 1.34 * tScale;
+
+  let observer: MutationObserver | null = null;
 
   const ctx = gsap.context(() => {
-    const breadcrumb = container.querySelector('[data-gsap="breadcrumb"]');
-    const imageBanner = container.querySelector('[data-gsap="product-detail-image"]');
-    const title = container.querySelector('[data-gsap="product-detail-title"]');
-    const badge = container.querySelector('[data-gsap="product-detail-badge"]');
-    const benefits = container.querySelector('[data-gsap="product-detail-benefits"]');
-    const orderBox = container.querySelector('[data-gsap="product-detail-order-box"]');
-    const price = container.querySelector('[data-gsap="product-detail-price"]');
-    const variants = container.querySelector('[data-gsap="product-detail-variants"]');
-    const quantity = container.querySelector('[data-gsap="product-detail-quantity"]');
-    const cta = container.querySelector('[data-gsap="product-detail-cta"]');
-    const desc = container.querySelector('[data-gsap="product-detail-desc"]');
-    const related = container.querySelectorAll(
-      '[data-gsap="product-detail-related"] [data-gsap="product-card"], [data-gsap="product-detail-related"] .grid > div'
-    );
-
     const tl = gsap.timeline({ defaults: { ease: 'power3.out', force3D: true } });
 
-    // Breadcrumb: x: -15 → 0
+    // PHASE 1 — BREADCRUMB: x: -18 → 0, opacity: 0 → 1, 0.45s, ease power2.out
     if (breadcrumb) {
-      tl.fromTo(breadcrumb, { x: -15, opacity: 0, immediateRender: true }, { x: 0, opacity: 1, duration: 0.35, clearProps: 'all' }, 0);
+      tl.fromTo(
+        breadcrumb,
+        { x: -18, opacity: 0, immediateRender: true },
+        { x: 0, opacity: 1, duration: isDesktop ? 0.45 : 0.38, ease: 'power2.out', clearProps: 'all' },
+        tBreadcrumb
+      );
     }
 
-    // Product image: clip/reveal from left
+    // PHASE 2 — PRODUCT IMAGE: clip-path reveal + settle y: 14 → 0, opacity: 0 → 1, ~0.65s
     if (imageBanner) {
       tl.fromTo(
         imageBanner,
-        { clipPath: 'inset(0% 100% 0% 0%)', opacity: 0.4, immediateRender: true },
-        { clipPath: 'inset(0% 0% 0% 0%)', opacity: 1, duration: 0.72, ease: 'power3.inOut', clearProps: 'clipPath,opacity' },
-        0.04
+        { clipPath: 'inset(8% 0% 8% 0%)', y: 14, opacity: 0, immediateRender: true },
+        { clipPath: 'inset(0% 0% 0% 0%)', y: 0, opacity: 1, duration: isDesktop ? 0.65 : 0.55, ease: 'power3.out', clearProps: 'all' },
+        tImage
       );
     }
 
-    // Product title: y: 25 → 0
-    if (title) {
-      tl.fromTo(title, { y: 25, opacity: 0, immediateRender: true }, { y: 0, opacity: 1, duration: 0.42, clearProps: 'all' }, 0.12);
-    }
-
-    // Brand / category: y: 12 → 0
-    if (badge) {
-      tl.fromTo(badge, { y: 12, opacity: 0, immediateRender: true }, { y: 0, opacity: 1, duration: 0.36, clearProps: 'all' }, 0.15);
-    }
-
-    // Rating / benefits: y: 10 → 0
-    if (benefits) {
-      tl.fromTo(benefits, { y: 10, opacity: 0, immediateRender: true }, { y: 0, opacity: 1, duration: 0.38, clearProps: 'all' }, 0.18);
-    }
-
-    // Order box container
-    if (orderBox) {
-      tl.fromTo(orderBox, { y: 20, opacity: 0, immediateRender: true }, { y: 0, opacity: 1, duration: 0.44, clearProps: 'all' }, 0.1);
-    }
-
-    // Price: y: 20 → 0
-    if (price) {
-      tl.fromTo(price, { y: 20, opacity: 0, immediateRender: true }, { y: 0, opacity: 1, duration: 0.4, clearProps: 'all' }, 0.18);
-    }
-
-    // Variant selector: y: 15 → 0
-    if (variants) {
-      tl.fromTo(variants, { y: 15, opacity: 0, immediateRender: true }, { y: 0, opacity: 1, duration: 0.38, clearProps: 'all' }, 0.22);
-    }
-
-    // Quantity: y: 10 → 0
-    if (quantity) {
-      tl.fromTo(quantity, { y: 10, opacity: 0, immediateRender: true }, { y: 0, opacity: 1, duration: 0.35, clearProps: 'all' }, 0.26);
-    }
-
-    // CTA: y: 20 → 0, opacity 0 → 1, scale 0.97 → 1
-    if (cta) {
-      tl.fromTo(cta, { y: 20, opacity: 0, scale: 0.97, immediateRender: true }, { y: 0, opacity: 1, scale: 1, duration: 0.4, clearProps: 'all' }, 0.3);
-    }
-
-    // Description: y: 20 → 0
-    if (desc) {
-      tl.fromTo(desc, { y: 20, opacity: 0, immediateRender: true }, { y: 0, opacity: 1, duration: 0.42, clearProps: 'all' }, 0.25);
-    }
-
-    // Related products: stagger
-    if (related.length > 0) {
-      const topRelated = Array.from(related).slice(0, 6);
+    // PHASE 3 — PRODUCT CATEGORY / LABEL: y: 10 → 0, opacity: 0 → 1, 0.35–0.45s
+    if (categories.length > 0) {
       tl.fromTo(
-        topRelated,
-        { y: 20, opacity: 0, immediateRender: true },
-        { y: 0, opacity: 1, duration: 0.4, stagger: 0.04, clearProps: 'all' },
-        0.35
+        Array.from(categories),
+        { y: 10, opacity: 0, immediateRender: true },
+        { y: 0, opacity: 1, duration: isDesktop ? 0.4 : 0.34, stagger: 0.04, clearProps: 'all' },
+        tCategory
       );
+    }
+
+    // PHASE 4 — PRODUCT TITLE: Focal point! y: 24 → 0, opacity: 0 → 1, letter-spacing settling
+    if (title) {
+      tl.fromTo(
+        title,
+        { y: 24, opacity: 0, letterSpacing: '0.02em', immediateRender: true },
+        { y: 0, opacity: 1, letterSpacing: 'normal', duration: isDesktop ? 0.5 : 0.42, clearProps: 'all' },
+        tTitle
+      );
+    }
+
+    // PHASE 5 — PRODUCT BENEFIT / META: Garansi, Proses Instan, Tipe Akun, stagger pendek 0.06–0.08s
+    if (metaItems.length > 0) {
+      tl.fromTo(
+        Array.from(metaItems),
+        { y: 10, opacity: 0, immediateRender: true },
+        { y: 0, opacity: 1, duration: 0.36, stagger: isDesktop ? 0.07 : 0.05, clearProps: 'all' },
+        tMeta
+      );
+    }
+
+    // PHASE 6 — TAB: y: 12 → 0, opacity: 0 → 1 + active indicator expansion
+    if (tabs) {
+      tl.fromTo(
+        tabs,
+        { y: 12, opacity: 0, immediateRender: true },
+        { y: 0, opacity: 1, duration: isDesktop ? 0.38 : 0.32, clearProps: 'all' },
+        tTabs
+      );
+      const activeTabBtn = tabs.querySelector('button.bg-white, [data-active="true"]');
+      if (activeTabBtn) {
+        tl.fromTo(
+          activeTabBtn,
+          { scaleX: 0.85, transformOrigin: 'center', immediateRender: true },
+          { scaleX: 1, duration: 0.32, ease: 'power2.out', clearProps: 'transform' },
+          tTabs + 0.06
+        );
+      }
+    }
+
+    // PHASE 7 — DESCRIPTION: Heading y: 18 → 0, Paragraph y: 12 → 0, Feature bullets stagger x: -8 → 0
+    if (descCard) {
+      const descHeading = descCard.querySelector('h2, h3');
+      const descPara = descCard.querySelector('p');
+      if (descHeading) {
+        tl.fromTo(descHeading, { y: 18, opacity: 0, immediateRender: true }, { y: 0, opacity: 1, duration: 0.38, clearProps: 'all' }, tDesc);
+      }
+      if (descPara) {
+        tl.fromTo(descPara, { y: 12, opacity: 0, immediateRender: true }, { y: 0, opacity: 1, duration: 0.35, clearProps: 'all' }, tDesc + 0.04);
+      }
+    }
+    if (features.length > 0) {
+      tl.fromTo(
+        Array.from(features),
+        { x: -8, opacity: 0, immediateRender: true },
+        { x: 0, opacity: 1, duration: 0.32, stagger: isDesktop ? 0.05 : 0.035, clearProps: 'all' },
+        tDesc + 0.08
+      );
+    }
+
+    // RIGHT COLUMN / ORDER BOX
+    if (orderBox) {
+      tl.fromTo(orderBox, { y: 18, opacity: 0, immediateRender: true }, { y: 0, opacity: 1, duration: 0.44, clearProps: 'all' }, tOrderBox);
+    }
+
+    // PHASE 8 — PACKAGE / VARIANT SELECTOR: Container y: 18 → 0, Variant buttons scale: 0.97 → 1 (No bounce)
+    if (variantContainer) {
+      tl.fromTo(
+        variantContainer,
+        { y: 18, opacity: 0, immediateRender: true },
+        { y: 0, opacity: 1, duration: 0.4, clearProps: 'all' },
+        tVariant
+      );
+    }
+    if (variantBtns.length > 0) {
+      tl.fromTo(
+        Array.from(variantBtns).slice(0, 16),
+        { scale: 0.97, opacity: 0, immediateRender: true },
+        { scale: 1, opacity: 1, duration: 0.3, stagger: 0.025, ease: 'power3.out', clearProps: 'all' },
+        tVariant + 0.04
+      );
+    }
+
+    // PHASE 9 — PRICE: Focal point! y: 16 → 0, opacity: 0 → 1, scale: 0.985 → 1, 0.45–0.55s, power3.out
+    if (price) {
+      tl.fromTo(
+        price,
+        { y: 16, opacity: 0, scale: 0.985, immediateRender: true },
+        { y: 0, opacity: 1, scale: 1, duration: isDesktop ? 0.5 : 0.42, ease: 'power3.out', clearProps: 'all' },
+        tPrice
+      );
+    }
+
+    // PHASE 10 — QUANTITY: y: 10 → 0, opacity: 0 → 1 (snappy UI detail)
+    if (quantity) {
+      tl.fromTo(
+        quantity,
+        { y: 10, opacity: 0, immediateRender: true },
+        { y: 0, opacity: 1, duration: 0.28, clearProps: 'all' },
+        tQuantity
+      );
+    }
+
+    // PHASE 11 — CTA: "Beli Sekarang", "Tambah ke Keranjang", y: 16 → 0, scale: 0.97 → 1, 0.5–0.6s
+    if (ctaButtons.length > 0) {
+      tl.fromTo(
+        Array.from(ctaButtons),
+        { opacity: 0, y: 16, scale: 0.97, immediateRender: true },
+        { opacity: 1, y: 0, scale: 1, duration: isDesktop ? 0.55 : 0.45, stagger: 0.06, ease: 'power3.out', clearProps: 'all' },
+        tCta
+      );
+    } else if (cta) {
+      tl.fromTo(
+        cta,
+        { opacity: 0, y: 16, scale: 0.97, immediateRender: true },
+        { opacity: 1, y: 0, scale: 1, duration: isDesktop ? 0.55 : 0.45, ease: 'power3.out', clearProps: 'all' },
+        tCta
+      );
+    }
+
+    // PHASE 12 — TRUST / INFO: Aktivasi otomatis, Dukungan WhatsApp, Garansi, stagger kecil
+    if (trustItems.length > 0) {
+      tl.fromTo(
+        Array.from(trustItems),
+        { y: 8, opacity: 0, immediateRender: true },
+        { y: 0, opacity: 1, duration: 0.32, stagger: 0.04, clearProps: 'all' },
+        tTrust
+      );
+    }
+
+    // PHASE 13 — SPECIFICATION TABLE: Heading y: 18 → 0, Rows x: 8 → 0, stagger
+    if (specSection) {
+      if (specHeading) {
+        tl.fromTo(specHeading, { y: 18, opacity: 0, immediateRender: true }, { y: 0, opacity: 1, duration: 0.38, clearProps: 'all' }, tSpec);
+      }
+      if (specRows.length > 0) {
+        tl.fromTo(
+          Array.from(specRows),
+          { x: 8, opacity: 0, immediateRender: true },
+          { x: 0, opacity: 1, duration: 0.32, stagger: 0.03, clearProps: 'all' },
+          tSpec + 0.04
+        );
+      }
+    }
+
+    // PHASE 14 — FAQ: Container y: 20 → 0, FAQ items y: 10 → 0, stagger
+    if (faqSection) {
+      tl.fromTo(faqSection, { y: 20, opacity: 0, immediateRender: true }, { y: 0, opacity: 1, duration: 0.4, clearProps: 'all' }, tFaq);
+      if (faqItems.length > 0) {
+        tl.fromTo(
+          Array.from(faqItems),
+          { y: 10, opacity: 0, immediateRender: true },
+          { y: 0, opacity: 1, duration: 0.34, stagger: 0.04, clearProps: 'all' },
+          tFaq + 0.04
+        );
+      }
+    }
+
+    // PHASE 15 — RELATED PRODUCTS: Heading y: 18 → 0, Product cards y: 24 → 0, stagger 50–70ms + micro image reveal
+    const animateRelatedCards = (cards: NodeListOf<Element> | Element[]) => {
+      const topCards = Array.from(cards).slice(0, 6);
+      if (topCards.length === 0) return;
+      gsap.fromTo(
+        topCards,
+        { y: 24, opacity: 0, immediateRender: true },
+        { y: 0, opacity: 1, duration: isDesktop ? 0.44 : 0.36, stagger: isDesktop ? 0.06 : 0.045, clearProps: 'all', ease: 'power3.out' }
+      );
+    };
+
+    if (relatedSection) {
+      if (relatedHeading) {
+        tl.fromTo(relatedHeading, { y: 18, opacity: 0, immediateRender: true }, { y: 0, opacity: 1, duration: 0.38, clearProps: 'all' }, tRelated);
+      }
+    }
+
+    if (relatedCards.length > 0) {
+      const topCards = Array.from(relatedCards).slice(0, 6);
+      tl.fromTo(
+        topCards,
+        { y: 24, opacity: 0, immediateRender: true },
+        {
+          y: 0,
+          opacity: 1,
+          duration: isDesktop ? 0.44 : 0.36,
+          stagger: isDesktop ? 0.06 : 0.045,
+          ease: 'power3.out',
+          clearProps: 'all',
+        },
+        tRelated + 0.04
+      );
+
+      // Micro reveal for related product card images
+      const relImages = container.querySelectorAll(
+        '[data-gsap="related-product-card"] [data-gsap="product-image"] img, [data-gsap="related-product-card"] img'
+      );
+      if (relImages.length > 0) {
+        tl.fromTo(
+          Array.from(relImages).slice(0, 6),
+          { scale: 1.04, opacity: 0.9, immediateRender: true },
+          { scale: 1, opacity: 1, duration: 0.4, stagger: 0.04, ease: 'power2.out', clearProps: 'all' },
+          tRelated + 0.08
+        );
+      }
+    } else {
+      observer = new MutationObserver(() => {
+        const found = container.querySelectorAll(
+          '[data-gsap="related-product-card"], [data-gsap="product-detail-related"] [data-gsap="product-card"]'
+        );
+        if (found.length > 0) {
+          observer?.disconnect();
+          observer = null;
+          animateRelatedCards(found);
+        }
+      });
+      observer.observe(container, { childList: true, subtree: true });
     }
   }, container);
 
-  return () => ctx.revert();
+  return () => {
+    observer?.disconnect();
+    ctx.revert();
+  };
 }
 
 /* ==========================================================================
@@ -1195,7 +1630,38 @@ export function animateSellerPage(container: HTMLElement | null): (() => void) |
     const tl = gsap.timeline({ defaults: { ease: 'power3.out', force3D: true } });
 
     if (hero) {
-      tl.fromTo(hero, { y: 20, opacity: 0, immediateRender: true }, { y: 0, opacity: 1, duration: 0.5, clearProps: 'all' }, 0);
+      const verticalDuration = isDesktop ? 0.92 : isTablet ? 0.85 : 0.78;
+      tl.fromTo(
+        hero,
+        {
+          clipPath: 'inset(0% 0% 100% 0%)',
+          opacity: 0.4,
+          immediateRender: true,
+        },
+        {
+          clipPath: 'inset(0% 0% 0% 0%)',
+          opacity: 1,
+          duration: verticalDuration,
+          ease: 'power3.inOut',
+          clearProps: 'clipPath,opacity',
+        },
+        0
+      );
+      const heroInner = hero.querySelector('a, img');
+      if (heroInner) {
+        tl.fromTo(
+          heroInner,
+          { y: 10, opacity: 0.94, immediateRender: true },
+          {
+            y: 0,
+            opacity: 1,
+            duration: isDesktop ? 0.75 : 0.65,
+            ease: 'power3.out',
+            clearProps: 'transform,opacity',
+          },
+          0.08
+        );
+      }
     }
 
     // Heading: y: 25 → 0
