@@ -1,15 +1,26 @@
 {
-  "name": "asterra-store",
+  "name": "asterra-store-workspace",
   "version": "1.0.0",
   "private": true,
-  "description": "Asterra Store - Digital Product & Premium Services Marketplace",
+  "description": "Asterra Store Multi-Project Decoupled Architecture (User Storefront, Admin Suite, Sales Console, Backend API)",
+  "workspaces": [
+    "frontend-user",
+    "frontend-admin",
+    "frontend-sales",
+    "backend"
+  ],
   "scripts": {
-    "dev": "next dev --experimental-https",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
+    "dev:user": "npm --prefix frontend-user run dev",
+    "dev:admin": "npm --prefix frontend-admin run dev",
+    "dev:sales": "npm --prefix frontend-sales run dev",
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:fastapi": "cd backend && uvicorn app.main:app --reload --port 8000",
+    "build:user": "npm --prefix frontend-user run build",
+    "build:admin": "npm --prefix frontend-admin run build",
+    "build:sales": "npm --prefix frontend-sales run build",
+    "build:backend": "npm --prefix backend run build",
+    "build:all": "npm run build:user && npm run build:admin && npm run build:sales && npm run build:backend",
+    "lint": "npm --prefix frontend-user run lint",
     "export:excel": "node scripts/generate-product-excel.js"
   },
   "dependencies": {
@@ -58,10 +69,10 @@
   "keywords": [
     "asterra",
     "store",
-    "digital-products",
-    "nextjs",
-    "react",
-    "shadcn"
+    "frontend-user",
+    "frontend-admin",
+    "frontend-sales",
+    "backend"
   ],
   "author": "dev.iqbal007@gmail.com",
   "license": "ISC"

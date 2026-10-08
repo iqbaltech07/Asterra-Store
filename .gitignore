@@ -1,18 +1,26 @@
 # Dependencies
-/node_modules
+node_modules/
 /.pnp
 .pnp.js
 
 # Testing
-/coverage
+coverage/
 
 # Next.js build output
-/.next/
-/out/
+.next/
+out/
 
 # Production
-/build
-/dist
+build/
+dist/
+
+# Python cache & virtualenv
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
 
 # Debug logs
 npm-debug.log*
@@ -38,9 +46,3 @@ Thumbs.db
 
 # Heavy local dumps (use database or active-catalog.json instead)
 data/managed-catalog.json
-
-# Scratch scripts
-/scratch/
-
-certificates
-*.MOV

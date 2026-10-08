@@ -1,0 +1,213 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Asterra Store Brand System Tokens - FINAL PALETTE */
+  --color-navy: #121a2a;
+  --color-navy-deep: #0c121e;
+  --color-navy-surface: #182235;
+  --color-navy-surface-2: #1e2a40;
+  --color-navy-border: rgba(18, 26, 42, 0.12);
+
+  --color-accent: #c96f55;
+  --color-accent-hover: #b86047;
+  --color-accent-soft: rgba(201, 111, 85, 0.08);
+  --color-accent-dark: #a9553e;
+
+  --color-bg: #ffffff;
+  --color-surface: #ffffff;
+  --color-surface-secondary: #f8fafc;
+  --color-surface-raised: #ffffff;
+  --color-surface-hover: #f1f5f9;
+
+  --color-border: rgba(18, 26, 42, 0.1);
+  --color-border-subtle: rgba(18, 26, 42, 0.06);
+  --color-border-strong: rgba(18, 26, 42, 0.2);
+
+  --color-ink: #121a2a;
+  --color-ink-soft: #23314b;
+  --color-muted: #5f6c80;
+  --color-secondary: #4a566a;
+
+  /* Semantic Status Colors */
+  --color-success: #16a34a;
+  --color-warning: #d97706;
+  --color-danger: #dc2626;
+  --color-info: #2563eb;
+
+  /* Radius */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-card: 12px;
+  --radius-input: 8px;
+
+  /* Tailwind Semantic Variable Aliases */
+  --background: #ffffff;
+  --surface: #ffffff;
+  --surface-raised: #ffffff;
+  --border: rgba(18, 26, 42, 0.1);
+  --primary: #c96f55;
+  --foreground: #121a2a;
+  --foreground-muted: #5f6c80;
+  --popover: #ffffff;
+  --popover-foreground: #121a2a;
+  --input: rgba(18, 26, 42, 0.12);
+  --card: #ffffff;
+  --card-foreground: #121a2a;
+
+  --accent: #c96f55;
+  --accent-hover: #b86047;
+  --accent-foreground: #ffffff;
+}
+
+html,
+body {
+  overflow-x: clip;
+  max-width: 100vw;
+  width: 100%;
+  background-color: #ffffff;
+  color: #121a2a;
+  font-family:
+    var(--font-jakarta),
+    'Plus Jakarta Sans',
+    system-ui,
+    -apple-system,
+    sans-serif;
+  min-height: 100dvh;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom Sleek Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #ffffff;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(18, 26, 42, 0.2);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(18, 26, 42, 0.35);
+}
+
+/* Seamless GPU-Accelerated Infinite Auto Marquee Carousel */
+@keyframes infinite-scroll {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.carousel-viewport {
+  overflow: hidden !important;
+  width: 100%;
+  max-width: 100%;
+  contain: paint;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.carousel-viewport::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.carousel-track {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  width: max-content !important;
+  flex-shrink: 0 !important;
+  align-items: stretch;
+  will-change: transform;
+  animation: infinite-scroll 60s linear infinite !important;
+}
+
+.carousel-viewport:hover .carousel-track,
+.carousel-track:hover {
+  animation-play-state: paused !important;
+}
+
+
+
+/* Editorial Transitions & GPU Compositing (Apple / Vercel style - smooth, zero blink, zero layout reflow) */
+@keyframes pageEditorialEnter {
+  0% {
+    opacity: 0.94;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.animate-page-enter {
+  animation: pageEditorialEnter 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes tabGlideIn {
+  0% {
+    opacity: 0.90;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.animate-tab-glide {
+  animation: tabGlideIn 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes textMorphSmooth {
+  0% {
+    opacity: 0.92;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.animate-text-smooth {
+  animation: textMorphSmooth 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes faqSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-faq-open {
+  animation: faqSlideDown 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-page-enter,
+  .animate-tab-glide,
+  .animate-text-smooth,
+  .animate-faq-open {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+
+
