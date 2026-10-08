@@ -12,6 +12,7 @@ const nextConfig: NextConfig = {
     ],
   },
   async rewrites() {
+    const backendUrl = process.env.BACKEND_URL || 'http://localhost:4000';
     return [
       {
         source: '/product',
@@ -20,6 +21,10 @@ const nextConfig: NextConfig = {
       {
         source: '/product/:id*',
         destination: '/products/:id*',
+      },
+      {
+        source: '/api/:path*',
+        destination: `${backendUrl}/api/:path*`,
       },
     ];
   },

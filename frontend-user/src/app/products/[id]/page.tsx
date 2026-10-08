@@ -1,10 +1,36 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { PrismaCatalogRepository } from '@/lib/services/prisma-catalog.repository';
 import { parseProductDurations } from '@/lib/services/product-duration';
 import { findRelevantProducts } from '@/lib/services/product-relevance';
 import { resolveProductFamily } from '@/lib/services/product-variant-parser';
 import { ProductDetailClient, ProductDetailData } from './product-detail-client';
+import { ProductItem } from '@/lib/products-data';
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || process.env.BACKEND_URL || 'http://localhost:4000';
+
+async function fetchActiveProducts(): Promise<ProductItem[]> {
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/v1/products`, { next: { revalidate: 60 } });
+    if (!res.ok) return [];
+    const json = await res.json();
+    return json.data || [];
+  } catch (err) {
+    console.error('[Product Detail] Failed to fetch products from backend:', err);
+    return [];
+  }
+}
+
+async function fetchProductById(id: string): Promise<ProductItem | null> {
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/v1/products/${id}`, { next: { revalidate: 60 } });
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json.success !== false ? json : null;
+  } catch (err) {
+    console.error(`[Product Detail] Failed to fetch product ${id} from backend:`, err);
+    return null;
+  }
+}
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -12,9 +38,9 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params;
-  const { products: activeProducts } = await PrismaCatalogRepository.getActiveProducts();
+  const activeProducts = await fetchActiveProducts();
   const familyData = resolveProductFamily(id, activeProducts);
-  const baseProduct = await PrismaCatalogRepository.getProductById(id);
+  const baseProduct = await fetchProductById(id);
 
   const product = familyData
     ? {
@@ -85,9 +111,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function ProductDetailPage({ params }: PageProps) {
   const { id } = await params;
-  const { products: activeProducts } = await PrismaCatalogRepository.getActiveProducts();
+  const activeProducts = await fetchActiveProducts();
   const familyData = resolveProductFamily(id, activeProducts);
-  const baseProduct = await PrismaCatalogRepository.getProductById(id);
+  const baseProduct = await fetchProductById(id);
 
   if (!familyData && (!baseProduct || baseProduct.status === 'archived')) {
     notFound();
@@ -152,7 +178,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
       },
       {
         label: 'Kode Layanan Supplier',
-        value: activeVariant?.id || fallbackProduct.providerCode || '-',
+        value: activeVariant?.id || (fallbackProduct as { providerCode?: string }).providerCode || '-',
       },
       { label: 'Waktu Pengiriman', value: 'Proses Instan (1 - 15 Menit)' },
       { label: 'Metode Pengiriman', value: 'Email Terdaftar & Notifikasi WhatsApp CS' },

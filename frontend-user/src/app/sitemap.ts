@@ -1,8 +1,8 @@
 import { MetadataRoute } from 'next';
-import { PrismaCatalogRepository } from '@/lib/services/prisma-catalog.repository';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://asterrastore.biz.id';
+  const backendUrl = process.env.NEXT_PUBLIC_API_URL || process.env.BACKEND_URL || 'http://localhost:4000';
 
   // Base static routes
   const staticRoutes: MetadataRoute.Sitemap = [
@@ -39,15 +39,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   try {
-    const { products } = await PrismaCatalogRepository.getActiveProducts({ limit: 500 });
-    const productRoutes: MetadataRoute.Sitemap = products.map((product) => ({
-      url: `${siteUrl}/products/${product.id}`,
-      lastModified: new Date(),
-      changeFrequency: 'daily',
-      priority: 0.8,
-    }));
-
-    return [...staticRoutes, ...productRoutes];
+    const res = await fetch(`${backendUrl}/api/v1/products`);
+    if (res.ok) {
+      const json = await res.json();
+      const products: Array<{ id: string }> = json.data || [];
+      const productRoutes: MetadataRoute.Sitemap = products.map((product) => ({
+        url: `${siteUrl}/products/${product.id}`,
+        lastModified: new Date(),
+        changeFrequency: 'daily',
+        priority: 0.8,
+      }));
+      return [...staticRoutes, ...productRoutes];
+    }
+    return staticRoutes;
   } catch {
     return staticRoutes;
   }
