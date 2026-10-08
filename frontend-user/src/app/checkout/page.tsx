@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { useCartStore } from '@/store/use-cart-store';
 import { useAuthStore } from '@/store/use-auth-store';
 import { useSession } from '@/lib/auth-client';
@@ -256,7 +257,6 @@ function CheckoutPageContent() {
     }, 4000);
   };
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeManualModal, setActiveManualModal] = useState<ManualPaymentModalData | null>(null);
   const [notification, setNotification] = useState<string | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
@@ -268,32 +268,30 @@ function CheckoutPageContent() {
     }, 4000);
   };
 
-  // Fetch active payment config on mount
+  // 1. TanStack Query: Fetch active payment config
+  const { data: configData } = useQuery({
+    queryKey: ['public-payment-config'],
+    queryFn: () => PaymentConfigApi.getPublicConfig(),
+    staleTime: 60000,
+  });
+
   useEffect(() => {
-    async function loadConfig() {
+    if (configData?.success && configData.data) {
+      setPaymentConfig(configData.data);
       try {
-        const json = await PaymentConfigApi.getPublicConfig();
-        if (json.success && json.data) {
-          setPaymentConfig(json.data);
-          try {
-            localStorage.setItem('asterra_payment_config', JSON.stringify(json.data));
-          } catch {}
-          setSelectedMethod((prev) => {
-            if (json.data.mode === 'manual' && !prev.startsWith('manual_')) {
-              return 'manual_bca';
-            }
-            if (json.data.mode === 'gateway' && prev.startsWith('manual_')) {
-              return 'qris';
-            }
-            return prev;
-          });
+        localStorage.setItem('asterra_payment_config', JSON.stringify(configData.data));
+      } catch {}
+      setSelectedMethod((prev) => {
+        if (configData.data.mode === 'manual' && !prev.startsWith('manual_')) {
+          return 'manual_bca';
         }
-      } catch (err) {
-        console.warn('[Checkout] Failed to load payment config, using default:', err);
-      }
+        if (configData.data.mode === 'gateway' && prev.startsWith('manual_')) {
+          return 'qris';
+        }
+        return prev;
+      });
     }
-    loadConfig();
-  }, []);
+  }, [configData]);
 
   // Prompt unauthenticated guests to login on checkout page
   useEffect(() => {
@@ -332,42 +330,44 @@ function CheckoutPageContent() {
       ]
     : GATEWAY_PAYMENT_METHODS;
 
-  const handleApplyPromo = async () => {
-    const code = promoCode.trim().toUpperCase();
-    if (!code) {
-      showPromoFeedback('error', 'Silakan masukkan kode voucher.');
-      return;
-    }
-
-    try {
-      setIsCheckingPromo(true);
-      const res = await PromosApi.validate(
+  // 2. TanStack Mutation: Validate Promo Voucher
+  const validatePromoMutation = useMutation({
+    mutationFn: async (code: string) => {
+      return PromosApi.validate(
         code,
         getTotalAmount(),
         targetEmail.trim() || undefined,
         items.map((i) => ({ product_id: i.id, quantity: i.quantity, price: i.priceNumeric })),
         referralDiscount
       );
-
+    },
+    onSuccess: (res, code) => {
       if (!res || !res.valid) {
         setAppliedPromo(null);
         showPromoFeedback('error', res?.error || 'Kode promo tidak valid atau syarat tidak terpenuhi.');
         return;
       }
-
       setAppliedPromo({
         code: res.code || code,
         discount: res.discountAmount || 0,
         description: res.description,
       });
       showPromoFeedback('success', res.message || `Kode voucher ${res.code || code} berhasil digunakan!`);
-    } catch (err: unknown) {
+    },
+    onError: (err: unknown) => {
       const msg = err instanceof Error ? err.message : 'Gagal memeriksa kode promo. Periksa koneksi Anda.';
       setAppliedPromo(null);
       showPromoFeedback('error', msg);
-    } finally {
-      setIsCheckingPromo(false);
+    },
+  });
+
+  const handleApplyPromo = () => {
+    const code = promoCode.trim().toUpperCase();
+    if (!code) {
+      showPromoFeedback('error', 'Silakan masukkan kode voucher.');
+      return;
     }
+    validatePromoMutation.mutate(code);
   };
 
   const handleRemovePromo = () => {
@@ -429,40 +429,12 @@ function CheckoutPageContent() {
     return true;
   };
 
-  const handleSubmitOrder = async (e?: React.FormEvent) => {
-    if (e) {
-      e.preventDefault();
-    }
-
-    if (!handleValidateBeforeCheckout()) {
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      const orderPayload = {
-        items: items.map((item) => ({
-          product_id: item.id,
-          product_name: item.name,
-          unit_price: item.priceNumeric,
-          quantity: item.quantity,
-          purchased_details: {
-            target_email: targetEmail.trim(),
-            phone: phoneNumber.trim(),
-          },
-        })),
-        customer_notes: customerNotes.trim(),
-        payment_method: selectedMethod,
-        promo_code: appliedPromo?.code || undefined,
-        referral_code: referralPartner?.code || (referralCode.trim() ? referralCode.trim() : undefined),
-        customer_contact: {
-          name: customerName.trim(),
-          email: targetEmail.trim(),
-          phone: phoneNumber.trim(),
-        },
-      };
-
-      const orderData = await OrdersApi.create(orderPayload);
+  // 3. TanStack Mutation: Create Order & Process Payment
+  const createOrderMutation = useMutation({
+    mutationFn: async (payload: any) => {
+      return OrdersApi.create(payload);
+    },
+    onSuccess: async (orderData) => {
       const createdOrder = orderData.order;
 
       if (referralDiscount > 0 && typeof window !== 'undefined') {
@@ -486,7 +458,6 @@ function CheckoutPageContent() {
         } catch (_) {}
       }
 
-      // Save customer email to localStorage for persistent individual order tracking
       if (typeof window !== 'undefined') {
         try {
           localStorage.setItem('asterra_customer_email', targetEmail.trim());
@@ -494,10 +465,8 @@ function CheckoutPageContent() {
         } catch {}
       }
 
-      // Clear shopping cart
       clearCart();
 
-      // Handle based on active payment mode
       if (isManualMode || createdOrder.payment_mode === 'manual') {
         setActiveManualModal({
           orderId: createdOrder.id,
@@ -521,12 +490,45 @@ function CheckoutPageContent() {
         showNotification('Pesanan berhasil dibuat. Mengarahkan ke status pesanan.');
         router.push('/orders');
       }
-    } catch (err: unknown) {
+    },
+    onError: (err: unknown) => {
       const msg = err instanceof Error ? err.message : 'Terjadi kesalahan sistem.';
       showNotification(msg);
-    } finally {
-      setIsSubmitting(false);
+    },
+  });
+
+  const handleSubmitOrder = (e?: React.FormEvent) => {
+    if (e) {
+      e.preventDefault();
     }
+
+    if (!handleValidateBeforeCheckout()) {
+      return;
+    }
+
+    const orderPayload = {
+      items: items.map((item) => ({
+        product_id: item.id,
+        product_name: item.name,
+        unit_price: item.priceNumeric,
+        quantity: item.quantity,
+        purchased_details: {
+          target_email: targetEmail.trim(),
+          phone: phoneNumber.trim(),
+        },
+      })),
+      customer_notes: customerNotes.trim(),
+      payment_method: selectedMethod,
+      promo_code: appliedPromo?.code || undefined,
+      referral_code: referralPartner?.code || (referralCode.trim() ? referralCode.trim() : undefined),
+      customer_contact: {
+        name: customerName.trim(),
+        email: targetEmail.trim(),
+        phone: phoneNumber.trim(),
+      },
+    };
+
+    createOrderMutation.mutate(orderPayload);
   };
 
   const getMethodName = (methodId: string) => {
@@ -632,13 +634,13 @@ function CheckoutPageContent() {
                     referralPartner={referralPartner}
                     finalTotal={finalTotal}
                     isManualMode={isManualMode}
-                    isSubmitting={isSubmitting}
+                    isSubmitting={createOrderMutation.isPending}
                     hasOutOfStockItems={hasOutOfStockItems}
                     promoCode={promoCode}
                     onPromoCodeChange={setPromoCode}
                     onApplyPromo={handleApplyPromo}
                     onRemovePromo={handleRemovePromo}
-                    isCheckingPromo={isCheckingPromo}
+                    isCheckingPromo={validatePromoMutation.isPending}
                     promoFeedback={promoFeedback}
                     onValidateBeforeCheckout={handleValidateBeforeCheckout}
                     onConfirmOrder={() => handleSubmitOrder()}

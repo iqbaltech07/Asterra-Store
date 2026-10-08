@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useMutation } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -72,7 +73,39 @@ function SalesLoginContent() {
     checkExistingSession();
   }, [router]);
 
-  const handleSalesLogin = async (e: React.FormEvent) => {
+  const loginMutation = useMutation({
+    mutationFn: async ({ emailVal, passwordVal }: { emailVal: string; passwordVal: string }) => {
+      const response = await fetch('/api/v1/admin/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: emailVal.trim(), password: passwordVal }),
+      });
+
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        throw new Error(
+          data.error?.message ||
+            'Email atau kata sandi tidak cocok. Pastikan Anda sudah terdaftar sebagai mitra sales.'
+        );
+      }
+      return data;
+    },
+    onSuccess: (data) => {
+      if (data.token && typeof window !== 'undefined') {
+        localStorage.setItem('asterra_admin_token', data.token);
+      }
+      setSuccessMessage('Login berhasil! Membuka Portal Sales Anda...');
+      setTimeout(() => {
+        window.location.href = callbackUrl;
+      }, 300);
+    },
+    onError: (err: unknown) => {
+      const message = err instanceof Error ? err.message : 'Terjadi kesalahan saat masuk.';
+      setErrorMessage(message);
+    },
+  });
+
+  const handleSalesLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
     setSuccessMessage(null);
@@ -82,40 +115,7 @@ function SalesLoginContent() {
       return;
     }
 
-    setIsLoading(true);
-
-    try {
-      const response = await fetch('/api/v1/admin/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim(), password }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok || !data.success) {
-        throw new Error(
-          data.error?.message ||
-            'Email atau kata sandi tidak cocok. Pastikan Anda sudah terdaftar sebagai mitra sales.'
-        );
-      }
-
-      if (data.token && typeof window !== 'undefined') {
-        localStorage.setItem('asterra_admin_token', data.token);
-      }
-
-      setSuccessMessage('Login berhasil! Membuka Portal Sales Anda...');
-
-      // Redirect immediately to sales console
-      setTimeout(() => {
-        window.location.href = callbackUrl;
-      }, 300);
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Terjadi kesalahan saat masuk.';
-      setErrorMessage(message);
-    } finally {
-      setIsLoading(false);
-    }
+    loginMutation.mutate({ emailVal: email, passwordVal: password });
   };
 
   if (isVerifyingSession) {
@@ -237,9 +237,9 @@ function SalesLoginContent() {
               type="submit"
               data-gsap="login-button"
               className="w-full gap-2 font-bold h-10 text-xs"
-              disabled={isLoading}
+              disabled={loginMutation.isPending}
             >
-              {isLoading ? (
+              {loginMutation.isPending ? (
                 <>
                   <FontAwesomeIcon icon={faSpinner} className="text-sm fa-spin" />
                   <span>Memverifikasi Akun...</span>

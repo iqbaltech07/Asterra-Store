@@ -3,6 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { useMutation } from '@tanstack/react-query';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faWallet,
@@ -145,37 +146,46 @@ function DaftarSalesContent() {
       return;
     }
 
-    setIsSubmitting(true);
+    registerMutation.mutate({
+      name,
+      email,
+      whatsapp,
+      password,
+      referralCode: referralCode.trim() || undefined,
+      customCode: customCode.trim() || undefined,
+    });
+  };
 
-    try {
+  const registerMutation = useMutation({
+    mutationFn: async (payload: {
+      name: string;
+      email: string;
+      whatsapp: string;
+      password: string;
+      referralCode?: string;
+      customCode?: string;
+    }) => {
       const res = await fetch('/api/v1/affiliate/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name,
-          email,
-          whatsapp,
-          password,
-          referralCode: referralCode.trim() || undefined,
-          customCode: customCode.trim() || undefined,
-        }),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
-
       if (!res.ok || !data.success) {
         throw new Error(data.message || 'Gagal mengirim formulir pendaftaran sales.');
       }
-
+      return data;
+    },
+    onSuccess: (data) => {
       setSuccessPartner(data.data);
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    } catch (err: unknown) {
+    },
+    onError: (err: unknown) => {
       const msg = err instanceof Error ? err.message : 'Terjadi gangguan koneksi. Silakan coba lagi.';
       setErrorMessage(msg);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+    },
+  });
 
   const getReferralUrl = (code: string) => {
     if (typeof window !== 'undefined') {
@@ -629,10 +639,10 @@ function DaftarSalesContent() {
                 <Button
                   type="submit"
                   data-gsap="daftar-button"
-                  disabled={isSubmitting}
+                  disabled={registerMutation.isPending}
                   className="w-full text-xs font-bold h-11 gap-2 shadow-md mt-2"
                 >
-                  {isSubmitting ? (
+                  {registerMutation.isPending ? (
                     <span>Mendaftarkan Akun Sales...</span>
                   ) : (
                     <>

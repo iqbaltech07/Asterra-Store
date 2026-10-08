@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useMutation } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -68,34 +69,24 @@ export default function AdminLoginPage() {
     checkExistingSession();
   }, [router]);
 
-  const handleAdminLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorMessage(null);
-    setSuccessMessage(null);
-
-    if (!email || !password) {
-      setErrorMessage('Email administrator dan kata sandi otorisasi wajib diisi.');
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
+  const loginMutation = useMutation({
+    mutationFn: async ({ emailVal, passwordVal }: { emailVal: string; passwordVal: string }) => {
       const response = await fetch('/api/v1/admin/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: emailVal, password: passwordVal }),
       });
 
       const data = await response.json();
-
       if (!response.ok || !data.success) {
         throw new Error(
           data.error?.message ||
             'Kredensial administrator tidak valid atau Anda tidak memiliki hak akses.'
         );
       }
-
+      return data;
+    },
+    onSuccess: (data) => {
       if (data.token && typeof window !== 'undefined') {
         localStorage.setItem('asterra_admin_token', data.token);
       }
@@ -111,12 +102,24 @@ export default function AdminLoginPage() {
           window.location.href = '/admin';
         }, 300);
       }
-    } catch (err: unknown) {
+    },
+    onError: (err: unknown) => {
       const message = err instanceof Error ? err.message : 'Terjadi kesalahan autentikasi.';
       setErrorMessage(message);
-    } finally {
-      setIsLoading(false);
+    },
+  });
+
+  const handleAdminLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage(null);
+    setSuccessMessage(null);
+
+    if (!email || !password) {
+      setErrorMessage('Email administrator dan kata sandi otorisasi wajib diisi.');
+      return;
     }
+
+    loginMutation.mutate({ emailVal: email, passwordVal: password });
   };
 
   if (isVerifyingSession) {
@@ -226,9 +229,9 @@ export default function AdminLoginPage() {
             <Button
               type="submit"
               className="w-full gap-2"
-              disabled={isLoading}
+              disabled={loginMutation.isPending}
             >
-              {isLoading ? (
+              {loginMutation.isPending ? (
                 <>
                   <FontAwesomeIcon icon={faSpinner} className="w-4 h-4 animate-spin" />
                   <span>Memverifikasi Otoritas...</span>
