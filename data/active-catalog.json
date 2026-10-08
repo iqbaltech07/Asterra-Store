@@ -2386,8 +2386,8 @@
       "id": "cat-apps-streaming",
       "name": "Apps & Streaming"
     },
-    "price": 8000,
-    "priceFormatted": "Rp 8 Rb",
+    "price": 15900,
+    "priceFormatted": "Rp 16 Rb",
     "description": "Private Akun 1 Tahun [ Garansi 3 Bulan ] - Layanan digital resmi terverifikasi dengan aktivasi instan.",
     "features": [
       "Brand: Digital",
@@ -2404,8 +2404,8 @@
     "providerPrice": 5000,
     "providerStatus": "available",
     "lastProviderCheck": "2026-09-24T10:25:18.860Z",
-    "profitMargin": 3000,
-    "profitPercentage": 60
+    "profitMargin": 10900,
+    "profitPercentage": 218
   },
   {
     "id": "vip-bspremprivate1bln-s1",
@@ -2498,8 +2498,8 @@
       "id": "cat-apps-streaming",
       "name": "Apps & Streaming"
     },
-    "price": 7000,
-    "priceFormatted": "Rp 7 Rb",
+    "price": 10900,
+    "priceFormatted": "Rp 11 Rb",
     "description": "BsTation Premium 1 Bulan [ AKUN - SHARED - 1 DEVICES ] - Layanan digital resmi terverifikasi dengan aktivasi instan.",
     "features": [
       "Brand: Digital",
@@ -2513,11 +2513,11 @@
     "provider": "vip-reseller",
     "providerCode": "BSPREMSHRD1BLN-S1",
     "providerName": "BsTation Premium 1 Bulan [ AKUN - SHARED - 1 DEVICES ]",
-    "providerPrice": 3750,
+    "providerPrice": 4000,
     "providerStatus": "available",
     "lastProviderCheck": "2026-09-24T10:25:18.863Z",
-    "profitMargin": 3250,
-    "profitPercentage": 87
+    "profitMargin": 6900,
+    "profitPercentage": 173
   },
   {
     "id": "vip-bspremshrd3bln-s1",
@@ -2526,8 +2526,8 @@
       "id": "cat-apps-streaming",
       "name": "Apps & Streaming"
     },
-    "price": 13000,
-    "priceFormatted": "Rp 13 Rb",
+    "price": 20900,
+    "priceFormatted": "Rp 21 Rb",
     "description": "BsTation Premium 3 Bulan [ AKUN - SHARED - 1 DEVICES ] - Layanan digital resmi terverifikasi dengan aktivasi instan.",
     "features": [
       "Brand: Digital",
@@ -2541,11 +2541,11 @@
     "provider": "vip-reseller",
     "providerCode": "BSPREMSHRD3BLN-S1",
     "providerName": "BsTation Premium 3 Bulan [ AKUN - SHARED - 1 DEVICES ]",
-    "providerPrice": 10250,
+    "providerPrice": 10500,
     "providerStatus": "available",
     "lastProviderCheck": "2026-09-24T10:25:18.863Z",
-    "profitMargin": 2750,
-    "profitPercentage": 27
+    "profitMargin": 10400,
+    "profitPercentage": 99
   },
   {
     "id": "vip-bspremshrd1thn-s1",
@@ -2554,8 +2554,8 @@
       "id": "cat-apps-streaming",
       "name": "Apps & Streaming"
     },
-    "price": 20000,
-    "priceFormatted": "Rp 20 Rb",
+    "price": 42900,
+    "priceFormatted": "Rp 43 Rb",
     "description": "BsTation Premium 1 Tahun [ AKUN - SHARED - 1 DEVICES ] - Layanan digital resmi terverifikasi dengan aktivasi instan.",
     "features": [
       "Brand: Digital",
@@ -2569,11 +2569,11 @@
     "provider": "vip-reseller",
     "providerCode": "BSPREMSHRD1THN-S1",
     "providerName": "BsTation Premium 1 Tahun [ AKUN - SHARED - 1 DEVICES ]",
-    "providerPrice": 17000,
+    "providerPrice": 20000,
     "providerStatus": "available",
     "lastProviderCheck": "2026-09-24T10:25:18.863Z",
-    "profitMargin": 3000,
-    "profitPercentage": 18
+    "profitMargin": 22900,
+    "profitPercentage": 115
   },
   {
     "id": "vip-canvaanggota1bln-s1",
@@ -2582,8 +2582,8 @@
       "id": "cat-apps-streaming",
       "name": "Apps & Streaming"
     },
-    "price": 4000,
-    "priceFormatted": "Rp 4 Rb",
+    "price": 6900,
+    "priceFormatted": "Rp 7 Rb",
     "description": "Canvaa Pro Anggota [ 1 Bulan ] [ Garansi 1 Bulan ] - Layanan digital resmi terverifikasi dengan aktivasi instan.",
     "features": [
       "Brand: Digital",
@@ -2600,8 +2600,8 @@
     "providerPrice": 1300,
     "providerStatus": "available",
     "lastProviderCheck": "2026-09-24T10:25:18.864Z",
-    "profitMargin": 2700,
-    "profitPercentage": 208
+    "profitMargin": 5600,
+    "profitPercentage": 431
   },
   {
     "id": "vip-canvaanggota2bln-s1",
@@ -2610,8 +2610,8 @@
       "id": "cat-apps-streaming",
       "name": "Apps & Streaming"
     },
-    "price": 5000,
-    "priceFormatted": "Rp 5 Rb",
+    "price": 10900,
+    "priceFormatted": "Rp 11 Rb",
     "description": "Canvaa Pro Anggota [ 2 Bulan ] [ Garansi 2 Bulan ] - Layanan digital resmi terverifikasi dengan aktivasi instan.",
     "features": [
       "Brand: Digital",
@@ -2628,8 +2628,8 @@
     "providerPrice": 2500,
     "providerStatus": "available",
     "lastProviderCheck": "2026-09-24T10:25:18.864Z",
-    "profitMargin": 2500,
-    "profitPercentage": 100
+    "profitMargin": 8400,
+    "profitPercentage": 336
   },
   {
     "id": "vip-canvadesainer1bln-s1",
@@ -2638,8 +2638,8 @@
       "id": "cat-apps-streaming",
       "name": "Apps & Streaming"
     },
-    "price": 5000,
-    "priceFormatted": "Rp 5 Rb",
+    "price": 9900,
+    "priceFormatted": "Rp 10 Rb",
     "description": "Canvaa Pro Desainer [ 1 Bulan ] [ Garansi 1 Bulan ] - Layanan digital resmi terverifikasi dengan aktivasi instan.",
     "features": [
       "Brand: Digital",
@@ -2656,8 +2656,8 @@
     "providerPrice": 2300,
     "providerStatus": "available",
     "lastProviderCheck": "2026-09-24T10:25:18.864Z",
-    "profitMargin": 2700,
-    "profitPercentage": 117
+    "profitMargin": 7600,
+    "profitPercentage": 330
   },
   {
     "id": "vip-canva6bln-s1",
@@ -2806,8 +2806,8 @@
       "id": "cat-apps-streaming",
       "name": "Apps & Streaming"
     },
-    "price": 14000,
-    "priceFormatted": "Rp 14 Rb",
+    "price": 26900,
+    "priceFormatted": "Rp 27 Rb",
     "description": "Canva Education [ 1 Tahun ] [ Garansi 6 Bulan ] - Layanan digital resmi terverifikasi dengan aktivasi instan.",
     "features": [
       "Brand: Digital",
@@ -2824,8 +2824,8 @@
     "providerPrice": 11500,
     "providerStatus": "available",
     "lastProviderCheck": "2026-09-24T10:25:18.864Z",
-    "profitMargin": 2500,
-    "profitPercentage": 22
+    "profitMargin": 15400,
+    "profitPercentage": 134
   },
   {
     "id": "vip-canvatestt-s6",
@@ -2918,8 +2918,8 @@
       "id": "cat-apps-streaming",
       "name": "Apps & Streaming"
     },
-    "price": 8000,
-    "priceFormatted": "Rp 8 Rb",
+    "price": 15900,
+    "priceFormatted": "Rp 16 Rb",
     "description": "Canvaa Pro [ 1 Bulan ] - Layanan digital resmi terverifikasi dengan aktivasi instan.",
     "features": [
       "Brand: Digital",
@@ -2936,8 +2936,8 @@
     "providerPrice": 5000,
     "providerStatus": "empty",
     "lastProviderCheck": "2026-09-24T10:25:18.864Z",
-    "profitMargin": 3000,
-    "profitPercentage": 60
+    "profitMargin": 10900,
+    "profitPercentage": 218
   },
   {
     "id": "vip-capcutprivate7d-s1",
@@ -2946,8 +2946,8 @@
       "id": "cat-apps-streaming",
       "name": "Apps & Streaming"
     },
-    "price": 9000,
-    "priceFormatted": "Rp 9 Rb",
+    "price": 13900,
+    "priceFormatted": "Rp 14 Rb",
     "description": "Private Akun 7 Hari [ Garansi 5 Hari ] - Layanan digital resmi terverifikasi dengan aktivasi instan.",
     "features": [
       "Brand: Digital",
@@ -2964,8 +2964,8 @@
     "providerPrice": 6500,
     "providerStatus": "available",
     "lastProviderCheck": "2026-09-24T10:25:18.864Z",
-    "profitMargin": 2500,
-    "profitPercentage": 38
+    "profitMargin": 7400,
+    "profitPercentage": 114
   },
   {
     "id": "vip-capcutprivate1bln-s2",
@@ -2974,8 +2974,8 @@
       "id": "cat-apps-streaming",
       "name": "Apps & Streaming"
     },
-    "price": 13000,
-    "priceFormatted": "Rp 13 Rb",
+    "price": 20900,
+    "priceFormatted": "Rp 21 Rb",
     "description": "Private Akun 1 Bulan [ Garansi 7 Hari ] - Layanan digital resmi terverifikasi dengan aktivasi instan.",
     "features": [
       "Brand: Digital",
@@ -2989,11 +2989,11 @@
     "provider": "vip-reseller",
     "providerCode": "CAPCUTPRIVATE1BLN-S2",
     "providerName": "Private Akun 1 Bulan [ Garansi 7 Hari ]",
-    "providerPrice": 9800,
+    "providerPrice": 10000,
     "providerStatus": "empty",
     "lastProviderCheck": "2026-09-24T10:25:18.864Z",
-    "profitMargin": 3200,
-    "profitPercentage": 33
+    "profitMargin": 10900,
+    "profitPercentage": 109
   },
   {
     "id": "vip-capcutprivate1blngar28d-s2",
@@ -3058,8 +3058,8 @@
       "id": "cat-apps-streaming",
       "name": "Apps & Streaming"
     },
-    "price": 16000,
-    "priceFormatted": "Rp 16 Rb",
+    "price": 20900,
+    "priceFormatted": "Rp 21 Rb",
     "description": "Shared Akun 1 Bulan [ 1 Devices - 2 User ] [ Garansi 7 Hari ] - Layanan digital resmi terverifikasi dengan aktivasi instan.",
     "features": [
       "Brand: Digital",
@@ -3076,8 +3076,8 @@
     "providerPrice": 13000,
     "providerStatus": "empty",
     "lastProviderCheck": "2026-09-24T10:25:18.864Z",
-    "profitMargin": 3000,
-    "profitPercentage": 23
+    "profitMargin": 7900,
+    "profitPercentage": 61
   },
   {
     "id": "vip-capcutshared1blngar28d-s2",
@@ -3086,8 +3086,8 @@
       "id": "cat-apps-streaming",
       "name": "Apps & Streaming"
     },
-    "price": 19000,
-    "priceFormatted": "Rp 19 Rb",
+    "price": 27900,
+    "priceFormatted": "Rp 28 Rb",
     "description": "Shared Akun 1 Bulan [ 1 Devices - 2 User ] [ Garansi 28 Hari ] - Layanan digital resmi terverifikasi dengan aktivasi instan.",
     "features": [
       "Brand: Digital",
@@ -3104,8 +3104,8 @@
     "providerPrice": 16000,
     "providerStatus": "empty",
     "lastProviderCheck": "2026-09-24T10:25:18.864Z",
-    "profitMargin": 3000,
-    "profitPercentage": 19
+    "profitMargin": 11900,
+    "profitPercentage": 74
   },
   {
     "id": "vip-capcutshared1bln-s1",
@@ -3114,8 +3114,8 @@
       "id": "cat-apps-streaming",
       "name": "Apps & Streaming"
     },
-    "price": 14000,
-    "priceFormatted": "Rp 14 Rb",
+    "price": 20900,
+    "priceFormatted": "Rp 21 Rb",
     "description": "Shared Akun [ 1 Bulan - 1 Devices ] - Layanan digital resmi terverifikasi dengan aktivasi instan.",
     "features": [
       "Brand: Digital",
@@ -3132,8 +3132,8 @@
     "providerPrice": 11000,
     "providerStatus": "empty",
     "lastProviderCheck": "2026-09-24T10:25:18.864Z",
-    "profitMargin": 3000,
-    "profitPercentage": 27
+    "profitMargin": 9900,
+    "profitPercentage": 90
   },
   {
     "id": "vip-capcutshared1bln-s3",
@@ -3142,8 +3142,8 @@
       "id": "cat-apps-streaming",
       "name": "Apps & Streaming"
     },
-    "price": 19000,
-    "priceFormatted": "Rp 19 Rb",
+    "price": 25900,
+    "priceFormatted": "Rp 26 Rb",
     "description": "Shared Akun 1 Bulan [ 1 Devices - 2 User ] [ Garansi 28 Hari ] - Layanan digital resmi terverifikasi dengan aktivasi instan.",
     "features": [
       "Brand: Digital",
@@ -3160,8 +3160,8 @@
     "providerPrice": 16500,
     "providerStatus": "empty",
     "lastProviderCheck": "2026-09-24T10:25:18.864Z",
-    "profitMargin": 2500,
-    "profitPercentage": 15
+    "profitMargin": 9400,
+    "profitPercentage": 57
   },
   {
     "id": "vip-capcutshared1thn-s1",
@@ -3170,8 +3170,8 @@
       "id": "cat-apps-streaming",
       "name": "Apps & Streaming"
     },
-    "price": 18000,
-    "priceFormatted": "Rp 18 Rb",
+    "price": 42900,
+    "priceFormatted": "Rp 43 Rb",
     "description": "Shared Akun [ 1 Tahun - 1 Devices ] [ Garansi 6 Bulan ] - Layanan digital resmi terverifikasi dengan aktivasi instan.",
     "features": [
       "Brand: Digital",
@@ -3188,8 +3188,8 @@
     "providerPrice": 15000,
     "providerStatus": "empty",
     "lastProviderCheck": "2026-09-24T10:25:18.864Z",
-    "profitMargin": 3000,
-    "profitPercentage": 20
+    "profitMargin": 27900,
+    "profitPercentage": 186
   },
   {
     "id": "vip-capcutprivate1bln-s3",
@@ -3226,8 +3226,8 @@
       "id": "cat-apps-streaming",
       "name": "Apps & Streaming"
     },
-    "price": 37000,
-    "priceFormatted": "Rp 37 Rb",
+    "price": 63900,
+    "priceFormatted": "Rp 64 Rb",
     "description": "Private Akun 30 Hari [ Garansi 25 Hari ] [ Reg Indonesia ] - Layanan digital resmi terverifikasi dengan aktivasi instan.",
     "features": [
       "Brand: Digital",
@@ -3244,8 +3244,8 @@
     "providerPrice": 34000,
     "providerStatus": "available",
     "lastProviderCheck": "2026-09-24T10:25:18.864Z",
-    "profitMargin": 3000,
-    "profitPercentage": 9
+    "profitMargin": 29900,
+    "profitPercentage": 88
   },
   {
     "id": "vip-chatgptgo1thngar1b-s1",
@@ -3254,8 +3254,8 @@
       "id": "cat-apps---streaming",
       "name": "Apps & Streaming"
     },
-    "price": 23000,
-    "priceFormatted": "Rp 23 Rb",
+    "price": 42900,
+    "priceFormatted": "Rp 43 Rb",
     "description": "GO Plan 1 Tahun [ Private Account ] [ Garansi 1 Bulan ] - Layanan digital resmi terverifikasi dengan aktivasi instan.",
     "features": [
       "Brand: Digital",
@@ -3272,8 +3272,8 @@
     "providerPrice": 20000,
     "providerStatus": "empty",
     "lastProviderCheck": "2026-09-24T10:25:18.864Z",
-    "profitMargin": 3000,
-    "profitPercentage": 15
+    "profitMargin": 22900,
+    "profitPercentage": 115
   },
   {
     "id": "vip-chatgptgo1thngar6b-s1",
@@ -3282,8 +3282,8 @@
       "id": "cat-apps---streaming",
       "name": "Apps & Streaming"
     },
-    "price": 33000,
-    "priceFormatted": "Rp 33 Rb",
+    "price": 57900,
+    "priceFormatted": "Rp 58 Rb",
     "description": "GO Plan 1 Tahun [ Private Account ] [ Garansi 6 Bulan ] - Layanan digital resmi terverifikasi dengan aktivasi instan.",
     "features": [
       "Brand: Digital",
@@ -3300,8 +3300,8 @@
     "providerPrice": 30000,
     "providerStatus": "empty",
     "lastProviderCheck": "2026-09-24T10:25:18.864Z",
-    "profitMargin": 3000,
-    "profitPercentage": 10
+    "profitMargin": 27900,
+    "profitPercentage": 93
   },
   {
     "id": "vip-chatgpt1bgar7d-s1",
@@ -3366,8 +3366,8 @@
       "id": "cat-apps-streaming",
       "name": "Apps & Streaming"
     },
-    "price": 51000,
-    "priceFormatted": "Rp 51 Rb",
+    "price": 95900,
+    "priceFormatted": "Rp 96 Rb",
     "description": "Plus Plan 1 Bulan [ Private Account ] [ Garansi 28 Hari ] - Layanan digital resmi terverifikasi dengan aktivasi instan.",
     "features": [
       "Brand: Digital",
@@ -3384,8 +3384,8 @@
     "providerPrice": 47000,
     "providerStatus": "empty",
     "lastProviderCheck": "2026-09-24T10:25:18.864Z",
-    "profitMargin": 4000,
-    "profitPercentage": 9
+    "profitMargin": 48900,
+    "profitPercentage": 104
   },
   {
     "id": "vip-chatgptplus1bshared-s1",
@@ -3534,8 +3534,8 @@
       "id": "cat-apps-streaming",
       "name": "Apps & Streaming"
     },
-    "price": 76000,
-    "priceFormatted": "Rp 76 Rb",
+    "price": 97900,
+    "priceFormatted": "Rp 98 Rb",
     "description": "Plus Plan 1 Bulan [ Private Account ] [ Garansi 14 Hari ] - Layanan digital resmi terverifikasi dengan aktivasi instan.",
     "features": [
       "Brand: Digital",
@@ -3552,8 +3552,8 @@
     "providerPrice": 70000,
     "providerStatus": "empty",
     "lastProviderCheck": "2026-09-24T10:25:18.864Z",
-    "profitMargin": 6000,
-    "profitPercentage": 9
+    "profitMargin": 27900,
+    "profitPercentage": 40
   },
   {
     "id": "vip-chatgptplus1bgar4d-s1",
@@ -3674,8 +3674,8 @@
       "id": "cat-apps-streaming",
       "name": "Apps & Streaming"
     },
-    "price": 54000,
-    "priceFormatted": "Rp 54 Rb",
+    "price": 152900,
+    "priceFormatted": "Rp 153 Rb",
     "description": "Plus Plan 3 Bulan [ Private Account ] [ Garansi 1 Bulan ] - Layanan digital resmi terverifikasi dengan aktivasi instan.",
     "features": [
       "Brand: Digital",
@@ -3692,8 +3692,8 @@
     "providerPrice": 50000,
     "providerStatus": "empty",
     "lastProviderCheck": "2026-09-24T10:25:18.864Z",
-    "profitMargin": 4000,
-    "profitPercentage": 8
+    "profitMargin": 102900,
+    "profitPercentage": 206
   },
   {
     "id": "vip-chatgptplus3bgar3bln-s1",
@@ -4066,8 +4066,8 @@
       "id": "cat-apps---streaming",
       "name": "Apps & Streaming"
     },
-    "price": 25000,
-    "priceFormatted": "Rp 25 Rb",
+    "price": 31900,
+    "priceFormatted": "Rp 32 Rb",
     "description": "Gemini AI Pro 1 Tahun [ Anggota ] [ Garansi 1 Bulan ] [ 5 TB GDRIVE ] - Layanan digital resmi terverifikasi dengan aktivasi instan.",
     "features": [
       "Brand: Digital",
@@ -4084,8 +4084,8 @@
     "providerPrice": 13000,
     "providerStatus": "available",
     "lastProviderCheck": "2026-09-24T10:25:18.934Z",
-    "profitMargin": 12000,
-    "profitPercentage": 92
+    "profitMargin": 18900,
+    "profitPercentage": 145
   },
   {
     "id": "vip-geminiproinvt1thngar6bln-s2",
@@ -4094,8 +4094,8 @@
       "id": "cat-apps-streaming",
       "name": "Apps & Streaming"
     },
-    "price": 31000,
-    "priceFormatted": "Rp 31 Rb",
+    "price": 58900,
+    "priceFormatted": "Rp 59 Rb",
     "description": "Gemini AI Pro 1 Tahun [ Anggota ] [ Garansi 6 Bulan ] [ 5 TB GDRIVE ] - Layanan digital resmi terverifikasi dengan aktivasi instan.",
     "features": [
       "Brand: Digital",
@@ -4112,8 +4112,8 @@
     "providerPrice": 28000,
     "providerStatus": "available",
     "lastProviderCheck": "2026-09-24T10:25:18.934Z",
-    "profitMargin": 3000,
-    "profitPercentage": 11
+    "profitMargin": 30900,
+    "profitPercentage": 110
   },
   {
     "id": "vip-geminiproinvt1thngar3bln-s2",
@@ -4122,8 +4122,8 @@
       "id": "cat-apps-streaming",
       "name": "Apps & Streaming"
     },
-    "price": 21000,
-    "priceFormatted": "Rp 21 Rb",
+    "price": 42900,
+    "priceFormatted": "Rp 43 Rb",
     "description": "Gemini AI Pro 1 Tahun [ Anggota ] [ Garansi 3 Bulan ] [ 5 TB GDRIVE ] - Layanan digital resmi terverifikasi dengan aktivasi instan.",
     "features": [
       "Brand: Digital",
@@ -4140,8 +4140,8 @@
     "providerPrice": 18000,
     "providerStatus": "available",
     "lastProviderCheck": "2026-09-24T10:25:18.934Z",
-    "profitMargin": 3000,
-    "profitPercentage": 17
+    "profitMargin": 24900,
+    "profitPercentage": 138
   },
   {
     "id": "vip-geminiproinvt1thngar1bln-s1",
@@ -4206,8 +4206,8 @@
       "id": "cat-apps-streaming",
       "name": "Apps & Streaming"
     },
-    "price": 49000,
-    "priceFormatted": "Rp 49 Rb",
+    "price": 72900,
+    "priceFormatted": "Rp 73 Rb",
     "description": "Gemini AI Pro 1 Tahun [ Head Invite 5 Anggota ] [ Garansi 1 Bulan ] [ 5 TB GDRIVE ] - Layanan digital resmi terverifikasi dengan aktivasi instan.",
     "features": [
       "Brand: Digital",
@@ -4224,8 +4224,8 @@
     "providerPrice": 45000,
     "providerStatus": "available",
     "lastProviderCheck": "2026-09-24T10:25:18.934Z",
-    "profitMargin": 4000,
-    "profitPercentage": 9
+    "profitMargin": 27900,
+    "profitPercentage": 62
   },
   {
     "id": "vip-geminiprohead1thngar6bln-s2",
@@ -4234,8 +4234,8 @@
       "id": "cat-apps-streaming",
       "name": "Apps & Streaming"
     },
-    "price": 108000,
-    "priceFormatted": "Rp 108 Rb",
+    "price": 156900,
+    "priceFormatted": "Rp 157 Rb",
     "description": "Gemini AI Pro 1 Tahun [ Head Invite 5 Anggota ] [ Garansi 6 Bulan ] [ 5 TB GDRIVE ] - Layanan digital resmi terverifikasi dengan aktivasi instan.",
     "features": [
       "Brand: Digital",
@@ -4252,8 +4252,8 @@
     "providerPrice": 100000,
     "providerStatus": "available",
     "lastProviderCheck": "2026-09-24T10:25:18.934Z",
-    "profitMargin": 8000,
-    "profitPercentage": 8
+    "profitMargin": 56900,
+    "profitPercentage": 57
   },
   {
     "id": "vip-geminiprohead1thngar3bln-s2",
@@ -4262,8 +4262,8 @@
       "id": "cat-apps-streaming",
       "name": "Apps & Streaming"
     },
-    "price": 65000,
-    "priceFormatted": "Rp 65 Rb",
+    "price": 105900,
+    "priceFormatted": "Rp 106 Rb",
     "description": "Gemini AI Pro 1 Tahun [ Head Invite 5 Anggota ] [ Garansi 3 Bulan ] [ 5 TB GDRIVE ] - Layanan digital resmi terverifikasi dengan aktivasi instan.",
     "features": [
       "Brand: Digital",
@@ -4280,8 +4280,8 @@
     "providerPrice": 60000,
     "providerStatus": "available",
     "lastProviderCheck": "2026-09-24T10:25:18.934Z",
-    "profitMargin": 5000,
-    "profitPercentage": 8
+    "profitMargin": 45900,
+    "profitPercentage": 77
   },
   {
     "id": "vip-geminiprohead1thngar1bln-s1",
@@ -4346,8 +4346,8 @@
       "id": "cat-apps-streaming",
       "name": "Apps & Streaming"
     },
-    "price": 13000,
-    "priceFormatted": "Rp 13 Rb",
+    "price": 17900,
+    "priceFormatted": "Rp 18 Rb",
     "description": "IQIYI Premium [ 1 Bulan ] [ Shared ] - Layanan digital resmi terverifikasi dengan aktivasi instan.",
     "features": [
       "Brand: Digital",
@@ -4364,8 +4364,8 @@
     "providerPrice": 10000,
     "providerStatus": "available",
     "lastProviderCheck": "2026-09-24T10:25:18.939Z",
-    "profitMargin": 3000,
-    "profitPercentage": 30
+    "profitMargin": 7900,
+    "profitPercentage": 79
   },
   {
     "id": "vip-iqiyiprivate-s1",
@@ -4402,8 +4402,8 @@
       "id": "cat-apps-streaming",
       "name": "Apps & Streaming"
     },
-    "price": 10000,
-    "priceFormatted": "Rp 10 Rb",
+    "price": 13900,
+    "priceFormatted": "Rp 14 Rb",
     "description": "IQIYI Premium [ 1 Bulan ] [ Shared ] [ Promo ] - Layanan digital resmi terverifikasi dengan aktivasi instan.",
     "features": [
       "Brand: Digital",
@@ -4420,8 +4420,8 @@
     "providerPrice": 7000,
     "providerStatus": "empty",
     "lastProviderCheck": "2026-09-24T10:25:18.939Z",
-    "profitMargin": 3000,
-    "profitPercentage": 43
+    "profitMargin": 6900,
+    "profitPercentage": 99
   },
   {
     "id": "vip-mlcmpgn3-s1a",
@@ -4430,8 +4430,8 @@
       "id": "cat-apps-streaming",
       "name": "Apps & Streaming"
     },
-    "price": 91000,
-    "priceFormatted": "Rp 91 Rb",
+    "price": 92000,
+    "priceFormatted": "Rp 92 Rb",
     "description": "[Promo] 296 Diamonds + iQIYI Standard 7 Days - Layanan digital resmi terverifikasi dengan aktivasi instan.",
     "features": [
       "Brand: Digital",
@@ -4445,11 +4445,11 @@
     "provider": "vip-reseller",
     "providerCode": "MLCMPGN3-S1A",
     "providerName": "[Promo] 296 Diamonds + iQIYI Standard 7 Days",
-    "providerPrice": 84053,
+    "providerPrice": 84528,
     "providerStatus": "empty",
     "lastProviderCheck": "2026-09-24T10:25:18.949Z",
-    "profitMargin": 6947,
-    "profitPercentage": 8
+    "profitMargin": 7472,
+    "profitPercentage": 9
   },
   {
     "id": "vip-mlcmpgn3-s1auto",
@@ -4542,8 +4542,8 @@
       "id": "cat-apps-streaming",
       "name": "Apps & Streaming"
     },
-    "price": 99000,
-    "priceFormatted": "Rp 99 Rb",
+    "price": 100000,
+    "priceFormatted": "Rp 100 Rb",
     "description": "[Promo] Weekly Diamond Pass x3 + iQIYI Standard 7 Days - Layanan digital resmi terverifikasi dengan aktivasi instan.",
     "features": [
       "Brand: Digital",
@@ -4557,11 +4557,11 @@
     "provider": "vip-reseller",
     "providerCode": "MLCMPGN2-S1A",
     "providerName": "[Promo] Weekly Diamond Pass x3 + iQIYI Standard 7 Days",
-    "providerPrice": 91384,
+    "providerPrice": 91686,
     "providerStatus": "empty",
     "lastProviderCheck": "2026-09-24T10:25:18.949Z",
-    "profitMargin": 7616,
-    "profitPercentage": 8
+    "profitMargin": 8314,
+    "profitPercentage": 9
   },
   {
     "id": "vip-mlcmpgn7-s1001",
@@ -5184,8 +5184,8 @@
       "id": "cat-apps-streaming",
       "name": "Apps & Streaming"
     },
-    "price": 18000,
-    "priceFormatted": "Rp 18 Rb",
+    "price": 25900,
+    "priceFormatted": "Rp 26 Rb",
     "description": "Video Premier Platinum [ 1 Bulan ] [ Shared 2 User - 1 Devices - Khusus Mobile] - Layanan digital resmi terverifikasi dengan aktivasi instan.",
     "features": [
       "Brand: Digital",
@@ -5199,11 +5199,11 @@
     "provider": "vip-reseller",
     "providerCode": "VIDIOSHAREDMBL1BLN-S2",
     "providerName": "Video Premier Platinum [ 1 Bulan ] [ Shared 2 User - 1 Devices - Khusus Mobile]",
-    "providerPrice": 14750,
+    "providerPrice": 15000,
     "providerStatus": "available",
     "lastProviderCheck": "2026-09-24T10:25:18.968Z",
-    "profitMargin": 3250,
-    "profitPercentage": 22
+    "profitMargin": 10900,
+    "profitPercentage": 73
   },
   {
     "id": "vip-vidioshared1bln-s2",
@@ -5268,8 +5268,8 @@
       "id": "cat-apps-streaming",
       "name": "Apps & Streaming"
     },
-    "price": 30000,
-    "priceFormatted": "Rp 30 Rb",
+    "price": 41900,
+    "priceFormatted": "Rp 42 Rb",
     "description": "Video Premier Platinum [ 1 Bulan ] [ Private - Khusus Mobile ] - Layanan digital resmi terverifikasi dengan aktivasi instan.",
     "features": [
       "Brand: Digital",
@@ -5286,8 +5286,8 @@
     "providerPrice": 27000,
     "providerStatus": "available",
     "lastProviderCheck": "2026-09-24T10:25:18.968Z",
-    "profitMargin": 3000,
-    "profitPercentage": 11
+    "profitMargin": 14900,
+    "profitPercentage": 55
   },
   {
     "id": "vip-vidioprivate-s1",
@@ -5856,8 +5856,8 @@
       "id": "cat-apps-streaming",
       "name": "Apps & Streaming"
     },
-    "price": 7000,
-    "priceFormatted": "Rp 7 Rb",
+    "price": 13900,
+    "priceFormatted": "Rp 14 Rb",
     "description": "Private 12 Bulan [ AKUN - 1 DEVICES ] [GARANSI 1 BULAN] - Layanan digital resmi terverifikasi dengan aktivasi instan.",
     "features": [
       "Brand: Digital",
@@ -5874,8 +5874,8 @@
     "providerPrice": 4500,
     "providerStatus": "available",
     "lastProviderCheck": "2026-09-24T10:25:18.968Z",
-    "profitMargin": 2500,
-    "profitPercentage": 56
+    "profitMargin": 9400,
+    "profitPercentage": 209
   },
   {
     "id": "vip-viu1thngar3bln-s1",
@@ -5884,8 +5884,8 @@
       "id": "cat-apps-streaming",
       "name": "Apps & Streaming"
     },
-    "price": 9000,
-    "priceFormatted": "Rp 9 Rb",
+    "price": 17900,
+    "priceFormatted": "Rp 18 Rb",
     "description": "Private 12 Bulan [ AKUN - 1 DEVICES ] [GARANSI 3 BULAN] - Layanan digital resmi terverifikasi dengan aktivasi instan.",
     "features": [
       "Brand: Digital",
@@ -5902,8 +5902,8 @@
     "providerPrice": 6500,
     "providerStatus": "available",
     "lastProviderCheck": "2026-09-24T10:25:18.968Z",
-    "profitMargin": 2500,
-    "profitPercentage": 38
+    "profitMargin": 11400,
+    "profitPercentage": 175
   },
   {
     "id": "vip-viu1blnprm-s1",
@@ -6108,8 +6108,8 @@
       "id": "cat-apps-streaming",
       "name": "Apps & Streaming"
     },
-    "price": 11000,
-    "priceFormatted": "Rp 11 Rb",
+    "price": 20900,
+    "priceFormatted": "Rp 21 Rb",
     "description": "WETV Premium [ 1 Bulan] [ Shared - 1 Devices ] - Layanan digital resmi terverifikasi dengan aktivasi instan.",
     "features": [
       "Brand: Digital",
@@ -6126,8 +6126,8 @@
     "providerPrice": 8500,
     "providerStatus": "available",
     "lastProviderCheck": "2026-09-24T10:25:18.970Z",
-    "profitMargin": 2500,
-    "profitPercentage": 29
+    "profitMargin": 12400,
+    "profitPercentage": 146
   },
   {
     "id": "vip-wetvshared3bln-s1",
@@ -6220,8 +6220,8 @@
       "id": "cat-apps-streaming",
       "name": "Apps & Streaming"
     },
-    "price": 33000,
-    "priceFormatted": "Rp 33 Rb",
+    "price": 52900,
+    "priceFormatted": "Rp 53 Rb",
     "description": "WETV Premium [ 1 Bulan ] [ Private ] - Layanan digital resmi terverifikasi dengan aktivasi instan.",
     "features": [
       "Brand: Digital",
@@ -6238,8 +6238,8 @@
     "providerPrice": 30000,
     "providerStatus": "available",
     "lastProviderCheck": "2026-09-24T10:25:18.970Z",
-    "profitMargin": 3000,
-    "profitPercentage": 10
+    "profitMargin": 22900,
+    "profitPercentage": 76
   },
   {
     "id": "vip-ytpremindpo5x-s2",
