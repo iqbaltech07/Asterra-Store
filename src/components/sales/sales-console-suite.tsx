@@ -31,6 +31,7 @@ import {
   ShieldCheck,
   CreditCard,
   Users,
+  ExternalLink,
 } from 'lucide-react';
 import { AdminTab } from '@/components/admin/admin-sidebar';
 
@@ -74,11 +75,14 @@ interface SalesProfileData {
 interface ProductItem {
   id: string;
   name: string;
-  categoryName: string;
+  category?: { id: string; name: string };
+  categoryName?: string;
   price: number;
   priceFormatted: string;
   status: string;
   imageUrl?: string;
+  profitMargin?: number;
+  profitPercentage?: number;
 }
 
 interface SalesOrder {
@@ -147,7 +151,7 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
   const [copiedLink, setCopiedLink] = useState<string | null>(null);
 
   // 1. Fetch Sales Profile & Live Metrics
-  const { data: profileRes } = useQuery<{
+  const { data: profileRes, isLoading: isProfileLoading } = useQuery<{
     success: boolean;
     data: SalesProfileData;
   }>({
@@ -274,10 +278,11 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
   const filteredProducts = useMemo(() => {
     const list = productsRes?.data || [];
     return list.filter((p) => {
+      const catName = p.categoryName || p.category?.name || 'Digital';
       const matchSearch =
         p.name.toLowerCase().includes(productSearch.toLowerCase()) ||
-        p.categoryName.toLowerCase().includes(productSearch.toLowerCase());
-      const matchCat = selectedCategory === 'all' || p.categoryName === selectedCategory;
+        catName.toLowerCase().includes(productSearch.toLowerCase());
+      const matchCat = selectedCategory === 'all' || catName === selectedCategory;
       return matchSearch && matchCat;
     });
   }, [productsRes?.data, productSearch, selectedCategory]);
@@ -285,22 +290,23 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
   const categories = useMemo(() => {
     const list = productsRes?.data || [];
     const set = new Set<string>();
-    list.forEach((p) => set.add(p.categoryName));
+    list.forEach((p) => {
+      const catName = p.categoryName || p.category?.name;
+      if (catName) set.add(catName);
+    });
     return Array.from(set);
   }, [productsRes?.data]);
 
-  // Link Generator State
+  // Link Generator State (Clean, direct referral URL without campaign tags)
   const [selectedProductForLink, setSelectedProductForLink] = useState('');
-  const [campaignTag, setCampaignTag] = useState('wa-status');
 
   const customGeneratedUrl = useMemo(() => {
     const base = getBaseUrl();
-    const tagQuery = campaignTag.trim() ? `&utm_campaign=${encodeURIComponent(campaignTag.trim())}` : '';
     if (selectedProductForLink) {
-      return `${base}/products/${selectedProductForLink}?ref=${partnerCode}${tagQuery}`;
+      return `${base}/products/${selectedProductForLink}?ref=${partnerCode}`;
     }
-    return `${base}/?ref=${partnerCode}${tagQuery}`;
-  }, [partnerCode, selectedProductForLink, campaignTag]);
+    return `${base}/?ref=${partnerCode}`;
+  }, [partnerCode, selectedProductForLink]);
 
   // Payout Form States
   const [payoutAmount, setPayoutAmount] = useState<string>('');
@@ -439,129 +445,198 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
           </div>
 
           {/* 4 Metric Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* 1. Saldo Komisi Siap Tarik */}
-            <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-2 relative overflow-hidden">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-foreground-muted">Komisi Siap Tarik (Final)</span>
-                <div className="w-8 h-8 rounded-lg bg-status-success/10 text-status-success flex items-center justify-center">
-                  <Wallet className="w-4 h-4" />
-                </div>
-              </div>
-              <div className="text-2xl font-extrabold text-foreground tracking-tight">
-                Rp {(partner?.unpaidCommission || 0).toLocaleString('id-ID')}
-              </div>
-              <div className="pt-2 border-t border-border/60 space-y-1.5 text-[11px]">
+          {isProfileLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Skeleton Card 1: Saldo Komisi Siap Tarik */}
+              <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-3 animate-pulse">
                 <div className="flex items-center justify-between">
-                  <span className="text-foreground-muted flex items-center gap-1">
-                    <Clock className="w-3 h-3 text-amber-500" />
-                    <span>Masa Garansi (3 Hari):</span>
-                  </span>
-                  <span className="font-semibold text-amber-500">
-                    Rp {(partner?.pendingCommission || 0).toLocaleString('id-ID')}
-                  </span>
+                  <div className="h-3.5 w-32 bg-foreground/10 rounded" />
+                  <div className="w-8 h-8 rounded-lg bg-foreground/10" />
                 </div>
-                <div className="flex items-center justify-between text-foreground-muted">
-                  <span>Total telah dicairkan:</span>
-                  <span className="font-medium text-foreground">
-                    Rp {(partner?.paidCommission || 0).toLocaleString('id-ID')}
-                  </span>
+                <div className="h-8 w-36 bg-foreground/15 rounded" />
+                <div className="pt-2 border-t border-border/60 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="h-3 w-28 bg-foreground/10 rounded" />
+                    <div className="h-3 w-16 bg-foreground/10 rounded" />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="h-3 w-24 bg-foreground/10 rounded" />
+                    <div className="h-3 w-20 bg-foreground/10 rounded" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Skeleton Card 2: Pesanan Referral */}
+              <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-3 animate-pulse">
+                <div className="flex items-center justify-between">
+                  <div className="h-3.5 w-28 bg-foreground/10 rounded" />
+                  <div className="w-8 h-8 rounded-lg bg-foreground/10" />
+                </div>
+                <div className="h-8 w-24 bg-foreground/15 rounded" />
+                <div className="pt-2 border-t border-border/60 flex items-center justify-between">
+                  <div className="h-3 w-24 bg-foreground/10 rounded" />
+                  <div className="h-3 w-20 bg-foreground/10 rounded" />
+                </div>
+              </div>
+
+              {/* Skeleton Card 3: Total Klik Referral */}
+              <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-3 animate-pulse">
+                <div className="flex items-center justify-between">
+                  <div className="h-3.5 w-28 bg-foreground/10 rounded" />
+                  <div className="w-8 h-8 rounded-lg bg-foreground/10" />
+                </div>
+                <div className="h-8 w-20 bg-foreground/15 rounded" />
+                <div className="pt-2 border-t border-border/60 flex items-center justify-between">
+                  <div className="h-3 w-24 bg-foreground/10 rounded" />
+                  <div className="h-3 w-14 bg-foreground/10 rounded" />
+                </div>
+              </div>
+
+              {/* Skeleton Card 4: Skema Komisi Anda */}
+              <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-3 animate-pulse">
+                <div className="flex items-center justify-between">
+                  <div className="h-3.5 w-32 bg-foreground/10 rounded" />
+                  <div className="w-8 h-8 rounded-lg bg-foreground/10" />
+                </div>
+                <div className="flex items-baseline justify-between">
+                  <div className="h-8 w-24 bg-foreground/15 rounded" />
+                  <div className="h-5 w-20 bg-foreground/10 rounded-full" />
+                </div>
+                <div className="pt-1.5 space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <div className="h-3 w-28 bg-foreground/10 rounded" />
+                    <div className="h-3 w-16 bg-foreground/10 rounded" />
+                  </div>
+                  <div className="w-full h-1.5 bg-foreground/10 rounded-full" />
+                  <div className="h-2.5 w-44 bg-foreground/10 rounded" />
                 </div>
               </div>
             </div>
-
-            {/* 2. Total Pesanan Berhasil */}
-            <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-foreground-muted">Pesanan Referral</span>
-                <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-                  <ShoppingBag className="w-4 h-4" />
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* 1. Saldo Komisi Siap Tarik */}
+              <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-2 relative overflow-hidden">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-foreground-muted">Komisi Siap Tarik (Final)</span>
+                  <div className="w-8 h-8 rounded-lg bg-status-success/10 text-status-success flex items-center justify-center">
+                    <Wallet className="w-4 h-4" />
+                  </div>
                 </div>
-              </div>
-              <div className="text-2xl font-extrabold text-foreground tracking-tight">
-                {partner?.totalOrders || 0} <span className="text-xs font-normal text-foreground-muted">Order</span>
-              </div>
-              <div className="flex items-center justify-between pt-1 text-[11px]">
-                <span className="text-foreground-muted">Omzet dihasilkan:</span>
-                <span className="font-semibold text-foreground">
-                  Rp {(partner?.totalRevenue || 0).toLocaleString('id-ID')}
-                </span>
-              </div>
-            </div>
-
-            {/* 3. Total Kunjungan Link (Clicks) */}
-            <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-foreground-muted">Total Klik Referral</span>
-                <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center">
-                  <TrendingUp className="w-4 h-4" />
-                </div>
-              </div>
-              <div className="text-2xl font-extrabold text-foreground tracking-tight">
-                {partner?.totalClicks || 0} <span className="text-xs font-normal text-foreground-muted">Klik</span>
-              </div>
-              <div className="flex items-center justify-between pt-1 text-[11px]">
-                <span className="text-foreground-muted">Tingkat konversi:</span>
-                <span className="font-semibold text-status-success">{conversionRate}</span>
-              </div>
-            </div>
-
-            {/* 4. Tier & Skema Komisi */}
-            <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-foreground-muted">Skema Komisi Anda</span>
-                <div
-                  className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                    partnerRate >= 15 ? 'bg-amber-500/10 text-amber-500' : 'bg-purple-500/10 text-purple-500'
-                  }`}
-                >
-                  <Award className="w-4 h-4" />
-                </div>
-              </div>
-              <div className="flex items-baseline justify-between">
                 <div className="text-2xl font-extrabold text-foreground tracking-tight">
-                  {partnerRate}% <span className="text-xs font-normal text-foreground-muted">Profit Transaksi</span>
+                  Rp {(partner?.unpaidCommission || 0).toLocaleString('id-ID')}
                 </div>
-                <Badge
-                  variant="outline"
-                  className={`text-[10px] font-semibold ${
-                    partnerRate >= 15
-                      ? 'text-amber-500 border-amber-500/30 bg-amber-500/10'
-                      : 'text-primary border-primary/30 bg-primary/10'
-                  }`}
-                >
-                  {partnerRate >= 15 ? 'VIP Sales (15%)' : 'Standard (10%)'}
-                </Badge>
+                <div className="pt-2 border-t border-border/60 space-y-1.5 text-[11px]">
+                  <div className="flex items-center justify-between">
+                    <span className="text-foreground-muted flex items-center gap-1">
+                      <Clock className="w-3 h-3 text-amber-500" />
+                      <span>Masa Garansi (3 Hari):</span>
+                    </span>
+                    <span className="font-semibold text-amber-500">
+                      Rp {(partner?.pendingCommission || 0).toLocaleString('id-ID')}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-foreground-muted">
+                    <span>Total telah dicairkan:</span>
+                    <span className="font-medium text-foreground">
+                      Rp {(partner?.paidCommission || 0).toLocaleString('id-ID')}
+                    </span>
+                  </div>
+                </div>
               </div>
 
-              {/* Progress Bar Milestone 50 Orders -> VIP Sales 15% */}
-              <div className="pt-1.5 space-y-1">
-                <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-foreground-muted">
-                    {partnerRate >= 15 ? 'Status VIP Aktif:' : 'Target VIP (15% Profit):'}
-                  </span>
-                  <span className="font-semibold text-foreground font-mono">
-                    {partner?.totalOrders || 0} / 50 Order
+              {/* 2. Total Pesanan Berhasil */}
+              <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-foreground-muted">Pesanan Referral</span>
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                    <ShoppingBag className="w-4 h-4" />
+                  </div>
+                </div>
+                <div className="text-2xl font-extrabold text-foreground tracking-tight">
+                  {partner?.totalOrders || 0} <span className="text-xs font-normal text-foreground-muted">Order</span>
+                </div>
+                <div className="flex items-center justify-between pt-1 text-[11px]">
+                  <span className="text-foreground-muted">Omzet dihasilkan:</span>
+                  <span className="font-semibold text-foreground">
+                    Rp {(partner?.totalRevenue || 0).toLocaleString('id-ID')}
                   </span>
                 </div>
-                <div className="w-full h-1.5 bg-surface-raised rounded-full overflow-hidden border border-border">
+              </div>
+
+              {/* 3. Total Kunjungan Link (Clicks) */}
+              <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-foreground-muted">Total Klik Referral</span>
+                  <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center">
+                    <TrendingUp className="w-4 h-4" />
+                  </div>
+                </div>
+                <div className="text-2xl font-extrabold text-foreground tracking-tight">
+                  {partner?.totalClicks || 0} <span className="text-xs font-normal text-foreground-muted">Klik</span>
+                </div>
+                <div className="flex items-center justify-between pt-1 text-[11px]">
+                  <span className="text-foreground-muted">Tingkat konversi:</span>
+                  <span className="font-semibold text-status-success">{conversionRate}</span>
+                </div>
+              </div>
+
+              {/* 4. Tier & Skema Komisi */}
+              <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-foreground-muted">Skema Komisi Anda</span>
                   <div
-                    className={`h-full transition-all duration-500 ${
-                      partnerRate >= 15 ? 'bg-amber-500' : 'bg-primary'
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                      partnerRate >= 15 ? 'bg-amber-500/10 text-amber-500' : 'bg-purple-500/10 text-purple-500'
                     }`}
-                    style={{
-                      width: `${Math.min(100, Math.max(4, (((partner?.totalOrders || 0) / 50) * 100)))}%`,
-                    }}
-                  />
+                  >
+                    <Award className="w-4 h-4" />
+                  </div>
                 </div>
-                <p className="text-[10px] text-foreground-muted leading-tight">
-                  {partnerRate >= 15
-                    ? '🌟 Selamat! Anda telah mencapai 50 order. Komisi 15% dari profit transaksi aktif!'
-                    : `${Math.max(0, 50 - (partner?.totalOrders || 0))} order lagi untuk upgrade ke VIP Sales (15% Profit Transaksi).`}
-                </p>
+                <div className="flex items-baseline justify-between">
+                  <div className="text-2xl font-extrabold text-foreground tracking-tight">
+                    {partnerRate}% <span className="text-xs font-normal text-foreground-muted">Profit Transaksi</span>
+                  </div>
+                  <Badge
+                    variant="outline"
+                    className={`text-[10px] font-semibold ${
+                      partnerRate >= 15
+                        ? 'text-amber-500 border-amber-500/30 bg-amber-500/10'
+                        : 'text-primary border-primary/30 bg-primary/10'
+                    }`}
+                  >
+                    {partnerRate >= 15 ? 'VIP Sales (15%)' : 'Standard (10%)'}
+                  </Badge>
+                </div>
+
+                {/* Progress Bar Milestone 50 Orders -> VIP Sales 15% */}
+                <div className="pt-1.5 space-y-1">
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="text-foreground-muted">
+                      {partnerRate >= 15 ? 'Status VIP Aktif:' : 'Target VIP (15% Profit):'}
+                    </span>
+                    <span className="font-semibold text-foreground font-mono">
+                      {partner?.totalOrders || 0} / 50 Order
+                    </span>
+                  </div>
+                  <div className="w-full h-1.5 bg-surface-raised rounded-full overflow-hidden border border-border">
+                    <div
+                      className={`h-full transition-all duration-500 ${
+                        partnerRate >= 15 ? 'bg-amber-500' : 'bg-primary'
+                      }`}
+                      style={{
+                        width: `${Math.min(100, Math.max(4, (((partner?.totalOrders || 0) / 50) * 100)))}%`,
+                      }}
+                    />
+                  </div>
+                  <p className="text-[10px] text-foreground-muted leading-tight">
+                    {partnerRate >= 15
+                      ? '🌟 Selamat! Anda telah mencapai 50 order. Komisi 15% dari profit transaksi aktif!'
+                      : `${Math.max(0, 50 - (partner?.totalOrders || 0))} order lagi untuk upgrade ke VIP Sales (15% Profit Transaksi).`}
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Ajak Teman Jadi Sales Callout Banner */}
           <div className="rounded-xl border border-primary/25 bg-gradient-to-r from-primary/10 via-surface to-primary/5 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -695,13 +770,41 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
             <div>
               <h2 className="text-lg font-bold text-foreground">Katalog Produk & Estimasi Komisi</h2>
               <p className="text-xs text-foreground-muted">
-                Salin link produk langsung dengan kode referral Anda ({partnerCode}) sudah terpasang otomatis.
+                Pilih produk, dapatkan link referral otomatis ({partnerCode}), dan nikmati komisi langsung dari setiap transaksi yang berhasil.
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <Badge variant="outline" className="text-xs font-semibold px-2.5 py-1 text-primary border-primary/30">
-                Komisi Anda: {partnerRate}% Per Transaksi
+              <Badge variant="outline" className="text-xs font-semibold px-3 py-1.5 text-status-success border-status-success/30 bg-status-success/5 gap-1.5">
+                <Percent className="w-3.5 h-3.5" />
+                <span>Skema Anda: {partnerRate}% dari Profit Transaksi</span>
               </Badge>
+            </div>
+          </div>
+
+          {/* Transparansi Info Banner */}
+          <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5">
+                <Sparkles className="w-4 h-4" />
+              </div>
+              <div className="space-y-0.5">
+                <h4 className="font-semibold text-foreground">Prinsip Komisi Transparan Asterra Store</h4>
+                <p className="text-foreground-muted text-[11px] leading-relaxed">
+                  Komisi dihitung berdasarkan <strong>Profit Bersih Transaksi</strong> (margin harga jual dikurangi biaya modal produk), bukan omzet kotor. Dengan skema {partnerRate}%, Anda mendapatkan bagian profit nyata tanpa potongan tersembunyi.
+                </p>
+              </div>
+            </div>
+            <div className="shrink-0 flex items-center gap-2">
+              <span className="text-[11px] text-foreground-muted">Butuh copywriting?</span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onTabChange('sales-links')}
+                className="text-xs h-8 border-primary/30 text-primary hover:bg-primary/10 gap-1 font-semibold"
+              >
+                <span>Materi Promosi</span>
+                <ArrowRight className="w-3 h-3" />
+              </Button>
             </div>
           </div>
 
@@ -710,7 +813,7 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
             <div className="relative flex-1">
               <Search className="w-4 h-4 text-foreground-muted absolute left-3 top-1/2 -translate-y-1/2" />
               <Input
-                placeholder="Cari produk digital (misal: Canva, Netflix, Spotify)..."
+                placeholder="Cari produk digital (misal: Canva, Netflix, Spotify, ChatGPT)..."
                 value={productSearch}
                 onChange={(e) => setProductSearch(e.target.value)}
                 className="pl-9 bg-surface border-border text-xs h-10"
@@ -721,9 +824,9 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
                 variant={selectedCategory === 'all' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setSelectedCategory('all')}
-                className="text-xs h-10 shrink-0"
+                className="text-xs h-10 shrink-0 font-medium"
               >
-                Semua Kategori
+                Semua Kategori ({productsRes?.data?.length || 0})
               </Button>
               {categories.map((cat) => (
                 <Button
@@ -731,7 +834,7 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
                   variant={selectedCategory === cat ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setSelectedCategory(cat)}
-                  className="text-xs h-10 shrink-0"
+                  className="text-xs h-10 shrink-0 font-medium"
                 >
                   {cat}
                 </Button>
@@ -743,7 +846,12 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
           {isProductsLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {[1, 2, 3, 4, 5, 6].map((i) => (
-                <div key={i} className="h-44 bg-surface rounded-xl border border-border animate-pulse" />
+                <div key={i} className="h-56 bg-surface rounded-xl border border-border animate-pulse p-4 space-y-3">
+                  <div className="h-4 w-24 bg-foreground/10 rounded" />
+                  <div className="h-6 w-3/4 bg-foreground/15 rounded" />
+                  <div className="h-14 w-full bg-foreground/10 rounded" />
+                  <div className="h-9 w-full bg-foreground/10 rounded mt-4" />
+                </div>
               ))}
             </div>
           ) : filteredProducts.length === 0 ? (
@@ -751,35 +859,73 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
               <Package className="w-10 h-10 text-foreground-muted mx-auto" />
               <h3 className="font-bold text-sm text-foreground">Tidak Ada Produk Ditemukan</h3>
               <p className="text-xs text-foreground-muted max-w-sm mx-auto">
-                Coba sesuaikan kata kunci pencarian atau ubah filter kategori Anda.
+                Coba sesuaikan kata kunci pencarian atau ubah pilihan kategori Anda.
               </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredProducts.map((p) => {
                 const productUrl = `${getBaseUrl()}/products/${p.id}?ref=${partnerCode}`;
-                const commissionRp = Math.round((p.price * partnerRate) / 100);
+                const catName = p.categoryName || p.category?.name || 'Digital';
+
+                // Profit & Commission Calculation
+                const estimatedProfit =
+                  p.profitMargin && p.profitMargin > 0
+                    ? p.profitMargin
+                    : Math.max(5000, Math.round(p.price * 0.25));
+                const commissionRp = Math.round((estimatedProfit * partnerRate) / 100);
 
                 return (
                   <div
                     key={p.id}
-                    className="bg-surface border border-border rounded-xl p-4 shadow-xs flex flex-col justify-between space-y-4 hover:border-border-hover transition-colors"
+                    className="bg-surface border border-border rounded-xl p-4 shadow-xs flex flex-col justify-between space-y-4 hover:border-primary/40 hover:shadow-sm transition-all group"
                   >
-                    <div className="space-y-2">
-                      <div className="flex items-start justify-between gap-2">
-                        <span className="text-[10px] font-semibold text-foreground-muted uppercase tracking-wider">
-                          {p.categoryName}
+                    <div className="space-y-3">
+                      {/* Top Badges */}
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-[10px] font-bold text-primary tracking-wider uppercase bg-primary/10 px-2 py-0.5 rounded-md">
+                          {catName}
                         </span>
-                        <Badge variant="outline" className="text-[10px] text-status-success border-status-success/30 bg-status-success/5 font-semibold">
+                        <Badge
+                          variant="outline"
+                          className="text-[10px] text-status-success border-status-success/30 bg-status-success/10 font-bold px-2 py-0.5"
+                        >
                           Komisi: Rp {commissionRp.toLocaleString('id-ID')}
                         </Badge>
                       </div>
-                      <h4 className="font-bold text-sm text-foreground line-clamp-1">{p.name}</h4>
-                      <div className="text-base font-extrabold text-foreground">
-                        {p.priceFormatted || `Rp ${p.price.toLocaleString('id-ID')}`}
+
+                      {/* Product Title */}
+                      <h4 className="font-bold text-sm text-foreground group-hover:text-primary transition-colors line-clamp-2">
+                        {p.name}
+                      </h4>
+
+                      {/* Price & Profit Box */}
+                      <div className="bg-surface-raised border border-border/80 rounded-lg p-2.5 space-y-1.5 text-xs">
+                        <div className="flex items-center justify-between">
+                          <span className="text-foreground-muted text-[11px]">Harga Pelanggan:</span>
+                          <span className="font-bold text-foreground">
+                            {p.priceFormatted || `Rp ${p.price.toLocaleString('id-ID')}`}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-foreground-muted text-[11px]">Estimasi Profit Bersih:</span>
+                          <span className="font-medium text-foreground-muted font-mono">
+                            Rp {estimatedProfit.toLocaleString('id-ID')}
+                          </span>
+                        </div>
+                        <div className="pt-1.5 border-t border-border flex items-center justify-between">
+                          <span className="font-semibold text-status-success text-[11px] flex items-center gap-1">
+                            <TrendingUp className="w-3 h-3" />
+                            <span>Potensi Jual 10 Unit:</span>
+                          </span>
+                          <span className="font-bold text-status-success font-mono">
+                            Rp {(commissionRp * 10).toLocaleString('id-ID')}
+                          </span>
+                        </div>
                       </div>
                     </div>
 
+                    {/* Action Buttons */}
                     <div className="pt-2 border-t border-border flex items-center gap-2">
                       <Button
                         size="sm"
@@ -789,12 +935,12 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
                         {copiedLink === `prod-${p.id}` ? (
                           <>
                             <Check className="w-3.5 h-3.5 text-status-success" />
-                            <span>Link Tersalin!</span>
+                            <span>Tersalin!</span>
                           </>
                         ) : (
                           <>
                             <Copy className="w-3.5 h-3.5" />
-                            <span>Salin Link Referral</span>
+                            <span>Salin Link</span>
                           </>
                         )}
                       </Button>
@@ -807,10 +953,20 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
                         )}%20di%20Asterra%20Store:%20${encodeURIComponent(productUrl)}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="h-9 px-3 rounded-lg border border-border bg-surface-raised hover:bg-surface-raised/80 text-foreground flex items-center justify-center transition-colors"
+                        className="h-9 px-3 rounded-lg border border-border bg-surface-raised hover:bg-status-success/10 hover:border-status-success/30 text-foreground hover:text-status-success flex items-center justify-center transition-colors shrink-0"
                         title="Bagikan ke WhatsApp"
                       >
                         <Send className="w-3.5 h-3.5 text-status-success" />
+                      </a>
+
+                      <a
+                        href={productUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="h-9 px-3 rounded-lg border border-border bg-surface-raised hover:bg-surface-raised/80 text-foreground-muted hover:text-foreground flex items-center justify-center transition-colors shrink-0"
+                        title="Buka Halaman Produk"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
                       </a>
                     </div>
                   </div>
@@ -829,7 +985,7 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
           <div>
             <h2 className="text-lg font-bold text-foreground">Generator Tautan & Materi Promosi</h2>
             <p className="text-xs text-foreground-muted">
-              Kustomisasi tautan kampanye khusus dan gunakan template copywriting yang terbukti menghasilkan penjualan.
+              Pilih produk tujuan untuk membuat tautan referral langsung dan gunakan template materi promosi siap pakai untuk meningkatkan konversi.
             </p>
           </div>
 
@@ -838,41 +994,54 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
             <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-4">
               <h3 className="font-bold text-sm text-foreground flex items-center gap-2">
                 <Share2 className="w-4 h-4 text-primary" />
-                <span>Custom Link Generator</span>
+                <span>Generator Tautan Referral</span>
               </h3>
 
-              <div className="space-y-3 text-xs">
+              <div className="space-y-3.5 text-xs">
                 <div>
-                  <label className="font-semibold text-foreground block mb-1">Pilih Halaman Tujuan:</label>
+                  <label className="font-semibold text-foreground block mb-1.5">Pilih Halaman Tujuan:</label>
                   <select
                     value={selectedProductForLink}
                     onChange={(e) => setSelectedProductForLink(e.target.value)}
-                    className="w-full bg-surface-raised border border-border rounded-lg text-xs p-2.5 text-foreground"
+                    className="w-full bg-surface-raised border border-border rounded-lg text-xs p-2.5 text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
                   >
-                    <option value="">Beranda Toko (Utama)</option>
+                    <option value="">Beranda Toko (Semua Katalog Produk)</option>
                     {(productsRes?.data || []).map((p) => (
                       <option key={p.id} value={p.id}>
-                        {p.name} — {p.priceFormatted}
+                        {p.name} — {p.priceFormatted || `Rp ${p.price.toLocaleString('id-ID')}`}
                       </option>
                     ))}
                   </select>
                 </div>
 
-                <div>
-                  <label className="font-semibold text-foreground block mb-1">Tag Sumber Kampanye (UTM):</label>
-                  <Input
-                    placeholder="Contoh: wa-status, ig-bio, tiktok, teman-kantor"
-                    value={campaignTag}
-                    onChange={(e) => setCampaignTag(e.target.value)}
-                    className="bg-surface-raised border-border text-xs h-10 font-mono"
-                  />
-                  <span className="text-[11px] text-foreground-muted mt-1 block">
-                    Tag ini membantu Anda melacak dari media mana pelanggan datang.
-                  </span>
-                </div>
+                {/* Selected Target Preview */}
+                {selectedProductForLink ? (
+                  <div className="p-3 rounded-lg border border-primary/20 bg-primary/5 flex items-center justify-between text-xs">
+                    <div>
+                      <span className="text-[10px] text-foreground-muted uppercase font-semibold block">Halaman Terpilih</span>
+                      <span className="font-bold text-foreground">
+                        {productsRes?.data?.find((p) => p.id === selectedProductForLink)?.name || 'Produk Spesifik'}
+                      </span>
+                    </div>
+                    <Badge variant="outline" className="text-[10px] font-semibold text-primary border-primary/30">
+                      Link Langsung ke Produk
+                    </Badge>
+                  </div>
+                ) : (
+                  <div className="p-3 rounded-lg border border-border bg-surface-raised flex items-center justify-between text-xs">
+                    <div>
+                      <span className="text-[10px] text-foreground-muted uppercase font-semibold block">Halaman Terpilih</span>
+                      <span className="font-bold text-foreground">Beranda Toko Asterra Store</span>
+                    </div>
+                    <Badge variant="outline" className="text-[10px] font-semibold text-foreground-muted">
+                      Semua Katalog
+                    </Badge>
+                  </div>
+                )}
 
+                {/* Hasil Tautan Referral */}
                 <div className="pt-2 space-y-1.5">
-                  <label className="font-semibold text-foreground block">Hasil Tautan Kustom Anda:</label>
+                  <label className="font-semibold text-foreground block">Tautan Referral Siap Pakai:</label>
                   <div className="flex items-center gap-2">
                     <Input
                       readOnly
@@ -881,12 +1050,12 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
                     />
                     <Button
                       onClick={() => handleCopy(customGeneratedUrl, 'custom-url')}
-                      className="h-10 px-3 text-xs font-semibold shrink-0 gap-1.5"
+                      className="h-10 px-3.5 text-xs font-semibold shrink-0 gap-1.5"
                     >
                       {copiedLink === 'custom-url' ? (
                         <>
                           <Check className="w-3.5 h-3.5 text-status-success" />
-                          <span>Tersalin</span>
+                          <span>Tersalin!</span>
                         </>
                       ) : (
                         <>
@@ -895,7 +1064,27 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
                         </>
                       )}
                     </Button>
+                    <a
+                      href={customGeneratedUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="h-10 px-3 rounded-lg border border-border bg-surface-raised hover:bg-surface-raised/80 text-foreground-muted hover:text-foreground flex items-center justify-center transition-colors shrink-0"
+                      title="Buka Tautan"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                    </a>
                   </div>
+                </div>
+
+                {/* Info Tracking Card */}
+                <div className="pt-3 border-t border-border/70 space-y-1.5 text-[11px] text-foreground-muted">
+                  <div className="flex items-center gap-1.5 font-semibold text-foreground">
+                    <ShieldCheck className="w-3.5 h-3.5 text-status-success" />
+                    <span>Garansi Pelacakan Cookie 30 Hari</span>
+                  </div>
+                  <p className="leading-relaxed">
+                    Setiap calon pelanggan yang membuka tautan di atas akan otomatis mengaktifkan kode referral Anda (<code className="font-mono text-primary font-bold">{partnerCode}</code>). Jika mereka membeli dalam kurun 30 hari, komisi {partnerRate}% otomatis masuk ke akun Anda.
+                  </p>
                 </div>
               </div>
             </div>
@@ -904,55 +1093,128 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
             <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-4">
               <h3 className="font-bold text-sm text-foreground flex items-center gap-2">
                 <FileText className="w-4 h-4 text-status-success" />
-                <span>Template Copywriting Promosi</span>
+                <span>Template Materi Copywriting Promosi</span>
               </h3>
 
-              <div className="space-y-3">
+              <div className="space-y-3 max-h-[520px] overflow-y-auto pr-1">
                 {/* Template 1: WhatsApp Status */}
-                <div className="bg-surface-raised border border-border rounded-lg p-3 space-y-2 text-xs">
+                <div className="bg-surface-raised border border-border rounded-lg p-3.5 space-y-2 text-xs">
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-foreground">Template WhatsApp Story / Status</span>
+                    <span className="font-bold text-foreground flex items-center gap-1.5">
+                      <MessageSquare className="w-3.5 h-3.5 text-status-success" />
+                      <span>WhatsApp Story / Status</span>
+                    </span>
                     <Button
                       size="sm"
                       variant="ghost"
                       onClick={() =>
                         handleCopy(
-                          `Halo temen-temen! Butuh akun Canva Pro, Gemini AI, atau Netflix private bergaransi resmi tanpa takut kena suspend? Langsung order aman lewat link resmi ini ya: ${customGeneratedUrl}`,
+                          `Halo teman-teman! Lagi butuh akun Canva Pro, Gemini AI, ChatGPT Plus, atau Netflix private bergaransi resmi tanpa takut kena suspend? Langsung order aman lewat link resmi ini ya: ${customGeneratedUrl}`,
                           'copy-wa'
                         )
                       }
-                      className="h-7 text-[11px] gap-1 px-2 text-primary"
+                      className="h-7 text-[11px] gap-1 px-2.5 text-primary hover:bg-primary/10"
                     >
                       {copiedLink === 'copy-wa' ? <Check className="w-3 h-3 text-status-success" /> : <Copy className="w-3 h-3" />}
-                      <span>{copiedLink === 'copy-wa' ? 'Tersalin' : 'Salin Teks'}</span>
+                      <span>{copiedLink === 'copy-wa' ? 'Tersalin!' : 'Salin Teks'}</span>
                     </Button>
                   </div>
-                  <p className="text-foreground-muted leading-relaxed text-[11px]">
-                    &ldquo;Halo temen-temen! Butuh akun Canva Pro, Gemini AI, atau Netflix private bergaransi resmi tanpa takut kena suspend? Langsung order aman lewat link resmi ini ya: [Link Referral Anda]&rdquo;
+                  <p className="text-foreground-muted leading-relaxed text-[11px] bg-surface p-2.5 rounded border border-border/50">
+                    &ldquo;Halo teman-teman! Lagi butuh akun Canva Pro, Gemini AI, ChatGPT Plus, atau Netflix private bergaransi resmi tanpa takut kena suspend? Langsung order aman lewat link resmi ini ya: {customGeneratedUrl}&rdquo;
                   </p>
+                  <div className="flex justify-end">
+                    <a
+                      href={`https://wa.me/?text=${encodeURIComponent(
+                        `Halo teman-teman! Lagi butuh akun Canva Pro, Gemini AI, ChatGPT Plus, atau Netflix private bergaransi resmi tanpa takut kena suspend? Langsung order aman lewat link resmi ini ya: ${customGeneratedUrl}`
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-status-success hover:underline"
+                    >
+                      <Send className="w-3 h-3" />
+                      <span>Bagikan ke Status WhatsApp</span>
+                    </a>
+                  </div>
                 </div>
 
-                {/* Template 2: Instagram Bio / DM */}
-                <div className="bg-surface-raised border border-border rounded-lg p-3 space-y-2 text-xs">
+                {/* Template 2: Chat Personal / Rekomendasi Teman */}
+                <div className="bg-surface-raised border border-border rounded-lg p-3.5 space-y-2 text-xs">
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-foreground">Template Caption Instagram / Bio</span>
+                    <span className="font-bold text-foreground flex items-center gap-1.5">
+                      <Users className="w-3.5 h-3.5 text-primary" />
+                      <span>Chat Rekomendasi Personal</span>
+                    </span>
                     <Button
                       size="sm"
                       variant="ghost"
                       onClick={() =>
                         handleCopy(
-                          `Layanan Akun Digital Premium Resmi & Bergaransi 100% ✨\nCanva Pro, ChatGPT, Gemini, Netflix, Spotify ready kilat ⚡\nOrder sekarang: ${customGeneratedUrl}`,
+                          `Halo kak! Mau infoin nih kalau butuh tools produktivitas & hiburan premium (Canva, ChatGPT, Netflix, dll) yang resmi dan ada garansi ganti baru 100%, rekomendasiku beli di Asterra Store aja kak. Harganya jauh lebih hemat dan prosesnya instan: ${customGeneratedUrl}`,
+                          'copy-personal'
+                        )
+                      }
+                      className="h-7 text-[11px] gap-1 px-2.5 text-primary hover:bg-primary/10"
+                    >
+                      {copiedLink === 'copy-personal' ? <Check className="w-3 h-3 text-status-success" /> : <Copy className="w-3 h-3" />}
+                      <span>{copiedLink === 'copy-personal' ? 'Tersalin!' : 'Salin Teks'}</span>
+                    </Button>
+                  </div>
+                  <p className="text-foreground-muted leading-relaxed text-[11px] bg-surface p-2.5 rounded border border-border/50">
+                    &ldquo;Halo kak! Mau infoin nih kalau butuh tools produktivitas &amp; hiburan premium (Canva, ChatGPT, Netflix, dll) yang resmi dan ada garansi ganti baru 100%, rekomendasiku beli di Asterra Store aja kak. Harganya jauh lebih hemat dan prosesnya instan: {customGeneratedUrl}&rdquo;
+                  </p>
+                </div>
+
+                {/* Template 3: Caption Instagram / Bio */}
+                <div className="bg-surface-raised border border-border rounded-lg p-3.5 space-y-2 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-foreground flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                      <span>Caption Instagram / Bio Link</span>
+                    </span>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() =>
+                        handleCopy(
+                          `Layanan Akun Digital Premium Resmi & Bergaransi 100% ✨\n\n✅ Canva Pro, ChatGPT Plus, Netflix, Spotify ready kilat\n✅ Bergaransi penuh & amanah\n✅ Proses 1 - 15 menit selesai\n\nKatalog lengkap & order resmi:\n👉 ${customGeneratedUrl}`,
                           'copy-ig'
                         )
                       }
-                      className="h-7 text-[11px] gap-1 px-2 text-primary"
+                      className="h-7 text-[11px] gap-1 px-2.5 text-primary hover:bg-primary/10"
                     >
                       {copiedLink === 'copy-ig' ? <Check className="w-3 h-3 text-status-success" /> : <Copy className="w-3 h-3" />}
-                      <span>{copiedLink === 'copy-ig' ? 'Tersalin' : 'Salin Teks'}</span>
+                      <span>{copiedLink === 'copy-ig' ? 'Tersalin!' : 'Salin Teks'}</span>
                     </Button>
                   </div>
-                  <p className="text-foreground-muted leading-relaxed text-[11px]">
-                    &ldquo;Layanan Akun Digital Premium Resmi &amp; Bergaransi 100% ✨ Canva Pro, Gemini, Netflix, Spotify ready kilat ⚡ Order: [Link Referral]&rdquo;
+                  <p className="text-foreground-muted leading-relaxed text-[11px] bg-surface p-2.5 rounded border border-border/50 whitespace-pre-line">
+                    {`Layanan Akun Digital Premium Resmi & Bergaransi 100% ✨\n\n✅ Canva Pro, ChatGPT Plus, Netflix, Spotify ready kilat\n✅ Bergaransi penuh & amanah\n✅ Proses 1 - 15 menit selesai\n\nKatalog lengkap & order resmi:\n👉 ${customGeneratedUrl}`}
+                  </p>
+                </div>
+
+                {/* Template 4: Broadcast Grup / Komunitas */}
+                <div className="bg-surface-raised border border-border rounded-lg p-3.5 space-y-2 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-foreground flex items-center gap-1.5">
+                      <Send className="w-3.5 h-3.5 text-primary" />
+                      <span>Broadcast Grup / Komunitas</span>
+                    </span>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() =>
+                        handleCopy(
+                          `Selamat siang rekan-rekan! Izin berbagi info bermanfaat untuk kebutuhan tugas, kantor, dan hiburan. Bagi yang butuh akses resmi Canva Pro, AI tools, atau streaming dengan garansi aktif dan harga terjangkau, silakan cek katalog resmi Asterra Store di: ${customGeneratedUrl} 🙏`,
+                          'copy-group'
+                        )
+                      }
+                      className="h-7 text-[11px] gap-1 px-2.5 text-primary hover:bg-primary/10"
+                    >
+                      {copiedLink === 'copy-group' ? <Check className="w-3 h-3 text-status-success" /> : <Copy className="w-3 h-3" />}
+                      <span>{copiedLink === 'copy-group' ? 'Tersalin!' : 'Salin Teks'}</span>
+                    </Button>
+                  </div>
+                  <p className="text-foreground-muted leading-relaxed text-[11px] bg-surface p-2.5 rounded border border-border/50">
+                    &ldquo;Selamat siang rekan-rekan! Izin berbagi info bermanfaat untuk kebutuhan tugas, kantor, dan hiburan. Bagi yang butuh akses resmi Canva Pro, AI tools, atau streaming dengan garansi aktif dan harga terjangkau, silakan cek katalog resmi Asterra Store di: {customGeneratedUrl} 🙏&rdquo;
                   </p>
                 </div>
               </div>
