@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { PublicPaymentConfig } from '@/lib/services/payment-config.service';
+import { PublicPaymentConfig } from '@/types/payment';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faXmark,

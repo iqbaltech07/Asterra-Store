@@ -21,7 +21,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { PromoCode } from '@/lib/services/promo.service';
+import { PromoCode } from '@/types/promo';
 
 interface AdminPromosTabProps {
   onNotify: (msg: string) => void;

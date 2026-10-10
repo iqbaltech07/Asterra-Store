@@ -34,7 +34,7 @@ import {
   ManualPaymentModalData,
 } from '@/components/checkout/checkout-manual-modal';
 import { PaymentConfigApi, OrdersApi } from '@/lib/api-client';
-import { PublicPaymentConfig } from '@/lib/services/payment-config.service';
+import { PublicPaymentConfig } from '@/types/payment';
 
 const STATUS_FILTERS = [
   { value: 'all', label: 'Semua Status' },

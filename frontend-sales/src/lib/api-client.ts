@@ -210,8 +210,8 @@ export const PaymentConfigApi = {
     return requestJson<PaymentConfigResponse>('/api/v1/payment-config');
   },
 
-  async getPublicConfig(): Promise<{ success: boolean; data: import('@/lib/services/payment-config.service').PublicPaymentConfig }> {
-    return requestJson<{ success: boolean; data: import('@/lib/services/payment-config.service').PublicPaymentConfig }>('/api/v1/payment-config');
+  async getPublicConfig(): Promise<{ success: boolean; data: import('@/types/payment').PublicPaymentConfig }> {
+    return requestJson<{ success: boolean; data: import('@/types/payment').PublicPaymentConfig }>('/api/v1/payment-config');
   },
 
   async updateConfig(configData: Record<string, unknown>) {

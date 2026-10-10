@@ -7,7 +7,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { useCartStore } from '@/store/use-cart-store';
 import { useAuthStore } from '@/store/use-auth-store';
 import { useSession } from '@/lib/auth-client';
-import { PublicPaymentConfig } from '@/lib/services/payment-config.service';
+import { PublicPaymentConfig } from '@/types/payment';
 import { OrdersApi, PromosApi, PaymentConfigApi } from '@/lib/api-client';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faLock, faCheck } from '@fortawesome/free-solid-svg-icons';
