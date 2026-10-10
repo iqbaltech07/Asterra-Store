@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Megaphone,
   Image as ImageIcon,
@@ -24,6 +24,8 @@ import {
   Copy,
   Layers,
   ArrowRight,
+  AlertTriangle,
+  Loader2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -49,16 +51,22 @@ interface CampaignItem {
 
 interface BannerItem {
   id: string;
-  type: 'hero' | 'promo-bar' | 'announcement';
+  type?: 'hero' | 'promo-bar' | 'announcement';
+  bannerType?: string;
   title: string;
-  description: string;
-  ctaText: string;
-  destinationUrl: string;
+  description?: string;
+  ctaText?: string;
+  destinationUrl?: string;
+  linkUrl?: string;
   imageUrl: string;
+  blobUrl?: string;
+  pathname?: string;
   displayOrder: number;
-  status: 'active' | 'inactive';
+  status?: 'active' | 'inactive';
+  isActive?: boolean;
   scheduledUntil?: string;
-  clickCount: number;
+  expiresAt?: string;
+  clickCount?: number;
 }
 
 const INITIAL_CAMPAIGNS: CampaignItem[] = [
@@ -194,7 +202,10 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
   const [campAffiliateBonus, setCampAffiliateBonus] = useState(5);
 
   // Banners State
-  const [banners, setBanners] = useState<BannerItem[]>(INITIAL_BANNERS);
+  const [banners, setBanners] = useState<BannerItem[]>([]);
+  const [isLoadingBanners, setIsLoadingBanners] = useState(true);
+  const [isSavingBanner, setIsSavingBanner] = useState(false);
+  const [stagedBannerFile, setStagedBannerFile] = useState<File | null>(null);
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('desktop');
   const [isBannerModalOpen, setIsBannerModalOpen] = useState(false);
   const [editingBanner, setEditingBanner] = useState<BannerItem | null>(null);
@@ -207,7 +218,8 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
   const [banUrl, setBanUrl] = useState('/#katalog');
   const [banImageUrl, setBanImageUrl] = useState('/images/default-product-banner.png');
   const [banOrder, setBanOrder] = useState(1);
-  const [banSchedule, setBanSchedule] = useState('2026-12-31');
+  const [banSchedule, setBanSchedule] = useState('');
+  const [banIsActive, setBanIsActive] = useState(true);
 
   // Campaign Handlers
   const handleOpenCreateCampaign = () => {
@@ -284,9 +296,46 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
     );
   };
 
-  // Banner Handlers
+  // Banner API Handlers
+  const loadBannersFromApi = useCallback(async () => {
+    setIsLoadingBanners(true);
+    try {
+      const res = await fetch('/api/v1/banners?activeOnly=false');
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && Array.isArray(json.data)) {
+          setBanners(json.data);
+          return;
+        }
+      }
+      // Fallback to initial banners if API is empty
+      setBanners(INITIAL_BANNERS);
+    } catch (err) {
+      console.error('Failed to load banners from API:', err);
+      setBanners(INITIAL_BANNERS);
+    } finally {
+      setIsLoadingBanners(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadBannersFromApi();
+  }, [loadBannersFromApi]);
+
+  const isBannerExpired = (ban: BannerItem): boolean => {
+    const exp = ban.expiresAt || ban.scheduledUntil;
+    if (!exp) return false;
+    try {
+      const expTime = new Date(exp).getTime();
+      return !isNaN(expTime) && expTime < Date.now();
+    } catch {
+      return false;
+    }
+  };
+
   const handleOpenCreateBanner = () => {
     setEditingBanner(null);
+    setStagedBannerFile(null);
     setBanType('hero');
     setBanTitle('');
     setBanDesc('');
@@ -294,64 +343,138 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
     setBanUrl('/#katalog');
     setBanImageUrl('/images/default-product-banner.png');
     setBanOrder(banners.length + 1);
-    setBanSchedule('2026-12-31');
+    setBanSchedule('');
+    setBanIsActive(true);
     setIsBannerModalOpen(true);
   };
 
-  const handleSaveBanner = (e: React.FormEvent) => {
+  const handleSaveBanner = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!banTitle.trim()) return;
 
-    if (editingBanner) {
-      setBanners((prev) =>
-        prev.map((b) =>
-          b.id === editingBanner.id
-            ? {
-                ...b,
-                type: banType,
-                title: banTitle,
-                description: banDesc,
-                ctaText: banCta,
-                destinationUrl: banUrl,
-                imageUrl: banImageUrl,
-                displayOrder: Number(banOrder),
-                scheduledUntil: banSchedule,
-              }
-            : b
-        )
-      );
-      onNotify?.(`Banner "${banTitle}" berhasil diperbarui.`);
-    } else {
-      const newBanner: BannerItem = {
-        id: `ban-${Date.now()}`,
-        type: banType,
-        title: banTitle,
-        description: banDesc,
-        ctaText: banCta,
-        destinationUrl: banUrl,
-        imageUrl: banImageUrl,
-        displayOrder: Number(banOrder),
-        status: 'active',
-        scheduledUntil: banSchedule,
-        clickCount: 0,
-      };
-      setBanners((prev) => [...prev, newBanner]);
-      onNotify?.(`Banner baru "${banTitle}" berhasil dipublikasikan ke etalase!`);
+    setIsSavingBanner(true);
+    try {
+      const formData = new FormData();
+      formData.append('title', banTitle.trim());
+      formData.append('description', banDesc.trim());
+      formData.append('ctaText', banCta.trim());
+      formData.append('bannerType', banType);
+      formData.append('destinationUrl', banUrl.trim() || '/#katalog');
+      formData.append('linkUrl', banUrl.trim() || '/#katalog');
+      formData.append('displayOrder', String(banOrder || 0));
+      formData.append('targetPage', 'home');
+      formData.append('isActive', String(banIsActive));
+      if (banSchedule) {
+        formData.append('expiresAt', banSchedule);
+        formData.append('scheduledUntil', banSchedule);
+      }
+
+      if (stagedBannerFile) {
+        formData.append('file', stagedBannerFile);
+      } else {
+        // Use existing image URL by converting to Blob or passing file
+        let blob: Blob | null = null;
+        try {
+          const fetchImg = await fetch(banImageUrl);
+          blob = await fetchImg.blob();
+        } catch {
+          blob = null;
+        }
+
+        if (blob) {
+          formData.append('file', blob, 'banner.webp');
+        } else {
+          // Fallback minimal 1x1 transparent png blob
+          const byteCharacters = atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==');
+          const byteNumbers = new Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+          const byteArray = new Uint8Array(byteNumbers);
+          const fallbackBlob = new Blob([byteArray], { type: 'image/png' });
+          formData.append('file', fallbackBlob, 'banner.webp');
+        }
+      }
+
+      const res = await fetch('/api/v1/banners', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const resJson = await res.json();
+      if (resJson.success) {
+        onNotify?.(resJson.message || `Banner "${banTitle}" berhasil dipublikasikan!`);
+        await loadBannersFromApi();
+        setIsBannerModalOpen(false);
+      } else {
+        onNotify?.(resJson.detail || 'Gagal menyimpan banner.');
+      }
+    } catch (err) {
+      console.error('Error saving banner:', err);
+      onNotify?.('Terjadi kesalahan saat menyimpan banner.');
+    } finally {
+      setIsSavingBanner(false);
     }
-    setIsBannerModalOpen(false);
   };
 
-  const toggleBannerStatus = (id: string) => {
+  const toggleBannerStatus = async (id: string) => {
+    const target = banners.find((b) => b.id === id);
+    if (!target) return;
+
+    const currentActive = target.isActive ?? (target.status === 'active');
+    const nextActive = !currentActive;
+
+    // Optimistic UI update
     setBanners((prev) =>
-      prev.map((b) => {
-        if (b.id === id) {
-          const next = b.status === 'active' ? 'inactive' : 'active';
-          onNotify?.(`Banner "${b.title}" ${next === 'active' ? 'diaktifkan' : 'disembunyikan'}.`);
-          return { ...b, status: next };
-        }
-        return b;
-      })
+      prev.map((b) =>
+        b.id === id
+          ? {
+              ...b,
+              isActive: nextActive,
+              status: nextActive ? 'active' : 'inactive',
+            }
+          : b
+      )
     );
+
+    try {
+      const res = await fetch(`/api/v1/banners/${id}/toggle-status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isActive: nextActive }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        onNotify?.(`Banner "${target.title}" ${nextActive ? 'diaktifkan' : 'dinonaktifkan'}.`);
+      } else {
+        loadBannersFromApi();
+      }
+    } catch (err) {
+      console.error('Error toggling banner status:', err);
+      loadBannersFromApi();
+    }
+  };
+
+  const handleDeleteBanner = async (id: string, title: string) => {
+    if (!confirm(`Hapus banner "${title}" dari etalase? File blob juga akan dibersihkan jika tidak digunakan lagi.`)) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/v1/banners/${id}`, {
+        method: 'DELETE',
+      });
+      const json = await res.json();
+      if (json.success) {
+        onNotify?.(`Banner "${title}" berhasil dihapus dari sistem & storage.`);
+        setBanners((prev) => prev.filter((b) => b.id !== id));
+      } else {
+        onNotify?.(json.detail || 'Gagal menghapus banner.');
+      }
+    } catch (err) {
+      console.error('Error deleting banner:', err);
+      onNotify?.('Gagal menghapus banner.');
+    }
   };
 
   // =========================================================================
@@ -799,74 +922,121 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {banners.map((ban) => (
-                <tr key={ban.id} className="hover:bg-surface-raised/40 transition-colors">
-                  <td className="py-3.5 px-4 text-center font-mono font-bold text-foreground">
-                    #{ban.displayOrder}
-                  </td>
-                  <td className="py-3.5 px-4">
-                    <Badge variant="outline" className="text-[10px] font-mono capitalize border-border">
-                      {ban.type === 'hero' ? 'Hero Main' : ban.type === 'promo-bar' ? 'Promo Bar' : 'Ticker'}
-                    </Badge>
-                  </td>
-                  <td className="py-3.5 px-4">
-                    <div className="font-semibold text-foreground">{ban.title}</div>
-                    <div className="text-[11px] text-foreground-muted line-clamp-1">{ban.description}</div>
-                  </td>
-                  <td className="py-3.5 px-4">
-                    <span className="font-medium text-primary block">{ban.ctaText}</span>
-                    <span className="text-[10px] font-mono text-foreground-muted">{ban.destinationUrl}</span>
-                  </td>
-                  <td className="py-3.5 px-4 text-center font-mono font-bold text-foreground">
-                    {ban.clickCount.toLocaleString('id-ID')}
-                  </td>
-                  <td className="py-3.5 px-4 text-center">
-                    <button
-                      type="button"
-                      onClick={() => toggleBannerStatus(ban.id)}
-                      className={`px-2.5 py-1 rounded-full text-[10px] font-semibold border transition-colors ${
-                        ban.status === 'active'
-                          ? 'bg-status-success/15 text-status-success border-status-success/30 hover:bg-status-success/25'
-                          : 'bg-surface-raised text-foreground-muted border-border hover:bg-surface'
-                      }`}
-                    >
-                      {ban.status === 'active' ? 'Aktif' : 'Nonaktif'}
-                    </button>
-                  </td>
-                  <td className="py-3.5 px-4 text-right space-x-1">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => {
-                        setEditingBanner(ban);
-                        setBanType(ban.type);
-                        setBanTitle(ban.title);
-                        setBanDesc(ban.description);
-                        setBanCta(ban.ctaText);
-                        setBanUrl(ban.destinationUrl);
-                        setBanImageUrl(ban.imageUrl);
-                        setBanOrder(ban.displayOrder);
-                        setBanSchedule(ban.scheduledUntil || '2026-12-31');
-                        setIsBannerModalOpen(true);
-                      }}
-                      className="h-8 px-2 text-xs text-primary"
-                    >
-                      <Edit className="w-3.5 h-3.5" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => {
-                        setBanners((prev) => prev.filter((b) => b.id !== ban.id));
-                        onNotify?.(`Banner "${ban.title}" berhasil dihapus.`);
-                      }}
-                      className="h-8 px-2 text-xs text-status-error hover:bg-status-error/10"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </Button>
+              {isLoadingBanners ? (
+                <tr>
+                  <td colSpan={7} className="py-8 text-center text-foreground-muted">
+                    <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2 text-primary" />
+                    <span>Memuat data banner etalase...</span>
                   </td>
                 </tr>
-              ))}
+              ) : banners.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-8 text-center text-foreground-muted">
+                    <span>Belum ada banner etalase. Klik "Tambah Banner" untuk mengunggah.</span>
+                  </td>
+                </tr>
+              ) : (
+                banners.map((ban) => {
+                  const isExpired = isBannerExpired(ban);
+                  const isActive = !isExpired && (ban.isActive ?? (ban.status === 'active'));
+                  const slotType = ban.type || ban.bannerType || 'hero';
+
+                  return (
+                    <tr key={ban.id} className="hover:bg-surface-raised/40 transition-colors">
+                      <td className="py-3.5 px-4 text-center font-mono font-bold text-foreground">
+                        #{ban.displayOrder || 1}
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <Badge variant="outline" className="text-[10px] font-mono capitalize border-border">
+                          {slotType === 'hero' ? 'Hero Main' : slotType === 'promo-bar' ? 'Promo Bar' : 'Ticker'}
+                        </Badge>
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <div className="flex items-center gap-2.5">
+                          {ban.imageUrl && (
+                            <img
+                              src={ban.imageUrl}
+                              alt={ban.title}
+                              className="w-10 h-6 object-cover rounded border border-border shrink-0"
+                            />
+                          )}
+                          <div className="min-w-0">
+                            <div className="font-semibold text-foreground truncate">{ban.title}</div>
+                            <div className="text-[11px] text-foreground-muted line-clamp-1">{ban.description || '-'}</div>
+                            {(ban.expiresAt || ban.scheduledUntil) && (
+                              <div className="text-[10px] text-foreground-muted flex items-center gap-1 mt-0.5">
+                                <Clock className="w-2.5 h-2.5" />
+                                <span>Exp: {ban.scheduledUntil || ban.expiresAt?.slice(0, 10)}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <span className="font-medium text-primary block">{ban.ctaText || 'Beli Sekarang'}</span>
+                        <span className="text-[10px] font-mono text-foreground-muted">{ban.destinationUrl || ban.linkUrl || '/#katalog'}</span>
+                      </td>
+                      <td className="py-3.5 px-4 text-center font-mono font-bold text-foreground">
+                        {(ban.clickCount || 0).toLocaleString('id-ID')}
+                      </td>
+                      <td className="py-3.5 px-4 text-center">
+                        {isExpired ? (
+                          <span
+                            title="Banner telah melewati masa berlaku tayang dan otomatis dinonaktifkan."
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold bg-status-error/15 text-status-error border border-status-error/30"
+                          >
+                            <Clock className="w-3 h-3" />
+                            <span>Kadaluarsa</span>
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => toggleBannerStatus(ban.id)}
+                            className={`px-2.5 py-1 rounded-full text-[10px] font-semibold border transition-colors cursor-pointer ${
+                              isActive
+                                ? 'bg-status-success/15 text-status-success border-status-success/30 hover:bg-status-success/25'
+                                : 'bg-surface-raised text-foreground-muted border-border hover:bg-surface'
+                            }`}
+                          >
+                            {isActive ? 'Aktif' : 'Nonaktif'}
+                          </button>
+                        )}
+                      </td>
+                      <td className="py-3.5 px-4 text-right space-x-1">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            setEditingBanner(ban);
+                            setStagedBannerFile(null);
+                            setBanType((ban.type || ban.bannerType || 'hero') as any);
+                            setBanTitle(ban.title);
+                            setBanDesc(ban.description || '');
+                            setBanCta(ban.ctaText || 'Beli Sekarang');
+                            setBanUrl(ban.destinationUrl || ban.linkUrl || '/#katalog');
+                            setBanImageUrl(ban.imageUrl);
+                            setBanOrder(ban.displayOrder || 1);
+                            setBanSchedule(ban.scheduledUntil || ban.expiresAt?.slice(0, 10) || '');
+                            setBanIsActive(ban.isActive ?? (ban.status === 'active'));
+                            setIsBannerModalOpen(true);
+                          }}
+                          className="h-8 px-2 text-xs text-primary"
+                        >
+                          <Edit className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleDeleteBanner(ban.id, ban.title)}
+                          className="h-8 px-2 text-xs text-status-error hover:bg-status-error/10"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </div>
@@ -953,36 +1123,61 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
                 </div>
               </div>
 
-              {/* Banner Image URL / Dropzone */}
+              {/* Visual Banner Upload Dropzone */}
               <div>
-                <label className="font-semibold text-foreground block mb-1">Gambar Banner / Visual Asset</label>
-                <Input
+                <label className="font-semibold text-foreground block mb-1">Visual Banner (Gambar)</label>
+                <ImageUploadDropzone
                   value={banImageUrl}
-                  onChange={(e) => setBanImageUrl(e.target.value)}
-                  placeholder="/images/default-product-banner.png atau link CDN"
-                  className="bg-surface-raised border-border text-xs font-mono"
+                  onChange={(url) => setBanImageUrl(url)}
+                  onFileStaged={(file) => setStagedBannerFile(file)}
+                  folder="banners"
+                  label="Pilih atau Tarik File Banner"
+                  description="Format JPG, PNG, WEBP, atau AVIF (Maks. 5MB). Otomatis dideduplikasi ke Vercel Blob."
+                  mode="lazy"
+                  isSpecialPromo={true}
                 />
-                <span className="text-[11px] text-foreground-muted mt-1 block">
-                  Format gambar terverifikasi Vercel Blob deduplikasi otomatis.
-                </span>
               </div>
 
-              <div>
-                <label className="font-semibold text-foreground block mb-1">Jadwal Tayang Sampai</label>
-                <Input
-                  type="date"
-                  value={banSchedule}
-                  onChange={(e) => setBanSchedule(e.target.value)}
-                  className="bg-surface-raised border-border text-xs"
-                />
+              <div className="grid grid-cols-2 gap-3 items-center">
+                <div>
+                  <label className="font-semibold text-foreground block mb-1">Jadwal Kadaluarsa (Opsional)</label>
+                  <Input
+                    type="date"
+                    value={banSchedule}
+                    onChange={(e) => setBanSchedule(e.target.value)}
+                    className="bg-surface-raised border-border text-xs"
+                  />
+                  <span className="text-[10px] text-foreground-muted mt-0.5 block">
+                    Otomatis non-aktif setelah tanggal ini tiba.
+                  </span>
+                </div>
+                <div className="pt-2">
+                  <label className="font-semibold text-foreground block mb-1">Status Publikasi</label>
+                  <label className="flex items-center gap-2 cursor-pointer mt-1">
+                    <input
+                      type="checkbox"
+                      checked={banIsActive}
+                      onChange={(e) => setBanIsActive(e.target.checked)}
+                      className="w-4 h-4 rounded text-primary border-border focus:ring-primary"
+                    />
+                    <span className="text-xs text-foreground font-medium">Aktifkan di etalase</span>
+                  </label>
+                </div>
               </div>
 
               <div className="pt-3 border-t border-border flex items-center justify-end gap-2">
-                <Button type="button" variant="outline" onClick={() => setIsBannerModalOpen(false)} className="text-xs">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsBannerModalOpen(false)}
+                  disabled={isSavingBanner}
+                  className="text-xs"
+                >
                   Batal
                 </Button>
-                <Button type="submit" className="text-xs">
-                  {editingBanner ? 'Simpan Perubahan' : 'Publikasikan Banner'}
+                <Button type="submit" disabled={isSavingBanner} className="text-xs gap-1.5">
+                  {isSavingBanner && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  <span>{isSavingBanner ? 'Menyimpan...' : editingBanner ? 'Simpan Perubahan' : 'Publikasikan Banner'}</span>
                 </Button>
               </div>
             </form>

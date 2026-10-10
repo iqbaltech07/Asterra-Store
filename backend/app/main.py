@@ -52,6 +52,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
+    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1|.*\.vercel\.app|.*asterrastore\.biz\.id)(:\d+)?$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -997,19 +998,31 @@ async def upload_admin_media(
 async def upload_promo_banner(
     file: UploadFile = File(...),
     title: str = Form(...),
+    description: Optional[str] = Form(""),
+    ctaText: Optional[str] = Form("Beli Sekarang"),
+    cta_text: Optional[str] = Form(None),
+    bannerType: Optional[str] = Form("hero"),
+    banner_type: Optional[str] = Form(None),
     linkUrl: Optional[str] = Form(None),
     link_url: Optional[str] = Form(None),
+    destinationUrl: Optional[str] = Form(None),
     targetPage: Optional[str] = Form("home"),
     target_page: Optional[str] = Form(None),
     displayOrder: Optional[int] = Form(0),
     display_order: Optional[int] = Form(None),
     isActive: Optional[bool] = Form(True),
     is_active: Optional[bool] = Form(None),
+    expiresAt: Optional[str] = Form(None),
+    expires_at: Optional[str] = Form(None),
+    scheduledUntil: Optional[str] = Form(None),
 ):
-    final_link = link_url if link_url is not None else linkUrl
+    final_link = destinationUrl or link_url if (destinationUrl or link_url) is not None else linkUrl
     final_target = target_page if target_page is not None else (targetPage or "home")
     final_order = display_order if display_order is not None else (displayOrder if displayOrder is not None else 0)
     final_active = is_active if is_active is not None else (isActive if isActive is not None else True)
+    final_cta = cta_text if cta_text is not None else (ctaText or "Beli Sekarang")
+    final_type = banner_type if banner_type is not None else (bannerType or "hero")
+    final_expires = expires_at or scheduledUntil if (expires_at or scheduledUntil) is not None else expiresAt
 
     content_type = file.content_type or "image/webp"
     content = await file.read()
@@ -1020,16 +1033,42 @@ async def upload_promo_banner(
             filename=file.filename or "banner.webp",
             content_type=content_type,
             title=title,
+            description=description or "",
+            cta_text=final_cta,
+            banner_type=final_type,
             link_url=final_link,
             target_page=final_target,
             display_order=int(final_order),
             is_active=bool(final_active),
+            expires_at=final_expires,
         )
         return res
     except ValueError as ve:
         raise HTTPException(status_code=400, detail=str(ve))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Gagal mengunggah banner: {str(e)}")
+
+@api_router.patch("/banners/{banner_id}/toggle-status", tags=["Promo Banners"])
+@api_router.patch("/admin/banners/{banner_id}/toggle-status", tags=["Promo Banners"])
+async def toggle_promo_banner_status(banner_id: str, request: Request):
+    new_status = None
+    try:
+        body = await request.json()
+        if "isActive" in body:
+            new_status = bool(body["isActive"])
+        elif "status" in body:
+            new_status = body["status"] == "active"
+    except Exception:
+        pass
+
+    updated = BannerService.toggle_status(banner_id, new_status=new_status)
+    if not updated:
+        raise HTTPException(status_code=404, detail="Banner tidak ditemukan.")
+    return {
+        "success": True,
+        "data": updated,
+        "message": f"Status banner '{updated.get('title')}' berhasil diubah.",
+    }
 
 @api_router.get("/banners", tags=["Promo Banners"])
 @api_router.get("/admin/banners", tags=["Promo Banners"])
@@ -1381,13 +1420,31 @@ async def event_generator():
         await asyncio.sleep(15)
         yield f"data: {json.dumps({'type': 'ping', 'timestamp': datetime.utcnow().isoformat()})}\n\n"
 
+@api_router.options("/events", tags=["Realtime"])
+async def sse_options(request: Request):
+    origin = request.headers.get("origin") or "*"
+    return Response(
+        status_code=204,
+        headers={
+            "Access-Control-Allow-Origin": origin,
+            "Access-Control-Allow-Credentials": "true",
+            "Access-Control-Allow-Methods": "GET, OPTIONS",
+            "Access-Control-Allow-Headers": "*",
+        },
+    )
+
 @api_router.get("/events", tags=["Realtime"])
-async def sse_events(role: Optional[str] = "user"):
+async def sse_events(request: Request, role: Optional[str] = "user"):
+    origin = request.headers.get("origin") or "*"
     headers = {
         "Cache-Control": "no-cache, no-transform",
         "Connection": "keep-alive",
         "X-Accel-Buffering": "no",
         "Content-Type": "text/event-stream",
+        "Access-Control-Allow-Origin": origin,
+        "Access-Control-Allow-Credentials": "true",
+        "Access-Control-Allow-Headers": "*",
+        "Access-Control-Allow-Methods": "GET, OPTIONS",
     }
     return StreamingResponse(event_generator(), media_type="text/event-stream", headers=headers)
 

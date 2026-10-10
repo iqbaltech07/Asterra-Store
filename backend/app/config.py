@@ -86,10 +86,17 @@ class Settings(BaseSettings):
         "http://localhost:3000",
         "http://localhost:3001",
         "http://localhost:3002",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:3001",
+        "http://127.0.0.1:3002",
         "https://asterrastore.biz.id",
+        "https://www.asterrastore.biz.id",
         "https://admin.asterrastore.biz.id",
+        "https://www.admin.asterrastore.biz.id",
         "https://sales.asterrastore.biz.id",
+        "https://www.sales.asterrastore.biz.id",
         "https://api.asterrastore.biz.id",
+        "https://www.api.asterrastore.biz.id",
     ]
 
     @property

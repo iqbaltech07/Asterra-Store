@@ -2,8 +2,6 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
-import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -34,6 +32,7 @@ import { getDummyOriginalPrice, isPromoItem } from '@/lib/utils/promo-pricing';
 import { QuickViewModal, QuickViewProductData } from '@/components/products/quick-view-modal';
 import { getRecentlyViewed, RecentlyViewedItem } from '@/lib/services/recently-viewed';
 import { ProductItem } from '@/lib/products-data';
+import { HeroBannerSwiper } from '@/components/home/hero-banner-swiper';
 
 // Helper to render crisp, brand-accurate badges for the top digital applications
 function AppBrandBadge({ name }: { name: string }) {
@@ -846,32 +845,9 @@ export default function HomePage() {
       {/* Main Content Container */}
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-2 sm:pt-3 pb-8 sm:pb-12 w-full overflow-hidden">
         {/*
-          SECTION 2: HERO BANNER IMAGE (HIGH RESOLUTION RETINA 2X, MAXIMUM SHARPNESS)
-          Master source resolution is 2640x882 (intrinsic aspect ratio 2.993:1).
-          - Desktop container slot: ~1320px (exact 1:1 pixel fidelity for 2x Retina)
-          - Responsive sizes ensures mobile receives light payload while desktop receives razor-sharp high-res
-          - quality 95 for visually lossless crisp typography and logo linework
-          - priority for immediate above-the-fold LCP preloading
+          SECTION 2: HERO BANNER IMAGE SWIPER (AUTOPLAY 5S IF >= 2 BANNERS)
         */}
-        <section aria-label="Banner Promo Asterra" data-gsap="hero-banner" className="w-full max-w-full mb-3.5 sm:mb-5 overflow-hidden">
-          <Link
-            href="/affiliate"
-            title="Program Mitra Affiliate Asterra Store - Dapatkan Komisi 10% per Penjualan"
-            data-gsap="hero-banner-inner"
-            className="group block relative w-full max-w-full overflow-hidden rounded-xl sm:rounded-2xl md:rounded-3xl border border-[rgba(18,26,42,0.08)] shadow-xs hover:shadow-md transition-shadow bg-[#f0f5ff]"
-          >
-            <Image
-              src="/images/banners/hero-banner-reseller.webp"
-              alt="Program Mitra Affiliate Asterra Store - Rekomendasikan Produk Digital, Dapatkan Komisi 10% Langsung"
-              width={2640}
-              height={882}
-              priority
-              quality={95}
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 1320px"
-              className="w-full max-w-full h-auto block rounded-xl sm:rounded-2xl md:rounded-3xl object-contain transition-transform duration-300 group-hover:scale-[1.004]"
-            />
-          </Link>
-        </section>
+        <HeroBannerSwiper />
 
         {/*
           SECTION 3: FEATURED PRODUCTS (STATIC GRID: [ 🔥 Promo ] [ Terlaris ] [ Terbaru ])
