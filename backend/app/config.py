@@ -1,6 +1,33 @@
 import os
+from pathlib import Path
+from dotenv import load_dotenv
 from pydantic_settings import BaseSettings
 from typing import List
+
+# Resolve Backend Directory
+BACKEND_DIR = Path(__file__).resolve().parent.parent
+
+# 1. Determine environment mode: 'development' or 'production'
+# Priority: ENVIRONMENT env var > APP_ENV env var > default 'development'
+env_mode = os.getenv("ENVIRONMENT", os.getenv("APP_ENV", "")).lower()
+
+# 2. Load base .env if present
+base_env_path = BACKEND_DIR / ".env"
+if base_env_path.exists():
+    load_dotenv(base_env_path)
+
+if not env_mode:
+    env_mode = os.getenv("ENVIRONMENT", os.getenv("APP_ENV", "development")).lower()
+
+# 3. Load environment-specific file with override
+if env_mode in ("production", "prod"):
+    prod_env = BACKEND_DIR / ".env.production"
+    if prod_env.exists():
+        load_dotenv(prod_env, override=True)
+else:
+    dev_env = BACKEND_DIR / ".env.development"
+    if dev_env.exists():
+        load_dotenv(dev_env, override=True)
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Asterra Store Core API"
@@ -62,6 +89,7 @@ class Settings(BaseSettings):
         "https://asterrastore.biz.id",
         "https://admin.asterrastore.biz.id",
         "https://sales.asterrastore.biz.id",
+        "https://api.asterrastore.biz.id",
     ]
 
     @property
@@ -74,7 +102,6 @@ class Settings(BaseSettings):
         return self.BACKEND_CORS_ORIGINS
 
     class Config:
-        env_file = ".env"
         extra = "allow"
 
 settings = Settings()

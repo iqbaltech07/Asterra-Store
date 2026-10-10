@@ -12,6 +12,8 @@
     "build:user": "npm --prefix frontend-user run build",
     "build:admin": "npm --prefix frontend-admin run build",
     "build:sales": "npm --prefix frontend-sales run build",
-    "build:all": "npm run build:user && npm run build:admin && npm run build:sales"
+    "build:all": "npm run build:user && npm run build:admin && npm run build:sales",
+    "env:dev": "node scripts/switch-env.js dev",
+    "env:prod": "node scripts/switch-env.js prod"
   }
 }
