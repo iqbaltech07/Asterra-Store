@@ -11,6 +11,31 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: '**' },
     ],
   },
+  async redirects() {
+    const salesUrl = process.env.NEXT_PUBLIC_SALES_URL || 'https://sales.asterrastore.biz.id';
+    return [
+      {
+        source: '/daftar-sales',
+        destination: `${salesUrl}/daftar-sales`,
+        permanent: false,
+      },
+      {
+        source: '/sales',
+        destination: `${salesUrl}/sales`,
+        permanent: false,
+      },
+      {
+        source: '/sales/:path*',
+        destination: `${salesUrl}/sales/:path*`,
+        permanent: false,
+      },
+      {
+        source: '/seller',
+        destination: '/affiliate',
+        permanent: false,
+      },
+    ];
+  },
   async rewrites() {
     const backendUrl = process.env.BACKEND_URL || 'http://localhost:8000';
     return [

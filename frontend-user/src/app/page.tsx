@@ -855,14 +855,14 @@ export default function HomePage() {
         */}
         <section aria-label="Banner Promo Asterra" data-gsap="hero-banner" className="w-full max-w-full mb-3.5 sm:mb-5 overflow-hidden">
           <Link
-            href="/seller"
-            title="Program Reseller Asterra Store - Jadi Bagian dari AsterraStore"
+            href="/affiliate"
+            title="Program Mitra Affiliate Asterra Store - Dapatkan Komisi 10% per Penjualan"
             data-gsap="hero-banner-inner"
             className="group block relative w-full max-w-full overflow-hidden rounded-xl sm:rounded-2xl md:rounded-3xl border border-[rgba(18,26,42,0.08)] shadow-xs hover:shadow-md transition-shadow bg-[#f0f5ff]"
           >
             <Image
               src="/images/banners/hero-banner-reseller.webp"
-              alt="Program Reseller Asterra Store - Jadi Bagian dari AsterraStore, Dapatkan Komisi 10-15% per Produk"
+              alt="Program Mitra Affiliate Asterra Store - Rekomendasikan Produk Digital, Dapatkan Komisi 10% Langsung"
               width={2640}
               height={882}
               priority

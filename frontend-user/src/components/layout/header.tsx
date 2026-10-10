@@ -113,16 +113,19 @@ export function Header({ onNotify: _onNotify }: HeaderProps) {
             Cara Pemesanan
           </Link>
           <Link
-            href="/seller"
+            href="/affiliate"
             prefetch={true}
             data-gsap="nav-link"
             className={`transition-colors py-1 ${
-              pathname.startsWith('/seller') || pathname.startsWith('/daftar-sales') || pathname.startsWith('/sales')
+              pathname.startsWith('/affiliate') ||
+              pathname.startsWith('/seller') ||
+              pathname.startsWith('/daftar-sales') ||
+              pathname.startsWith('/sales')
                 ? 'text-[#C96F55] font-semibold'
                 : 'text-[#F7F5EF]/80 hover:text-[#F7F5EF]'
             }`}
           >
-            Seller
+            Affiliate
           </Link>
         </nav>
 

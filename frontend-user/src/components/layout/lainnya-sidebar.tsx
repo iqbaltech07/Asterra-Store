@@ -12,6 +12,7 @@ import {
   faStar,
   faBookOpen,
   faHeadset,
+  faHandshake,
   faChevronRight,
   faRightFromBracket,
   faRightToBracket,
@@ -89,6 +90,13 @@ export function LainnyaSidebar() {
       subtitle: 'Panduan transaksi',
       href: '/#panduan',
       icon: faBookOpen,
+      isExternal: false,
+    },
+    {
+      title: 'Program Affiliate',
+      subtitle: 'Komisi 10% per penjualan',
+      href: '/affiliate',
+      icon: faHandshake,
       isExternal: false,
     },
     {

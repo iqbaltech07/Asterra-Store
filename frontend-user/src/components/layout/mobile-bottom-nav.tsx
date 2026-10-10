@@ -7,7 +7,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faHouse,
   faReceipt,
-  faStore,
+  faShareNodes,
   faEllipsis,
 } from '@fortawesome/free-solid-svg-icons';
 import { useNavigationStore } from '@/store/use-navigation-store';
@@ -18,7 +18,11 @@ export function MobileBottomNav() {
 
   const isHome = pathname === '/';
   const isOrders = pathname.startsWith('/orders') || pathname.startsWith('/order');
-  const isSeller = pathname.startsWith('/seller') || pathname.startsWith('/daftar-sales') || pathname.startsWith('/sales');
+  const isAffiliate =
+    pathname.startsWith('/affiliate') ||
+    pathname.startsWith('/seller') ||
+    pathname.startsWith('/daftar-sales') ||
+    pathname.startsWith('/sales');
 
   const isDetailPage = pathname.startsWith('/products/') && pathname !== '/products';
   const isCheckout = pathname.startsWith('/checkout');
@@ -38,10 +42,10 @@ export function MobileBottomNav() {
       active: isOrders && !isSidebarOpen,
     },
     {
-      label: 'Seller',
-      href: '/seller',
-      icon: faStore,
-      active: isSeller && !isSidebarOpen,
+      label: 'Affiliate',
+      href: '/affiliate',
+      icon: faShareNodes,
+      active: isAffiliate && !isSidebarOpen,
     },
     {
       label: 'Lainnya',

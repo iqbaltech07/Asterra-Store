@@ -121,8 +121,8 @@ export function Footer({ onNotify }: FooterProps) {
                 </Link>
               </li>
               <li>
-                <Link href="/seller" className="text-primary hover:underline font-semibold transition-colors">
-                  ★ Program Seller
+                <Link href="/affiliate" className="text-primary hover:underline font-semibold transition-colors">
+                  ★ Program Kemitraan Affiliate
                 </Link>
               </li>
             </ul>

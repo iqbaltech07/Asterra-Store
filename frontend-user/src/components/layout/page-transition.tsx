@@ -55,7 +55,7 @@ export function PageTransition({ children }: PageTransitionProps) {
       // to strictly sync with React data lifecycle, variant changes, and avoid race conditions.
     } else if (pathname === '/orders' || pathname.startsWith('/orders') || pathname === '/order') {
       cleanupEntrance = animateOrdersPage(container);
-    } else if (pathname === '/seller') {
+    } else if (pathname === '/seller' || pathname === '/affiliate') {
       cleanupEntrance = animateSellerPage(container);
     } else if (pathname === '/daftar-sales') {
       cleanupEntrance = animateDaftarSalesPage(container);
