@@ -9,6 +9,7 @@ export const env = {
   isProduction: process.env.NODE_ENV === 'production',
   PORT: parseInt(process.env.PORT || '3000', 10),
   APP_URL: getAppBaseUrl(),
+  BACKEND_URL: process.env.BACKEND_URL || 'http://localhost:8000',
 
   // Database
   DATABASE_URL:

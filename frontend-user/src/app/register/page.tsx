@@ -79,10 +79,12 @@ export default function RegisterPage() {
         throw new Error(data.error?.message || 'Registrasi gagal.');
       }
 
-      // Save token & user in localStorage
+      // Save token & user in localStorage & cookies
       if (typeof window !== 'undefined') {
         localStorage.setItem('asterra_token', data.token);
         localStorage.setItem('asterra_user', JSON.stringify(data.user));
+        document.cookie = `asterra_token=${data.token}; path=/; max-age=2592000; SameSite=Lax`;
+        document.cookie = `asterra_session=${data.token}; path=/; max-age=2592000; SameSite=Lax`;
       }
 
       // Update Zustand state
@@ -90,8 +92,8 @@ export default function RegisterPage() {
 
       setSuccessMessage('Pendaftaran berhasil! Mengalihkan ke halaman utama...');
       setTimeout(() => {
-        router.push('/');
-      }, 1000);
+        window.location.href = '/';
+      }, 500);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Terjadi kesalahan sistem.';
       setErrorMessage(message);

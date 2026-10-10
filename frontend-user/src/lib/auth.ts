@@ -19,7 +19,19 @@ export const auth = betterAuth({
     process.env.NEXTAUTH_SECRET ||
     process.env.JWT_SECRET ||
     'cabkjs.fbekjfgvesivcfsasterra2026dajcg.awid.wa!aoicgqowiqgdaigbciagdiwacamt2ru',
-  baseURL: getAppBaseUrl(),
+  baseURL: {
+    allowedHosts: [
+      'localhost:3000',
+      'localhost:3001',
+      '127.0.0.1:3000',
+      '127.0.0.1:3001',
+      'asterrastore.biz.id',
+      '*.asterrastore.biz.id',
+      'asterrastore.vercel.app',
+      '*.vercel.app',
+    ],
+    fallback: getAppBaseUrl(),
+  },
   trustedOrigins: async (request) => {
     const list: string[] = [
       'https://asterrastore.biz.id',
@@ -56,6 +68,9 @@ export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: 'postgresql',
   }),
+  emailAndPassword: {
+    enabled: true,
+  },
   socialProviders: {
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID || 'placeholder_client_id',

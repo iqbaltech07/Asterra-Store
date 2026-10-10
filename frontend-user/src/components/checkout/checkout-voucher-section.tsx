@@ -41,7 +41,7 @@ export function CheckoutVoucherSection({
             <div>
               <span className="font-bold font-mono">{appliedPromo.code}</span>
               <span className="text-[11px] block text-foreground-muted">
-                Hemat Rp {appliedPromo.discount.toLocaleString('id-ID')}
+                Hemat Rp {(appliedPromo.discount ?? 0).toLocaleString('id-ID')}
               </span>
             </div>
           </div>

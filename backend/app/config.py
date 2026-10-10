@@ -1,4 +1,4 @@
-﻿import os
+import os
 from pydantic_settings import BaseSettings
 from typing import List
 
@@ -23,6 +23,9 @@ class Settings(BaseSettings):
     TRIPAY_PRIVATE_KEY: str = os.getenv("TRIPAY_PRIVATE_KEY", "")
     TRIPAY_MERCHANT_CODE: str = os.getenv("TRIPAY_MERCHANT_CODE", "")
     TRIPAY_IS_PRODUCTION: bool = os.getenv("TRIPAY_IS_PRODUCTION", "false").lower() == "true"
+    
+    # Vercel Blob Storage
+    BLOB_READ_WRITE_TOKEN: str = os.getenv("BLOB_READ_WRITE_TOKEN", "")
     
     # CORS
     BACKEND_CORS_ORIGINS: List[str] = [

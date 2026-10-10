@@ -101,11 +101,12 @@ export function findRelevantProducts(
   allCandidates: ProductItem[],
   limit = 3
 ): ProductItem[] {
-  const targetName = target.name.toLowerCase();
+  if (!target || !target.name) return [];
+  const targetName = (target.name || '').toLowerCase();
   const targetCategory = (target.category?.name || '').toLowerCase();
-  const targetEcosystem = getEcosystem(target.name, target.category?.name || '', target.brand);
-  const targetBrand = extractCoreBrand(target.name, target.brand);
-  const targetDuration = extractDuration(target.name);
+  const targetEcosystem = getEcosystem(target.name || '', target.category?.name || '', target.brand);
+  const targetBrand = extractCoreBrand(target.name || '', target.brand);
+  const targetDuration = extractDuration(target.name || '');
 
   // Extract meaningful token words from target name
   const stopWords = new Set([
@@ -136,12 +137,13 @@ export function findRelevantProducts(
 
   const scored: ScoredProduct[] = [];
 
-  for (const candidate of allCandidates) {
+  for (const candidate of (allCandidates || [])) {
+    if (!candidate || !candidate.name) continue;
     if (candidate.id === target.id) continue;
     if (candidate.status === 'archived') continue;
 
     let score = 0;
-    const candName = candidate.name.toLowerCase();
+    const candName = (candidate.name || '').toLowerCase();
     const candCat = (candidate.category?.name || '').toLowerCase();
     const candEcosystem = getEcosystem(
       candidate.name,

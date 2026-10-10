@@ -6,7 +6,7 @@ import { resolveProductFamily } from '@/lib/services/product-variant-parser';
 import { ProductDetailClient, ProductDetailData } from './product-detail-client';
 import { ProductItem } from '@/lib/products-data';
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || process.env.BACKEND_URL || 'http://localhost:4000';
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || process.env.BACKEND_URL || 'http://localhost:8000';
 
 async function fetchActiveProducts(): Promise<ProductItem[]> {
   try {
@@ -25,7 +25,8 @@ async function fetchProductById(id: string): Promise<ProductItem | null> {
     const res = await fetch(`${BACKEND_URL}/api/v1/products/${id}`, { next: { revalidate: 60 } });
     if (!res.ok) return null;
     const json = await res.json();
-    return json.success !== false ? json : null;
+    if (!json || json.success === false) return null;
+    return (json.data as ProductItem) || (json.name ? (json as ProductItem) : null);
   } catch (err) {
     console.error(`[Product Detail] Failed to fetch product ${id} from backend:`, err);
     return null;
@@ -128,7 +129,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
   const productPrice = activeVariant ? activeVariant.price : (baseProduct?.price || 0);
   const productPriceFormatted = activeVariant ? activeVariant.priceFormatted : (baseProduct?.priceFormatted || `Rp ${productPrice.toLocaleString('id-ID')}`);
 
-  const fallbackProduct = baseProduct || {
+  const resolvedProduct = baseProduct || {
     id: activeVariant?.id || id,
     name: productName,
     category: productCategory,
@@ -143,12 +144,12 @@ export default async function ProductDetailPage({ params }: PageProps) {
     providerCode: activeVariant?.id || id,
   };
 
-  const { durations, primaryDurationLabel, warranty } = parseProductDurations(fallbackProduct);
-  const relevantProducts = findRelevantProducts(fallbackProduct, activeProducts, 3);
+  const { durations, primaryDurationLabel, warranty } = parseProductDurations(resolvedProduct);
+  const relevantProducts = findRelevantProducts(resolvedProduct, activeProducts, 3);
 
   const initialData: ProductDetailData = {
-    ...fallbackProduct,
-    id: activeVariant?.id || fallbackProduct.id,
+    ...resolvedProduct,
+    id: activeVariant?.id || resolvedProduct.id,
     name: productName,
     category: productCategory,
     price: productPrice,
@@ -178,7 +179,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
       },
       {
         label: 'Kode Layanan Supplier',
-        value: activeVariant?.id || (fallbackProduct as { providerCode?: string }).providerCode || '-',
+        value: activeVariant?.id || (resolvedProduct as { providerCode?: string }).providerCode || '-',
       },
       { label: 'Waktu Pengiriman', value: 'Proses Instan (1 - 15 Menit)' },
       { label: 'Metode Pengiriman', value: 'Email Terdaftar & Notifikasi WhatsApp CS' },

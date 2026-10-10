@@ -4,7 +4,7 @@
   "private": true,
   "description": "Asterra Store - Customer Storefront",
   "scripts": {
-    "dev": "next dev -p 3000",
+    "dev": "next dev --experimental-https -p 3000",
     "build": "next build",
     "start": "next start -p 3000",
     "lint": "next lint",

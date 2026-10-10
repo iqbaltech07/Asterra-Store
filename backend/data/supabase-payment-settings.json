@@ -1,0 +1,22 @@
+[
+  {
+    "id": "default_setting",
+    "mode": "manual",
+    "bankName": "Bank Central Asia (BCA)",
+    "bankAccountNumber": "8965123456",
+    "bankAccountName": "Asterra Store Official",
+    "qrisImageUrl": "https://panduan.bersama.co.id/QRIS/images/Qris.png",
+    "qrisMerchantName": "ASTERRA STORE QRIS",
+    "danaNumber": "081234567890",
+    "danaAccountName": "Asterra Store",
+    "confirmationWhatsapp": "6281234567890",
+    "instructions": "Transfer sesuai nominal tepat hingga 3 digit kode unik terakhir untuk verifikasi instan mutasi.",
+    "csEmail": "support@asterra.store",
+    "csWhatsappNumbers": [
+      "081234567890"
+    ],
+    "enableUniqueCode": true,
+    "orderExpiryHours": 24,
+    "updatedAt": "2026-09-28T19:34:09.331Z"
+  }
+]

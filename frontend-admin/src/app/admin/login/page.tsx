@@ -90,6 +90,9 @@ export default function AdminLoginPage() {
       if (data.token && typeof window !== 'undefined') {
         localStorage.setItem('asterra_admin_token', data.token);
       }
+      if (data.token && typeof document !== 'undefined') {
+        document.cookie = `asterra_admin_session=${data.token}; path=/; max-age=28800; SameSite=Lax`;
+      }
 
       if (data.admin?.role === 'sales') {
         setSuccessMessage('Login mitra sales berhasil. Mengalihkan ke Portal Sales...');

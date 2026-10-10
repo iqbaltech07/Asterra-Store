@@ -42,8 +42,23 @@ const SORT_OPTIONS = [
 
 function ProductsContent() {
   const searchParams = useSearchParams();
+  const resolveCategoryParam = (cat: string | null): string => {
+    if (!cat) return 'Semua';
+    const lower = cat.toLowerCase().trim();
+    if (lower === 'cat-ai-tools' || lower === 'ai-tools' || lower === 'ai tools' || lower === 'ai') {
+      return 'AI Tools';
+    }
+    if (lower === 'cat-apps-streaming' || lower === 'apps-streaming' || lower === 'apps & streaming' || lower === 'streaming') {
+      return 'Apps & Streaming';
+    }
+    if (lower === 'cat-digital-services' || lower === 'digital' || lower === 'layanan digital') {
+      return 'Layanan Digital';
+    }
+    return cat;
+  };
+
   const initialSearch = searchParams.get('search') || searchParams.get('brand') || '';
-  const initialCategory = searchParams.get('category') || 'Semua';
+  const initialCategory = resolveCategoryParam(searchParams.get('category'));
 
   const [selectedCategory, setSelectedCategory] = useState<string>(initialCategory);
   const [searchQuery, setSearchQuery] = useState<string>(initialSearch);
@@ -56,7 +71,7 @@ function ProductsContent() {
     const q = searchParams.get('search') || searchParams.get('brand');
     const cat = searchParams.get('category');
     if (q !== null) setSearchQuery(q);
-    if (cat !== null) setSelectedCategory(cat);
+    if (cat !== null) setSelectedCategory(resolveCategoryParam(cat));
   }, [searchParams]);
 
   const { items: cartItems, addItem, removeItem } = useCartStore();
@@ -84,12 +99,22 @@ function ProductsContent() {
     [catalogResponse?.data]
   );
 
-  // Extract dynamic categories from real products
+  // Extract dynamic categories from real products with intentional priority order
   const categories = useMemo(() => {
     const set = new Set<string>(['Semua']);
+    const priorityCategories = ['AI Tools', 'Apps & Streaming', 'Layanan Digital', 'Voucher Game'];
+
+    priorityCategories.forEach((priority) => {
+      if (allProducts.some((p) => p.category?.name?.toLowerCase() === priority.toLowerCase())) {
+        const found = allProducts.find((p) => p.category?.name?.toLowerCase() === priority.toLowerCase());
+        if (found?.category?.name) set.add(found.category.name);
+      }
+    });
+
     allProducts.forEach((p) => {
       if (p.category?.name) set.add(p.category.name);
     });
+
     return Array.from(set);
   }, [allProducts]);
 

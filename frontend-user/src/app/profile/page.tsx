@@ -87,12 +87,13 @@ function formatDate(dateInput: string | Date | undefined | null) {
   }
 }
 
-function formatIDR(amount: number) {
+function formatIDR(amount: number = 0) {
+  const safe = typeof amount === 'number' && !isNaN(amount) ? amount : Number(amount) || 0;
   return new Intl.NumberFormat('id-ID', {
     style: 'currency',
     currency: 'IDR',
     maximumFractionDigits: 0,
-  }).format(amount);
+  }).format(safe);
 }
 
 export default function ProfilePage() {
@@ -113,7 +114,11 @@ export default function ProfilePage() {
   const { data: profileData, isLoading: isProfileLoading } = useQuery<ProfileApiResponse>({
     queryKey: ['user-profile', session?.user?.email],
     queryFn: async () => {
-      const res = await fetch('/api/v1/users/profile');
+      const email = session?.user?.email;
+      const url = email
+        ? `/api/v1/users/profile?email=${encodeURIComponent(email)}`
+        : '/api/v1/users/profile';
+      const res = await fetch(url);
       if (!res.ok) throw new Error('Gagal mengambil data profil');
       return res.json();
     },
@@ -199,7 +204,7 @@ export default function ProfilePage() {
   };
 
   const getOrderStatusBadge = (status: string) => {
-    switch (status.toLowerCase()) {
+    switch ((status || 'pending').toLowerCase()) {
       case 'completed':
       case 'paid':
         return (
@@ -458,7 +463,7 @@ export default function ProfilePage() {
                       <FontAwesomeIcon icon={faBagShopping} className="w-4 h-4 text-accent" />
                     </div>
                     <p className="text-2xl font-extrabold text-navy-900">
-                      {isProfileLoading ? '-' : profile?.stats.totalOrders ?? 0}
+                      {isProfileLoading ? '-' : profile?.stats?.totalOrders ?? 0}
                     </p>
                     <span className="text-[10px] text-slate-400">
                       Transaksi terdaftar
@@ -471,7 +476,7 @@ export default function ProfilePage() {
                       <FontAwesomeIcon icon={faCircleCheck} className="w-4 h-4 text-status-success" />
                     </div>
                     <p className="text-2xl font-extrabold text-navy-900">
-                      {isProfileLoading ? '-' : profile?.stats.completedOrders ?? 0}
+                      {isProfileLoading ? '-' : profile?.stats?.completedOrders ?? 0}
                     </p>
                     <span className="text-[10px] text-slate-400">
                       Lisensi aktif & terkirim
@@ -484,7 +489,7 @@ export default function ProfilePage() {
                       <FontAwesomeIcon icon={faClock} className="w-4 h-4 text-status-warning" />
                     </div>
                     <p className="text-2xl font-extrabold text-navy-900">
-                      {isProfileLoading ? '-' : profile?.stats.pendingOrders ?? 0}
+                      {isProfileLoading ? '-' : profile?.stats?.pendingOrders ?? 0}
                     </p>
                     <span className="text-[10px] text-slate-400">
                       Belum diselesaikan
@@ -689,15 +694,15 @@ export default function ProfilePage() {
                                         </div>
                                         <div className="min-w-0 flex-1">
                                           <p className="font-bold text-navy-900 truncate">
-                                            {item.productName}
+                                            {item.productName || (item as unknown as { product_name?: string }).product_name || 'Layanan Digital'}
                                           </p>
                                           <p className="text-[10px] text-slate-500">
-                                            {item.quantity} x {formatIDR(item.price)}
+                                            {item.quantity || 1} x {formatIDR(item.price ?? (item as unknown as { unit_price?: number }).unit_price ?? 0)}
                                           </p>
                                         </div>
                                       </div>
                                       <span className="font-bold text-navy-900 shrink-0 text-right">
-                                        {formatIDR(item.price * item.quantity)}
+                                        {formatIDR((item.price ?? (item as unknown as { unit_price?: number }).unit_price ?? 0) * (item.quantity || 1))}
                                       </span>
                                     </div>
                                   ))
@@ -713,7 +718,7 @@ export default function ProfilePage() {
                                 <div className="flex items-center gap-1.5">
                                   <span className="text-slate-500">Total Pembayaran:</span>
                                   <span className="font-extrabold text-accent text-sm">
-                                    {formatIDR(order.totalAmount)}
+                                    {formatIDR(order.totalAmount ?? (order as unknown as { total_amount?: number }).total_amount ?? 0)}
                                   </span>
                                 </div>
 

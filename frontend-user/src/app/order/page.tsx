@@ -103,9 +103,15 @@ function OrderCountdownBadge({
 
 // --- Order Pure Helper Functions ---
 function isOrderExpired(order: Order): boolean {
-  if (order.order_status === 'cancelled') return true;
-  if (order.order_status === 'pending' && order.expires_at) {
-    return new Date(order.expires_at).getTime() < Date.now();
+  const status = (
+    order.order_status ||
+    (order as unknown as { status?: string }).status ||
+    ''
+  ).toLowerCase();
+  if (status === 'cancelled') return true;
+  const expiresAt = order.expires_at || (order as unknown as { expiresAt?: string }).expiresAt;
+  if (status === 'pending' && expiresAt) {
+    return new Date(expiresAt).getTime() < Date.now();
   }
   return false;
 }
@@ -344,13 +350,16 @@ function PrivateOrderContent() {
   const rawOrders = data?.data || [];
 
   const orders = [...rawOrders].sort((a, b) => {
-    return new Date(b.order_date).getTime() - new Date(a.order_date).getTime();
+    const timeA = new Date(a.order_date || (a as unknown as { createdAt?: string }).createdAt || 0).getTime();
+    const timeB = new Date(b.order_date || (b as unknown as { createdAt?: string }).createdAt || 0).getTime();
+    return timeB - timeA;
   });
 
   const filteredOrders = orders.filter((order) => {
     const isExpired = isOrderExpired(order);
+    const rawStatus = (order.order_status || (order as unknown as { status?: string }).status || 'pending').toLowerCase();
     const effectiveStatus =
-      order.order_status === 'pending' && isExpired ? 'cancelled' : order.order_status;
+      rawStatus === 'pending' && isExpired ? 'cancelled' : rawStatus;
 
     if (selectedStatus !== 'all' && effectiveStatus !== selectedStatus) {
       return false;
@@ -359,8 +368,11 @@ function PrivateOrderContent() {
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase();
     return (
-      order.id.toLowerCase().includes(q) ||
-      order.items.some((item) => item.product_name.toLowerCase().includes(q))
+      (order.id || '').toLowerCase().includes(q) ||
+      (order.items || []).some((item) => {
+        const pName = item.product_name || (item as unknown as { productName?: string }).productName || '';
+        return pName.toLowerCase().includes(q);
+      })
     );
   });
 
@@ -373,12 +385,32 @@ function PrivateOrderContent() {
 
   const handleCopyOrderInfo = (order: Order) => {
     if (typeof window !== 'undefined') {
+      const orderTotal = Number(
+        order.total_amount ??
+        (order as unknown as { totalAmount?: number }).totalAmount ??
+        (order as unknown as { amount?: number }).amount ??
+        0
+      );
+      const orderDateStr =
+        order.order_date ||
+        (order as unknown as { createdAt?: string }).createdAt ||
+        order.expires_at ||
+        new Date().toISOString();
+      const statusStr = (
+        order.order_status ||
+        (order as unknown as { status?: string }).status ||
+        'pending'
+      ).toUpperCase();
+
       const summaryText = `[Asterra Store] Bukti Pesanan:\nNomor: ${order.id}\nTanggal: ${new Date(
-        order.order_date
-      ).toLocaleDateString('id-ID')}\nTotal: Rp ${order.total_amount.toLocaleString(
+        orderDateStr
+      ).toLocaleDateString('id-ID')}\nTotal: Rp ${orderTotal.toLocaleString(
         'id-ID'
-      )}\nStatus: ${order.order_status.toUpperCase()}\nItem: ${order.items
-        .map((i) => `${i.product_name} (${i.quantity}x)`)
+      )}\nStatus: ${statusStr}\nItem: ${(order.items || [])
+        .map((i) => {
+          const pName = i.product_name || (i as unknown as { productName?: string }).productName || 'Produk';
+          return `${pName} (${i.quantity || 1}x)`;
+        })
         .join(', ')}`;
       navigator.clipboard?.writeText(summaryText);
       showNotification(`Informasi pesanan ${order.id} berhasil disalin!`);
@@ -386,13 +418,20 @@ function PrivateOrderContent() {
   };
 
   const handleReorder = (order: Order) => {
-    order.items.forEach((item) => {
+    (order.items || []).forEach((item) => {
+      const unitPrice = Number(
+        item.unit_price ??
+        (item as unknown as { price?: number }).price ??
+        0
+      );
+      const pId = item.product_id || (item as unknown as { productId?: string }).productId || 'item';
+      const pName = item.product_name || (item as unknown as { productName?: string }).productName || 'Layanan Digital';
       addItem({
-        id: item.product_id,
-        name: item.product_name,
+        id: pId,
+        name: pName,
         category: 'Digital Service',
-        priceFormatted: `Rp ${item.unit_price.toLocaleString('id-ID')}`,
-        priceNumeric: item.unit_price,
+        priceFormatted: `Rp ${unitPrice.toLocaleString('id-ID')}`,
+        priceNumeric: unitPrice,
       });
     });
     showNotification(`Item dari pesanan ${order.id} telah ditambahkan ke keranjang.`);
@@ -425,18 +464,48 @@ function PrivateOrderContent() {
       return;
     }
 
+    const rawOrder = order as unknown as Record<string, any>;
+    const orderTotal = Number(
+      rawOrder.total_amount ??
+      rawOrder.totalAmount ??
+      rawOrder.amount ??
+      0
+    );
+    const orderRaw = Number(
+      rawOrder.raw_amount ??
+      rawOrder.rawAmount ??
+      orderTotal
+    );
+    const orderUnique = Number(
+      rawOrder.unique_code ??
+      rawOrder.uniqueCode ??
+      0
+    );
+    const orderExpiresAt = rawOrder.expires_at || rawOrder.expiresAt;
+    const paymentMethod =
+      rawOrder.payment?.payment_method ||
+      rawOrder.paymentMethod ||
+      rawOrder.payment_method ||
+      'manual_bca';
+
     const isManual =
-      order.payment_mode === 'manual' ||
-      order.payment?.payment_method?.startsWith('manual_');
+      rawOrder.payment_mode === 'manual' ||
+      rawOrder.paymentMode === 'manual' ||
+      paymentMethod.startsWith('manual_');
 
     if (isManual) {
       setActiveManualModal({
         orderId: order.id,
-        amount: order.total_amount,
-        rawAmount: order.raw_amount,
-        uniqueCode: order.unique_code,
-        method: order.payment?.payment_method || 'manual_bca',
-        expiresAt: order.expires_at,
+        amount: orderTotal,
+        totalAmount: orderTotal,
+        total_amount: orderTotal,
+        rawAmount: orderRaw,
+        raw_amount: orderRaw,
+        uniqueCode: orderUnique,
+        unique_code: orderUnique,
+        method: paymentMethod,
+        expiresAt: orderExpiresAt,
+        expires_at: orderExpiresAt,
       });
       setSelectedOrderForModal(order);
     } else {
@@ -679,10 +748,23 @@ function PrivateOrderContent() {
             {filteredOrders.map((order) => {
               const isExpanded = expandedOrderId === order.id;
               const isExpired = isOrderExpired(order);
+              const rawStatus = (order.order_status || (order as unknown as { status?: string }).status || 'pending').toLowerCase() as Order['order_status'];
               const effectiveStatus: Order['order_status'] =
-                order.order_status === 'pending' && isExpired ? 'cancelled' : order.order_status;
+                rawStatus === 'pending' && isExpired ? 'cancelled' : rawStatus;
               const step = getTimelineStep({ ...order, order_status: effectiveStatus });
               const isCancelled = effectiveStatus === 'cancelled';
+              const orderTotal = Number(
+                order.total_amount ??
+                (order as unknown as { totalAmount?: number }).totalAmount ??
+                (order as unknown as { amount?: number }).amount ??
+                0
+              );
+              const orderExpiresAt = order.expires_at || (order as unknown as { expiresAt?: string }).expiresAt;
+              const orderDateStr =
+                order.order_date ||
+                (order as unknown as { createdAt?: string }).createdAt ||
+                orderExpiresAt ||
+                new Date().toISOString();
 
               return (
                 <div
@@ -711,7 +793,7 @@ function PrivateOrderContent() {
                         </div>
                         <span className="text-[11px] text-foreground-muted">
                           Dipesan pada:{' '}
-                          {new Date(order.order_date).toLocaleDateString('id-ID', {
+                          {new Date(orderDateStr).toLocaleDateString('id-ID', {
                             day: 'numeric',
                             month: 'long',
                             year: 'numeric',
@@ -725,7 +807,7 @@ function PrivateOrderContent() {
                     <div className="flex items-center justify-between sm:justify-end gap-2">
                       {effectiveStatus === 'pending' && (
                         <OrderCountdownBadge
-                          expiresAt={order.expires_at}
+                          expiresAt={orderExpiresAt}
                           onExpired={() => {
                             fetch(`/api/v1/orders/${order.id}/cancel`, { method: 'POST' }).finally(() => refetch());
                           }}
@@ -733,7 +815,7 @@ function PrivateOrderContent() {
                       )}
                       {getStatusBadge(effectiveStatus)}
                       <span className="text-sm font-bold text-foreground">
-                        Rp {order.total_amount.toLocaleString('id-ID')}
+                        Rp {orderTotal.toLocaleString('id-ID')}
                       </span>
                     </div>
                   </div>
@@ -828,37 +910,54 @@ function PrivateOrderContent() {
 
                   {/* Items List inside Order */}
                   <div className="space-y-2">
-                    {order.items.map((item) => (
-                      <div
-                        key={item.id}
-                        className="bg-surface-raised rounded-lg p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
-                      >
-                        <div className="space-y-0.5">
-                          <h4 className="font-semibold text-foreground text-sm">
-                            {item.product_name}
-                          </h4>
-                          <div className="flex flex-wrap items-center gap-2 text-foreground-muted text-[11px]">
-                            <span>Jumlah: {item.quantity} lisensi</span>
-                            <span>—</span>
-                            <span>
-                              Target Email:{' '}
-                              <strong className="text-foreground">
-                                {item.purchased_details?.target_email || 'customer@asterra.store'}
-                              </strong>
+                    {(order.items || []).map((item) => {
+                      const unitPrice = Number(
+                        item.unit_price ??
+                        (item as unknown as { price?: number }).price ??
+                        0
+                      );
+                      const itemQty = Number(item.quantity ?? 1);
+                      const pName =
+                        item.product_name ||
+                        (item as unknown as { productName?: string }).productName ||
+                        'Layanan Digital';
+
+                      return (
+                        <div
+                          key={item.id}
+                          className="bg-surface-raised rounded-lg p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+                        >
+                          <div className="space-y-0.5">
+                            <h4 className="font-semibold text-foreground text-sm">
+                              {pName}
+                            </h4>
+                            <div className="flex flex-wrap items-center gap-2 text-foreground-muted text-[11px]">
+                              <span>Jumlah: {itemQty} lisensi</span>
+                              <span>—</span>
+                              <span>
+                                Target Email:{' '}
+                                <strong className="text-foreground">
+                                  {item.purchased_details?.target_email ||
+                                    (item as unknown as { targetEmail?: string }).targetEmail ||
+                                    order.customer_email ||
+                                    (order as unknown as { customerEmail?: string }).customerEmail ||
+                                    'customer@asterra.store'}
+                                </strong>
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="text-left sm:text-right">
+                            <span className="font-bold text-foreground block">
+                              Rp {(unitPrice * itemQty).toLocaleString('id-ID')}
+                            </span>
+                            <span className="text-[10px] text-foreground-muted">
+                              @ Rp {unitPrice.toLocaleString('id-ID')}
                             </span>
                           </div>
                         </div>
-
-                        <div className="text-left sm:text-right">
-                          <span className="font-bold text-foreground block">
-                            Rp {(item.unit_price * item.quantity).toLocaleString('id-ID')}
-                          </span>
-                          <span className="text-[10px] text-foreground-muted">
-                            @ Rp {item.unit_price.toLocaleString('id-ID')}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
 
                   {/* Expandable Details Section */}

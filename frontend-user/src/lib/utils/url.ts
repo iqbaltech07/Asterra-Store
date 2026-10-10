@@ -28,10 +28,15 @@ export function getAppBaseUrl(
         return Array.isArray(val) ? val[0] || null : (val as string) || null;
       };
 
-      const host = getHeader('x-forwarded-host') || getHeader('host');
-      const proto =
-        getHeader('x-forwarded-proto') ||
-        (host && !host.includes('localhost') && !host.includes('127.0.0.1') ? 'https' : 'http');
+      let proto = getHeader('x-forwarded-proto');
+      if (!proto && request && 'url' in request && typeof (request as Request).url === 'string') {
+        try {
+          proto = new URL((request as Request).url).protocol.replace(':', '');
+        } catch {}
+      }
+      if (!proto) {
+        proto = host && !host.includes('localhost') && !host.includes('127.0.0.1') ? 'https' : 'http';
+      }
 
       if (host) {
         return `${proto}://${host}`.replace(/\/+$/, '');

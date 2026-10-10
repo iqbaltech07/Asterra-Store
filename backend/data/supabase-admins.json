@@ -1,0 +1,79 @@
+[
+  {
+    "id": "admin-root",
+    "username": "admin",
+    "email": "admin@asterra.store",
+    "name": "Super Admin Asterra",
+    "passwordHash": "$2b$10$kzfa/ronlVttUQVWrnH6Oe7A8TSS/hw.qCIB7Os9bpASvI6BnY1oO",
+    "isActive": true,
+    "role": "superadmin",
+    "createdAt": "2026-09-30T04:28:20.125Z",
+    "updatedAt": "2026-09-30T12:12:50.509Z"
+  },
+  {
+    "id": "cmunz01kv0000jm0405ubupmo",
+    "username": "admin2",
+    "email": "admin.iqbal@asterra.store",
+    "name": "Iqbal",
+    "passwordHash": "$2b$10$MDR2Q/oVFoHmxTI1pGBwmeJo6KaI76auz1mfJvuH9j.hOrYqS0ybm",
+    "isActive": true,
+    "role": "superadmin",
+    "createdAt": "2026-09-30T10:36:30.847Z",
+    "updatedAt": "2026-10-01T18:16:10.557Z"
+  },
+  {
+    "id": "cmunz4qzt0001jm04460ubnc8",
+    "username": "admin3",
+    "email": "admin.dyah@asterra.store",
+    "name": "dyah",
+    "passwordHash": "$2b$10$xKlkH5Qyix3mlMuYkafCP.m8hV2gpbJVTOgjrPgbgZLGerYSxeOa.",
+    "isActive": true,
+    "role": "admin",
+    "createdAt": "2026-09-30T10:40:10.410Z",
+    "updatedAt": "2026-10-03T17:05:24.534Z"
+  },
+  {
+    "id": "cmux9j3gj0001l90474ac8el7",
+    "username": "sales-astfounder",
+    "email": "founder@asterra.store",
+    "name": "Founder Asterra Store",
+    "passwordHash": "$2b$10$p8cMsuRJoR/n.Wk/k189N.dtF8ks2wZ339mgAy7.OFpjoHo7eIdfy",
+    "isActive": true,
+    "role": "sales",
+    "createdAt": "2026-10-06T22:41:11.491Z",
+    "updatedAt": "2026-10-06T22:41:11.491Z"
+  },
+  {
+    "id": "cmuxcxsa60002kx04gb6ziit5",
+    "username": "sales-astceo9md2",
+    "email": "ceo@asterra.store",
+    "name": "CEO Asterra Store",
+    "passwordHash": "$2b$10$ktRIsyHeVx/yYgDMLZHlPuGtg2lgvodrFFS/iVGJFjIIf4sqAi7f6",
+    "isActive": true,
+    "role": "sales",
+    "createdAt": "2026-10-07T00:16:35.694Z",
+    "updatedAt": "2026-10-07T00:16:35.694Z"
+  },
+  {
+    "id": "cmuxiq05s0002jt04tad1axu7",
+    "username": "sales-astacelinocool",
+    "email": "marchelinokurniawan321@gmail.com",
+    "name": "Acelino",
+    "passwordHash": "$2b$10$5SeVZKiu98O.FbJ.ZMhV3ejLNgnDPA6m6g5vRiDOLQpbn7UiyC4dm",
+    "isActive": true,
+    "role": "sales",
+    "createdAt": "2026-10-07T02:58:30.352Z",
+    "updatedAt": "2026-10-07T02:58:30.352Z"
+  },
+  {
+    "id": "cmuxsg3ig0001l6065qwiau91",
+    "username": "sales-astdyahd5ve",
+    "email": "dyhklstr99@gmail.com",
+    "name": "Dyah Ika Lestari",
+    "passwordHash": "$2b$10$alYgWDfWQk6EPJNkD.8xEOXrRTfkdVXOetoF4aPwuvqFp.WLpMZgW",
+    "isActive": true,
+    "role": "sales",
+    "createdAt": "2026-10-07T07:30:44.296Z",
+    "updatedAt": "2026-10-07T07:30:44.296Z"
+  }
+]

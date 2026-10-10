@@ -220,7 +220,8 @@ function CheckoutPageContent() {
   // Fetch saved WhatsApp number and verified profile details
   useEffect(() => {
     if (session?.user) {
-      fetch('/api/v1/users/profile')
+      const emailParam = session?.user?.email ? `?email=${encodeURIComponent(session.user.email)}` : '';
+      fetch(`/api/v1/users/profile${emailParam}`)
         .then((res) => res.json())
         .then((json) => {
           if (json.success && json.data) {
@@ -467,14 +468,47 @@ function CheckoutPageContent() {
 
       clearCart();
 
-      if (isManualMode || createdOrder.payment_mode === 'manual') {
+      const orderTotal = Number(
+        (createdOrder as unknown as { totalAmount?: number; total_amount?: number; amount?: number }).totalAmount ??
+        (createdOrder as unknown as { totalAmount?: number; total_amount?: number; amount?: number }).total_amount ??
+        (createdOrder as unknown as { totalAmount?: number; total_amount?: number; amount?: number }).amount ??
+        finalPayableAmount ??
+        0
+      );
+      const orderRaw = Number(
+        (createdOrder as unknown as { rawAmount?: number; raw_amount?: number }).rawAmount ??
+        (createdOrder as unknown as { rawAmount?: number; raw_amount?: number }).raw_amount ??
+        subtotal ??
+        0
+      );
+      const orderUnique = Number(
+        (createdOrder as unknown as { uniqueCode?: number; unique_code?: number }).uniqueCode ??
+        (createdOrder as unknown as { uniqueCode?: number; unique_code?: number }).unique_code ??
+        0
+      );
+      const orderExpiresAt =
+        (createdOrder as unknown as { expiresAt?: string; expires_at?: string }).expiresAt ||
+        (createdOrder as unknown as { expiresAt?: string; expires_at?: string }).expires_at;
+
+      const isOrderManual =
+        isManualMode ||
+        createdOrder.payment_mode === 'manual' ||
+        (createdOrder as unknown as { paymentMode?: string }).paymentMode === 'manual' ||
+        selectedMethod.startsWith('manual_');
+
+      if (isOrderManual) {
         setActiveManualModal({
           orderId: createdOrder.id,
-          amount: createdOrder.total_amount,
-          rawAmount: createdOrder.raw_amount,
-          uniqueCode: createdOrder.unique_code,
+          amount: orderTotal,
+          totalAmount: orderTotal,
+          total_amount: orderTotal,
+          rawAmount: orderRaw,
+          raw_amount: orderRaw,
+          uniqueCode: orderUnique,
+          unique_code: orderUnique,
           method: selectedMethod,
-          expiresAt: createdOrder.expires_at,
+          expiresAt: orderExpiresAt,
+          expires_at: orderExpiresAt,
         });
       } else {
         showNotification('Membuat tagihan pembayaran Tripay...');

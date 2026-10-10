@@ -1,5 +1,4 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { getSessionCookie } from 'better-auth/cookies';
 
 export const ADMIN_COOKIE_NAME = 'asterra_admin_session';
 
@@ -140,7 +139,11 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 
   // 3. Customer Profile Protection (/profile)
   if (pathname.startsWith('/profile')) {
-    const customerSession = getSessionCookie(request);
+    const customerSession =
+      request.cookies.get('better-auth.session_token')?.value ||
+      request.cookies.get('__Secure-better-auth.session_token')?.value ||
+      request.cookies.get('asterra_token')?.value ||
+      request.cookies.get('asterra_session')?.value;
 
     if (!customerSession) {
       const loginUrl = new URL('/login', request.url);
@@ -151,7 +154,11 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 
   // 4. Customer Login Portal (/login)
   if (pathname === '/login') {
-    const customerSession = getSessionCookie(request);
+    const customerSession =
+      request.cookies.get('better-auth.session_token')?.value ||
+      request.cookies.get('__Secure-better-auth.session_token')?.value ||
+      request.cookies.get('asterra_token')?.value ||
+      request.cookies.get('asterra_session')?.value;
 
     // If customer is already logged in -> redirect to /profile (or callbackUrl)
     if (customerSession) {

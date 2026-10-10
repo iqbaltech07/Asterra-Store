@@ -212,13 +212,68 @@ export interface ApplicationGroupItem {
   slug: string;
   category: string;
   categoryTag: 'ai' | 'design' | 'video' | 'streaming' | 'other';
-  fallbackCount: number;
-  fallbackPrice: number;
+  minPrice: number;
   soldCount?: number;
   rating?: string;
   badgeLabel?: string;
   isPromo?: boolean;
   items: ProductItem[];
+}
+
+/**
+ * SKELETON CARD FOR FEATURED PRODUCT GRID
+ */
+function FeaturedGridCardSkeleton() {
+  return (
+    <div className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-2.5 sm:p-3.5 flex flex-col justify-between w-full h-[155px] sm:h-[165px] animate-pulse select-none">
+      <div>
+        <div className="flex items-start gap-2 sm:gap-2.5">
+          <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-[#121A2A]/8 shrink-0" />
+          <div className="min-w-0 flex-1 space-y-2 pt-0.5">
+            <div className="h-3.5 bg-[#121A2A]/10 rounded-md w-3/4" />
+            <div className="h-2.5 bg-[#121A2A]/6 rounded-md w-1/2" />
+          </div>
+        </div>
+        <div className="flex items-center gap-1 sm:gap-1.5 mt-2.5 pt-0.5">
+          <div className="w-10 h-3.5 bg-[#121A2A]/6 rounded" />
+          <div className="w-12 h-3.5 bg-[#121A2A]/6 rounded" />
+          <div className="w-14 h-3.5 bg-[#121A2A]/6 rounded" />
+        </div>
+      </div>
+      <div className="pt-2 border-t border-[rgba(18,26,42,0.06)] mt-2 sm:mt-2.5 flex items-center justify-between">
+        <div className="h-4 sm:h-5 bg-[#121A2A]/10 rounded-md w-20" />
+        <div className="h-6 sm:h-7 bg-[#C96F55]/15 rounded-md w-12" />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * SKELETON CARD FOR SHOWCASE LOOPING CAROUSEL
+ */
+function ShowcaseLoopingCardSkeleton() {
+  return (
+    <div className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-3 sm:p-3.5 flex flex-col justify-between shrink-0 flex-none w-[230px] sm:w-[260px] lg:w-[280px] h-[150px] sm:h-[158px] mr-3 sm:mr-4 animate-pulse select-none">
+      <div>
+        <div className="flex items-start gap-2.5 sm:gap-3">
+          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-[#121A2A]/8 shrink-0" />
+          <div className="min-w-0 flex-1 space-y-2 pt-0.5">
+            <div className="h-3.5 bg-[#121A2A]/10 rounded-md w-3/4" />
+            <div className="h-2.5 bg-[#121A2A]/6 rounded-md w-1/2" />
+          </div>
+        </div>
+        <div className="flex items-center gap-1.5 mt-2.5 pt-0.5">
+          <div className="w-10 h-3.5 bg-[#121A2A]/6 rounded" />
+          <div className="w-12 h-3.5 bg-[#121A2A]/6 rounded" />
+          <div className="w-14 h-3.5 bg-[#121A2A]/6 rounded" />
+        </div>
+      </div>
+      <div className="pt-2 border-t border-[rgba(18,26,42,0.06)] mt-2 flex items-center justify-between">
+        <div className="h-4 sm:h-5 bg-[#121A2A]/10 rounded-md w-20" />
+        <div className="h-6 sm:h-7 bg-[#C96F55]/15 rounded-md w-12" />
+      </div>
+    </div>
+  );
 }
 
 /**
@@ -233,8 +288,8 @@ function FeaturedGridCard({
   app: ApplicationGroupItem;
   onQuickView?: (app: ApplicationGroupItem) => void;
 }) {
-  const activePrices = app.items.map((p) => p.price).filter((p) => p > 0);
-  const minPrice = activePrices.length > 0 ? Math.min(...activePrices) : app.fallbackPrice;
+  const minPrice = app.minPrice;
+  if (!minPrice || minPrice <= 0) return null;
   const isPromo = isPromoItem(app);
   const dummyOriginal = getDummyOriginalPrice(minPrice);
 
@@ -354,8 +409,8 @@ function ShowcaseLoopingCard({
   isDuplicate?: boolean;
   onQuickView?: (app: ApplicationGroupItem) => void;
 }) {
-  const activePrices = app.items.map((p) => p.price).filter((p) => p > 0);
-  const minPrice = activePrices.length > 0 ? Math.min(...activePrices) : app.fallbackPrice;
+  const minPrice = app.minPrice;
+  if (!minPrice || minPrice <= 0) return null;
   const isPromo = isPromoItem(app);
   const dummyOriginal = getDummyOriginalPrice(minPrice);
 
@@ -387,7 +442,7 @@ function ShowcaseLoopingCard({
               <FontAwesomeIcon icon={faStar} className="w-3 h-3 text-amber-500 shrink-0" />
               <span className="font-semibold text-[#121A2A]">{app.rating || '5.0'}</span>
               <span className="text-[#121A2A]/45 truncate">
-                (Terjual {app.soldCount ? app.soldCount.toLocaleString('id-ID') : 100 * (app.items.length || app.fallbackCount)})
+                (Terjual {app.soldCount ? app.soldCount.toLocaleString('id-ID') : (app.items.length * 20).toLocaleString('id-ID')})
               </span>
             </div>
           </div>
@@ -467,7 +522,8 @@ export default function HomePage() {
   }, []);
 
   // Dynamic products fetched from catalog API (cached via shared query)
-  const { data: catalogResponse } = useCatalogProducts();
+  const { data: catalogResponse, isLoading } = useCatalogProducts();
+  const isCatalogLoading = isLoading || !catalogResponse?.data;
 
   const allProducts = useMemo(
     () => catalogResponse?.data || [],
@@ -482,8 +538,6 @@ export default function HomePage() {
         match: (t: string) => t.includes('gemini') || t.includes('google ai'),
         cat: 'AI Assistant & Cloud',
         tag: 'ai' as const,
-        fallbackCount: 11,
-        fallbackPrice: 19000,
         soldCount: 620,
         rating: '5.0',
         isPromo: true,
@@ -495,8 +549,6 @@ export default function HomePage() {
         match: (t: string) => t.includes('canva'),
         cat: 'Design & Kreatif',
         tag: 'design' as const,
-        fallbackCount: 13,
-        fallbackPrice: 4000,
         soldCount: 1420,
         rating: '5.0',
         isPromo: true,
@@ -508,8 +560,6 @@ export default function HomePage() {
         match: (t: string) => t.includes('capcut'),
         cat: 'Video Editing & Content',
         tag: 'video' as const,
-        fallbackCount: 11,
-        fallbackPrice: 9000,
         soldCount: 980,
         rating: '4.9',
         isPromo: true,
@@ -521,8 +571,6 @@ export default function HomePage() {
         match: (t: string) => t.includes('chatgpt') || t.includes('chat gpt') || t.includes('plus plan'),
         cat: 'AI Assistant & Writing',
         tag: 'ai' as const,
-        fallbackCount: 20,
-        fallbackPrice: 16000,
         soldCount: 850,
         rating: '5.0',
         isPromo: true,
@@ -534,8 +582,6 @@ export default function HomePage() {
         match: (t: string) => t.includes('alightmotion') || t.includes('alight motion'),
         cat: 'Motion Graphic & VFX',
         tag: 'video' as const,
-        fallbackCount: 1,
-        fallbackPrice: 8000,
         soldCount: 340,
         rating: '4.8',
         isPromo: false,
@@ -547,8 +593,6 @@ export default function HomePage() {
         match: (t: string) => t.includes('youtube'),
         cat: 'Streaming & Video',
         tag: 'streaming' as const,
-        fallbackCount: 33,
-        fallbackPrice: 4000,
         soldCount: 2100,
         rating: '5.0',
         isPromo: true,
@@ -560,8 +604,6 @@ export default function HomePage() {
         match: (t: string) => t.includes('spotify'),
         cat: 'Music & Podcast',
         tag: 'streaming' as const,
-        fallbackCount: 24,
-        fallbackPrice: 12000,
         soldCount: 780,
         rating: '5.0',
         isPromo: true,
@@ -573,8 +615,6 @@ export default function HomePage() {
         match: (t: string) => t.includes('netflix'),
         cat: 'Movie & Series HD',
         tag: 'streaming' as const,
-        fallbackCount: 15,
-        fallbackPrice: 25000,
         soldCount: 1650,
         rating: '5.0',
         isPromo: true,
@@ -586,8 +626,6 @@ export default function HomePage() {
         match: (t: string) => t.includes('vidio'),
         cat: 'Live Sports & Premier',
         tag: 'streaming' as const,
-        fallbackCount: 25,
-        fallbackPrice: 15000,
         soldCount: 1100,
         rating: '4.9',
         isPromo: false,
@@ -599,8 +637,6 @@ export default function HomePage() {
         match: (t: string) => t.includes('wetv'),
         cat: 'Asian Drama VIP',
         tag: 'streaming' as const,
-        fallbackCount: 12,
-        fallbackPrice: 7000,
         soldCount: 560,
         rating: '4.8',
         isPromo: false,
@@ -612,8 +648,6 @@ export default function HomePage() {
         match: (t: string) => t.includes('iqiyi'),
         cat: 'Anime & Drama HD',
         tag: 'streaming' as const,
-        fallbackCount: 9,
-        fallbackPrice: 10000,
         soldCount: 420,
         rating: '4.8',
         isPromo: true,
@@ -625,8 +659,6 @@ export default function HomePage() {
         match: (t: string) => t.includes('bstation'),
         cat: 'Anime & Pop Culture',
         tag: 'streaming' as const,
-        fallbackCount: 8,
-        fallbackPrice: 8000,
         soldCount: 390,
         rating: '4.8',
         isPromo: false,
@@ -638,8 +670,6 @@ export default function HomePage() {
         match: (t: string) => t.includes('viu'),
         cat: 'Asian Drama & Variety',
         tag: 'streaming' as const,
-        fallbackCount: 16,
-        fallbackPrice: 5000,
         soldCount: 910,
         rating: '4.9',
         isPromo: false,
@@ -661,21 +691,21 @@ export default function HomePage() {
       filteredConfig = appConfigurations.filter((a) => a.isTerbaru);
     }
 
-    // Limit to max 8 items so homepage remains clean and product-first
-    return filteredConfig.slice(0, 8).map((target) => {
+    const mapped = filteredConfig.map((target) => {
       const items = allProducts.filter((p) => {
         const text = `${p.name} ${(p as unknown as { id?: string }).id || ''} ${(p as unknown as { providerCode?: string }).providerCode || ''}`.toLowerCase();
         if (text.includes('lisensi')) return false;
         return target.match(text);
       });
 
+      const activePrices = items.map((p) => p.price).filter((p) => p > 0);
+      const minPrice = activePrices.length > 0 ? Math.min(...activePrices) : 0;
+
       return {
         name: target.name,
         slug: target.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
         category: target.cat,
         categoryTag: target.tag,
-        fallbackCount: target.fallbackCount,
-        fallbackPrice: target.fallbackPrice,
         soldCount: target.soldCount,
         rating: target.rating,
         badgeLabel:
@@ -686,21 +716,23 @@ export default function HomePage() {
             : 'Baru',
         isPromo: activeCategory === 'promo' || target.isPromo,
         items,
+        minPrice,
       };
     });
+
+    // Only include application groups that actually have matched items in database
+    return mapped.filter((app) => app.items.length > 0 && app.minPrice > 0).slice(0, 8);
   }, [allProducts, appConfigurations, activeCategory]);
 
   // Product Looping Showcase: Curated list of popular accounts that stays completely independent of the selector
   const showcaseApps = useMemo(() => {
     const showcaseNames = ['Canva', 'ChatGPT', 'Netflix', 'YouTube', 'CapCut', 'Google Gemini', 'Spotify', 'Vidio', 'Alight Motion', 'iQIYI'];
-    return showcaseNames.map((name) => {
+    const mapped = showcaseNames.map((name) => {
       const conf = appConfigurations.find((a) => a.name === name) || {
         name,
         match: (t: string) => t.includes(name.toLowerCase()),
         cat: 'Digital Product',
         tag: 'other' as const,
-        fallbackCount: 10,
-        fallbackPrice: 10000,
         soldCount: 500,
         rating: '5.0',
       };
@@ -710,23 +742,28 @@ export default function HomePage() {
         return conf.match(text);
       });
 
+      const activePrices = items.map((p) => p.price).filter((p) => p > 0);
+      const minPrice = activePrices.length > 0 ? Math.min(...activePrices) : 0;
+
       return {
         name: conf.name,
         slug: conf.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
         category: conf.cat,
         categoryTag: conf.tag,
-        fallbackCount: conf.fallbackCount,
-        fallbackPrice: conf.fallbackPrice,
         soldCount: conf.soldCount,
         rating: conf.rating,
         items,
+        minPrice,
       };
     });
+
+    // Only include applications that have real items
+    return mapped.filter((app) => app.items.length > 0 && app.minPrice > 0);
   }, [allProducts, appConfigurations]);
 
   const handleOpenQuickView = (app: ApplicationGroupItem) => {
-    const activePrices = app.items.map((p) => p.price).filter((p) => p > 0);
-    const minPrice = activePrices.length > 0 ? Math.min(...activePrices) : app.fallbackPrice;
+    const minPrice = app.minPrice;
+    if (!minPrice || minPrice <= 0) return;
 
     setQuickViewProduct({
       id: app.slug,
@@ -915,15 +952,29 @@ export default function HomePage() {
           </div>
 
           {/* STATIC PRODUCT GRID (4 columns desktop, 2 columns mobile) */}
-          <div key={activeCategory} data-gsap="product-grid" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-3.5 lg:gap-4 animate-tab-glide">
-            {featuredApps.map((app) => (
-              <FeaturedGridCard
-                key={`featured-${activeCategory}-${app.name}`}
-                app={app}
-                onQuickView={handleOpenQuickView}
-              />
-            ))}
-          </div>
+          {isCatalogLoading ? (
+            <div data-gsap="product-grid" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-3.5 lg:gap-4">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <FeaturedGridCardSkeleton key={`skeleton-featured-${i}`} />
+              ))}
+            </div>
+          ) : featuredApps.length > 0 ? (
+            <div key={activeCategory} data-gsap="product-grid" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-3.5 lg:gap-4 animate-tab-glide">
+              {featuredApps.map((app) => (
+                <FeaturedGridCard
+                  key={`featured-${activeCategory}-${app.name}`}
+                  app={app}
+                  onQuickView={handleOpenQuickView}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="p-8 text-center bg-white rounded-2xl border border-[rgba(18,26,42,0.08)] col-span-full">
+              <p className="text-xs sm:text-sm font-semibold text-[#121A2A]/70">
+                Belum ada produk aktif yang tersedia untuk kategori ini.
+              </p>
+            </div>
+          )}
         </section>
 
         {/*
@@ -950,35 +1001,43 @@ export default function HomePage() {
             <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-3 sm:w-6 z-10 bg-gradient-to-r from-white to-transparent" />
             <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-3 sm:w-6 z-10 bg-gradient-to-l from-white to-transparent" />
 
-            <div
-              className="carousel-track flex flex-nowrap w-max shrink-0 items-stretch"
-              style={{
-                display: 'flex',
-                width: 'max-content',
-                flexShrink: 0,
-                willChange: 'transform',
-                animation: 'infinite-scroll 45s linear infinite',
-              }}
-            >
-              {/* Original Showcase Items */}
-              {showcaseApps.map((app) => (
-                <ShowcaseLoopingCard
-                  key={`showcase-orig-${app.name}`}
-                  app={app}
-                  onQuickView={handleOpenQuickView}
-                />
-              ))}
+            {isCatalogLoading ? (
+              <div className="flex flex-nowrap w-max gap-3 sm:gap-4 overflow-hidden py-1">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <ShowcaseLoopingCardSkeleton key={`skeleton-showcase-${i}`} />
+                ))}
+              </div>
+            ) : showcaseApps.length > 0 ? (
+              <div
+                className="carousel-track flex flex-nowrap w-max shrink-0 items-stretch"
+                style={{
+                  display: 'flex',
+                  width: 'max-content',
+                  flexShrink: 0,
+                  willChange: 'transform',
+                  animation: 'infinite-scroll 45s linear infinite',
+                }}
+              >
+                {/* Original Showcase Items */}
+                {showcaseApps.map((app) => (
+                  <ShowcaseLoopingCard
+                    key={`showcase-orig-${app.name}`}
+                    app={app}
+                    onQuickView={handleOpenQuickView}
+                  />
+                ))}
 
-              {/* Duplicated Items for continuous -50% loop */}
-              {showcaseApps.map((app) => (
-                <ShowcaseLoopingCard
-                  key={`showcase-dup-${app.name}`}
-                  app={app}
-                  isDuplicate
-                  onQuickView={handleOpenQuickView}
-                />
-              ))}
-            </div>
+                {/* Duplicated Items for continuous -50% loop */}
+                {showcaseApps.map((app) => (
+                  <ShowcaseLoopingCard
+                    key={`showcase-dup-${app.name}`}
+                    app={app}
+                    isDuplicate
+                    onQuickView={handleOpenQuickView}
+                  />
+                ))}
+              </div>
+            ) : null}
           </div>
         </section>
 

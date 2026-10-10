@@ -16,11 +16,16 @@ import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
 
 export interface ManualPaymentModalData {
   orderId: string;
-  amount: number;
+  amount?: number;
+  totalAmount?: number;
+  total_amount?: number;
   rawAmount?: number;
+  raw_amount?: number;
   uniqueCode?: number;
+  unique_code?: number;
   method: string;
   expiresAt?: string;
+  expires_at?: string;
 }
 
 interface CheckoutManualModalProps {
@@ -60,8 +65,9 @@ export function CheckoutManualModal({
   useEffect(() => {
     if (!data) return;
 
-    const targetTime = data.expiresAt
-      ? new Date(data.expiresAt).getTime()
+    const expiryStr = data.expiresAt || data.expires_at;
+    const targetTime = expiryStr
+      ? new Date(expiryStr).getTime()
       : Date.now() + (paymentConfig?.order_expiry_hours || 24) * 3600 * 1000;
 
     let hasTriggeredCancel = false;
@@ -94,6 +100,21 @@ export function CheckoutManualModal({
   }, [data, paymentConfig?.order_expiry_hours]);
 
   if (!data) return null;
+
+  const amountNumber =
+    typeof data.amount === 'number' && !isNaN(data.amount)
+      ? data.amount
+      : typeof data.totalAmount === 'number' && !isNaN(data.totalAmount)
+      ? data.totalAmount
+      : typeof data.total_amount === 'number' && !isNaN(data.total_amount)
+      ? data.total_amount
+      : typeof data.rawAmount === 'number' && !isNaN(data.rawAmount)
+      ? data.rawAmount
+      : typeof data.raw_amount === 'number' && !isNaN(data.raw_amount)
+      ? data.raw_amount
+      : Number(data.amount || data.totalAmount || data.total_amount || 0) || 0;
+
+  const formattedAmount = amountNumber.toLocaleString('id-ID');
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -167,11 +188,11 @@ export function CheckoutManualModal({
           </span>
           <div className="flex items-center justify-center gap-2">
             <span className="text-2xl sm:text-3xl font-extrabold text-primary font-mono">
-              Rp {data.amount.toLocaleString('id-ID')}
+              Rp {formattedAmount}
             </span>
             <button
               type="button"
-              onClick={() => onCopy(String(data.amount), 'amount', 'Nominal transfer tepat')}
+              onClick={() => onCopy(String(amountNumber), 'amount', 'Nominal transfer tepat')}
               className="px-2 py-1 rounded bg-primary/20 text-primary hover:bg-primary/30 text-xs font-semibold flex items-center gap-1"
               title="Salin Nominal Tepat"
             >
@@ -306,9 +327,7 @@ export function CheckoutManualModal({
             href={`https://wa.me/${paymentConfig?.confirmation_whatsapp || '6281234567890'}?text=${encodeURIComponent(
               `Halo Admin Asterra Store, saya sudah melakukan transfer pembayaran manual untuk pesanan:\n\n• No. Pesanan: ${
                 data.orderId
-              }\n• Nama Pemesan: ${customerName}\n• Email Aktivasi: ${targetEmail}\n• Total Nominal Ditransfer: Rp ${data.amount.toLocaleString(
-                'id-ID'
-              )}\n• Metode: ${getMethodName(
+              }\n• Nama Pemesan: ${customerName}\n• Email Aktivasi: ${targetEmail}\n• Total Nominal Ditransfer: Rp ${formattedAmount}\n• Metode: ${getMethodName(
                 data.method
               )}\n\nBerikut saya lampirkan bukti transfernya untuk divalidasi. Terima kasih!`
             )}`}
