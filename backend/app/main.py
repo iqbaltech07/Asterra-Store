@@ -12,7 +12,8 @@ import secrets
 import time
 
 import httpx
-from fastapi import FastAPI, APIRouter, Request, Response, HTTPException, Query, UploadFile, File
+from fastapi import FastAPI, APIRouter, Request, Response, HTTPException, Query, UploadFile, File, Form
+import re
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse, JSONResponse
 
@@ -27,6 +28,7 @@ from app.services.finance_service import FinanceService
 from app.services.audit_log_service import AuditLogService
 from app.services.referral_profit_service import ReferralProfitService
 from app.services.tripay_service import TripayService
+from app.services.analytics_service import AnalyticsService
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -680,6 +682,34 @@ def get_profit_distribution():
         "data": res,
     }
 
+@api_router.get("/admin/analytics/overview", tags=["Admin Analytics"])
+def get_analytics_overview():
+    return {
+        "success": True,
+        "data": AnalyticsService.get_dashboard_overview(),
+    }
+
+@api_router.get("/admin/analytics/suite", tags=["Admin Analytics"])
+def get_analytics_suite():
+    return {
+        "success": True,
+        "data": AnalyticsService.get_analytics_suite_data(),
+    }
+
+@api_router.get("/admin/finance/summary", tags=["Admin Finance"])
+def get_finance_summary():
+    return {
+        "success": True,
+        "data": AnalyticsService.get_finance_summary(),
+    }
+
+@api_router.get("/admin/customers", tags=["Admin Customers"])
+def get_admin_customers():
+    return {
+        "success": True,
+        "data": AnalyticsService.get_customers(),
+    }
+
 # ------------------------------------------
 # 7. Administrator Users Management Endpoints
 # ------------------------------------------
@@ -744,30 +774,183 @@ def get_admin_logs(
         },
     }
 
+ALLOWED_MIME_TYPES = [
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "image/gif",
+    "image/svg+xml",
+    "image/avif",
+]
+MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+
 @api_router.post("/admin/upload", tags=["Admin Media"])
-async def upload_admin_media(file: UploadFile = File(None)):
-    if file:
-        filename = f"{int(time.time())}-{file.filename}"
-        public_dir = pathlib.Path(__file__).resolve().parent.parent / "public" / "uploads"
+async def upload_admin_media(
+    file: UploadFile = File(None),
+    folder: str = Form("products"),
+    productName: Optional[str] = Form(None),
+    productId: Optional[str] = Form(None),
+    isSpecialPromo: Optional[str] = Form("false"),
+):
+    if not file:
+        return {
+            "success": True,
+            "url": "/images/default-product-banner.png",
+            "viewUrl": "/images/default-product-banner.png",
+            "data": {
+                "viewUrl": "/images/default-product-banner.png",
+                "url": "/images/default-product-banner.png",
+                "pathname": "images/default-product-banner.png",
+                "deduplicated": True,
+            },
+            "message": "Menggunakan banner default.",
+        }
+
+    content_type = file.content_type or "image/png"
+    if content_type not in ALLOWED_MIME_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Format file '{content_type}' tidak didukung. Harap unggah format JPG, PNG, WEBP, GIF, SVG, atau AVIF.",
+        )
+
+    content = await file.read()
+    if len(content) > MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=400,
+            detail="Ukuran file melebihi batas maksimal 5MB.",
+        )
+
+    # 1. Anti-Redundansi & Guard Produk
+    # Aturan User:
+    # "dan jika ada potensi redundan upload atau duplicate banner product maka itu juga salah,
+    #  harusnya tidak ada redudan atau duplicate. tandai file dengan nama product agar bisa di track.
+    #  jadi jika ada product yang sama misal Google AI Pro / Gemini Pro maka sudah ada gambar nya
+    #  tidak bisa upload banner lagi, kecuali banner khusus seperti promo khusus baru bisa upload.
+    #  jika tidak maka tidak bisa."
+    is_promo = str(isSpecialPromo).strip().lower() in ["true", "1", "yes"]
+    target_prod_name = (productName or "").strip()
+    target_prod_id = (productId or "").strip()
+
+    # Periksa apakah produk sudah ada di katalog dan memiliki banner resmi
+    matched_product = None
+    if target_prod_id or target_prod_name:
+        matched_product = CatalogService.find_product_by_id_or_name(
+            product_id=target_prod_id or None,
+            product_name=target_prod_name or None,
+        )
+
+    if matched_product and folder == "products":
+        existing_banner = matched_product.get("imageUrl") or ""
+        has_official_banner = (
+            bool(existing_banner)
+            and not existing_banner.endswith("default-product-banner.png")
+            and len(existing_banner) > 5
+        )
+        # Jika produk sudah memiliki gambar resmi dan BUKAN upload banner promo khusus -> TOLAK UPLOAD
+        if has_official_banner and not is_promo:
+            prod_display_name = matched_product.get("name") or target_prod_name
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    f"Produk '{prod_display_name}' sudah memiliki banner resmi ({existing_banner}). "
+                    "Upload banner produk reguler ditolak untuk mencegah duplikasi dan redundansi aset. "
+                    "Silakan centang 'Banner Promo Khusus' jika ingin mengunggah banner promosi tertentu."
+                ),
+            )
+
+    # 2. Tag file dengan nama produk agar dapat ditrack secara deterministik
+    raw_filename = file.filename or "image.webp"
+    ext = raw_filename.split(".")[-1].lower() if "." in raw_filename else "webp"
+    if ext not in ["jpg", "jpeg", "png", "webp", "gif", "svg", "avif"]:
+        ext = "webp"
+
+    base_label = target_prod_name or (matched_product.get("name") if matched_product else "") or raw_filename.rsplit(".", 1)[0]
+    prod_slug = re.sub(r"[^a-zA-Z0-9]+", "-", base_label.lower()).strip("-")
+    if not prod_slug:
+        prod_slug = "banner"
+    prod_slug = prod_slug[:50]
+
+    # Content-Hash (SHA-256) untuk deteksi duplikasi konten biner
+    content_hash = hashlib.sha256(content).hexdigest()[:12]
+
+    # Format penamaan file yang terlacak:
+    # - Standard: products/{prod_slug}-{hash}.{ext}
+    # - Promo khusus: products/promo-{prod_slug}-{hash}.{ext}
+    prefix = "promo-" if (is_promo and folder == "products") else ""
+    pathname = f"{folder}/{prefix}{prod_slug}-{content_hash}.{ext}"
+
+    token = settings.BLOB_READ_WRITE_TOKEN or os.getenv("BLOB_READ_WRITE_TOKEN", "")
+    blob_url = None
+    deduplicated = False
+
+    if token:
+        parts = token.split("_")
+        store_id = parts[3] if len(parts) >= 4 else None
+
+        # Check-Before-Upload Deduplication: Cek apakah pathname yang sama persis sudah ada di Vercel Blob
+        if store_id:
+            try:
+                async with httpx.AsyncClient(timeout=10.0) as check_client:
+                    check_res = await check_client.head(
+                        f"https://{store_id}.private.blob.vercel-storage.com/{pathname}",
+                        headers={"Authorization": f"Bearer {token}"},
+                    )
+                    if check_res.status_code == 200:
+                        blob_url = f"https://{store_id}.private.blob.vercel-storage.com/{pathname}"
+                        deduplicated = True
+            except Exception as e:
+                print(f"[UploadAPI] Check-before-upload error (ignorable): {e}")
+
+        # Jika belum ada di Vercel Blob, upload ke Vercel Blob Private Mode
+        if not blob_url:
+            put_url = f"https://blob.vercel-storage.com/?pathname={pathname}"
+            put_headers = {
+                "authorization": f"Bearer {token}",
+                "x-api-version": "12",
+                "x-vercel-blob-access": "private",
+                "x-content-type": content_type,
+                "x-allow-overwrite": "1",
+                "x-add-random-suffix": "0",
+            }
+            try:
+                async with httpx.AsyncClient(timeout=30.0) as upload_client:
+                    upload_res = await upload_client.put(put_url, content=content, headers=put_headers)
+                    if upload_res.status_code == 200:
+                        res_json = upload_res.json()
+                        blob_url = res_json.get("url")
+                    else:
+                        print(f"[UploadAPI] Vercel Blob PUT error ({upload_res.status_code}): {upload_res.text}")
+            except Exception as upload_err:
+                print(f"[UploadAPI] Exception uploading to Vercel Blob: {upload_err}")
+
+    # Fallback simpan lokal jika token belum diset atau Vercel Blob offline
+    if not blob_url:
+        public_dir = pathlib.Path(__file__).resolve().parent.parent / "public" / folder
         public_dir.mkdir(parents=True, exist_ok=True)
-        file_path = public_dir / filename
-        content = await file.read()
+        file_path = public_dir / f"{prefix}{prod_slug}-{content_hash}.{ext}"
         file_path.write_bytes(content)
-        url = f"/api/v1/media/uploads/{filename}"
-    else:
-        filename = "default-product-banner.png"
-        url = "/images/default-product-banner.png"
+        blob_url = f"/api/v1/media/{pathname}"
+
+    view_url = f"/api/v1/media/{pathname}"
+    msg = (
+        "Banner sudah ada di storage (deduplicated). Tidak ada upload ulang."
+        if deduplicated
+        else ("Banner promo khusus berhasil diunggah ke Vercel Blob." if is_promo else "Banner produk berhasil diunggah ke Vercel Blob (Private Mode).")
+    )
 
     return {
         "success": True,
-        "url": url,
-        "viewUrl": url,
+        "url": blob_url,
+        "viewUrl": view_url,
         "data": {
-            "viewUrl": url,
-            "url": url,
-            "pathname": filename,
-            "deduplicated": False,
+            "viewUrl": view_url,
+            "url": blob_url,
+            "pathname": pathname,
+            "deduplicated": deduplicated,
+            "isSpecialPromo": is_promo,
+            "productName": target_prod_name or prod_slug,
         },
+        "message": msg,
     }
 
 # ------------------------------------------

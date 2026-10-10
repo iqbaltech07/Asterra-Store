@@ -38,6 +38,9 @@ interface ImageUploadDropzoneProps {
   disabled?: boolean;
   /** Upload mode: 'eager' uploads immediately, 'lazy' defers to parent submit */
   mode?: UploadMode;
+  productName?: string;
+  productId?: string;
+  isSpecialPromo?: boolean;
 }
 
 const MAX_FILE_SIZE_MB = 5;
@@ -49,7 +52,10 @@ const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'i
  */
 export async function uploadFileToBlob(
   file: File,
-  folder: string = 'products'
+  folder: string = 'products',
+  productName?: string,
+  productId?: string,
+  isSpecialPromo?: boolean
 ): Promise<{ viewUrl: string; url: string; pathname: string; deduplicated: boolean }> {
   // Compress to WebP before upload (Pilar 4)
   const compressed = await compressImageToWebP(file);
@@ -57,6 +63,9 @@ export async function uploadFileToBlob(
   const formData = new FormData();
   formData.append('file', compressed);
   formData.append('folder', folder);
+  if (productName) formData.append('productName', productName);
+  if (productId) formData.append('productId', productId);
+  if (isSpecialPromo) formData.append('isSpecialPromo', 'true');
 
   const res = await fetch('/api/v1/admin/upload', {
     method: 'POST',
@@ -66,12 +75,13 @@ export async function uploadFileToBlob(
   const data = await res.json();
 
   if (!res.ok || !data.success) {
-    throw new Error(data.error || 'Gagal mengunggah file ke Vercel Blob.');
+    const errMsg = data.detail || data.error || 'Gagal mengunggah file ke Vercel Blob.';
+    throw new Error(errMsg);
   }
 
   return {
-    viewUrl: data.data?.viewUrl || data.data?.url,
-    url: data.data?.url,
+    viewUrl: data.data?.viewUrl || data.url,
+    url: data.data?.url || data.url,
     pathname: data.data?.pathname,
     deduplicated: data.data?.deduplicated ?? false,
   };
@@ -87,6 +97,9 @@ export function ImageUploadDropzone({
   className = '',
   disabled = false,
   mode = 'eager',
+  productName,
+  productId,
+  isSpecialPromo = false,
 }: ImageUploadDropzoneProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -156,7 +169,7 @@ export function ImageUploadDropzone({
       // --- EAGER MODE (legacy behavior) ---
       setIsUploading(true);
       try {
-        const result = await uploadFileToBlob(file, folder);
+        const result = await uploadFileToBlob(file, folder, productName, productId, isSpecialPromo);
         onChange(result.viewUrl);
 
         // Keep local object preview briefly to avoid visual flicker while network fetches stream
@@ -171,7 +184,7 @@ export function ImageUploadDropzone({
         setIsUploading(false);
       }
     },
-    [folder, onChange, onFileStaged, mode]
+    [folder, onChange, onFileStaged, mode, productName, productId, isSpecialPromo]
   );
 
   const handleDragOver = (e: React.DragEvent) => {

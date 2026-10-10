@@ -3,6 +3,9 @@ import pathlib
 from datetime import datetime
 from typing import Dict, Any, List, Optional
 
+from app.core.database import SessionLocal
+from app.models.promo import PromoCode
+
 DATA_DIR = pathlib.Path(__file__).resolve().parent.parent.parent / "data"
 PROMOS_FILE = DATA_DIR / "supabase-promos.json"
 
@@ -11,9 +14,29 @@ class PromoService:
 
     @classmethod
     def load_promos(cls, force_reload: bool = False) -> List[Dict[str, Any]]:
+        """
+        Loads promo codes directly from Supabase promo_codes table.
+        Falls back to local clean JSON if offline.
+        """
         if cls._promos is not None and not force_reload:
             return cls._promos
 
+        # 1. Query Supabase
+        try:
+            db = SessionLocal()
+            try:
+                db_promos = db.query(PromoCode).all()
+                if db_promos:
+                    data = [p.to_dict() for p in db_promos]
+                    cls._promos = data
+                    cls.save_promos()
+                    return data
+            finally:
+                db.close()
+        except Exception as e:
+            print(f"[PromoService] Warning: Supabase promo query failed: {e}")
+
+        # 2. Fallback to file
         if PROMOS_FILE.exists():
             try:
                 data = json.loads(PROMOS_FILE.read_text(encoding="utf-8"))
@@ -21,7 +44,7 @@ class PromoService:
                     cls._promos = data
                     return data
             except Exception as e:
-                print(f"[PromoService] Error loading promos: {e}")
+                print(f"[PromoService] Error loading promos fallback: {e}")
 
         cls._promos = []
         return []

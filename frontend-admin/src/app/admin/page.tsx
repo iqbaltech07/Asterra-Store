@@ -259,6 +259,7 @@ export default function AdminPage() {
   const [formFeatures, setFormFeatures] = useState('');
   const [formImageUrl, setFormImageUrl] = useState('');
   const [stagedFile, setStagedFile] = useState<File | null>(null);
+  const [isSpecialPromoBanner, setIsSpecialPromoBanner] = useState(false);
   const [formPopular, setFormPopular] = useState(false);
   const [formGuaranteeTitle, setFormGuaranteeTitle] = useState('Garansi Penuh');
   const [formGuaranteeDesc, setFormGuaranteeDesc] = useState('Jaminan ganti akun 100%');
@@ -408,7 +409,13 @@ export default function AdminPage() {
       // If a file is staged (lazy mode), upload it now before saving the product
       let finalImageUrl = formImageUrl;
       if (stagedFile) {
-        const uploadResult = await uploadFileToBlob(stagedFile, 'products');
+        const uploadResult = await uploadFileToBlob(
+          stagedFile,
+          'products',
+          formName,
+          editingProduct?.id,
+          isSpecialPromoBanner
+        );
         finalImageUrl = uploadResult.viewUrl;
       }
 
@@ -460,7 +467,11 @@ export default function AdminPage() {
       setEditingProduct(null);
       setIsCreateModalOpen(false);
       setStagedFile(null);
+      setIsSpecialPromoBanner(false);
       queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+    },
+    onError: (err: Error) => {
+      showNotification(`Gagal menyimpan produk: ${err.message}`);
     },
   });
 
@@ -552,6 +563,7 @@ export default function AdminPage() {
     setFormFeatures(p.features.join('\n'));
     setFormImageUrl(p.imageUrl);
     setStagedFile(null);
+    setIsSpecialPromoBanner(false);
     setFormPopular(Boolean(p.popular));
     setFormGuaranteeTitle(p.guaranteeTitle || 'Garansi Penuh');
     setFormGuaranteeDesc(p.guaranteeDesc || 'Jaminan ganti akun 100%');
@@ -574,6 +586,7 @@ export default function AdminPage() {
     setFormFeatures('Akses resmi bergaransi\nProses aktivasi cepat 1-5 menit');
     setFormImageUrl('/images/default-product-banner.png');
     setStagedFile(null);
+    setIsSpecialPromoBanner(false);
     setFormPopular(false);
     setFormGuaranteeTitle('Garansi Penuh');
     setFormGuaranteeDesc('Jaminan ganti akun 100%');
@@ -2080,13 +2093,65 @@ export default function AdminPage() {
                 />
               </div>
 
+              {/* Product Banner Guard & Anti-Redundansi Notice */}
+              {editingProduct &&
+                Boolean(editingProduct.imageUrl && !editingProduct.imageUrl.includes('default-product-banner')) && (
+                  <div className="p-3 rounded-lg border border-primary/20 bg-primary/5 space-y-2 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold text-primary flex items-center gap-1.5">
+                        <ShieldCheck className="w-4 h-4 text-primary" />
+                        <span>Banner Resmi Terdaftar di Vercel Blob</span>
+                      </span>
+                      <Badge variant="outline" className="text-[10px] text-primary border-primary/30">
+                        Terkunci (Anti-Duplikasi)
+                      </Badge>
+                    </div>
+                    <p className="text-[11px] text-foreground-muted leading-relaxed">
+                      Produk ini sudah memiliki banner resmi di Vercel Blob. Upload banner reguler dinonaktifkan untuk menjaga integritas aset dan mencegah redundansi file.
+                    </p>
+                    <label className="flex items-center gap-2 pt-1 font-medium text-foreground cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={isSpecialPromoBanner}
+                        onChange={(e) => setIsSpecialPromoBanner(e.target.checked)}
+                        className="rounded text-primary focus:ring-primary w-4 h-4"
+                      />
+                      <span className="text-xs">
+                        Aktifkan Unggah Banner Promo Khusus (Event / Promo Terbatas)
+                      </span>
+                    </label>
+                  </div>
+                )}
+
               <ImageUploadDropzone
                 value={formImageUrl}
                 onChange={setFormImageUrl}
                 onFileStaged={setStagedFile}
                 folder="products"
-                label="Banner / Gambar Produk"
-                description="Tarik & lepas gambar banner produk ke sini, atau klik untuk memilih file."
+                productName={formName}
+                productId={editingProduct?.id}
+                isSpecialPromo={isSpecialPromoBanner}
+                disabled={Boolean(
+                  editingProduct &&
+                    editingProduct.imageUrl &&
+                    !editingProduct.imageUrl.includes('default-product-banner') &&
+                    !isSpecialPromoBanner
+                )}
+                label={
+                  isSpecialPromoBanner
+                    ? 'Unggah Banner Promo Khusus (Vercel Blob)'
+                    : 'Banner / Gambar Produk (Vercel Blob)'
+                }
+                description={
+                  editingProduct &&
+                  editingProduct.imageUrl &&
+                  !editingProduct.imageUrl.includes('default-product-banner') &&
+                  !isSpecialPromoBanner
+                    ? 'Banner resmi sudah aktif. Centang opsi di atas jika ingin mengunggah banner promosi khusus.'
+                    : isSpecialPromoBanner
+                    ? 'Tarik & lepas gambar promo khusus ke sini (otomatis ditandai prefix promo-).'
+                    : 'Tarik & lepas gambar banner produk ke sini, atau klik untuk memilih file.'
+                }
                 mode="lazy"
               />
 

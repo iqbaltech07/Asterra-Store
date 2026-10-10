@@ -87,17 +87,34 @@ class FinanceService:
             else:
                 available_commission_total += sales_comm + recruit_bonus
 
+            items = o.get("items") or []
+            product_names = ", ".join([str(it.get("productName", "")) for it in items if it.get("productName")])
+            if not product_names:
+                product_names = "Produk Digital"
+            first_product_id = str(items[0].get("productId", "")) if items else ""
+
+            direct_cost = cog + fee
+
             entries.append({
                 "id": f"ledg-{o.get('id', str(idx))}",
                 "orderId": o.get("id"),
                 "customerEmail": o.get("customerEmail") or "buyer@asterra.store",
                 "customerName": o.get("customerName") or "Pelanggan",
+                "productId": first_product_id,
+                "productNames": product_names,
                 "sellingPrice": selling_price,
                 "customerReferralDiscount": discount,
                 "netRevenue": net_rev,
                 "costOfGoods": cog,
                 "paymentFee": fee,
+                "otherDirectCost": 0,
+                "directTransactionCost": direct_cost,
                 "transactionProfit": tx_profit,
+                "salesId": o.get("salesPartnerId"),
+                "referralCode": o.get("referralCode"),
+                "recruiterSalesId": o.get("recruiterPartnerId"),
+                "saleCommissionRate": 0.10 if has_ref else 0.0,
+                "recruitmentBonusRate": 0.02 if (has_ref and o.get("recruiterPartnerId")) else 0.0,
                 "salesCommission": sales_comm,
                 "recruitmentBonus": recruit_bonus,
                 "profitDistribution": distributable,
@@ -105,7 +122,9 @@ class FinanceService:
                 "cooShare": coo_share,
                 "businessReserve": reserve,
                 "status": entry_status,
+                "holdingUntil": o.get("expiresAt") or o.get("createdAt") or datetime.utcnow().isoformat() + "Z",
                 "createdAt": o.get("createdAt") or datetime.utcnow().isoformat() + "Z",
+                "updatedAt": o.get("updatedAt") or o.get("createdAt") or datetime.utcnow().isoformat() + "Z",
             })
 
         summary = {

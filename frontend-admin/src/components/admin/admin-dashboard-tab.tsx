@@ -54,6 +54,7 @@ export function AdminDashboardTab({
   isSyncingVip,
 }: AdminDashboardTabProps) {
   const [salesPeriod, setSalesPeriod] = useState<'daily' | 'weekly' | 'monthly'>('weekly');
+  const [dashboardOverview, setDashboardOverview] = useState<any | null>(null);
   const [liveAffiliates, setLiveAffiliates] = useState<any[]>([]);
   const [liveOrders, setLiveOrders] = useState<any[]>([]);
   const [liveOrderMetrics, setLiveOrderMetrics] = useState<{
@@ -67,6 +68,15 @@ export function AdminDashboardTab({
   } | null>(null);
 
   useEffect(() => {
+    fetch('/api/v1/admin/analytics/overview')
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.success && json.data) {
+          setDashboardOverview(json.data);
+        }
+      })
+      .catch((err) => console.warn('Failed to fetch analytics overview:', err));
+
     fetch('/api/v1/admin/affiliates')
       .then((res) => res.json())
       .then((json) => {
@@ -76,7 +86,7 @@ export function AdminDashboardTab({
       })
       .catch((err) => console.warn('Failed to fetch affiliates for dashboard:', err));
 
-    fetch('/api/v1/admin/orders?limit=5')
+    fetch('/api/v1/admin/orders?limit=6')
       .then((res) => res.json())
       .then((json) => {
         if (json.success) {
@@ -91,83 +101,32 @@ export function AdminDashboardTab({
       .catch((err) => console.warn('Failed to fetch orders for dashboard:', err));
   }, []);
 
-  const totalReferralRevenue = liveAffiliates.reduce((acc, a) => acc + (a.totalRevenue || 0), 0);
-  const totalPaidReferralCommission = liveAffiliates.reduce((acc, a) => acc + (a.paidCommission || 0), 0);
-  const topPartner = [...liveAffiliates].sort((a, b) => (b.totalRevenue || 0) - (a.totalRevenue || 0))[0];
+  const totalReferralRevenue =
+    dashboardOverview?.affiliateSnapshot?.totalReferralRevenue ??
+    liveAffiliates.reduce((acc, a) => acc + (a.totalRevenue || 0), 0);
+  const totalPaidReferralCommission =
+    dashboardOverview?.affiliateSnapshot?.totalPaidCommission ??
+    liveAffiliates.reduce((acc, a) => acc + (a.paidCommission || 0), 0);
+  const topPartner =
+    dashboardOverview?.affiliateSnapshot?.topPartner ??
+    [...liveAffiliates].sort((a, b) => (b.totalRevenue || 0) - (a.totalRevenue || 0))[0];
 
+  const salesData: { label: string; orders: number; revenue: number }[] =
+    (dashboardOverview?.salesData && dashboardOverview.salesData[salesPeriod]) || [
+      { label: '08:00', orders: 0, revenue: 0 },
+      { label: '11:00', orders: 0, revenue: 0 },
+      { label: '14:00', orders: 0, revenue: 0 },
+      { label: '17:00', orders: 0, revenue: 0 },
+      { label: '20:00', orders: 0, revenue: 0 },
+      { label: '23:00', orders: 0, revenue: 0 },
+    ];
 
-  // Sample sales chart data based on period
-  const salesData = {
-    daily: [
-      { label: '08:00', orders: 4, revenue: 165000 },
-      { label: '11:00', orders: 9, revenue: 380000 },
-      { label: '14:00', orders: 15, revenue: 645000 },
-      { label: '17:00', orders: 22, revenue: 950000 },
-      { label: '20:00', orders: 18, revenue: 780000 },
-      { label: '23:00', orders: 8, revenue: 320000 },
-    ],
-    weekly: [
-      { label: 'Senin', orders: 34, revenue: 1420000 },
-      { label: 'Selasa', orders: 42, revenue: 1850000 },
-      { label: 'Rabu', orders: 38, revenue: 1620000 },
-      { label: 'Kamis', orders: 55, revenue: 2450000 },
-      { label: 'Jumat', orders: 68, revenue: 3120000 },
-      { label: 'Sabtu', orders: 82, revenue: 3950000 },
-      { label: 'Minggu', orders: 74, revenue: 3450000 },
-    ],
-    monthly: [
-      { label: 'Minggu 1', orders: 210, revenue: 9400000 },
-      { label: 'Minggu 2', orders: 265, revenue: 11800000 },
-      { label: 'Minggu 3', orders: 290, revenue: 13200000 },
-      { label: 'Minggu 4', orders: 340, revenue: 15600000 },
-    ],
-  }[salesPeriod];
-
-  const maxRevenue = Math.max(...salesData.map((d) => d.revenue));
-
-  // Recent real-time activities
-  const recentTransactions = [
-    {
-      id: 'ORD-882194',
-      customer: 'Reza Pratama',
-      whatsapp: '081298441122',
-      product: 'Canva Pro 1 Bulan Private',
-      amount: 25000,
-      paymentMethod: 'QRIS',
-      status: 'completed',
-      time: '2 menit lalu',
-    },
-    {
-      id: 'ORD-882193',
-      customer: 'Citra Kirana',
-      whatsapp: '085712339900',
-      product: 'Gemini AI Pro 1 Tahun',
-      amount: 31000,
-      paymentMethod: 'BCA Virtual Account',
-      status: 'completed',
-      time: '14 menit lalu',
-    },
-    {
-      id: 'ORD-882192',
-      customer: 'Dimas Setiawan',
-      whatsapp: '082188776655',
-      product: 'Netflix Premium 1 Bulan UHD',
-      amount: 32000,
-      paymentMethod: 'DANA E-Wallet',
-      status: 'pending',
-      time: '28 menit lalu',
-    },
-    {
-      id: 'ORD-882191',
-      customer: 'Ahmad Faisal',
-      whatsapp: '089655112233',
-      product: 'ChatGPT Plus 1 Bulan Shared',
-      amount: 45000,
-      paymentMethod: 'QRIS',
-      status: 'completed',
-      time: '45 menit lalu',
-    },
-  ];
+  const maxRevenue = Math.max(1, ...salesData.map((d) => d.revenue));
+  const topProducts = dashboardOverview?.topProducts || [];
+  const recentTransactions =
+    dashboardOverview?.recentTransactions && dashboardOverview.recentTransactions.length > 0
+      ? dashboardOverview.recentTransactions
+      : liveOrders;
 
   return (
     <div className="space-y-6">
@@ -242,7 +201,7 @@ export function AdminDashboardTab({
             <TrendingUp className="w-4 h-4 text-status-success group-hover:scale-110 transition-transform" />
           </div>
           <div className="text-xl font-bold text-foreground">
-            {liveOrderMetrics ? `Rp ${(liveOrderMetrics.totalRevenue || 0).toLocaleString('id-ID')}` : 'Rp 0'}
+            Rp {(dashboardOverview?.kpi?.totalRevenue ?? liveOrderMetrics?.totalRevenue ?? 0).toLocaleString('id-ID')}
           </div>
           <span className="text-[10px] text-status-success font-semibold flex items-center gap-1 mt-1">
             ↑ Terverifikasi Sistem
@@ -259,10 +218,10 @@ export function AdminDashboardTab({
             <ShoppingBag className="w-4 h-4 text-primary group-hover:scale-110 transition-transform" />
           </div>
           <div className="text-xl font-bold text-foreground">
-            {(liveOrderMetrics?.total ?? 0).toLocaleString('id-ID')}
+            {(dashboardOverview?.kpi?.totalOrders ?? liveOrderMetrics?.total ?? 0).toLocaleString('id-ID')}
           </div>
           <span className="text-[10px] text-foreground-muted block mt-1">
-            {liveOrderMetrics?.completed ?? 0} Selesai diproses
+            {(dashboardOverview?.kpi?.completedOrders ?? liveOrderMetrics?.completed ?? 0)} Selesai diproses
           </span>
         </div>
 
@@ -276,10 +235,10 @@ export function AdminDashboardTab({
             <Users className="w-4 h-4 text-primary group-hover:scale-110 transition-transform" />
           </div>
           <div className="text-xl font-bold text-foreground">
-            642
+            {(dashboardOverview?.kpi?.totalCustomers ?? 0).toLocaleString('id-ID')}
           </div>
           <span className="text-[10px] text-status-success font-semibold block mt-1">
-            +38 pelanggan baru
+            +{dashboardOverview?.kpi?.newCustomers ?? 0} pelanggan terdata
           </span>
         </div>
 
@@ -293,10 +252,10 @@ export function AdminDashboardTab({
             <Coins className="w-4 h-4 text-status-success group-hover:scale-110 transition-transform" />
           </div>
           <div className="text-xl font-bold text-status-success">
-            {liveOrderMetrics ? `Rp ${Math.round((liveOrderMetrics.totalRevenue || 0) * 0.35).toLocaleString('id-ID')}` : 'Rp 0'}
+            Rp {(dashboardOverview?.kpi?.grossProfit ?? Math.round((liveOrderMetrics?.totalRevenue || 0) * 0.35)).toLocaleString('id-ID')}
           </div>
           <span className="text-[10px] text-foreground-muted block mt-1">
-            Estimasi Margin 35%
+            Estimasi Margin {dashboardOverview?.kpi?.profitMarginPercent ?? 35}%
           </span>
         </div>
 
@@ -310,7 +269,7 @@ export function AdminDashboardTab({
             <Clock className="w-4 h-4 text-status-warning group-hover:scale-110 transition-transform" />
           </div>
           <div className="text-xl font-bold text-status-warning">
-            {(liveOrderMetrics?.pending ?? 0).toLocaleString('id-ID')}
+            {(dashboardOverview?.kpi?.pendingOrders ?? liveOrderMetrics?.pending ?? 0).toLocaleString('id-ID')}
           </div>
           <span className="text-[10px] text-status-warning block mt-1">
             Menunggu pembayaran
@@ -434,37 +393,21 @@ export function AdminDashboardTab({
           </div>
 
           <div className="space-y-2.5 text-xs">
-            <div className="p-2.5 rounded-lg bg-surface-raised border border-border flex items-center justify-between">
-              <div className="min-w-0 pr-2">
-                <span className="font-semibold text-foreground truncate block">Canva Pro 1 Bulan Private</span>
-                <span className="text-[10px] text-foreground-muted">142 unit terjual • Stok Ready</span>
-              </div>
-              <span className="font-bold text-primary shrink-0">Rp 3.55M</span>
-            </div>
-
-            <div className="p-2.5 rounded-lg bg-surface-raised border border-border flex items-center justify-between">
-              <div className="min-w-0 pr-2">
-                <span className="font-semibold text-foreground truncate block">Gemini AI Pro 1 Tahun</span>
-                <span className="text-[10px] text-foreground-muted">89 unit terjual • Stok Ready</span>
-              </div>
-              <span className="font-bold text-primary shrink-0">Rp 2.75M</span>
-            </div>
-
-            <div className="p-2.5 rounded-lg bg-surface-raised border border-border flex items-center justify-between">
-              <div className="min-w-0 pr-2">
-                <span className="font-semibold text-foreground truncate block">Netflix Premium 1 Bulan UHD</span>
-                <span className="text-[10px] text-foreground-muted">76 unit terjual • Garansi Penuh</span>
-              </div>
-              <span className="font-bold text-primary shrink-0">Rp 2.43M</span>
-            </div>
-
-            <div className="p-2.5 rounded-lg bg-surface-raised border border-border flex items-center justify-between">
-              <div className="min-w-0 pr-2">
-                <span className="font-semibold text-foreground truncate block">YouTube Premium 3 Bulan</span>
-                <span className="text-[10px] text-foreground-muted">64 unit terjual • Anti-Hold</span>
-              </div>
-              <span className="font-bold text-primary shrink-0">Rp 1.15M</span>
-            </div>
+            {topProducts.length === 0 ? (
+              <div className="p-4 text-center text-foreground-muted">Belum ada transaksi produk terlaris</div>
+            ) : (
+              topProducts.map((p: any, idx: number) => (
+                <div key={idx} className="p-2.5 rounded-lg bg-surface-raised border border-border flex items-center justify-between">
+                  <div className="min-w-0 pr-2">
+                    <span className="font-semibold text-foreground truncate block">{p.name}</span>
+                    <span className="text-[10px] text-foreground-muted">{p.unitsSold} unit terjual • {p.category}</span>
+                  </div>
+                  <span className="font-bold text-primary shrink-0 font-mono">
+                    Rp {Number(p.revenue || 0).toLocaleString('id-ID')}
+                  </span>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>

@@ -88,6 +88,52 @@ interface ProfitLedgerEntry {
   reversalReason?: string;
 }
 
+interface WalletData {
+  tripayBalance: number;
+  vipBalance: number;
+  reserveBalance: number;
+}
+
+interface PaymentChannel {
+  name: string;
+  amount: number;
+  percentage: number;
+}
+
+interface RevenueData {
+  todayRevenue: number;
+  monthRevenue: number;
+  aov: number;
+  completedOrders: number;
+  paymentChannels: PaymentChannel[];
+}
+
+interface ExpenseItem {
+  id: string;
+  category: string;
+  desc: string;
+  amount: number;
+  date: string;
+  ref: string;
+}
+
+interface JournalEntry {
+  id: string;
+  type: 'Credit' | 'Debit';
+  desc: string;
+  amount: number;
+  balance: number;
+  date: string;
+}
+
+interface FinanceSummary {
+  wallets: WalletData;
+  revenue: RevenueData;
+  expenses: ExpenseItem[];
+  totalExpense: number;
+  financialTransactions: JournalEntry[];
+}
+
 interface AdminFinanceSuiteProps {
   activeTab: 'wallets' | 'revenue' | 'expenses' | 'profit' | 'financial-transactions';
   metrics?: {
@@ -99,12 +145,31 @@ interface AdminFinanceSuiteProps {
 export function AdminFinanceSuite({ activeTab, metrics, onNotify }: AdminFinanceSuiteProps) {
   const vipBalance = metrics?.vipBalance ?? 0;
 
+  // Finance Summary SSOT state
+  const [financeSummary, setFinanceSummary] = useState<FinanceSummary | null>(null);
+  const [isLoadingFinance, setIsLoadingFinance] = useState<boolean>(false);
+
   // Profit Distribution & Ledger SSOT state
   const [profitSummary, setProfitSummary] = useState<ProfitDistributionSummary | null>(null);
   const [profitEntries, setProfitEntries] = useState<ProfitLedgerEntry[]>([]);
   const [isLoadingProfit, setIsLoadingProfit] = useState<boolean>(false);
   const [profitSearch, setProfitSearch] = useState<string>('');
   const [profitStatusFilter, setProfitStatusFilter] = useState<string>('all');
+
+  const fetchFinanceSummary = useCallback(async () => {
+    try {
+      setIsLoadingFinance(true);
+      const res = await fetch('/api/v1/admin/finance/summary');
+      const json = await res.json();
+      if (json.success && json.data) {
+        setFinanceSummary(json.data);
+      }
+    } catch (err) {
+      console.error('Failed to load finance summary:', err);
+    } finally {
+      setIsLoadingFinance(false);
+    }
+  }, []);
 
   const fetchProfitData = useCallback(async () => {
     try {
@@ -123,10 +188,11 @@ export function AdminFinanceSuite({ activeTab, metrics, onNotify }: AdminFinance
   }, []);
 
   useEffect(() => {
+    fetchFinanceSummary();
     if (activeTab === 'profit') {
       fetchProfitData();
     }
-  }, [activeTab, fetchProfitData]);
+  }, [activeTab, fetchFinanceSummary, fetchProfitData]);
 
   const filteredProfitEntries = useMemo(() => {
     return profitEntries.filter((entry) => {
@@ -184,12 +250,14 @@ export function AdminFinanceSuite({ activeTab, metrics, onNotify }: AdminFinance
                 Available
               </Badge>
             </div>
-            <div className="text-2xl font-bold text-foreground font-mono">Rp 12.850.000</div>
+            <div className="text-2xl font-bold text-foreground font-mono">
+              Rp {(financeSummary?.wallets?.tripayBalance ?? 0).toLocaleString('id-ID')}
+            </div>
             <p className="text-[11px] text-foreground-muted">Dana siap ditarik ke rekening bank operasional</p>
             <Button
               size="sm"
               variant="outline"
-              onClick={() => onNotify?.('Pengajuan pencairan Tripay sebesar Rp 12.850.000 sedang diproses.')}
+              onClick={() => onNotify?.(`Pengajuan pencairan Tripay sebesar Rp ${(financeSummary?.wallets?.tripayBalance ?? 0).toLocaleString('id-ID')} sedang diproses.`)}
               className="w-full text-xs border-border"
             >
               Withdraw ke Rekening Bank
@@ -205,7 +273,7 @@ export function AdminFinanceSuite({ activeTab, metrics, onNotify }: AdminFinance
               </Badge>
             </div>
             <div className="text-2xl font-bold text-primary font-mono">
-              Rp {vipBalance.toLocaleString('id-ID')}
+              Rp {(financeSummary?.wallets?.vipBalance ?? vipBalance ?? 0).toLocaleString('id-ID')}
             </div>
             <p className="text-[11px] text-foreground-muted">Dipakai otomatis untuk eksekusi order instan supplier</p>
             <Button
@@ -226,7 +294,9 @@ export function AdminFinanceSuite({ activeTab, metrics, onNotify }: AdminFinance
                 Escrow
               </Badge>
             </div>
-            <div className="text-2xl font-bold text-foreground font-mono">Rp 3.500.000</div>
+            <div className="text-2xl font-bold text-foreground font-mono">
+              Rp {(financeSummary?.wallets?.reserveBalance ?? 0).toLocaleString('id-ID')}
+            </div>
             <p className="text-[11px] text-foreground-muted">Alokasi jaminan penggantian akun jika kendala</p>
             <Button
               size="sm"
@@ -269,22 +339,30 @@ export function AdminFinanceSuite({ activeTab, metrics, onNotify }: AdminFinance
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="bg-surface border border-border rounded-xl p-4 shadow-xs">
             <span className="text-xs text-foreground-muted block mb-1">Omzet Hari Ini</span>
-            <div className="text-xl font-bold text-foreground">Rp 985.000</div>
-            <span className="text-[10px] text-status-success font-semibold">↑ +8.4% vs kemarin</span>
+            <div className="text-xl font-bold text-foreground">
+              Rp {(financeSummary?.revenue?.todayRevenue ?? 0).toLocaleString('id-ID')}
+            </div>
+            <span className="text-[10px] text-status-success font-semibold">↑ Real-Time Gateway</span>
           </div>
           <div className="bg-surface border border-border rounded-xl p-4 shadow-xs">
             <span className="text-xs text-foreground-muted block mb-1">Omzet Bulan Ini</span>
-            <div className="text-xl font-bold text-status-success">Rp 18.450.000</div>
-            <span className="text-[10px] text-status-success font-semibold">Target tercapai 115%</span>
+            <div className="text-xl font-bold text-status-success">
+              Rp {(financeSummary?.revenue?.monthRevenue ?? 0).toLocaleString('id-ID')}
+            </div>
+            <span className="text-[10px] text-status-success font-semibold">Transaksi Terverifikasi</span>
           </div>
           <div className="bg-surface border border-border rounded-xl p-4 shadow-xs">
             <span className="text-xs text-foreground-muted block mb-1">Average Order Value (AOV)</span>
-            <div className="text-xl font-bold text-foreground">Rp 38.600</div>
+            <div className="text-xl font-bold text-foreground">
+              Rp {(financeSummary?.revenue?.aov ?? 0).toLocaleString('id-ID')}
+            </div>
             <span className="text-[10px] text-foreground-muted">Rata-rata belanja per order</span>
           </div>
           <div className="bg-surface border border-border rounded-xl p-4 shadow-xs">
             <span className="text-xs text-foreground-muted block mb-1">Total Transaksi Lunas</span>
-            <div className="text-xl font-bold text-primary">478 Order</div>
+            <div className="text-xl font-bold text-primary">
+              {(financeSummary?.revenue?.completedOrders ?? 0)} Order
+            </div>
             <span className="text-[10px] text-foreground-muted">Bulan berjalan</span>
           </div>
         </div>
@@ -293,35 +371,28 @@ export function AdminFinanceSuite({ activeTab, metrics, onNotify }: AdminFinance
         <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-3">
           <h3 className="font-bold text-sm text-foreground">Distribusi Pendapatan per Kanal Pembayaran</h3>
           <div className="space-y-2.5 text-xs">
-            <div className="p-3 bg-surface-raised rounded-lg border border-border space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="font-semibold text-foreground">QRIS (ShopeePay, GoPay, DANA, OVO, BCA Mobile)</span>
-                <span className="font-bold text-primary">Rp 12.177.000 (66.0%)</span>
-              </div>
-              <div className="w-full bg-border rounded-full h-2">
-                <div className="bg-primary h-2 rounded-full" style={{ width: '66%' }} />
-              </div>
-            </div>
-
-            <div className="p-3 bg-surface-raised rounded-lg border border-border space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="font-semibold text-foreground">Virtual Account (BCA, Mandiri, BNI, BRI)</span>
-                <span className="font-bold text-status-success">Rp 4.612.500 (25.0%)</span>
-              </div>
-              <div className="w-full bg-border rounded-full h-2">
-                <div className="bg-status-success h-2 rounded-full" style={{ width: '25%' }} />
-              </div>
-            </div>
-
-            <div className="p-3 bg-surface-raised rounded-lg border border-border space-y-1">
-              <div className="flex items-center justify-between">
-                <span className="font-semibold text-foreground">Transfer Bank Manual (BCA & DANA Toko)</span>
-                <span className="font-bold text-foreground">Rp 1.660.500 (9.0%)</span>
-              </div>
-              <div className="w-full bg-border rounded-full h-2">
-                <div className="bg-foreground-muted h-2 rounded-full" style={{ width: '9%' }} />
-              </div>
-            </div>
+            {financeSummary?.revenue?.paymentChannels && financeSummary.revenue.paymentChannels.length > 0 ? (
+              financeSummary.revenue.paymentChannels.map((ch, idx) => (
+                <div key={idx} className="p-3 bg-surface-raised rounded-lg border border-border space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-foreground">{ch.name}</span>
+                    <span className="font-bold text-primary">
+                      Rp {(ch.amount ?? 0).toLocaleString('id-ID')} ({ch.percentage}%)
+                    </span>
+                  </div>
+                  <div className="w-full bg-border rounded-full h-2">
+                    <div
+                      className={`h-2 rounded-full ${
+                        idx === 0 ? 'bg-primary' : idx === 1 ? 'bg-status-success' : 'bg-foreground-muted'
+                      }`}
+                      style={{ width: `${Math.min(100, Math.max(5, ch.percentage))}%` }}
+                    />
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="p-4 text-center text-foreground-muted">Belum ada data kanal pembayaran</div>
+            )}
           </div>
         </div>
       </div>
@@ -332,15 +403,8 @@ export function AdminFinanceSuite({ activeTab, metrics, onNotify }: AdminFinance
   // 3. EXPENSES (Cost Center & Expense Tracker)
   // -------------------------------------------------------------
   if (activeTab === 'expenses') {
-    const expenses = [
-      { id: 'exp-1', category: 'Modal Supplier VIP Reseller', desc: 'Pembelian lisensi & API auto-fulfillment', amount: 10820000, date: '01 Okt 2026', ref: 'INV-VIP-0926' },
-      { id: 'exp-2', category: 'Payment Gateway Fee (Tripay)', desc: 'Fee transaksi QRIS & Virtual Account (0.7%)', amount: 129150, date: '01 Okt 2026', ref: 'TRIPAY-FEE-09' },
-      { id: 'exp-3', category: 'Komisi Mitra Affiliate', desc: 'Pencairan bagi hasil mitra kreator & sales', amount: 1485000, date: '28 Sep 2026', ref: 'PAYOUT-AFF-09' },
-      { id: 'exp-4', category: 'Server & Cloud Hosting', desc: 'Vercel Pro & Upstash Redis Cloud', amount: 350000, date: '15 Sep 2026', ref: 'VCL-SUB-4981' },
-      { id: 'exp-5', category: 'Gateway WhatsApp Bot', desc: 'Fonnte WhatsApp API Gateway Bulanan', amount: 100000, date: '10 Sep 2026', ref: 'FONNTE-SUB-89' },
-    ];
-
-    const totalExpense = expenses.reduce((a, b) => a + b.amount, 0);
+    const expenses = financeSummary?.expenses || [];
+    const totalExpense = financeSummary?.totalExpense ?? expenses.reduce((a, b) => a + (b.amount || 0), 0);
 
     return (
       <div className="space-y-6">
@@ -370,17 +434,25 @@ export function AdminFinanceSuite({ activeTab, metrics, onNotify }: AdminFinance
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {expenses.map((exp) => (
-                  <tr key={exp.id} className="hover:bg-surface-raised/40">
-                    <td className="py-3.5 px-4 font-semibold text-foreground">{exp.category}</td>
-                    <td className="py-3.5 px-4 text-foreground-muted">{exp.desc}</td>
-                    <td className="py-3.5 px-4 font-mono text-[11px] text-primary">{exp.ref}</td>
-                    <td className="py-3.5 px-4 text-foreground-muted text-[11px]">{exp.date}</td>
-                    <td className="py-3.5 px-4 text-right font-bold text-status-error font-mono">
-                      -Rp {exp.amount.toLocaleString('id-ID')}
+                {expenses.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="py-8 text-center text-foreground-muted">
+                      Belum ada pencatatan biaya operasional
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  expenses.map((exp) => (
+                    <tr key={exp.id} className="hover:bg-surface-raised/40">
+                      <td className="py-3.5 px-4 font-semibold text-foreground">{exp.category}</td>
+                      <td className="py-3.5 px-4 text-foreground-muted">{exp.desc}</td>
+                      <td className="py-3.5 px-4 font-mono text-[11px] text-primary">{exp.ref}</td>
+                      <td className="py-3.5 px-4 text-foreground-muted text-[11px]">{exp.date}</td>
+                      <td className="py-3.5 px-4 text-right font-bold text-status-error font-mono">
+                        -Rp {(exp.amount ?? 0).toLocaleString('id-ID')}
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -734,9 +806,9 @@ export function AdminFinanceSuite({ activeTab, metrics, onNotify }: AdminFinance
                         <td className="py-3 px-3">
                           <div className="font-medium text-foreground line-clamp-1">{e.productNames}</div>
                           <div className="text-[10px] text-foreground-muted font-mono">{e.customerEmail}</div>
-                          {e.customerReferralDiscount > 0 && (
+                          {(e.customerReferralDiscount ?? 0) > 0 && (
                             <span className="text-[10px] text-status-warning block">
-                              Diskon 1x: -Rp {e.customerReferralDiscount.toLocaleString('id-ID')}
+                              Diskon 1x: -Rp {(e.customerReferralDiscount ?? 0).toLocaleString('id-ID')}
                             </span>
                           )}
                         </td>
@@ -759,28 +831,28 @@ export function AdminFinanceSuite({ activeTab, metrics, onNotify }: AdminFinance
                         </td>
 
                         <td className="py-3 px-3 text-right font-mono font-medium text-foreground">
-                          Rp {e.netRevenue.toLocaleString('id-ID')}
+                          Rp {(e.netRevenue ?? 0).toLocaleString('id-ID')}
                         </td>
 
                         <td className="py-3 px-3 text-right font-mono text-status-error text-[11px]">
-                          -Rp {e.directTransactionCost.toLocaleString('id-ID')}
+                          -Rp {(e.directTransactionCost ?? ((e.costOfGoods ?? 0) + (e.paymentFee ?? 0))).toLocaleString('id-ID')}
                           <div className="text-[9px] text-foreground-muted">
-                            COGS: {e.costOfGoods.toLocaleString('id-ID')} | Fee: {e.paymentFee.toLocaleString('id-ID')}
+                            COGS: {(e.costOfGoods ?? 0).toLocaleString('id-ID')} | Fee: {(e.paymentFee ?? 0).toLocaleString('id-ID')}
                           </div>
                         </td>
 
                         <td className="py-3 px-3 text-right font-mono font-bold text-status-success">
-                          Rp {e.transactionProfit.toLocaleString('id-ID')}
+                          Rp {(e.transactionProfit ?? 0).toLocaleString('id-ID')}
                         </td>
 
                         <td className="py-3 px-3 text-right font-mono text-xs">
-                          {e.salesCommission > 0 || e.recruitmentBonus > 0 ? (
+                          {(e.salesCommission ?? 0) > 0 || (e.recruitmentBonus ?? 0) > 0 ? (
                             <div>
                               <span className="text-status-warning font-semibold">
-                                Rp {(e.salesCommission + e.recruitmentBonus).toLocaleString('id-ID')}
+                                Rp {((e.salesCommission ?? 0) + (e.recruitmentBonus ?? 0)).toLocaleString('id-ID')}
                               </span>
                               <div className="text-[9px] text-foreground-muted">
-                                Direct: {e.salesCommission.toLocaleString('id-ID')} | Upline: {e.recruitmentBonus.toLocaleString('id-ID')}
+                                Direct: {(e.salesCommission ?? 0).toLocaleString('id-ID')} | Upline: {(e.recruitmentBonus ?? 0).toLocaleString('id-ID')}
                               </div>
                             </div>
                           ) : (
@@ -789,13 +861,13 @@ export function AdminFinanceSuite({ activeTab, metrics, onNotify }: AdminFinance
                         </td>
 
                         <td className="py-3 px-3 text-right font-mono font-bold text-primary">
-                          Rp {e.profitDistribution.toLocaleString('id-ID')}
+                          Rp {(e.profitDistribution ?? 0).toLocaleString('id-ID')}
                         </td>
 
                         <td className="py-3 px-3 text-right font-mono text-[10px] text-foreground-muted">
-                          <div>CEO (40%): Rp {e.ceoShare.toLocaleString('id-ID')}</div>
-                          <div>COO (40%): Rp {e.cooShare.toLocaleString('id-ID')}</div>
-                          <div>Modal (20%): Rp {e.businessReserve.toLocaleString('id-ID')}</div>
+                          <div>CEO (40%): Rp {(e.ceoShare ?? 0).toLocaleString('id-ID')}</div>
+                          <div>COO (40%): Rp {(e.cooShare ?? 0).toLocaleString('id-ID')}</div>
+                          <div>Modal (20%): Rp {(e.businessReserve ?? 0).toLocaleString('id-ID')}</div>
                         </td>
 
                         <td className="py-3 px-3 text-center">
@@ -832,13 +904,7 @@ export function AdminFinanceSuite({ activeTab, metrics, onNotify }: AdminFinance
   // -------------------------------------------------------------
   // 5. FINANCIAL TRANSACTIONS (General Ledger Audit Trail)
   // -------------------------------------------------------------
-  const ledgerEntries = [
-    { id: 'TX-9841', type: 'Credit', desc: 'Pembayaran Order ORD-882194 (Canva Pro)', amount: 25000, balance: 12850000, date: '01 Okt 2026, 17:42' },
-    { id: 'TX-9840', type: 'Debit', desc: 'Deduction VIP Reseller Order ORD-882194', amount: 13000, balance: 12825000, date: '01 Okt 2026, 17:42' },
-    { id: 'TX-9839', type: 'Credit', desc: 'Pembayaran Order ORD-882193 (Gemini Pro)', amount: 31000, balance: 12838000, date: '01 Okt 2026, 17:30' },
-    { id: 'TX-9838', type: 'Debit', desc: 'Deduction VIP Reseller Order ORD-882193', amount: 18000, balance: 12807000, date: '01 Okt 2026, 17:30' },
-    { id: 'TX-9837', type: 'Debit', desc: 'Payout Komisi Mitra Affiliate (AST-IQBAL)', amount: 320000, balance: 12825000, date: '01 Okt 2026, 12:00' },
-  ];
+  const ledgerEntries = financeSummary?.financialTransactions || [];
 
   return (
     <div className="space-y-6">
@@ -874,33 +940,41 @@ export function AdminFinanceSuite({ activeTab, metrics, onNotify }: AdminFinance
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {ledgerEntries.map((l) => (
-                <tr key={l.id} className="hover:bg-surface-raised/40">
-                  <td className="py-3.5 px-4 font-mono font-bold text-foreground">{l.id}</td>
-                  <td className="py-3.5 px-4">
-                    <Badge
-                      variant="outline"
-                      className={`text-[10px] font-semibold ${
-                        l.type === 'Credit'
-                          ? 'bg-status-success/15 text-status-success border-status-success/30'
-                          : 'bg-status-error/15 text-status-error border-status-error/30'
-                      }`}
-                    >
-                      {l.type === 'Credit' ? '+ KREDIT' : '- DEBIT'}
-                    </Badge>
+              {ledgerEntries.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="py-8 text-center text-foreground-muted">
+                    Belum ada riwayat mutasi kas transaksi
                   </td>
-                  <td className="py-3.5 px-4 font-medium text-foreground">{l.desc}</td>
-                  <td className={`py-3.5 px-4 text-right font-mono font-bold ${
-                    l.type === 'Credit' ? 'text-status-success' : 'text-status-error'
-                  }`}>
-                    {l.type === 'Credit' ? '+' : '-'}Rp {l.amount.toLocaleString('id-ID')}
-                  </td>
-                  <td className="py-3.5 px-4 text-right font-mono text-foreground font-semibold">
-                    Rp {l.balance.toLocaleString('id-ID')}
-                  </td>
-                  <td className="py-3.5 px-4 text-foreground-muted text-[11px]">{l.date}</td>
                 </tr>
-              ))}
+              ) : (
+                ledgerEntries.map((l) => (
+                  <tr key={l.id} className="hover:bg-surface-raised/40">
+                    <td className="py-3.5 px-4 font-mono font-bold text-foreground">{l.id}</td>
+                    <td className="py-3.5 px-4">
+                      <Badge
+                        variant="outline"
+                        className={`text-[10px] font-semibold ${
+                          l.type === 'Credit'
+                            ? 'bg-status-success/15 text-status-success border-status-success/30'
+                            : 'bg-status-error/15 text-status-error border-status-error/30'
+                        }`}
+                      >
+                        {l.type === 'Credit' ? '+ KREDIT' : '- DEBIT'}
+                      </Badge>
+                    </td>
+                    <td className="py-3.5 px-4 font-medium text-foreground">{l.desc}</td>
+                    <td className={`py-3.5 px-4 text-right font-mono font-bold ${
+                      l.type === 'Credit' ? 'text-status-success' : 'text-status-error'
+                    }`}>
+                      {l.type === 'Credit' ? '+' : '-'}Rp {(l.amount ?? 0).toLocaleString('id-ID')}
+                    </td>
+                    <td className="py-3.5 px-4 text-right font-mono text-foreground font-semibold">
+                      Rp {(l.balance ?? 0).toLocaleString('id-ID')}
+                    </td>
+                    <td className="py-3.5 px-4 text-foreground-muted text-[11px]">{l.date}</td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

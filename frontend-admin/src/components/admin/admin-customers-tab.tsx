@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Users,
   Search,
@@ -43,84 +43,30 @@ interface CustomerItem {
   }[];
 }
 
-const INITIAL_CUSTOMERS: CustomerItem[] = [
-  {
-    id: 'cust-1',
-    name: 'Budi Santoso',
-    email: 'budi.santoso@gmail.com',
-    whatsapp: '081234567890',
-    tier: 'VIP Platinum',
-    totalOrders: 12,
-    totalSpent: 845000,
-    lastOrderDate: '01 Okt 2026',
-    joinedAt: '15 Juli 2026',
-    referralCode: 'AST-IQBAL',
-    purchasedProducts: ['Canva Pro 1 Bulan', 'Gemini AI Pro 1 Tahun', 'Netflix UHD Private'],
-    recentOrders: [
-      { orderId: 'ORD-882194', product: 'Canva Pro 1 Bulan Private', amount: 25000, date: '01 Okt 2026', status: 'completed' },
-      { orderId: 'ORD-881023', product: 'Gemini AI Pro 1 Tahun', amount: 31000, date: '18 Sep 2026', status: 'completed' },
-      { orderId: 'ORD-879410', product: 'Netflix UHD 1 Bulan', amount: 32000, date: '04 Sep 2026', status: 'completed' },
-    ],
-  },
-  {
-    id: 'cust-2',
-    name: 'Dewi Lestari',
-    email: 'dewi.lestari@yahoo.com',
-    whatsapp: '085712345678',
-    tier: 'Gold Member',
-    totalOrders: 6,
-    totalSpent: 390000,
-    lastOrderDate: '29 Sep 2026',
-    joinedAt: '02 Ags 2026',
-    referralCode: 'DESAIN-PRO',
-    purchasedProducts: ['Canva Pro 1 Bulan', 'CapCut Pro 1 Bulan'],
-    recentOrders: [
-      { orderId: 'ORD-881940', product: 'Canva Pro 1 Bulan', amount: 25000, date: '29 Sep 2026', status: 'completed' },
-      { orderId: 'ORD-880291', product: 'CapCut Pro 1 Bulan', amount: 35000, date: '12 Sep 2026', status: 'completed' },
-    ],
-  },
-  {
-    id: 'cust-3',
-    name: 'Farhan Maulana',
-    email: 'farhan.m@outlook.com',
-    whatsapp: '082199887766',
-    tier: 'VIP Platinum',
-    totalOrders: 15,
-    totalSpent: 1240000,
-    lastOrderDate: '02 Okt 2026',
-    joinedAt: '20 Jun 2026',
-    purchasedProducts: ['ChatGPT Plus 1 Bulan', 'Gemini AI Pro', 'Claude AI Pro Private', 'Office 365 5TB'],
-    recentOrders: [
-      { orderId: 'ORD-882191', product: 'ChatGPT Plus 1 Bulan', amount: 45000, date: '02 Okt 2026', status: 'completed' },
-      { orderId: 'ORD-881880', product: 'Claude AI Pro Private', amount: 95000, date: '25 Sep 2026', status: 'completed' },
-    ],
-  },
-  {
-    id: 'cust-4',
-    name: 'Siti Rahmawati',
-    email: 'siti.rahma@gmail.com',
-    whatsapp: '089655443322',
-    tier: 'Silver',
-    totalOrders: 2,
-    totalSpent: 90000,
-    lastOrderDate: '26 Sep 2026',
-    joinedAt: '24 Sep 2026',
-    referralCode: 'RIAN-STREAM',
-    purchasedProducts: ['YouTube Premium 3 Bulan'],
-    recentOrders: [
-      { orderId: 'ORD-881512', product: 'YouTube Premium 3 Bulan', amount: 45000, date: '26 Sep 2026', status: 'completed' },
-    ],
-  },
-];
+const INITIAL_CUSTOMERS: CustomerItem[] = [];
 
 interface AdminCustomersTabProps {
   onNotify?: (msg: string) => void;
 }
 
 export function AdminCustomersTab({ onNotify }: AdminCustomersTabProps) {
-  const [customers] = useState<CustomerItem[]>(INITIAL_CUSTOMERS);
+  const [customers, setCustomers] = useState<CustomerItem[]>(INITIAL_CUSTOMERS);
+  const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerItem | null>(null);
+
+  useEffect(() => {
+    setIsLoading(true);
+    fetch('/api/v1/admin/customers')
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.success && Array.isArray(json.data)) {
+          setCustomers(json.data);
+        }
+      })
+      .catch((err) => console.warn('Failed to load customers from API:', err))
+      .finally(() => setIsLoading(false));
+  }, []);
 
   const filteredCustomers = customers.filter((c) => {
     const q = searchQuery.toLowerCase();
@@ -173,19 +119,31 @@ export function AdminCustomersTab({ onNotify }: AdminCustomersTabProps) {
 
         <div className="bg-surface border border-border rounded-xl p-4 shadow-xs">
           <span className="text-xs text-foreground-muted block mb-1">Repeat Customer Rate</span>
-          <div className="text-2xl font-bold text-primary">75.0%</div>
-          <span className="text-[10px] text-foreground-muted">Pernah order &gt; 2 kali</span>
+          <div className="text-2xl font-bold text-primary">
+            {customers.length > 0
+              ? ((customers.filter((c) => c.totalOrders > 1).length / customers.length) * 100).toFixed(1)
+              : '0.0'}%
+          </div>
+          <span className="text-[10px] text-foreground-muted">Pernah order &gt; 1 kali</span>
         </div>
 
         <div className="bg-surface border border-border rounded-xl p-4 shadow-xs">
           <span className="text-xs text-foreground-muted block mb-1">Average Lifetime Value (LTV)</span>
-          <div className="text-2xl font-bold text-foreground">Rp 641.250</div>
-          <span className="text-[10px] text-status-success font-semibold">Tinggi (High retention)</span>
+          <div className="text-2xl font-bold text-foreground font-mono">
+            Rp {customers.length > 0
+              ? Math.round(customers.reduce((a, b) => a + (b.totalSpent || 0), 0) / customers.length).toLocaleString('id-ID')
+              : '0'}
+          </div>
+          <span className="text-[10px] text-status-success font-semibold">Rata-rata akumulasi belanja</span>
         </div>
 
         <div className="bg-surface border border-border rounded-xl p-4 shadow-xs">
           <span className="text-xs text-foreground-muted block mb-1">Dari Jalur Referral Sales</span>
-          <div className="text-2xl font-bold text-status-success">75%</div>
+          <div className="text-2xl font-bold text-status-success">
+            {customers.length > 0
+              ? Math.round((customers.filter((c) => !!c.referralCode).length / customers.length) * 100)
+              : 0}%
+          </div>
           <span className="text-[10px] text-foreground-muted">Attributed to Affiliate</span>
         </div>
       </div>

@@ -3,6 +3,9 @@ import pathlib
 import random
 from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional
+from sqlalchemy.orm import joinedload
+from app.core.database import SessionLocal
+from app.models.order import Order, OrderItem
 
 DATA_DIR = pathlib.Path(__file__).resolve().parent.parent.parent / "data"
 ORDERS_FILE = DATA_DIR / "supabase-orders.json"
@@ -120,10 +123,29 @@ class OrderService:
 
     @classmethod
     def load_orders(cls, force_reload: bool = False) -> List[Dict[str, Any]]:
+        """
+        Loads orders directly from Supabase PostgreSQL database.
+        Falls back to local clean JSON files if Supabase is offline.
+        """
         if cls._orders is not None and not force_reload:
             return cls._orders
 
-        # Priority 1: Real Supabase orders export
+        # 1. Try querying Supabase PostgreSQL
+        try:
+            db = SessionLocal()
+            try:
+                db_orders = db.query(Order).options(joinedload(Order.items)).order_by(Order.created_at.desc()).all()
+                if db_orders:
+                    normalized = [cls._normalize_order(o.to_dict()) for o in db_orders]
+                    cls._orders = normalized
+                    cls.save_orders()
+                    return normalized
+            finally:
+                db.close()
+        except Exception as e:
+            print(f"[OrderService] Warning: Supabase orders query failed, using local fallback: {e}")
+
+        # 2. Priority 1 Fallback: Supabase orders JSON
         if ORDERS_FILE.exists():
             try:
                 data = json.loads(ORDERS_FILE.read_text(encoding="utf-8"))
@@ -133,7 +155,7 @@ class OrderService:
             except Exception as e:
                 print(f"[OrderService] Error loading supabase-orders.json: {e}")
 
-        # Priority 2: Legacy orders file
+        # Priority 2 Fallback: Legacy orders file
         if LEGACY_ORDERS_FILE.exists():
             try:
                 data = json.loads(LEGACY_ORDERS_FILE.read_text(encoding="utf-8"))
@@ -148,15 +170,15 @@ class OrderService:
 
     @classmethod
     def save_orders(cls) -> bool:
+        """Saves current orders state to local backup cache."""
         try:
             if cls._orders is not None:
                 ORDERS_FILE.parent.mkdir(parents=True, exist_ok=True)
                 ORDERS_FILE.write_text(json.dumps(cls._orders, indent=2, ensure_ascii=False), encoding="utf-8")
-                # Also mirror to orders.json
                 LEGACY_ORDERS_FILE.write_text(json.dumps(cls._orders, indent=2, ensure_ascii=False), encoding="utf-8")
                 return True
         except Exception as e:
-            print(f"[OrderService] Error saving orders: {e}")
+            print(f"[OrderService] Error saving backup orders: {e}")
         return False
 
     @classmethod
@@ -240,8 +262,20 @@ class OrderService:
 
     @classmethod
     def get_order_by_id(cls, order_id: str) -> Optional[Dict[str, Any]]:
-        orders = cls.load_orders()
+        # Query Supabase directly for instant accuracy
         clean_id = order_id.strip().upper()
+        try:
+            db = SessionLocal()
+            try:
+                order_obj = db.query(Order).options(joinedload(Order.items)).filter(Order.id == clean_id).first()
+                if order_obj:
+                    return cls._normalize_order(order_obj.to_dict())
+            finally:
+                db.close()
+        except Exception:
+            pass
+
+        orders = cls.load_orders()
         for o in orders:
             if str(o.get("id", "")).upper() == clean_id:
                 return o
@@ -249,7 +283,6 @@ class OrderService:
 
     @classmethod
     def create_order(cls, payload: Dict[str, Any]) -> Dict[str, Any]:
-        orders = cls.load_orders()
         now = datetime.utcnow()
         today_str = now.strftime("%Y%m%d")
         rand_code = random.randint(1000, 9999)
@@ -257,81 +290,105 @@ class OrderService:
 
         items = payload.get("items", [])
         raw_total = sum(
-            float(item.get("unit_price") or item.get("price") or 0) * int(item.get("quantity", 1))
+            int(item.get("unit_price") or item.get("price") or 0) * int(item.get("quantity", 1))
             for item in items
         )
 
         unique_code = random.randint(100, 999)
-        promo_discount = float(payload.get("promo_discount") or payload.get("promoDiscount") or 0)
-        referral_discount = float(payload.get("referral_discount") or payload.get("referralDiscount") or 0)
-        total_amount = max(0.0, raw_total - promo_discount - referral_discount)
+        promo_discount = int(payload.get("promo_discount") or payload.get("promoDiscount") or 0)
+        referral_discount = int(payload.get("referral_discount") or payload.get("referralDiscount") or 0)
+        total_amount = max(0, raw_total - promo_discount - referral_discount)
 
         contact = payload.get("customer_contact", {})
         customer_email = contact.get("email") or payload.get("customerEmail") or "buyer@asterra.store"
         customer_phone = contact.get("phone") or payload.get("customerWhatsapp") or "081234567890"
         customer_name = contact.get("name") or payload.get("customerName") or "Pelanggan Asterra"
 
-        formatted_items = []
-        for item in items:
-            formatted_items.append({
-                "id": f"item-{random.randint(10000, 99999)}",
-                "orderId": order_id,
-                "productId": item.get("product_id") or item.get("productId") or "vip-service",
-                "productName": item.get("product_name") or item.get("productName") or "Layanan Digital",
-                "price": float(item.get("unit_price") or item.get("price") or 0),
-                "quantity": int(item.get("quantity", 1)),
-                "targetEmail": customer_email,
-                "targetPhone": customer_phone,
-            })
+        # 1. Save directly into Supabase
+        try:
+            db = SessionLocal()
+            try:
+                order_record = Order(
+                    id=order_id,
+                    customer_email=customer_email,
+                    customer_whatsapp=customer_phone,
+                    customer_name=customer_name,
+                    customer_notes=payload.get("customer_notes") or payload.get("customerNotes") or "",
+                    total_amount=total_amount,
+                    raw_amount=raw_total,
+                    promo_discount=promo_discount,
+                    referral_discount=referral_discount,
+                    unique_code=unique_code,
+                    payment_mode=payload.get("payment_mode") or payload.get("paymentMode") or "manual",
+                    payment_method=payload.get("payment_method") or payload.get("paymentMethod") or "manual_bca",
+                    payment_reference=None,
+                    payment_status="pending",
+                    status="pending",
+                    created_at=now,
+                    updated_at=now,
+                    expires_at=now + timedelta(hours=24),
+                    referral_code=payload.get("referral_code") or payload.get("referralCode"),
+                )
+                db.add(order_record)
 
-        new_order = cls._normalize_order({
-            "id": order_id,
-            "customerEmail": customer_email,
-            "customerWhatsapp": customer_phone,
-            "customerName": customer_name,
-            "customerNotes": payload.get("customer_notes") or payload.get("customerNotes") or "",
-            "totalAmount": total_amount,
-            "rawAmount": raw_total,
-            "promoDiscount": promo_discount,
-            "referralDiscount": referral_discount,
-            "uniqueCode": unique_code,
-            "paymentMode": payload.get("payment_mode") or payload.get("paymentMode") or "manual",
-            "paymentMethod": payload.get("payment_method") or payload.get("paymentMethod") or "manual_bca",
-            "paymentReference": None,
-            "paymentStatus": "pending",
-            "status": "pending",
-            "createdAt": now.isoformat() + "Z",
-            "updatedAt": now.isoformat() + "Z",
-            "expiresAt": (now + timedelta(hours=24)).isoformat() + "Z",
-            "referralCode": payload.get("referral_code") or payload.get("referralCode"),
-            "items": formatted_items,
-        })
+                for item in items:
+                    item_id = f"item-{random.randint(10000, 99999)}"
+                    order_item_rec = OrderItem(
+                        id=item_id,
+                        order_id=order_id,
+                        product_id=item.get("product_id") or item.get("productId") or "vip-service",
+                        product_name=item.get("product_name") or item.get("productName") or "Layanan Digital",
+                        price=int(item.get("unit_price") or item.get("price") or 0),
+                        quantity=int(item.get("quantity", 1)),
+                        target_email=customer_email,
+                        target_phone=customer_phone,
+                    )
+                    db.add(order_item_rec)
 
-        orders.insert(0, new_order)
-        cls.save_orders()
-        return new_order
+                db.commit()
+                db.refresh(order_record)
+                normalized = cls._normalize_order(order_record.to_dict())
+            finally:
+                db.close()
+        except Exception as e:
+            print(f"[OrderService] Error saving order to Supabase: {e}")
+            raise e
+
+        # 2. Reload and sync cache
+        cls.load_orders(force_reload=True)
+        return normalized
 
     @classmethod
     def update_status(cls, order_id: str, new_status: str, notes: Optional[str] = None) -> Optional[Dict[str, Any]]:
-        orders = cls.load_orders()
         clean_id = order_id.strip().upper()
-        now_iso = datetime.utcnow().isoformat() + "Z"
+        now_dt = datetime.utcnow()
+        normalized = None
 
-        for idx, o in enumerate(orders):
-            if str(o.get("id", "")).upper() == clean_id:
-                o["status"] = new_status
-                o["updatedAt"] = now_iso
-                if new_status == "completed":
-                    o["paidAt"] = now_iso
-                    o["paymentStatus"] = "settlement"
-                elif new_status == "cancelled":
-                    o["paymentStatus"] = "cancelled"
-                if notes:
-                    curr_notes = o.get("customerNotes") or o.get("customer_notes") or ""
-                    o["customerNotes"] = f"{curr_notes} | Admin: {notes}".strip(" | ")
+        # 1. Update in Supabase
+        try:
+            db = SessionLocal()
+            try:
+                order_obj = db.query(Order).options(joinedload(Order.items)).filter(Order.id == clean_id).first()
+                if order_obj:
+                    order_obj.status = new_status
+                    order_obj.updated_at = now_dt
+                    if new_status in ["completed", "paid", "settlement"]:
+                        order_obj.paid_at = now_dt
+                        order_obj.payment_status = "settlement"
+                    elif new_status in ["cancelled", "expired"]:
+                        order_obj.payment_status = "cancelled"
+                    if notes:
+                        curr_notes = order_obj.customer_notes or ""
+                        order_obj.customer_notes = f"{curr_notes} | Admin: {notes}".strip(" | ")
 
-                normalized = cls._normalize_order(o)
-                orders[idx] = normalized
-                cls.save_orders()
-                return normalized
-        return None
+                    db.commit()
+                    db.refresh(order_obj)
+                    normalized = cls._normalize_order(order_obj.to_dict())
+            finally:
+                db.close()
+        except Exception as e:
+            print(f"[OrderService] Error updating order status in Supabase: {e}")
+
+        # 2. Reload and sync cache
+        cls.load_orders(force_reload=True)
+        return normalized

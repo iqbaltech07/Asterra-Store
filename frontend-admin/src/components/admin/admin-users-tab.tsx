@@ -17,6 +17,9 @@ import {
   faUserXmark,
   faPen,
   faUserGear,
+  faUsers,
+  faUserTie,
+  faBriefcase,
 } from '@fortawesome/free-solid-svg-icons';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -49,23 +52,25 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
   const [admins, setAdmins] = useState<AdminUserItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [roleFilter, setRoleFilter] = useState<'all' | 'superadmin' | 'admin'>('all');
+  const [activeSegment, setActiveSegment] = useState<'all' | 'admin' | 'sales'>('all');
+  const [roleFilter, setRoleFilter] = useState<'all' | 'superadmin' | 'admin' | 'sales'>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
 
   // Create Modal State
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [createModalType, setCreateModalType] = useState<'admin' | 'sales'>('admin');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formUsername, setFormUsername] = useState('');
   const [formName, setFormName] = useState('');
   const [formEmail, setFormEmail] = useState('');
   const [formPassword, setFormPassword] = useState('');
-  const [formRole, setFormRole] = useState<'admin' | 'superadmin'>('admin');
+  const [formRole, setFormRole] = useState<'admin' | 'superadmin' | 'sales'>('admin');
   const [formIsActive, setFormIsActive] = useState<boolean>(true);
 
   // Edit Details Modal State
   const [editModalAdmin, setEditModalAdmin] = useState<AdminUserItem | null>(null);
   const [editFormName, setEditFormName] = useState('');
-  const [editFormRole, setEditFormRole] = useState<'admin' | 'superadmin'>('admin');
+  const [editFormRole, setEditFormRole] = useState<'admin' | 'superadmin' | 'sales'>('admin');
   const [editFormIsActive, setEditFormIsActive] = useState<boolean>(true);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
 
@@ -115,6 +120,18 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
     fetchAdmins();
   }, [fetchAdmins]);
 
+  // Open Create Modal for specific type
+  const openCreateModal = (type: 'admin' | 'sales') => {
+    setCreateModalType(type);
+    setFormRole(type === 'sales' ? 'sales' : 'admin');
+    setFormUsername('');
+    setFormName('');
+    setFormEmail('');
+    setFormPassword('');
+    setFormIsActive(true);
+    setIsCreateModalOpen(true);
+  };
+
   // Toggle active/inactive status with instant feedback
   const handleToggleStatus = async (admin: AdminUserItem) => {
     const newStatus = !admin.isActive;
@@ -128,13 +145,13 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
 
       const data = await res.json();
       if (!res.ok || !data.success) {
-        throw new Error(data.error?.message || 'Gagal mengubah status admin');
+        throw new Error(data.error?.message || 'Gagal mengubah status akun');
       }
 
       onNotify(
         newStatus
-          ? `Akun "${admin.username}" berhasil diaktifkan. Admin kini bisa login.`
-          : `Akun "${admin.username}" dinonaktifkan. Admin tidak bisa login.`
+          ? `Akun "${admin.username}" berhasil diaktifkan. Pengguna kini bisa login.`
+          : `Akun "${admin.username}" dinonaktifkan. Pengguna tidak bisa login.`
       );
       fetchAdmins();
     } catch (err: unknown) {
@@ -143,8 +160,11 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
     }
   };
 
-  // Change admin role (Super Admin vs Admin)
-  const handleChangeRole = async (admin: AdminUserItem, newRole: 'admin' | 'superadmin') => {
+  // Change user role (Super Admin vs Admin vs Sales)
+  const handleChangeRole = async (
+    admin: AdminUserItem,
+    newRole: 'admin' | 'superadmin' | 'sales'
+  ) => {
     if (admin.role === newRole) return;
     try {
       const res = await fetch(`/api/v1/admin/users/${admin.id}`, {
@@ -156,18 +176,22 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
 
       const data = await res.json();
       if (!res.ok || !data.success) {
-        throw new Error(data.error?.message || 'Gagal mengubah jenis admin');
+        throw new Error(data.error?.message || 'Gagal mengubah peran akun');
       }
 
+      const roleLabels: Record<string, string> = {
+        superadmin: 'Super Admin',
+        admin: 'Admin',
+        sales: 'Sales',
+      };
+
       onNotify(
-        `Jenis admin "${admin.username}" berhasil diubah menjadi ${
-          newRole === 'superadmin' ? 'Super Admin' : 'Admin'
-        }.`
+        `Peran akun "${admin.username}" berhasil diubah menjadi ${roleLabels[newRole] || newRole}.`
       );
       fetchAdmins();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      onNotify(`Gagal mengubah jenis admin: ${msg}`);
+      onNotify(`Gagal mengubah jenis peran: ${msg}`);
     }
   };
 
@@ -191,21 +215,21 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
 
       const data = await res.json();
       if (!res.ok || !data.success) {
-        throw new Error(data.error?.message || 'Gagal memperbarui data administrator');
+        throw new Error(data.error?.message || 'Gagal memperbarui data akun');
       }
 
-      onNotify(`Data administrator "${editModalAdmin.username}" berhasil diperbarui.`);
+      onNotify(`Data akun "${editModalAdmin.username}" berhasil diperbarui.`);
       setEditModalAdmin(null);
       fetchAdmins();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      onNotify(`Gagal memperbarui admin: ${msg}`);
+      onNotify(`Gagal memperbarui akun: ${msg}`);
     } finally {
       setIsSavingEdit(false);
     }
   };
 
-  // Submit new admin
+  // Submit new admin or sales
   const handleCreateAdmin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formUsername || !formEmail || !formPassword) {
@@ -231,10 +255,16 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
 
       const data = await res.json();
       if (!res.ok || !data.success) {
-        throw new Error(data.error?.message || 'Gagal menambahkan admin baru');
+        throw new Error(data.error?.message || 'Gagal menambahkan akun baru');
       }
 
-      onNotify(`Admin "${data.admin.username}" berhasil ditambahkan.`);
+      const roleLabels: Record<string, string> = {
+        superadmin: 'Super Admin',
+        admin: 'Admin',
+        sales: 'Sales',
+      };
+
+      onNotify(`Akun "${data.admin.username}" berhasil ditambahkan sebagai ${roleLabels[formRole] || formRole}.`);
       setIsCreateModalOpen(false);
       // Reset form
       setFormUsername('');
@@ -274,7 +304,7 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
         throw new Error(data.error?.message || 'Gagal memperbarui kata sandi');
       }
 
-      onNotify(`Kata sandi admin "${editingAdmin.username}" berhasil diperbarui.`);
+      onNotify(`Kata sandi akun "${editingAdmin.username}" berhasil diperbarui.`);
       setEditingAdmin(null);
       setNewPassword('');
     } catch (err: unknown) {
@@ -299,10 +329,10 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
 
       const data = await res.json();
       if (!res.ok || !data.success) {
-        throw new Error(data.error?.message || 'Gagal menghapus admin');
+        throw new Error(data.error?.message || 'Gagal menghapus akun');
       }
 
-      onNotify(`Admin "${deletingAdmin.username}" berhasil dihapus.`);
+      onNotify(`Akun "${deletingAdmin.username}" berhasil dihapus.`);
       setDeletingAdmin(null);
       fetchAdmins();
     } catch (err: unknown) {
@@ -313,8 +343,8 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
     }
   };
 
-  // Filtered admins
-  const filteredAdmins = admins.filter((a) => {
+  // Filter criteria logic
+  const filterUser = (a: AdminUserItem) => {
     const q = searchQuery.toLowerCase().trim();
     const matchQuery =
       !q ||
@@ -323,137 +353,84 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
       (a.name && a.name.toLowerCase().includes(q));
 
     const matchRole =
-      roleFilter === 'all' ||
-      (roleFilter === 'superadmin' ? a.role === 'superadmin' : a.role !== 'superadmin');
+      roleFilter === 'all' || a.role === roleFilter;
 
     const matchStatus =
       statusFilter === 'all' ||
       (statusFilter === 'active' ? a.isActive : !a.isActive);
 
     return matchQuery && matchRole && matchStatus;
-  });
+  };
+
+  // Separate Admin/Superadmin from Sales
+  const adminUsers = admins.filter((a) => a.role === 'superadmin' || a.role === 'admin');
+  const salesUsers = admins.filter((a) => a.role === 'sales');
+
+  const filteredAdminUsers = adminUsers.filter(filterUser);
+  const filteredSalesUsers = salesUsers.filter(filterUser);
 
   const totalActive = admins.filter((a) => a.isActive).length;
   const totalInactive = admins.filter((a) => !a.isActive).length;
 
-  return (
-    <div className="space-y-6">
-      {/* Top Header & Metrics */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="p-4 rounded-xl bg-surface border border-border">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-foreground-muted">Total Admin</span>
-            <FontAwesomeIcon icon={faShieldHalved} className="w-4 h-4 text-primary" />
-          </div>
-          <p className="text-xl font-bold text-foreground mt-1">{admins.length}</p>
-          <span className="text-[11px] text-foreground-muted">Terdaftar di database</span>
-        </div>
+  // Render a specific table section (Admin Table or Sales Table)
+  const renderUserTable = (
+    userList: AdminUserItem[],
+    tableType: 'admin' | 'sales',
+    title: string,
+    badgeText: string,
+    subtitle: string,
+    onAddClick: () => void
+  ) => {
+    const isSales = tableType === 'sales';
 
-        <div className="p-4 rounded-xl bg-surface border border-status-success/30 bg-status-success/5">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-status-success font-medium">Admin Aktif</span>
-            <FontAwesomeIcon icon={faUserCheck} className="w-4 h-4 text-status-success" />
+    return (
+      <div className="rounded-xl border border-border bg-surface overflow-hidden shadow-xs space-y-0">
+        {/* Table Header Section */}
+        <div className="p-4 border-b border-border bg-surface-raised flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-start sm:items-center gap-2.5">
+            <div
+              className={`p-2 rounded-lg shrink-0 ${
+                isSales ? 'bg-status-success/15 text-status-success' : 'bg-primary/15 text-primary'
+              }`}
+            >
+              <FontAwesomeIcon icon={isSales ? faUserTie : faShieldHalved} className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-bold text-sm text-foreground tracking-tight">{title}</h3>
+                <Badge
+                  variant="outline"
+                  className={`text-[10px] font-mono font-semibold ${
+                    isSales
+                      ? 'border-status-success/30 text-status-success bg-status-success/5'
+                      : 'border-primary/30 text-primary bg-primary/5'
+                  }`}
+                >
+                  {badgeText}
+                </Badge>
+              </div>
+              <p className="text-[11px] text-foreground-muted mt-0.5">{subtitle}</p>
+            </div>
           </div>
-          <p className="text-xl font-bold text-status-success mt-1">{totalActive}</p>
-          <span className="text-[11px] text-status-success/80">Bisa login ke panel</span>
-        </div>
-
-        <div className="p-4 rounded-xl bg-surface border border-status-error/30 bg-status-error/5">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-status-error font-medium">Non-Aktif</span>
-            <FontAwesomeIcon icon={faUserXmark} className="w-4 h-4 text-status-error" />
-          </div>
-          <p className="text-xl font-bold text-status-error mt-1">{totalInactive}</p>
-          <span className="text-[11px] text-status-error/80">Akses login ditolak</span>
-        </div>
-
-        <div className="p-4 rounded-xl bg-surface border border-border">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-foreground-muted">Super Admin</span>
-            <FontAwesomeIcon icon={faShieldHalved} className="w-4 h-4 text-primary" />
-          </div>
-          <p className="text-xl font-bold text-foreground mt-1">
-            {admins.filter((a) => a.role === 'superadmin').length}
-          </p>
-          <span className="text-[11px] text-foreground-muted">Akses penuh sistem</span>
-        </div>
-      </div>
-
-      {/* Action Controls & Filters */}
-      <div className="p-4 rounded-xl bg-surface border border-border flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
-        <div className="flex flex-1 flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
-          {/* Search Bar */}
-          <div className="relative flex-1 min-w-[200px]">
-            <FontAwesomeIcon icon={faMagnifyingGlass} className="w-4 h-4 text-foreground-muted absolute left-3 top-1/2 -translate-y-1/2" />
-            <Input
-              type="text"
-              placeholder="Cari admin (username, nama, email)..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 text-xs bg-surface-raised border-border h-9"
-            />
-          </div>
-
-          {/* Role Filter using Reusable Radix Select */}
-          <div className="w-[140px]">
-            <Select value={roleFilter} onValueChange={(val: string) => setRoleFilter(val as 'all' | 'superadmin' | 'admin')}>
-              <SelectTrigger className="h-9 text-xs bg-surface-raised border-border">
-                <SelectValue placeholder="Role" />
-              </SelectTrigger>
-              <SelectContent align="start">
-                <SelectItem value="all">Semua Role</SelectItem>
-                <SelectItem value="superadmin">Super Admin</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Status Filter using Reusable Radix Select */}
-          <div className="w-[150px]">
-            <Select value={statusFilter} onValueChange={(val: string) => setStatusFilter(val as 'all' | 'active' | 'inactive')}>
-              <SelectTrigger className="h-9 text-xs bg-surface-raised border-border">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent align="start">
-                <SelectItem value="all">Semua Status</SelectItem>
-                <SelectItem value="active">Aktif (Bisa Login)</SelectItem>
-                <SelectItem value="inactive">Non-Aktif (Ditolak)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex items-center gap-2 shrink-0">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={fetchAdmins}
-            disabled={isLoading}
-            className="h-9 text-xs gap-1.5 border-border hover:bg-surface-hover"
-          >
-            <FontAwesomeIcon icon={faArrowsRotate} className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
-            <span className="hidden sm:inline">Segarkan</span>
-          </Button>
 
           <Button
             size="sm"
-            onClick={() => setIsCreateModalOpen(true)}
-            className="h-9 text-xs gap-1.5 font-medium shadow-xs"
+            onClick={onAddClick}
+            className={`text-xs gap-1.5 font-medium shadow-xs shrink-0 ${
+              isSales ? 'bg-status-success hover:bg-status-success/90 text-white' : ''
+            }`}
           >
             <FontAwesomeIcon icon={faUserPlus} className="w-3.5 h-3.5" />
-            <span>Tambah Admin</span>
+            <span>{isSales ? 'Tambah Akun Sales' : 'Tambah Admin'}</span>
           </Button>
         </div>
-      </div>
 
-      {/* Admin Table */}
-      <div className="rounded-xl border border-border bg-surface overflow-hidden shadow-xs">
+        {/* Table Content */}
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-surface-raised border-b border-border text-foreground-muted font-medium">
+            <thead className="bg-surface-raised/50 border-b border-border text-foreground-muted font-medium">
               <tr>
-                <th className="py-3 px-4">Administrator</th>
+                <th className="py-3 px-4">{isSales ? 'Anggota Tim Sales' : 'Administrator'}</th>
                 <th className="py-3 px-4">Email</th>
                 <th className="py-3 px-4">Role</th>
                 <th className="py-3 px-4">Status Login</th>
@@ -464,18 +441,18 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
             <tbody className="divide-y divide-border">
               {isLoading ? (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-foreground-muted">
-                    Memuat daftar akun administrator...
+                  <td colSpan={6} className="py-10 text-center text-foreground-muted">
+                    Memuat data {isSales ? 'tim sales' : 'administrator'}...
                   </td>
                 </tr>
-              ) : filteredAdmins.length === 0 ? (
+              ) : userList.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-12 text-center text-foreground-muted">
-                    Tidak ada administrator yang cocok dengan filter atau kata kunci.
+                  <td colSpan={6} className="py-10 text-center text-foreground-muted">
+                    Tidak ada {isSales ? 'akun sales' : 'administrator'} yang cocok dengan filter atau pencarian.
                   </td>
                 </tr>
               ) : (
-                filteredAdmins.map((admin) => {
+                userList.map((admin) => {
                   const isCurrent = currentAdminEmail?.toLowerCase() === admin.email.toLowerCase();
                   return (
                     <tr
@@ -487,9 +464,11 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
                         <div className="flex items-center gap-3">
                           <div
                             className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ring-1 ${
-                              admin.isActive
-                                ? 'bg-primary/10 text-primary ring-primary/20'
-                                : 'bg-status-error/10 text-status-error ring-status-error/20'
+                              !admin.isActive
+                                ? 'bg-status-error/10 text-status-error ring-status-error/20'
+                                : isSales
+                                ? 'bg-status-success/10 text-status-success ring-status-success/20'
+                                : 'bg-primary/10 text-primary ring-primary/20'
                             }`}
                           >
                             {admin.name
@@ -509,8 +488,16 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
                                   Anda
                                 </Badge>
                               )}
+                              {admin.role === 'sales' && (
+                                <Badge
+                                  variant="outline"
+                                  className="text-[10px] py-0 px-1.5 border-status-success/30 text-status-success bg-status-success/5 font-mono"
+                                >
+                                  Sales
+                                </Badge>
+                              )}
                             </div>
-                            <span className="text-[11px] text-foreground-muted">
+                            <span className="text-[11px] text-foreground-muted font-mono">
                               @{admin.username}
                             </span>
                           </div>
@@ -524,11 +511,11 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
 
                       {/* Role Selector */}
                       <td className="py-3.5 px-4">
-                        <div className="w-[125px]">
+                        <div className="w-[130px]">
                           <Select
                             value={admin.role}
                             onValueChange={(val: string) =>
-                              handleChangeRole(admin, val as 'admin' | 'superadmin')
+                              handleChangeRole(admin, val as 'admin' | 'superadmin' | 'sales')
                             }
                           >
                             <SelectTrigger className="h-7 text-[11px] bg-surface-raised border-border px-2">
@@ -539,7 +526,10 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
                                 <span className="text-primary font-semibold">Super Admin</span>
                               </SelectItem>
                               <SelectItem value="admin" className="text-xs">
-                                <span>Admin</span>
+                                <span className="font-medium text-foreground">Admin</span>
+                              </SelectItem>
+                              <SelectItem value="sales" className="text-xs">
+                                <span className="text-status-success font-semibold">Sales</span>
                               </SelectItem>
                             </SelectContent>
                           </Select>
@@ -591,11 +581,11 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
                             onClick={() => {
                               setEditModalAdmin(admin);
                               setEditFormName(admin.name || '');
-                              setEditFormRole(admin.role === 'superadmin' ? 'superadmin' : 'admin');
+                              setEditFormRole((admin.role as 'admin' | 'superadmin' | 'sales') || 'admin');
                               setEditFormIsActive(admin.isActive);
                             }}
                             className="h-7 w-7 p-0 text-foreground-muted hover:text-foreground"
-                            title="Edit Administrator (Nama, Jenis Admin, Status)"
+                            title="Edit Data Akun"
                           >
                             <FontAwesomeIcon icon={faPen} className="w-3.5 h-3.5" />
                           </Button>
@@ -612,8 +602,8 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
                             }`}
                             title={
                               admin.isActive
-                                ? 'Nonaktifkan akun admin ini'
-                                : 'Aktifkan akun admin ini agar bisa login'
+                                ? 'Nonaktifkan akun ini'
+                                : 'Aktifkan akun ini agar bisa login'
                             }
                           >
                             <FontAwesomeIcon icon={faPowerOff} className="w-3.5 h-3.5" />
@@ -650,7 +640,7 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
                             title={
                               isCurrent
                                 ? 'Tidak bisa menghapus akun Anda sendiri'
-                                : 'Hapus Akun Administrator'
+                                : 'Hapus Akun Pengguna'
                             }
                           >
                             <FontAwesomeIcon icon={faTrash} className="w-3.5 h-3.5" />
@@ -665,6 +655,176 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
           </table>
         </div>
       </div>
+    );
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Top Header & Metrics */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="p-4 rounded-xl bg-surface border border-border">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-foreground-muted">Administrator</span>
+            <FontAwesomeIcon icon={faShieldHalved} className="w-4 h-4 text-primary" />
+          </div>
+          <p className="text-xl font-bold text-foreground mt-1">{adminUsers.length}</p>
+          <span className="text-[11px] text-foreground-muted">Super Admin & Admin</span>
+        </div>
+
+        <div className="p-4 rounded-xl bg-surface border border-border">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-status-success font-medium">Tim Sales</span>
+            <FontAwesomeIcon icon={faUserTie} className="w-4 h-4 text-status-success" />
+          </div>
+          <p className="text-xl font-bold text-status-success mt-1">{salesUsers.length}</p>
+          <span className="text-[11px] text-foreground-muted">Portal Sales & Afiliasi</span>
+        </div>
+
+        <div className="p-4 rounded-xl bg-surface border border-status-success/30 bg-status-success/5">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-status-success font-medium">Akun Aktif</span>
+            <FontAwesomeIcon icon={faUserCheck} className="w-4 h-4 text-status-success" />
+          </div>
+          <p className="text-xl font-bold text-status-success mt-1">{totalActive}</p>
+          <span className="text-[11px] text-status-success/80">Bisa login ke sistem</span>
+        </div>
+
+        <div className="p-4 rounded-xl bg-surface border border-status-error/30 bg-status-error/5">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-status-error font-medium">Non-Aktif</span>
+            <FontAwesomeIcon icon={faUserXmark} className="w-4 h-4 text-status-error" />
+          </div>
+          <p className="text-xl font-bold text-status-error mt-1">{totalInactive}</p>
+          <span className="text-[11px] text-status-error/80">Akses login ditolak</span>
+        </div>
+      </div>
+
+      {/* Action Controls & Filters */}
+      <div className="p-4 rounded-xl bg-surface border border-border space-y-3.5">
+        {/* Segment Switcher (Semua / Administrator / Sales) */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-1.5 p-1 bg-surface-raised border border-border rounded-xl w-fit text-xs">
+            <button
+              type="button"
+              onClick={() => setActiveSegment('all')}
+              className={`px-3 py-1.5 rounded-lg font-medium transition-all flex items-center gap-1.5 ${
+                activeSegment === 'all'
+                  ? 'bg-primary text-white shadow-xs font-semibold'
+                  : 'text-foreground-muted hover:text-foreground'
+              }`}
+            >
+              <FontAwesomeIcon icon={faUsers} className="w-3.5 h-3.5" />
+              <span>Semua Akun ({admins.length})</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveSegment('admin')}
+              className={`px-3 py-1.5 rounded-lg font-medium transition-all flex items-center gap-1.5 ${
+                activeSegment === 'admin'
+                  ? 'bg-primary text-white shadow-xs font-semibold'
+                  : 'text-foreground-muted hover:text-foreground'
+              }`}
+            >
+              <FontAwesomeIcon icon={faShieldHalved} className="w-3.5 h-3.5" />
+              <span>Administrator ({adminUsers.length})</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveSegment('sales')}
+              className={`px-3 py-1.5 rounded-lg font-medium transition-all flex items-center gap-1.5 ${
+                activeSegment === 'sales'
+                  ? 'bg-status-success text-white shadow-xs font-semibold'
+                  : 'text-foreground-muted hover:text-foreground'
+              }`}
+            >
+              <FontAwesomeIcon icon={faUserTie} className="w-3.5 h-3.5" />
+              <span>Tim Sales ({salesUsers.length})</span>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={fetchAdmins}
+              disabled={isLoading}
+              className="h-8 text-xs gap-1.5 border-border hover:bg-surface-hover"
+            >
+              <FontAwesomeIcon icon={faArrowsRotate} className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
+              <span>Segarkan</span>
+            </Button>
+          </div>
+        </div>
+
+        {/* Search & Filters */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 pt-1 border-t border-border/60">
+          {/* Search Bar */}
+          <div className="relative flex-1 min-w-[200px]">
+            <FontAwesomeIcon icon={faMagnifyingGlass} className="w-4 h-4 text-foreground-muted absolute left-3 top-1/2 -translate-y-1/2" />
+            <Input
+              type="text"
+              placeholder="Cari akun (username, nama, email)..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 text-xs bg-surface-raised border-border h-8"
+            />
+          </div>
+
+          {/* Role Filter */}
+          <div className="w-[140px]">
+            <Select value={roleFilter} onValueChange={(val: string) => setRoleFilter(val as 'all' | 'superadmin' | 'admin' | 'sales')}>
+              <SelectTrigger className="h-8 text-xs bg-surface-raised border-border">
+                <SelectValue placeholder="Role" />
+              </SelectTrigger>
+              <SelectContent align="start">
+                <SelectItem value="all">Semua Role</SelectItem>
+                <SelectItem value="superadmin">Super Admin</SelectItem>
+                <SelectItem value="admin">Admin</SelectItem>
+                <SelectItem value="sales">Sales</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Status Filter */}
+          <div className="w-[150px]">
+            <Select value={statusFilter} onValueChange={(val: string) => setStatusFilter(val as 'all' | 'active' | 'inactive')}>
+              <SelectTrigger className="h-8 text-xs bg-surface-raised border-border">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent align="start">
+                <SelectItem value="all">Semua Status</SelectItem>
+                <SelectItem value="active">Aktif (Bisa Login)</SelectItem>
+                <SelectItem value="inactive">Non-Aktif (Ditolak)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </div>
+
+      {/* SEPARATED TABLES */}
+      <div className="space-y-6">
+        {/* Table 1: Administrator & Super Admin */}
+        {(activeSegment === 'all' || activeSegment === 'admin') &&
+          renderUserTable(
+            filteredAdminUsers,
+            'admin',
+            'Administrator & Super Admin',
+            `${filteredAdminUsers.length} Admin`,
+            'Akun pengelola internal dengan hak akses manajemen sistem dan operasional toko.',
+            () => openCreateModal('admin')
+          )}
+
+        {/* Table 2: Tim Sales */}
+        {(activeSegment === 'all' || activeSegment === 'sales') &&
+          renderUserTable(
+            filteredSalesUsers,
+            'sales',
+            'Akun Tim Sales',
+            `${filteredSalesUsers.length} Sales`,
+            'Akun login portal sales (@sales-*) untuk monitoring performa referral, omzet afiliasi, dan komisi.',
+            () => openCreateModal('sales')
+          )}
+      </div>
 
       {/* MODAL: Edit Data Administrator */}
       {editModalAdmin && (
@@ -672,9 +832,12 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
           <div className="bg-surface border border-border rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95">
             <div className="flex items-center justify-between p-4 border-b border-border bg-surface-raised">
               <div className="flex items-center gap-2">
-                <FontAwesomeIcon icon={faUserGear} className="w-4 h-4 text-primary" />
+                <FontAwesomeIcon
+                  icon={editModalAdmin.role === 'sales' ? faUserTie : faUserGear}
+                  className={`w-4 h-4 ${editModalAdmin.role === 'sales' ? 'text-status-success' : 'text-primary'}`}
+                />
                 <h3 className="font-semibold text-sm text-foreground">
-                  Edit Data Administrator
+                  Edit Data {editModalAdmin.role === 'sales' ? 'Akun Tim Sales' : 'Administrator'}
                 </h3>
               </div>
               <button
@@ -718,12 +881,12 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
                 />
               </div>
 
-              {/* Jenis Admin / Role */}
+              {/* Peran / Hak Akses */}
               <div className="space-y-1">
-                <label className="text-xs font-medium text-foreground">Jenis Admin / Hak Akses</label>
+                <label className="text-xs font-medium text-foreground">Peran / Hak Akses</label>
                 <Select
                   value={editFormRole}
-                  onValueChange={(val: string) => setEditFormRole(val as 'admin' | 'superadmin')}
+                  onValueChange={(val: string) => setEditFormRole(val as 'admin' | 'superadmin' | 'sales')}
                 >
                   <SelectTrigger className="text-xs bg-surface-raised border-border">
                     <SelectValue />
@@ -742,6 +905,14 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
                         <span className="font-semibold block">Admin</span>
                         <span className="text-[10px] text-foreground-muted block">
                           Kelola pesanan, verifikasi manual, dan monitoring katalog
+                        </span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="sales">
+                      <div className="space-y-0.5">
+                        <span className="font-semibold text-status-success block">Sales</span>
+                        <span className="text-[10px] text-foreground-muted block">
+                          Akses portal sales (@sales-*), referral tracking, omzet afiliasi, dan komisi
                         </span>
                       </div>
                     </SelectItem>
@@ -809,9 +980,12 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
           <div className="bg-surface border border-border rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95">
             <div className="flex items-center justify-between p-4 border-b border-border bg-surface-raised">
               <div className="flex items-center gap-2">
-                <FontAwesomeIcon icon={faUserPlus} className="w-4 h-4 text-primary" />
+                <FontAwesomeIcon
+                  icon={createModalType === 'sales' ? faUserTie : faUserPlus}
+                  className={`w-4 h-4 ${createModalType === 'sales' ? 'text-status-success' : 'text-primary'}`}
+                />
                 <h3 className="font-semibold text-sm text-foreground">
-                  Tambah Administrator Baru
+                  {createModalType === 'sales' ? 'Tambah Akun Tim Sales Baru' : 'Tambah Administrator Baru'}
                 </h3>
               </div>
               <button
@@ -830,14 +1004,16 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
                 </label>
                 <Input
                   type="text"
-                  placeholder="misal: admin_keuangan"
+                  placeholder={createModalType === 'sales' ? 'misal: sales-budi atau budi' : 'misal: admin_keuangan'}
                   value={formUsername}
                   onChange={(e) => setFormUsername(e.target.value)}
                   required
                   className="text-xs bg-surface-raised border-border"
                 />
                 <span className="text-[11px] text-foreground-muted">
-                  Digunakan untuk login (huruf kecil, tanpa spasi).
+                  {createModalType === 'sales'
+                    ? 'ID login akun sales (bisa awalan sales- atau username unik).'
+                    : 'Digunakan untuk login (huruf kecil, tanpa spasi).'}
                 </span>
               </div>
 
@@ -845,7 +1021,7 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
                 <label className="text-xs font-medium text-foreground">Nama Lengkap</label>
                 <Input
                   type="text"
-                  placeholder="misal: Iqbal Administrator"
+                  placeholder={createModalType === 'sales' ? 'misal: Budi Santoso' : 'misal: Iqbal Administrator'}
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
                   className="text-xs bg-surface-raised border-border"
@@ -858,14 +1034,16 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
                 </label>
                 <Input
                   type="email"
-                  placeholder="admin@asterra.store"
+                  placeholder={createModalType === 'sales' ? 'sales.budi@asterra.store' : 'admin@asterra.store'}
                   value={formEmail}
                   onChange={(e) => setFormEmail(e.target.value)}
                   required
                   className="text-xs bg-surface-raised border-border"
                 />
                 <span className="text-[11px] text-foreground-muted">
-                  Bisa juga dipakai untuk login ke panel admin.
+                  {createModalType === 'sales'
+                    ? 'Email yang digunakan untuk login portal sales.'
+                    : 'Bisa juga dipakai untuk login ke panel admin.'}
                 </span>
               </div>
 
@@ -887,13 +1065,21 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
               <div className="grid grid-cols-2 gap-3 pt-1">
                 <div className="space-y-1">
                   <label className="text-xs font-medium text-foreground">Peran / Role</label>
-                  <Select value={formRole} onValueChange={(val: string) => setFormRole(val as 'admin' | 'superadmin')}>
+                  <Select
+                    value={formRole}
+                    onValueChange={(val: string) => setFormRole(val as 'admin' | 'superadmin' | 'sales')}
+                  >
                     <SelectTrigger className="text-xs bg-surface-raised border-border h-9">
                       <SelectValue placeholder="Pilih Role" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="admin">Admin Standar</SelectItem>
-                      <SelectItem value="superadmin">Super Admin</SelectItem>
+                      <SelectItem value="superadmin">
+                        <span className="text-primary font-medium">Super Admin</span>
+                      </SelectItem>
+                      <SelectItem value="sales">
+                        <span className="text-status-success font-medium">Tim Sales</span>
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -929,14 +1115,18 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
                   type="submit"
                   size="sm"
                   disabled={isSubmitting}
-                  className="text-xs font-medium gap-1.5"
+                  className={`text-xs font-medium gap-1.5 ${
+                    formRole === 'sales'
+                      ? 'bg-status-success hover:bg-status-success/90 text-white'
+                      : ''
+                  }`}
                 >
                   {isSubmitting ? (
                     <FontAwesomeIcon icon={faArrowsRotate} className="w-3.5 h-3.5 animate-spin" />
                   ) : (
                     <FontAwesomeIcon icon={faCheck} className="w-3.5 h-3.5" />
                   )}
-                  <span>Simpan Admin</span>
+                  <span>{formRole === 'sales' ? 'Simpan Akun Sales' : 'Simpan Admin'}</span>
                 </Button>
               </div>
             </form>
@@ -1020,10 +1210,12 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
                 <FontAwesomeIcon icon={faTriangleExclamation} className="w-5 h-5" />
               </div>
               <div className="text-center space-y-1">
-                <h3 className="font-semibold text-sm text-foreground">Hapus Administrator?</h3>
+                <h3 className="font-semibold text-sm text-foreground">
+                  Hapus {deletingAdmin.role === 'sales' ? 'Akun Sales' : 'Administrator'}?
+                </h3>
                 <p className="text-xs text-foreground-muted leading-relaxed">
-                  Apakah Anda yakin ingin menghapus akun admin{' '}
-                  <strong className="text-foreground">{deletingAdmin.username}</strong> (
+                  Apakah Anda yakin ingin menghapus akun{' '}
+                  <strong className="text-foreground">@{deletingAdmin.username}</strong> (
                   {deletingAdmin.email})? Tindakan ini tidak dapat dibatalkan.
                 </p>
               </div>
@@ -1051,7 +1243,7 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
                   ) : (
                     <FontAwesomeIcon icon={faTrash} className="w-3.5 h-3.5" />
                   )}
-                  <span>Ya, Hapus Admin</span>
+                  <span>Ya, Hapus {deletingAdmin.role === 'sales' ? 'Sales' : 'Admin'}</span>
                 </Button>
               </div>
             </div>

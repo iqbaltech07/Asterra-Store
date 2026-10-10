@@ -1,7 +1,10 @@
 import json
 import pathlib
 import os
+from datetime import datetime
 from typing import List, Dict, Any, Optional
+from app.core.database import SessionLocal
+from app.models.product import Product
 
 DATA_DIR = pathlib.Path(__file__).resolve().parent.parent.parent / "data"
 CATALOG_PATH = DATA_DIR / "active-catalog.json"
@@ -81,9 +84,29 @@ class CatalogService:
 
     @classmethod
     def load_products(cls, force_reload: bool = False) -> List[Dict[str, Any]]:
+        """
+        Loads products directly from Supabase PostgreSQL database.
+        Falls back to local clean JSON files if Supabase is offline.
+        """
         if cls._cached_products is not None and not force_reload:
             return cls._cached_products
 
+        # 1. Try querying Supabase PostgreSQL
+        try:
+            db = SessionLocal()
+            try:
+                db_prods = db.query(Product).order_by(Product.created_at.desc()).all()
+                if db_prods:
+                    normalized = [cls._normalize_product(p.to_dict()) for p in db_prods]
+                    cls._cached_products = normalized
+                    cls.save_products()
+                    return normalized
+            finally:
+                db.close()
+        except Exception as e:
+            print(f"[CatalogService] Warning: Supabase products query failed, using local fallback: {e}")
+
+        # 2. Fallback to local files
         try:
             if CATALOG_PATH.exists():
                 data = json.loads(CATALOG_PATH.read_text(encoding="utf-8"))
@@ -96,20 +119,21 @@ class CatalogService:
                 cls._cached_products = active
                 return active
         except Exception as e:
-            print(f"[CatalogService] Error loading catalog: {e}")
+            print(f"[CatalogService] Error loading catalog fallback: {e}")
 
         cls._cached_products = []
         return []
 
     @classmethod
     def save_products(cls) -> bool:
+        """Saves current products state to local backup cache."""
         try:
             if cls._cached_products is not None:
                 CATALOG_PATH.parent.mkdir(parents=True, exist_ok=True)
                 CATALOG_PATH.write_text(json.dumps(cls._cached_products, indent=2, ensure_ascii=False), encoding="utf-8")
                 return True
         except Exception as e:
-            print(f"[CatalogService] Error saving catalog: {e}")
+            print(f"[CatalogService] Error saving backup catalog: {e}")
         return False
 
     @classmethod
@@ -159,6 +183,18 @@ class CatalogService:
 
     @classmethod
     def get_product_by_id(cls, product_id: str) -> Optional[Dict[str, Any]]:
+        # Check DB directly for freshest product state
+        try:
+            db = SessionLocal()
+            try:
+                prod = db.query(Product).filter((Product.id == product_id) | (Product.provider_code == product_id)).first()
+                if prod:
+                    return cls._normalize_product(prod.to_dict())
+            finally:
+                db.close()
+        except Exception:
+            pass
+
         products = cls.load_products()
         for p in products:
             if p.get("id") == product_id or str(p.get("providerCode")) == product_id:
@@ -167,12 +203,6 @@ class CatalogService:
 
     @classmethod
     def load_managed_products(cls) -> List[Dict[str, Any]]:
-        try:
-            if MANAGED_PATH.exists():
-                all_products = json.loads(MANAGED_PATH.read_text(encoding="utf-8"))
-                return [cls._normalize_product(p) for p in all_products]
-        except Exception as e:
-            print(f"[CatalogService] Error loading managed catalog: {e}")
         return cls.load_products()
 
     @classmethod
@@ -182,12 +212,12 @@ class CatalogService:
         category: Optional[str] = None,
         search: Optional[str] = None,
     ) -> Dict[str, Any]:
-        products = cls.load_managed_products()
+        products = cls.load_products(force_reload=True)
 
         # Compute accurate metrics across whole dataset
         total = len(products)
         total_active = sum(1 for p in products if p.get("status", "active") == "active")
-        total_archived = sum(1 for p in products if p.get("status") == "archived")
+        total_archived = sum(1 for p in products if p.get("status", "active") == "archived")
         total_warnings = sum(
             1 for p in products
             if p.get("status", "active") == "active"
@@ -200,7 +230,7 @@ class CatalogService:
             if status == "active":
                 filtered = [p for p in filtered if p.get("status", "active") == "active"]
             elif status == "archived":
-                filtered = [p for p in filtered if p.get("status") == "archived"]
+                filtered = [p for p in filtered if p.get("status", "active") == "archived"]
             elif status == "warning":
                 filtered = [
                     p for p in filtered
@@ -208,13 +238,14 @@ class CatalogService:
                     and (p.get("providerStatus") == "empty" or p.get("stock") == 0)
                 ]
 
-        if category and category.lower() not in ["semua", "all", "cat-all"]:
+        if category and category != "all" and category != "cat-all":
             cat_clean = category.lower().strip()
             filtered = [
                 p for p in filtered
                 if (isinstance(p.get("category"), dict) and p["category"].get("id", "").lower() == cat_clean)
                 or (isinstance(p.get("category"), dict) and p["category"].get("name", "").lower() == cat_clean)
                 or str(p.get("categoryId", "")).lower() == cat_clean
+                or str(p.get("categoryName", "")).lower() == cat_clean
             ]
 
         if search and search.strip():
@@ -223,138 +254,223 @@ class CatalogService:
                 p for p in filtered
                 if query in p.get("name", "").lower()
                 or query in str(p.get("providerCode", "")).lower()
-                or query in p.get("description", "").lower()
+                or query in str(p.get("description", "")).lower()
+                or query in str(p.get("brand", "")).lower()
                 or any(query in str(f).lower() for f in p.get("features", []))
             ]
 
         return {
             "products": filtered,
-            "total": len(filtered),
+            "total": total,
             "metrics": {
                 "total": total,
                 "totalActive": total_active,
                 "totalArchived": total_archived,
                 "totalWarnings": total_warnings,
-                "vipBalance": 1250000,
             },
         }
 
     @classmethod
     def create_product(cls, payload: Dict[str, Any]) -> Dict[str, Any]:
-        products = cls.load_products()
-        product_id = payload.get("id") or f"prod-{int(len(products) + 1)}-{payload.get('name', 'item')[:8].lower().replace(' ', '-')}"
-
-        price = float(payload.get("price", 0))
-        provider_price = float(payload.get("providerPrice", 0))
+        product_id = payload.get("id") or f"prod-{int(datetime.utcnow().timestamp() * 1000)}"
+        price = int(payload.get("price", 0))
+        provider_price = int(payload.get("providerPrice", 0))
         margin = price - provider_price if provider_price > 0 else 0
         pct = round((margin / provider_price) * 100) if provider_price > 0 else 0
 
-        new_product = {
-            "id": product_id,
-            "name": payload.get("name", ""),
-            "category": payload.get("category") or {
-                "id": "cat-ai-tools",
-                "name": "AI Tools",
-            },
-            "price": price,
-            "priceFormatted": f"Rp {price:,.0f}".replace(",", "."),
-            "providerPrice": provider_price,
-            "stock": int(payload.get("stock", 100)),
-            "status": payload.get("status", "active"),
-            "description": payload.get("description", ""),
-            "features": payload.get("features", []),
-            "imageUrl": payload.get("imageUrl") or "/images/default-product-banner.png",
-            "popular": bool(payload.get("popular", False)),
-            "provider": payload.get("provider", "native"),
-            "providerCode": payload.get("providerCode"),
-            "providerStatus": "available",
-            "profitMargin": margin,
-            "profitPercentage": pct,
-            "guaranteeTitle": payload.get("guaranteeTitle", "Garansi Penuh"),
-            "guaranteeDesc": payload.get("guaranteeDesc", "Jaminan ganti akun 100%"),
-            "processTitle": payload.get("processTitle", "Proses Instan"),
-            "processDesc": payload.get("processDesc", "1 - 15 menit selesai"),
-            "privacyTitle": payload.get("privacyTitle", "Akun Private"),
-            "privacyDesc": payload.get("privacyDesc", "Ruang kerja aman & personal"),
-        }
+        cat = payload.get("category") or {}
+        cat_id = cat.get("id") or payload.get("categoryId") or "cat-ai-tools"
+        cat_name = cat.get("name") or payload.get("categoryName") or "AI Tools"
 
-        products.insert(0, new_product)
-        cls.save_products()
-        return new_product
+        # 1. Save directly to Supabase
+        try:
+            db = SessionLocal()
+            try:
+                new_prod = Product(
+                    id=product_id,
+                    name=payload.get("name", ""),
+                    category_id=cat_id,
+                    category_name=cat_name,
+                    brand=payload.get("brand", "Digital"),
+                    price=price,
+                    price_formatted=f"Rp {price:,.0f}".replace(",", "."),
+                    description=payload.get("description", ""),
+                    features=payload.get("features", []),
+                    status=payload.get("status", "active"),
+                    stock=int(payload.get("stock", 100)),
+                    image_url=payload.get("imageUrl") or "/images/default-product-banner.png",
+                    popular=bool(payload.get("popular", False)),
+                    provider=payload.get("provider", "native"),
+                    provider_code=payload.get("providerCode"),
+                    provider_name=payload.get("providerName"),
+                    provider_price=provider_price,
+                    provider_status=payload.get("providerStatus", "available"),
+                    profit_margin=margin,
+                    profit_percentage=pct,
+                    guarantee_title=payload.get("guaranteeTitle", "Garansi Penuh"),
+                    guarantee_desc=payload.get("guaranteeDesc", "Jaminan ganti akun 100%"),
+                    process_title=payload.get("processTitle", "Proses Instan"),
+                    process_desc=payload.get("processDesc", "1 - 15 menit selesai"),
+                    privacy_title=payload.get("privacyTitle", "Akun Private"),
+                    privacy_desc=payload.get("privacyDesc", "Ruang kerja aman & personal"),
+                    created_at=datetime.utcnow(),
+                    updated_at=datetime.utcnow(),
+                )
+                db.add(new_prod)
+                db.commit()
+                db.refresh(new_prod)
+                res_dict = cls._normalize_product(new_prod.to_dict())
+            finally:
+                db.close()
+        except Exception as e:
+            print(f"[CatalogService] Error creating product in Supabase: {e}")
+            raise e
+
+        # 2. Reload and sync cache
+        cls.load_products(force_reload=True)
+        return res_dict
 
     @classmethod
     def update_product(cls, product_id: str, payload: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        products = cls.load_products()
-        for idx, p in enumerate(products):
-            if p.get("id") == product_id or str(p.get("providerCode")) == product_id:
-                # Merge updates
-                for key, val in payload.items():
-                    if val is not None:
-                        p[key] = val
+        # 1. Update in Supabase
+        updated_dict = None
+        try:
+            db = SessionLocal()
+            try:
+                prod = db.query(Product).filter((Product.id == product_id) | (Product.provider_code == product_id)).first()
+                if prod:
+                    if "name" in payload and payload["name"] is not None:
+                        prod.name = payload["name"]
+                    if "price" in payload and payload["price"] is not None:
+                        prod.price = int(payload["price"])
+                        prod.price_formatted = f"Rp {prod.price:,.0f}".replace(",", ".")
+                    if "providerPrice" in payload and payload["providerPrice"] is not None:
+                        prod.provider_price = int(payload["providerPrice"])
+                    if "stock" in payload and payload["stock"] is not None:
+                        prod.stock = int(payload["stock"])
+                    if "status" in payload and payload["status"] is not None:
+                        prod.status = payload["status"]
+                    if "description" in payload and payload["description"] is not None:
+                        prod.description = payload["description"]
+                    if "features" in payload and payload["features"] is not None:
+                        prod.features = payload["features"]
+                    if "imageUrl" in payload and payload["imageUrl"] is not None:
+                        prod.image_url = payload["imageUrl"]
+                    if "popular" in payload and payload["popular"] is not None:
+                        prod.popular = bool(payload["popular"])
+                    if "brand" in payload and payload["brand"] is not None:
+                        prod.brand = payload["brand"]
+                    if "categoryId" in payload and payload["categoryId"] is not None:
+                        prod.category_id = payload["categoryId"]
+                    if "categoryName" in payload and payload["categoryName"] is not None:
+                        prod.category_name = payload["categoryName"]
+                    if "guaranteeTitle" in payload and payload["guaranteeTitle"] is not None:
+                        prod.guarantee_title = payload["guaranteeTitle"]
+                    if "guaranteeDesc" in payload and payload["guaranteeDesc"] is not None:
+                        prod.guarantee_desc = payload["guaranteeDesc"]
+                    if "processTitle" in payload and payload["processTitle"] is not None:
+                        prod.process_title = payload["processTitle"]
+                    if "processDesc" in payload and payload["processDesc"] is not None:
+                        prod.process_desc = payload["processDesc"]
+                    if "privacyTitle" in payload and payload["privacyTitle"] is not None:
+                        prod.privacy_title = payload["privacyTitle"]
+                    if "privacyDesc" in payload and payload["privacyDesc"] is not None:
+                        prod.privacy_desc = payload["privacyDesc"]
 
-                # Recalculate margins if price or providerPrice updated
-                if "price" in payload or "providerPrice" in payload:
-                    price = float(p.get("price", 0))
-                    provider_price = float(p.get("providerPrice", 0))
-                    if provider_price > 0:
-                        p["profitMargin"] = price - provider_price
-                        p["profitPercentage"] = round(((price - provider_price) / provider_price) * 100)
-                    p["priceFormatted"] = f"Rp {price:,.0f}".replace(",", ".")
+                    # Recalculate margins
+                    if prod.provider_price and prod.provider_price > 0:
+                        prod.profit_margin = prod.price - prod.provider_price
+                        prod.profit_percentage = round((prod.profit_margin / prod.provider_price) * 100)
 
-                products[idx] = p
-                cls.save_products()
-                return p
-        return None
+                    prod.updated_at = datetime.utcnow()
+                    db.commit()
+                    db.refresh(prod)
+                    updated_dict = cls._normalize_product(prod.to_dict())
+            finally:
+                db.close()
+        except Exception as e:
+            print(f"[CatalogService] Error updating product in Supabase: {e}")
+
+        # 2. Reload and sync cache
+        cls.load_products(force_reload=True)
+        return updated_dict
 
     @classmethod
     def delete_product(cls, product_id: str) -> bool:
-        products = cls.load_products()
-        initial_len = len(products)
-        cls._cached_products = [p for p in products if p.get("id") != product_id and str(p.get("providerCode")) != product_id]
-        if len(cls._cached_products) < initial_len:
-            cls.save_products()
-            return True
-        return False
+        deleted = False
+        try:
+            db = SessionLocal()
+            try:
+                prod = db.query(Product).filter((Product.id == product_id) | (Product.provider_code == product_id)).first()
+                if prod:
+                    db.delete(prod)
+                    db.commit()
+                    deleted = True
+            finally:
+                db.close()
+        except Exception as e:
+            print(f"[CatalogService] Error deleting product from Supabase: {e}")
+
+        cls.load_products(force_reload=True)
+        return deleted
 
     @classmethod
     def toggle_status(cls, product_id: str) -> Optional[str]:
-        products = cls.load_products()
-        for idx, p in enumerate(products):
-            if p.get("id") == product_id or str(p.get("providerCode")) == product_id:
-                current = p.get("status", "active")
-                new_status = "archived" if current == "active" else "active"
-                p["status"] = new_status
-                products[idx] = p
-                cls.save_products()
-                return new_status
-        return None
+        new_status = None
+        try:
+            db = SessionLocal()
+            try:
+                prod = db.query(Product).filter((Product.id == product_id) | (Product.provider_code == product_id)).first()
+                if prod:
+                    new_status = "archived" if prod.status == "active" else "active"
+                    prod.status = new_status
+                    prod.updated_at = datetime.utcnow()
+                    db.commit()
+            finally:
+                db.close()
+        except Exception as e:
+            print(f"[CatalogService] Error toggling product status in Supabase: {e}")
+
+        cls.load_products(force_reload=True)
+        return new_status
 
     @classmethod
     def bulk_status(cls, ids: List[str], status: str) -> int:
-        products = cls.load_products()
-        id_set = set(ids)
         updated_count = 0
-        for idx, p in enumerate(products):
-            if p.get("id") in id_set or str(p.get("providerCode")) in id_set:
-                p["status"] = status
-                products[idx] = p
-                updated_count += 1
-        if updated_count > 0:
-            cls.save_products()
+        try:
+            db = SessionLocal()
+            try:
+                prods = db.query(Product).filter((Product.id.in_(ids)) | (Product.provider_code.in_(ids))).all()
+                for p in prods:
+                    p.status = status
+                    p.updated_at = datetime.utcnow()
+                    updated_count += 1
+                db.commit()
+            finally:
+                db.close()
+        except Exception as e:
+            print(f"[CatalogService] Error bulk updating products in Supabase: {e}")
+
+        cls.load_products(force_reload=True)
         return updated_count
 
     @classmethod
     def bulk_delete(cls, ids: List[str]) -> int:
-        products = cls.load_products()
-        id_set = set(ids)
-        initial_len = len(products)
-        cls._cached_products = [
-            p for p in products
-            if p.get("id") not in id_set and str(p.get("providerCode")) not in id_set
-        ]
-        deleted_count = initial_len - len(cls._cached_products)
-        if deleted_count > 0:
-            cls.save_products()
+        deleted_count = 0
+        try:
+            db = SessionLocal()
+            try:
+                prods = db.query(Product).filter((Product.id.in_(ids)) | (Product.provider_code.in_(ids))).all()
+                for p in prods:
+                    db.delete(p)
+                    deleted_count += 1
+                db.commit()
+            finally:
+                db.close()
+        except Exception as e:
+            print(f"[CatalogService] Error bulk deleting products from Supabase: {e}")
+
+        cls.load_products(force_reload=True)
         return deleted_count
 
     @classmethod
@@ -453,65 +569,131 @@ class CatalogService:
     def import_vip_service(cls, payload: Dict[str, Any]) -> Dict[str, Any]:
         code = str(payload.get("code") or payload.get("providerCode") or "").strip()
         name = payload.get("name", "").strip()
-        price = float(payload.get("price", 0))
-        provider_price = float(payload.get("providerPrice", 0))
+        price = int(payload.get("price", 0))
+        provider_price = int(payload.get("providerPrice", 0))
         stock = int(payload.get("stock", 100))
         category_name = payload.get("categoryName", "Digital Services")
         description = payload.get("description", "")
         status = payload.get("status", "active")
         image_url = payload.get("imageUrl") or "/images/default-product-banner.png"
 
-        products = cls.load_products()
-        existing = next((p for p in products if str(p.get("providerCode", "")).upper() == code.upper()), None)
-
         margin = price - provider_price if provider_price > 0 else 0
         pct = round((margin / provider_price) * 100) if provider_price > 0 else 0
-
-        if existing:
-            existing["name"] = name or existing.get("name")
-            existing["price"] = price or existing.get("price")
-            existing["priceFormatted"] = f"Rp {existing['price']:,.0f}".replace(",", ".")
-            existing["providerPrice"] = provider_price or existing.get("providerPrice")
-            existing["profitMargin"] = margin
-            existing["profitPercentage"] = pct
-            existing["stock"] = stock
-            existing["status"] = status
-            existing["imageUrl"] = image_url or existing.get("imageUrl")
-            cls.save_products()
-            return existing
-
         cat_id = f"cat-{category_name.lower().replace(' ', '-')}"
-        new_product = {
-            "id": f"vip-{code.lower().replace(' ', '-')}",
-            "name": name,
-            "category": {"id": cat_id, "name": category_name},
-            "price": price,
-            "priceFormatted": f"Rp {price:,.0f}".replace(",", "."),
-            "providerPrice": provider_price,
-            "stock": stock,
-            "status": status,
-            "description": description,
-            "features": [
-                f"Kode Layanan: {code}",
-                "Proses Instan Otomatis",
-                "Garansi Penuh 100%",
-            ],
-            "imageUrl": image_url,
-            "popular": False,
-            "provider": "vip-reseller",
-            "providerCode": code,
-            "providerName": name,
-            "providerStatus": "available",
-            "profitMargin": margin,
-            "profitPercentage": pct,
-            "guaranteeTitle": "Garansi Penuh",
-            "guaranteeDesc": "Jaminan ganti akun 100%",
-            "processTitle": "Proses Instan",
-            "processDesc": "1 - 15 menit selesai",
-            "privacyTitle": "Akun Private",
-            "privacyDesc": "Ruang kerja aman & personal",
-        }
 
-        products.insert(0, new_product)
-        cls.save_products()
-        return new_product
+        prod_id = f"vip-{code.lower().replace(' ', '-')}"
+
+        try:
+            db = SessionLocal()
+            try:
+                existing = db.query(Product).filter((Product.provider_code.ilike(code)) | (Product.id == prod_id)).first()
+                if existing:
+                    existing.name = name or existing.name
+                    existing.price = price or existing.price
+                    existing.price_formatted = f"Rp {existing.price:,.0f}".replace(",", ".")
+                    existing.provider_price = provider_price or existing.provider_price
+                    existing.profit_margin = margin
+                    existing.profit_percentage = pct
+                    existing.stock = stock
+                    existing.status = status
+                    if image_url:
+                        existing.image_url = image_url
+                    existing.updated_at = datetime.utcnow()
+                    db.commit()
+                    db.refresh(existing)
+                    res_dict = cls._normalize_product(existing.to_dict())
+                else:
+                    new_prod = Product(
+                        id=prod_id,
+                        name=name,
+                        category_id=cat_id,
+                        category_name=category_name,
+                        brand="VIP Reseller",
+                        price=price,
+                        price_formatted=f"Rp {price:,.0f}".replace(",", "."),
+                        provider_price=provider_price,
+                        stock=stock,
+                        status=status,
+                        description=description,
+                        features=[
+                            f"Kode Layanan: {code}",
+                            "Proses Instan Otomatis",
+                            "Garansi Penuh 100%",
+                        ],
+                        image_url=image_url,
+                        popular=False,
+                        provider="vip-reseller",
+                        provider_code=code,
+                        provider_name=name,
+                        provider_status="available",
+                        profit_margin=margin,
+                        profit_percentage=pct,
+                        guarantee_title="Garansi Penuh",
+                        guarantee_desc="Jaminan ganti akun 100%",
+                        process_title="Proses Instan",
+                        process_desc="1 - 15 menit selesai",
+                        privacy_title="Akun Private",
+                        privacy_desc="Ruang kerja aman & personal",
+                        created_at=datetime.utcnow(),
+                        updated_at=datetime.utcnow(),
+                    )
+                    db.add(new_prod)
+                    db.commit()
+                    db.refresh(new_prod)
+                    res_dict = cls._normalize_product(new_prod.to_dict())
+            finally:
+                db.close()
+        except Exception as e:
+            print(f"[CatalogService] Error importing VIP service to Supabase: {e}")
+            raise e
+
+        cls.load_products(force_reload=True)
+        return res_dict
+
+    @classmethod
+    def find_product_by_id_or_name(
+        cls,
+        product_id: Optional[str] = None,
+        product_name: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        products = cls.load_products()
+
+        if product_id:
+            pid_clean = str(product_id).strip().lower()
+            for p in products:
+                if (
+                    str(p.get("id") or "").strip().lower() == pid_clean
+                    or str(p.get("providerCode") or "").strip().lower() == pid_clean
+                ):
+                    return p
+
+        if product_name:
+            import re
+            name_clean = re.sub(r'[^a-zA-Z0-9]', '', product_name).lower()
+            tokens = set(re.findall(r'[a-zA-Z0-9]+', product_name.lower()))
+            meaningful_tokens = {
+                t for t in tokens
+                if t not in ['dan', 'atau', 'the', 'and', 'or', '1', 'bulan', 'tahun', 'resmi', 'private', 'garansi']
+            }
+
+            best_match = None
+            best_score = 0
+
+            for p in products:
+                p_name = str(p.get("name") or "")
+                p_clean = re.sub(r'[^a-zA-Z0-9]', '', p_name).lower()
+                if name_clean == p_clean:
+                    return p
+                if len(name_clean) >= 5 and (name_clean in p_clean or p_clean in name_clean):
+                    return p
+
+                p_tokens = set(re.findall(r'[a-zA-Z0-9]+', p_name.lower()))
+                common = meaningful_tokens.intersection(p_tokens)
+                if len(common) >= 2 and len(common) > best_score:
+                    best_score = len(common)
+                    best_match = p
+
+            if best_match and best_score >= 2:
+                return best_match
+
+        return None

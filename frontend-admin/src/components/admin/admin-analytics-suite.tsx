@@ -30,6 +30,62 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 
+interface SalesTimeSeriesItem {
+  date: string;
+  revenue: number;
+  orders: number;
+}
+
+interface ProductPerformanceItem {
+  id: string;
+  name: string;
+  category: string;
+  provider: string;
+  unitsSold: number;
+  revenue: number;
+  cogs: number;
+  profit: number;
+  marginPercent: number;
+  refundRate: number;
+  conversionRate: number;
+  status: string;
+}
+
+interface AffiliatePerformanceItem {
+  code: string;
+  partnerName: string;
+  clicks: number;
+  referralOrders: number;
+  conversionRate: number;
+  generatedRevenue: number;
+  commissionEarned: number;
+  activeStatus: string;
+}
+
+interface FinancialReportData {
+  period: string;
+  grossRevenue: number;
+  discounts: number;
+  netRevenue: number;
+  cogs: number;
+  grossProfit: number;
+  pgFees: number;
+  commissions: number;
+  infraOpex: number;
+  totalOpex: number;
+  netOperatingProfit: number;
+  ceoShare: number;
+  cooShare: number;
+  businessReserve: number;
+}
+
+interface AnalyticsSuiteData {
+  salesTimeSeries: SalesTimeSeriesItem[];
+  productPerformanceData: ProductPerformanceItem[];
+  affiliatePerformanceData: AffiliatePerformanceItem[];
+  financialReport: FinancialReportData;
+}
+
 interface AdminAnalyticsSuiteProps {
   activeTab: 'sales-summary' | 'product-performance' | 'affiliate-performance' | 'financial-reports';
   onNotify?: (msg: string) => void;
@@ -40,120 +96,27 @@ export function AdminAnalyticsSuite({ activeTab, onNotify }: AdminAnalyticsSuite
   const [selectedPeriod, setSelectedPeriod] = useState<'today' | '7d' | '30d' | 'month' | 'year'>('30d');
   const [productSearch, setProductSearch] = useState('');
   const [productCategoryFilter, setProductCategoryFilter] = useState('all');
-  const [selectedProductDetail, setSelectedProductDetail] = useState<any | null>(null);
-  const [liveAffiliates, setLiveAffiliates] = useState<any[]>([]);
+  const [selectedProductDetail, setSelectedProductDetail] = useState<ProductPerformanceItem | null>(null);
+  const [suiteData, setSuiteData] = useState<AnalyticsSuiteData | null>(null);
+  const [isLoadingSuite, setIsLoadingSuite] = useState(false);
 
   useEffect(() => {
-    fetch('/api/v1/admin/affiliates')
+    setIsLoadingSuite(true);
+    fetch('/api/v1/admin/analytics/suite')
       .then((res) => res.json())
       .then((json) => {
-        if (json.success && Array.isArray(json.data)) {
-          setLiveAffiliates(json.data);
+        if (json.success && json.data) {
+          setSuiteData(json.data);
         }
       })
-      .catch((err) => console.warn('Failed to fetch live affiliates:', err));
+      .catch((err) => console.warn('Failed to fetch analytics suite data:', err))
+      .finally(() => setIsLoadingSuite(false));
   }, []);
 
-  // Time-Series Sales Data (30-day simulation)
-  const salesTimeSeries = [
-    { date: '01 Sep', revenue: 620000, orders: 18 },
-    { date: '05 Sep', revenue: 840000, orders: 24 },
-    { date: '10 Sep', revenue: 1120000, orders: 32 },
-    { date: '15 Sep', revenue: 950000, orders: 28 },
-    { date: '20 Sep', revenue: 1450000, orders: 41 },
-    { date: '25 Sep', revenue: 1980000, orders: 58 },
-    { date: '30 Sep', revenue: 2450000, orders: 72 },
-    { date: '01 Okt', revenue: 1850000, orders: 51 },
-  ];
-
-  // Top Products Merchandise Matrix
-  const productPerformanceData = [
-    {
-      id: 'p-1',
-      name: 'Canva Pro 1 Bulan Private',
-      category: 'Desain & Grafis',
-      provider: 'VIP Reseller',
-      unitsSold: 284,
-      revenue: 7100000,
-      cogs: 3692000,
-      profit: 3408000,
-      marginPercent: 48.0,
-      refundRate: 0.3,
-      conversionRate: 14.2,
-      status: 'active',
-    },
-    {
-      id: 'p-2',
-      name: 'Gemini AI Pro 1 Tahun Workspace',
-      category: 'AI Tools',
-      provider: 'VIP Reseller',
-      unitsSold: 142,
-      revenue: 4402000,
-      cogs: 2556000,
-      profit: 1846000,
-      marginPercent: 41.9,
-      refundRate: 0.7,
-      conversionRate: 12.8,
-      status: 'active',
-    },
-    {
-      id: 'p-3',
-      name: 'Netflix Premium 1 Bulan UHD Private',
-      category: 'Streaming & Hiburan',
-      provider: 'VIP Reseller',
-      unitsSold: 118,
-      revenue: 3776000,
-      cogs: 2360000,
-      profit: 1416000,
-      marginPercent: 37.5,
-      refundRate: 1.2,
-      conversionRate: 10.5,
-      status: 'active',
-    },
-    {
-      id: 'p-4',
-      name: 'YouTube Premium 3 Bulan No ADS',
-      category: 'Streaming & Hiburan',
-      provider: 'VIP Reseller',
-      unitsSold: 96,
-      revenue: 1728000,
-      cogs: 1056000,
-      profit: 672000,
-      marginPercent: 38.9,
-      refundRate: 0.0,
-      conversionRate: 11.4,
-      status: 'active',
-    },
-    {
-      id: 'p-5',
-      name: 'ChatGPT Plus 1 Bulan Akun Shared',
-      category: 'AI Tools',
-      provider: 'Internal Vault',
-      unitsSold: 88,
-      revenue: 3080000,
-      cogs: 1540000,
-      profit: 1540000,
-      marginPercent: 50.0,
-      refundRate: 1.5,
-      conversionRate: 8.9,
-      status: 'active',
-    },
-  ];
-
-  // Affiliate Partner Telemetry Matrix (Derived from live affiliates in real-time)
-  const affiliatePerformanceData = liveAffiliates.map((a) => ({
-    code: a.code,
-    partnerName: a.name,
-    clicks: a.totalClicks || 0,
-    referralOrders: a.totalOrders || 0,
-    conversionRate:
-      a.totalClicks > 0
-        ? Number(((a.totalOrders / a.totalClicks) * 100).toFixed(1))
-        : 0,
-    generatedRevenue: a.totalRevenue || 0,
-    commissionEarned: (a.unpaidCommission || 0) + (a.paidCommission || 0),
-    activeStatus: a.tier || 'Standard (10%)',
-  }));
+  const salesTimeSeries = suiteData?.salesTimeSeries || [];
+  const productPerformanceData = suiteData?.productPerformanceData || [];
+  const affiliatePerformanceData = suiteData?.affiliatePerformanceData || [];
+  const financialReport = suiteData?.financialReport;
 
 
   // =========================================================================
@@ -209,74 +172,96 @@ export function AdminAnalyticsSuite({ activeTab, onNotify }: AdminAnalyticsSuite
         </div>
 
         {/* 4 Executive KPI Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-surface border border-border rounded-xl p-4 shadow-xs">
-            <span className="text-[11px] text-foreground-muted block mb-1">Gross Revenue (Omzet)</span>
-            <div className="text-2xl font-bold text-foreground font-mono">Rp 22.840.000</div>
-            <div className="flex items-center gap-1 text-[10px] text-status-success font-semibold mt-1">
-              <TrendingUp className="w-3 h-3" />
-              <span>+18.4% vs periode lalu</span>
-            </div>
-          </div>
+        {(() => {
+          const totalRev = financialReport?.grossRevenue ?? salesTimeSeries.reduce((a, b) => a + (b.revenue || 0), 0);
+          const totalOrders = salesTimeSeries.reduce((a, b) => a + (b.orders || 0), 0);
+          const aov = totalOrders > 0 ? Math.round(totalRev / totalOrders) : 0;
+          const totalUnits = productPerformanceData.length > 0 ? productPerformanceData.reduce((a, b) => a + (b.unitsSold || 0), 0) : totalOrders;
+          const maxRev = Math.max(...salesTimeSeries.map((s) => s.revenue || 0), 50000);
 
-          <div className="bg-surface border border-border rounded-xl p-4 shadow-xs">
-            <span className="text-[11px] text-foreground-muted block mb-1">Total Pesanan Berhasil</span>
-            <div className="text-2xl font-bold text-foreground font-mono">684 Orders</div>
-            <div className="flex items-center gap-1 text-[10px] text-status-success font-semibold mt-1">
-              <TrendingUp className="w-3 h-3" />
-              <span>+12.1% peningkatan</span>
-            </div>
-          </div>
-
-          <div className="bg-surface border border-border rounded-xl p-4 shadow-xs">
-            <span className="text-[11px] text-foreground-muted block mb-1">Average Order Value (AOV)</span>
-            <div className="text-2xl font-bold text-primary font-mono">Rp 33.390</div>
-            <span className="text-[10px] text-foreground-muted">Rata-rata keranjang per checkout</span>
-          </div>
-
-          <div className="bg-surface border border-border rounded-xl p-4 shadow-xs">
-            <span className="text-[11px] text-foreground-muted block mb-1">Pelanggan Aktif Belanja</span>
-            <div className="text-2xl font-bold text-foreground font-mono">492 Konsumen</div>
-            <span className="text-[10px] text-status-success font-semibold">68% Repeat Buyers</span>
-          </div>
-        </div>
-
-        {/* Time-Series Chart Interactive Container */}
-        <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-bold text-sm text-foreground">Grafik Volume Transaksi & Pertumbuhan Omzet</h3>
-              <p className="text-xs text-foreground-muted">Distribusi pendapatan harian terverifikasi sistem</p>
-            </div>
-            <Badge variant="outline" className="text-xs font-mono text-status-success border-status-success/30">
-              Pertumbuhan Positif
-            </Badge>
-          </div>
-
-          {/* Bar Visualizer */}
-          <div className="pt-6 pb-2 px-2">
-            <div className="h-44 flex items-end gap-3 sm:gap-6 border-b border-border/70 pb-2">
-              {salesTimeSeries.map((s, idx) => {
-                const heightPercent = Math.min(100, Math.max(15, Math.round((s.revenue / 2600000) * 100)));
-                return (
-                  <div key={idx} className="flex-1 flex flex-col items-center gap-2 group relative">
-                    {/* Tooltip on hover */}
-                    <div className="absolute -top-10 opacity-0 group-hover:opacity-100 transition-opacity bg-ink text-white text-[10px] py-1 px-2 rounded pointer-events-none whitespace-nowrap shadow-md z-20 font-mono">
-                      Rp {s.revenue.toLocaleString('id-ID')} ({s.orders} orders)
-                    </div>
-                    <div
-                      className="w-full bg-primary/20 hover:bg-primary transition-all rounded-t-sm group-hover:shadow-lg group-hover:shadow-primary/20 cursor-pointer"
-                      style={{ height: `${heightPercent}%` }}
-                    />
-                    <span className="text-[10px] font-mono text-foreground-muted whitespace-nowrap">
-                      {s.date}
-                    </span>
+          return (
+            <>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-surface border border-border rounded-xl p-4 shadow-xs">
+                  <span className="text-[11px] text-foreground-muted block mb-1">Gross Revenue (Omzet)</span>
+                  <div className="text-2xl font-bold text-foreground font-mono">
+                    Rp {totalRev.toLocaleString('id-ID')}
                   </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
+                  <div className="flex items-center gap-1 text-[10px] text-status-success font-semibold mt-1">
+                    <TrendingUp className="w-3 h-3" />
+                    <span>Terverifikasi Gateway</span>
+                  </div>
+                </div>
+
+                <div className="bg-surface border border-border rounded-xl p-4 shadow-xs">
+                  <span className="text-[11px] text-foreground-muted block mb-1">Total Pesanan Berhasil</span>
+                  <div className="text-2xl font-bold text-foreground font-mono">{totalOrders} Orders</div>
+                  <div className="flex items-center gap-1 text-[10px] text-status-success font-semibold mt-1">
+                    <TrendingUp className="w-3 h-3" />
+                    <span>Lunas & Selesai</span>
+                  </div>
+                </div>
+
+                <div className="bg-surface border border-border rounded-xl p-4 shadow-xs">
+                  <span className="text-[11px] text-foreground-muted block mb-1">Average Order Value (AOV)</span>
+                  <div className="text-2xl font-bold text-primary font-mono">
+                    Rp {aov.toLocaleString('id-ID')}
+                  </div>
+                  <span className="text-[10px] text-foreground-muted">Rata-rata keranjang per checkout</span>
+                </div>
+
+                <div className="bg-surface border border-border rounded-xl p-4 shadow-xs">
+                  <span className="text-[11px] text-foreground-muted block mb-1">Volume Unit Terjual</span>
+                  <div className="text-2xl font-bold text-foreground font-mono">{totalUnits} Unit</div>
+                  <span className="text-[10px] text-status-success font-semibold">Distribusi Katalog</span>
+                </div>
+              </div>
+
+              {/* Time-Series Chart Interactive Container */}
+              <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-bold text-sm text-foreground">Grafik Volume Transaksi & Pertumbuhan Omzet</h3>
+                    <p className="text-xs text-foreground-muted">Distribusi pendapatan harian terverifikasi sistem</p>
+                  </div>
+                  <Badge variant="outline" className="text-xs font-mono text-status-success border-status-success/30">
+                    Real-Time SSOT
+                  </Badge>
+                </div>
+
+                {/* Bar Visualizer */}
+                <div className="pt-6 pb-2 px-2">
+                  <div className="h-44 flex items-end gap-3 sm:gap-6 border-b border-border/70 pb-2">
+                    {salesTimeSeries.length === 0 ? (
+                      <div className="w-full h-full flex items-center justify-center text-xs text-foreground-muted">
+                        Belum ada data penjualan tercatat
+                      </div>
+                    ) : (
+                      salesTimeSeries.map((s, idx) => {
+                        const heightPercent = Math.min(100, Math.max(15, Math.round((s.revenue / maxRev) * 100)));
+                        return (
+                          <div key={idx} className="flex-1 flex flex-col items-center gap-2 group relative">
+                            {/* Tooltip on hover */}
+                            <div className="absolute -top-10 opacity-0 group-hover:opacity-100 transition-opacity bg-ink text-white text-[10px] py-1 px-2 rounded pointer-events-none whitespace-nowrap shadow-md z-20 font-mono">
+                              Rp {s.revenue.toLocaleString('id-ID')} ({s.orders} orders)
+                            </div>
+                            <div
+                              className="w-full bg-primary/20 hover:bg-primary transition-all rounded-t-sm group-hover:shadow-lg group-hover:shadow-primary/20 cursor-pointer"
+                              style={{ height: `${heightPercent}%` }}
+                            />
+                            <span className="text-[10px] font-mono text-foreground-muted whitespace-nowrap">
+                              {s.date}
+                            </span>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              </div>
+            </>
+          );
+        })()}
 
         {/* Breakdown Triple Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -732,7 +717,9 @@ export function AdminAnalyticsSuite({ activeTab, onNotify }: AdminAnalyticsSuite
         <div className="border-b border-border pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <h3 className="text-base font-bold text-foreground">LAPORAN LABA RUGI (INCOME STATEMENT)</h3>
-            <p className="text-xs text-foreground-muted">Periode: 01 September 2026 – 30 September 2026 • Standar Akuntansi Asterra</p>
+            <p className="text-xs text-foreground-muted">
+              Periode: {financialReport?.period || '01 Oktober 2026 - 10 Oktober 2026'} • Standar Akuntansi Asterra
+            </p>
           </div>
           <Badge variant="outline" className="w-fit text-xs font-mono text-primary border-primary/30">
             Status: Telah Diaudit
@@ -747,20 +734,22 @@ export function AdminAnalyticsSuite({ activeTab, onNotify }: AdminAnalyticsSuite
             </div>
             <div className="pl-4 space-y-1.5">
               <div className="flex justify-between py-1 border-b border-border/50">
-                <span className="text-foreground">Penjualan Akun AI Tools & Productivity</span>
-                <span className="font-mono text-foreground font-medium">Rp 7.760.000</span>
+                <span className="text-foreground">Akumulasi Penjualan Bruto Toko</span>
+                <span className="font-mono text-foreground font-medium">
+                  Rp {(financialReport?.grossRevenue ?? 0).toLocaleString('id-ID')}
+                </span>
               </div>
               <div className="flex justify-between py-1 border-b border-border/50">
-                <span className="text-foreground">Penjualan Lisensi Desain & Grafis (Canva/CapCut)</span>
-                <span className="font-mono text-foreground font-medium">Rp 9.590.000</span>
-              </div>
-              <div className="flex justify-between py-1 border-b border-border/50">
-                <span className="text-foreground">Penjualan Streaming & Hiburan (Netflix/Spotify/YouTube)</span>
-                <span className="font-mono text-foreground font-medium">Rp 5.490.000</span>
+                <span className="text-foreground-muted">Diskon Kupon & Potongan Referral</span>
+                <span className="font-mono text-status-error">
+                  -Rp {(financialReport?.discounts ?? 0).toLocaleString('id-ID')}
+                </span>
               </div>
               <div className="flex justify-between pt-1 font-bold text-foreground">
-                <span>TOTAL PENDAPATAN PENJUALAN</span>
-                <span className="font-mono text-status-success font-bold">Rp 22.840.000</span>
+                <span>TOTAL PENDAPATAN BERSIH (NET REVENUE)</span>
+                <span className="font-mono text-status-success font-bold">
+                  Rp {(financialReport?.netRevenue ?? 0).toLocaleString('id-ID')}
+                </span>
               </div>
             </div>
           </div>
@@ -773,15 +762,15 @@ export function AdminAnalyticsSuite({ activeTab, onNotify }: AdminAnalyticsSuite
             <div className="pl-4 space-y-1.5">
               <div className="flex justify-between py-1 border-b border-border/50">
                 <span className="text-foreground-muted">Biaya Pengambilan Saldo API VIP Reseller</span>
-                <span className="font-mono text-status-error">-Rp 10.120.000</span>
-              </div>
-              <div className="flex justify-between py-1 border-b border-border/50">
-                <span className="text-foreground-muted">Biaya Akun Private Internal Vault</span>
-                <span className="font-mono text-status-error">-Rp 1.540.000</span>
+                <span className="font-mono text-status-error">
+                  -Rp {(financialReport?.cogs ?? 0).toLocaleString('id-ID')}
+                </span>
               </div>
               <div className="flex justify-between pt-1 font-bold">
                 <span className="text-foreground">TOTAL HARGA POKOK PENJUALAN</span>
-                <span className="font-mono text-status-error">-Rp 11.660.000</span>
+                <span className="font-mono text-status-error">
+                  -Rp {(financialReport?.cogs ?? 0).toLocaleString('id-ID')}
+                </span>
               </div>
             </div>
           </div>
@@ -789,7 +778,9 @@ export function AdminAnalyticsSuite({ activeTab, onNotify }: AdminAnalyticsSuite
           {/* Gross Profit Subtotal */}
           <div className="p-3 rounded-lg bg-surface-raised border border-border flex justify-between font-bold text-sm">
             <span className="text-foreground">LABA KOTOR (GROSS PROFIT)</span>
-            <span className="font-mono text-primary">Rp 11.180.000 (48.9%)</span>
+            <span className="font-mono text-primary">
+              Rp {(financialReport?.grossProfit ?? 0).toLocaleString('id-ID')} ({financialReport?.netRevenue ? Math.round(((financialReport.grossProfit ?? 0) / financialReport.netRevenue) * 100) : 0}%)
+            </span>
           </div>
 
           {/* Section 3: Operating Expenses */}
@@ -800,27 +791,21 @@ export function AdminAnalyticsSuite({ activeTab, onNotify }: AdminAnalyticsSuite
             <div className="pl-4 space-y-1.5">
               <div className="flex justify-between py-1 border-b border-border/50">
                 <span className="text-foreground-muted">Biaya Transaksi Payment Gateway Tripay (0.7% + QRIS)</span>
-                <span className="font-mono text-status-error">-Rp 195.000</span>
+                <span className="font-mono text-status-error">
+                  -Rp {(financialReport?.pgFees ?? 0).toLocaleString('id-ID')}
+                </span>
               </div>
               <div className="flex justify-between py-1 border-b border-border/50">
                 <span className="text-foreground-muted">Komisi Mitra Affiliate & Sales Referrals</span>
-                <span className="font-mono text-status-error">-Rp 1.336.200</span>
-              </div>
-              <div className="flex justify-between py-1 border-b border-border/50">
-                <span className="text-foreground-muted">Server Hosting, Domain & Vercel Pro Infrastructure</span>
-                <span className="font-mono text-status-error">-Rp 350.000</span>
-              </div>
-              <div className="flex justify-between py-1 border-b border-border/50">
-                <span className="text-foreground-muted">WhatsApp Business Notification Gateway (Fonnte API)</span>
-                <span className="font-mono text-status-error">-Rp 95.000</span>
-              </div>
-              <div className="flex justify-between py-1 border-b border-border/50">
-                <span className="text-foreground-muted">Pengembalian Dana / Klaim Refund Garansi</span>
-                <span className="font-mono text-status-error">-Rp 57.000</span>
+                <span className="font-mono text-status-error">
+                  -Rp {(financialReport?.commissions ?? 0).toLocaleString('id-ID')}
+                </span>
               </div>
               <div className="flex justify-between pt-1 font-bold">
                 <span className="text-foreground">TOTAL BEBAN OPERASIONAL</span>
-                <span className="font-mono text-status-error">-Rp 2.033.200</span>
+                <span className="font-mono text-status-error">
+                  -Rp {(financialReport?.totalOpex ?? 0).toLocaleString('id-ID')}
+                </span>
               </div>
             </div>
           </div>
@@ -829,11 +814,40 @@ export function AdminAnalyticsSuite({ activeTab, onNotify }: AdminAnalyticsSuite
           <div className="p-4 rounded-xl bg-status-success/10 border border-status-success/30 flex justify-between font-bold text-base mt-4">
             <div className="space-y-0.5">
               <span className="text-status-success block">LABA BERSIH OPERASIONAL (NET PROFIT)</span>
-              <span className="text-[11px] text-foreground-muted font-normal">Margin Bersih Akhir: 40.0% dari Omzet</span>
+              <span className="text-[11px] text-foreground-muted font-normal">
+                Margin Bersih: {financialReport?.netRevenue ? Math.round(((financialReport.netOperatingProfit ?? 0) / financialReport.netRevenue) * 100) : 0}% dari Net Revenue
+              </span>
             </div>
             <span className="font-mono text-status-success text-xl self-center font-extrabold">
-              Rp 9.146.800
+              Rp {(financialReport?.netOperatingProfit ?? 0).toLocaleString('id-ID')}
             </span>
+          </div>
+
+          {/* Profit Sharing SSOT Allocation */}
+          <div className="p-4 rounded-xl bg-surface-raised border border-border space-y-2 mt-2">
+            <div className="font-bold text-foreground text-[11px] uppercase tracking-wider">
+              4. ALOKASI BAGI HASIL BERSIH (SSOT PROFIT SHARING)
+            </div>
+            <div className="grid grid-cols-3 gap-2 pt-1 text-center font-mono">
+              <div className="p-2 rounded bg-surface border border-border">
+                <span className="text-[10px] text-foreground-muted block">CEO Share (40%)</span>
+                <span className="font-bold text-primary">
+                  Rp {(financialReport?.ceoShare ?? 0).toLocaleString('id-ID')}
+                </span>
+              </div>
+              <div className="p-2 rounded bg-surface border border-border">
+                <span className="text-[10px] text-foreground-muted block">COO Share (40%)</span>
+                <span className="font-bold text-primary">
+                  Rp {(financialReport?.cooShare ?? 0).toLocaleString('id-ID')}
+                </span>
+              </div>
+              <div className="p-2 rounded bg-surface border border-border">
+                <span className="text-[10px] text-foreground-muted block">Cadangan Usaha (20%)</span>
+                <span className="font-bold text-status-success">
+                  Rp {(financialReport?.businessReserve ?? 0).toLocaleString('id-ID')}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       </div>

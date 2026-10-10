@@ -3,6 +3,9 @@ import pathlib
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional
 
+from app.core.database import SessionLocal
+from app.models.partner import SalesPartner
+
 DATA_DIR = pathlib.Path(__file__).resolve().parent.parent.parent / "data"
 PARTNERS_FILE = DATA_DIR / "supabase-partners.json"
 ORDERS_FILE = DATA_DIR / "supabase-orders.json"
@@ -13,9 +16,29 @@ class PartnerService:
 
     @classmethod
     def load_partners(cls, force_reload: bool = False) -> List[Dict[str, Any]]:
+        """
+        Loads partners directly from Supabase PostgreSQL sales_partners table.
+        Falls back to local clean JSON file if offline.
+        """
         if cls._partners is not None and not force_reload:
             return cls._partners
 
+        # 1. Try querying Supabase PostgreSQL
+        try:
+            db = SessionLocal()
+            try:
+                db_partners = db.query(SalesPartner).order_by(SalesPartner.created_at.asc()).all()
+                if db_partners:
+                    data = [p.to_dict() for p in db_partners]
+                    cls._partners = data
+                    cls.save_partners()
+                    return data
+            finally:
+                db.close()
+        except Exception as e:
+            print(f"[PartnerService] Warning: Supabase query failed, using local fallback: {e}")
+
+        # 2. Fallback to local file
         if PARTNERS_FILE.exists():
             try:
                 data = json.loads(PARTNERS_FILE.read_text(encoding="utf-8"))
@@ -23,7 +46,7 @@ class PartnerService:
                     cls._partners = data
                     return data
             except Exception as e:
-                print(f"[PartnerService] Error loading partners: {e}")
+                print(f"[PartnerService] Error loading partners fallback: {e}")
 
         cls._partners = []
         return []
