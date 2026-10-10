@@ -17,10 +17,11 @@ interface PromoBannerItem {
 }
 
 const DEFAULT_BANNER: PromoBannerItem = {
-  id: 'default-hero',
-  title: 'Program Mitra Affiliate Asterra Store - Dapatkan Komisi 10% per Penjualan',
-  imageUrl: '/images/banners/hero-banner-reseller.webp',
-  linkUrl: '/affiliate',
+  id: 'default-welcome-hero',
+  title: 'Selamat Datang di Asterra Store — Pusat Akun & Lisensi Premium Resmi Bergaransi',
+  imageUrl: '/images/banners/hero-banner-welcome.webp',
+  linkUrl: '/#katalog',
+  destinationUrl: '/#katalog',
 };
 
 export function HeroBannerSwiper() {
@@ -100,7 +101,7 @@ export function HeroBannerSwiper() {
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      <div className="relative w-full overflow-hidden rounded-xl sm:rounded-2xl md:rounded-3xl border border-[rgba(18,26,42,0.08)] shadow-xs bg-[#f0f5ff]">
+      <div className="relative w-full overflow-hidden rounded-xl sm:rounded-2xl md:rounded-3xl border border-[rgba(18,26,42,0.08)] shadow-xs bg-[#121A2A] aspect-[2640/882]">
         {/* Slides Track */}
         <div
           className="flex transition-transform duration-500 ease-out will-change-transform"

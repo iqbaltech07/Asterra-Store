@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     title: 'Program Mitra Affiliate - Asterra Store',
     description:
       'Dapatkan komisi langsung 10% dari setiap penjualan produk digital bergaransi. Daftar gratis dan kelola referral di Portal Sales.',
-    images: ['/images/banners/hero-banner-seller.webp'],
+    images: ['/images/banners/hero-banner-affiliate.webp'],
   },
 };
 
@@ -46,17 +46,17 @@ export default function AffiliatePage() {
             target="_blank"
             rel="noopener noreferrer"
             title="Daftar Program Mitra Affiliate Asterra Store - Dapatkan Komisi 10% per Penjualan"
-            className="group block relative w-full overflow-hidden rounded-xl sm:rounded-2xl md:rounded-3xl border border-[rgba(18,26,42,0.08)] shadow-xs hover:shadow-md transition-shadow bg-[#f0f5ff]"
+            className="group block relative w-full overflow-hidden rounded-xl sm:rounded-2xl md:rounded-3xl border border-[rgba(18,26,42,0.08)] shadow-xs hover:shadow-md transition-shadow bg-[#121A2A] aspect-[2640/882]"
           >
             <Image
-              src="/images/banners/hero-banner-seller.webp"
+              src="/images/banners/hero-banner-affiliate.webp"
               alt="Program Affiliate Asterra Store - Dapatkan Komisi 10% Langsung dari Setiap Transaksi Produk Digital"
               width={2640}
               height={882}
               priority
               quality={95}
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 1320px"
-              className="w-full h-auto block rounded-xl sm:rounded-2xl md:rounded-3xl object-cover sm:object-contain transition-transform duration-300 group-hover:scale-[1.004]"
+              className="w-full h-auto block rounded-xl sm:rounded-2xl md:rounded-3xl object-contain transition-transform duration-300 group-hover:scale-[1.004]"
             />
           </a>
         </section>

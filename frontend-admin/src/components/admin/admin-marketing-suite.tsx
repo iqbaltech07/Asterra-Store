@@ -26,6 +26,11 @@ import {
   ArrowRight,
   AlertTriangle,
   Loader2,
+  ChevronLeft,
+  ChevronRight,
+  Info,
+  X,
+  Check,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -138,29 +143,35 @@ const INITIAL_CAMPAIGNS: CampaignItem[] = [
 
 const INITIAL_BANNERS: BannerItem[] = [
   {
-    id: 'ban-1',
+    id: 'ban-affiliate',
     type: 'hero',
-    title: 'Akses Premium Resmi & Bergaransi',
-    description: 'Beli akun Canva Pro, Gemini AI, Netflix, dan Spotify dengan proses instan 1 menit.',
-    ctaText: 'Eksplor Katalog',
-    destinationUrl: '/#katalog',
-    imageUrl: '/images/default-product-banner.png',
+    bannerType: 'hero',
+    title: 'Program Mitra Affiliate Asterra Store',
+    description: 'Rekomendasikan produk lisensi digital resmi, raih komisi 10% per transaksi langsung ke rekening.',
+    ctaText: 'Daftar Affiliate',
+    destinationUrl: '/daftar-sales',
+    linkUrl: '/daftar-sales',
+    imageUrl: '/images/banners/hero-banner-affiliate.webp',
     displayOrder: 1,
     status: 'active',
-    scheduledUntil: '2026-12-31',
+    isActive: true,
+    scheduledUntil: '2027-12-31',
     clickCount: 1420,
   },
   {
-    id: 'ban-2',
-    type: 'promo-bar',
-    title: '⚡ Flash Promo 10% Diskon Pengguna Baru',
-    description: 'Gunakan kupon AST-NEWUSER pada halaman checkout tanpa minimal transaksi!',
-    ctaText: 'Salin Kode',
-    destinationUrl: '/#promo',
-    imageUrl: '',
+    id: 'ban-welcome',
+    type: 'hero',
+    bannerType: 'hero',
+    title: 'Selamat Datang di Asterra Store — Akses Akun & Lisensi Premium',
+    description: 'Beli akun Canva Pro, Gemini AI, Netflix, dan Spotify dengan proses instan 1 menit.',
+    ctaText: 'Eksplor Katalog',
+    destinationUrl: '/#katalog',
+    linkUrl: '/#katalog',
+    imageUrl: '/images/banners/hero-banner-welcome.webp',
     displayOrder: 2,
     status: 'active',
-    scheduledUntil: '2026-10-31',
+    isActive: true,
+    scheduledUntil: '2027-12-31',
     clickCount: 890,
   },
   {
@@ -173,7 +184,8 @@ const INITIAL_BANNERS: BannerItem[] = [
     imageUrl: '',
     displayOrder: 3,
     status: 'active',
-    scheduledUntil: '2026-12-31',
+    isActive: true,
+    scheduledUntil: '2027-12-31',
     clickCount: 340,
   },
 ];
@@ -207,6 +219,9 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
   const [isSavingBanner, setIsSavingBanner] = useState(false);
   const [stagedBannerFile, setStagedBannerFile] = useState<File | null>(null);
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('desktop');
+  const [previewSlideIndex, setPreviewSlideIndex] = useState(0);
+  const [isPreviewPaused, setIsPreviewPaused] = useState(false);
+  const [isSpecGuideOpen, setIsSpecGuideOpen] = useState(false);
   const [isBannerModalOpen, setIsBannerModalOpen] = useState(false);
   const [editingBanner, setEditingBanner] = useState<BannerItem | null>(null);
 
@@ -216,7 +231,7 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
   const [banDesc, setBanDesc] = useState('');
   const [banCta, setBanCta] = useState('Beli Sekarang');
   const [banUrl, setBanUrl] = useState('/#katalog');
-  const [banImageUrl, setBanImageUrl] = useState('/images/default-product-banner.png');
+  const [banImageUrl, setBanImageUrl] = useState('/images/banners/hero-banner-welcome.webp');
   const [banOrder, setBanOrder] = useState(1);
   const [banSchedule, setBanSchedule] = useState('');
   const [banIsActive, setBanIsActive] = useState(true);
@@ -804,6 +819,38 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
   // =========================================================================
   // 2. BANNERS & STOREFRONT CMS TAB
   // =========================================================================
+  // Active Hero Banners & Live Interactive Preview Calculations
+  const activeHeroBanners = banners.filter(
+    (b) => (b.type === 'hero' || b.bannerType === 'hero') && (b.status === 'active' || b.isActive)
+  );
+  const fallbackWelcomeBanner: BannerItem = {
+    id: 'default-welcome',
+    title: 'Selamat Datang di Asterra Store — Akses Akun & Lisensi Premium Resmi',
+    description: 'Layanan akun digital Canva, Netflix, Gemini AI terpercaya nomor 1.',
+    ctaText: 'Eksplor Katalog',
+    destinationUrl: '/#katalog',
+    linkUrl: '/#katalog',
+    imageUrl: '/images/banners/hero-banner-welcome.webp',
+    displayOrder: 1,
+    status: 'active',
+    type: 'hero',
+    bannerType: 'hero',
+    isActive: true,
+  };
+  const displayHeroBanners = activeHeroBanners.length > 0 ? activeHeroBanners : [fallbackWelcomeBanner];
+
+  // Auto-rotate live preview every 5 seconds if multiple banners exist
+  useEffect(() => {
+    if (displayHeroBanners.length <= 1 || isPreviewPaused) return;
+    const timer = setInterval(() => {
+      setPreviewSlideIndex((prev) => (prev + 1) % displayHeroBanners.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [displayHeroBanners.length, isPreviewPaused]);
+
+  const currentPreviewBanner =
+    displayHeroBanners[previewSlideIndex % displayHeroBanners.length] || displayHeroBanners[0];
+
   return (
     <div className="space-y-6">
       {/* Header Bar */}
@@ -820,7 +867,7 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
             Kelola hero banner, promotional announcement bar, featured spotlight, dan urutan tampilan tanpa perlu menyentuh kode.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {/* Device Simulator Toggle */}
           <div className="flex items-center bg-surface-raised border border-border rounded-lg p-1 text-xs">
             <button
@@ -829,7 +876,7 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
               className={`p-1.5 rounded flex items-center gap-1 transition-colors ${
                 previewDevice === 'desktop' ? 'bg-primary text-primary-foreground font-semibold shadow-xs' : 'text-foreground-muted hover:text-foreground'
               }`}
-              title="Pratinjau Layar Desktop"
+              title="Pratinjau Layar Desktop 1920px"
             >
               <Monitor className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Desktop</span>
@@ -840,12 +887,25 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
               className={`p-1.5 rounded flex items-center gap-1 transition-colors ${
                 previewDevice === 'mobile' ? 'bg-primary text-primary-foreground font-semibold shadow-xs' : 'text-foreground-muted hover:text-foreground'
               }`}
-              title="Pratinjau Layar Mobile Smartphone"
+              title="Pratinjau Layar Mobile Smartphone 390px"
             >
               <Smartphone className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Mobile</span>
             </button>
           </div>
+
+          {/* Aturan & Panduan Ukuran Banner Button */}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setIsSpecGuideOpen(true)}
+            className="text-xs gap-1.5 border-primary/30 text-primary hover:bg-primary/5 shadow-xs"
+            title="Buka panduan standar ukuran banner rasio 3:1"
+          >
+            <Info className="w-3.5 h-3.5" />
+            <span>Aturan Ukuran 3:1</span>
+          </Button>
 
           <Button size="sm" onClick={handleOpenCreateBanner} className="text-xs gap-1.5 shadow-xs">
             <Plus className="w-3.5 h-3.5" />
@@ -856,48 +916,142 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
 
       {/* Live Storefront Preview Box */}
       <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-3">
-        <div className="flex items-center justify-between text-xs">
-          <span className="font-semibold text-foreground flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-primary" />
-            <span>Live Interactive Preview (Mode {previewDevice === 'desktop' ? 'Desktop 1920px' : 'Mobile 390px'})</span>
-          </span>
-          <span className="text-[11px] text-foreground-muted">Sesuai tampilan pengunjung saat ini</span>
+        <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-foreground flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-primary" />
+              <span>Live Interactive Preview (Mode {previewDevice === 'desktop' ? 'Desktop 1920px' : 'Mobile 390px'})</span>
+            </span>
+            <Badge variant="outline" className="text-[10px] font-mono border-border bg-surface-raised">
+              Slide {displayHeroBanners.length > 0 ? `${(previewSlideIndex % displayHeroBanners.length) + 1} dari ${displayHeroBanners.length}` : '1'}
+            </Badge>
+          </div>
+          <div className="flex items-center gap-3 text-[11px] text-foreground-muted">
+            <span className="hidden sm:inline">Berganti tiap 5 detik jika ada &gt; 1 banner</span>
+            <button
+              type="button"
+              onClick={() => setIsSpecGuideOpen(true)}
+              className="text-primary hover:underline font-semibold flex items-center gap-1 cursor-pointer"
+            >
+              <Info className="w-3 h-3" />
+              Lihat Spesifikasi
+            </button>
+          </div>
         </div>
 
         {/* Viewport Simulation Box */}
-        <div className={`mx-auto transition-all duration-300 ${previewDevice === 'mobile' ? 'max-w-sm border-2 border-border/80 rounded-3xl p-3 bg-ink shadow-2xl' : 'w-full'}`}>
+        <div className={`mx-auto transition-all duration-300 ${previewDevice === 'mobile' ? 'max-w-[390px] border-4 border-zinc-800 rounded-[2.5rem] p-3.5 bg-zinc-950 shadow-2xl space-y-3' : 'w-full'}`}>
+          {/* Smartphone Simulator Top Island Notch */}
+          {previewDevice === 'mobile' && (
+            <div className="flex items-center justify-between px-2 pt-1 pb-1 text-[10px] text-zinc-400 font-mono select-none">
+              <span>09:41</span>
+              <div className="w-20 h-3.5 bg-zinc-800 rounded-full mx-auto flex items-center justify-center">
+                <div className="w-2 h-2 rounded-full bg-zinc-900 mr-2" />
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
+                <span>5G</span>
+              </div>
+            </div>
+          )}
+
           {/* Announcement Bar Top */}
-          {banners.filter((b) => b.type === 'announcement' && b.status === 'active').map((ann) => (
-            <div key={ann.id} className="mb-3 px-3 py-1.5 rounded-lg bg-primary/20 border border-primary/30 flex items-center justify-between text-[11px] text-primary">
+          {banners.filter((b) => b.type === 'announcement' && (b.status === 'active' || b.isActive)).map((ann) => (
+            <div key={ann.id} className="mb-2 px-3 py-1.5 rounded-lg bg-primary/20 border border-primary/30 flex items-center justify-between text-[11px] text-primary">
               <span className="truncate font-medium">{ann.title}</span>
-              <a href={ann.destinationUrl} className="text-primary hover:underline font-semibold ml-2 shrink-0 flex items-center gap-0.5">
-                {ann.ctaText} →
+              <a href={ann.destinationUrl || ann.linkUrl} className="text-primary hover:underline font-semibold ml-2 shrink-0 flex items-center gap-0.5">
+                {ann.ctaText || 'Lihat'} →
               </a>
             </div>
           ))}
 
-          {/* Hero Banner Showcase */}
-          <div className="relative rounded-2xl overflow-hidden border border-border/80 bg-gradient-to-r from-zinc-950 via-zinc-900 to-indigo-950/80 p-6 sm:p-8 text-foreground shadow-lg">
-            <div className="relative z-10 max-w-xl space-y-3">
-              <Badge variant="outline" className="text-[10px] font-semibold uppercase tracking-wider text-primary border-primary/40 bg-primary/10">
-                Official Asterra Store
-              </Badge>
-              <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-white leading-tight">
-                {banners.find((b) => b.type === 'hero' && b.status === 'active')?.title || 'Akses Akun Premium Bergaransi'}
-              </h1>
-              <p className="text-xs text-zinc-300 line-clamp-2">
-                {banners.find((b) => b.type === 'hero' && b.status === 'active')?.description ||
-                  'Layanan akun digital Canva, Netflix, Gemini AI terpercaya nomor 1.'}
-              </p>
-              <div className="pt-2 flex items-center gap-3">
-                <Button size="sm" className="text-xs font-semibold shadow-md">
-                  {banners.find((b) => b.type === 'hero' && b.status === 'active')?.ctaText || 'Beli Sekarang'}
-                  <ArrowRight className="w-3.5 h-3.5 ml-1" />
-                </Button>
-                <span className="text-[11px] text-zinc-400">Garansi ganti akun 100%</span>
+          {/* Real Banner Showcase Swiper */}
+          <div
+            className="group relative w-full overflow-hidden rounded-xl sm:rounded-2xl md:rounded-3xl border border-border/80 shadow-md bg-[#121A2A] aspect-[2640/882] select-none"
+            onMouseEnter={() => setIsPreviewPaused(true)}
+            onMouseLeave={() => setIsPreviewPaused(false)}
+          >
+            {/* Graphic Image Banner */}
+            <div className="relative w-full h-full overflow-hidden">
+              <img
+                src={currentPreviewBanner.imageUrl || '/images/banners/hero-banner-welcome.webp'}
+                alt={currentPreviewBanner.title}
+                className="w-full h-full object-cover sm:object-contain transition-transform duration-300 group-hover:scale-[1.004]"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = '/images/banners/hero-banner-welcome.webp';
+                }}
+              />
+
+              {/* Title & Info Pill */}
+              <div className="absolute top-2.5 left-2.5 sm:top-4 sm:left-4 z-10 flex items-center gap-1.5 pointer-events-none">
+                <span className="px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-semibold bg-black/60 text-white backdrop-blur-md border border-white/10 shadow-xs flex items-center gap-1.5">
+                  <Sparkles className="w-3 h-3 text-[#E85D3F]" />
+                  <span className="truncate max-w-[200px] sm:max-w-md">{currentPreviewBanner.title}</span>
+                </span>
               </div>
+
+              {/* Destination URL Bottom-Left */}
+              <div className="absolute bottom-2.5 left-2.5 sm:bottom-4 sm:left-4 z-10 hidden sm:flex items-center gap-1 pointer-events-none">
+                <span className="px-2 py-0.5 rounded-md text-[10px] font-mono bg-black/60 text-zinc-300 backdrop-blur-md border border-white/10">
+                  Target: {currentPreviewBanner.destinationUrl || currentPreviewBanner.linkUrl || '/#katalog'}
+                </span>
+              </div>
+
+              {/* Swiper Arrows (visible if multiple banners) */}
+              {displayHeroBanners.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setPreviewSlideIndex((prev) => (prev - 1 + displayHeroBanners.length) % displayHeroBanners.length);
+                    }}
+                    aria-label="Banner Sebelumnya"
+                    className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 w-7 h-7 sm:w-9 sm:h-9 rounded-full bg-black/60 hover:bg-black/85 text-white backdrop-blur-md flex items-center justify-center opacity-80 group-hover:opacity-100 transition-opacity cursor-pointer z-20 shadow-md"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setPreviewSlideIndex((prev) => (prev + 1) % displayHeroBanners.length);
+                    }}
+                    aria-label="Banner Selanjutnya"
+                    className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 w-7 h-7 sm:w-9 sm:h-9 rounded-full bg-black/60 hover:bg-black/85 text-white backdrop-blur-md flex items-center justify-center opacity-80 group-hover:opacity-100 transition-opacity cursor-pointer z-20 shadow-md"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </>
+              )}
+
+              {/* Dot Indicators */}
+              {displayHeroBanners.length > 1 && (
+                <div className="absolute bottom-2 sm:bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-20 px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-md">
+                  {displayHeroBanners.map((b, idx) => (
+                    <button
+                      key={b.id || idx}
+                      type="button"
+                      onClick={() => setPreviewSlideIndex(idx)}
+                      className={`transition-all duration-200 rounded-full cursor-pointer ${
+                        idx === previewSlideIndex % displayHeroBanners.length
+                          ? 'w-4 h-1.5 bg-[#E85D3F]'
+                          : 'w-1.5 h-1.5 bg-white/60 hover:bg-white'
+                      }`}
+                      title={`Ke Banner ${idx + 1}: ${b.title}`}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           </div>
+
+          {/* Smartphone Simulator Bottom Bar */}
+          {previewDevice === 'mobile' && (
+            <div className="pt-2 pb-0.5 flex justify-center">
+              <div className="w-24 h-1 bg-zinc-700 rounded-full" />
+            </div>
+          )}
         </div>
       </div>
 
@@ -1124,8 +1278,29 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
               </div>
 
               {/* Visual Banner Upload Dropzone */}
-              <div>
-                <label className="font-semibold text-foreground block mb-1">Visual Banner (Gambar)</label>
+              {/* Visual Banner Upload Dropzone with Specification Hint */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="font-semibold text-foreground block">Visual Banner (Gambar)</label>
+                  <button
+                    type="button"
+                    onClick={() => setIsSpecGuideOpen(true)}
+                    className="text-[11px] text-primary hover:underline flex items-center gap-1 font-medium cursor-pointer"
+                  >
+                    <Info className="w-3 h-3" />
+                    Standar Rasio 3:1
+                  </button>
+                </div>
+
+                <div className="p-2.5 rounded-lg bg-primary/10 border border-primary/20 text-xs flex items-start gap-2.5 text-foreground">
+                  <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                  <div className="text-[11px] leading-relaxed text-foreground-muted">
+                    <span className="font-semibold text-foreground">Standar Banner:</span> Resolusi master{' '}
+                    <strong className="text-primary font-mono font-bold">2640 x 882 px</strong> (Rasio 3:1). Pastikan teks & maskot berada di{' '}
+                    <strong className="text-foreground">Safe Zone tengah 80%</strong> agar tidak terpotong di layar HP. Format WebP/PNG maks. 5MB.
+                  </div>
+                </div>
+
                 <ImageUploadDropzone
                   value={banImageUrl}
                   onChange={(url) => setBanImageUrl(url)}
@@ -1181,6 +1356,150 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
                 </Button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Panduan & Aturan Ukuran Banner (3:1) */}
+      {isSpecGuideOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-surface border border-border rounded-2xl w-full max-w-2xl shadow-2xl p-6 space-y-5 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-start justify-between border-b border-border pb-4">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider bg-primary/15 text-primary border border-primary/25">
+                    Official Design Guidelines
+                  </span>
+                  <span className="text-[11px] text-foreground-muted">Asterra Store Hero Standards</span>
+                </div>
+                <h3 className="font-extrabold text-base sm:text-lg text-foreground tracking-tight">
+                  Aturan & Standar Ukuran Banner Etalase (Rasio 3:1)
+                </h3>
+                <p className="text-xs text-foreground-muted mt-0.5">
+                  Ikuti panduan berikut agar seluruh banner promosi tampil pas, tajam, dan tidak terpotong pada layar desktop maupun smartphone.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsSpecGuideOpen(false)}
+                className="p-1 rounded-lg text-foreground-muted hover:text-foreground hover:bg-surface-raised cursor-pointer"
+                title="Tutup Panduan"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Spec Cards Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs">
+              {/* Card 1: Rasio Canvas */}
+              <div className="bg-surface-raised border border-border/80 rounded-xl p-4 space-y-2">
+                <div className="flex items-center gap-2 text-primary font-bold">
+                  <div className="w-6 h-6 rounded-md bg-primary/15 flex items-center justify-center text-xs">1</div>
+                  <span>Rasio Aspek Baku (3 : 1)</span>
+                </div>
+                <p className="text-[11px] text-foreground-muted leading-relaxed">
+                  Kanvas resmi menggunakan rasio widescreen <strong className="text-foreground">3:1</strong> (Lebar 3 x Tinggi 1).
+                </p>
+                <div className="p-2.5 rounded-lg bg-surface border border-border space-y-1 font-mono text-[11px]">
+                  <div className="flex justify-between">
+                    <span className="text-foreground-muted">Rekomendasi Utama:</span>
+                    <strong className="text-primary font-bold">2640 x 882 px</strong>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-foreground-muted">Resolusi Minimum:</span>
+                    <span className="text-foreground">1920 x 640 px</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 2: Safe Zone */}
+              <div className="bg-surface-raised border border-border/80 rounded-xl p-4 space-y-2">
+                <div className="flex items-center gap-2 text-primary font-bold">
+                  <div className="w-6 h-6 rounded-md bg-primary/15 flex items-center justify-center text-xs">2</div>
+                  <span>Safe Zone 80% (Mobile Safety)</span>
+                </div>
+                <p className="text-[11px] text-foreground-muted leading-relaxed">
+                  Pastikan elemen krusial (headline, tombol CTA, maskot) berada di <strong className="text-foreground">80% area tengah kanvas</strong>.
+                </p>
+                <div className="p-2.5 rounded-lg bg-surface border border-border space-y-1 text-[11px]">
+                  <div className="flex justify-between">
+                    <span className="text-foreground-muted">Margin Kiri & Kanan:</span>
+                    <strong className="text-foreground font-mono">Min. 10% (bebas teks)</strong>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-foreground-muted">Tampilan HP (390px):</span>
+                    <span className="text-status-success font-semibold">Bebas dari cut-off</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 3: Format & Ukuran File */}
+              <div className="bg-surface-raised border border-border/80 rounded-xl p-4 space-y-2">
+                <div className="flex items-center gap-2 text-primary font-bold">
+                  <div className="w-6 h-6 rounded-md bg-primary/15 flex items-center justify-center text-xs">3</div>
+                  <span>Format File & Kompresi</span>
+                </div>
+                <p className="text-[11px] text-foreground-muted leading-relaxed">
+                  Unggah file berformat modern untuk kecepatan muat kilat dan gambar anti-buram.
+                </p>
+                <div className="p-2.5 rounded-lg bg-surface border border-border space-y-1 text-[11px]">
+                  <div className="flex justify-between">
+                    <span className="text-foreground-muted">Format Terbaik:</span>
+                    <strong className="text-primary font-bold">.WEBP / .PNG</strong>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-foreground-muted">Maks. Ukuran File:</span>
+                    <span className="text-foreground font-mono">5 MB (Optimal &lt; 500KB)</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 4: Brand & Maskot Asterra */}
+              <div className="bg-surface-raised border border-border/80 rounded-xl p-4 space-y-2">
+                <div className="flex items-center gap-2 text-primary font-bold">
+                  <div className="w-6 h-6 rounded-md bg-primary/15 flex items-center justify-center text-xs">4</div>
+                  <span>Warna Brand & Maskot Asterra</span>
+                </div>
+                <p className="text-[11px] text-foreground-muted leading-relaxed">
+                  Desain bersih, tegas, <strong className="text-foreground">no AI-slop</strong> atau elemen ungu acak.
+                </p>
+                <div className="p-2.5 rounded-lg bg-surface border border-border flex items-center gap-2 text-[10px] font-mono">
+                  <div className="flex items-center gap-1">
+                    <span className="w-3.5 h-3.5 rounded-full bg-[#121A2A] border border-white/20 inline-block" />
+                    <span>#121A2A</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="w-3.5 h-3.5 rounded-full bg-[#E85D3F] inline-block" />
+                    <span>#E85D3F</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="w-3.5 h-3.5 rounded-full bg-[#F8F6F1] border border-border inline-block" />
+                    <span>#F8F6F1</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Visual Canvas Diagram */}
+            <div className="p-4 rounded-xl border border-border bg-[#121A2A] text-white space-y-2 text-center select-none">
+              <div className="text-[10px] font-mono uppercase tracking-wider text-[#E85D3F] font-bold">
+                Diagram Proporsi Banner Widescreen 3:1 (2640 x 882 px)
+              </div>
+              <div className="border border-dashed border-[#E85D3F]/50 rounded-lg p-5 bg-black/30 flex items-center justify-between text-xs">
+                <div className="text-[10px] text-zinc-400 font-mono px-2 py-1 rounded bg-black/40">Margin 10%</div>
+                <div className="space-y-1">
+                  <div className="text-xs sm:text-sm font-extrabold text-white">★ SAFE ZONE 80% TENGAH ★</div>
+                  <div className="text-[10px] sm:text-[11px] text-zinc-300">Tempatkan Maskot, Headline Promo, & Tombol CTA di Sini</div>
+                </div>
+                <div className="text-[10px] text-zinc-400 font-mono px-2 py-1 rounded bg-black/40">Margin 10%</div>
+              </div>
+            </div>
+
+            <div className="pt-2 border-t border-border flex justify-end">
+              <Button size="sm" onClick={() => setIsSpecGuideOpen(false)} className="text-xs">
+                Mengerti & Tutup Panduan
+              </Button>
+            </div>
           </div>
         </div>
       )}
