@@ -24,7 +24,7 @@ import httpx
 from fastapi import FastAPI, APIRouter, Request, Response, HTTPException, Query, UploadFile, File, Form
 import re
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse, JSONResponse
+from fastapi.responses import StreamingResponse, JSONResponse, RedirectResponse
 
 from app.config import settings
 from app.services.catalog_service import CatalogService
@@ -55,6 +55,21 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.get("/", tags=["Health"])
+def root_endpoint():
+    return {
+        "status": "ok",
+        "service": settings.PROJECT_NAME,
+        "version": settings.VERSION,
+        "docs": "/docs",
+        "api_v1_docs": "/api/v1/docs",
+        "health": "/health",
+    }
+
+@app.get("/api/v1/docs", include_in_schema=False)
+def api_v1_docs_redirect():
+    return RedirectResponse(url="/docs")
 
 @app.get("/health", tags=["Health"])
 def health_check():
