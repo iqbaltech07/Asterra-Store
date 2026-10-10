@@ -241,7 +241,6 @@ function CheckoutPageContent() {
     discount: number;
     description?: string;
   } | null>(null);
-  const [isCheckingPromo, setIsCheckingPromo] = useState(false);
   const [promoFeedback, setPromoFeedback] = useState<{
     type: 'success' | 'error';
     text: string;
@@ -472,7 +471,7 @@ function CheckoutPageContent() {
         (createdOrder as unknown as { totalAmount?: number; total_amount?: number; amount?: number }).totalAmount ??
         (createdOrder as unknown as { totalAmount?: number; total_amount?: number; amount?: number }).total_amount ??
         (createdOrder as unknown as { totalAmount?: number; total_amount?: number; amount?: number }).amount ??
-        finalPayableAmount ??
+        finalTotal ??
         0
       );
       const orderRaw = Number(
