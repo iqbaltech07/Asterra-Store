@@ -7,12 +7,11 @@
     "dev:user": "npm --prefix frontend-user run dev",
     "dev:admin": "npm --prefix frontend-admin run dev",
     "dev:sales": "npm --prefix frontend-sales run dev",
-    "dev:backend": "npm --prefix backend run dev",
+    "dev:backend": "cd backend && uvicorn app.main:app --reload --port 8000",
     "dev:fastapi": "cd backend && uvicorn app.main:app --reload --port 8000",
     "build:user": "npm --prefix frontend-user run build",
     "build:admin": "npm --prefix frontend-admin run build",
     "build:sales": "npm --prefix frontend-sales run build",
-    "build:backend": "npm --prefix backend run build",
-    "build:all": "npm run build:user && npm run build:admin && npm run build:sales && npm run build:backend"
+    "build:all": "npm run build:user && npm run build:admin && npm run build:sales"
   }
 }
