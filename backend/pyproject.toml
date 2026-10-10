@@ -13,6 +13,3 @@ dependencies = [
     "python-multipart>=0.0.9",
     "python-dotenv>=1.0.0",
 ]
-
-[tool.vercel]
-entrypoint = "main.py"
