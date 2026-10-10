@@ -976,26 +976,11 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
               <img
                 src={currentPreviewBanner.imageUrl || '/images/banners/hero-banner-welcome.webp'}
                 alt={currentPreviewBanner.title}
-                className="w-full h-full object-cover sm:object-contain transition-transform duration-300 group-hover:scale-[1.004]"
+                className="w-full h-full object-contain transition-transform duration-300 group-hover:scale-[1.004]"
                 onError={(e) => {
                   (e.currentTarget as HTMLImageElement).src = '/images/banners/hero-banner-welcome.webp';
                 }}
               />
-
-              {/* Title & Info Pill */}
-              <div className="absolute top-2.5 left-2.5 sm:top-4 sm:left-4 z-10 flex items-center gap-1.5 pointer-events-none">
-                <span className="px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-semibold bg-black/60 text-white backdrop-blur-md border border-white/10 shadow-xs flex items-center gap-1.5">
-                  <Sparkles className="w-3 h-3 text-[#E85D3F]" />
-                  <span className="truncate max-w-[200px] sm:max-w-md">{currentPreviewBanner.title}</span>
-                </span>
-              </div>
-
-              {/* Destination URL Bottom-Left */}
-              <div className="absolute bottom-2.5 left-2.5 sm:bottom-4 sm:left-4 z-10 hidden sm:flex items-center gap-1 pointer-events-none">
-                <span className="px-2 py-0.5 rounded-md text-[10px] font-mono bg-black/60 text-zinc-300 backdrop-blur-md border border-white/10">
-                  Target: {currentPreviewBanner.destinationUrl || currentPreviewBanner.linkUrl || '/#katalog'}
-                </span>
-              </div>
 
               {/* Swiper Arrows (visible if multiple banners) */}
               {displayHeroBanners.length > 1 && (

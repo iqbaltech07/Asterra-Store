@@ -16,13 +16,22 @@ interface PromoBannerItem {
   isActive?: boolean;
 }
 
-const DEFAULT_BANNER: PromoBannerItem = {
-  id: 'default-welcome-hero',
-  title: 'Selamat Datang di Asterra Store — Pusat Akun & Lisensi Premium Resmi Bergaransi',
-  imageUrl: '/images/banners/hero-banner-welcome.webp',
-  linkUrl: '/#katalog',
-  destinationUrl: '/#katalog',
-};
+const INITIAL_STOREFRONT_BANNERS: PromoBannerItem[] = [
+  {
+    id: 'default-affiliate-hero',
+    title: 'Program Mitra Affiliate Asterra Store — Raih Komisi 10% Penjualan Produk Digital',
+    imageUrl: '/images/banners/hero-banner-affiliate.webp',
+    linkUrl: '/daftar-sales',
+    destinationUrl: '/daftar-sales',
+  },
+  {
+    id: 'default-welcome-hero',
+    title: 'Selamat Datang di Asterra Store — Pusat Akun & Lisensi Premium Resmi Bergaransi',
+    imageUrl: '/images/banners/hero-banner-welcome.webp',
+    linkUrl: '/#katalog',
+    destinationUrl: '/#katalog',
+  },
+];
 
 export function HeroBannerSwiper() {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -30,7 +39,7 @@ export function HeroBannerSwiper() {
   const touchStartX = useRef<number | null>(null);
   const touchEndX = useRef<number | null>(null);
 
-  // Fetch active banners for homepage from API
+  // Fetch active banners for homepage from API with initialData to eliminate hydration flash
   const { data } = useQuery<{ success: boolean; data: PromoBannerItem[] }>({
     queryKey: ['home-promo-banners'],
     queryFn: async () => {
@@ -38,11 +47,15 @@ export function HeroBannerSwiper() {
       if (!res.ok) return { success: false, data: [] };
       return res.json();
     },
+    initialData: {
+      success: true,
+      data: INITIAL_STOREFRONT_BANNERS,
+    },
     staleTime: 60000, // 1 minute fresh cache
   });
 
   const apiBanners = data?.data && data.data.length > 0 ? data.data : [];
-  const banners = apiBanners.length > 0 ? apiBanners : [DEFAULT_BANNER];
+  const banners = apiBanners.length > 0 ? apiBanners : INITIAL_STOREFRONT_BANNERS;
   const hasMultiple = banners.length >= 2;
 
   const nextSlide = useCallback(() => {
