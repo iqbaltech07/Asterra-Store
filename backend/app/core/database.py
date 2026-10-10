@@ -9,6 +9,11 @@ db_url = settings.DATABASE_URL or ""
 if "pgbouncer=true" in db_url:
     db_url = db_url.replace("?pgbouncer=true", "")
 
+if db_url.startswith("postgres://"):
+    db_url = db_url.replace("postgres://", "postgresql+psycopg2://", 1)
+elif db_url.startswith("postgresql://") and not db_url.startswith("postgresql+"):
+    db_url = db_url.replace("postgresql://", "postgresql+psycopg2://", 1)
+
 is_serverless = os.getenv("VERCEL") == "1" or os.getenv("AWS_LAMBDA_FUNCTION_NAME") is not None
 
 engine_kwargs = {
