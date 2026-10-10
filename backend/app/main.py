@@ -75,6 +75,12 @@ def api_v1_docs_redirect():
 def api_v1_openapi_redirect():
     return RedirectResponse(url="/openapi.json")
 
+@app.get("/api", include_in_schema=False)
+@app.get("/api/index.py", include_in_schema=False)
+def api_root_redirect():
+    return root_endpoint()
+
+
 
 @app.get("/health", tags=["Health"])
 def health_check():
