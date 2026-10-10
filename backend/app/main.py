@@ -71,6 +71,11 @@ def root_endpoint():
 def api_v1_docs_redirect():
     return RedirectResponse(url="/docs")
 
+@app.get("/api/v1/openapi.json", include_in_schema=False)
+def api_v1_openapi_redirect():
+    return RedirectResponse(url="/openapi.json")
+
+
 @app.get("/health", tags=["Health"])
 def health_check():
     return {
