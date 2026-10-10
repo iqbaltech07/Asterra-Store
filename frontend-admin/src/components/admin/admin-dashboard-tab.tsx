@@ -447,7 +447,7 @@ export function AdminDashboardTab({
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {(liveOrders.length > 0 ? liveOrders.slice(0, 5) : recentTransactions).map((tx) => {
+                {(liveOrders.length > 0 ? liveOrders.slice(0, 5) : recentTransactions).map((tx: any) => {
                   const id = tx.id || tx.orderId;
                   const customer = tx.customer || tx.customerName || 'Pelanggan';
                   const product = tx.product || (tx.items?.[0]?.productName) || 'Produk Digital';

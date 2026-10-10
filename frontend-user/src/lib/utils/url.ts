@@ -28,6 +28,7 @@ export function getAppBaseUrl(
         return Array.isArray(val) ? val[0] || null : (val as string) || null;
       };
 
+      const host = getHeader('x-forwarded-host') || getHeader('host');
       let proto = getHeader('x-forwarded-proto');
       if (!proto && request && 'url' in request && typeof (request as Request).url === 'string') {
         try {
