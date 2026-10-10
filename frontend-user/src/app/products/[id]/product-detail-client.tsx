@@ -14,7 +14,6 @@ import { useAuthStore } from '@/store/use-auth-store';
 import { AuthRequiredModal } from '@/components/auth/auth-required-modal';
 import {
   faCircleCheck,
-  faCartShopping,
   faBolt,
   faShieldHalved,
   faClock,
@@ -1061,7 +1060,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                   </div>
 
                   {/* Order Actions */}
-                  <div data-gsap="product-cta" className="space-y-2.5 pt-1">
+                  <div data-gsap="product-cta" className="pt-1">
                     <Button
                       type="button"
                       onClick={handleBuyNow}
@@ -1070,17 +1069,6 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                     >
                       <span>{isOutOfStock ? 'Stok Habis' : 'Beli Sekarang (Langsung Checkout)'}</span>
                       <FontAwesomeIcon icon={faArrowRight} className="w-4 h-4" />
-                    </Button>
-
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleAddToCart}
-                      disabled={isOutOfStock}
-                      className="w-full text-xs sm:text-sm font-semibold border-[rgba(18,26,42,0.18)] hover:bg-white text-[#121A2A] py-3 h-auto gap-2 rounded-xl transition-all cursor-pointer active:scale-98"
-                    >
-                      <FontAwesomeIcon icon={faCartShopping} className="w-4 h-4 text-[#C96F55]" />
-                      <span>{isOutOfStock ? 'Stok Habis' : 'Tambah ke Keranjang'}</span>
                     </Button>
                   </div>
 
@@ -1260,19 +1248,9 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
           <div className="flex items-center gap-2 shrink-0">
             <button
               type="button"
-              onClick={handleAddToCart}
-              disabled={isOutOfStock}
-              className="w-10 h-10 rounded-xl border border-[rgba(18,26,42,0.18)] bg-white flex items-center justify-center text-[#C96F55] active:scale-95 transition-transform cursor-pointer shadow-xs disabled:opacity-50"
-              title="Tambah ke Keranjang"
-            >
-              <FontAwesomeIcon icon={faCartShopping} className="w-4 h-4" />
-            </button>
-
-            <button
-              type="button"
               onClick={handleBuyNow}
               disabled={isOutOfStock}
-              className="px-4 py-2.5 rounded-xl bg-[#C96F55] hover:bg-[#B86047] text-white text-xs font-bold active:scale-98 transition-transform cursor-pointer shadow-xs flex items-center gap-1.5 disabled:opacity-50"
+              className="px-5 py-2.5 rounded-xl bg-[#C96F55] hover:bg-[#B86047] text-white text-xs sm:text-sm font-bold active:scale-98 transition-transform cursor-pointer shadow-xs flex items-center gap-2 disabled:opacity-50"
             >
               <span>{isOutOfStock ? 'Stok Habis' : 'Beli Sekarang'}</span>
               <FontAwesomeIcon icon={faArrowRight} className="w-3.5 h-3.5" />

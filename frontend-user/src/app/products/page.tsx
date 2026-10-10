@@ -493,37 +493,15 @@ function ProductsContent() {
                       <span className="text-[11px] text-[#121A2A]/50 block">/ akun lisensi</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Button
-                        size="sm"
-                        variant={isOutOfStock ? 'outline' : isSelected ? 'secondary' : 'default'}
-                        className={`rounded-lg text-xs font-semibold ${
-                          isSelected ? 'bg-[rgba(201,111,85,0.1)] text-[#C96F55] border border-[rgba(201,111,85,0.3)]' : ''
-                        }`}
-                        disabled={isOutOfStock}
-                        onClick={() => !isOutOfStock && handleAddToCart(product)}
-                      >
-                        {isOutOfStock ? (
-                          'Habis'
-                        ) : isSelected ? (
-                          <>
-                            <FontAwesomeIcon icon={faCheck} className="w-3.5 h-3.5 text-[#C96F55] mr-1" />
-                            <span>Dipilih</span>
-                          </>
-                        ) : (
-                          <>
-                            <FontAwesomeIcon icon={faCartShopping} className="w-3.5 h-3.5 mr-1" />
-                            <span>Pilih</span>
-                          </>
-                        )}
-                      </Button>
-                      <Link href={`/products/${product.id}`} prefetch={true}>
-                        <button
-                          type="button"
-                          className="w-8 h-8 rounded-lg bg-[#121A2A] text-[#F7F5EF] flex items-center justify-center hover:bg-[#C96F55] transition-colors shadow-xs cursor-pointer"
-                          aria-label={`Detail ${product.name}`}
+                      <Link href={`/products/${product.id}`} prefetch={true} className="w-full sm:w-auto">
+                        <Button
+                          size="sm"
+                          className="rounded-lg text-xs font-semibold bg-[#C96F55] hover:bg-[#B86047] text-white gap-1.5 shadow-xs cursor-pointer active:scale-95"
+                          disabled={isOutOfStock}
                         >
-                          <FontAwesomeIcon icon={faArrowRight} className="w-3.5 h-3.5" />
-                        </button>
+                          <span>{isOutOfStock ? 'Stok Habis' : 'Beli Sekarang'}</span>
+                          <FontAwesomeIcon icon={faArrowRight} className="w-3 h-3" />
+                        </Button>
                       </Link>
                     </div>
                   </div>

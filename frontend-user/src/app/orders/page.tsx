@@ -261,7 +261,7 @@ function GlobalOrdersContent() {
             className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-surface border border-border hover:border-primary/40 text-xs font-medium text-foreground transition-colors shrink-0 self-start sm:self-auto"
           >
             <FontAwesomeIcon icon={faReceipt} className="w-3.5 h-3.5 text-primary" />
-            <span>Cari Pesanan Saya</span>
+            <span>Pesanan Saya</span>
             <FontAwesomeIcon icon={faArrowRight} className="w-2.5 h-2.5 text-foreground-muted" />
           </Link>
         </div>

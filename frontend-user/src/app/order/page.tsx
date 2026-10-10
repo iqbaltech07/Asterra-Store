@@ -4,7 +4,6 @@ import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import { useCartStore } from '@/store/use-cart-store';
 import { Order } from '@/lib/orders-data';
 import { notificationSound } from '@/lib/utils/notification-sound';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -19,13 +18,11 @@ import {
   faArrowRight,
   faPhone,
   faMagnifyingGlass,
-  faCartShopping,
   faShieldHalved,
   faChevronDown,
   faChevronUp,
   faXmark,
   faCreditCard,
-  faRightToBracket,
   faReceipt,
 } from '@fortawesome/free-solid-svg-icons';
 import { useSession } from '@/lib/auth-client';
@@ -267,7 +264,6 @@ function PrivateOrderContent() {
     return '';
   });
   const [emailInput, setEmailInput] = useState('');
-  const [isChangingEmail, setIsChangingEmail] = useState(false);
   const [isSubmittingLookup, setIsSubmittingLookup] = useState(false);
 
   // Effective email to filter orders
@@ -277,8 +273,6 @@ function PrivateOrderContent() {
   const [activeManualModal, setActiveManualModal] = useState<ManualPaymentModalData | null>(null);
   const [selectedOrderForModal, setSelectedOrderForModal] = useState<Order | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
-
-  const { addItem } = useCartStore();
 
   // Load payment config with caching (infrequently changes during a session)
   const { data: paymentConfigData } = useQuery<PublicPaymentConfig | null>({
@@ -304,6 +298,7 @@ function PrivateOrderContent() {
     },
     enabled: Boolean(activeEmail),
     staleTime: 10000,
+    refetchInterval: 15000, // Background polling fallback ensures orders stay synchronized even if SSE is buffered or proxy returns 502
     placeholderData: (previousData) => previousData,
   });
 
@@ -314,36 +309,51 @@ function PrivateOrderContent() {
     }
   }, [data, error]);
 
-  // SSE Real-Time Listener for User Orders
+  // SSE Real-Time Listener for User Orders with proxy-resilient connection
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    const eventSource = new EventSource('/api/v1/events?role=user');
+    const apiBase = process.env.NEXT_PUBLIC_API_URL || '';
+    const eventUrl = apiBase ? `${apiBase}/api/v1/events?role=user` : '/api/v1/events?role=user';
 
-    eventSource.addEventListener('order:payment_verified', (e: MessageEvent) => {
-      try {
-        const payload = JSON.parse(e.data);
-        notificationSound.play('payment_verified');
-        refetch();
-        showNotification(`Pembayaran #${payload.order_id} terverifikasi! Pesanan sedang diproses.`);
-      } catch (err) {
-        console.error('SSE user order:payment_verified error', err);
-      }
-    });
+    let eventSource: EventSource | null = null;
 
-    eventSource.addEventListener('order:status_changed', (e: MessageEvent) => {
-      try {
-        const payload = JSON.parse(e.data);
-        notificationSound.play('status_updated');
-        refetch();
-        showNotification(`Status pesanan #${payload.order_id} diperbarui: ${payload.new_status}`);
-      } catch (err) {
-        console.error('SSE user order:status_changed error', err);
-      }
-    });
+    try {
+      eventSource = new EventSource(eventUrl);
+
+      eventSource.onerror = () => {
+        // Reverse proxies (such as Vercel Edge rewrites) return 502 for long-lived streams.
+        // Immediately close the connection on error so browser does not spam reconnects and 502 errors.
+        eventSource?.close();
+      };
+
+      eventSource.addEventListener('order:payment_verified', (e: MessageEvent) => {
+        try {
+          const payload = JSON.parse(e.data);
+          notificationSound.play('payment_verified');
+          refetch();
+          showNotification(`Pembayaran #${payload.order_id} terverifikasi! Pesanan sedang diproses.`);
+        } catch (err) {
+          console.error('SSE user order:payment_verified error', err);
+        }
+      });
+
+      eventSource.addEventListener('order:status_changed', (e: MessageEvent) => {
+        try {
+          const payload = JSON.parse(e.data);
+          notificationSound.play('status_updated');
+          refetch();
+          showNotification(`Status pesanan #${payload.order_id} diperbarui: ${payload.new_status}`);
+        } catch (err) {
+          console.error('SSE user order:status_changed error', err);
+        }
+      });
+    } catch {
+      // Graceful fallback if SSE is unavailable
+    }
 
     return () => {
-      eventSource.close();
+      eventSource?.close();
     };
   }, [refetch]);
 
@@ -418,23 +428,13 @@ function PrivateOrderContent() {
   };
 
   const handleReorder = (order: Order) => {
-    (order.items || []).forEach((item) => {
-      const unitPrice = Number(
-        item.unit_price ??
-        (item as unknown as { price?: number }).price ??
-        0
-      );
-      const pId = item.product_id || (item as unknown as { productId?: string }).productId || 'item';
-      const pName = item.product_name || (item as unknown as { productName?: string }).productName || 'Layanan Digital';
-      addItem({
-        id: pId,
-        name: pName,
-        category: 'Digital Service',
-        priceFormatted: `Rp ${unitPrice.toLocaleString('id-ID')}`,
-        priceNumeric: unitPrice,
-      });
-    });
-    showNotification(`Item dari pesanan ${order.id} telah ditambahkan ke keranjang.`);
+    const firstItem = order.items && order.items.length > 0 ? order.items[0] : null;
+    const pId = firstItem?.product_id || (firstItem as unknown as { productId?: string })?.productId;
+    if (pId) {
+      window.location.href = `/products/${pId}`;
+    } else {
+      window.location.href = '/products';
+    }
   };
 
   const handleModalCopy = (text: string, key: string, label: string) => {
@@ -554,8 +554,8 @@ function PrivateOrderContent() {
           <div className="flex items-center gap-2">
             <Link href="/products">
               <Button size="sm" variant="outline" className="text-xs gap-1.5 border-border h-8">
-                <FontAwesomeIcon icon={faCartShopping} className="w-3.5 h-3.5 text-primary" />
-                <span className="hidden sm:inline">Beli Lisensi Baru</span>
+                <FontAwesomeIcon icon={faArrowRight} className="w-3.5 h-3.5 text-primary" />
+                <span className="hidden sm:inline">Katalog Produk</span>
               </Button>
             </Link>
             <button
@@ -577,8 +577,8 @@ function PrivateOrderContent() {
           </div>
         </div>
 
-        {/* Email Entry & Lookup Form when unauthenticated or changing email */}
-        {(!activeEmail || isChangingEmail) && (
+        {/* Email Entry & Lookup Form when unauthenticated and no active email */}
+        {!activeEmail && (
           <div data-gsap="hero-card" className="bg-surface border border-primary/30 rounded-xl p-4 sm:p-5 max-w-xl mx-auto mb-8 shadow-sm">
             <form
               onSubmit={(e) => {
@@ -590,7 +590,6 @@ function PrivateOrderContent() {
                   if (typeof window !== 'undefined') {
                     localStorage.setItem('asterra_customer_email', trimmed);
                   }
-                  setIsChangingEmail(false);
                   showNotification(`Memuat riwayat pesanan untuk ${trimmed}`);
                 }
               }}
@@ -612,7 +611,7 @@ function PrivateOrderContent() {
         )}
 
         {/* Active Account / Tracking Banner */}
-        {activeEmail && !isChangingEmail && (
+        {activeEmail && (
           <div className="bg-surface border border-border rounded-xl px-4 py-3 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
             <div className="flex items-center gap-2.5">
               <FontAwesomeIcon icon={faReceipt} className="w-3.5 h-3.5 text-primary shrink-0" />
@@ -625,29 +624,6 @@ function PrivateOrderContent() {
                   </span>
                 )}
               </div>
-            </div>
-            <div className="flex items-center gap-3 shrink-0 self-end sm:self-auto">
-              {!session?.user?.email && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEmailInput(guestEmail);
-                    setIsChangingEmail(true);
-                  }}
-                  className="text-primary hover:underline text-[11px] font-medium cursor-pointer"
-                >
-                  Ganti Email Pelacakan
-                </button>
-              )}
-              {!session?.user && (
-                <Link
-                  href="/login"
-                  className="text-foreground-muted hover:text-foreground text-[11px] inline-flex items-center gap-1"
-                >
-                  <FontAwesomeIcon icon={faRightToBracket} className="w-3 h-3" />
-                  <span>Masuk</span>
-                </Link>
-              )}
             </div>
           </div>
         )}
@@ -1036,7 +1012,7 @@ function PrivateOrderContent() {
                           onClick={() => handleReorder(order)}
                           className="text-xs gap-1.5 border-border h-8 font-medium cursor-pointer"
                         >
-                          <FontAwesomeIcon icon={faCartShopping} className="w-3 h-3 text-primary" />
+                          <FontAwesomeIcon icon={faRotateLeft} className="w-3 h-3 text-primary" />
                           <span>Beli Lagi</span>
                         </Button>
                       )}

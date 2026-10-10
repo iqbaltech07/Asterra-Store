@@ -3,35 +3,22 @@ import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { prisma } from '@/lib/prisma';
 import { getAppBaseUrl } from '@/lib/utils/url';
 
-// Prevent stale localhost in BETTER_AUTH_URL from breaking Vercel production authentication
-if (
-  typeof process !== 'undefined' &&
-  (process.env.VERCEL || process.env.VERCEL_URL) &&
-  process.env.BETTER_AUTH_URL &&
-  (process.env.BETTER_AUTH_URL.includes('localhost') || process.env.BETTER_AUTH_URL.includes('127.0.0.1'))
-) {
-  process.env.BETTER_AUTH_URL = getAppBaseUrl();
+const appBaseUrl = getAppBaseUrl();
+
+// Ensure BETTER_AUTH_URL and secret are always populated and synced with production domain
+if (!process.env.BETTER_AUTH_URL || (process.env.BETTER_AUTH_URL.includes('localhost') && (process.env.VERCEL || process.env.VERCEL_URL))) {
+  process.env.BETTER_AUTH_URL = appBaseUrl;
+}
+if (!process.env.BETTER_AUTH_SECRET) {
+  process.env.BETTER_AUTH_SECRET =
+    process.env.NEXTAUTH_SECRET ||
+    process.env.JWT_SECRET ||
+    'cabkjs.fbekjfgvesivcfsasterra2026dajcg.awid.wa!aoicgqowiqgdaigbciagdiwacamt2ru';
 }
 
 export const auth = betterAuth({
-  secret:
-    process.env.BETTER_AUTH_SECRET ||
-    process.env.NEXTAUTH_SECRET ||
-    process.env.JWT_SECRET ||
-    'cabkjs.fbekjfgvesivcfsasterra2026dajcg.awid.wa!aoicgqowiqgdaigbciagdiwacamt2ru',
-  baseURL: {
-    allowedHosts: [
-      'localhost:3000',
-      'localhost:3001',
-      '127.0.0.1:3000',
-      '127.0.0.1:3001',
-      'asterrastore.biz.id',
-      '*.asterrastore.biz.id',
-      'asterrastore.vercel.app',
-      '*.vercel.app',
-    ],
-    fallback: getAppBaseUrl(),
-  },
+  secret: process.env.BETTER_AUTH_SECRET,
+  baseURL: appBaseUrl,
   trustedOrigins: async (request) => {
     const list: string[] = [
       'https://asterrastore.biz.id',
@@ -75,6 +62,7 @@ export const auth = betterAuth({
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID || 'placeholder_client_id',
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'placeholder_client_secret',
+      redirectURI: `${appBaseUrl}/api/auth/callback/google`,
     },
   },
   user: {

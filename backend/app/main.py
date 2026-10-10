@@ -38,6 +38,7 @@ from app.services.audit_log_service import AuditLogService
 from app.services.referral_profit_service import ReferralProfitService
 from app.services.tripay_service import TripayService
 from app.services.analytics_service import AnalyticsService
+from app.services.banner_service import BannerService
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -989,6 +990,83 @@ async def upload_admin_media(
     }
 
 # ------------------------------------------
+# 8.5. Promo Banner Management Endpoints (Storefront & Admin)
+# ------------------------------------------
+@api_router.post("/banners", tags=["Promo Banners"])
+@api_router.post("/admin/banners", tags=["Promo Banners"])
+async def upload_promo_banner(
+    file: UploadFile = File(...),
+    title: str = Form(...),
+    linkUrl: Optional[str] = Form(None),
+    link_url: Optional[str] = Form(None),
+    targetPage: Optional[str] = Form("home"),
+    target_page: Optional[str] = Form(None),
+    displayOrder: Optional[int] = Form(0),
+    display_order: Optional[int] = Form(None),
+    isActive: Optional[bool] = Form(True),
+    is_active: Optional[bool] = Form(None),
+):
+    final_link = link_url if link_url is not None else linkUrl
+    final_target = target_page if target_page is not None else (targetPage or "home")
+    final_order = display_order if display_order is not None else (displayOrder if displayOrder is not None else 0)
+    final_active = is_active if is_active is not None else (isActive if isActive is not None else True)
+
+    content_type = file.content_type or "image/webp"
+    content = await file.read()
+
+    try:
+        res = await BannerService.upload_banner(
+            content=content,
+            filename=file.filename or "banner.webp",
+            content_type=content_type,
+            title=title,
+            link_url=final_link,
+            target_page=final_target,
+            display_order=int(final_order),
+            is_active=bool(final_active),
+        )
+        return res
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Gagal mengunggah banner: {str(e)}")
+
+@api_router.get("/banners", tags=["Promo Banners"])
+@api_router.get("/admin/banners", tags=["Promo Banners"])
+def get_promo_banners(
+    active_only: bool = Query(True, alias="activeOnly"),
+    target_page: Optional[str] = Query(None, alias="targetPage"),
+):
+    banners = BannerService.get_banners(active_only=active_only, target_page=target_page)
+    return {
+        "success": True,
+        "data": banners,
+        "total": len(banners),
+    }
+
+@api_router.get("/banners/{banner_id}", tags=["Promo Banners"])
+@api_router.get("/admin/banners/{banner_id}", tags=["Promo Banners"])
+def get_promo_banner_detail(banner_id: str):
+    banner = BannerService.get_banner_by_id(banner_id)
+    if not banner:
+        raise HTTPException(status_code=404, detail="Banner tidak ditemukan.")
+    return {
+        "success": True,
+        "data": banner,
+    }
+
+@api_router.delete("/banners/{banner_id}", tags=["Promo Banners"])
+@api_router.delete("/admin/banners/{banner_id}", tags=["Promo Banners"])
+async def delete_promo_banner(banner_id: str):
+    success = await BannerService.delete_banner(banner_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Banner tidak ditemukan atau sudah dihapus.")
+    return {
+        "success": True,
+        "message": f"Banner {banner_id} berhasil dihapus dari sistem dan storage.",
+    }
+
+# ------------------------------------------
 # 9. Admin & Customer Authentication Logic
 # ------------------------------------------
 def get_admin_auth_secret() -> str:
@@ -1305,7 +1383,13 @@ async def event_generator():
 
 @api_router.get("/events", tags=["Realtime"])
 async def sse_events(role: Optional[str] = "user"):
-    return StreamingResponse(event_generator(), media_type="text/event-stream")
+    headers = {
+        "Cache-Control": "no-cache, no-transform",
+        "Connection": "keep-alive",
+        "X-Accel-Buffering": "no",
+        "Content-Type": "text/event-stream",
+    }
+    return StreamingResponse(event_generator(), media_type="text/event-stream", headers=headers)
 
 # ------------------------------------------
 # 11. Catch-All Proxy / Fallback Handler
