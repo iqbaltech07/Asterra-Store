@@ -1,9 +1,8 @@
 import sys
-import os
 from pathlib import Path
 
 # Add backend directory and app directory to sys.path
-backend_dir = Path(__file__).resolve().parent.parent
+backend_dir = Path(__file__).resolve().parent
 app_dir = backend_dir / "app"
 
 for p in [str(backend_dir), str(app_dir)]:

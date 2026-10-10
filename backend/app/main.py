@@ -1,7 +1,16 @@
+import sys
+import pathlib
+
+# Ensure backend root and app directory are always in sys.path for serverless runtimes (Vercel / Lambda)
+_current_dir = pathlib.Path(__file__).resolve().parent
+_parent_dir = _current_dir.parent
+for _p in [str(_parent_dir), str(_current_dir)]:
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
+
 import asyncio
 import json
 import os
-import pathlib
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 
