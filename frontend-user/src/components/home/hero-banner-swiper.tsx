@@ -139,7 +139,7 @@ export function HeroBannerSwiper() {
                     priority={isPriority}
                     quality={95}
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 1320px"
-                    className="w-full max-w-full h-auto block rounded-xl sm:rounded-2xl md:rounded-3xl object-contain transition-transform duration-300 group-hover:scale-[1.004]"
+                    className="w-full h-full object-cover block transition-transform duration-300 group-hover:scale-[1.004]"
                   />
                 </Link>
               </div>
