@@ -282,14 +282,16 @@ function ShowcaseLoopingCardSkeleton() {
  */
 function FeaturedGridCard({
   app,
+  hasCampaign = false,
   onQuickView,
 }: {
   app: ApplicationGroupItem;
+  hasCampaign?: boolean;
   onQuickView?: (app: ApplicationGroupItem) => void;
 }) {
   const minPrice = app.minPrice;
   if (!minPrice || minPrice <= 0) return null;
-  const isPromo = isPromoItem(app);
+  const isPromo = hasCampaign && isPromoItem(app);
   const dummyOriginal = getDummyOriginalPrice(minPrice);
 
   return (
@@ -338,7 +340,12 @@ function FeaturedGridCard({
           <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60 leading-none">
             Garansi
           </span>
-          {app.badgeLabel && (
+          {isPromo && (
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-bold bg-[#C96F55]/10 text-[#C96F55] border border-[#C96F55]/20 leading-none truncate max-w-[90px]">
+              🔥 Promo
+            </span>
+          )}
+          {!isPromo && app.badgeLabel && (
             <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-bold bg-[#C96F55]/10 text-[#C96F55] border border-[#C96F55]/20 leading-none truncate max-w-[90px]">
               {app.badgeLabel}
             </span>
@@ -402,15 +409,17 @@ function FeaturedGridCard({
 function ShowcaseLoopingCard({
   app,
   isDuplicate = false,
+  hasCampaign = false,
   onQuickView,
 }: {
   app: ApplicationGroupItem;
   isDuplicate?: boolean;
+  hasCampaign?: boolean;
   onQuickView?: (app: ApplicationGroupItem) => void;
 }) {
   const minPrice = app.minPrice;
   if (!minPrice || minPrice <= 0) return null;
-  const isPromo = isPromoItem(app);
+  const isPromo = hasCampaign && isPromoItem(app);
   const dummyOriginal = getDummyOriginalPrice(minPrice);
 
   return (
@@ -454,9 +463,16 @@ function ShowcaseLoopingCard({
           <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60 leading-none">
             Garansi
           </span>
-          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#C96F55]/10 text-[#C96F55] border border-[#C96F55]/20 leading-none">
-            Unggulan
-          </span>
+          {isPromo && (
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#C96F55]/10 text-[#C96F55] border border-[#C96F55]/20 leading-none">
+              🔥 Promo
+            </span>
+          )}
+          {!isPromo && (
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#C96F55]/10 text-[#C96F55] border border-[#C96F55]/20 leading-none">
+              Unggulan
+            </span>
+          )}
         </div>
       </div>
 
@@ -516,9 +532,23 @@ export default function HomePage() {
   // 3. Recently Viewed Products (localStorage)
   const [recentlyViewed, setRecentlyViewed] = useState<RecentlyViewedItem[]>([]);
 
+  // Active Campaign Status for live promotional discounts & badges
+  const [activeCampaigns, setActiveCampaigns] = useState<any[]>([]);
+
   useEffect(() => {
     setRecentlyViewed(getRecentlyViewed());
+
+    fetch('/api/v1/campaigns/active')
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.success && Array.isArray(json.data)) {
+          setActiveCampaigns(json.data);
+        }
+      })
+      .catch(() => {});
   }, []);
+
+  const hasActiveCampaign = activeCampaigns.length > 0;
 
   // Dynamic products fetched from catalog API (cached via shared query)
   const { data: catalogResponse, isLoading } = useCatalogProducts();
@@ -605,7 +635,7 @@ export default function HomePage() {
         tag: 'streaming' as const,
         soldCount: 780,
         rating: '5.0',
-        isPromo: true,
+        isPromo: false,
         isTerlaris: true,
         isTerbaru: false,
       },
@@ -918,7 +948,7 @@ export default function HomePage() {
 
             {/* Quick Link to Full Catalog */}
             <Link
-              href="/product"
+              href="/products"
               data-gsap="hero-button"
               className="text-xs font-semibold text-[#C96F55] hover:text-[#B86047] hidden md:inline-flex items-center gap-1 shrink-0"
             >
@@ -940,6 +970,7 @@ export default function HomePage() {
                 <FeaturedGridCard
                   key={`featured-${activeCategory}-${app.name}`}
                   app={app}
+                  hasCampaign={hasActiveCampaign}
                   onQuickView={handleOpenQuickView}
                 />
               ))}
@@ -999,6 +1030,7 @@ export default function HomePage() {
                   <ShowcaseLoopingCard
                     key={`showcase-orig-${app.name}`}
                     app={app}
+                    hasCampaign={hasActiveCampaign}
                     onQuickView={handleOpenQuickView}
                   />
                 ))}
@@ -1009,6 +1041,7 @@ export default function HomePage() {
                     key={`showcase-dup-${app.name}`}
                     app={app}
                     isDuplicate
+                    hasCampaign={hasActiveCampaign}
                     onQuickView={handleOpenQuickView}
                   />
                 ))}

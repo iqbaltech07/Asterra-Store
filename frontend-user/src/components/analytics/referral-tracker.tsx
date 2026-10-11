@@ -9,7 +9,7 @@ function ReferralTrackerInner() {
 
   useEffect(() => {
     const urlRef = searchParams.get('ref');
-    const urlCampaign = searchParams.get('utm_campaign');
+    const urlCampaign = searchParams.get('campaign') || searchParams.get('utm_campaign');
     const urlSource = searchParams.get('utm_source');
     const urlMedium = searchParams.get('utm_medium');
 
@@ -22,30 +22,11 @@ function ReferralTrackerInner() {
         document.cookie = `asterra_ref=${encodeURIComponent(
           normalizedCode
         )}; path=/; max-age=2592000; SameSite=Lax`;
-
-        if (urlCampaign && urlCampaign.trim()) {
-          localStorage.setItem('asterra_utm_campaign', urlCampaign.trim());
-          document.cookie = `asterra_utm_campaign=${encodeURIComponent(
-            urlCampaign.trim()
-          )}; path=/; max-age=2592000; SameSite=Lax`;
-        }
-        if (urlSource && urlSource.trim()) {
-          localStorage.setItem('asterra_utm_source', urlSource.trim());
-          document.cookie = `asterra_utm_source=${encodeURIComponent(
-            urlSource.trim()
-          )}; path=/; max-age=2592000; SameSite=Lax`;
-        }
-        if (urlMedium && urlMedium.trim()) {
-          localStorage.setItem('asterra_utm_medium', urlMedium.trim());
-          document.cookie = `asterra_utm_medium=${encodeURIComponent(
-            urlMedium.trim()
-          )}; path=/; max-age=2592000; SameSite=Lax`;
-        }
       } catch {
         // ignore storage errors
       }
 
-      // 2. Dispatch click telemetry once per session
+      // Dispatch click telemetry once per session
       const sessionTrackedKey = `asterra_tracked_${normalizedCode}`;
       if (!sessionStorage.getItem(sessionTrackedKey)) {
         sessionStorage.setItem(sessionTrackedKey, 'true');
@@ -57,68 +38,125 @@ function ReferralTrackerInner() {
       }
     }
 
-    // 3. Auto-Preserve URL Parameters on Navigation (with 1-time discount check)
+    // 2. If URL has campaign parameter, store in localStorage & cookies
+    if (urlCampaign && urlCampaign.trim()) {
+      const normalizedCamp = urlCampaign.trim();
+      try {
+        localStorage.setItem('asterra_campaign', normalizedCamp);
+        localStorage.setItem('asterra_utm_campaign', normalizedCamp);
+        document.cookie = `asterra_campaign=${encodeURIComponent(
+          normalizedCamp
+        )}; path=/; max-age=2592000; SameSite=Lax`;
+        document.cookie = `asterra_utm_campaign=${encodeURIComponent(
+          normalizedCamp
+        )}; path=/; max-age=2592000; SameSite=Lax`;
+      } catch {}
+    }
+
+    if (urlSource && urlSource.trim()) {
+      try {
+        localStorage.setItem('asterra_utm_source', urlSource.trim());
+        document.cookie = `asterra_utm_source=${encodeURIComponent(
+          urlSource.trim()
+        )}; path=/; max-age=2592000; SameSite=Lax`;
+      } catch {}
+    }
+
+    if (urlMedium && urlMedium.trim()) {
+      try {
+        localStorage.setItem('asterra_utm_medium', urlMedium.trim());
+        document.cookie = `asterra_utm_medium=${encodeURIComponent(
+          urlMedium.trim()
+        )}; path=/; max-age=2592000; SameSite=Lax`;
+      } catch {}
+    }
+
+    // 3. Auto-Preserve URL Parameters on Navigation
     if (typeof window !== 'undefined') {
-      const allowedPaths = ['/', '/products', '/checkout'];
+      const allowedPaths = ['/', '/products', '/checkout', '/orders', '/profile'];
       const isAllowed =
         allowedPaths.includes(pathname || '') ||
         (pathname || '').startsWith('/products/');
 
       if (isAllowed) {
         let storedRef = '';
+        let storedCamp = '';
         try {
           storedRef = localStorage.getItem('asterra_ref') || '';
+          storedCamp =
+            localStorage.getItem('asterra_campaign') ||
+            localStorage.getItem('asterra_utm_campaign') ||
+            '';
         } catch {}
 
-        if (storedRef && !searchParams.get('ref')) {
-          const storedEmail = (() => {
-            try {
-              return localStorage.getItem('asterra_customer_email') || '';
-            } catch { return ''; }
-          })();
-          const customerEmail = storedEmail.trim().toLowerCase();
-          const shouldValidate = Boolean(customerEmail && customerEmail.includes('@'));
+        // Check campaign status if storedCamp exists: only remove if campaign has ended
+        if (storedCamp) {
+          fetch('/api/v1/campaigns/active')
+            .then((r) => r.json())
+            .then((res) => {
+              const activeList = Array.isArray(res?.data) ? res.data : [];
+              const isStillActive = activeList.some(
+                (c: { slug?: string; id?: string; status?: string; isActive?: boolean }) =>
+                  (c.slug === storedCamp || c.id === storedCamp) &&
+                  c.status !== 'ended' &&
+                  c.isActive !== false
+              );
 
-          const inject = () => {
-            const currentUrl = new URL(window.location.href);
-            if (currentUrl.searchParams.get('ref')) return;
-            currentUrl.searchParams.set('ref', storedRef);
-            try {
-              const storedCampaign = localStorage.getItem('asterra_utm_campaign');
-              if (storedCampaign && !currentUrl.searchParams.has('utm_campaign')) {
-                currentUrl.searchParams.set('utm_campaign', storedCampaign);
-              }
-              const storedSource = localStorage.getItem('asterra_utm_source');
-              if (storedSource && !currentUrl.searchParams.has('utm_source')) {
-                currentUrl.searchParams.set('utm_source', storedSource);
-              }
-            } catch {}
-            const newUrl = currentUrl.pathname + currentUrl.search + currentUrl.hash;
-            window.history.replaceState(window.history.state, '', newUrl);
-          };
+              // If campaign has ended, purge campaign parameter only
+              if (!isStillActive) {
+                try {
+                  localStorage.removeItem('asterra_campaign');
+                  localStorage.removeItem('asterra_utm_campaign');
+                  document.cookie = 'asterra_campaign=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+                  document.cookie = 'asterra_utm_campaign=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+                } catch {}
 
-          if (shouldValidate) {
-            fetch(`/api/v1/affiliate/validate-referral?code=${encodeURIComponent(storedRef)}&email=${encodeURIComponent(customerEmail)}`)
-              .then((r) => r.json())
-              .then((json) => {
-                if (json.valid && json.data && json.data.discountEligible === false) {
-                  try {
-                    localStorage.removeItem('asterra_ref');
-                    document.cookie = 'asterra_ref=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-                  } catch {}
-                  const currentUrl = new URL(window.location.href);
-                  if (currentUrl.searchParams.has('ref')) {
-                    currentUrl.searchParams.delete('ref');
-                    window.history.replaceState(window.history.state, '', currentUrl.pathname + currentUrl.search + currentUrl.hash);
-                  }
-                  return;
+                const currentUrl = new URL(window.location.href);
+                let changed = false;
+                if (currentUrl.searchParams.has('campaign')) {
+                  currentUrl.searchParams.delete('campaign');
+                  changed = true;
                 }
-                inject();
-              })
-              .catch(() => inject());
-          } else {
-            inject();
-          }
+                if (currentUrl.searchParams.has('utm_campaign')) {
+                  currentUrl.searchParams.delete('utm_campaign');
+                  changed = true;
+                }
+                if (changed) {
+                  window.history.replaceState(
+                    window.history.state,
+                    '',
+                    currentUrl.pathname + currentUrl.search + currentUrl.hash
+                  );
+                }
+              }
+            })
+            .catch(() => {});
+        }
+
+        // Auto-inject missing parameters into URL
+        const currentUrl = new URL(window.location.href);
+        let urlModified = false;
+
+        if (storedRef && !currentUrl.searchParams.has('ref')) {
+          currentUrl.searchParams.set('ref', storedRef);
+          urlModified = true;
+        }
+
+        if (
+          storedCamp &&
+          !currentUrl.searchParams.has('campaign') &&
+          !currentUrl.searchParams.has('utm_campaign')
+        ) {
+          currentUrl.searchParams.set('campaign', storedCamp);
+          urlModified = true;
+        }
+
+        if (urlModified) {
+          window.history.replaceState(
+            window.history.state,
+            '',
+            currentUrl.pathname + currentUrl.search + currentUrl.hash
+          );
         }
       }
     }
@@ -134,3 +172,4 @@ export function ReferralTracker() {
     </Suspense>
   );
 }
+

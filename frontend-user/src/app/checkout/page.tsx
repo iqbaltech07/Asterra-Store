@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, Suspense } from 'react';
+import { useState, useEffect, useRef, useMemo, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery, useMutation } from '@tanstack/react-query';
@@ -73,7 +73,22 @@ function CheckoutPageContent() {
     name: string;
   } | null>(null);
   const [referralDiscount, setReferralDiscount] = useState<number>(0);
+  const [isReferralDiscountUsed, setIsReferralDiscountUsed] = useState<boolean>(false);
   const [activeCampaignSlug, setActiveCampaignSlug] = useState<string>('');
+
+  // 0. Fetch active running promo campaigns
+  const { data: activeCampaignsData } = useQuery({
+    queryKey: ['active-promo-campaigns'],
+    queryFn: async () => {
+      const res = await fetch('/api/v1/campaigns/active');
+      return res.json();
+    },
+    staleTime: 30000,
+  });
+
+  const activeCampaigns = useMemo(() => {
+    return Array.isArray(activeCampaignsData?.data) ? activeCampaignsData.data : [];
+  }, [activeCampaignsData]);
 
   // Auto-detect & persist referral code & campaign from query params or localStorage
   useEffect(() => {
@@ -89,13 +104,16 @@ function CheckoutPageContent() {
       if (typeof window !== 'undefined') {
         try {
           localStorage.setItem('asterra_ref', cleanRef);
+          document.cookie = `asterra_ref=${encodeURIComponent(cleanRef)}; path=/; max-age=2592000; SameSite=Lax`;
           // Preserve parameter in address bar if not present
           if (!searchParams.get('ref')) {
             const url = new URL(window.location.href);
             url.searchParams.set('ref', cleanRef);
-            const campaign = localStorage.getItem('asterra_utm_campaign');
-            if (campaign && !url.searchParams.has('utm_campaign')) {
-              url.searchParams.set('utm_campaign', campaign);
+            const campaign =
+              localStorage.getItem('asterra_campaign') ||
+              localStorage.getItem('asterra_utm_campaign');
+            if (campaign && !url.searchParams.has('campaign')) {
+              url.searchParams.set('campaign', campaign);
             }
             window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
           }
@@ -108,24 +126,92 @@ function CheckoutPageContent() {
     let campVal = urlCamp;
     if (!campVal && typeof window !== 'undefined') {
       try {
-        campVal = localStorage.getItem('asterra_utm_campaign') || localStorage.getItem('asterra_campaign');
+        campVal = localStorage.getItem('asterra_campaign') || localStorage.getItem('asterra_utm_campaign');
       } catch (_) {}
     }
     if (campVal && campVal.trim()) {
-      setActiveCampaignSlug(campVal.trim());
+      const cleanCamp = campVal.trim();
+      setActiveCampaignSlug(cleanCamp);
       if (typeof window !== 'undefined') {
         try {
-          localStorage.setItem('asterra_utm_campaign', campVal.trim());
+          localStorage.setItem('asterra_campaign', cleanCamp);
+          localStorage.setItem('asterra_utm_campaign', cleanCamp);
+          document.cookie = `asterra_campaign=${encodeURIComponent(cleanCamp)}; path=/; max-age=2592000; SameSite=Lax`;
+          document.cookie = `asterra_utm_campaign=${encodeURIComponent(cleanCamp)}; path=/; max-age=2592000; SameSite=Lax`;
+          if (!searchParams.get('campaign') && !searchParams.get('utm_campaign')) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('campaign', cleanCamp);
+            window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
+          }
         } catch (_) {}
       }
     }
   }, [searchParams]);
+
+  // Match active campaign
+  const matchingCampaign = useMemo(() => {
+    if (!activeCampaigns.length) return null;
+    if (activeCampaignSlug) {
+      const found = activeCampaigns.find(
+        (c: { slug?: string; id?: string; status?: string; isActive?: boolean }) =>
+          (c.slug === activeCampaignSlug || c.id === activeCampaignSlug) &&
+          c.status !== 'ended' &&
+          c.isActive !== false
+      );
+      if (found) return found;
+    }
+    // Fallback to active campaign if site-wide
+    return activeCampaigns[0] || null;
+  }, [activeCampaigns, activeCampaignSlug]);
+
+  // Purge campaign parameter ONLY when campaign has ended
+  useEffect(() => {
+    if (activeCampaignsData && activeCampaignSlug) {
+      const isStillRunning = activeCampaigns.some(
+        (c: { slug?: string; id?: string; status?: string; isActive?: boolean }) =>
+          (c.slug === activeCampaignSlug || c.id === activeCampaignSlug) &&
+          c.status !== 'ended' &&
+          c.isActive !== false
+      );
+
+      if (!isStillRunning) {
+        // Campaign has ended! Clean up
+        setActiveCampaignSlug('');
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.removeItem('asterra_campaign');
+            localStorage.removeItem('asterra_utm_campaign');
+            document.cookie = 'asterra_campaign=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+            document.cookie = 'asterra_utm_campaign=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+          } catch {}
+          const currentUrl = new URL(window.location.href);
+          let changed = false;
+          if (currentUrl.searchParams.has('campaign')) {
+            currentUrl.searchParams.delete('campaign');
+            changed = true;
+          }
+          if (currentUrl.searchParams.has('utm_campaign')) {
+            currentUrl.searchParams.delete('utm_campaign');
+            changed = true;
+          }
+          if (changed) {
+            window.history.replaceState(
+              window.history.state,
+              '',
+              currentUrl.pathname + currentUrl.search + currentUrl.hash
+            );
+          }
+        }
+      }
+    }
+  }, [activeCampaignsData, activeCampaignSlug, activeCampaigns]);
 
   // Real-time referral attribution & 1-time customer referral discount eligibility check
   useEffect(() => {
     if (!referralCode.trim()) {
       setReferralPartner(null);
       setReferralDiscount(0);
+      setIsReferralDiscountUsed(false);
       return;
     }
 
@@ -142,29 +228,30 @@ function CheckoutPageContent() {
         if (isCancelled) return;
 
         if (json.valid && json.data) {
+          setReferralPartner({
+            code: json.data.code,
+            name: json.data.partnerName,
+          });
+
           if (json.data.discountEligible === false) {
-             // Ref sudah diklaim, bersihkan dari UI dan storage
-             setReferralPartner(null);
+             // Diskon referral sudah 1x dipakai untuk akun ini
              setReferralDiscount(0);
-             setReferralCode('');
-             if (typeof window !== 'undefined') {
-                localStorage.removeItem('asterra_ref');
-             }
+             setIsReferralDiscountUsed(true);
+             // JANGAN HAPUS asterra_ref dan JANGAN HAPUS url param! Mitra sales tetap tercatat sah!
           } else {
-             setReferralPartner({
-               code: json.data.code,
-               name: json.data.partnerName,
-             });
-             setReferralDiscount(json.data.discountAmount);
+             setReferralDiscount(json.data.discountAmount || 1000);
+             setIsReferralDiscountUsed(false);
           }
         } else {
           setReferralPartner(null);
           setReferralDiscount(0);
+          setIsReferralDiscountUsed(false);
         }
       } catch (_) {
         if (!isCancelled) {
           setReferralPartner(null);
           setReferralDiscount(0);
+          setIsReferralDiscountUsed(false);
         }
       }
     };
@@ -396,7 +483,53 @@ function CheckoutPageContent() {
 
   const subtotal = getTotalAmount();
   const discountAmount = appliedPromo ? appliedPromo.discount : 0;
-  const finalTotal = Math.max(0, subtotal - discountAmount - referralDiscount);
+
+  // Real-time Campaign Discount Computation
+  const campaignDiscount = useMemo(() => {
+    if (!matchingCampaign) return 0;
+    const minOrder = Number(matchingCampaign.minPurchase || matchingCampaign.minOrderAmount || 0);
+    if (subtotal < minOrder) return 0;
+
+    let totalDiscount = 0;
+    for (const item of items) {
+      const scope = matchingCampaign.targetScope || 'all';
+      let eligible = false;
+      if (scope === 'all') {
+        eligible = true;
+      } else if (scope === 'category') {
+        const cats = (matchingCampaign.targetCategories || []).map((c: string) => c.toLowerCase());
+        const itemCat = ((item as { category?: string }).category || '').toLowerCase();
+        if (cats.includes(itemCat) || cats.some((c: string) => itemCat.includes(c))) {
+          eligible = true;
+        }
+      } else if (scope === 'specific_products') {
+        const prods = matchingCampaign.targetProducts || [];
+        if (prods.includes(item.id)) {
+          eligible = true;
+        }
+      }
+
+      if (eligible) {
+        const itemTotal = item.priceNumeric * item.quantity;
+        if (matchingCampaign.discountType === 'percentage') {
+          const pct = Number(matchingCampaign.discountValue || 0);
+          totalDiscount += Math.round((itemTotal * pct) / 100);
+        } else {
+          const fixedVal = Number(matchingCampaign.discountValue || 0);
+          totalDiscount += Math.min(fixedVal * item.quantity, itemTotal);
+        }
+      }
+    }
+
+    const maxDisc = Number(matchingCampaign.maxDiscountAmount || 0);
+    if (maxDisc > 0 && totalDiscount > maxDisc) {
+      totalDiscount = maxDisc;
+    }
+
+    return Math.max(0, totalDiscount);
+  }, [matchingCampaign, items, subtotal]);
+
+  const finalTotal = Math.max(0, subtotal - discountAmount - referralDiscount - campaignDiscount);
 
   const handleCopy = (text: string, key: string, label: string) => {
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
@@ -455,25 +588,10 @@ function CheckoutPageContent() {
     onSuccess: async (orderData) => {
       const createdOrder = orderData.order;
 
-      if (referralDiscount > 0 && typeof window !== 'undefined') {
-        try {
-          localStorage.removeItem('asterra_ref');
-          localStorage.removeItem('asterra_utm_campaign');
-          localStorage.removeItem('asterra_utm_source');
-          localStorage.removeItem('asterra_utm_medium');
-          document.cookie = 'asterra_ref=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-          document.cookie = 'asterra_utm_campaign=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-          document.cookie = 'asterra_utm_source=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-          const url = new URL(window.location.href);
-          url.searchParams.delete('ref');
-          url.searchParams.delete('utm_campaign');
-          url.searchParams.delete('utm_source');
-          url.searchParams.delete('utm_medium');
-          window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
-          setReferralCode('');
-          setReferralPartner(null);
-          setReferralDiscount(0);
-        } catch (_) {}
+      // Note: ref and campaign remain permanently attributed. 1-time referral discount is marked used.
+      if (referralDiscount > 0) {
+        setIsReferralDiscountUsed(true);
+        setReferralDiscount(0);
       }
 
       if (typeof window !== 'undefined') {
@@ -572,8 +690,11 @@ function CheckoutPageContent() {
       payment_method: selectedMethod,
       promo_code: appliedPromo?.code || undefined,
       referral_code: referralPartner?.code || (referralCode.trim() ? referralCode.trim() : undefined),
-      campaign_slug: activeCampaignSlug || undefined,
-      utm_campaign: activeCampaignSlug || undefined,
+      referral_discount: referralDiscount,
+      campaign_id: matchingCampaign?.id || undefined,
+      campaign_slug: matchingCampaign?.slug || activeCampaignSlug || undefined,
+      campaign_discount: campaignDiscount,
+      utm_campaign: matchingCampaign?.slug || activeCampaignSlug || undefined,
       customer_contact: {
         name: customerName.trim(),
         email: targetEmail.trim(),
@@ -685,6 +806,9 @@ function CheckoutPageContent() {
                     discountAmount={discountAmount}
                     referralDiscount={referralDiscount}
                     referralPartner={referralPartner}
+                    isReferralDiscountUsed={isReferralDiscountUsed}
+                    campaignDiscount={campaignDiscount}
+                    activeCampaign={matchingCampaign}
                     finalTotal={finalTotal}
                     isManualMode={isManualMode}
                     isSubmitting={createOrderMutation.isPending}

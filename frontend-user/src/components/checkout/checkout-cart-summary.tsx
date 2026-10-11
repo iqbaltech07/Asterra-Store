@@ -35,6 +35,14 @@ interface CheckoutCartSummaryProps {
     code: string;
     name: string;
   } | null;
+  isReferralDiscountUsed?: boolean;
+  campaignDiscount?: number;
+  activeCampaign?: {
+    name: string;
+    slug?: string;
+    discountValue?: number;
+    discountType?: string;
+  } | null;
   finalTotal: number;
   isManualMode: boolean;
   enableUniqueCode?: boolean;
@@ -61,6 +69,9 @@ export function CheckoutCartSummary({
   discountAmount,
   referralDiscount = 0,
   referralPartner = null,
+  isReferralDiscountUsed = false,
+  campaignDiscount = 0,
+  activeCampaign = null,
   finalTotal,
   isManualMode,
   isSubmitting,
@@ -155,11 +166,29 @@ export function CheckoutCartSummary({
               <span className="text-[11px] font-mono text-[#121A2A]/60">({referralPartner.code})</span>
             </span>
           </div>
-          {(referralDiscount ?? 0) > 0 && (
+          {(referralDiscount ?? 0) > 0 ? (
             <span className="text-status-success font-bold text-[10px] bg-status-success/15 px-2 py-0.5 rounded-full shrink-0">
               Hemat Rp {(referralDiscount ?? 0).toLocaleString('id-ID')}
             </span>
-          )}
+          ) : isReferralDiscountUsed ? (
+            <span className="text-[#121A2A]/60 font-semibold text-[10px] bg-black/5 px-2 py-0.5 rounded-full shrink-0" title="Diskon referral 1x telah digunakan pada pesanan sebelumnya. Mitra tetap sah terhubung.">
+              Mitra Terhubung
+            </span>
+          ) : null}
+        </div>
+      )}
+
+      {/* Active Promo Campaign Banner */}
+      {activeCampaign && (campaignDiscount ?? 0) > 0 && (
+        <div className="p-3 rounded-xl border border-[#C96F55]/30 bg-[#C96F55]/5 text-xs flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <span className="text-[#121A2A] text-xs">
+              Promo: <strong className="text-[#C96F55] font-semibold">{activeCampaign.name}</strong>
+            </span>
+          </div>
+          <span className="text-[#C96F55] font-bold text-[10px] bg-[#C96F55]/15 px-2 py-0.5 rounded-full shrink-0">
+            Hemat Rp {(campaignDiscount ?? 0).toLocaleString('id-ID')}
+          </span>
         </div>
       )}
 
@@ -181,6 +210,13 @@ export function CheckoutCartSummary({
           <div className="flex justify-between text-status-success font-semibold">
             <span>Diskon Referral Mitra:</span>
             <span>-Rp {(referralDiscount ?? 0).toLocaleString('id-ID')}</span>
+          </div>
+        )}
+
+        {(campaignDiscount ?? 0) > 0 && (
+          <div className="flex justify-between text-status-success font-semibold">
+            <span>Diskon Campaign Promo:</span>
+            <span>-Rp {(campaignDiscount ?? 0).toLocaleString('id-ID')}</span>
           </div>
         )}
 

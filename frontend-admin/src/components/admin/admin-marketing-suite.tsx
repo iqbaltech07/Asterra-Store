@@ -131,7 +131,7 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
   const [campCategory, setCampCategory] = useState('Semua Kategori');
   const [campDiscountType, setCampDiscountType] = useState<'percentage' | 'fixed'>('percentage');
   const [campDiscountValue, setCampDiscountValue] = useState(15);
-  const [campMinPurchase, setCampMinPurchase] = useState(50000);
+  const [campMinPurchase, setCampMinPurchase] = useState(0);
   const [campAffiliateBonus, setCampAffiliateBonus] = useState(5);
 
   // Banners State
@@ -206,7 +206,7 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
     setCampCategory('Semua Kategori');
     setCampDiscountType('percentage');
     setCampDiscountValue(15);
-    setCampMinPurchase(50000);
+    setCampMinPurchase(0);
     setCampAffiliateBonus(15);
     setIsCampaignModalOpen(true);
   };

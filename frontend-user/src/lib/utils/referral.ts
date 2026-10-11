@@ -14,17 +14,24 @@ export function getActiveReferralParams(): Record<string, string> {
     const urlMedium = urlParams.get('utm_medium');
 
     if (urlRef && urlRef.trim()) {
-      localStorage.setItem('asterra_ref', urlRef.trim().toUpperCase());
+      const code = urlRef.trim().toUpperCase();
+      localStorage.setItem('asterra_ref', code);
+      document.cookie = `asterra_ref=${encodeURIComponent(code)}; path=/; max-age=2592000; SameSite=Lax`;
     }
     if (urlCamp && urlCamp.trim()) {
-      localStorage.setItem('asterra_utm_campaign', urlCamp.trim());
-      localStorage.setItem('asterra_campaign', urlCamp.trim());
+      const cName = urlCamp.trim();
+      localStorage.setItem('asterra_utm_campaign', cName);
+      localStorage.setItem('asterra_campaign', cName);
+      document.cookie = `asterra_campaign=${encodeURIComponent(cName)}; path=/; max-age=2592000; SameSite=Lax`;
+      document.cookie = `asterra_utm_campaign=${encodeURIComponent(cName)}; path=/; max-age=2592000; SameSite=Lax`;
     }
     if (urlSource && urlSource.trim()) {
       localStorage.setItem('asterra_utm_source', urlSource.trim());
+      document.cookie = `asterra_utm_source=${encodeURIComponent(urlSource.trim())}; path=/; max-age=2592000; SameSite=Lax`;
     }
     if (urlMedium && urlMedium.trim()) {
       localStorage.setItem('asterra_utm_medium', urlMedium.trim());
+      document.cookie = `asterra_utm_medium=${encodeURIComponent(urlMedium.trim())}; path=/; max-age=2592000; SameSite=Lax`;
     }
 
     const ref = urlRef || localStorage.getItem('asterra_ref');

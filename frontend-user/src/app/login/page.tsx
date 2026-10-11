@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/card';
 import { signIn } from '@/lib/auth-client';
 import { AsterraLogo } from '@/components/ui/asterra-logo';
+import { appendReferralParams } from '@/lib/utils/referral';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faArrowLeft,
@@ -26,7 +27,8 @@ import { faGoogle } from '@fortawesome/free-brands-svg-icons';
 function LoginFormContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get('callbackUrl') || '/';
+  const rawCallback = searchParams.get('callbackUrl') || '/';
+  const callbackUrl = appendReferralParams(rawCallback);
 
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
