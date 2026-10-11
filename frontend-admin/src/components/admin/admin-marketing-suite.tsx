@@ -60,73 +60,6 @@ interface BannerItem {
   clickCount?: number;
 }
 
-const INITIAL_CAMPAIGNS: CampaignItem[] = [
-  {
-    id: 'camp-1',
-    name: 'Payday Special: AI & Streaming Boost',
-    tagline: 'Diskon kilat akhir bulan untuk seluruh AI Tools & Hiburan',
-    startDate: '2026-09-25',
-    endDate: '2026-10-05',
-    targetCategory: 'Semua Kategori',
-    discountType: 'percentage',
-    discountValue: 15,
-    minPurchase: 50000,
-    affiliateBonusPercent: 5,
-    status: 'running',
-    totalOrders: 184,
-    revenue: 5520000,
-    conversionRate: 8.4,
-  },
-  {
-    id: 'camp-2',
-    name: 'Content Creator Starter Pack',
-    tagline: 'Bundling Canva Pro + CapCut Pro diskon Rp 15.000',
-    startDate: '2026-10-01',
-    endDate: '2026-10-15',
-    targetCategory: 'Desain & Grafis',
-    discountType: 'fixed',
-    discountValue: 15000,
-    minPurchase: 60000,
-    affiliateBonusPercent: 7.5,
-    status: 'running',
-    totalOrders: 92,
-    revenue: 3220000,
-    conversionRate: 11.2,
-  },
-  {
-    id: 'camp-3',
-    name: 'Flash Sale 10.10 Digital Mega Deal',
-    tagline: 'Mega sale kupon diskon 25% serentak jam 12:00 - 24:00',
-    startDate: '2026-10-10',
-    endDate: '2026-10-11',
-    targetCategory: 'Semua Kategori',
-    discountType: 'percentage',
-    discountValue: 25,
-    minPurchase: 30000,
-    affiliateBonusPercent: 10,
-    status: 'scheduled',
-    totalOrders: 0,
-    revenue: 0,
-    conversionRate: 0,
-  },
-  {
-    id: 'camp-4',
-    name: 'Student Productivity Sprint',
-    tagline: 'Subsidi akun Gemini & ChatGPT Pro untuk mahasiswa',
-    startDate: '2026-08-15',
-    endDate: '2026-09-15',
-    targetCategory: 'AI Tools',
-    discountType: 'percentage',
-    discountValue: 20,
-    minPurchase: 40000,
-    affiliateBonusPercent: 5,
-    status: 'ended',
-    totalOrders: 312,
-    revenue: 9672000,
-    conversionRate: 9.8,
-  },
-];
-
 const INITIAL_BANNERS: BannerItem[] = [
   {
     id: 'ban-affiliate',
@@ -182,8 +115,8 @@ interface AdminMarketingSuiteProps {
 }
 
 export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuiteProps) {
-  // Campaigns State
-  const [campaigns, setCampaigns] = useState<CampaignItem[]>(INITIAL_CAMPAIGNS);
+  // Campaigns State (100% loaded from PostgreSQL database)
+  const [campaigns, setCampaigns] = useState<CampaignItem[]>([]);
   const [isLoadingCampaigns, setIsLoadingCampaigns] = useState(false);
   const [isSavingCampaign, setIsSavingCampaign] = useState(false);
   const [campaignFilter, setCampaignFilter] = useState<'all' | 'running' | 'scheduled' | 'ended'>('all');
@@ -236,22 +169,22 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
     return () => clearInterval(timer);
   }, [banners, isPreviewPaused]);
 
-  // Load Campaigns from Backend API
+  // Load Campaigns from Backend API (Directly from real database)
   const loadCampaignsFromApi = useCallback(async () => {
     setIsLoadingCampaigns(true);
     try {
       const res = await fetch('/api/v1/admin/campaigns');
       if (res.ok) {
         const json = await res.json();
-        if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+        if (json.success && Array.isArray(json.data)) {
           setCampaigns(json.data);
           return;
         }
       }
-      setCampaigns(INITIAL_CAMPAIGNS);
+      setCampaigns([]);
     } catch (err) {
-      console.warn('Backend campaigns fetch error, using local state:', err);
-      setCampaigns(INITIAL_CAMPAIGNS);
+      console.warn('Backend campaigns fetch error:', err);
+      setCampaigns([]);
     } finally {
       setIsLoadingCampaigns(false);
     }
@@ -678,7 +611,24 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
 
         {/* Campaigns Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {filteredCampaigns.map((camp) => (
+          {filteredCampaigns.length === 0 ? (
+            <div className="col-span-full py-12 px-6 rounded-xl border border-dashed border-border bg-surface text-center flex flex-col items-center justify-center space-y-3">
+              <div className="w-12 h-12 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
+                <Sparkles className="w-6 h-6" />
+              </div>
+              <div className="space-y-1 max-w-sm">
+                <h4 className="text-sm font-bold text-foreground">Belum Ada Campaign Promosi</h4>
+                <p className="text-xs text-foreground-muted">
+                  Belum ada data campaign di database untuk filter ini. Buat campaign baru untuk memulai program diskon & booster komisi affiliate.
+                </p>
+              </div>
+              <Button size="sm" onClick={handleOpenCreateCampaign} className="text-xs gap-1.5 shadow-xs mt-2">
+                <Plus className="w-3.5 h-3.5" />
+                <span>Buat Campaign Pertama</span>
+              </Button>
+            </div>
+          ) : (
+            filteredCampaigns.map((camp) => (
             <div
               key={camp.id}
               className="bg-surface border border-border hover:border-primary/40 rounded-xl p-5 shadow-xs transition-all flex flex-col justify-between space-y-4"
@@ -797,7 +747,7 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
                 </div>
               </div>
             </div>
-          ))}
+          )))}
         </div>
 
         {/* Modal Create/Edit Campaign */}

@@ -1411,16 +1411,10 @@ async def admin_auth_me(request: Request):
 
     payload = verify_admin_session_token(token) if token else None
     if not payload:
-        # Fallback to superadmin profile if running in dev mode
         return {
-            "success": True,
-            "authenticated": True,
-            "admin": {
-                "id": "admin-root",
-                "email": "admin@asterra.store",
-                "name": "Super Admin Asterra",
-                "role": "superadmin",
-            },
+            "success": False,
+            "authenticated": False,
+            "admin": None,
         }
 
     return {

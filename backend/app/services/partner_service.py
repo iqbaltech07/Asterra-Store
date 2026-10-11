@@ -116,18 +116,48 @@ class PartnerService:
 
     @classmethod
     def find_by_code(cls, code: str) -> Optional[Dict[str, Any]]:
-        partners = cls.load_partners()
         clean = code.strip().upper()
+        try:
+            db = SessionLocal()
+            try:
+                p_obj = db.query(SalesPartner).filter(SalesPartner.code.ilike(clean)).first()
+                if p_obj:
+                    return p_obj.to_dict()
+            finally:
+                db.close()
+        except Exception:
+            pass
+        partners = cls.load_partners()
         return next((p for p in partners if str(p.get("code", "")).upper() == clean), None)
 
     @classmethod
     def find_by_email(cls, email: str) -> Optional[Dict[str, Any]]:
-        partners = cls.load_partners()
         clean = email.strip().lower()
+        try:
+            db = SessionLocal()
+            try:
+                p_obj = db.query(SalesPartner).filter(SalesPartner.email.ilike(clean)).first()
+                if p_obj:
+                    return p_obj.to_dict()
+            finally:
+                db.close()
+        except Exception:
+            pass
+        partners = cls.load_partners()
         return next((p for p in partners if str(p.get("email", "")).lower() == clean), None)
 
     @classmethod
     def find_by_id(cls, partner_id: str) -> Optional[Dict[str, Any]]:
+        try:
+            db = SessionLocal()
+            try:
+                p_obj = db.query(SalesPartner).filter(SalesPartner.id == str(partner_id)).first()
+                if p_obj:
+                    return p_obj.to_dict()
+            finally:
+                db.close()
+        except Exception:
+            pass
         partners = cls.load_partners()
         return next((p for p in partners if str(p.get("id", "")) == str(partner_id)), None)
 

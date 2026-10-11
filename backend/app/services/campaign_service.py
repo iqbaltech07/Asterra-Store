@@ -53,11 +53,10 @@ class CampaignService:
                         .order_by(PromoCampaign.starts_at.desc())
                         .all()
                     )
-                    if db_items:
-                        data = [c.to_dict() for c in db_items]
-                        cls._campaigns = data
-                        cls.save_campaigns()
-                        return cls._campaigns
+                    data = [c.to_dict() for c in db_items]
+                    cls._campaigns = data
+                    cls.save_campaigns()
+                    return cls._campaigns
                 finally:
                     db.close()
         except Exception as e:

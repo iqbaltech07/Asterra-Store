@@ -7,7 +7,7 @@ function getAdminSecret(): string {
   return (
     process.env.ADMIN_SESSION_SECRET ||
     process.env.JWT_SECRET ||
-    'asterra_admin_fallback_secret_production_2026'
+    'asterra_admin_sec_789f28a7c1b54a20b080bfa15c3281c7e930!3odsay8e21'
   );
 }
 

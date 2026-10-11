@@ -26,10 +26,10 @@
     "username": "admin3",
     "email": "admin.dyah@asterra.store",
     "name": "dyah",
-    "isActive": true,
+    "isActive": false,
     "role": "admin",
     "createdAt": "2026-09-30T10:40:10.410000",
-    "updatedAt": "2026-10-03T17:05:24.534000",
+    "updatedAt": "2026-10-11T10:44:40.316000",
     "passwordHash": "$2b$10$xKlkH5Qyix3mlMuYkafCP.m8hV2gpbJVTOgjrPgbgZLGerYSxeOa."
   },
   {
