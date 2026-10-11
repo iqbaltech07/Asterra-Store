@@ -34,6 +34,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "tailwind-merge": "^2.5.4",
+    "swiper": "^11.2.5",
     "zustand": "^5.0.15"
   },
   "overrides": {

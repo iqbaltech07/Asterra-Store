@@ -1,15 +1,15 @@
 [
   {
-    "id": "banner_2fdbefb3927a",
+    "id": "banner_53f48c92dd91",
     "title": "Program Mitra Affiliate Asterra Store",
     "description": "Rekomendasikan produk lisensi digital resmi, raih komisi 10% per transaksi. Dashboard real-time, pencairan kilat ke rekening/e-wallet.",
     "ctaText": "Daftar Affiliate",
     "bannerType": "hero",
     "type": "hero",
-    "imageUrl": "/api/v1/media/banners/promo-program-mitra-affiliate-asterra-store-92ed5aa3a8e1.webp",
-    "blobUrl": "https://jyoavpfhhqnaysh3.private.blob.vercel-storage.com/banners/promo-program-mitra-affiliate-asterra-store-92ed5aa3a8e1.webp",
-    "pathname": "banners/promo-program-mitra-affiliate-asterra-store-92ed5aa3a8e1.webp",
-    "contentHash": "92ed5aa3a8e1",
+    "imageUrl": "/api/v1/media/banners/promo-program-mitra-affiliate-asterra-store-cf39fad5af86.webp",
+    "blobUrl": "https://jyoavpfhhqnaysh3.private.blob.vercel-storage.com/banners/promo-program-mitra-affiliate-asterra-store-cf39fad5af86.webp",
+    "pathname": "banners/promo-program-mitra-affiliate-asterra-store-cf39fad5af86.webp",
+    "contentHash": "cf39fad5af86",
     "linkUrl": "/daftar-sales",
     "destinationUrl": "/daftar-sales",
     "targetPage": "home",
@@ -18,20 +18,20 @@
     "status": "active",
     "expiresAt": "2027-12-31T00:00:00",
     "scheduledUntil": "2027-12-31",
-    "createdAt": "2026-10-11T08:29:22.658977",
-    "updatedAt": "2026-10-11T08:29:22.658977"
+    "createdAt": "2026-10-11T09:05:18.084201",
+    "updatedAt": "2026-10-11T09:05:18.084201"
   },
   {
-    "id": "banner_e7a17ed9311b",
+    "id": "banner_f5673e22c8e1",
     "title": "Selamat Datang di Asterra Store",
     "description": "Pusat Akun & Lisensi Premium Resmi Bergaransi. Canva Pro, Gemini AI, Netflix kilat 1 menit.",
     "ctaText": "Eksplor Katalog",
     "bannerType": "hero",
     "type": "hero",
-    "imageUrl": "/api/v1/media/banners/promo-selamat-datang-di-asterra-store-52c810db8986.webp",
-    "blobUrl": "https://jyoavpfhhqnaysh3.private.blob.vercel-storage.com/banners/promo-selamat-datang-di-asterra-store-52c810db8986.webp",
-    "pathname": "banners/promo-selamat-datang-di-asterra-store-52c810db8986.webp",
-    "contentHash": "52c810db8986",
+    "imageUrl": "/api/v1/media/banners/promo-selamat-datang-di-asterra-store-bf58f8ad4602.webp",
+    "blobUrl": "https://jyoavpfhhqnaysh3.private.blob.vercel-storage.com/banners/promo-selamat-datang-di-asterra-store-bf58f8ad4602.webp",
+    "pathname": "banners/promo-selamat-datang-di-asterra-store-bf58f8ad4602.webp",
+    "contentHash": "bf58f8ad4602",
     "linkUrl": "/#katalog",
     "destinationUrl": "/#katalog",
     "targetPage": "home",
@@ -40,7 +40,7 @@
     "status": "active",
     "expiresAt": "2027-12-31T00:00:00",
     "scheduledUntil": "2027-12-31",
-    "createdAt": "2026-10-11T08:29:27.285079",
-    "updatedAt": "2026-10-11T08:29:27.285079"
+    "createdAt": "2026-10-11T09:05:21.209357",
+    "updatedAt": "2026-10-11T09:05:21.209357"
   }
 ]

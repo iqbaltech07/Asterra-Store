@@ -236,6 +236,18 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
   const [banSchedule, setBanSchedule] = useState('');
   const [banIsActive, setBanIsActive] = useState(true);
 
+  // Auto-rotate live banner preview every 5 seconds at top level (Rules of Hooks compliant)
+  useEffect(() => {
+    const heroCount = banners.filter(
+      (b) => (b.type === 'hero' || b.bannerType === 'hero') && (b.status === 'active' || b.isActive)
+    ).length;
+    if (heroCount <= 1 || isPreviewPaused) return;
+    const timer = setInterval(() => {
+      setPreviewSlideIndex((prev) => (prev + 1) % heroCount);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [banners, isPreviewPaused]);
+
   // Campaign Handlers
   const handleOpenCreateCampaign = () => {
     setEditingCampaign(null);
@@ -838,15 +850,6 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
     isActive: true,
   };
   const displayHeroBanners = activeHeroBanners.length > 0 ? activeHeroBanners : [fallbackWelcomeBanner];
-
-  // Auto-rotate live preview every 5 seconds if multiple banners exist
-  useEffect(() => {
-    if (displayHeroBanners.length <= 1 || isPreviewPaused) return;
-    const timer = setInterval(() => {
-      setPreviewSlideIndex((prev) => (prev + 1) % displayHeroBanners.length);
-    }, 5000);
-    return () => clearInterval(timer);
-  }, [displayHeroBanners.length, isPreviewPaused]);
 
   const currentPreviewBanner =
     displayHeroBanners[previewSlideIndex % displayHeroBanners.length] || displayHeroBanners[0];
