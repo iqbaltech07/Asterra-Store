@@ -52,6 +52,8 @@ class Order(Base):
     recruiter_partner_id = Column(String, nullable=True)
     promo_discount = Column(Integer, default=0)
     referral_discount = Column(Integer, default=0)
+    campaign_id = Column(String, nullable=True)
+    campaign_discount = Column(Integer, default=0)
     expires_at = Column(DateTime, nullable=True)
     paid_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -80,6 +82,8 @@ class Order(Base):
             "recruiterPartnerId": self.recruiter_partner_id,
             "promoDiscount": self.promo_discount,
             "referralDiscount": self.referral_discount,
+            "campaignId": self.campaign_id,
+            "campaignDiscount": self.campaign_discount,
             "expiresAt": self.expires_at.isoformat() if self.expires_at else None,
             "paidAt": self.paid_at.isoformat() if self.paid_at else None,
             "createdAt": self.created_at.isoformat() if self.created_at else None,

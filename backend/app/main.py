@@ -39,6 +39,7 @@ from app.services.referral_profit_service import ReferralProfitService
 from app.services.tripay_service import TripayService
 from app.services.analytics_service import AnalyticsService
 from app.services.banner_service import BannerService
+from app.services.campaign_service import CampaignService
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -1103,6 +1104,161 @@ async def delete_promo_banner(banner_id: str):
     return {
         "success": True,
         "message": f"Banner {banner_id} berhasil dihapus dari sistem dan storage.",
+    }
+
+# ------------------------------------------
+# 8.5. Promo Campaigns & Flash Sale Engine (Storefront, Sales Portal, Admin)
+# ------------------------------------------
+@api_router.get("/campaigns/active", tags=["Campaigns"])
+@api_router.get("/campaigns", tags=["Campaigns"])
+def get_active_campaigns():
+    """Returns currently running campaigns evaluated against live time-window."""
+    campaigns = CampaignService.get_active_campaigns()
+    return {
+        "success": True,
+        "data": campaigns,
+        "total": len(campaigns),
+    }
+
+@api_router.get("/campaigns/evaluate", tags=["Campaigns"])
+def evaluate_product_campaign_price(
+    product_id: str = Query(..., alias="productId"),
+    category: Optional[str] = Query(None),
+    price: float = Query(..., alias="price"),
+):
+    """O(1) in-memory evaluation for product campaign discount and affiliate booster rate."""
+    evaluation = CampaignService.evaluate_product_campaign(
+        product_id=product_id,
+        category_name=category,
+        original_price=price,
+    )
+    return {
+        "success": True,
+        "isCampaignActive": evaluation is not None,
+        "data": evaluation,
+    }
+
+@api_router.get("/admin/campaigns", tags=["Admin Campaigns"])
+def get_admin_campaigns(status: Optional[str] = Query(None)):
+    """Returns all campaigns with computed status and order/revenue telemetry."""
+    campaigns = CampaignService.get_all_campaigns(filter_status=status)
+    return {
+        "success": True,
+        "data": campaigns,
+        "total": len(campaigns),
+    }
+
+@api_router.post("/admin/campaigns", tags=["Admin Campaigns"])
+async def create_admin_campaign(request: Request):
+    """Creates a new campaign with discount and affiliate booster configurations."""
+    payload = await request.json()
+    try:
+        created = CampaignService.create_campaign(payload)
+        return {
+            "success": True,
+            "message": f"Campaign '{created.get('name')}' berhasil diluncurkan.",
+            "data": created,
+        }
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Gagal membuat campaign: {str(e)}")
+
+@api_router.put("/admin/campaigns/{campaign_id}", tags=["Admin Campaigns"])
+@api_router.patch("/admin/campaigns/{campaign_id}", tags=["Admin Campaigns"])
+async def update_admin_campaign(campaign_id: str, request: Request):
+    """Updates campaign parameters and active status."""
+    payload = await request.json()
+    updated = CampaignService.update_campaign(campaign_id, payload)
+    if not updated:
+        raise HTTPException(status_code=404, detail="Campaign tidak ditemukan.")
+    return {
+        "success": True,
+        "message": f"Campaign '{updated.get('name')}' berhasil diperbarui.",
+        "data": updated,
+    }
+
+@api_router.patch("/admin/campaigns/{campaign_id}/toggle", tags=["Admin Campaigns"])
+@api_router.post("/admin/campaigns/{campaign_id}/toggle", tags=["Admin Campaigns"])
+def toggle_admin_campaign(campaign_id: str):
+    """Emergency kill-switch: toggles campaign active/inactive state immediately."""
+    updated = CampaignService.toggle_active(campaign_id)
+    if not updated:
+        raise HTTPException(status_code=404, detail="Campaign tidak ditemukan.")
+    label = "diaktifkan" if updated.get("isActive") else "dinonaktifkan"
+    return {
+        "success": True,
+        "message": f"Campaign '{updated.get('name')}' berhasil {label}.",
+        "data": updated,
+    }
+
+@api_router.delete("/admin/campaigns/{campaign_id}", tags=["Admin Campaigns"])
+def delete_admin_campaign(campaign_id: str):
+    """Deletes campaign from database and in-memory cache."""
+    success = CampaignService.delete_campaign(campaign_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Campaign tidak ditemukan.")
+    return {
+        "success": True,
+        "message": "Campaign berhasil dihapus dari sistem.",
+    }
+
+@api_router.get("/sales/campaigns", tags=["Sales Campaigns"])
+def get_sales_campaigns(request: Request):
+    """
+    Returns active promo campaigns for sales partners with personalized tracking links
+    and high-converting WhatsApp promotional copy.
+    """
+    token = request.cookies.get("asterra_admin_session")
+    if not token:
+        auth_hdr = request.headers.get("authorization", "")
+        if auth_hdr.lower().startswith("bearer "):
+            token = auth_hdr[7:].strip()
+
+    email_or_code = None
+    if token:
+        payload = verify_admin_session_token(token)
+        if payload:
+            email_or_code = payload.get("email")
+
+    profile = PartnerService.get_profile(email_or_code)
+    partner_code = profile.get("code") or "AST-FOUNDER"
+    partner_rate = float(profile.get("rate") or 10.0)
+
+    base_url = "https://asterrastore.biz.id"
+    active_camps = CampaignService.get_active_campaigns()
+
+    enriched_campaigns = []
+    for c in active_camps:
+        slug = c.get("slug") or c.get("id")
+        camp_name = c.get("name")
+        discount_display = f"{c.get('discountValue')}%" if c.get("discountType") == "percentage" else f"Rp {int(c.get('discountValue', 0)):,}"
+        booster_rate = float(c.get("affiliateBonusPercent") or c.get("affiliateCommissionOverride") or partner_rate)
+        
+        affiliate_link = f"{base_url}/?ref={partner_code}&campaign={slug}"
+        
+        wa_copy = (
+            f"🔥 PROMO SPESIAL ASTERRA STORE: {camp_name}!\n\n"
+            f"Dapatkan diskon instan {discount_display} untuk layanan langganan digital premium & AI Tools favorit kamu.\n\n"
+            f"⚡ Langsung klaim promonya sebelum periode berakhir di:\n"
+            f"{affiliate_link}\n\n"
+            f"Garansi 100% resmi & aktif instan!"
+        )
+
+        c_copy = dict(c)
+        c_copy["affiliateLink"] = affiliate_link
+        c_copy["partnerCode"] = partner_code
+        c_copy["partnerCommissionRate"] = partner_rate
+        c_copy["boosterCommissionRate"] = booster_rate
+        c_copy["isBoosterActive"] = booster_rate > partner_rate
+        c_copy["whatsappShareText"] = wa_copy
+        enriched_campaigns.append(c_copy)
+
+    return {
+        "success": True,
+        "data": enriched_campaigns,
+        "partnerCode": partner_code,
+        "total": len(enriched_campaigns),
     }
 
 # ------------------------------------------

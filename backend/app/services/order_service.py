@@ -37,6 +37,13 @@ class OrderService:
         o["uniqueCode"] = unique_val
         o["unique_code"] = unique_val
 
+        # Campaign attributes
+        camp_disc = o.get("campaign_discount") if o.get("campaign_discount") is not None else o.get("campaignDiscount", 0)
+        o["campaignDiscount"] = int(camp_disc) if camp_disc is not None else 0
+        o["campaign_discount"] = o["campaignDiscount"]
+        o["campaignId"] = o.get("campaign_id") or o.get("campaignId")
+        o["campaign_id"] = o["campaignId"]
+
         # Status & Dates
         status = str(o.get("status") or o.get("order_status") or "pending").lower()
         o["status"] = status
@@ -297,7 +304,9 @@ class OrderService:
         unique_code = random.randint(100, 999)
         promo_discount = int(payload.get("promo_discount") or payload.get("promoDiscount") or 0)
         referral_discount = int(payload.get("referral_discount") or payload.get("referralDiscount") or 0)
-        total_amount = max(0, raw_total - promo_discount - referral_discount)
+        campaign_discount = int(payload.get("campaign_discount") or payload.get("campaignDiscount") or 0)
+        campaign_id = payload.get("campaign_id") or payload.get("campaignId")
+        total_amount = max(0, raw_total - promo_discount - referral_discount - campaign_discount)
 
         contact = payload.get("customer_contact", {})
         customer_email = contact.get("email") or payload.get("customerEmail") or "buyer@asterra.store"
@@ -318,6 +327,8 @@ class OrderService:
                     raw_amount=raw_total,
                     promo_discount=promo_discount,
                     referral_discount=referral_discount,
+                    campaign_id=campaign_id,
+                    campaign_discount=campaign_discount,
                     unique_code=unique_code,
                     payment_mode=payload.get("payment_mode") or payload.get("paymentMode") or "manual",
                     payment_method=payload.get("payment_method") or payload.get("paymentMethod") or "manual_bca",
@@ -356,6 +367,15 @@ class OrderService:
 
         # 2. Reload and sync cache
         cls.load_orders(force_reload=True)
+
+        # 3. Telemetry tracking for campaign
+        if campaign_id:
+            try:
+                from app.services.campaign_service import CampaignService
+                CampaignService.record_campaign_order(str(campaign_id), float(total_amount))
+            except Exception:
+                pass
+
         return normalized
 
     @classmethod

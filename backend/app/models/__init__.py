@@ -5,6 +5,7 @@ from app.models.partner import SalesPartner
 from app.models.payment_setting import PaymentSetting
 from app.models.promo import PromoCode
 from app.models.banner import PromoBanner
+from app.models.campaign import PromoCampaign
 
 __all__ = [
     "Product",
@@ -15,4 +16,5 @@ __all__ = [
     "PaymentSetting",
     "PromoCode",
     "PromoBanner",
+    "PromoCampaign",
 ]

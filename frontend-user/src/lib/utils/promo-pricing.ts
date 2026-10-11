@@ -59,11 +59,13 @@ export function isPromoItem(item?: unknown): boolean {
   if (!item || typeof item !== 'object') return false;
   const anyItem = item as Record<string, unknown>;
   if (anyItem.isPromo === true) return true;
-  if (typeof anyItem.badgeLabel === 'string' && anyItem.badgeLabel.toLowerCase().includes('promo')) return true;
-  if (typeof anyItem.badge === 'string' && anyItem.badge.toLowerCase().includes('promo')) return true;
-  if (typeof anyItem.status === 'string' && anyItem.status.toLowerCase().includes('promo')) return true;
+  if (anyItem.isCampaignActive === true) return true;
+  if (Boolean(anyItem.campaignId || anyItem.campaign || anyItem.campaignSlug)) return true;
+  if (typeof anyItem.badgeLabel === 'string' && (anyItem.badgeLabel.toLowerCase().includes('promo') || anyItem.badgeLabel.toLowerCase().includes('sale') || anyItem.badgeLabel.toLowerCase().includes('flash'))) return true;
+  if (typeof anyItem.badge === 'string' && (anyItem.badge.toLowerCase().includes('promo') || anyItem.badge.toLowerCase().includes('sale') || anyItem.badge.toLowerCase().includes('flash'))) return true;
+  if (typeof anyItem.status === 'string' && (anyItem.status.toLowerCase().includes('promo') || anyItem.status.toLowerCase().includes('sale'))) return true;
   if (typeof anyItem.categoryTag === 'string' && anyItem.categoryTag.toLowerCase().includes('promo')) return true;
-  if (Array.isArray(anyItem.tags) && anyItem.tags.some((t) => typeof t === 'string' && t.toLowerCase().includes('promo'))) return true;
+  if (Array.isArray(anyItem.tags) && anyItem.tags.some((t) => typeof t === 'string' && (t.toLowerCase().includes('promo') || t.toLowerCase().includes('sale')))) return true;
   return false;
 }
 

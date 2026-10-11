@@ -1,4 +1,4 @@
-﻿from datetime import datetime, timedelta
+from datetime import datetime, timedelta
 from typing import Dict, Any, Optional
 
 class ReferralProfitService:
@@ -28,8 +28,27 @@ class ReferralProfitService:
         direct_partner_code: Optional[str] = None,
         direct_partner_rate: Optional[float] = None,
         sponsor_partner_code: Optional[str] = None,
+        campaign_id: Optional[str] = None,
+        campaign_booster_rate: Optional[float] = None,
     ) -> Dict[str, Any]:
         direct_rate = direct_partner_rate if direct_partner_rate is not None else cls.DIRECT_RATE_DEFAULT
+
+        # Apply campaign booster override if provided or active
+        if campaign_booster_rate is not None and campaign_booster_rate > direct_rate:
+            direct_rate = campaign_booster_rate
+        elif campaign_id:
+            try:
+                from app.services.campaign_service import CampaignService
+                active_camps = CampaignService.get_active_campaigns()
+                for c in active_camps:
+                    if c.get("id") == campaign_id or c.get("slug") == campaign_id:
+                        override = float(c.get("affiliateBonusPercent") or c.get("affiliateCommissionOverride") or 0)
+                        if override > direct_rate:
+                            direct_rate = override
+                        break
+            except Exception:
+                pass
+
         sponsor_rate = cls.SPONSOR_RATE_DEFAULT
 
         direct_commission = 0.0

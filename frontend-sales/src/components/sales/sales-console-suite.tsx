@@ -32,6 +32,9 @@ import {
   CreditCard,
   Users,
   ExternalLink,
+  Flame,
+  Tag,
+  Calendar,
 } from 'lucide-react';
 import { AdminTab } from '@/components/admin/admin-sidebar';
 
@@ -221,6 +224,40 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
 
   const networkData = networkRes?.data;
 
+  // 5. Fetch Active Campaigns & Booster Rates for Sales Portal
+  const { data: campaignsRes, isLoading: isCampaignsLoading } = useQuery<{
+    success: boolean;
+    data: Array<{
+      id: string;
+      name: string;
+      slug: string;
+      tagline: string;
+      startDate: string;
+      endDate: string;
+      discountType: string;
+      discountValue: number;
+      targetCategory: string;
+      affiliateBonusPercent: number;
+      affiliateLink: string;
+      partnerCode: string;
+      partnerCommissionRate: number;
+      boosterCommissionRate: number;
+      isBoosterActive: boolean;
+      whatsappShareText: string;
+    }>;
+  }>({
+    queryKey: ['sales-campaigns'],
+    queryFn: async () => {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('asterra_admin_token') : null;
+      const headers: Record<string, string> = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const res = await fetch('/api/v1/sales/campaigns', { headers });
+      if (!res.ok) throw new Error('Gagal memuat event campaign');
+      return res.json();
+    },
+    staleTime: 30000,
+  });
+
   // Helper copy link
   const handleCopy = (text: string, id: string) => {
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
@@ -297,16 +334,18 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
     return Array.from(set);
   }, [productsRes?.data]);
 
-  // Link Generator State (Clean, direct referral URL without campaign tags)
+  // Link Generator State (supports both direct and campaign-attached links)
   const [selectedProductForLink, setSelectedProductForLink] = useState('');
+  const [selectedCampaignForLink, setSelectedCampaignForLink] = useState('');
 
   const customGeneratedUrl = useMemo(() => {
     const base = getBaseUrl();
+    const campParam = selectedCampaignForLink ? `&campaign=${selectedCampaignForLink}` : '';
     if (selectedProductForLink) {
-      return `${base}/products/${selectedProductForLink}?ref=${partnerCode}`;
+      return `${base}/products/${selectedProductForLink}?ref=${partnerCode}${campParam}`;
     }
-    return `${base}/?ref=${partnerCode}`;
-  }, [partnerCode, selectedProductForLink]);
+    return `${base}/?ref=${partnerCode}${campParam}`;
+  }, [partnerCode, selectedProductForLink, selectedCampaignForLink]);
 
   // Payout Form States
   const [payoutAmount, setPayoutAmount] = useState<string>('');
@@ -443,6 +482,41 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
               </div>
             </div>
           </div>
+
+          {/* Active Campaign Booster Teaser Banner */}
+          {campaignsRes?.data && campaignsRes.data.length > 0 && (
+            <div className="rounded-xl border border-primary/30 bg-primary/10 p-4 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl bg-primary/20 border border-primary/30 flex items-center justify-center shrink-0 text-primary">
+                  <Flame className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-primary text-primary-foreground">
+                      🔥 Flash Sale & Event Aktif
+                    </span>
+                    <span className="text-xs text-foreground-muted font-medium">
+                      Booster Komisi hingga {Math.max(...campaignsRes.data.map((c) => c.boosterCommissionRate || 15))}%
+                    </span>
+                  </div>
+                  <h4 className="text-sm font-bold text-foreground">
+                    {campaignsRes.data[0].name} — Diskon Pembeli & Bonus Komisi Mitra
+                  </h4>
+                  <p className="text-xs text-foreground-muted mt-0.5">
+                    Promosikan event resmi ini untuk mendapatkan komisi lebih tinggi ({campaignsRes.data[0].boosterCommissionRate}% vs {partnerRate}% normal). Link siap pakai tersedia!
+                  </p>
+                </div>
+              </div>
+              <Button
+                size="sm"
+                onClick={() => onTabChange('sales-links')}
+                className="shrink-0 text-xs font-semibold gap-1.5 shadow-xs"
+              >
+                <span>Lihat Campaign & Salin Link</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Button>
+            </div>
+          )}
 
           {/* 4 Metric Cards */}
           {isProfileLoading ? (
@@ -989,6 +1063,108 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
             </p>
           </div>
 
+          {/* Active Campaigns & Booster Komisi Section */}
+          {campaignsRes?.data && campaignsRes.data.length > 0 && (
+            <div className="bg-surface border border-primary/25 rounded-xl p-5 shadow-xs space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/70 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-primary/20 border border-primary/30 flex items-center justify-center text-primary">
+                    <Flame className="w-4 h-4 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-sm text-foreground flex items-center gap-2">
+                      <span>Event & Campaign Promo Aktif</span>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-primary/15 text-primary border border-primary/25">
+                        Booster Komisi
+                      </span>
+                    </h3>
+                    <p className="text-[11px] text-foreground-muted">
+                      Promosikan event resmi di bawah ini untuk mendapatkan bonus komisi lebih tinggi dan link siap pakai.
+                    </p>
+                  </div>
+                </div>
+                <span className="text-xs font-semibold text-status-success font-mono">
+                  {campaignsRes.data.length} Event Berjalan
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {campaignsRes.data.map((camp) => (
+                  <div
+                    key={camp.id}
+                    className="bg-surface-raised border border-border hover:border-primary/40 rounded-xl p-4 shadow-2xs flex flex-col justify-between space-y-3.5 transition-all"
+                  >
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between gap-1 text-[11px]">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-status-success/15 text-status-success border border-status-success/25 flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-status-success animate-pulse" />
+                          <span>Aktif</span>
+                        </span>
+                        <span className="text-[10px] text-foreground-muted flex items-center gap-1 font-mono">
+                          <Calendar className="w-3 h-3" />
+                          <span>{camp.startDate} s.d. {camp.endDate}</span>
+                        </span>
+                      </div>
+
+                      <div>
+                        <h4 className="font-bold text-sm text-foreground leading-snug">{camp.name}</h4>
+                        <p className="text-[11px] text-foreground-muted line-clamp-2 mt-0.5">{camp.tagline}</p>
+                      </div>
+
+                      <div className="p-2.5 rounded-lg bg-primary/10 border border-primary/20 space-y-1">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-[10px] text-foreground-muted">Bonus Komisi Anda:</span>
+                          <span className="font-extrabold text-primary font-mono text-sm">
+                            🔥 {camp.boosterCommissionRate}%
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-[11px] text-foreground-muted pt-1 border-t border-primary/15">
+                          <span>Diskon Pembeli:</span>
+                          <span className="font-semibold text-foreground font-mono">
+                            {camp.discountType === 'percentage' ? `${camp.discountValue}% OFF` : `Rp ${camp.discountValue.toLocaleString('id-ID')}`}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2 pt-2 border-t border-border/70">
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() => handleCopy(camp.affiliateLink, `camp-${camp.id}`)}
+                          className="flex-1 h-8 text-xs font-semibold gap-1.5"
+                        >
+                          {copiedLink === `camp-${camp.id}` ? (
+                            <>
+                              <Check className="w-3.5 h-3.5 text-status-success" />
+                              <span>Tersalin!</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-3.5 h-3.5" />
+                              <span>Salin Link</span>
+                            </>
+                          )}
+                        </Button>
+
+                        <a
+                          href={`https://wa.me/?text=${encodeURIComponent(camp.whatsappShareText)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="h-8 px-2.5 rounded-lg bg-status-success hover:bg-status-success/90 text-white flex items-center justify-center transition-colors shrink-0 gap-1 text-xs font-semibold"
+                          title="Bagikan ke WhatsApp"
+                        >
+                          <Send className="w-3.5 h-3.5" />
+                          <span className="hidden sm:inline">WhatsApp</span>
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Custom Link Builder */}
             <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-4">
@@ -1009,6 +1185,27 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
                     {(productsRes?.data || []).map((p) => (
                       <option key={p.id} value={p.id}>
                         {p.name} — {p.priceFormatted || `Rp ${p.price.toLocaleString('id-ID')}`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="font-semibold text-foreground block mb-1.5 flex items-center justify-between">
+                    <span>Sertakan Parameter Campaign (Opsional):</span>
+                    {selectedCampaignForLink && (
+                      <span className="text-[10px] text-status-success font-semibold">Booster Komisi Aktif!</span>
+                    )}
+                  </label>
+                  <select
+                    value={selectedCampaignForLink}
+                    onChange={(e) => setSelectedCampaignForLink(e.target.value)}
+                    className="w-full bg-surface-raised border border-border rounded-lg text-xs p-2.5 text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                  >
+                    <option value="">Tanpa Campaign (Link Standar)</option>
+                    {(campaignsRes?.data || []).map((camp) => (
+                      <option key={camp.id} value={camp.slug}>
+                        🔥 {camp.name} — Booster Komisi {camp.boosterCommissionRate}%
                       </option>
                     ))}
                   </select>

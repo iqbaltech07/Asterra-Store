@@ -73,8 +73,9 @@ function CheckoutPageContent() {
     name: string;
   } | null>(null);
   const [referralDiscount, setReferralDiscount] = useState<number>(0);
+  const [activeCampaignSlug, setActiveCampaignSlug] = useState<string>('');
 
-  // Auto-detect & persist referral code from query params or localStorage
+  // Auto-detect & persist referral code & campaign from query params or localStorage
   useEffect(() => {
     let activeRef = searchParams.get('ref');
     if (!activeRef && typeof window !== 'undefined') {
@@ -98,6 +99,23 @@ function CheckoutPageContent() {
             }
             window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
           }
+        } catch (_) {}
+      }
+    }
+
+    // Detect campaign parameter
+    const urlCamp = searchParams.get('campaign') || searchParams.get('utm_campaign');
+    let campVal = urlCamp;
+    if (!campVal && typeof window !== 'undefined') {
+      try {
+        campVal = localStorage.getItem('asterra_utm_campaign') || localStorage.getItem('asterra_campaign');
+      } catch (_) {}
+    }
+    if (campVal && campVal.trim()) {
+      setActiveCampaignSlug(campVal.trim());
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('asterra_utm_campaign', campVal.trim());
         } catch (_) {}
       }
     }
@@ -554,6 +572,8 @@ function CheckoutPageContent() {
       payment_method: selectedMethod,
       promo_code: appliedPromo?.code || undefined,
       referral_code: referralPartner?.code || (referralCode.trim() ? referralCode.trim() : undefined),
+      campaign_slug: activeCampaignSlug || undefined,
+      utm_campaign: activeCampaignSlug || undefined,
       customer_contact: {
         name: customerName.trim(),
         email: targetEmail.trim(),

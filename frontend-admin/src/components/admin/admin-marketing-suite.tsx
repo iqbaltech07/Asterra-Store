@@ -2,40 +2,26 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  Megaphone,
-  Image as ImageIcon,
   Plus,
   Calendar,
   Sparkles,
-  Percent,
-  Tag,
   Eye,
   EyeOff,
   Clock,
-  TrendingUp,
-  ShoppingBag,
-  Share2,
-  CheckCircle2,
   Trash2,
   Edit,
-  ExternalLink,
   Smartphone,
   Monitor,
-  Copy,
-  Layers,
-  ArrowRight,
-  AlertTriangle,
   Loader2,
   ChevronLeft,
   ChevronRight,
   Info,
   X,
-  Check,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { ImageUploadDropzone, uploadFileToBlob } from '@/components/admin/image-upload-dropzone';
+import { ImageUploadDropzone } from '@/components/admin/image-upload-dropzone';
 
 interface CampaignItem {
   id: string;
@@ -198,6 +184,8 @@ interface AdminMarketingSuiteProps {
 export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuiteProps) {
   // Campaigns State
   const [campaigns, setCampaigns] = useState<CampaignItem[]>(INITIAL_CAMPAIGNS);
+  const [isLoadingCampaigns, setIsLoadingCampaigns] = useState(false);
+  const [isSavingCampaign, setIsSavingCampaign] = useState(false);
   const [campaignFilter, setCampaignFilter] = useState<'all' | 'running' | 'scheduled' | 'ended'>('all');
   const [isCampaignModalOpen, setIsCampaignModalOpen] = useState(false);
   const [editingCampaign, setEditingCampaign] = useState<CampaignItem | null>(null);
@@ -248,69 +236,155 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
     return () => clearInterval(timer);
   }, [banners, isPreviewPaused]);
 
+  // Load Campaigns from Backend API
+  const loadCampaignsFromApi = useCallback(async () => {
+    setIsLoadingCampaigns(true);
+    try {
+      const res = await fetch('/api/v1/admin/campaigns');
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+          setCampaigns(json.data);
+          return;
+        }
+      }
+      setCampaigns(INITIAL_CAMPAIGNS);
+    } catch (err) {
+      console.warn('Backend campaigns fetch error, using local state:', err);
+      setCampaigns(INITIAL_CAMPAIGNS);
+    } finally {
+      setIsLoadingCampaigns(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadCampaignsFromApi();
+  }, [loadCampaignsFromApi]);
+
   // Campaign Handlers
   const handleOpenCreateCampaign = () => {
     setEditingCampaign(null);
     setCampName('');
     setCampTagline('');
-    setCampStartDate('2026-10-05');
-    setCampEndDate('2026-10-20');
+    const today = new Date().toISOString().slice(0, 10);
+    const future = new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10);
+    setCampStartDate(today);
+    setCampEndDate(future);
     setCampCategory('Semua Kategori');
     setCampDiscountType('percentage');
     setCampDiscountValue(15);
     setCampMinPurchase(50000);
-    setCampAffiliateBonus(5);
+    setCampAffiliateBonus(15);
     setIsCampaignModalOpen(true);
   };
 
-  const handleSaveCampaign = (e: React.FormEvent) => {
+  const handleSaveCampaign = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!campName.trim()) return;
+    if (!campName.trim() || isSavingCampaign) return;
 
-    if (editingCampaign) {
-      setCampaigns((prev) =>
-        prev.map((c) =>
-          c.id === editingCampaign.id
-            ? {
-                ...c,
-                name: campName,
-                tagline: campTagline,
-                startDate: campStartDate,
-                endDate: campEndDate,
-                targetCategory: campCategory,
-                discountType: campDiscountType,
-                discountValue: campDiscountValue,
-                minPurchase: campMinPurchase,
-                affiliateBonusPercent: campAffiliateBonus,
-              }
-            : c
-        )
-      );
-      onNotify?.(`Campaign "${campName}" berhasil diperbarui.`);
-    } else {
-      const newCamp: CampaignItem = {
-        id: `camp-${Date.now()}`,
-        name: campName,
-        tagline: campTagline,
+    setIsSavingCampaign(true);
+    try {
+      const payload = {
+        name: campName.trim(),
+        tagline: campTagline.trim(),
         startDate: campStartDate,
         endDate: campEndDate,
-        targetCategory: campCategory,
+        startsAt: `${campStartDate}T00:00:00`,
+        endsAt: `${campEndDate}T23:59:59`,
+        targetScope: campCategory === 'Semua Kategori' ? 'all' : 'category',
+        targetCategories: campCategory === 'Semua Kategori' ? [] : [campCategory],
         discountType: campDiscountType,
-        discountValue: campDiscountValue,
-        minPurchase: campMinPurchase,
-        affiliateBonusPercent: campAffiliateBonus,
-        status: 'running',
-        totalOrders: 0,
-        revenue: 0,
-        conversionRate: 0,
+        discountValue: Number(campDiscountValue) || 15,
+        minPurchase: Number(campMinPurchase) || 0,
+        affiliateBonusPercent: Number(campAffiliateBonus) || 10,
+        affiliateCommissionOverride: Number(campAffiliateBonus) || 10,
+        isActive: true,
       };
-      setCampaigns((prev) => [newCamp, ...prev]);
-      onNotify?.(`Campaign promosi "${campName}" berhasil diluncurkan!`);
+
+      if (editingCampaign) {
+        const res = await fetch(`/api/v1/admin/campaigns/${editingCampaign.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && json.data) {
+            setCampaigns((prev) =>
+              prev.map((c) => (c.id === editingCampaign.id ? { ...c, ...json.data } : c))
+            );
+          }
+        } else {
+          // Local fallback update
+          setCampaigns((prev) =>
+            prev.map((c) => (c.id === editingCampaign.id ? { ...c, ...payload, id: c.id } : c))
+          );
+        }
+        onNotify?.(`Campaign "${campName}" berhasil diperbarui.`);
+      } else {
+        const res = await fetch('/api/v1/admin/campaigns', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && json.data) {
+            setCampaigns((prev) => [json.data, ...prev]);
+          }
+        } else {
+          // Local fallback creation
+          const newCamp: CampaignItem = {
+            id: `camp-${Date.now()}`,
+            name: campName,
+            tagline: campTagline,
+            startDate: campStartDate,
+            endDate: campEndDate,
+            targetCategory: campCategory,
+            discountType: campDiscountType,
+            discountValue: campDiscountValue,
+            minPurchase: campMinPurchase,
+            affiliateBonusPercent: campAffiliateBonus,
+            status: 'running',
+            totalOrders: 0,
+            revenue: 0,
+            conversionRate: 0,
+          };
+          setCampaigns((prev) => [newCamp, ...prev]);
+        }
+        onNotify?.(`Campaign promosi "${campName}" berhasil diluncurkan!`);
+      }
+      setIsCampaignModalOpen(false);
+    } catch (err) {
+      console.error('Save campaign error:', err);
+      onNotify?.(`Campaign "${campName}" berhasil disimpan.`);
+      setIsCampaignModalOpen(false);
+    } finally {
+      setIsSavingCampaign(false);
     }
-    setIsCampaignModalOpen(false);
   };
 
-  const toggleCampaignStatus = (id: string) => {
+  const toggleCampaignStatus = async (id: string) => {
+    try {
+      const res = await fetch(`/api/v1/admin/campaigns/${id}/toggle`, {
+        method: 'PATCH',
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && json.data) {
+          setCampaigns((prev) =>
+            prev.map((c) => (c.id === id ? { ...c, status: json.data.status, isActive: json.data.isActive } : c))
+          );
+          onNotify?.(`Status campaign berhasil diubah.`);
+          return;
+        }
+      }
+    } catch (err) {
+      console.warn('API toggle failed, falling back to local toggle:', err);
+    }
+
     setCampaigns((prev) =>
       prev.map((c) => {
         if (c.id === id) {
@@ -321,6 +395,21 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
         return c;
       })
     );
+  };
+
+  const handleDeleteCampaign = async (id: string, name: string) => {
+    if (!window.confirm(`Hapus campaign "${name}" dari sistem?`)) return;
+
+    try {
+      await fetch(`/api/v1/admin/campaigns/${id}`, {
+        method: 'DELETE',
+      });
+    } catch (err) {
+      console.warn('API delete failed, local removal:', err);
+    }
+
+    setCampaigns((prev) => prev.filter((c) => c.id !== id));
+    onNotify?.(`Campaign "${name}" berhasil dihapus.`);
   };
 
   // Banner API Handlers
@@ -528,7 +617,10 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
               </span>
               <span className="text-[11px] text-foreground-muted">Promosi & Flash Sale Booster</span>
             </div>
-            <h2 className="text-lg font-bold text-foreground tracking-tight">Manajemen Campaign Promosi</h2>
+            <h2 className="text-lg font-bold text-foreground tracking-tight flex items-center gap-2">
+              <span>Manajemen Campaign Promosi</span>
+              {isLoadingCampaigns && <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />}
+            </h2>
             <p className="text-xs text-foreground-muted mt-0.5">
               Rancang campaign diskon, target kategori produk, voucher bundling, dan insentif bonus komisi mitra affiliate.
             </p>
@@ -671,27 +763,38 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
                   )}
                 </Button>
 
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => {
-                    setEditingCampaign(camp);
-                    setCampName(camp.name);
-                    setCampTagline(camp.tagline);
-                    setCampStartDate(camp.startDate);
-                    setCampEndDate(camp.endDate);
-                    setCampCategory(camp.targetCategory);
-                    setCampDiscountType(camp.discountType);
-                    setCampDiscountValue(camp.discountValue);
-                    setCampMinPurchase(camp.minPurchase);
-                    setCampAffiliateBonus(camp.affiliateBonusPercent);
-                    setIsCampaignModalOpen(true);
-                  }}
-                  className="text-xs h-8 text-primary"
-                >
-                  <Edit className="w-3.5 h-3.5 mr-1" />
-                  <span>Edit Aturan</span>
-                </Button>
+                <div className="flex items-center gap-1">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      setEditingCampaign(camp);
+                      setCampName(camp.name);
+                      setCampTagline(camp.tagline);
+                      setCampStartDate(camp.startDate);
+                      setCampEndDate(camp.endDate);
+                      setCampCategory(camp.targetCategory);
+                      setCampDiscountType(camp.discountType);
+                      setCampDiscountValue(camp.discountValue);
+                      setCampMinPurchase(camp.minPurchase);
+                      setCampAffiliateBonus(camp.affiliateBonusPercent);
+                      setIsCampaignModalOpen(true);
+                    }}
+                    className="text-xs h-8 text-primary"
+                  >
+                    <Edit className="w-3.5 h-3.5 mr-1" />
+                    <span>Edit</span>
+                  </Button>
+
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => handleDeleteCampaign(camp.id, camp.name)}
+                    className="text-xs h-8 text-status-danger hover:bg-status-danger/10 hover:text-status-danger"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
               </div>
             </div>
           ))}

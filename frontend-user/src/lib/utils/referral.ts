@@ -8,13 +8,35 @@ export function getActiveReferralParams(): Record<string, string> {
 
   try {
     const urlParams = new URLSearchParams(window.location.search);
-    const ref = urlParams.get('ref') || localStorage.getItem('asterra_ref');
-    const campaign = urlParams.get('utm_campaign') || localStorage.getItem('asterra_utm_campaign');
-    const source = urlParams.get('utm_source') || localStorage.getItem('asterra_utm_source');
-    const medium = urlParams.get('utm_medium') || localStorage.getItem('asterra_utm_medium');
+    const urlRef = urlParams.get('ref');
+    const urlCamp = urlParams.get('campaign') || urlParams.get('utm_campaign');
+    const urlSource = urlParams.get('utm_source');
+    const urlMedium = urlParams.get('utm_medium');
+
+    if (urlRef && urlRef.trim()) {
+      localStorage.setItem('asterra_ref', urlRef.trim().toUpperCase());
+    }
+    if (urlCamp && urlCamp.trim()) {
+      localStorage.setItem('asterra_utm_campaign', urlCamp.trim());
+      localStorage.setItem('asterra_campaign', urlCamp.trim());
+    }
+    if (urlSource && urlSource.trim()) {
+      localStorage.setItem('asterra_utm_source', urlSource.trim());
+    }
+    if (urlMedium && urlMedium.trim()) {
+      localStorage.setItem('asterra_utm_medium', urlMedium.trim());
+    }
+
+    const ref = urlRef || localStorage.getItem('asterra_ref');
+    const campaign = urlCamp || localStorage.getItem('asterra_utm_campaign') || localStorage.getItem('asterra_campaign');
+    const source = urlSource || localStorage.getItem('asterra_utm_source');
+    const medium = urlMedium || localStorage.getItem('asterra_utm_medium');
 
     if (ref && ref.trim()) params.ref = ref.trim().toUpperCase();
-    if (campaign && campaign.trim()) params.utm_campaign = campaign.trim();
+    if (campaign && campaign.trim()) {
+      params.campaign = campaign.trim();
+      params.utm_campaign = campaign.trim();
+    }
     if (source && source.trim()) params.utm_source = source.trim();
     if (medium && medium.trim()) params.utm_medium = medium.trim();
   } catch {}
