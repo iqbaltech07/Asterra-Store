@@ -9,6 +9,7 @@
     "dev:sales": "npm --prefix frontend-sales run dev",
     "dev:backend": "cd backend && uvicorn app.main:app --reload --port 8000",
     "dev:fastapi": "cd backend && uvicorn app.main:app --reload --port 8000",
+    "build": "npm run build:all",
     "build:user": "npm --prefix frontend-user run build",
     "build:admin": "npm --prefix frontend-admin run build",
     "build:sales": "npm --prefix frontend-sales run build",
