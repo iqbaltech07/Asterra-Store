@@ -13,7 +13,6 @@ import {
   faRotateLeft,
   faArrowRight,
   faMagnifyingGlass,
-  faCartShopping,
   faShieldHalved,
   faReceipt,
   faUserCheck,
@@ -232,8 +231,8 @@ function GlobalOrdersContent() {
           <div className="flex items-center gap-2">
             <Link href="/products">
               <Button size="sm" variant="outline" className="text-xs gap-1.5 border-border h-8">
-                <FontAwesomeIcon icon={faCartShopping} className="w-3.5 h-3.5 text-primary" />
-                <span className="hidden sm:inline">Beli Lisensi Baru</span>
+                <FontAwesomeIcon icon={faArrowRight} className="w-3.5 h-3.5 text-primary" />
+                <span>Beli Lisensi Baru</span>
               </Button>
             </Link>
             <button

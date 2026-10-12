@@ -6,7 +6,6 @@ import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faBox,
   faMagnifyingGlass,
 } from '@fortawesome/free-solid-svg-icons';
 import { useAuthStore } from '@/store/use-auth-store';
@@ -89,14 +88,13 @@ export function Header({ onNotify: _onNotify }: HeaderProps) {
             href="/orders"
             prefetch={true}
             data-gsap="nav-link"
-            className={`transition-colors py-1 inline-flex items-center gap-1.5 ${
+            className={`transition-colors py-1 ${
               isOrdersActive
                 ? 'text-[#C96F55] font-semibold'
                 : 'text-[#F7F5EF]/80 hover:text-[#F7F5EF]'
             }`}
           >
-            <FontAwesomeIcon icon={faBox} className="w-3.5 h-3.5 text-[#C96F55]" />
-            <span>Pesanan</span>
+            Pesanan
           </Link>
           <Link
             href="/#keunggulan"
