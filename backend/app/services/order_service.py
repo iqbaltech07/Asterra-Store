@@ -15,6 +15,15 @@ class OrderService:
     _orders: Optional[List[Dict[str, Any]]] = None
 
     @classmethod
+    def _normalize_iso(cls, dt_str: Optional[str]) -> str:
+        if not dt_str:
+            return datetime.utcnow().isoformat() + "Z"
+        s = str(dt_str).strip()
+        if not s.endswith("Z") and "+" not in s:
+            return s + "Z"
+        return s
+
+    @classmethod
     def _normalize_order(cls, order: Dict[str, Any]) -> Dict[str, Any]:
         if not isinstance(order, dict):
             return order
@@ -37,36 +46,67 @@ class OrderService:
         o["uniqueCode"] = unique_val
         o["unique_code"] = unique_val
 
-        # Campaign attributes
-        camp_disc = o.get("campaign_discount") if o.get("campaign_discount") is not None else o.get("campaignDiscount", 0)
-        o["campaignDiscount"] = int(camp_disc) if camp_disc is not None else 0
-        o["campaign_discount"] = o["campaignDiscount"]
-        o["campaignId"] = o.get("campaign_id") or o.get("campaignId")
-        o["campaign_id"] = o["campaignId"]
+        # Campaign & Promo & Referral discounts
+        promo_disc = int(o.get("promo_discount") if o.get("promo_discount") is not None else o.get("promoDiscount", 0))
+        ref_disc = int(o.get("referral_discount") if o.get("referral_discount") is not None else o.get("referralDiscount", 0))
+        camp_disc = int(o.get("campaign_discount") if o.get("campaign_discount") is not None else o.get("campaignDiscount", 0))
 
-        # Status & Dates
+        o["promoDiscount"] = promo_disc
+        o["promo_discount"] = promo_disc
+        o["referralDiscount"] = ref_disc
+        o["referral_discount"] = ref_disc
+        o["campaignDiscount"] = camp_disc
+        o["campaign_discount"] = camp_disc
+        o["discountAmount"] = promo_disc + ref_disc + camp_disc
+        o["discount_amount"] = promo_disc + ref_disc + camp_disc
+
+        # Campaign and Referral attribution
+        camp_id = o.get("campaign_id") or o.get("campaignId")
+        o["campaignId"] = camp_id
+        o["campaign_id"] = camp_id
+
+        ref_code = o.get("referral_code") or o.get("referralCode")
+        o["referralCode"] = ref_code
+        o["referral_code"] = ref_code
+
+        sales_p_id = o.get("sales_partner_id") or o.get("salesPartnerId")
+        o["salesPartnerId"] = sales_p_id
+        o["sales_partner_id"] = sales_p_id
+
+        recruiter_p_id = o.get("recruiter_partner_id") or o.get("recruiterPartnerId")
+        o["recruiterPartnerId"] = recruiter_p_id
+        o["recruiter_partner_id"] = recruiter_p_id
+
+        # Status & Dates (guaranteed UTC Z)
         status = str(o.get("status") or o.get("order_status") or "pending").lower()
         o["status"] = status
         o["order_status"] = status
 
-        created = o.get("createdAt") or o.get("created_at") or o.get("order_date") or (datetime.utcnow().isoformat() + "Z")
+        created = cls._normalize_iso(o.get("createdAt") or o.get("created_at") or o.get("order_date"))
         o["createdAt"] = created
         o["created_at"] = created
         o["order_date"] = created
 
-        updated = o.get("updatedAt") or o.get("updated_at") or created
+        updated = cls._normalize_iso(o.get("updatedAt") or o.get("updated_at") or created)
         o["updatedAt"] = updated
         o["updated_at"] = updated
 
-        expires = o.get("expiresAt") or o.get("expires_at")
-        if not expires:
+        expires_val = o.get("expiresAt") or o.get("expires_at")
+        if not expires_val:
             try:
                 dt = datetime.fromisoformat(created.replace("Z", "+00:00"))
-                expires = (dt + timedelta(hours=24)).isoformat() + "Z"
+                expires = cls._normalize_iso((dt + timedelta(hours=24)).isoformat())
             except Exception:
-                expires = (datetime.utcnow() + timedelta(hours=24)).isoformat() + "Z"
+                expires = cls._normalize_iso((datetime.utcnow() + timedelta(hours=24)).isoformat())
+        else:
+            expires = cls._normalize_iso(expires_val)
         o["expiresAt"] = expires
         o["expires_at"] = expires
+
+        if o.get("paidAt") or o.get("paid_at"):
+            paid_val = cls._normalize_iso(o.get("paidAt") or o.get("paid_at"))
+            o["paidAt"] = paid_val
+            o["paid_at"] = paid_val
 
         # Contact info
         cust_email = o.get("customerEmail") or o.get("customer_email") or ""
@@ -82,6 +122,17 @@ class OrderService:
         o["customer_whatsapp"] = cust_phone
         o["customerNotes"] = cust_notes
         o["customer_notes"] = cust_notes
+
+        # Public Display Attributes
+        if cust_name and len(cust_name) > 2:
+            o["customer_display"] = f"{cust_name[0]}***{cust_name[-1]}"
+        elif cust_email and "@" in cust_email:
+            parts = cust_email.split("@")
+            o["customer_display"] = f"{parts[0][:2]}***@{parts[1]}"
+        else:
+            o["customer_display"] = "Pelanggan Terverifikasi"
+
+        o["raw_id"] = o.get("id", "")
 
         # Payment details
         pay_mode = o.get("paymentMode") or o.get("payment_mode") or "manual"
@@ -126,6 +177,12 @@ class OrderService:
             norm_items.append(it_dict)
 
         o["items"] = norm_items
+        o["items_count"] = len(norm_items)
+        first_prod = norm_items[0]["productName"] if len(norm_items) > 0 else "Layanan Digital"
+        o["product_name"] = first_prod
+        o["productName"] = first_prod
+        o["items_summary"] = ", ".join(i.get("productName", "") for i in norm_items) or first_prod
+
         return o
 
     @classmethod
@@ -301,19 +358,61 @@ class OrderService:
             for item in items
         )
 
-        unique_code = random.randint(100, 999)
+        contact = payload.get("customer_contact", {})
+        customer_email = (contact.get("email") or payload.get("customerEmail") or "buyer@asterra.store").strip()
+        customer_phone = (contact.get("phone") or payload.get("customerWhatsapp") or "081234567890").strip()
+        customer_name = (contact.get("name") or payload.get("customerName") or "Pelanggan Asterra").strip()
+
+        # 1. Payment config settings (unique code toggle & order expiry)
+        from app.services.payment_config_service import PaymentConfigService
+        pay_cfg = PaymentConfigService.get_config()
+        enable_unique = pay_cfg.get("enable_unique_code")
+        if enable_unique is None:
+            enable_unique = pay_cfg.get("enableUniqueCode", True)
+        enable_unique = bool(enable_unique)
+        unique_code = random.randint(100, 999) if enable_unique else 0
+        expiry_hours = int(pay_cfg.get("order_expiry_hours") or pay_cfg.get("orderExpiryHours") or 24)
+
         promo_discount = int(payload.get("promo_discount") or payload.get("promoDiscount") or 0)
         referral_discount = int(payload.get("referral_discount") or payload.get("referralDiscount") or 0)
         campaign_discount = int(payload.get("campaign_discount") or payload.get("campaignDiscount") or 0)
         campaign_id = payload.get("campaign_id") or payload.get("campaignId")
-        total_amount = max(0, raw_total - promo_discount - referral_discount - campaign_discount)
+        ref_code = (payload.get("referral_code") or payload.get("referralCode") or "").strip().upper()
 
-        contact = payload.get("customer_contact", {})
-        customer_email = contact.get("email") or payload.get("customerEmail") or "buyer@asterra.store"
-        customer_phone = contact.get("phone") or payload.get("customerWhatsapp") or "081234567890"
-        customer_name = contact.get("name") or payload.get("customerName") or "Pelanggan Asterra"
+        # 2. Lifetime 1-Time Referral Discount Eligibility Enforcement
+        if referral_discount > 0:
+            import re
+            clean_email = customer_email.lower().strip()
+            clean_phone = re.sub(r"\D", "", customer_phone)
+            all_past_orders = cls.load_orders()
+            already_claimed = any(
+                (str(o.get("customerEmail", "")).lower().strip() == clean_email or
+                 (clean_phone and re.sub(r"\D", "", str(o.get("customerWhatsapp", ""))) == clean_phone))
+                and (float(o.get("referralDiscount") or o.get("referral_discount") or 0) > 0)
+                for o in all_past_orders
+            )
+            if already_claimed:
+                referral_discount = 0
 
-        # 1. Save directly into Supabase
+        # Calculate final payable amount (unique code is included only if enable_unique is True)
+        subtotal_after_discounts = max(0, raw_total - promo_discount - referral_discount - campaign_discount)
+        total_amount = subtotal_after_discounts + (unique_code if enable_unique else 0)
+
+        # 3. Sales Partner Attribution & Recruiter Network
+        sales_partner_id = None
+        recruiter_partner_id = None
+        partner = None
+        if ref_code:
+            try:
+                from app.services.partner_service import PartnerService
+                partner = PartnerService.find_by_code(ref_code)
+                if partner:
+                    sales_partner_id = partner.get("id")
+                    recruiter_partner_id = partner.get("referredById")
+            except Exception as e:
+                print(f"[OrderService] Partner lookup error: {e}")
+
+        # 4. Save directly into Supabase PostgreSQL
         try:
             db = SessionLocal()
             try:
@@ -337,8 +436,10 @@ class OrderService:
                     status="pending",
                     created_at=now,
                     updated_at=now,
-                    expires_at=now + timedelta(hours=24),
-                    referral_code=payload.get("referral_code") or payload.get("referralCode"),
+                    expires_at=now + timedelta(hours=expiry_hours),
+                    referral_code=ref_code or None,
+                    sales_partner_id=sales_partner_id,
+                    recruiter_partner_id=recruiter_partner_id,
                 )
                 db.add(order_record)
 
@@ -365,16 +466,72 @@ class OrderService:
             print(f"[OrderService] Error saving order to Supabase: {e}")
             raise e
 
-        # 2. Reload and sync cache
+        # 5. Reload and sync cache
         cls.load_orders(force_reload=True)
 
-        # 3. Telemetry tracking for campaign
+        # 6. Allocate Waterfall Commission to Sales Partner
+        if partner:
+            try:
+                from app.services.partner_service import PartnerService
+                comm_rate = float(partner.get("rate", 10.0))
+                camp_name = None
+                if campaign_id:
+                    try:
+                        from app.services.campaign_service import CampaignService
+                        camps = CampaignService.get_active_campaigns()
+                        for c in camps:
+                            if c.get("id") == campaign_id or c.get("slug") == campaign_id:
+                                override = float(c.get("affiliateBonusPercent") or c.get("affiliateCommissionOverride") or 0)
+                                if override > 0:
+                                    comm_rate = override
+                                    camp_name = c.get("name")
+                                break
+                    except Exception:
+                        pass
+
+                comm_amount = round(total_amount * (comm_rate / 100.0))
+                comm_item = {
+                    "id": f"comm-{int(now.timestamp() * 1000)}-{random.randint(100, 999)}",
+                    "orderId": order_id,
+                    "orderTotal": total_amount,
+                    "commissionAmount": comm_amount,
+                    "commissionRate": comm_rate,
+                    "campaignId": campaign_id,
+                    "campaignName": camp_name,
+                    "status": "pending",
+                    "holdingUntil": (now + timedelta(days=3)).isoformat() + "Z",
+                    "createdAt": now.isoformat() + "Z",
+                }
+                if "commissions" not in partner:
+                    partner["commissions"] = []
+                partner["commissions"].insert(0, comm_item)
+                PartnerService.save_partners()
+            except Exception as e:
+                print(f"[OrderService] Commission allocation error: {e}")
+
+        # 7. Telemetry tracking for campaign
         if campaign_id:
             try:
                 from app.services.campaign_service import CampaignService
                 CampaignService.record_campaign_order(str(campaign_id), float(total_amount))
             except Exception:
                 pass
+
+        # 8. Record Real Persistent Audit Log
+        try:
+            from app.services.audit_log_service import AuditLogService
+            AuditLogService.record_log(
+                order_id=order_id,
+                actor="customer",
+                action="order_created",
+                previous_status=None,
+                new_status="pending",
+                notes=f"Pesanan {order_id} dibuat oleh {customer_name} ({customer_email}) dengan total Rp {total_amount:,.0f}".replace(",", "."),
+                customer_name=customer_name,
+                customer_email=customer_email,
+            )
+        except Exception as e:
+            print(f"[OrderService] Audit log error: {e}")
 
         return normalized
 
@@ -383,6 +540,9 @@ class OrderService:
         clean_id = order_id.strip().upper()
         now_dt = datetime.utcnow()
         normalized = None
+        prev_st = "pending"
+        order_cust_name = None
+        order_cust_email = None
 
         # 1. Update in Supabase
         try:
@@ -390,6 +550,9 @@ class OrderService:
             try:
                 order_obj = db.query(Order).options(joinedload(Order.items)).filter(Order.id == clean_id).first()
                 if order_obj:
+                    prev_st = order_obj.status or "pending"
+                    order_cust_name = order_obj.customer_name
+                    order_cust_email = order_obj.customer_email
                     order_obj.status = new_status
                     order_obj.updated_at = now_dt
                     if new_status in ["completed", "paid", "settlement"]:
@@ -411,4 +574,45 @@ class OrderService:
 
         # 2. Reload and sync cache
         cls.load_orders(force_reload=True)
+
+        # 3. Synchronize Partner Commissions Status
+        try:
+            from app.services.partner_service import PartnerService
+            partners = PartnerService.load_partners()
+            has_partner_changes = False
+            for p in partners:
+                for comm in p.get("commissions", []):
+                    if str(comm.get("orderId", "")).upper() == clean_id:
+                        if new_status in ["completed", "paid", "settlement"]:
+                            comm["status"] = "final"
+                            has_partner_changes = True
+                        elif new_status in ["cancelled", "expired"]:
+                            comm["status"] = "reversed"
+                            has_partner_changes = True
+            if has_partner_changes:
+                PartnerService.save_partners()
+        except Exception as e:
+            print(f"[OrderService] Partner commission update note: {e}")
+
+        # 4. Record Real Persistent Audit Log
+        try:
+            from app.services.audit_log_service import AuditLogService
+            action_name = (
+                "payment_received"
+                if new_status in ["completed", "paid", "settlement"]
+                else ("cancelled" if new_status in ["cancelled", "expired"] else "status_updated")
+            )
+            AuditLogService.record_log(
+                order_id=clean_id,
+                actor="admin",
+                action=action_name,
+                previous_status=prev_st,
+                new_status=new_status,
+                notes=f"Status pesanan {clean_id} diubah ke '{new_status}'. {notes or ''}".strip(),
+                customer_name=order_cust_name,
+                customer_email=order_cust_email,
+            )
+        except Exception as e:
+            print(f"[OrderService] Status audit log note: {e}")
+
         return normalized

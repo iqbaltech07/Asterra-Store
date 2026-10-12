@@ -8,13 +8,15 @@ import { Button } from '@/components/ui/button';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck, faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { ProductItem } from '@/lib/products-data';
-import { getDummyOriginalPrice, isPromoItem } from '@/lib/utils/promo-pricing';
+import { calculateCampaignPrice, ActiveCampaign } from '@/lib/utils/promo-pricing';
+import { useQuery } from '@tanstack/react-query';
 
 interface ProductCardProps {
   product: ProductItem & { providerCode?: string };
   isSelected: boolean;
   onAddToCart: (product: ProductItem) => void;
   priorityImage?: boolean;
+  activeCampaigns?: ActiveCampaign[];
 }
 
 export function ProductCard({
@@ -22,13 +24,35 @@ export function ProductCard({
   isSelected,
   onAddToCart,
   priorityImage = false,
+  activeCampaigns: propCampaigns,
 }: ProductCardProps) {
   const isOutOfStock =
     (product.stock !== undefined && product.stock <= 0) ||
     product.providerStatus === 'empty' ||
     product.status === 'out_of_stock';
-  const isPromo = isPromoItem(product);
-  const dummyOriginal = getDummyOriginalPrice(product.price);
+
+  const { data: campaignsRes } = useQuery<{ success: boolean; data: ActiveCampaign[] }>({
+    queryKey: ['active-campaigns'],
+    queryFn: async () => {
+      const res = await fetch('/api/v1/campaigns/active');
+      if (!res.ok) return { success: false, data: [] };
+      return res.json();
+    },
+    enabled: !propCampaigns,
+    staleTime: 60000,
+  });
+
+  const activeCampaigns = propCampaigns || campaignsRes?.data || [];
+  const campaignPrice = calculateCampaignPrice(
+    product.price,
+    {
+      id: product.id,
+      name: product.name,
+      category: product.category?.name,
+    },
+    activeCampaigns
+  );
+  const isPromo = campaignPrice.hasPromo;
 
   return (
     <Card data-gsap="product-card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl shadow-card hover:shadow-card-hover hover:border-[rgba(18,26,42,0.22)] transition-[border-color,box-shadow,background-color] duration-200 overflow-hidden flex flex-col justify-between group">
@@ -127,11 +151,16 @@ export function ProductCard({
         <div className="min-w-0 flex-1">
           {isPromo ? (
             <div className="flex flex-col">
-              <span className="text-[10px] sm:text-[11px] text-[#121A2A]/40 line-through font-medium leading-none">
-                {dummyOriginal.originalPriceFormatted}
-              </span>
-              <span data-gsap="product-price" className="text-xs sm:text-base md:text-lg font-black tracking-tight text-[#121A2A] block truncate mt-0.5">
-                {product.priceFormatted}
+              <div className="flex items-center gap-1">
+                <span className="text-[10px] sm:text-[11px] text-[#121A2A]/40 line-through font-medium leading-none">
+                  {campaignPrice.originalPriceFormatted}
+                </span>
+                <span className="text-[9px] font-bold text-[#C96F55] bg-[#C96F55]/10 px-1 rounded leading-tight">
+                  {campaignPrice.discountBadge}
+                </span>
+              </div>
+              <span data-gsap="product-price" className="text-xs sm:text-base md:text-lg font-black tracking-tight text-[#C96F55] block truncate mt-0.5">
+                {campaignPrice.discountedPriceFormatted}
               </span>
             </div>
           ) : (

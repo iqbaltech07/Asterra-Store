@@ -137,7 +137,14 @@ function ReferralTrackerInner() {
         const currentUrl = new URL(window.location.href);
         let urlModified = false;
 
-        if (storedRef && !currentUrl.searchParams.has('ref')) {
+        const isRefClaimed = localStorage.getItem('asterra_ref_claimed') === 'true';
+        const hasCampaign =
+          currentUrl.searchParams.has('campaign') ||
+          currentUrl.searchParams.has('utm_campaign') ||
+          Boolean(storedCamp);
+
+        // Jika referral discount sudah pernah diklaim dan tidak ada campaign, jangan auto-inject 'ref' ke URL
+        if (storedRef && !currentUrl.searchParams.has('ref') && (!isRefClaimed || hasCampaign)) {
           currentUrl.searchParams.set('ref', storedRef);
           urlModified = true;
         }

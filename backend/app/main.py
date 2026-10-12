@@ -662,7 +662,11 @@ async def request_sales_payout(request: Request):
     return res
 
 @api_router.get("/affiliate/validate-referral", tags=["Affiliate"])
-def validate_referral(code: Optional[str] = Query(None)):
+def validate_referral(
+    code: Optional[str] = Query(None),
+    email: Optional[str] = Query(None),
+    phone: Optional[str] = Query(None),
+):
     if not code or not code.strip():
         return {"success": False, "valid": False, "message": "Kode referral tidak disertakan."}
 
@@ -674,6 +678,30 @@ def validate_referral(code: Optional[str] = Query(None)):
             "message": "Kode referral tidak ditemukan di sistem Asterra Store.",
         }
 
+    # Cek batas 1-kali seumur hidup per pengguna untuk klaim diskon referral
+    discount_eligible = True
+    discount_amount = 1000
+    discount_reason = "Potongan referral resmi kemitraan sales"
+
+    if email or phone:
+        import re
+        orders = OrderService.load_orders()
+        clean_email = (email or "").strip().lower()
+        clean_phone = re.sub(r"\D", "", phone or "")
+
+        has_claimed = any(
+            (
+                (clean_email and str(o.get("customerEmail", "")).lower().strip() == clean_email)
+                or (clean_phone and re.sub(r"\D", "", str(o.get("customerWhatsapp", ""))) == clean_phone)
+            )
+            and float(o.get("referralDiscount") or o.get("referral_discount") or 0) > 0
+            for o in orders
+        )
+        if has_claimed:
+            discount_eligible = False
+            discount_amount = 0
+            discount_reason = "Diskon referral telah digunakan sebelumnya (hanya berlaku 1x seumur hidup)"
+
     return {
         "success": True,
         "valid": True,
@@ -681,16 +709,20 @@ def validate_referral(code: Optional[str] = Query(None)):
             "code": partner["code"],
             "partnerName": partner["name"],
             "tier": partner.get("tier", "Standard (10%)"),
-            "discountEligible": True,
-            "discountAmount": 1000,
-            "discountReason": "Potongan referral resmi kemitraan sales",
+            "discountEligible": discount_eligible,
+            "discountAmount": discount_amount,
+            "discountReason": discount_reason,
         },
         "partner": {
             "code": partner["code"],
             "name": partner["name"],
             "rate": partner.get("rate", 10),
         },
-        "message": f"Kode referral valid! Diundang oleh mitra {partner['name']} ({partner['code']})",
+        "message": (
+            f"Kode referral valid! Diundang oleh mitra {partner['name']} ({partner['code']})"
+            if discount_eligible
+            else f"Kode referral valid dari mitra {partner['name']} ({partner['code']}). Diskon sudah pernah diklaim sebelumnya (1x seumur hidup), namun transaksi Anda tetap mendukung mitra."
+        ),
     }
 
 @api_router.post("/affiliate/register", tags=["Affiliate"])

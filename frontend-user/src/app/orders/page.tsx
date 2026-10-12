@@ -77,10 +77,18 @@ function getStatusBadge(status: PublicOrder['order_status']) {
   }
 }
 
+function parseSafeDate(dateString: string): Date {
+  if (!dateString) return new Date();
+  const normalized = dateString.endsWith('Z') || dateString.includes('+') ? dateString : `${dateString}Z`;
+  const parsed = new Date(normalized);
+  return isNaN(parsed.getTime()) ? new Date() : parsed;
+}
+
 function formatRelativeTime(dateString: string): string {
-  const date = new Date(dateString);
+  if (!dateString) return '-';
+  const date = parseSafeDate(dateString);
   const now = new Date();
-  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+  const diffInSeconds = Math.max(0, Math.floor((now.getTime() - date.getTime()) / 1000));
 
   if (diffInSeconds < 60) return 'Baru saja';
   if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} menit lalu`;
@@ -194,14 +202,15 @@ function GlobalOrdersContent() {
 
   const filteredOrders = useMemo(() => {
     if (!searchQuery.trim()) return orders;
-    const q = searchQuery.toLowerCase();
-    return orders.filter(
-      (order) =>
-        order.id.toLowerCase().includes(q) ||
-        order.product_name.toLowerCase().includes(q) ||
-        order.customer_display.toLowerCase().includes(q) ||
-        order.items_summary.toLowerCase().includes(q)
-    );
+    const q = searchQuery.toLowerCase().trim();
+    return orders.filter((order) => {
+      const idMatch = (order.id || '').toLowerCase().includes(q) || (order.raw_id || '').toLowerCase().includes(q);
+      const productMatch =
+        (order.product_name || '').toLowerCase().includes(q) ||
+        (order.items_summary || '').toLowerCase().includes(q);
+      const customerMatch = (order.customer_display || '').toLowerCase().includes(q);
+      return idMatch || productMatch || customerMatch;
+    });
   }, [orders, searchQuery]);
 
   // Initial loading state (no cached data yet)
@@ -390,11 +399,16 @@ function GlobalOrdersContent() {
                       <span>{formatRelativeTime(order.order_date)}</span>
                       <span>—</span>
                       <span>
-                        {new Date(order.order_date).toLocaleDateString('id-ID', {
+                        {parseSafeDate(order.order_date).toLocaleDateString('id-ID', {
                           day: 'numeric',
                           month: 'short',
                           year: 'numeric',
-                        })}
+                        })}{' '}
+                        {parseSafeDate(order.order_date).toLocaleTimeString('id-ID', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}{' '}
+                        WIB
                       </span>
                     </div>
                   </div>

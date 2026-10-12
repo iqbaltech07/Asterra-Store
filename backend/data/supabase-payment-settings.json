@@ -1,51 +1,23 @@
 [
   {
+    "id": "default_setting",
     "mode": "manual",
     "bankName": "Bank Central Asia (BCA)",
-    "bankAccountNumber": "8965123456",
+    "bankAccountNumber": "80012777123",
     "bankAccountName": "Asterra Store Official",
     "qrisImageUrl": "/api/v1/media/qris/whatsapp-image-2026-10-10-at-10-55-38-pm-bbd6e68487a4.webp",
     "qrisMerchantName": "ASTERRA STORE ",
-    "danaNumber": "081234567890",
+    "danaNumber": "089676636637",
     "danaAccountName": "Asterra Store",
-    "confirmationWhatsapp": "6281234567890",
+    "confirmationWhatsapp": "628812625551",
     "instructions": "Transfer sesuai nominal tepat hingga 3 digit kode unik terakhir untuk verifikasi instan mutasi.",
-    "csEmail": "support@asterra.store",
+    "csEmail": "support@asterrastore.biz.id",
     "csWhatsappNumbers": [
-      "081234567890"
+      "6289676636637",
+      "6282188881233"
     ],
     "enableUniqueCode": false,
-    "orderExpiryHours": 24,
-    "bank": {
-      "name": "Bank Central Asia (BCA)",
-      "account_number": "8965123456",
-      "account_name": "Asterra Store Official"
-    },
-    "qris": {
-      "image_url": "/api/v1/media/qris/whatsapp-image-2026-10-10-at-10-55-38-pm-bbd6e68487a4.webp",
-      "merchant_name": "ASTERRA STORE "
-    },
-    "dana": {
-      "number": "081234567890",
-      "account_name": "Asterra Store"
-    },
-    "manualAccounts": [
-      {
-        "id": "acc-bca",
-        "bankName": "Bank Central Asia (BCA)",
-        "accountNumber": "8965123456",
-        "accountHolder": "Asterra Store Official",
-        "isActive": true
-      },
-      {
-        "id": "acc-dana",
-        "bankName": "E-Wallet DANA",
-        "accountNumber": "081234567890",
-        "accountHolder": "Asterra Store",
-        "isActive": true
-      }
-    ],
-    "id": "default_setting",
-    "updatedAt": "2026-10-10T16:00:54.422000"
+    "orderExpiryHours": 10,
+    "updatedAt": "2026-10-11T13:48:38.333Z"
   }
 ]

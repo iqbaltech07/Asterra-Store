@@ -299,6 +299,7 @@ function CheckoutPageContent() {
     }
     return DEFAULT_PUBLIC_CONFIG;
   });
+
   const [selectedMethod, setSelectedMethod] = useState<string>(() => {
     if (typeof window !== 'undefined') {
       try {
@@ -312,6 +313,40 @@ function CheckoutPageContent() {
     }
     return 'manual_bca';
   });
+
+  // Real-time synchronization of server payment settings (unique code toggle, expiry hours, admin WA, CS contact)
+  useEffect(() => {
+    fetch('/api/v1/payment-config')
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.success && json.data) {
+          const cfg = json.data;
+          const mergedConfig: PublicPaymentConfig = {
+            mode: cfg.mode || 'manual',
+            bank: cfg.bank || DEFAULT_PUBLIC_CONFIG.bank,
+            qris: cfg.qris || DEFAULT_PUBLIC_CONFIG.qris,
+            dana: cfg.dana || DEFAULT_PUBLIC_CONFIG.dana,
+            confirmation_whatsapp:
+              cfg.confirmation_whatsapp || cfg.confirmationWhatsapp || DEFAULT_PUBLIC_CONFIG.confirmation_whatsapp,
+            instructions: cfg.instructions || DEFAULT_PUBLIC_CONFIG.instructions,
+            enable_unique_code:
+              cfg.enable_unique_code !== undefined
+                ? Boolean(cfg.enable_unique_code)
+                : cfg.enableUniqueCode !== undefined
+                ? Boolean(cfg.enableUniqueCode)
+                : false,
+            order_expiry_hours: Number(cfg.order_expiry_hours || cfg.orderExpiryHours || 24),
+            cs_email: cfg.cs_email || cfg.csEmail || 'cs@asterra.store',
+            cs_whatsapp_numbers: cfg.cs_whatsapp_numbers || cfg.csWhatsappNumbers || ['6281234567890'],
+          };
+          setPaymentConfig(mergedConfig);
+          try {
+            localStorage.setItem('asterra_payment_config', JSON.stringify(mergedConfig));
+          } catch {}
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Auto-fill from active Better Auth session or legacy auth store
   useEffect(() => {
@@ -588,10 +623,39 @@ function CheckoutPageContent() {
     onSuccess: async (orderData) => {
       const createdOrder = orderData.order;
 
-      // Note: ref and campaign remain permanently attributed. 1-time referral discount is marked used.
+      // Rule 3: Perilaku parameter URL
+      // Setelah user berhasil mengklaim diskon referral, parameter ref harus dihapus dari URL.
+      // Pengecualian: jika parameter campaign juga tersedia, parameter ref tidak boleh dihapus.
       if (referralDiscount > 0) {
         setIsReferralDiscountUsed(true);
         setReferralDiscount(0);
+
+        if (typeof window !== 'undefined') {
+          try {
+            const currentUrl = new URL(window.location.href);
+            const hasCampaignParam =
+              currentUrl.searchParams.has('campaign') ||
+              currentUrl.searchParams.has('utm_campaign') ||
+              Boolean(activeCampaignSlug);
+
+            if (!hasCampaignParam) {
+              if (currentUrl.searchParams.has('ref')) {
+                currentUrl.searchParams.delete('ref');
+                window.history.replaceState(
+                  window.history.state,
+                  '',
+                  currentUrl.pathname + currentUrl.search + currentUrl.hash
+                );
+              }
+              localStorage.setItem('asterra_ref_claimed', 'true');
+              localStorage.removeItem('asterra_ref');
+              document.cookie = 'asterra_ref=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+            } else {
+              // Jika campaign tersedia bersamaan, parameter ref tidak boleh dihapus (misal ref=AST-Founder-SAGE&campaign=flash-sales-10-10)
+              localStorage.setItem('asterra_ref_claimed', 'true');
+            }
+          } catch {}
+        }
       }
 
       if (typeof window !== 'undefined') {
@@ -811,6 +875,7 @@ function CheckoutPageContent() {
                     activeCampaign={matchingCampaign}
                     finalTotal={finalTotal}
                     isManualMode={isManualMode}
+                    enableUniqueCode={Boolean(paymentConfig.enable_unique_code)}
                     isSubmitting={createOrderMutation.isPending}
                     hasOutOfStockItems={hasOutOfStockItems}
                     promoCode={promoCode}

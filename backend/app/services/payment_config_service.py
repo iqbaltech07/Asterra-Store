@@ -63,46 +63,106 @@ class PaymentConfigService:
         Loads payment settings directly from Supabase payment_settings table.
         Falls back to local file if offline.
         """
+        raw_data: Dict[str, Any] = {}
         try:
             db = SessionLocal()
             try:
                 setting = db.query(PaymentSetting).first()
                 if setting:
-                    data = setting.to_dict()
-                    cls._config = {
-                        **DEFAULT_CONFIG,
-                        **data,
-                        "bank": {
-                            "name": data.get("bankName") or "Bank Central Asia (BCA)",
-                            "account_number": data.get("bankAccountNumber") or "8965123456",
-                            "account_name": data.get("bankAccountName") or "Asterra Store Official",
-                        },
-                        "qris": {
-                            "image_url": data.get("qrisImageUrl") or DEFAULT_CONFIG["qris"]["image_url"],
-                            "merchant_name": data.get("qrisMerchantName") or DEFAULT_CONFIG["qris"]["merchant_name"],
-                        },
-                        "dana": {
-                            "number": data.get("danaNumber") or "081234567890",
-                            "account_name": data.get("danaAccountName") or "Asterra Store",
-                        },
-                    }
-                    return cls._config
+                    raw_data = setting.to_dict()
             finally:
                 db.close()
         except Exception as e:
             print(f"[PaymentConfigService] Warning: Supabase query failed: {e}")
 
-        if PAYMENT_SETTINGS_FILE.exists():
+        if not raw_data and PAYMENT_SETTINGS_FILE.exists():
             try:
                 data = json.loads(PAYMENT_SETTINGS_FILE.read_text(encoding="utf-8"))
                 if isinstance(data, list) and len(data) > 0:
-                    cls._config = {**DEFAULT_CONFIG, **data[0]}
+                    raw_data = data[0]
                 elif isinstance(data, dict):
-                    cls._config = {**DEFAULT_CONFIG, **data}
-                return cls._config
+                    raw_data = data
             except Exception as e:
                 print(f"[PaymentConfigService] Error reading supabase-payment-settings: {e}")
 
+        merged = {**DEFAULT_CONFIG, **raw_data}
+
+        # Resolve field values with fallback
+        mode = str(merged.get("mode", "manual")).lower()
+        bank_name = merged.get("bankName") or merged.get("bank_name") or "Bank Central Asia (BCA)"
+        bank_acc = merged.get("bankAccountNumber") or merged.get("bank_account_number") or "8965123456"
+        bank_holder = merged.get("bankAccountName") or merged.get("bank_account_name") or "Asterra Store Official"
+
+        qris_url = merged.get("qrisImageUrl") or merged.get("qris_image_url") or DEFAULT_CONFIG["qris"]["image_url"]
+        qris_merchant = merged.get("qrisMerchantName") or merged.get("qris_merchant_name") or DEFAULT_CONFIG["qris"]["merchant_name"]
+
+        dana_num = merged.get("danaNumber") or merged.get("dana_number") or "081234567890"
+        dana_acc = merged.get("danaAccountName") or merged.get("dana_account_name") or "Asterra Store"
+
+        conf_wa = merged.get("confirmationWhatsapp") or merged.get("confirmation_whatsapp") or "6281234567890"
+        instructions = merged.get("instructions") or DEFAULT_CONFIG["instructions"]
+
+        # Support boolean enableUniqueCode / enable_unique_code
+        enable_unique = merged.get("enableUniqueCode")
+        if enable_unique is None:
+            enable_unique = merged.get("enable_unique_code", True)
+        enable_unique = bool(enable_unique)
+
+        expiry_hrs = merged.get("orderExpiryHours")
+        if expiry_hrs is None:
+            expiry_hrs = merged.get("order_expiry_hours", 24)
+        expiry_hrs = int(expiry_hrs)
+
+        cs_email = merged.get("csEmail") or merged.get("cs_email") or "support@asterra.store"
+        cs_wa = merged.get("csWhatsappNumbers") or merged.get("cs_whatsapp_numbers") or [conf_wa]
+        if isinstance(cs_wa, str):
+            cs_wa = [cs_wa]
+
+        cls._config = {
+            "mode": mode,
+            # CamelCase
+            "bankName": bank_name,
+            "bankAccountNumber": bank_acc,
+            "bankAccountName": bank_holder,
+            "qrisImageUrl": qris_url,
+            "qrisMerchantName": qris_merchant,
+            "danaNumber": dana_num,
+            "danaAccountName": dana_acc,
+            "confirmationWhatsapp": conf_wa,
+            "instructions": instructions,
+            "enableUniqueCode": enable_unique,
+            "orderExpiryHours": expiry_hrs,
+            "csEmail": cs_email,
+            "csWhatsappNumbers": cs_wa,
+            # Snake_case (for PublicPaymentConfig)
+            "bank_name": bank_name,
+            "bank_account_number": bank_acc,
+            "bank_account_name": bank_holder,
+            "qris_image_url": qris_url,
+            "qris_merchant_name": qris_merchant,
+            "dana_number": dana_num,
+            "dana_account_name": dana_acc,
+            "confirmation_whatsapp": conf_wa,
+            "enable_unique_code": enable_unique,
+            "order_expiry_hours": expiry_hrs,
+            "cs_email": cs_email,
+            "cs_whatsapp_numbers": cs_wa,
+            # Structured objects
+            "bank": {
+                "name": bank_name,
+                "account_number": bank_acc,
+                "account_name": bank_holder,
+            },
+            "qris": {
+                "image_url": qris_url,
+                "merchant_name": qris_merchant,
+            },
+            "dana": {
+                "number": dana_num,
+                "account_name": dana_acc,
+            },
+            "manualAccounts": merged.get("manualAccounts", DEFAULT_CONFIG["manualAccounts"]),
+        }
         return cls._config
 
     @classmethod
@@ -116,19 +176,34 @@ class PaymentConfigService:
                     db.add(setting)
 
                 if "mode" in payload: setting.mode = payload["mode"]
-                if "bankName" in payload: setting.bank_name = payload["bankName"]
-                if "bankAccountNumber" in payload: setting.bank_account_number = payload["bankAccountNumber"]
-                if "bankAccountName" in payload: setting.bank_account_name = payload["bankAccountName"]
-                if "qrisImageUrl" in payload: setting.qris_image_url = payload["qrisImageUrl"]
-                if "qrisMerchantName" in payload: setting.qris_merchant_name = payload["qrisMerchantName"]
-                if "danaNumber" in payload: setting.dana_number = payload["danaNumber"]
-                if "danaAccountName" in payload: setting.dana_account_name = payload["danaAccountName"]
-                if "confirmationWhatsapp" in payload: setting.confirmation_whatsapp = payload["confirmationWhatsapp"]
-                if "instructions" in payload: setting.instructions = payload["instructions"]
-                if "enableUniqueCode" in payload: setting.enable_unique_code = bool(payload["enableUniqueCode"])
-                if "orderExpiryHours" in payload: setting.order_expiry_hours = int(payload["orderExpiryHours"])
-                if "csEmail" in payload: setting.cs_email = payload["csEmail"]
-                if "csWhatsappNumbers" in payload: setting.cs_whatsapp_numbers = payload["csWhatsappNumbers"]
+                if "bankName" in payload or "bank_name" in payload:
+                    setting.bank_name = payload.get("bankName") or payload.get("bank_name")
+                if "bankAccountNumber" in payload or "bank_account_number" in payload:
+                    setting.bank_account_number = payload.get("bankAccountNumber") or payload.get("bank_account_number")
+                if "bankAccountName" in payload or "bank_account_name" in payload:
+                    setting.bank_account_name = payload.get("bankAccountName") or payload.get("bank_account_name")
+                if "qrisImageUrl" in payload or "qris_image_url" in payload:
+                    setting.qris_image_url = payload.get("qrisImageUrl") or payload.get("qris_image_url")
+                if "qrisMerchantName" in payload or "qris_merchant_name" in payload:
+                    setting.qris_merchant_name = payload.get("qrisMerchantName") or payload.get("qris_merchant_name")
+                if "danaNumber" in payload or "dana_number" in payload:
+                    setting.dana_number = payload.get("danaNumber") or payload.get("dana_number")
+                if "danaAccountName" in payload or "dana_account_name" in payload:
+                    setting.dana_account_name = payload.get("danaAccountName") or payload.get("dana_account_name")
+                if "confirmationWhatsapp" in payload or "confirmation_whatsapp" in payload:
+                    setting.confirmation_whatsapp = payload.get("confirmationWhatsapp") or payload.get("confirmation_whatsapp")
+                if "instructions" in payload:
+                    setting.instructions = payload["instructions"]
+                if "enableUniqueCode" in payload or "enable_unique_code" in payload:
+                    val = payload.get("enableUniqueCode") if "enableUniqueCode" in payload else payload.get("enable_unique_code")
+                    setting.enable_unique_code = bool(val)
+                if "orderExpiryHours" in payload or "order_expiry_hours" in payload:
+                    val = payload.get("orderExpiryHours") if "orderExpiryHours" in payload else payload.get("order_expiry_hours")
+                    setting.order_expiry_hours = int(val)
+                if "csEmail" in payload or "cs_email" in payload:
+                    setting.cs_email = payload.get("csEmail") or payload.get("cs_email")
+                if "csWhatsappNumbers" in payload or "cs_whatsapp_numbers" in payload:
+                    setting.cs_whatsapp_numbers = payload.get("csWhatsappNumbers") or payload.get("cs_whatsapp_numbers")
 
                 db.commit()
                 db.refresh(setting)
@@ -139,6 +214,10 @@ class PaymentConfigService:
 
         # Update local cache
         cls.get_config()
+        # Merge updated payload into config
+        for k, v in payload.items():
+            cls._config[k] = v
+
         try:
             PAYMENT_SETTINGS_FILE.parent.mkdir(parents=True, exist_ok=True)
             PAYMENT_SETTINGS_FILE.write_text(json.dumps([cls._config], indent=2, ensure_ascii=False), encoding="utf-8")

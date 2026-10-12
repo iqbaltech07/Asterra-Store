@@ -252,6 +252,26 @@ class PartnerService:
         if not partner:
             return []
 
+        # Resolve active and registered campaigns for dynamic commission booster
+        campaign_map = {}
+        try:
+            from app.services.campaign_service import CampaignService
+            for c in CampaignService.get_all_campaigns():
+                c_id = str(c.get("id", "")).strip()
+                c_slug = str(c.get("slug", "")).strip()
+                bonus_pct = float(c.get("affiliateBonusPercent") or c.get("affiliateCommissionOverride") or 15.0)
+                meta = {
+                    "id": c_id,
+                    "name": c.get("name") or c.get("title") or "Campaign Promo",
+                    "rate": bonus_pct,
+                }
+                if c_id:
+                    campaign_map[c_id] = meta
+                if c_slug:
+                    campaign_map[c_slug] = meta
+        except Exception:
+            pass
+
         orders = cls.load_orders()
         p_code = str(partner.get("code", "")).upper()
         p_id = partner.get("id")
@@ -273,11 +293,29 @@ class PartnerService:
             items = o.get("items", [])
             prod_names = ", ".join(i.get("productName") or i.get("product_name") or "Layanan" for i in items) or "Produk Digital"
             total = float(o.get("totalAmount", 0))
-            commission = round(total * (partner.get("rate", 10) / 100.0))
+
+            camp_key = str(o.get("campaignId") or o.get("campaign_id") or "").strip()
+            is_campaign_sale = bool(camp_key)
+            camp_meta = campaign_map.get(camp_key, {}) if camp_key else {}
+
+            if is_campaign_sale:
+                campaign_rate = camp_meta.get("rate", 15.0)
+                commission_rate = campaign_rate
+                campaign_name = camp_meta.get("name") or "Promo Campaign Spesial"
+            else:
+                campaign_rate = None
+                commission_rate = float(partner.get("rate", 10.0))
+                campaign_name = None
+
+            commission = round(total * (commission_rate / 100.0))
+
+            created_at_val = o.get("createdAt") or o.get("created_at") or (datetime.utcnow().isoformat() + "Z")
+            if isinstance(created_at_val, str) and not created_at_val.endswith("Z"):
+                created_at_val = created_at_val + "Z"
 
             result.append({
                 "id": o.get("id"),
-                "createdAt": o.get("createdAt", datetime.utcnow().isoformat() + "Z"),
+                "createdAt": created_at_val,
                 "customerEmail": masked_email,
                 "customerName": masked_name,
                 "totalAmount": total,
@@ -285,6 +323,11 @@ class PartnerService:
                 "status": o.get("status", "completed"),
                 "paymentStatus": o.get("paymentStatus", "PAID"),
                 "commission": commission,
+                "commissionRate": commission_rate,
+                "isCampaignSale": is_campaign_sale,
+                "campaignId": camp_key or None,
+                "campaignName": campaign_name,
+                "campaignRate": campaign_rate,
                 "commissionStatus": "pending" if o.get("status") == "pending" else "final",
                 "holdingUntil": (datetime.utcnow() + timedelta(days=3)).isoformat() + "Z",
                 "itemsCount": len(items) if len(items) > 0 else 1,

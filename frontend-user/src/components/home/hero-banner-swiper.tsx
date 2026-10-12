@@ -1,19 +1,11 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useQuery } from '@tanstack/react-query';
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Autoplay, Pagination, Navigation } from 'swiper/modules';
-import type { Swiper as SwiperType } from 'swiper';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
-
-// Import Swiper styles
-import 'swiper/css';
-import 'swiper/css/pagination';
-import 'swiper/css/navigation';
 
 interface PromoBannerItem {
   id: string;
@@ -42,7 +34,7 @@ const INITIAL_STOREFRONT_BANNERS: PromoBannerItem[] = [
 ];
 
 export function HeroBannerSwiper() {
-  const swiperRef = useRef<SwiperType | null>(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
 
   // Fetch active banners for homepage from API with initialData to eliminate hydration flash
@@ -64,55 +56,47 @@ export function HeroBannerSwiper() {
   const banners = apiBanners.length > 0 ? apiBanners : INITIAL_STOREFRONT_BANNERS;
   const hasMultiple = banners.length >= 2;
 
+  // Autoplay 5s when >= 2 banners and not hovered
+  useEffect(() => {
+    if (!hasMultiple || isHovered) return;
+    const timer = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % banners.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [hasMultiple, isHovered, banners.length]);
+
+  const handlePrev = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCurrentIndex((prev) => (prev - 1 + banners.length) % banners.length);
+  };
+
+  const handleNext = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCurrentIndex((prev) => (prev + 1) % banners.length);
+  };
+
   return (
     <section
       aria-label="Banner Promo Asterra"
       data-gsap="hero-banner"
       className="group relative w-full max-w-full mb-3.5 sm:mb-5 overflow-hidden select-none"
-      onMouseEnter={() => {
-        setIsHovered(true);
-        swiperRef.current?.autoplay?.stop();
-      }}
-      onMouseLeave={() => {
-        setIsHovered(false);
-        swiperRef.current?.autoplay?.start();
-      }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       <div className="relative w-full overflow-hidden rounded-xl sm:rounded-2xl md:rounded-3xl border border-[rgba(18,26,42,0.08)] shadow-xs bg-[#121A2A] aspect-[2640/882]">
-        <Swiper
-          modules={[Autoplay, Pagination, Navigation]}
-          slidesPerView={1}
-          spaceBetween={0}
-          loop={hasMultiple}
-          speed={600}
-          autoplay={
-            hasMultiple
-              ? {
-                  delay: 5000,
-                  disableOnInteraction: false,
-                }
-              : false
-          }
-          pagination={
-            hasMultiple
-              ? {
-                  clickable: true,
-                  bulletClass: 'hero-bullet',
-                  bulletActiveClass: 'hero-bullet-active',
-                }
-              : false
-          }
-          onSwiper={(swiper) => {
-            swiperRef.current = swiper;
-          }}
-          className="hero-banner-swiper w-full h-full"
+        {/* Slides Track */}
+        <div
+          className="flex w-full h-full transition-transform duration-500 ease-out"
+          style={{ transform: `translateX(-${currentIndex * 100}%)` }}
         >
           {banners.map((banner, index) => {
             const targetUrl = banner.destinationUrl || banner.linkUrl || '/#katalog';
             const isPriority = index === 0;
 
             return (
-              <SwiperSlide key={banner.id} className="relative w-full h-full">
+              <div key={banner.id} className="w-full h-full shrink-0 relative">
                 <Link
                   href={targetUrl}
                   title={banner.title}
@@ -129,21 +113,17 @@ export function HeroBannerSwiper() {
                     className="w-full h-full object-cover block transition-transform duration-500 group-hover:scale-[1.006]"
                   />
                 </Link>
-              </SwiperSlide>
+              </div>
             );
           })}
-        </Swiper>
+        </div>
 
         {/* Custom Navigation Arrows (Visible on desktop hover if >= 2 banners) */}
         {hasMultiple && (
           <>
             <button
               type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                swiperRef.current?.slidePrev();
-              }}
+              onClick={handlePrev}
               aria-label="Banner Sebelumnya"
               className={`absolute left-2.5 sm:left-4 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#121A2A]/40 hover:bg-[#121A2A]/80 text-white backdrop-blur-md flex items-center justify-center transition-all duration-200 shadow-md cursor-pointer z-20 ${
                 isHovered ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'
@@ -154,11 +134,7 @@ export function HeroBannerSwiper() {
 
             <button
               type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                swiperRef.current?.slideNext();
-              }}
+              onClick={handleNext}
               aria-label="Banner Selanjutnya"
               className={`absolute right-2.5 sm:right-4 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#121A2A]/40 hover:bg-[#121A2A]/80 text-white backdrop-blur-md flex items-center justify-center transition-all duration-200 shadow-md cursor-pointer z-20 ${
                 isHovered ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'
@@ -168,53 +144,30 @@ export function HeroBannerSwiper() {
             </button>
           </>
         )}
-      </div>
 
-      {/* Styled Swiper pagination bullets */}
-      <style jsx global>{`
-        .hero-banner-swiper .swiper-pagination {
-          bottom: 10px !important;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 6px;
-          z-index: 20;
-        }
-        @media (min-width: 640px) {
-          .hero-banner-swiper .swiper-pagination {
-            bottom: 14px !important;
-            gap: 8px;
-          }
-        }
-        .hero-bullet {
-          display: inline-block;
-          width: 7px;
-          height: 7px;
-          border-radius: 9999px;
-          background: rgba(255, 255, 255, 0.45);
-          cursor: pointer;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        @media (min-width: 640px) {
-          .hero-bullet {
-            width: 8px;
-            height: 8px;
-          }
-        }
-        .hero-bullet:hover {
-          background: rgba(255, 255, 255, 0.8);
-        }
-        .hero-bullet-active {
-          width: 22px !important;
-          background: #ffffff !important;
-          box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
-        }
-        @media (min-width: 640px) {
-          .hero-bullet-active {
-            width: 26px !important;
-          }
-        }
-      `}</style>
+        {/* Styled pagination bullets */}
+        {hasMultiple && (
+          <div className="absolute bottom-2.5 sm:bottom-3.5 left-0 right-0 flex items-center justify-center gap-1.5 sm:gap-2 z-20">
+            {banners.map((banner, idx) => (
+              <button
+                key={`bullet-${banner.id}`}
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setCurrentIndex(idx);
+                }}
+                aria-label={`Slide ke ${idx + 1}`}
+                className={`transition-all duration-300 rounded-full cursor-pointer ${
+                  currentIndex === idx
+                    ? 'w-5 sm:w-6.5 h-1.5 sm:h-2 bg-white shadow-xs'
+                    : 'w-1.5 sm:w-2 h-1.5 sm:h-2 bg-white/45 hover:bg-white/80'
+                }`}
+              />
+            ))}
+          </div>
+        )}
+      </div>
     </section>
   );
 }

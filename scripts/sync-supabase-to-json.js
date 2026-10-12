@@ -1,7 +1,8 @@
-require('dotenv').config();
-const { PrismaClient } = require('@prisma/client');
-const fs = require('fs');
 const path = require('path');
+const fs = require('fs');
+require('dotenv').config({ path: path.resolve(__dirname, '../backend/.env') });
+const { PrismaClient } = require('@prisma/client');
+
 
 const prisma = new PrismaClient();
 
@@ -95,8 +96,8 @@ function formatProduct(p) {
 }
 
 async function exportAll() {
-  const dataDir = path.join(process.cwd(), 'data');
-  if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+  const backendDataDir = path.resolve(__dirname, '../backend/data');
+  if (!fs.existsSync(backendDataDir)) fs.mkdirSync(backendDataDir, { recursive: true });
 
   const [orders, admins, partners, promos, paymentSettings, allDbProducts] = await Promise.all([
     prisma.order.findMany({ include: { items: true }, orderBy: { createdAt: 'desc' } }),
@@ -121,30 +122,32 @@ async function exportAll() {
     return a.name.localeCompare(b.name);
   });
 
-  fs.writeFileSync(path.join(dataDir, 'supabase-orders.json'), JSON.stringify(orders, null, 2));
-  fs.writeFileSync(path.join(dataDir, 'supabase-admins.json'), JSON.stringify(admins, null, 2));
-  fs.writeFileSync(path.join(dataDir, 'supabase-partners.json'), JSON.stringify(partners, null, 2));
-  fs.writeFileSync(path.join(dataDir, 'supabase-promos.json'), JSON.stringify(promos, null, 2));
-  fs.writeFileSync(path.join(dataDir, 'supabase-payment-settings.json'), JSON.stringify(paymentSettings, null, 2));
+  fs.writeFileSync(path.join(backendDataDir, 'supabase-orders.json'), JSON.stringify(orders, null, 2));
+  fs.writeFileSync(path.join(backendDataDir, 'supabase-admins.json'), JSON.stringify(admins, null, 2));
+  fs.writeFileSync(path.join(backendDataDir, 'supabase-partners.json'), JSON.stringify(partners, null, 2));
+  fs.writeFileSync(path.join(backendDataDir, 'supabase-promos.json'), JSON.stringify(promos, null, 2));
+  fs.writeFileSync(path.join(backendDataDir, 'supabase-payment-settings.json'), JSON.stringify(paymentSettings, null, 2));
 
-  // Write active and managed catalogs
+  // Write active and managed catalogs in backend/data
   const activeCatalogJson = JSON.stringify(activeProducts, null, 2);
-  fs.writeFileSync(path.join(dataDir, 'active-catalog.json'), activeCatalogJson);
-  fs.writeFileSync(path.join(dataDir, 'managed-catalog.json'), JSON.stringify(formattedAll, null, 2));
+  const managedCatalogJson = JSON.stringify(formattedAll, null, 2);
+  fs.writeFileSync(path.join(backendDataDir, 'active-catalog.json'), activeCatalogJson);
+  fs.writeFileSync(path.join(backendDataDir, 'managed-catalog.json'), managedCatalogJson);
 
   // Sync to frontends fallback if data folder exists
-  const frontendUserDir = path.resolve(__dirname, '../../frontend-user/data');
+  const frontendUserDir = path.resolve(__dirname, '../frontend-user/data');
   if (fs.existsSync(frontendUserDir)) {
     fs.writeFileSync(path.join(frontendUserDir, 'active-catalog.json'), activeCatalogJson);
   }
-  const frontendAdminDir = path.resolve(__dirname, '../../frontend-admin/data');
+  const frontendAdminDir = path.resolve(__dirname, '../frontend-admin/data');
   if (fs.existsSync(frontendAdminDir)) {
     fs.writeFileSync(path.join(frontendAdminDir, 'active-catalog.json'), activeCatalogJson);
   }
-  const frontendSalesDir = path.resolve(__dirname, '../../frontend-sales/data');
+  const frontendSalesDir = path.resolve(__dirname, '../frontend-sales/data');
   if (fs.existsSync(frontendSalesDir)) {
     fs.writeFileSync(path.join(frontendSalesDir, 'active-catalog.json'), activeCatalogJson);
   }
+
 
   const categoryBreakdown = {};
   activeProducts.forEach((p) => {

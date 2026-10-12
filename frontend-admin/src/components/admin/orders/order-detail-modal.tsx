@@ -241,22 +241,61 @@ export function OrderDetailModal({
                   </span>
                 </div>
 
-                <div className="flex justify-between items-center">
-                  <span className="flex items-center gap-1.5 text-foreground-muted">
-                    <FontAwesomeIcon icon={faTicket} className="w-3.5 h-3.5 text-emerald-500" />
-                    <span>Kupon / Voucher</span>
-                  </span>
-                  {order.promo_code || (order.discount_amount && order.discount_amount > 0) ? (
-                    <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-mono font-bold">
-                      <span>{order.promo_code || 'PROMO'}</span>
-                      <span>(-Rp {(order.discount_amount || 0).toLocaleString('id-ID')})</span>
-                    </div>
-                  ) : (
-                    <span className="font-mono text-foreground-muted italic">
-                      Tanpa Voucher (Rp 0)
+                {/* Rincian Potongan Harga Lengkap per Sumber */}
+                {((order.promo_discount || 0) > 0 || !!order.promo_code) && (
+                  <div className="flex justify-between items-center">
+                    <span className="flex items-center gap-1.5 text-foreground-muted">
+                      <FontAwesomeIcon icon={faTicket} className="w-3.5 h-3.5 text-emerald-500" />
+                      <span>Voucher Promo:</span>
                     </span>
+                    <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-mono font-bold text-[11px]">
+                      <span>{order.promo_code || 'VOUCHER'}</span>
+                      <span>(-Rp {(order.promo_discount || order.discount_amount || 0).toLocaleString('id-ID')})</span>
+                    </div>
+                  </div>
+                )}
+
+                {((order.referral_discount || 0) > 0 || !!order.referral_code) && (
+                  <div className="flex justify-between items-center">
+                    <span className="flex items-center gap-1.5 text-foreground-muted">
+                      <FontAwesomeIcon icon={faTicket} className="w-3.5 h-3.5 text-primary" />
+                      <span>Diskon Referral Sales:</span>
+                    </span>
+                    <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-primary/15 border border-primary/30 text-primary font-mono font-bold text-[11px]">
+                      <span>{order.referral_code || 'REFERRAL'}</span>
+                      <span>(-Rp {(order.referral_discount || 0).toLocaleString('id-ID')})</span>
+                    </div>
+                  </div>
+                )}
+
+                {((order.campaign_discount || 0) > 0 || !!order.campaign_id) && (
+                  <div className="flex justify-between items-center">
+                    <span className="flex items-center gap-1.5 text-foreground-muted">
+                      <FontAwesomeIcon icon={faTicket} className="w-3.5 h-3.5 text-amber-500" />
+                      <span>Diskon Campaign Promo:</span>
+                    </span>
+                    <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-500/15 border border-amber-500/30 text-amber-600 dark:text-amber-400 font-mono font-bold text-[11px]">
+                      <span>{order.campaign_id || 'CAMPAIGN'}</span>
+                      <span>(-Rp {(order.campaign_discount || 0).toLocaleString('id-ID')})</span>
+                    </div>
+                  </div>
+                )}
+
+                {!(order.promo_discount || 0) &&
+                  !order.promo_code &&
+                  !(order.referral_discount || 0) &&
+                  !order.referral_code &&
+                  !(order.campaign_discount || 0) &&
+                  !order.campaign_id &&
+                  !(order.discount_amount || 0) && (
+                    <div className="flex justify-between items-center text-foreground-muted">
+                      <span className="flex items-center gap-1.5">
+                        <FontAwesomeIcon icon={faTicket} className="w-3.5 h-3.5 opacity-40" />
+                        <span>Potongan Harga</span>
+                      </span>
+                      <span className="font-mono italic">Tanpa Diskon (Rp 0)</span>
+                    </div>
                   )}
-                </div>
 
                 {!!order.unique_code && (
                   <div className="flex justify-between items-center text-foreground-muted">

@@ -28,7 +28,7 @@ import {
   faSpotify,
 } from '@fortawesome/free-brands-svg-icons';
 import { useCatalogProducts } from '@/lib/hooks/use-catalog-products';
-import { getDummyOriginalPrice, isPromoItem } from '@/lib/utils/promo-pricing';
+import { calculateCampaignPrice, isProductInCampaign, ActiveCampaign } from '@/lib/utils/promo-pricing';
 import { QuickViewModal, QuickViewProductData } from '@/components/products/quick-view-modal';
 import { getRecentlyViewed, RecentlyViewedItem } from '@/lib/services/recently-viewed';
 import { ProductItem } from '@/lib/products-data';
@@ -282,17 +282,17 @@ function ShowcaseLoopingCardSkeleton() {
  */
 function FeaturedGridCard({
   app,
-  hasCampaign = false,
+  activeCampaigns = [],
   onQuickView,
 }: {
   app: ApplicationGroupItem;
-  hasCampaign?: boolean;
+  activeCampaigns?: ActiveCampaign[];
   onQuickView?: (app: ApplicationGroupItem) => void;
 }) {
   const minPrice = app.minPrice;
   if (!minPrice || minPrice <= 0) return null;
-  const isPromo = hasCampaign && isPromoItem(app);
-  const dummyOriginal = getDummyOriginalPrice(minPrice);
+  const promoCalc = calculateCampaignPrice(minPrice, app, activeCampaigns);
+  const isPromo = promoCalc.hasPromo;
 
   return (
     <div
@@ -342,7 +342,7 @@ function FeaturedGridCard({
           </span>
           {isPromo && (
             <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-bold bg-[#C96F55]/10 text-[#C96F55] border border-[#C96F55]/20 leading-none truncate max-w-[90px]">
-              🔥 Promo
+              🔥 {promoCalc.discountBadge || 'Promo'}
             </span>
           )}
           {!isPromo && app.badgeLabel && (
@@ -358,7 +358,7 @@ function FeaturedGridCard({
         <div className="flex flex-col min-w-0">
           {isPromo && (
             <span className="text-[10px] sm:text-[11px] text-[#121A2A]/40 line-through font-medium leading-none block">
-              {dummyOriginal.originalPriceFormatted}
+              {promoCalc.originalPriceFormatted}
             </span>
           )}
           <Link
@@ -366,7 +366,7 @@ function FeaturedGridCard({
             data-gsap="product-price"
             className="font-black text-xs sm:text-sm lg:text-[15px] text-[#121A2A] tracking-tight hover:text-[#C96F55] transition-colors mt-0.5 block truncate"
           >
-            Rp{minPrice.toLocaleString('id-ID')}
+            {isPromo ? promoCalc.discountedPriceFormatted : `Rp${minPrice.toLocaleString('id-ID')}`}
           </Link>
         </div>
 
@@ -409,18 +409,18 @@ function FeaturedGridCard({
 function ShowcaseLoopingCard({
   app,
   isDuplicate = false,
-  hasCampaign = false,
+  activeCampaigns = [],
   onQuickView,
 }: {
   app: ApplicationGroupItem;
   isDuplicate?: boolean;
-  hasCampaign?: boolean;
+  activeCampaigns?: ActiveCampaign[];
   onQuickView?: (app: ApplicationGroupItem) => void;
 }) {
   const minPrice = app.minPrice;
   if (!minPrice || minPrice <= 0) return null;
-  const isPromo = hasCampaign && isPromoItem(app);
-  const dummyOriginal = getDummyOriginalPrice(minPrice);
+  const promoCalc = calculateCampaignPrice(minPrice, app, activeCampaigns);
+  const isPromo = promoCalc.hasPromo;
 
   return (
     <div
@@ -465,7 +465,7 @@ function ShowcaseLoopingCard({
           </span>
           {isPromo && (
             <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#C96F55]/10 text-[#C96F55] border border-[#C96F55]/20 leading-none">
-              🔥 Promo
+              🔥 {promoCalc.discountBadge || 'Promo'}
             </span>
           )}
           {!isPromo && (
@@ -480,11 +480,11 @@ function ShowcaseLoopingCard({
         <div className="flex flex-col min-w-0">
           {isPromo && (
             <span className="text-[10px] sm:text-[11px] text-[#121A2A]/40 line-through font-medium leading-none block">
-              {dummyOriginal.originalPriceFormatted}
+              {promoCalc.originalPriceFormatted}
             </span>
           )}
           <Link href={`/products/${app.slug}`} className="font-black text-sm sm:text-[15px] text-[#121A2A] tracking-tight hover:text-[#C96F55] transition-colors mt-0.5 block truncate">
-            Rp{minPrice.toLocaleString('id-ID')}
+            {isPromo ? promoCalc.discountedPriceFormatted : `Rp${minPrice.toLocaleString('id-ID')}`}
           </Link>
         </div>
 
@@ -710,17 +710,8 @@ export default function HomePage() {
 
   // Map to Featured Products (filtered by active category: Promo / Terlaris / Terbaru)
   const featuredApps = useMemo(() => {
-    let filteredConfig = appConfigurations;
-
-    if (activeCategory === 'promo') {
-      filteredConfig = appConfigurations.filter((a) => a.isPromo);
-    } else if (activeCategory === 'terlaris') {
-      filteredConfig = appConfigurations.filter((a) => a.isTerlaris);
-    } else if (activeCategory === 'terbaru') {
-      filteredConfig = appConfigurations.filter((a) => a.isTerbaru);
-    }
-
-    const mapped = filteredConfig.map((target) => {
+    // Map all configuration targets to their actual product items and prices
+    const allMapped = appConfigurations.map((target) => {
       const items = allProducts.filter((p) => {
         const text = `${p.name} ${(p as unknown as { id?: string }).id || ''} ${(p as unknown as { providerCode?: string }).providerCode || ''}`.toLowerCase();
         if (text.includes('lisensi')) return false;
@@ -743,15 +734,51 @@ export default function HomePage() {
             : activeCategory === 'terlaris'
             ? 'Terlaris'
             : 'Baru',
-        isPromo: activeCategory === 'promo' || target.isPromo,
+        isPromo: target.isPromo,
         items,
         minPrice,
       };
-    });
+    }).filter((app) => app.items.length > 0 && app.minPrice > 0);
 
-    // Only include application groups that actually have matched items in database
-    return mapped.filter((app) => app.items.length > 0 && app.minPrice > 0).slice(0, 8);
-  }, [allProducts, appConfigurations, activeCategory]);
+    if (activeCategory === 'promo') {
+      // Rule 4: Dynamic based on active campaigns!
+      if (!activeCampaigns || activeCampaigns.length === 0) {
+        return [];
+      }
+
+      // Filter products participating in active campaigns
+      const promoMatching = allMapped.filter((app) => {
+        return activeCampaigns.some((camp) =>
+          isProductInCampaign(app, camp) ||
+          app.items.some((item) =>
+            isProductInCampaign({ id: item.id, name: item.name, category: item.category?.name }, camp)
+          )
+        );
+      });
+
+      // Strictly maximum 7 popular products, sorted by popularity (soldCount descending)
+      return promoMatching
+        .sort((a, b) => (b.soldCount || 0) - (a.soldCount || 0))
+        .slice(0, 7);
+    }
+
+    if (activeCategory === 'terlaris') {
+      const terlarisConfigNames = new Set(appConfigurations.filter((a) => a.isTerlaris).map((a) => a.name));
+      return allMapped
+        .filter((app) => terlarisConfigNames.has(app.name))
+        .sort((a, b) => (b.soldCount || 0) - (a.soldCount || 0))
+        .slice(0, 8);
+    }
+
+    if (activeCategory === 'terbaru') {
+      const terbaruConfigNames = new Set(appConfigurations.filter((a) => a.isTerbaru).map((a) => a.name));
+      return allMapped
+        .filter((app) => terbaruConfigNames.has(app.name))
+        .slice(0, 8);
+    }
+
+    return allMapped.slice(0, 8);
+  }, [allProducts, appConfigurations, activeCategory, activeCampaigns]);
 
   // Product Looping Showcase: Curated list of popular accounts that stays completely independent of the selector
   const showcaseApps = useMemo(() => {
@@ -970,7 +997,7 @@ export default function HomePage() {
                 <FeaturedGridCard
                   key={`featured-${activeCategory}-${app.name}`}
                   app={app}
-                  hasCampaign={hasActiveCampaign}
+                  activeCampaigns={activeCampaigns}
                   onQuickView={handleOpenQuickView}
                 />
               ))}
@@ -978,7 +1005,9 @@ export default function HomePage() {
           ) : (
             <div className="p-8 text-center bg-white rounded-2xl border border-[rgba(18,26,42,0.08)] col-span-full">
               <p className="text-xs sm:text-sm font-semibold text-[#121A2A]/70">
-                Belum ada produk aktif yang tersedia untuk kategori ini.
+                {activeCategory === 'promo'
+                  ? 'Saat ini belum ada promo campaign yang sedang berlangsung. Cek kembali nanti!'
+                  : 'Belum ada produk aktif yang tersedia untuk kategori ini.'}
               </p>
             </div>
           )}
@@ -1030,7 +1059,7 @@ export default function HomePage() {
                   <ShowcaseLoopingCard
                     key={`showcase-orig-${app.name}`}
                     app={app}
-                    hasCampaign={hasActiveCampaign}
+                    activeCampaigns={activeCampaigns}
                     onQuickView={handleOpenQuickView}
                   />
                 ))}
@@ -1041,7 +1070,7 @@ export default function HomePage() {
                     key={`showcase-dup-${app.name}`}
                     app={app}
                     isDuplicate
-                    hasCampaign={hasActiveCampaign}
+                    activeCampaigns={activeCampaigns}
                     onQuickView={handleOpenQuickView}
                   />
                 ))}
@@ -1387,6 +1416,7 @@ export default function HomePage() {
         product={quickViewProduct}
         isOpen={isQuickViewOpen}
         onClose={() => setIsQuickViewOpen(false)}
+        activeCampaigns={activeCampaigns}
       />
     </div>
   );

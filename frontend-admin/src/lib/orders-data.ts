@@ -44,7 +44,11 @@ export interface Order {
   items: OrderItem[];
   customer_notes?: string;
   promo_code?: string;
+  promo_discount?: number;
   referral_code?: string;
+  referral_discount?: number;
+  campaign_id?: string;
+  campaign_discount?: number;
   discount_amount?: number;
   logs?: OrderLog[];
   payment?: {

@@ -26,7 +26,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { ProductCard } from '@/components/products/product-card';
 import { ProductItem } from '@/lib/products-data';
-import { getDummyOriginalPrice, isPromoItem } from '@/lib/utils/promo-pricing';
+import { calculateCampaignPrice, ActiveCampaign } from '@/lib/utils/promo-pricing';
 import { ParsedVariant, cleanHtmlContent } from '@/lib/services/product-variant-parser';
 import { saveRecentlyViewed } from '@/lib/services/recently-viewed';
 import { animateProductDetailPage } from '@/lib/animations/gsap-utils';
@@ -505,6 +505,31 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
   const currentPrice = activeVariant ? activeVariant.price : (product?.price || 0);
   const totalPrice = currentPrice * quantity;
 
+  // Genuine Active Campaigns for live strike-through price and promotional badges
+  const { data: campaignsRes } = useQuery<{ success: boolean; data: ActiveCampaign[] }>({
+    queryKey: ['active-campaigns'],
+    queryFn: async () => {
+      const res = await fetch('/api/v1/campaigns/active');
+      if (!res.ok) return { success: false, data: [] };
+      return res.json();
+    },
+    staleTime: 60000,
+  });
+  const activeCampaigns = campaignsRes?.data || [];
+
+  const campaignPrice = useMemo(() => {
+    return calculateCampaignPrice(
+      totalPrice,
+      {
+        id: product?.id,
+        slug: (product as unknown as { slug?: string })?.slug || id,
+        category: product?.category?.name,
+        name: product?.name,
+      },
+      activeCampaigns
+    );
+  }, [totalPrice, product, id, activeCampaigns]);
+
   const isOutOfStock =
     (product?.stock !== undefined && product.stock <= 0) ||
     product?.providerStatus === 'empty' ||
@@ -874,18 +899,33 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
 
                   {/* Price Header */}
                   <div>
-                    {isPromoItem(product) && (
-                      <span className="text-xs sm:text-sm text-[#121A2A]/40 line-through font-medium block">
-                        {getDummyOriginalPrice(totalPrice).originalPriceFormatted}
-                      </span>
+                    {campaignPrice.hasPromo ? (
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-xs sm:text-sm text-[#121A2A]/40 line-through font-medium block">
+                            {campaignPrice.originalPriceFormatted}
+                          </span>
+                          <span className="text-[11px] font-bold text-[#C96F55] bg-[#C96F55]/10 border border-[#C96F55]/20 px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                            🔥 {campaignPrice.campaignName || 'Event Promo'} ({campaignPrice.discountBadge})
+                          </span>
+                        </div>
+                        <div
+                          key={campaignPrice.discountedPrice}
+                          data-gsap="product-price"
+                          className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#C96F55] font-mono tracking-tight animate-text-smooth"
+                        >
+                          {campaignPrice.discountedPriceFormatted}
+                        </div>
+                      </div>
+                    ) : (
+                      <div
+                        key={totalPrice}
+                        data-gsap="product-price"
+                        className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#121A2A] font-mono tracking-tight animate-text-smooth"
+                      >
+                        Rp {totalPrice.toLocaleString('id-ID')}
+                      </div>
                     )}
-                    <div
-                      key={totalPrice}
-                      data-gsap="product-price"
-                      className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#121A2A] font-mono tracking-tight animate-text-smooth"
-                    >
-                      Rp {totalPrice.toLocaleString('id-ID')}
-                    </div>
                     <p className="text-[11px] sm:text-xs text-[#121A2A]/60 mt-0.5 sm:mt-1">
                       Harga nett termasuk panduan aktivasi resmi & garansi pergantian.
                     </p>
@@ -1235,14 +1275,25 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
             <span className="text-[10px] text-[#121A2A]/60 block leading-tight font-medium uppercase tracking-wider">
               Total Harga:
             </span>
-            {isPromoItem(product) && (
-              <span className="text-[10px] text-[#121A2A]/40 line-through font-medium block leading-none">
-                {getDummyOriginalPrice(totalPrice).originalPriceFormatted}
+            {campaignPrice.hasPromo ? (
+              <>
+                <div className="flex items-center gap-1.5 leading-none">
+                  <span className="text-[10px] text-[#121A2A]/40 line-through font-medium block">
+                    {campaignPrice.originalPriceFormatted}
+                  </span>
+                  <span className="text-[9px] font-bold text-[#C96F55] bg-[#C96F55]/10 px-1 rounded">
+                    {campaignPrice.discountBadge}
+                  </span>
+                </div>
+                <span className="text-base font-black font-mono text-[#C96F55] tracking-tight block">
+                  {campaignPrice.discountedPriceFormatted}
+                </span>
+              </>
+            ) : (
+              <span className="text-base font-black font-mono text-[#121A2A] tracking-tight block">
+                Rp {totalPrice.toLocaleString('id-ID')}
               </span>
             )}
-            <span className="text-base font-black font-mono text-[#121A2A] tracking-tight block">
-              Rp {totalPrice.toLocaleString('id-ID')}
-            </span>
           </div>
 
           <div className="flex items-center gap-2 shrink-0">

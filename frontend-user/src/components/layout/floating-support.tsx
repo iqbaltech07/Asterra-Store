@@ -30,13 +30,17 @@ export function FloatingSupport() {
       .then((res) => res.json())
       .then((json) => {
         if (json.success && json.data) {
-          if (Array.isArray(json.data.cs_whatsapp_numbers) && json.data.cs_whatsapp_numbers.length > 0) {
-            setWhatsappNumbers(json.data.cs_whatsapp_numbers);
-          } else if (json.data.confirmation_whatsapp) {
-            setWhatsappNumbers([json.data.confirmation_whatsapp]);
+          const waList = json.data.cs_whatsapp_numbers || json.data.csWhatsappNumbers;
+          const confWa = json.data.confirmation_whatsapp || json.data.confirmationWhatsapp;
+          const email = json.data.cs_email || json.data.csEmail;
+
+          if (Array.isArray(waList) && waList.length > 0) {
+            setWhatsappNumbers(waList);
+          } else if (confWa) {
+            setWhatsappNumbers([confWa]);
           }
-          if (json.data.cs_email) {
-            setSupportEmail(json.data.cs_email);
+          if (email) {
+            setSupportEmail(email);
           }
         }
       })

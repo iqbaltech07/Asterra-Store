@@ -46,4 +46,10 @@ next-env.d.ts
 Thumbs.db
 
 # Heavy local dumps (use database or active-catalog.json instead)
+data/
 data/managed-catalog.json
+
+# Local scratch, certificates & temp media
+scratch/
+certificates/
+*.MOV

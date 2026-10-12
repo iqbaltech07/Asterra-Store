@@ -18,9 +18,25 @@ interface FooterProps {
 
 export function Footer({ onNotify }: FooterProps) {
   const footerRef = useRef<HTMLElement>(null);
+  const [csWhatsapp, setCsWhatsapp] = React.useState('6281234567890');
 
   useEffect(() => {
     const cleanup = setupFooterReveal(footerRef.current);
+    fetch('/api/v1/payment-config')
+      .then((res) => res.json())
+      .then((json) => {
+        if (json.success && json.data) {
+          const num =
+            (Array.isArray(json.data.cs_whatsapp_numbers) && json.data.cs_whatsapp_numbers[0]) ||
+            json.data.confirmation_whatsapp ||
+            json.data.confirmationWhatsapp;
+          if (num) {
+            setCsWhatsapp(num.replace(/\D/g, ''));
+          }
+        }
+      })
+      .catch(() => {});
+
     return () => {
       cleanup?.();
     };
@@ -100,7 +116,7 @@ export function Footer({ onNotify }: FooterProps) {
             <ul className="space-y-1.5 text-xs text-[#F7F5EF]/70">
               <li>
                 <a
-                  href="https://wa.me/6281234567890?text=Halo%20Customer%20Service%20Asterra%20Store%2C%20saya%20memerlukan%20bantuan%20layanan."
+                  href={`https://wa.me/${csWhatsapp}?text=Halo%20Customer%20Service%20Asterra%20Store%2C%20saya%20memerlukan%20bantuan%20layanan.`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-[#C96F55] transition-colors inline-flex items-center gap-1.5 text-[#F7F5EF]/85"
