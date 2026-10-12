@@ -1048,6 +1048,7 @@ async def upload_promo_banner(
     expiresAt: Optional[str] = Form(None),
     expires_at: Optional[str] = Form(None),
     scheduledUntil: Optional[str] = Form(None),
+    id: Optional[str] = Form(None),
 ):
     final_link = destinationUrl or link_url if (destinationUrl or link_url) is not None else linkUrl
     final_target = target_page if target_page is not None else (targetPage or "home")
@@ -1074,6 +1075,7 @@ async def upload_promo_banner(
             display_order=int(final_order),
             is_active=bool(final_active),
             expires_at=final_expires,
+            banner_id=id,
         )
         return res
     except ValueError as ve:
@@ -1108,8 +1110,13 @@ async def toggle_promo_banner_status(banner_id: str, request: Request):
 def get_promo_banners(
     active_only: bool = Query(True, alias="activeOnly"),
     target_page: Optional[str] = Query(None, alias="targetPage"),
+    banner_type: Optional[str] = Query(None, alias="bannerType"),
 ):
-    banners = BannerService.get_banners(active_only=active_only, target_page=target_page)
+    banners = BannerService.get_banners(
+        active_only=active_only,
+        target_page=target_page,
+        banner_type=banner_type,
+    )
     return {
         "success": True,
         "data": banners,

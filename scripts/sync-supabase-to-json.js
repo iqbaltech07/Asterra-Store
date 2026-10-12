@@ -128,6 +128,15 @@ async function exportAll() {
   fs.writeFileSync(path.join(backendDataDir, 'supabase-promos.json'), JSON.stringify(promos, null, 2));
   fs.writeFileSync(path.join(backendDataDir, 'supabase-payment-settings.json'), JSON.stringify(paymentSettings, null, 2));
 
+  const rootDataDir = path.resolve(__dirname, '../data');
+  if (fs.existsSync(rootDataDir)) {
+    fs.writeFileSync(path.join(rootDataDir, 'supabase-orders.json'), JSON.stringify(orders, null, 2));
+    fs.writeFileSync(path.join(rootDataDir, 'supabase-admins.json'), JSON.stringify(admins, null, 2));
+    fs.writeFileSync(path.join(rootDataDir, 'supabase-partners.json'), JSON.stringify(partners, null, 2));
+    fs.writeFileSync(path.join(rootDataDir, 'supabase-promos.json'), JSON.stringify(promos, null, 2));
+    fs.writeFileSync(path.join(rootDataDir, 'supabase-payment-settings.json'), JSON.stringify(paymentSettings, null, 2));
+  }
+
   // Write active and managed catalogs in backend/data
   const activeCatalogJson = JSON.stringify(activeProducts, null, 2);
   const managedCatalogJson = JSON.stringify(formattedAll, null, 2);

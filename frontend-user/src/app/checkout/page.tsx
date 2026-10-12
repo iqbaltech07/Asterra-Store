@@ -160,22 +160,26 @@ function CheckoutPageContent() {
       );
       if (found) return found;
     }
-    // Fallback to active campaign if site-wide
-    return activeCampaigns[0] || null;
+    // Do not fall back to activeCampaigns[0] if user didn't arrive via a campaign link
+    return null;
   }, [activeCampaigns, activeCampaignSlug]);
 
-  // Purge campaign parameter ONLY when campaign has ended
+  // Purge campaign parameter ONLY when campaign has explicitly ended
   useEffect(() => {
-    if (activeCampaignsData && activeCampaignSlug) {
-      const isStillRunning = activeCampaigns.some(
+    if (activeCampaignsData && activeCampaignSlug && activeCampaigns.length > 0) {
+      const isExplicitlyEnded = activeCampaigns.some(
         (c: { slug?: string; id?: string; status?: string; isActive?: boolean }) =>
           (c.slug === activeCampaignSlug || c.id === activeCampaignSlug) &&
-          c.status !== 'ended' &&
-          c.isActive !== false
+          (c.status === 'ended' || c.isActive === false)
       );
 
-      if (!isStillRunning) {
-        // Campaign has ended! Clean up
+      const hasExplicitParam =
+        typeof window !== 'undefined' &&
+        (new URL(window.location.href).searchParams.has('campaign') ||
+          new URL(window.location.href).searchParams.has('utm_campaign'));
+
+      if (isExplicitlyEnded && !hasExplicitParam) {
+        // Campaign has explicitly ended! Clean up
         setActiveCampaignSlug('');
         if (typeof window !== 'undefined') {
           try {
@@ -755,10 +759,10 @@ function CheckoutPageContent() {
       promo_code: appliedPromo?.code || undefined,
       referral_code: referralPartner?.code || (referralCode.trim() ? referralCode.trim() : undefined),
       referral_discount: referralDiscount,
-      campaign_id: matchingCampaign?.id || undefined,
-      campaign_slug: matchingCampaign?.slug || activeCampaignSlug || undefined,
+      campaign_id: matchingCampaign?.id || (activeCampaignSlug ? activeCampaignSlug : undefined),
+      campaign_slug: matchingCampaign?.slug || (activeCampaignSlug ? activeCampaignSlug : undefined),
       campaign_discount: campaignDiscount,
-      utm_campaign: matchingCampaign?.slug || activeCampaignSlug || undefined,
+      utm_campaign: matchingCampaign?.slug || (activeCampaignSlug ? activeCampaignSlug : undefined),
       customer_contact: {
         name: customerName.trim(),
         email: targetEmail.trim(),

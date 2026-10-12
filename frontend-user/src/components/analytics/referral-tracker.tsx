@@ -89,21 +89,25 @@ function ReferralTrackerInner() {
             '';
         } catch {}
 
-        // Check campaign status if storedCamp exists: only remove if campaign has ended
+        // Check campaign status if storedCamp exists: only remove if campaign explicitly confirmed ended
         if (storedCamp) {
           fetch('/api/v1/campaigns/active')
             .then((r) => r.json())
             .then((res) => {
               const activeList = Array.isArray(res?.data) ? res.data : [];
-              const isStillActive = activeList.some(
+              if (activeList.length === 0) return; // Do not purge if list is empty or offline
+
+              const isExplicitlyEnded = activeList.some(
                 (c: { slug?: string; id?: string; status?: string; isActive?: boolean }) =>
                   (c.slug === storedCamp || c.id === storedCamp) &&
-                  c.status !== 'ended' &&
-                  c.isActive !== false
+                  (c.status === 'ended' || c.isActive === false)
               );
 
-              // If campaign has ended, purge campaign parameter only
-              if (!isStillActive) {
+              const currentUrl = new URL(window.location.href);
+              const hasExplicitParam = currentUrl.searchParams.has('campaign') || currentUrl.searchParams.has('utm_campaign');
+
+              // If campaign is explicitly ended and URL is not intentionally carrying it, clean up
+              if (isExplicitlyEnded && !hasExplicitParam) {
                 try {
                   localStorage.removeItem('asterra_campaign');
                   localStorage.removeItem('asterra_utm_campaign');
@@ -111,7 +115,6 @@ function ReferralTrackerInner() {
                   document.cookie = 'asterra_utm_campaign=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
                 } catch {}
 
-                const currentUrl = new URL(window.location.href);
                 let changed = false;
                 if (currentUrl.searchParams.has('campaign')) {
                   currentUrl.searchParams.delete('campaign');

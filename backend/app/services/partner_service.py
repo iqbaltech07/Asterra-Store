@@ -64,6 +64,11 @@ class PartnerService:
 
     @classmethod
     def load_orders(cls) -> List[Dict[str, Any]]:
+        try:
+            from app.services.order_service import OrderService
+            return OrderService.load_orders()
+        except Exception:
+            pass
         if ORDERS_FILE.exists():
             try:
                 return json.loads(ORDERS_FILE.read_text(encoding="utf-8"))
@@ -82,32 +87,31 @@ class PartnerService:
             p_code = str(p.get("code", "")).upper()
             p_id = p.get("id")
 
-            partner_orders = [
-                o for o in orders
-                if str(o.get("referralCode", "")).upper() == p_code
-                or str(o.get("salesPartnerId", "")) == str(p_id)
-            ]
+            partner_orders = cls.get_orders_for_partner(p_id or p_code)
 
             total_revenue = sum(
                 float(o.get("totalAmount", 0)) for o in partner_orders
                 if str(o.get("status", "")).lower() in ["completed", "paid", "settlement"]
             )
 
-            commissions = p.get("commissions", [])
-            unpaid_commission = sum(
-                float(c.get("commissionAmount", 0)) for c in commissions
-                if c.get("status") in ["pending", "available"]
+            final_comm = sum(
+                float(o.get("commission", 0)) for o in partner_orders
+                if o.get("commissionStatus") == "final"
             )
+
+            payouts = p.get("payoutRequests", [])
             paid_commission = sum(
-                float(c.get("commissionAmount", 0)) for c in commissions
-                if c.get("status") in ["paid", "withdrawn"]
+                float(pr.get("amount", 0)) for pr in payouts
+                if str(pr.get("status", "")).lower() in ["approved", "completed", "paid"]
             )
+
+            available_unpaid = max(0.0, final_comm - paid_commission)
 
             enriched.append({
                 **p,
                 "totalOrders": len(partner_orders),
                 "totalRevenue": total_revenue,
-                "unpaidCommission": unpaid_commission,
+                "unpaidCommission": available_unpaid,
                 "paidCommission": paid_commission,
                 "_count": {"orders": len(partner_orders)},
             })
@@ -197,26 +201,36 @@ class PartnerService:
                 "payoutRequests": [],
             }
 
-        orders = cls.load_orders()
         p_code = str(partner.get("code", "")).upper()
         p_id = partner.get("id")
 
-        partner_orders = [
-            o for o in orders
-            if str(o.get("referralCode", "")).upper() == p_code
-            or str(o.get("salesPartnerId", "")) == str(p_id)
-        ]
+        partner_orders = cls.get_orders_for_partner(p_id or p_code)
 
         total_revenue = sum(
             float(o.get("totalAmount", 0)) for o in partner_orders
             if str(o.get("status", "")).lower() in ["completed", "paid", "settlement"]
         )
 
-        commissions = partner.get("commissions", [])
-        unpaid = sum(float(c.get("commissionAmount", 0)) for c in commissions if c.get("status") in ["pending", "available"])
-        pending = sum(float(c.get("commissionAmount", 0)) for c in commissions if c.get("status") == "pending")
-        paid = sum(float(c.get("commissionAmount", 0)) for c in commissions if c.get("status") in ["paid", "withdrawn"])
-        network_commission = sum(float(c.get("bonusAmount", 0)) for c in commissions)
+        pending_comm = sum(
+            float(o.get("commission", 0)) for o in partner_orders
+            if o.get("commissionStatus") == "pending"
+        )
+        final_comm = sum(
+            float(o.get("commission", 0)) for o in partner_orders
+            if o.get("commissionStatus") == "final"
+        )
+
+        payouts = partner.get("payoutRequests", [])
+        paid_comm = sum(
+            float(p.get("amount", 0)) for p in payouts
+            if str(p.get("status", "")).lower() in ["approved", "completed", "paid"]
+        )
+
+        available_unpaid = max(0.0, final_comm - paid_comm)
+
+        # Network commissions from team
+        network_data = cls.get_network_for_partner(p_id or p_code)
+        network_comm = float(network_data.get("totalNetworkBonus", 0))
 
         return {
             "id": partner.get("id"),
@@ -229,10 +243,10 @@ class PartnerService:
             "totalClicks": partner.get("totalClicks", 0),
             "totalOrders": len(partner_orders),
             "totalRevenue": total_revenue,
-            "unpaidCommission": unpaid or 145000,
-            "pendingCommission": pending or 29000,
-            "paidCommission": paid,
-            "networkCommission": network_commission or 34000,
+            "unpaidCommission": available_unpaid,
+            "pendingCommission": pending_comm,
+            "paidCommission": paid_comm,
+            "networkCommission": network_comm,
             "bankName": partner.get("bankName") or "Bank Central Asia (BCA)",
             "bankAccount": partner.get("bankAccount") or "8965123456",
             "status": partner.get("status", "active"),
@@ -294,14 +308,24 @@ class PartnerService:
             prod_names = ", ".join(i.get("productName") or i.get("product_name") or "Layanan" for i in items) or "Produk Digital"
             total = float(o.get("totalAmount", 0))
 
-            camp_key = str(o.get("campaignId") or o.get("campaign_id") or "").strip()
-            is_campaign_sale = bool(camp_key)
+            camp_key = str(
+                o.get("campaignId") or o.get("campaign_id") or
+                o.get("campaign_slug") or o.get("campaignSlug") or
+                o.get("campaign") or o.get("utm_campaign") or ""
+            ).strip()
+            camp_discount = float(o.get("campaignDiscount") or o.get("campaign_discount") or 0)
+            is_campaign_sale = bool(camp_key) or (camp_discount > 0)
             camp_meta = campaign_map.get(camp_key, {}) if camp_key else {}
+            if not camp_meta and camp_key:
+                for k, v in campaign_map.items():
+                    if k.lower() == camp_key.lower():
+                        camp_meta = v
+                        break
 
             if is_campaign_sale:
-                campaign_rate = camp_meta.get("rate", 15.0)
+                campaign_rate = camp_meta.get("rate") or float(o.get("campaignRate") or o.get("commissionRate") or 15.0)
                 commission_rate = campaign_rate
-                campaign_name = camp_meta.get("name") or "Promo Campaign Spesial"
+                campaign_name = camp_meta.get("name") or o.get("campaignName") or (f"Promo Campaign ({camp_key})" if camp_key else "Promo Campaign Spesial")
             else:
                 campaign_rate = None
                 commission_rate = float(partner.get("rate", 10.0))
@@ -312,6 +336,14 @@ class PartnerService:
             created_at_val = o.get("createdAt") or o.get("created_at") or (datetime.utcnow().isoformat() + "Z")
             if isinstance(created_at_val, str) and not created_at_val.endswith("Z"):
                 created_at_val = created_at_val + "Z"
+
+            o_status = str(o.get("status") or o.get("order_status") or "").lower()
+            if o_status in ["completed", "paid", "settlement"]:
+                comm_status = "final"
+            elif o_status in ["cancelled", "refunded", "expired"]:
+                comm_status = "reversed"
+            else:
+                comm_status = "pending"
 
             result.append({
                 "id": o.get("id"),
@@ -325,10 +357,10 @@ class PartnerService:
                 "commission": commission,
                 "commissionRate": commission_rate,
                 "isCampaignSale": is_campaign_sale,
-                "campaignId": camp_key or None,
+                "campaignId": (camp_meta.get("id") or camp_key) if is_campaign_sale else None,
                 "campaignName": campaign_name,
                 "campaignRate": campaign_rate,
-                "commissionStatus": "pending" if o.get("status") == "pending" else "final",
+                "commissionStatus": comm_status,
                 "holdingUntil": (datetime.utcnow() + timedelta(days=3)).isoformat() + "Z",
                 "itemsCount": len(items) if len(items) > 0 else 1,
                 "productNames": prod_names,

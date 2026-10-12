@@ -93,13 +93,10 @@ class BannerService:
     def load_banners(cls, force_reload: bool = False) -> List[Dict[str, Any]]:
         """
         Loads banners from Supabase/Postgres promo_banners table.
+        Always queries database if connected to ensure real-time synchronization with Admin Console.
         Falls back to local clean JSON if DB is offline.
         """
-        if cls._banners is not None and not force_reload:
-            cls.check_and_deactivate_expired()
-            return cls._banners
-
-        # 1. Query Database
+        # 1. Query Database first if available
         try:
             cls.ensure_table()
             db = SessionLocal() if SessionLocal else None
@@ -110,7 +107,7 @@ class BannerService:
                         .order_by(PromoBanner.display_order.asc(), PromoBanner.created_at.desc())
                         .all()
                     )
-                    if db_banners:
+                    if db_banners is not None and len(db_banners) > 0:
                         data = [b.to_dict() for b in db_banners]
                         cls._banners = data
                         cls.check_and_deactivate_expired()
@@ -120,6 +117,10 @@ class BannerService:
                     db.close()
         except Exception as e:
             print(f"[BannerService] Warning: Database banner query failed: {e}")
+
+        if cls._banners is not None and not force_reload:
+            cls.check_and_deactivate_expired()
+            return cls._banners
 
         # 2. Fallback to JSON file
         if BANNERS_FILE.exists():
@@ -155,8 +156,9 @@ class BannerService:
         cls,
         active_only: bool = False,
         target_page: Optional[str] = None,
+        banner_type: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
-        """Retrieve list of promo banners with auto-expiration check and filtering."""
+        """Retrieve list of promo banners with auto-expiration check, slot filter, and sorting."""
         banners = cls.load_banners()
         cls.check_and_deactivate_expired()
 
@@ -171,12 +173,28 @@ class BannerService:
                 if (b.get("targetPage") or "home").lower() in [t_page, "all"]
             ]
 
-        # Sort: displayOrder ascending, then createdAt descending
+        if banner_type and banner_type.lower() != "all":
+            b_type = banner_type.lower()
+            filtered = [
+                b for b in filtered
+                if (b.get("bannerType") or b.get("type") or "hero").lower() in [b_type, "all"]
+            ]
+
+        # Sort: displayOrder ascending, then createdAt descending (newest first for ties)
+        def parse_ts(item):
+            created = item.get("createdAt")
+            if not created:
+                return 0.0
+            try:
+                return datetime.fromisoformat(str(created).replace("Z", "+00:00")).timestamp()
+            except Exception:
+                return 0.0
+
         return sorted(
             filtered,
             key=lambda x: (
                 x.get("displayOrder", 0) if isinstance(x.get("displayOrder"), int) else 0,
-                x.get("createdAt") or "",
+                -parse_ts(x),
             ),
         )
 
@@ -236,6 +254,7 @@ class BannerService:
         display_order: int = 0,
         is_active: bool = True,
         expires_at: Optional[str] = None,
+        banner_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Uploads and registers a promo banner with Vercel Blob deduplication,
@@ -333,7 +352,7 @@ class BannerService:
             blob_url = f"/api/v1/media/{pathname}"
 
         view_url = f"/api/v1/media/{pathname}"
-        banner_id = f"banner_{uuid.uuid4().hex[:12]}"
+        final_banner_id = banner_id or f"banner_{uuid.uuid4().hex[:12]}"
         now_iso = datetime.utcnow().isoformat()
 
         # Parse expires_at if provided
@@ -354,7 +373,7 @@ class BannerService:
             effective_active = False
 
         banner_dict = {
-            "id": banner_id,
+            "id": final_banner_id,
             "title": clean_title,
             "description": description or "",
             "ctaText": cta_text or "Beli Sekarang",
@@ -382,25 +401,42 @@ class BannerService:
             db = SessionLocal() if SessionLocal else None
             if db:
                 try:
-                    db_banner = PromoBanner(
-                        id=banner_id,
-                        title=clean_title,
-                        description=description or "",
-                        cta_text=cta_text or "Beli Sekarang",
-                        banner_type=banner_type or "hero",
-                        image_url=view_url,
-                        blob_url=blob_url,
-                        pathname=pathname,
-                        content_hash=content_hash,
-                        link_url=link_url.strip() if link_url else "/#katalog",
-                        target_page=target_page or "home",
-                        display_order=int(display_order or 0),
-                        is_active=effective_active,
-                        expires_at=parsed_exp,
-                        created_at=datetime.utcnow(),
-                        updated_at=datetime.utcnow(),
-                    )
-                    db.add(db_banner)
+                    existing_db = db.query(PromoBanner).filter(PromoBanner.id == final_banner_id).first() if final_banner_id else None
+                    if existing_db:
+                        existing_db.title = clean_title
+                        existing_db.description = description or ""
+                        existing_db.cta_text = cta_text or "Beli Sekarang"
+                        existing_db.banner_type = banner_type or "hero"
+                        existing_db.image_url = view_url
+                        existing_db.blob_url = blob_url
+                        existing_db.pathname = pathname
+                        existing_db.content_hash = content_hash
+                        existing_db.link_url = link_url.strip() if link_url else "/#katalog"
+                        existing_db.target_page = target_page or "home"
+                        existing_db.display_order = int(display_order or 0)
+                        existing_db.is_active = effective_active
+                        existing_db.expires_at = parsed_exp
+                        existing_db.updated_at = datetime.utcnow()
+                    else:
+                        db_banner = PromoBanner(
+                            id=final_banner_id,
+                            title=clean_title,
+                            description=description or "",
+                            cta_text=cta_text or "Beli Sekarang",
+                            banner_type=banner_type or "hero",
+                            image_url=view_url,
+                            blob_url=blob_url,
+                            pathname=pathname,
+                            content_hash=content_hash,
+                            link_url=link_url.strip() if link_url else "/#katalog",
+                            target_page=target_page or "home",
+                            display_order=int(display_order or 0),
+                            is_active=effective_active,
+                            expires_at=parsed_exp,
+                            created_at=datetime.utcnow(),
+                            updated_at=datetime.utcnow(),
+                        )
+                        db.add(db_banner)
                     db.commit()
                 finally:
                     db.close()
@@ -410,6 +446,7 @@ class BannerService:
         # 4. Update in-memory and local JSON cache
         if cls._banners is None:
             cls._banners = []
+        cls._banners = [b for b in cls._banners if b.get("id") != final_banner_id]
         cls._banners.insert(0, banner_dict)
         cls.save_banners()
 

@@ -1,5 +1,27 @@
 [
   {
+    "id": "banner_bf3e3c48d9bb",
+    "title": "Grand Opening!",
+    "description": "",
+    "ctaText": "Beli Sekarang",
+    "bannerType": "hero",
+    "type": "hero",
+    "imageUrl": "/api/v1/media/banners/promo-grand-opening-38c6ec3ca5bf.webp",
+    "blobUrl": "https://jyoavpfhhqnaysh3.private.blob.vercel-storage.com/banners/promo-grand-opening-38c6ec3ca5bf.webp",
+    "pathname": "banners/promo-grand-opening-38c6ec3ca5bf.webp",
+    "contentHash": "38c6ec3ca5bf",
+    "linkUrl": "/#katalog",
+    "destinationUrl": "/#katalog",
+    "targetPage": "home",
+    "displayOrder": 1,
+    "isActive": true,
+    "status": "active",
+    "expiresAt": null,
+    "scheduledUntil": null,
+    "createdAt": "2026-10-12T12:26:43.159232",
+    "updatedAt": "2026-10-12T12:29:02.610720"
+  },
+  {
     "id": "banner_53f48c92dd91",
     "title": "Program Mitra Affiliate Asterra Store",
     "description": "Rekomendasikan produk lisensi digital resmi, raih komisi 10% per transaksi. Dashboard real-time, pencairan kilat ke rekening/e-wallet.",

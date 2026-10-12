@@ -413,6 +413,9 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
       formData.append('displayOrder', String(banOrder || 0));
       formData.append('targetPage', 'home');
       formData.append('isActive', String(banIsActive));
+      if (editingBanner?.id) {
+        formData.append('id', editingBanner.id);
+      }
       if (banSchedule) {
         formData.append('expiresAt', banSchedule);
         formData.append('scheduledUntil', banSchedule);

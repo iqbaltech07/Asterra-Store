@@ -376,7 +376,32 @@ class OrderService:
         promo_discount = int(payload.get("promo_discount") or payload.get("promoDiscount") or 0)
         referral_discount = int(payload.get("referral_discount") or payload.get("referralDiscount") or 0)
         campaign_discount = int(payload.get("campaign_discount") or payload.get("campaignDiscount") or 0)
-        campaign_id = payload.get("campaign_id") or payload.get("campaignId")
+        
+        raw_camp = (
+            payload.get("campaign_id") or
+            payload.get("campaignId") or
+            payload.get("campaign_slug") or
+            payload.get("campaignSlug") or
+            payload.get("campaign") or
+            payload.get("utm_campaign")
+        )
+        campaign_id = str(raw_camp).strip() if raw_camp else None
+        matched_campaign = None
+        canonical_campaign_id = campaign_id
+        if campaign_id:
+            try:
+                from app.services.campaign_service import CampaignService
+                all_camps = CampaignService.get_all_campaigns()
+                for c in all_camps:
+                    c_id = str(c.get("id") or "").strip()
+                    c_slug = str(c.get("slug") or "").strip().lower()
+                    if c_id == campaign_id or c_slug == campaign_id.lower():
+                        matched_campaign = c
+                        canonical_campaign_id = c_id
+                        break
+            except Exception as e:
+                print(f"[OrderService] Campaign lookup note: {e}")
+
         ref_code = (payload.get("referral_code") or payload.get("referralCode") or "").strip().upper()
 
         # 2. Lifetime 1-Time Referral Discount Eligibility Enforcement
@@ -426,7 +451,7 @@ class OrderService:
                     raw_amount=raw_total,
                     promo_discount=promo_discount,
                     referral_discount=referral_discount,
-                    campaign_id=campaign_id,
+                    campaign_id=canonical_campaign_id or campaign_id,
                     campaign_discount=campaign_discount,
                     unique_code=unique_code,
                     payment_mode=payload.get("payment_mode") or payload.get("paymentMode") or "manual",
@@ -475,19 +500,30 @@ class OrderService:
                 from app.services.partner_service import PartnerService
                 comm_rate = float(partner.get("rate", 10.0))
                 camp_name = None
-                if campaign_id:
+                target_camp_id = canonical_campaign_id or campaign_id
+
+                if matched_campaign:
+                    override = float(matched_campaign.get("affiliateBonusPercent") or matched_campaign.get("affiliateCommissionOverride") or 0)
+                    if override > 0:
+                        comm_rate = override
+                    camp_name = matched_campaign.get("name")
+                elif target_camp_id:
                     try:
                         from app.services.campaign_service import CampaignService
-                        camps = CampaignService.get_active_campaigns()
-                        for c in camps:
-                            if c.get("id") == campaign_id or c.get("slug") == campaign_id:
+                        for c in CampaignService.get_all_campaigns():
+                            c_id = str(c.get("id") or "").strip()
+                            c_slug = str(c.get("slug") or "").strip().lower()
+                            if c_id == str(target_camp_id) or c_slug == str(target_camp_id).lower():
                                 override = float(c.get("affiliateBonusPercent") or c.get("affiliateCommissionOverride") or 0)
                                 if override > 0:
                                     comm_rate = override
-                                    camp_name = c.get("name")
+                                camp_name = c.get("name")
                                 break
                     except Exception:
                         pass
+                elif campaign_discount > 0:
+                    comm_rate = 15.0
+                    camp_name = "Promo Campaign Spesial"
 
                 comm_amount = round(total_amount * (comm_rate / 100.0))
                 comm_item = {
@@ -496,7 +532,7 @@ class OrderService:
                     "orderTotal": total_amount,
                     "commissionAmount": comm_amount,
                     "commissionRate": comm_rate,
-                    "campaignId": campaign_id,
+                    "campaignId": target_camp_id,
                     "campaignName": camp_name,
                     "status": "pending",
                     "holdingUntil": (now + timedelta(days=3)).isoformat() + "Z",
@@ -510,13 +546,13 @@ class OrderService:
                 print(f"[OrderService] Commission allocation error: {e}")
 
         # 7. Telemetry tracking for campaign
-        if campaign_id:
+        target_camp_id = canonical_campaign_id or campaign_id
+        if target_camp_id:
             try:
                 from app.services.campaign_service import CampaignService
-                CampaignService.record_campaign_order(str(campaign_id), float(total_amount))
+                CampaignService.record_campaign_order(str(target_camp_id), float(total_amount))
             except Exception:
                 pass
-
         # 8. Record Real Persistent Audit Log
         try:
             from app.services.audit_log_service import AuditLogService
