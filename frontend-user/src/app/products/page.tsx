@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { useCatalogProducts } from '@/lib/hooks/use-catalog-products';
-import { getDummyOriginalPrice, isPromoItem } from '@/lib/utils/promo-pricing';
+import { calculateCampaignPrice, isPromoItem } from '@/lib/utils/promo-pricing';
 import { Button } from '@/components/ui/button';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -437,15 +437,25 @@ function ProductsContent() {
                 (product.stock !== undefined && product.stock <= 0) ||
                 product.providerStatus === 'empty' ||
                 product.status === 'out_of_stock';
+              const promoCalc = calculateCampaignPrice(product.price, product);
 
               return (
                 <div
                   key={product.id}
                   data-gsap="card"
-                  className="bg-white border border-[rgba(18,26,42,0.08)] rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 shadow-card hover:shadow-card-hover hover:border-[rgba(18,26,42,0.18)] transition-all duration-200"
+                  className={`bg-white rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 transition-all duration-200 ${
+                    promoCalc.hasPromo
+                      ? 'border border-[rgba(201,111,85,0.28)] shadow-[0_4px_16px_rgba(201,111,85,0.08)] hover:shadow-card-hover hover:border-[#C96F55]'
+                      : 'border border-[rgba(18,26,42,0.08)] shadow-card hover:shadow-card-hover hover:border-[rgba(18,26,42,0.18)]'
+                  }`}
                 >
                   <div className="flex items-start sm:items-center gap-4">
                     <div className="w-20 h-20 rounded-xl overflow-hidden bg-[#F8FAFC] shrink-0 border border-[rgba(18,26,42,0.08)] relative">
+                      {promoCalc.hasPromo && (
+                        <div className="absolute top-1 left-1 z-10 bg-gradient-to-r from-[#DC2626] to-[#C96F55] text-white text-[8px] font-black px-1.5 py-0.2 rounded shadow-xs">
+                          {promoCalc.discountBadge}
+                        </div>
+                      )}
                       <Link href={`/products/${product.id}`} prefetch={true} className="block w-full h-full relative">
                         <Image
                           src={product.imageUrl}
@@ -460,7 +470,12 @@ function ProductsContent() {
                     <div className="space-y-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-xs font-semibold text-[#C96F55]">{product.category.name}</span>
-                        {product.popular && (
+                        {promoCalc.hasPromo && (
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-gradient-to-r from-[#DC2626]/12 to-[#C96F55]/15 border border-[#DC2626]/25 text-[#DC2626] font-bold inline-flex items-center gap-1">
+                            🔥 DISKON {promoCalc.discountBadge.replace('-', '')}
+                          </span>
+                        )}
+                        {product.popular && !promoCalc.hasPromo && (
                           <span className="text-[10px] px-2 py-0.5 rounded bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.25)] text-[#C96F55] font-semibold">
                             Populer
                           </span>
@@ -484,12 +499,25 @@ function ProductsContent() {
 
                   <div className="flex sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto gap-3 pt-3 sm:pt-0 border-t sm:border-t-0 border-[rgba(18,26,42,0.08)]">
                     <div className="text-left sm:text-right">
-                      {isPromoItem(product) && (
-                        <span className="text-[11px] sm:text-xs text-[#121A2A]/40 line-through font-medium block">
-                          {getDummyOriginalPrice(product.price).originalPriceFormatted}
+                      {promoCalc.hasPromo ? (
+                        <>
+                          <div className="flex items-center gap-1.5 sm:justify-end flex-wrap">
+                            <span className="text-[11px] sm:text-xs text-[#121A2A]/45 line-through font-semibold">
+                              {promoCalc.originalPriceFormatted}
+                            </span>
+                            <span className="text-[9px] font-black text-[#DC2626] bg-[#DC2626]/10 px-1.5 py-0.2 rounded border border-[#DC2626]/20">
+                              {promoCalc.savingsText}
+                            </span>
+                          </div>
+                          <span className="text-base sm:text-lg font-black text-[#C96F55] block">
+                            {promoCalc.discountedPriceFormatted}
+                          </span>
+                        </>
+                      ) : (
+                        <span className="text-base sm:text-lg font-extrabold text-[#121A2A] block">
+                          {product.priceFormatted}
                         </span>
                       )}
-                      <span className="text-base sm:text-lg font-extrabold text-[#121A2A] block">{product.priceFormatted}</span>
                       <span className="text-[11px] text-[#121A2A]/50 block">/ akun lisensi</span>
                     </div>
                     <div className="flex items-center gap-2">

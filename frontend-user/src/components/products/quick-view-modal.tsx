@@ -122,23 +122,39 @@ export function QuickViewModal({ product, isOpen, onClose, activeCampaigns = [] 
         {(() => {
           const promoCalc = calculateCampaignPrice(product.price, product, activeCampaigns);
           return (
-            <div className="pb-3.5 mb-3.5 border-b border-[rgba(18,26,42,0.08)] flex items-baseline gap-2">
-              {promoCalc.hasPromo && (
+            <div className="pb-3.5 mb-3.5 border-b border-[rgba(18,26,42,0.08)] flex items-baseline gap-2 flex-wrap">
+              {promoCalc.hasPromo ? (
                 <>
-                  <span className="text-xs sm:text-sm text-[#121A2A]/40 line-through font-medium">
-                    {promoCalc.originalPriceFormatted}
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-xs sm:text-sm text-[#121A2A]/45 line-through font-semibold">
+                      {promoCalc.originalPriceFormatted}
+                    </span>
+                    <span className="text-[10px] font-black text-[#DC2626] bg-[#DC2626]/10 border border-[#DC2626]/25 px-2 py-0.5 rounded-full inline-flex items-center gap-1 shadow-2xs">
+                      🔥 HEMAT {promoCalc.discountBadge.replace('-', '')}
+                    </span>
+                    <span className="text-[10px] font-bold text-[#C96F55] bg-[rgba(201,111,85,0.08)] px-1.5 py-0.5 rounded">
+                      {promoCalc.savingsText}
+                    </span>
+                  </div>
+                  <div className="w-full flex items-baseline gap-2 mt-0.5">
+                    <span className="text-xl sm:text-2xl font-black text-[#C96F55] tracking-tight">
+                      {promoCalc.discountedPriceFormatted}
+                    </span>
+                    <span className="text-[11px] text-[#121A2A]/50 font-medium">
+                      / paket langganan
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <span className="text-xl sm:text-2xl font-black text-[#121A2A] tracking-tight">
+                    {priceDisplay}
                   </span>
-                  <span className="text-[10px] sm:text-xs font-bold text-[#C96F55] bg-[#C96F55]/10 px-1.5 py-0.5 rounded">
-                    {promoCalc.discountBadge}
+                  <span className="text-[11px] text-[#121A2A]/50 font-medium">
+                    / paket langganan
                   </span>
                 </>
               )}
-              <span className="text-xl sm:text-2xl font-black text-[#121A2A] tracking-tight">
-                {promoCalc.hasPromo ? promoCalc.discountedPriceFormatted : priceDisplay}
-              </span>
-              <span className="text-[11px] text-[#121A2A]/50 font-medium">
-                / paket langganan
-              </span>
             </div>
           );
         })()}

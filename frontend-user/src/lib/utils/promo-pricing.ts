@@ -34,6 +34,7 @@ export interface CalculatedPromoPrice {
   discountedPriceFormatted: string;
   discountAmount: number;
   discountBadge: string;
+  savingsText?: string;
 }
 
 /**
@@ -83,7 +84,8 @@ export function isProductInCampaign(
 }
 
 /**
- * Calculates genuine campaign discount and crossed-out price based on active campaigns.
+ * Calculates genuine campaign discount and crossed-out price based on active campaigns,
+ * with retail anchor psychological pricing fallback for promo/popular products.
  */
 export function calculateCampaignPrice(
   price: number,
@@ -94,6 +96,8 @@ export function calculateCampaignPrice(
     categoryId?: string;
     name?: string;
     tags?: string[];
+    popular?: boolean;
+    isPromo?: boolean;
   } = {},
   activeCampaigns: ActiveCampaign[] = []
 ): CalculatedPromoPrice {
@@ -106,61 +110,91 @@ export function calculateCampaignPrice(
       discountedPriceFormatted: 'Rp 0',
       discountAmount: 0,
       discountBadge: '',
+      savingsText: '',
     };
   }
 
-  // Find first matching active campaign
+  // 1. Check if matching any active campaign
   const campaign = (activeCampaigns || []).find((c) => isProductInCampaign(product, c));
 
-  if (!campaign) {
+  if (campaign) {
+    let discount = 0;
+    if (campaign.discountType === 'percentage') {
+      const pct = Number(campaign.discountValue || 0);
+      discount = Math.round((price * pct) / 100);
+    } else {
+      discount = Number(campaign.discountValue || 0);
+    }
+
+    const maxDisc = Number(campaign.maxDiscountAmount || 0);
+    if (maxDisc > 0 && discount > maxDisc) {
+      discount = maxDisc;
+    }
+
+    discount = Math.min(price, Math.max(0, discount));
+    const discountedPrice = Math.max(0, price - discount);
+
+    const discountBadge =
+      campaign.discountType === 'percentage'
+        ? `-${campaign.discountValue}%`
+        : `-Rp ${discount.toLocaleString('id-ID')}`;
+
     return {
-      hasPromo: false,
+      hasPromo: discount > 0,
+      campaignName: campaign.name,
+      discountType: campaign.discountType,
+      discountValue: campaign.discountValue,
       originalPrice: price,
       originalPriceFormatted: `Rp ${price.toLocaleString('id-ID')}`,
-      discountedPrice: price,
-      discountedPriceFormatted: `Rp ${price.toLocaleString('id-ID')}`,
-      discountAmount: 0,
-      discountBadge: '',
+      discountedPrice,
+      discountedPriceFormatted: `Rp ${discountedPrice.toLocaleString('id-ID')}`,
+      discountAmount: discount,
+      discountBadge,
+      savingsText: `Hemat Rp ${discount.toLocaleString('id-ID')}`,
     };
   }
 
-  let discount = 0;
-  if (campaign.discountType === 'percentage') {
-    const pct = Number(campaign.discountValue || 0);
-    discount = Math.round((price * pct) / 100);
-  } else {
-    discount = Number(campaign.discountValue || 0);
+  // 2. Check if product is marked as promo item (popular / promo in name / isPromo flag)
+  if (isPromoItem(product, activeCampaigns)) {
+    const anchor = getDummyOriginalPrice(price);
+    const originalPrice = anchor.originalPrice;
+    const discountAmount = Math.max(0, originalPrice - price);
+    const pct = Math.round((discountAmount / originalPrice) * 100);
+    const discountBadge = `-${pct}%`;
+
+    return {
+      hasPromo: true,
+      campaignName: 'Promo Diskon',
+      discountType: 'percentage',
+      discountValue: pct,
+      originalPrice,
+      originalPriceFormatted: anchor.originalPriceFormatted,
+      discountedPrice: price,
+      discountedPriceFormatted: `Rp ${price.toLocaleString('id-ID')}`,
+      discountAmount,
+      discountBadge,
+      savingsText: `Hemat Rp ${discountAmount.toLocaleString('id-ID')}`,
+    };
   }
-
-  const maxDisc = Number(campaign.maxDiscountAmount || 0);
-  if (maxDisc > 0 && discount > maxDisc) {
-    discount = maxDisc;
-  }
-
-  discount = Math.min(price, Math.max(0, discount));
-  const discountedPrice = Math.max(0, price - discount);
-
-  const discountBadge =
-    campaign.discountType === 'percentage'
-      ? `-${campaign.discountValue}%`
-      : `-Rp ${discount.toLocaleString('id-ID')}`;
 
   return {
-    hasPromo: discount > 0,
-    campaignName: campaign.name,
-    discountType: campaign.discountType,
-    discountValue: campaign.discountValue,
+    hasPromo: false,
     originalPrice: price,
     originalPriceFormatted: `Rp ${price.toLocaleString('id-ID')}`,
-    discountedPrice,
-    discountedPriceFormatted: `Rp ${discountedPrice.toLocaleString('id-ID')}`,
-    discountAmount: discount,
-    discountBadge,
+    discountedPrice: price,
+    discountedPriceFormatted: `Rp ${price.toLocaleString('id-ID')}`,
+    discountAmount: 0,
+    discountBadge: '',
+    savingsText: '',
   };
 }
 
 /**
  * Backward compatibility fallback anchor price generator.
+ * Follows retail psychological anchor pricing:
+ * - < 10,000: ~40% markup, rounded to nearest 1,000 (e.g. 4,000 -> 6,000)
+ * - 10,000 - 100,000: ~35% markup, rounded to nearest 1,000 (e.g. 21,000 -> 30,000, 18,000 -> 25,000)
+ * - > 100,000: ~30% markup, rounded to nearest 5,000
  */
 export function getDummyOriginalPrice(price: number): {
   originalPrice: number;
@@ -197,7 +231,7 @@ export function isPromoItem(item?: unknown, activeCampaigns: ActiveCampaign[] = 
   if (!item || typeof item !== 'object') return false;
   const anyItem = item as Record<string, unknown>;
 
-  // Check if matching any active campaign
+  // 1. Check if matching any active campaign
   if (activeCampaigns.length > 0) {
     const isMatching = activeCampaigns.some((c) =>
       isProductInCampaign(
@@ -213,27 +247,71 @@ export function isPromoItem(item?: unknown, activeCampaigns: ActiveCampaign[] = 
     if (isMatching) return true;
   }
 
+  // 2. Explicit promo flags
   if (anyItem.isPromo === true) return true;
   if (anyItem.isCampaignActive === true) return true;
   if (Boolean(anyItem.campaignId || anyItem.campaign || anyItem.campaignSlug)) return true;
+
+  // 3. Popular products are promo / featured deals in AsterraStore
+  if (anyItem.popular === true) return true;
+
+  // 4. Promo keywords in badges or titles
   if (
     typeof anyItem.badgeLabel === 'string' &&
     (anyItem.badgeLabel.toLowerCase().includes('promo') ||
       anyItem.badgeLabel.toLowerCase().includes('sale') ||
-      anyItem.badgeLabel.toLowerCase().includes('flash'))
+      anyItem.badgeLabel.toLowerCase().includes('laris') ||
+      anyItem.badgeLabel.toLowerCase().includes('flash') ||
+      anyItem.badgeLabel.toLowerCase().includes('diskon'))
   )
     return true;
+
   if (
     typeof anyItem.badge === 'string' &&
     (anyItem.badge.toLowerCase().includes('promo') ||
       anyItem.badge.toLowerCase().includes('sale') ||
-      anyItem.badge.toLowerCase().includes('flash'))
+      anyItem.badge.toLowerCase().includes('laris') ||
+      anyItem.badge.toLowerCase().includes('flash') ||
+      anyItem.badge.toLowerCase().includes('diskon'))
   )
     return true;
+
+  if (
+    typeof anyItem.name === 'string' &&
+    (anyItem.name.toLowerCase().includes('promo') ||
+      anyItem.name.toLowerCase().includes('sale') ||
+      anyItem.name.toLowerCase().includes('diskon'))
+  )
+    return true;
+
   if (
     typeof anyItem.status === 'string' &&
     (anyItem.status.toLowerCase().includes('promo') || anyItem.status.toLowerCase().includes('sale'))
   )
     return true;
+
+  if (
+    typeof anyItem.categoryTag === 'string' &&
+    anyItem.categoryTag.toLowerCase().includes('promo')
+  )
+    return true;
+
+  if (
+    Array.isArray(anyItem.tags) &&
+    anyItem.tags.some(
+      (t) =>
+        typeof t === 'string' &&
+        (t.toLowerCase().includes('promo') ||
+          t.toLowerCase().includes('sale') ||
+          t.toLowerCase().includes('diskon'))
+    )
+  )
+    return true;
+
+  // 5. Explicitly treat CapCut products as promo items
+  const nameStr = typeof anyItem.name === 'string' ? anyItem.name.toLowerCase() : '';
+  const slugStr = typeof anyItem.slug === 'string' ? anyItem.slug.toLowerCase() : '';
+  if (nameStr.includes('capcut') || slugStr.includes('capcut')) return true;
+
   return false;
 }

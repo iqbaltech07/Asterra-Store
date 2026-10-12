@@ -525,6 +525,8 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
         slug: (product as unknown as { slug?: string })?.slug || id,
         category: product?.category?.name,
         name: product?.name,
+        popular: product?.popular,
+        isPromo: (product as unknown as { isPromo?: boolean })?.isPromo,
       },
       activeCampaigns
     );
@@ -897,24 +899,48 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                     </span>
                   </div>
 
+                  {/* Promo Callout Banner for Discounted Products */}
+                  {campaignPrice.hasPromo && (
+                    <div className="bg-gradient-to-r from-[#DC2626]/8 via-[#C96F55]/10 to-transparent border border-[#DC2626]/20 rounded-xl p-2.5 sm:p-3 mb-2 flex items-center justify-between gap-2 shadow-2xs select-none">
+                      <div className="flex items-center gap-2">
+                        <span className="text-base sm:text-lg">⚡</span>
+                        <div>
+                          <span className="text-xs font-bold text-[#121A2A] block leading-tight">
+                            Harga Diskon Terbatas Sedang Aktif!
+                          </span>
+                          <span className="text-[10px] sm:text-[11px] text-[#121A2A]/70 block mt-0.5">
+                            Dapatkan akses premium hemat {campaignPrice.discountBadge.replace('-', '')} untuk aktivasi instan hari ini.
+                          </span>
+                        </div>
+                      </div>
+                      <span className="text-[10px] sm:text-[11px] font-black text-white bg-gradient-to-r from-[#DC2626] to-[#C96F55] px-2.5 py-1 rounded-lg shadow-xs shrink-0">
+                        {campaignPrice.discountBadge}
+                      </span>
+                    </div>
+                  )}
+
                   {/* Price Header */}
                   <div>
                     {campaignPrice.hasPromo ? (
-                      <div className="space-y-1">
+                      <div className="space-y-1.5">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-xs sm:text-sm text-[#121A2A]/40 line-through font-medium block">
+                          <span className="text-xs sm:text-sm text-[#121A2A]/45 line-through font-semibold block">
                             {campaignPrice.originalPriceFormatted}
                           </span>
-                          <span className="text-[11px] font-bold text-[#C96F55] bg-[#C96F55]/10 border border-[#C96F55]/20 px-2 py-0.5 rounded-full inline-flex items-center gap-1">
-                            🔥 {campaignPrice.campaignName || 'Event Promo'} ({campaignPrice.discountBadge})
+                          <span className="text-[10px] sm:text-[11px] font-black text-[#DC2626] bg-[#DC2626]/10 border border-[#DC2626]/25 px-2 py-0.5 rounded-full inline-flex items-center gap-1 shadow-2xs">
+                            🔥 HEMAT {campaignPrice.discountBadge.replace('-', '')}
+                          </span>
+                          <span className="text-[10px] sm:text-[11px] font-bold text-[#C96F55] bg-[rgba(201,111,85,0.08)] px-2 py-0.5 rounded-md">
+                            {campaignPrice.savingsText}
                           </span>
                         </div>
                         <div
                           key={campaignPrice.discountedPrice}
                           data-gsap="product-price"
-                          className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#C96F55] font-mono tracking-tight animate-text-smooth"
+                          className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#DC2626] sm:text-[#C96F55] font-mono tracking-tight animate-text-smooth flex items-baseline gap-2"
                         >
-                          {campaignPrice.discountedPriceFormatted}
+                          <span>{campaignPrice.discountedPriceFormatted}</span>
+                          <span className="text-xs font-sans font-medium text-[#121A2A]/50">/ paket</span>
                         </div>
                       </div>
                     ) : (

@@ -49,16 +49,33 @@ export function ProductCard({
       id: product.id,
       name: product.name,
       category: product.category?.name,
+      popular: product.popular,
+      isPromo: (product as unknown as { isPromo?: boolean })?.isPromo,
     },
     activeCampaigns
   );
   const isPromo = campaignPrice.hasPromo;
 
   return (
-    <Card data-gsap="product-card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl shadow-card hover:shadow-card-hover hover:border-[rgba(18,26,42,0.22)] transition-[border-color,box-shadow,background-color] duration-200 overflow-hidden flex flex-col justify-between group">
+    <Card
+      data-gsap="product-card"
+      className={`bg-white rounded-xl sm:rounded-2xl transition-[border-color,box-shadow,background-color] duration-200 overflow-hidden flex flex-col justify-between group ${
+        isPromo
+          ? 'border border-[rgba(201,111,85,0.3)] shadow-[0_4px_16px_rgba(201,111,85,0.08)] hover:border-[#C96F55] hover:shadow-card-hover'
+          : 'border border-[rgba(18,26,42,0.08)] shadow-card hover:shadow-card-hover hover:border-[rgba(18,26,42,0.22)]'
+      }`}
+    >
       <div>
         {/* 1. Product Image / Banner with fixed 16/7 aspect ratio */}
         <div data-gsap="product-image" className="relative w-full aspect-[16/7] bg-[#121A2A]/5 overflow-hidden border-b border-[rgba(18,26,42,0.06)]">
+          {/* Floating Discount Badge for Promo Products */}
+          {isPromo && (
+            <div className="absolute top-2 left-2 z-10 flex items-center gap-1 bg-gradient-to-r from-[#DC2626] to-[#C96F55] text-white text-[9px] sm:text-[10px] font-black px-2 py-0.5 rounded-full shadow-md border border-white/20 select-none">
+              <span className="text-[10px] leading-none">🔥</span>
+              <span>DISKON {campaignPrice.discountBadge.replace('-', '')}</span>
+            </div>
+          )}
+
           <Link href={`/products/${product.id}`} prefetch={true} className="block w-full h-full relative">
             <Image
               src={product.imageUrl}
@@ -147,19 +164,28 @@ export function ProductCard({
       </div>
 
       {/* 4. Price & Compact CTA */}
-      <div className="p-2.5 sm:p-3.5 pt-2 border-t border-[rgba(18,26,42,0.08)] bg-[#F8FAFC] flex items-center justify-between gap-1.5 sm:gap-2">
+      <div
+        className={`p-2.5 sm:p-3.5 pt-2 border-t flex items-center justify-between gap-1.5 sm:gap-2 ${
+          isPromo
+            ? 'border-[rgba(201,111,85,0.18)] bg-gradient-to-b from-[#FFF] to-[#FDF8F6]'
+            : 'border-[rgba(18,26,42,0.08)] bg-[#F8FAFC]'
+        }`}
+      >
         <div className="min-w-0 flex-1">
           {isPromo ? (
             <div className="flex flex-col">
-              <div className="flex items-center gap-1">
-                <span className="text-[10px] sm:text-[11px] text-[#121A2A]/40 line-through font-medium leading-none">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-[10px] sm:text-[11px] text-[#121A2A]/45 line-through font-semibold leading-none">
                   {campaignPrice.originalPriceFormatted}
                 </span>
-                <span className="text-[9px] font-bold text-[#C96F55] bg-[#C96F55]/10 px-1 rounded leading-tight">
-                  {campaignPrice.discountBadge}
+                <span className="text-[9px] font-black text-[#DC2626] bg-[#DC2626]/10 px-1.5 py-0.2 rounded border border-[#DC2626]/20 leading-tight">
+                  Hemat Rp {campaignPrice.discountAmount.toLocaleString('id-ID')}
                 </span>
               </div>
-              <span data-gsap="product-price" className="text-xs sm:text-base md:text-lg font-black tracking-tight text-[#C96F55] block truncate mt-0.5">
+              <span
+                data-gsap="product-price"
+                className="text-xs sm:text-base md:text-lg font-black tracking-tight text-[#DC2626] sm:text-[#C96F55] block truncate mt-0.5"
+              >
                 {campaignPrice.discountedPriceFormatted}
               </span>
             </div>

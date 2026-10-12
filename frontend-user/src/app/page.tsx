@@ -341,8 +341,8 @@ function FeaturedGridCard({
             Garansi
           </span>
           {isPromo && (
-            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-bold bg-[#C96F55]/10 text-[#C96F55] border border-[#C96F55]/20 leading-none truncate max-w-[90px]">
-              🔥 {promoCalc.discountBadge || 'Promo'}
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-black bg-gradient-to-r from-[#DC2626] to-[#C96F55] text-white shadow-2xs leading-none select-none">
+              🔥 DISKON {promoCalc.discountBadge?.replace('-', '') || 'PROMO'}
             </span>
           )}
           {!isPromo && app.badgeLabel && (
@@ -357,14 +357,21 @@ function FeaturedGridCard({
       <div className="pt-2 border-t border-[rgba(18,26,42,0.06)] mt-2 sm:mt-2.5 flex items-center justify-between">
         <div className="flex flex-col min-w-0">
           {isPromo && (
-            <span className="text-[10px] sm:text-[11px] text-[#121A2A]/40 line-through font-medium leading-none block">
-              {promoCalc.originalPriceFormatted}
-            </span>
+            <div className="flex items-center gap-1 leading-none">
+              <span className="text-[10px] sm:text-[11px] text-[#121A2A]/40 line-through font-semibold leading-none block">
+                {promoCalc.originalPriceFormatted}
+              </span>
+              <span className="text-[8px] font-black text-[#DC2626] bg-[#DC2626]/10 px-1 py-0.2 rounded border border-[#DC2626]/20">
+                {promoCalc.savingsText}
+              </span>
+            </div>
           )}
           <Link
             href={`/products/${app.slug}`}
             data-gsap="product-price"
-            className="font-black text-xs sm:text-sm lg:text-[15px] text-[#121A2A] tracking-tight hover:text-[#C96F55] transition-colors mt-0.5 block truncate"
+            className={`font-black text-xs sm:text-sm lg:text-[15px] tracking-tight hover:text-[#C96F55] transition-colors mt-0.5 block truncate ${
+              isPromo ? 'text-[#DC2626] sm:text-[#C96F55]' : 'text-[#121A2A]'
+            }`}
           >
             {isPromo ? promoCalc.discountedPriceFormatted : `Rp${minPrice.toLocaleString('id-ID')}`}
           </Link>
@@ -464,8 +471,8 @@ function ShowcaseLoopingCard({
             Garansi
           </span>
           {isPromo && (
-            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#C96F55]/10 text-[#C96F55] border border-[#C96F55]/20 leading-none">
-              🔥 {promoCalc.discountBadge || 'Promo'}
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-black bg-gradient-to-r from-[#DC2626] to-[#C96F55] text-white shadow-2xs leading-none select-none">
+              🔥 DISKON {promoCalc.discountBadge?.replace('-', '') || 'PROMO'}
             </span>
           )}
           {!isPromo && (
@@ -479,11 +486,21 @@ function ShowcaseLoopingCard({
       <div className="pt-2 border-t border-[rgba(18,26,42,0.06)] mt-2 flex items-center justify-between">
         <div className="flex flex-col min-w-0">
           {isPromo && (
-            <span className="text-[10px] sm:text-[11px] text-[#121A2A]/40 line-through font-medium leading-none block">
-              {promoCalc.originalPriceFormatted}
-            </span>
+            <div className="flex items-center gap-1 leading-none">
+              <span className="text-[10px] sm:text-[11px] text-[#121A2A]/40 line-through font-semibold leading-none block">
+                {promoCalc.originalPriceFormatted}
+              </span>
+              <span className="text-[8px] font-black text-[#DC2626] bg-[#DC2626]/10 px-1 py-0.2 rounded border border-[#DC2626]/20">
+                {promoCalc.savingsText}
+              </span>
+            </div>
           )}
-          <Link href={`/products/${app.slug}`} className="font-black text-sm sm:text-[15px] text-[#121A2A] tracking-tight hover:text-[#C96F55] transition-colors mt-0.5 block truncate">
+          <Link
+            href={`/products/${app.slug}`}
+            className={`font-black text-sm sm:text-[15px] tracking-tight hover:text-[#C96F55] transition-colors mt-0.5 block truncate ${
+              isPromo ? 'text-[#DC2626] sm:text-[#C96F55]' : 'text-[#121A2A]'
+            }`}
+          >
             {isPromo ? promoCalc.discountedPriceFormatted : `Rp${minPrice.toLocaleString('id-ID')}`}
           </Link>
         </div>
