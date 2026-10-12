@@ -148,7 +148,7 @@ export const KNOWN_APPS: AppDefinition[] = [
     aliases: ['capcut', 'capcut-pro'],
     name: 'CapCut',
     category: { id: 'cat-apps-streaming', name: 'Video Editing' },
-    imageUrl: '/images/apps/capcut.png',
+    imageUrl: '/images/banners/capcut-banner.png',
     rating: '4.9',
     soldCount: 980,
     description:
@@ -457,7 +457,9 @@ export function parseProductVariant(
     isOutOfStock,
     description: p.description,
     features: p.features,
-    imageUrl: p.imageUrl,
+    imageUrl: (/capcut/i.test(name) || /capcut/i.test(id))
+      ? '/images/banners/capcut-banner.png'
+      : p.imageUrl,
   };
 }
 

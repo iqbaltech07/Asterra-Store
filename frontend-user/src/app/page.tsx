@@ -81,7 +81,7 @@ function AppBrandBadge({ name }: { name: string }) {
     return (
       <div className="w-full h-full bg-white rounded-lg sm:rounded-xl flex items-center justify-center p-1 shadow-2xs">
         <img
-          src="/images/apps/capcut.png"
+          src="/images/apps/capcut.png?v=20261012b"
           alt="CapCut"
           className="w-full h-full object-contain"
           draggable={false}

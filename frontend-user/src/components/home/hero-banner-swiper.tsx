@@ -28,22 +28,6 @@ export interface PromoBannerItem {
 
 const INITIAL_STOREFRONT_BANNERS: PromoBannerItem[] = [
   {
-    id: 'banner_53f48c92dd91',
-    title: 'Program Mitra Affiliate Asterra Store — Raih Komisi 10% Penjualan Produk Digital',
-    description: 'Rekomendasikan produk lisensi digital resmi, raih komisi 10% per transaksi. Dashboard real-time, pencairan kilat ke rekening/e-wallet.',
-    ctaText: 'Daftar Affiliate',
-    bannerType: 'hero',
-    type: 'hero',
-    imageUrl: '/images/banners/hero-banner-affiliate.webp',
-    linkUrl: '/daftar-sales',
-    destinationUrl: '/daftar-sales',
-    targetPage: 'home',
-    displayOrder: 1,
-    isActive: true,
-    status: 'active',
-    createdAt: '2026-10-11T09:05:18.084Z',
-  },
-  {
     id: 'banner_bf3e3c48d9bb',
     title: 'Grand Opening! Asterra Store — Beli Sekarang & Nikmati Promo Spesial',
     description: 'Promo Spesial Grand Opening Asterra Store. Akun resmi & lisensi digital bergaransi penuh.',
@@ -60,6 +44,22 @@ const INITIAL_STOREFRONT_BANNERS: PromoBannerItem[] = [
     createdAt: '2026-10-12T12:26:43.159Z',
   },
   {
+    id: 'banner_53f48c92dd91',
+    title: 'Program Mitra Affiliate Asterra Store — Raih Komisi 10% Penjualan Produk Digital',
+    description: 'Rekomendasikan produk lisensi digital resmi, raih komisi 10% per transaksi. Dashboard real-time, pencairan kilat ke rekening/e-wallet.',
+    ctaText: 'Daftar Affiliate',
+    bannerType: 'hero',
+    type: 'hero',
+    imageUrl: '/images/banners/hero-banner-affiliate.webp',
+    linkUrl: '/daftar-sales',
+    destinationUrl: '/daftar-sales',
+    targetPage: 'home',
+    displayOrder: 2,
+    isActive: true,
+    status: 'active',
+    createdAt: '2026-10-11T09:05:18.084Z',
+  },
+  {
     id: 'banner_f5673e22c8e1',
     title: 'Selamat Datang di Asterra Store — Pusat Akun & Lisensi Premium Resmi Bergaransi',
     description: 'Pusat Akun & Lisensi Premium Resmi Bergaransi. Canva Pro, Gemini AI, Netflix kilat 1 menit.',
@@ -70,7 +70,7 @@ const INITIAL_STOREFRONT_BANNERS: PromoBannerItem[] = [
     linkUrl: '/#katalog',
     destinationUrl: '/#katalog',
     targetPage: 'home',
-    displayOrder: 2,
+    displayOrder: 3,
     isActive: true,
     status: 'active',
     createdAt: '2026-10-11T09:05:21.209Z',
@@ -87,10 +87,11 @@ export function HeroBannerSwiper() {
 
   // Fetch active hero banners from API with placeholderData for instant render & background sync
   const { data } = useQuery<{ success: boolean; data: PromoBannerItem[] }>({
-    queryKey: ['home-promo-banners'],
+    queryKey: ['home-promo-banners', 'v3'],
     queryFn: async () => {
-      const res = await fetch('/api/v1/banners?targetPage=home&activeOnly=true&bannerType=hero', {
-        headers: { Accept: 'application/json' },
+      const res = await fetch('/api/v1/banners?targetPage=home&activeOnly=true&bannerType=hero&_t=' + Date.now(), {
+        cache: 'no-store',
+        headers: { Accept: 'application/json', 'Cache-Control': 'no-cache, no-store' },
       });
       if (!res.ok) throw new Error('Gagal mengambil data banner promo');
       return res.json();
@@ -99,7 +100,7 @@ export function HeroBannerSwiper() {
       success: true,
       data: INITIAL_STOREFRONT_BANNERS,
     },
-    staleTime: 30 * 1000, // 30 seconds fresh cache
+    staleTime: 0,
     refetchOnMount: 'always',
   });
 

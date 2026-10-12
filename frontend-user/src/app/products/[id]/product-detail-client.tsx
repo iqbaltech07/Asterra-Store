@@ -654,7 +654,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                 <div data-gsap="product-image" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl overflow-hidden relative shadow-card group">
                   <div className="relative h-56 sm:h-72 md:h-96 w-full bg-[#121A2A]/5 overflow-hidden">
                     <Image
-                      src={activeVariant?.imageUrl || product.imageUrl}
+                      src={(/capcut/i.test(product.id) || /capcut/i.test(variantDetails.title)) ? "/images/banners/capcut-banner.png" : (activeVariant?.imageUrl || product.imageUrl)}
                       alt={variantDetails.title}
                       fill
                       priority
