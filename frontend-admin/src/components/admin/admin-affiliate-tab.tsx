@@ -25,6 +25,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { getStoreBaseUrl } from '@/lib/utils/url';
 
 interface AffiliatePartner {
   id: string;
@@ -112,7 +113,7 @@ export function AdminAffiliateTab({ onNotify }: AdminAffiliateTabProps) {
   const [newAccount, setNewAccount] = useState('');
 
   const copyReferralLink = (code: string) => {
-    const url = `https://asterra.store/?ref=${code}`;
+    const url = `${getStoreBaseUrl()}/?ref=${code}`;
     if (typeof navigator !== 'undefined') {
       navigator.clipboard.writeText(url);
       setCopiedCode(code);

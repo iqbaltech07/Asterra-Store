@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useCallback } from 'react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faXmark,
@@ -11,7 +11,6 @@ import {
   faBolt,
   faLock,
 } from '@fortawesome/free-solid-svg-icons';
-import { Button } from '@/components/ui/button';
 import { calculateCampaignPrice, ActiveCampaign } from '@/lib/utils/promo-pricing';
 
 export interface QuickViewProductData {
@@ -42,6 +41,7 @@ interface QuickViewModalProps {
 }
 
 export function QuickViewModal({ product, isOpen, onClose, activeCampaigns = [] }: QuickViewModalProps) {
+  const router = useRouter();
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -72,26 +72,46 @@ export function QuickViewModal({ product, isOpen, onClose, activeCampaigns = [] 
     product.priceFormatted ||
     `Rp ${product.price.toLocaleString('id-ID')}`;
 
+  const handleViewDetail = (e: React.MouseEvent) => {
+    if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) {
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    onClose();
+    router.push(productUrl);
+  };
+
   return (
     <div
       role="dialog"
       aria-modal="true"
       aria-labelledby="quick-view-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200"
-      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs pointer-events-auto select-none"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          e.preventDefault();
+          e.stopPropagation();
+          onClose();
+        }
+      }}
     >
       <div
-        className="relative w-full max-w-md bg-white rounded-2xl sm:rounded-3xl border border-[rgba(18,26,42,0.12)] shadow-2xl p-5 sm:p-6 text-[#121A2A] animate-in zoom-in-95 duration-200 select-none"
+        className="relative w-full max-w-md bg-white rounded-2xl sm:rounded-3xl border border-[rgba(18,26,42,0.12)] shadow-2xl p-5 sm:p-6 text-[#121A2A] pointer-events-auto select-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close Button */}
         <button
           type="button"
-          onClick={onClose}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onClose();
+          }}
           aria-label="Tutup Tampilan Cepat"
           className="absolute top-4 right-4 w-8 h-8 rounded-full bg-[rgba(18,26,42,0.06)] hover:bg-[rgba(18,26,42,0.12)] text-[#121A2A]/70 hover:text-[#121A2A] flex items-center justify-center transition-colors cursor-pointer"
         >
-          <FontAwesomeIcon icon={faXmark} className="w-4 h-4" />
+          <FontAwesomeIcon icon={faXmark} className="w-4 h-4 pointer-events-none" />
         </button>
 
         {/* Category & Rating */}
@@ -163,7 +183,7 @@ export function QuickViewModal({ product, isOpen, onClose, activeCampaigns = [] 
         <div className="space-y-2 mb-5">
           <div className="flex items-center gap-2.5 text-xs sm:text-[13px] text-[#121A2A]/85">
             <div className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
-              <FontAwesomeIcon icon={faShieldHalved} className="w-3 h-3" />
+              <FontAwesomeIcon icon={faShieldHalved} className="w-3 h-3 pointer-events-none" />
             </div>
             <span className="font-semibold">
               {product.guaranteeTitle || 'Garansi Penuh 100% Penggantian'}
@@ -172,7 +192,7 @@ export function QuickViewModal({ product, isOpen, onClose, activeCampaigns = [] 
 
           <div className="flex items-center gap-2.5 text-xs sm:text-[13px] text-[#121A2A]/85">
             <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
-              <FontAwesomeIcon icon={faBolt} className="w-3 h-3" />
+              <FontAwesomeIcon icon={faBolt} className="w-3 h-3 pointer-events-none" />
             </div>
             <span className="font-semibold">
               {product.processTitle || 'Aktivasi Otomatis 1 - 15 Menit'}
@@ -181,7 +201,7 @@ export function QuickViewModal({ product, isOpen, onClose, activeCampaigns = [] 
 
           <div className="flex items-center gap-2.5 text-xs sm:text-[13px] text-[#121A2A]/85">
             <div className="w-5 h-5 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
-              <FontAwesomeIcon icon={faLock} className="w-3 h-3" />
+              <FontAwesomeIcon icon={faLock} className="w-3 h-3 pointer-events-none" />
             </div>
             <span className="font-semibold">
               {product.privacyTitle || 'Akun Private / Sharing Workspace Resmi'}
@@ -196,14 +216,16 @@ export function QuickViewModal({ product, isOpen, onClose, activeCampaigns = [] 
           </p>
         )}
 
-        {/* Action: STRICTLY [Lihat Detail] only. NO [Beli Sekarang] */}
+        {/* Action: [Lihat Detail] with robust router navigation */}
         <div className="pt-2">
-          <Link href={productUrl} onClick={onClose} className="block w-full">
-            <Button className="w-full h-11 rounded-xl bg-[#C96F55] hover:bg-[#B86047] text-[#F7F5EF] font-bold text-sm gap-2 shadow-xs transition-transform active:scale-98">
-              <span>Lihat Detail</span>
-              <FontAwesomeIcon icon={faArrowRight} className="w-4 h-4" />
-            </Button>
-          </Link>
+          <a
+            href={productUrl}
+            onClick={handleViewDetail}
+            className="w-full h-11 rounded-xl bg-[#C96F55] hover:bg-[#B86047] text-[#F7F5EF] font-bold text-sm gap-2 shadow-xs transition-transform active:scale-98 flex items-center justify-center cursor-pointer"
+          >
+            <span>Lihat Detail</span>
+            <FontAwesomeIcon icon={faArrowRight} className="w-4 h-4 pointer-events-none" />
+          </a>
         </div>
       </div>
     </div>

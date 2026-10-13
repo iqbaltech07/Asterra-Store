@@ -1,9 +1,8 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faLock,
@@ -13,7 +12,6 @@ import {
   faShieldHalved,
   faBagShopping,
 } from '@fortawesome/free-solid-svg-icons';
-import { Button } from '@/components/ui/button';
 
 interface AuthRequiredModalProps {
   isOpen: boolean;
@@ -31,6 +29,7 @@ export function AuthRequiredModal({
   callbackUrl,
 }: AuthRequiredModalProps) {
   const [mounted, setMounted] = useState(false);
+  const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
@@ -38,12 +37,16 @@ export function AuthRequiredModal({
   }, []);
 
   // Close on Escape key
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
         onClose();
       }
-    };
+    },
+    [isOpen, onClose]
+  );
+
+  useEffect(() => {
     if (isOpen) {
       window.addEventListener('keydown', handleKeyDown);
       document.body.style.overflow = 'hidden';
@@ -52,90 +55,125 @@ export function AuthRequiredModal({
       window.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = '';
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, handleKeyDown]);
 
   if (!mounted || !isOpen) return null;
 
-  const effectiveCallback = callbackUrl || pathname || '/';
+  // Resolve target callback URL safely preserving any existing query params in browser
+  const currentPathWithSearch =
+    typeof window !== 'undefined'
+      ? window.location.pathname + window.location.search
+      : pathname || '/';
+  const effectiveCallback = callbackUrl || currentPathWithSearch || '/';
   const loginUrl = `/login?callbackUrl=${encodeURIComponent(effectiveCallback)}`;
   const registerUrl = `/register?callbackUrl=${encodeURIComponent(effectiveCallback)}`;
+
+  const handleNavigateToLogin = (e: React.MouseEvent) => {
+    if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) {
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    onClose();
+    router.push(loginUrl);
+  };
+
+  const handleNavigateToRegister = (e: React.MouseEvent) => {
+    if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) {
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    onClose();
+    router.push(registerUrl);
+  };
 
   const modalJSX = (
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-background/80 backdrop-blur-md animate-in fade-in duration-200"
+      aria-labelledby="auth-modal-title"
+      className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-[#121A2A]/70 backdrop-blur-sm pointer-events-auto select-none"
       onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
+        if (e.target === e.currentTarget) {
+          e.preventDefault();
+          e.stopPropagation();
+          onClose();
+        }
       }}
     >
-      <div className="bg-surface border border-primary/30 rounded-2xl max-w-md w-full shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 relative">
+      <div
+        className="bg-white border border-[rgba(18,26,42,0.12)] rounded-2xl max-w-md w-full shadow-2xl overflow-hidden relative select-auto pointer-events-auto transform transition-all"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header Ribbon */}
-        <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-6 pb-4 border-b border-border flex items-start justify-between">
+        <div className="bg-[#121A2A] p-5 sm:p-6 border-b border-white/10 flex items-start justify-between text-[#F7F5EF]">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary/20 border border-primary/40 flex items-center justify-center text-primary shrink-0 shadow-inner">
-              <FontAwesomeIcon icon={faLock} className="text-base" />
+            <div className="w-10 h-10 rounded-xl bg-[rgba(201,111,85,0.2)] border border-[rgba(201,111,85,0.4)] flex items-center justify-center text-[#C96F55] shrink-0 shadow-inner">
+              <FontAwesomeIcon icon={faLock} className="text-base pointer-events-none" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-base font-bold text-foreground leading-snug">
-                  {title}
-                </h3>
-              </div>
-              <p className="text-xs text-primary font-medium flex items-center gap-1.5 mt-0.5">
-                <FontAwesomeIcon icon={faShieldHalved} className="text-[11px]" />
-                <span>Asterra Secure Customer Protection</span>
+              <h3 id="auth-modal-title" className="text-base font-bold text-[#F7F5EF] leading-snug">
+                {title}
+              </h3>
+              <p className="text-xs text-[#C96F55] font-semibold flex items-center gap-1.5 mt-0.5">
+                <FontAwesomeIcon icon={faShieldHalved} className="text-[11px] pointer-events-none" />
+                <span>Asterra Customer Protection</span>
               </p>
             </div>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onClose}
-            className="h-8 w-8 p-0 rounded-full text-foreground-muted hover:text-foreground"
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onClose();
+            }}
+            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-[#F7F5EF]/80 hover:text-[#F7F5EF] flex items-center justify-center transition-colors cursor-pointer"
+            aria-label="Tutup Popup"
           >
-            <FontAwesomeIcon icon={faXmark} className="text-sm" />
-          </Button>
+            <FontAwesomeIcon icon={faXmark} className="text-sm pointer-events-none" />
+          </button>
         </div>
 
         {/* Modal Body */}
-        <div className="p-6 space-y-5">
-          <p className="text-xs sm:text-sm text-foreground-muted leading-relaxed">
+        <div className="p-5 sm:p-6 space-y-5 bg-white text-[#121A2A]">
+          <p className="text-xs sm:text-sm text-[#121A2A]/70 leading-relaxed">
             {message}
           </p>
 
-          <div className="bg-surface-raised border border-border/80 rounded-xl p-3.5 flex items-start gap-3">
-            <FontAwesomeIcon icon={faBagShopping} className="text-sm text-primary shrink-0 mt-0.5" />
-            <div className="text-xs text-foreground-muted">
-              <span className="font-semibold text-foreground">Keuntungan Akun Asterra:</span>{' '}
+          <div className="bg-[#F8FAFC] border border-[rgba(18,26,42,0.08)] rounded-xl p-3.5 flex items-start gap-3">
+            <FontAwesomeIcon icon={faBagShopping} className="text-sm text-[#C96F55] shrink-0 mt-0.5 pointer-events-none" />
+            <div className="text-xs text-[#121A2A]/70">
+              <span className="font-bold text-[#121A2A]">Keuntungan Akun Asterra:</span>{' '}
               Akses instan garansi lisensi digital, pelacakan riwayat pesanan real-time, dan klaim garansi otomatis 1-klik.
             </div>
           </div>
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-3 pt-1">
-            <Link
+            <a
               href={loginUrl}
-              onClick={onClose}
-              className="flex-1 inline-flex items-center justify-center whitespace-nowrap rounded-lg transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 bg-[#C96F55] text-white hover:bg-[#B86047] active:bg-[#A9553E] shadow-md font-semibold text-xs h-10 gap-2 cursor-pointer"
+              onClick={handleNavigateToLogin}
+              className="flex-1 inline-flex items-center justify-center whitespace-nowrap rounded-xl transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C96F55]/40 bg-[#C96F55] text-white hover:bg-[#B86047] active:bg-[#A9553E] shadow-sm font-bold text-xs sm:text-sm h-11 gap-2 cursor-pointer active:scale-98"
             >
-              <FontAwesomeIcon icon={faRightToBracket} className="text-xs" />
+              <FontAwesomeIcon icon={faRightToBracket} className="text-xs pointer-events-none" />
               <span>Masuk Sekarang</span>
-            </Link>
-            <Link
+            </a>
+            <a
               href={registerUrl}
-              onClick={onClose}
-              className="flex-1 inline-flex items-center justify-center whitespace-nowrap rounded-lg transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/20 border border-border bg-surface hover:bg-surface-raised active:bg-surface text-foreground font-medium text-xs h-10 gap-2 cursor-pointer"
+              onClick={handleNavigateToRegister}
+              className="flex-1 inline-flex items-center justify-center whitespace-nowrap rounded-xl transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#121A2A]/20 border border-[rgba(18,26,42,0.15)] bg-white hover:bg-[#F8FAFC] active:bg-white text-[#121A2A] font-semibold text-xs sm:text-sm h-11 gap-2 cursor-pointer active:scale-98"
             >
-              <FontAwesomeIcon icon={faUserPlus} className="text-xs" />
+              <FontAwesomeIcon icon={faUserPlus} className="text-xs pointer-events-none" />
               <span>Daftar Akun Baru</span>
-            </Link>
+            </a>
           </div>
         </div>
 
         {/* Modal Footer Note */}
-        <div className="px-6 py-3 bg-surface-raised/50 border-t border-border text-center">
-          <p className="text-[11px] text-foreground-muted">
+        <div className="px-6 py-3 bg-[#F8FAFC] border-t border-[rgba(18,26,42,0.08)] text-center">
+          <p className="text-[11px] text-[#121A2A]/60">
             Sudah punya akun? Masuk untuk melanjutkan belanja Anda dengan aman.
           </p>
         </div>

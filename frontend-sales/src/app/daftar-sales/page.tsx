@@ -27,6 +27,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { getStoreBaseUrl } from '@/lib/utils/url';
 
 interface PartnerResult {
   id: string;
@@ -188,10 +189,7 @@ function DaftarSalesContent() {
   });
 
   const getReferralUrl = (code: string) => {
-    if (typeof window !== 'undefined') {
-      return `${window.location.origin}/?ref=${code}`;
-    }
-    return `https://asterrastore.biz.id/?ref=${code}`;
+    return `${getStoreBaseUrl()}/?ref=${code}`;
   };
 
   const handleCopyLink = (code: string) => {

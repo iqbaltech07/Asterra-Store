@@ -53,3 +53,7 @@ data/managed-catalog.json
 scratch/
 certificates/
 *.MOV
+
+# Graphify temporary caches
+graphify-out/cache/
+graphify-out/transcripts/

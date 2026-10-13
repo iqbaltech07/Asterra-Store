@@ -5,7 +5,7 @@
  * 2. Incoming HTTP Request headers (x-forwarded-proto, x-forwarded-host, host) -> 100% dynamic for any domain
  * 3. Explicit NEXT_PUBLIC_APP_URL or APP_URL environment variable
  * 4. Vercel System Environment Variables (VERCEL_PROJECT_PRODUCTION_URL, VERCEL_URL)
- * 5. Fallback for local development (http://localhost:3000)
+ * 5. Fallback for local development (http://localhost:3001 for admin)
  */
 
 export function getAppBaseUrl(
@@ -63,7 +63,7 @@ export function getAppBaseUrl(
     return `https://${process.env.VERCEL_URL}`.replace(/\/+$/, '');
   }
   if (isVercel) {
-    return 'https://asterrastore.biz.id';
+    return 'https://admin.asterrastore.biz.id';
   }
 
   // 5. Explicit localhost from env if in local development
@@ -71,6 +71,50 @@ export function getAppBaseUrl(
     return envUrl.replace(/\/+$/, '');
   }
 
-  // 6. Default local development URL
-  return 'http://localhost:3000';
+  // 6. Default local development URL for Admin
+  return process.env.NODE_ENV === 'production'
+    ? 'https://admin.asterrastore.biz.id'
+    : 'http://localhost:3001';
+}
+
+/**
+ * Utility to reliably resolve the Customer Storefront Base URL (where retail products, checkout & cart live)
+ */
+export function getStoreBaseUrl(): string {
+  const envStore = process.env.NEXT_PUBLIC_STORE_URL?.trim();
+  if (envStore) {
+    return envStore.replace(/\/+$/, '');
+  }
+
+  if (typeof window !== 'undefined') {
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      return `${window.location.protocol}//${window.location.hostname}:3000`;
+    }
+    return 'https://asterrastore.biz.id';
+  }
+
+  return process.env.NODE_ENV === 'production'
+    ? 'https://asterrastore.biz.id'
+    : 'http://localhost:3000';
+}
+
+/**
+ * Utility to reliably resolve the Sales Portal Base URL
+ */
+export function getSalesBaseUrl(): string {
+  const envSales = process.env.NEXT_PUBLIC_SALES_URL?.trim();
+  if (envSales) {
+    return envSales.replace(/\/+$/, '');
+  }
+
+  if (typeof window !== 'undefined') {
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      return `${window.location.protocol}//${window.location.hostname}:3002`;
+    }
+    return 'https://sales.asterrastore.biz.id';
+  }
+
+  return process.env.NODE_ENV === 'production'
+    ? 'https://sales.asterrastore.biz.id'
+    : 'http://localhost:3002';
 }

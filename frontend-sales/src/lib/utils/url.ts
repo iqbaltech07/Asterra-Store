@@ -42,35 +42,38 @@ export function getAppBaseUrl(
   }
 
   // 3. User-configured custom base URL from environment variable
-  const envUrl =
-    process.env.BETTER_AUTH_URL?.trim() ||
-    process.env.NEXT_PUBLIC_APP_URL?.trim() ||
-    process.env.APP_URL?.trim();
-  const isVercel = Boolean(process.env.VERCEL || process.env.VERCEL_URL);
-
-  // If deployed on Vercel, prioritize custom domains or Vercel system URLs over accidental localhost in .env
-  if (envUrl) {
-    if (!isVercel || (!envUrl.includes('localhost') && !envUrl.includes('127.0.0.1'))) {
-      return envUrl.replace(/\/+$/, '');
-    }
-  }
-
-  // 4. Vercel automatically injected system environment variables or known project production domain
-  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
-    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`.replace(/\/+$/, '');
-  }
-  if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}`.replace(/\/+$/, '');
-  }
-  if (isVercel) {
-    return 'https://asterrastore.biz.id';
-  }
-
-  // 5. Explicit localhost from env if in local development
+  const envUrl = process.env.NEXT_PUBLIC_APP_URL?.trim() || process.env.APP_URL?.trim();
   if (envUrl) {
     return envUrl.replace(/\/+$/, '');
   }
 
-  // 6. Default local development URL
-  return 'http://localhost:3000';
+  // 4. Default Sales Portal URL
+  return process.env.NODE_ENV === 'production'
+    ? 'https://sales.asterrastore.biz.id'
+    : 'http://localhost:3002';
 }
+
+/**
+ * Utility to reliably resolve the Customer Storefront Base URL (where retail products, checkout & cart live)
+ */
+export function getStoreBaseUrl(): string {
+  // 1. Explicit env var
+  const envStore = process.env.NEXT_PUBLIC_STORE_URL?.trim();
+  if (envStore) {
+    return envStore.replace(/\/+$/, '');
+  }
+
+  // 2. Client-side browser execution
+  if (typeof window !== 'undefined') {
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      return `${window.location.protocol}//${window.location.hostname}:3000`;
+    }
+    return 'https://asterrastore.biz.id';
+  }
+
+  // 3. Server-side execution
+  return process.env.NODE_ENV === 'production'
+    ? 'https://asterrastore.biz.id'
+    : 'http://localhost:3000';
+}
+

@@ -1264,7 +1264,7 @@ def get_sales_campaigns(request: Request):
     partner_code = profile.get("code") or "AST-FOUNDER"
     partner_rate = float(profile.get("rate") or 10.0)
 
-    base_url = "https://asterrastore.biz.id"
+    base_url = (os.getenv("STORE_URL") or os.getenv("FRONTEND_STORE_URL") or "https://asterrastore.biz.id").rstrip("/")
     active_camps = CampaignService.get_active_campaigns()
 
     enriched_campaigns = []

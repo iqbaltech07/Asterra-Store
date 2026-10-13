@@ -34,6 +34,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { AdminTab } from '@/components/admin/admin-sidebar';
+import { getStoreBaseUrl, getSalesBaseUrl } from '@/lib/utils/url';
 
 interface SalesConsoleProps {
   activeTab: AdminTab;
@@ -230,13 +231,8 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
     }
   };
 
-  const getBaseUrl = () => {
-    if (typeof window !== 'undefined') return window.location.origin;
-    return 'https://asterrastore.biz.id';
-  };
-
-  const referralUrl = `${getBaseUrl()}/?ref=${partnerCode}`;
-  const inviteSalesUrl = `${getBaseUrl()}/daftar-sales?ref=${partnerCode}`;
+  const referralUrl = `${getStoreBaseUrl()}/?ref=${partnerCode}`;
+  const inviteSalesUrl = `${getSalesBaseUrl()}/daftar-sales?ref=${partnerCode}`;
 
   const inviteWaMessage = encodeURIComponent(
     `Halo! Mau dapat penghasilan tambahan tanpa modal? Yuk gabung jadi Mitra Sales resmi di Asterra Store!\n\n` +
@@ -301,7 +297,7 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
   const [selectedProductForLink, setSelectedProductForLink] = useState('');
 
   const customGeneratedUrl = useMemo(() => {
-    const base = getBaseUrl();
+    const base = getStoreBaseUrl();
     if (selectedProductForLink) {
       return `${base}/products/${selectedProductForLink}?ref=${partnerCode}`;
     }
@@ -865,7 +861,7 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredProducts.map((p) => {
-                const productUrl = `${getBaseUrl()}/products/${p.id}?ref=${partnerCode}`;
+                const productUrl = `${getStoreBaseUrl()}/products/${p.id}?ref=${partnerCode}`;
                 const catName = p.categoryName || p.category?.name || 'Digital';
 
                 // Profit & Commission Calculation
