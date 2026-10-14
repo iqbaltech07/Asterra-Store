@@ -115,25 +115,23 @@ function ReferralTrackerInner() {
             '';
         } catch {}
 
-        // Check campaign status if storedCamp exists: only remove if campaign explicitly confirmed ended
+        // Check campaign status if storedCamp exists: purge campaign and claimed ref if campaign has ended
         if (storedCamp) {
           fetch('/api/v1/campaigns/active')
             .then((r) => r.json())
             .then((res) => {
-              const activeList = Array.isArray(res?.data) ? res.data : [];
-              if (activeList.length === 0) return; // Do not purge if list is empty or offline
+              if (!res || !Array.isArray(res?.data)) return; // Do not purge if API failed or offline
+              const activeList = res.data;
 
-              const isExplicitlyEnded = activeList.some(
+              const isStillActive = activeList.some(
                 (c: { slug?: string; id?: string; status?: string; isActive?: boolean }) =>
                   (c.slug === storedCamp || c.id === storedCamp) &&
-                  (c.status === 'ended' || c.isActive === false)
+                  c.status === 'running' &&
+                  c.isActive !== false
               );
 
-              const currentUrl = new URL(window.location.href);
-              const hasExplicitParam = currentUrl.searchParams.has('campaign') || currentUrl.searchParams.has('utm_campaign');
-
-              // If campaign is explicitly ended and URL is not intentionally carrying it, clean up
-              if (isExplicitlyEnded && !hasExplicitParam) {
+              // If campaign is no longer running / has ended, clean it up
+              if (!isStillActive) {
                 try {
                   localStorage.removeItem('asterra_campaign');
                   localStorage.removeItem('asterra_utm_campaign');
@@ -141,7 +139,9 @@ function ReferralTrackerInner() {
                   document.cookie = 'asterra_utm_campaign=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
                 } catch {}
 
+                const currentUrl = new URL(window.location.href);
                 let changed = false;
+
                 if (currentUrl.searchParams.has('campaign')) {
                   currentUrl.searchParams.delete('campaign');
                   changed = true;
@@ -150,6 +150,23 @@ function ReferralTrackerInner() {
                   currentUrl.searchParams.delete('utm_campaign');
                   changed = true;
                 }
+
+                // If referral discount was already claimed previously, also purge ref now that campaign has ended
+                const isClaimed = localStorage.getItem('asterra_ref_claimed') === 'true';
+                if (isClaimed) {
+                  try {
+                    localStorage.removeItem('asterra_ref');
+                    localStorage.removeItem('asterra_referral_session_id');
+                    document.cookie = 'asterra_ref=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+                    document.cookie = 'asterra_referral_session_id=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+                  } catch {}
+
+                  if (currentUrl.searchParams.has('ref')) {
+                    currentUrl.searchParams.delete('ref');
+                    changed = true;
+                  }
+                }
+
                 if (changed) {
                   window.history.replaceState(
                     window.history.state,
