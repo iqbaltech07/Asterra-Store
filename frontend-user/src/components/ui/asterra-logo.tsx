@@ -58,8 +58,8 @@ export function AsterraLogo({
       overlap: '-mr-2 sm:-mr-3.5 md:-mr-4.5',
     },
     xl: {
-      planet: 'h-12 sm:h-14 md:h-16',
-      wordmark: 'h-[22px] sm:h-[26px] md:h-[30px]',
+      planet: 'h-14 sm:h-16 md:h-18',
+      wordmark: 'h-[24px] sm:h-[28px] md:h-[32px]',
       overlap: '-mr-2.5 sm:-mr-4 md:-mr-5',
     },
     '2xl': {

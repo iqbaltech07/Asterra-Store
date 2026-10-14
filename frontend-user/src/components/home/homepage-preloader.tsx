@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
-import { AsterraLogo } from '@/components/ui/asterra-logo';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import Image from 'next/image';
 
 export type TaskStatus = 'pending' | 'success' | 'fallback';
 
@@ -26,6 +26,9 @@ interface HomepagePreloaderProps {
   isComponentReady?: boolean;
   onPreloaderComplete?: () => void;
 }
+
+// Track if homepage has already been preloaded during client-side SPA navigation (resets on page refresh / F5)
+let hasPreloadedInSpa = false;
 
 // Stable weighted tasks strictly summing to 100%
 const TASK_WEIGHTS: Record<keyof PreloaderTaskState, number> = {
@@ -71,16 +74,15 @@ export function HomepagePreloader({
   const animFrameRef = useRef<number | null>(null);
   const isCompletedRef = useRef(false);
 
-  // Check sessionStorage so internal client-side navigation doesn't replay the preloader
+  // Clean up any stale sessionStorage lock and ensure preloader appears on initial visit & refresh (F5)
   useEffect(() => {
     try {
-      const alreadyPreloaded = sessionStorage.getItem('asterra_home_preloaded');
-      if (alreadyPreloaded === 'true') {
-        onPreloaderComplete?.();
-        return;
-      }
-    } catch {
-      // sessionStorage unavailable or blocked
+      sessionStorage.removeItem('asterra_home_preloaded');
+    } catch {}
+
+    if (hasPreloadedInSpa) {
+      onPreloaderComplete?.();
+      return;
     }
     setShouldRender(true);
   }, [onPreloaderComplete]);
@@ -276,8 +278,9 @@ export function HomepagePreloader({
             // Short respectful visual pause for user gratification
             setTimeout(() => {
               setIsExiting(true);
+              hasPreloadedInSpa = true;
               try {
-                sessionStorage.setItem('asterra_home_preloaded', 'true');
+                sessionStorage.removeItem('asterra_home_preloaded');
               } catch {}
               // Complete callback after exit animation finishes
               setTimeout(() => {
@@ -311,59 +314,139 @@ export function HomepagePreloader({
   if (!shouldRender) return null;
 
   return (
-    <div
-      role="status"
-      aria-live="polite"
-      aria-label="Memuat AsterraStore"
-      className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#0C121E] select-none transition-all duration-450 ease-out ${
-        isExiting
-          ? 'opacity-0 scale-[1.015] pointer-events-none'
-          : 'opacity-100 scale-100'
-      }`}
-    >
-      {/* Ambient Warm Glow */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[320px] sm:w-[440px] h-[320px] sm:h-[440px] bg-[#C96F55]/12 rounded-full blur-[100px] pointer-events-none" />
-      </div>
+    <>
+      <style>{`
+        @keyframes orbitSpinClockwise {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        @keyframes orbitSpinCounterClockwise {
+          from { transform: rotate(360deg); }
+          to { transform: rotate(0deg); }
+        }
+      `}</style>
 
-      {/* Centerpiece Container */}
-      <div className="relative z-10 flex flex-col items-center max-w-sm px-6 text-center">
-        {/* Official Animated Asterra Navbar Logo (Identical animation, speed, frames, & white wordmark) */}
-        <div className="mb-7 sm:mb-8 flex items-center justify-center">
-          <AsterraLogo
-            variant="navbar"
-            size="xl"
-            linkToHome={false}
-            className="pointer-events-none drop-shadow-[0_4px_24px_rgba(201,111,85,0.25)]"
-          />
+      <div
+        role="status"
+        aria-live="polite"
+        aria-label="Memuat AsterraStore"
+        className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#0C121E] select-none transition-all duration-450 ease-out ${
+          isExiting
+            ? 'opacity-0 scale-[1.015] pointer-events-none'
+            : 'opacity-100 scale-100'
+        }`}
+      >
+        {/* Ambient Warm Glow */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[340px] sm:w-[440px] h-[340px] sm:h-[440px] bg-[#C96F55]/12 rounded-full blur-[100px] pointer-events-none" />
         </div>
 
-        {/* Real-Time Progress Bar & Metrics */}
-        <div className="w-64 sm:w-72 space-y-2.5">
-          {/* Dynamic Status and Percentage */}
-          <div className="flex items-center justify-between text-xs font-medium tracking-tight">
-            <span className="text-white/70 text-[11px] truncate pr-2 text-left">
-              {statusText}
-            </span>
-            <span className="font-mono font-bold text-white tracking-wider text-[11px] shrink-0">
-              {displayProgress}%
-            </span>
+        {/* Centerpiece Container: Perfectly Centered Along the Vertical Axis */}
+        <div className="relative z-10 flex flex-col items-center justify-center w-full max-w-sm px-6 text-center">
+          {/* 1. Official Orbital Centerpiece with 3D Animated Planet (Navbar Asset: 152 frames, 20fps) */}
+          <div className="relative w-32 h-32 sm:w-36 sm:h-36 flex items-center justify-center mb-6 mx-auto">
+            {/* SVG Orbital Track Geometry */}
+            <svg
+              className="absolute inset-0 w-full h-full pointer-events-none"
+              viewBox="0 0 144 144"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              {/* Outer Subtle Dashed Orbit */}
+              <circle
+                cx="72"
+                cy="72"
+                r="64"
+                stroke="rgba(255, 255, 255, 0.08)"
+                strokeWidth="1"
+                strokeDasharray="4 6"
+              />
+              {/* Main Accent Orbit */}
+              <circle
+                cx="72"
+                cy="72"
+                r="52"
+                stroke="rgba(201, 111, 85, 0.35)"
+                strokeWidth="1.2"
+              />
+            </svg>
+
+            {/* Rotating Outer Ring with Glowing Satellite Node */}
+            <div
+              className="absolute inset-3 rounded-full pointer-events-none"
+              style={{
+                animation: 'orbitSpinClockwise 10s linear infinite',
+              }}
+            >
+              <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-[#C96F55] shadow-[0_0_12px_#C96F55]" />
+            </div>
+
+            {/* Counter-rotating Inner Ring with Secondary White Node */}
+            <div
+              className="absolute inset-5 rounded-full pointer-events-none"
+              style={{
+                animation: 'orbitSpinCounterClockwise 7s linear infinite',
+              }}
+            >
+              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-white/70 shadow-[0_0_8px_rgba(255,255,255,0.6)]" />
+            </div>
+
+            {/* Central 3D Animated Asterra Planet (Identical in Asset, Motion, Speed, and Looping to Navbar) */}
+            <div className="relative z-10 w-24 h-24 sm:w-28 sm:h-28 flex items-center justify-center drop-shadow-[0_4px_24px_rgba(201,111,85,0.45)]">
+              <picture className="w-full h-full flex items-center justify-center pointer-events-none select-none">
+                <source srcSet="/assets/asterra-planet-navbar.webp" type="image/webp" />
+                <img
+                  src="/assets/asterra-planet-navbar.webp"
+                  alt="Asterra Planet"
+                  width={200}
+                  height={107}
+                  decoding="async"
+                  draggable={false}
+                  className="w-full h-auto object-contain pointer-events-none select-none scale-135"
+                />
+              </picture>
+            </div>
           </div>
 
-          {/* Progress Track */}
-          <div className="relative w-full h-[3px] bg-white/[0.08] rounded-full overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-[#C96F55] via-[#E07A5F] to-white rounded-full transition-all duration-150 ease-out shadow-[0_0_10px_rgba(201,111,85,0.7)]"
-              style={{ width: `${displayProgress}%` }}
+          {/* 2. Official Brand Wordmark in Pure White (AsterraStore) */}
+          <div className="mb-7 sm:mb-8 flex items-center justify-center mx-auto">
+            <Image
+              src="/images/brand/asterra-wordmark-light.png"
+              alt="AsterraStore"
+              width={381}
+              height={49}
+              priority
+              className="h-5 sm:h-6 w-auto object-contain mx-auto select-none drop-shadow-[0_2px_12px_rgba(255,255,255,0.18)]"
             />
           </div>
 
-          {/* Minimalist Sub-Status Footer */}
-          <div className="pt-1 text-[10px] text-white/35 tracking-widest uppercase font-mono">
-            Lisensi & Akun Digital Resmi
+          {/* 3. Real-Time Progress Bar & Metrics */}
+          <div className="w-64 sm:w-72 mx-auto space-y-2.5">
+            {/* Dynamic Status and Percentage */}
+            <div className="flex items-center justify-between text-xs font-medium tracking-tight">
+              <span className="text-white/75 text-[11px] truncate pr-2 text-left">
+                {statusText}
+              </span>
+              <span className="font-mono font-bold text-white tracking-wider text-[11px] shrink-0">
+                {displayProgress}%
+              </span>
+            </div>
+
+            {/* Progress Track */}
+            <div className="relative w-full h-[3px] bg-white/[0.08] rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-[#C96F55] via-[#E07A5F] to-white rounded-full transition-all duration-150 ease-out shadow-[0_0_10px_rgba(201,111,85,0.7)]"
+                style={{ width: `${displayProgress}%` }}
+              />
+            </div>
+
+            {/* Minimalist Sub-Status Footer */}
+            <div className="pt-1 text-[10px] text-white/40 tracking-widest uppercase font-mono text-center">
+              Lisensi & Akun Digital Resmi
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
