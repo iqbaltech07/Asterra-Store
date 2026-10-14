@@ -153,9 +153,7 @@ export function getCampaignCountdown(endsAtOrDate?: string): {
     const pad = (n: number) => String(n).padStart(2, '0');
     const timeFormatted = `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
 
-    const countdownText = days > 0
-      ? `Promo berakhir dalam ${days} hari ${timeFormatted}`
-      : `Promo berakhir dalam ${timeFormatted}`;
+    const countdownText = `Promo berakhir dalam ${timeFormatted}`;
 
     return {
       isExpired: false,

@@ -35,9 +35,8 @@ export function ProductPromoCountdownBadge({
       const cd = getCampaignCountdown(endsAtOrDate);
       if (cd.isExpired) {
         setCountdownStr('');
-      } else {
         const timePart = `${String(cd.hours).padStart(2, '0')}:${String(cd.minutes).padStart(2, '0')}:${String(cd.seconds).padStart(2, '0')}`;
-        setCountdownStr(cd.days > 0 ? `⏳ ${cd.days} hari ${timePart}` : `⏳ ${timePart}`);
+        setCountdownStr(`⏳ ${timePart}`);
       }
     };
 
