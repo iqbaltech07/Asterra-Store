@@ -12,6 +12,7 @@ import {
   faLock,
 } from '@fortawesome/free-solid-svg-icons';
 import { calculateCampaignPrice, ActiveCampaign } from '@/lib/utils/promo-pricing';
+import { ProductPromoCountdownBadge } from '@/components/products/product-card';
 
 export interface QuickViewProductData {
   id: string;
@@ -155,10 +156,11 @@ export function QuickViewModal({ product, isOpen, onClose, activeCampaigns = [] 
                     <span className="text-[10px] font-bold text-[#C96F55] bg-[rgba(201,111,85,0.08)] px-1.5 py-0.5 rounded">
                       {promoCalc.savingsText}
                     </span>
-                    {promoCalc.endDateFormatted && (
-                      <span className="text-[10px] font-medium text-[#121A2A]/70 bg-black/5 px-2 py-0.5 rounded-full">
-                        ⏳ {promoCalc.endDateFormatted}
-                      </span>
+                    {promoCalc.hasPromo && (
+                      <ProductPromoCountdownBadge
+                        endsAtOrDate={promoCalc.endsAt || promoCalc.endDate}
+                        className="text-[10px] font-semibold text-[#C96F55] bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.25)] px-2 py-0.5 rounded-full inline-flex items-center"
+                      />
                     )}
                   </div>
                   <div className="w-full flex items-baseline gap-2 mt-0.5">

@@ -24,7 +24,7 @@ import { useSession } from '@/lib/auth-client';
 import { useAuthStore } from '@/store/use-auth-store';
 import { AuthRequiredModal } from '@/components/auth/auth-required-modal';
 import { ProductItem } from '@/lib/products-data';
-import { ProductCard } from '@/components/products/product-card';
+import { ProductCard, ProductPromoCountdownBadge } from '@/components/products/product-card';
 import {
   Select,
   SelectContent,
@@ -488,10 +488,11 @@ function ProductsContent() {
                             🔥 {promoCalc.discountBadge}
                           </span>
                         )}
-                        {promoCalc.hasPromo && promoCalc.endDateFormatted && (
-                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-[rgba(18,26,42,0.05)] text-[#121A2A]/70 font-medium">
-                            ⏳ {promoCalc.endDateFormatted}
-                          </span>
+                        {promoCalc.hasPromo && (
+                          <ProductPromoCountdownBadge
+                            endsAtOrDate={promoCalc.endsAt || promoCalc.endDate}
+                            className="text-[10px] px-2 py-0.5 rounded-full bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.25)] text-[#C96F55] font-semibold inline-flex items-center"
+                          />
                         )}
                         {product.popular && !promoCalc.hasPromo && (
                           <span className="text-[10px] px-2 py-0.5 rounded bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.25)] text-[#C96F55] font-semibold">

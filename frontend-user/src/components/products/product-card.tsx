@@ -8,8 +8,48 @@ import { Button } from '@/components/ui/button';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck, faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { ProductItem } from '@/lib/products-data';
-import { calculateCampaignPrice, ActiveCampaign } from '@/lib/utils/promo-pricing';
+import { calculateCampaignPrice, getCampaignCountdown, ActiveCampaign } from '@/lib/utils/promo-pricing';
 import { useQuery } from '@tanstack/react-query';
+
+export function ProductPromoCountdownBadge({
+  endsAtOrDate,
+  className = 'text-[9px] font-bold text-[#C96F55] bg-[rgba(201,111,85,0.08)] px-1.5 py-0.5 rounded border border-[rgba(201,111,85,0.2)] leading-tight whitespace-nowrap inline-flex items-center',
+}: {
+  endsAtOrDate?: string;
+  className?: string;
+}) {
+  const [countdownStr, setCountdownStr] = React.useState<string>('');
+  const [isMounted, setIsMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  React.useEffect(() => {
+    if (!endsAtOrDate) {
+      setCountdownStr('');
+      return;
+    }
+
+    const update = () => {
+      const cd = getCampaignCountdown(endsAtOrDate);
+      if (cd.isExpired) {
+        setCountdownStr('');
+      } else {
+        const timePart = `${String(cd.hours).padStart(2, '0')}:${String(cd.minutes).padStart(2, '0')}:${String(cd.seconds).padStart(2, '0')}`;
+        setCountdownStr(cd.days > 0 ? `⏳ ${cd.days} hari ${timePart}` : `⏳ ${timePart}`);
+      }
+    };
+
+    update();
+    const interval = setInterval(update, 1000);
+    return () => clearInterval(interval);
+  }, [endsAtOrDate]);
+
+  if (!isMounted || !countdownStr) return null;
+
+  return <span className={className}>{countdownStr}</span>;
+}
 
 interface ProductCardProps {
   product: ProductItem & { providerCode?: string };
@@ -178,11 +218,9 @@ export function ProductCard({
                 <span className="text-[10px] sm:text-[11px] text-[#121A2A]/45 line-through font-semibold leading-none">
                   {campaignPrice.originalPriceFormatted}
                 </span>
-                {campaignPrice.endDateFormatted && (
-                  <span className="text-[9px] font-bold text-[#C96F55] bg-[rgba(201,111,85,0.08)] px-1.5 py-0.5 rounded border border-[rgba(201,111,85,0.2)] leading-tight whitespace-nowrap">
-                    {campaignPrice.endDateFormatted}
-                  </span>
-                )}
+                <ProductPromoCountdownBadge
+                  endsAtOrDate={campaignPrice.endsAt || campaignPrice.endDate}
+                />
               </div>
               <span
                 data-gsap="product-price"
@@ -203,12 +241,12 @@ export function ProductCard({
           )}
         </div>
 
-        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+        <div className="flex items-center shrink-0">
           <Button
             size="sm"
             data-gsap="product-button"
             variant={isOutOfStock ? 'outline' : isSelected ? 'secondary' : 'default'}
-            className={`h-7 sm:h-8.5 px-2 sm:px-3 text-[11px] sm:text-xs font-semibold rounded-lg sm:rounded-xl transition-all active:scale-95 ${
+            className={`h-7 sm:h-8.5 px-2.5 sm:px-3.5 text-[11px] sm:text-xs font-semibold rounded-lg sm:rounded-xl transition-all active:scale-95 ${
               isSelected
                 ? 'bg-[rgba(201,111,85,0.12)] text-[#C96F55] border border-[rgba(201,111,85,0.4)]'
                 : isOutOfStock
@@ -232,16 +270,6 @@ export function ProductCard({
               </>
             )}
           </Button>
-
-          <Link href={`/products/${product.id}`} prefetch={true}>
-            <button
-              type="button"
-              className="w-7 h-7 sm:w-8.5 sm:h-8.5 rounded-lg sm:rounded-xl bg-[#121A2A] text-[#F7F5EF] flex items-center justify-center hover:bg-[#C96F55] transition-colors shadow-xs cursor-pointer active:scale-95"
-              aria-label={`Lihat detail ${product.name}`}
-            >
-              <FontAwesomeIcon icon={faArrowRight} className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            </button>
-          </Link>
         </div>
       </div>
     </Card>
