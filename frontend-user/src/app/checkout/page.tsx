@@ -653,7 +653,9 @@ function CheckoutPageContent() {
               }
               localStorage.setItem('asterra_ref_claimed', 'true');
               localStorage.removeItem('asterra_ref');
+              localStorage.removeItem('asterra_referral_session_id');
               document.cookie = 'asterra_ref=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+              document.cookie = 'asterra_referral_session_id=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
             } else {
               // Jika campaign tersedia bersamaan, parameter ref tidak boleh dihapus (misal ref=AST-Founder-SAGE&campaign=flash-sales-10-10)
               localStorage.setItem('asterra_ref_claimed', 'true');
@@ -759,6 +761,10 @@ function CheckoutPageContent() {
       promo_code: appliedPromo?.code || undefined,
       referral_code: referralPartner?.code || (referralCode.trim() ? referralCode.trim() : undefined),
       referral_discount: referralDiscount,
+      referral_session_id:
+        typeof window !== 'undefined'
+          ? localStorage.getItem('asterra_referral_session_id') || undefined
+          : undefined,
       campaign_id: matchingCampaign?.id || (activeCampaignSlug ? activeCampaignSlug : undefined),
       campaign_slug: matchingCampaign?.slug || (activeCampaignSlug ? activeCampaignSlug : undefined),
       campaign_discount: campaignDiscount,

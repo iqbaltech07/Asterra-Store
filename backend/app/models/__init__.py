@@ -6,6 +6,7 @@ from app.models.payment_setting import PaymentSetting
 from app.models.promo import PromoCode
 from app.models.banner import PromoBanner
 from app.models.campaign import PromoCampaign
+from app.models.referral_session import ReferralSession
 
 __all__ = [
     "Product",
@@ -17,4 +18,5 @@ __all__ = [
     "PromoCode",
     "PromoBanner",
     "PromoCampaign",
+    "ReferralSession",
 ]

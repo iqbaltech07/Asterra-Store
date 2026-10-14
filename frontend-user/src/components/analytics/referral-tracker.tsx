@@ -14,9 +14,8 @@ function ReferralTrackerInner() {
     const urlMedium = searchParams.get('utm_medium');
 
     // 1. If URL has ref parameter, store in localStorage & cookies
-    if (urlRef && urlRef.trim()) {
-      const normalizedCode = urlRef.trim().toUpperCase();
-
+    const normalizedCode = urlRef && urlRef.trim() ? urlRef.trim().toUpperCase() : '';
+    if (normalizedCode) {
       try {
         localStorage.setItem('asterra_ref', normalizedCode);
         document.cookie = `asterra_ref=${encodeURIComponent(
@@ -25,22 +24,11 @@ function ReferralTrackerInner() {
       } catch {
         // ignore storage errors
       }
-
-      // Dispatch click telemetry once per session
-      const sessionTrackedKey = `asterra_tracked_${normalizedCode}`;
-      if (!sessionStorage.getItem(sessionTrackedKey)) {
-        sessionStorage.setItem(sessionTrackedKey, 'true');
-        fetch('/api/v1/affiliate/track-click', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ code: normalizedCode }),
-        }).catch(() => {});
-      }
     }
 
     // 2. If URL has campaign parameter, store in localStorage & cookies
-    if (urlCampaign && urlCampaign.trim()) {
-      const normalizedCamp = urlCampaign.trim();
+    const normalizedCamp = urlCampaign && urlCampaign.trim() ? urlCampaign.trim() : '';
+    if (normalizedCamp) {
       try {
         localStorage.setItem('asterra_campaign', normalizedCamp);
         localStorage.setItem('asterra_utm_campaign', normalizedCamp);
@@ -69,6 +57,44 @@ function ReferralTrackerInner() {
           urlMedium.trim()
         )}; path=/; max-age=2592000; SameSite=Lax`;
       } catch {}
+    }
+
+    // 3. Dispatch click telemetry to server (Hybrid Cookie + DB Session)
+    if (normalizedCode || normalizedCamp) {
+      const sessionTrackedKey = `asterra_tracked_${normalizedCode || 'none'}_${normalizedCamp || 'none'}`;
+      if (typeof window !== 'undefined' && !sessionStorage.getItem(sessionTrackedKey)) {
+        sessionStorage.setItem(sessionTrackedKey, 'true');
+
+        let existingSessionId: string | undefined = undefined;
+        try {
+          existingSessionId = localStorage.getItem('asterra_referral_session_id') || undefined;
+        } catch {}
+
+        fetch('/api/v1/affiliate/track-click', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            code: normalizedCode || undefined,
+            campaign: normalizedCamp || undefined,
+            utm_source: urlSource ? urlSource.trim() : undefined,
+            utm_medium: urlMedium ? urlMedium.trim() : undefined,
+            session_id: existingSessionId,
+          }),
+        })
+          .then((r) => r.json())
+          .then((res) => {
+            const sid = res?.data?.id || res?.data?.sessionId;
+            if (sid) {
+              try {
+                localStorage.setItem('asterra_referral_session_id', sid);
+                document.cookie = `asterra_referral_session_id=${encodeURIComponent(
+                  sid
+                )}; path=/; max-age=2592000; SameSite=Lax`;
+              } catch {}
+            }
+          })
+          .catch(() => {});
+      }
     }
 
     // 3. Auto-Preserve URL Parameters on Navigation

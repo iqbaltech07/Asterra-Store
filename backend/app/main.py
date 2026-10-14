@@ -40,6 +40,7 @@ from app.services.tripay_service import TripayService
 from app.services.analytics_service import AnalyticsService
 from app.services.banner_service import BannerService
 from app.services.campaign_service import CampaignService
+from app.services.referral_service import ReferralService
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -738,8 +739,26 @@ async def register_sales_affiliate(request: Request):
     }
 
 @api_router.post("/affiliate/track-click", tags=["Affiliate"])
-def track_affiliate_click():
-    return {"success": True, "message": "Klik referral berhasil dicatat"}
+async def track_affiliate_click(request: Request):
+    try:
+        payload = await request.json()
+    except Exception:
+        payload = {}
+
+    forwarded = request.headers.get("x-forwarded-for")
+    if forwarded:
+        client_ip = forwarded.split(",")[0].strip()
+    else:
+        client_ip = request.client.host if request.client else ""
+    user_agent = request.headers.get("user-agent", "")
+
+    result = ReferralService.track_click(payload, client_ip=client_ip, user_agent=user_agent)
+    return result
+
+@api_router.post("/affiliate/expire-sessions", tags=["Affiliate"])
+def expire_affiliate_sessions():
+    count = ReferralService.auto_expire_sessions()
+    return {"success": True, "message": f"{count} sesi referral kedaluwarsa berhasil diperbarui", "expired_count": count}
 
 # ------------------------------------------
 # 6. Finance & Profit Distribution Endpoints

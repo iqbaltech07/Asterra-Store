@@ -2,6 +2,36 @@
  * Utility for preserving and retrieving active referral & UTM parameters across navigation
  */
 
+export function getReferralSessionId(): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const local = localStorage.getItem('asterra_referral_session_id');
+    if (local) return local;
+    const match = document.cookie.match(/(?:^|;\s*)asterra_referral_session_id=([^;]*)/);
+    return match ? decodeURIComponent(match[1]) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function setReferralSessionId(sessionId: string): void {
+  if (typeof window === 'undefined' || !sessionId) return;
+  try {
+    localStorage.setItem('asterra_referral_session_id', sessionId);
+    document.cookie = `asterra_referral_session_id=${encodeURIComponent(
+      sessionId
+    )}; path=/; max-age=2592000; SameSite=Lax`;
+  } catch {}
+}
+
+export function clearReferralSession(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.removeItem('asterra_referral_session_id');
+    document.cookie = 'asterra_referral_session_id=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+  } catch {}
+}
+
 export function getActiveReferralParams(): Record<string, string> {
   const params: Record<string, string> = {};
   if (typeof window === 'undefined') return params;
@@ -38,6 +68,7 @@ export function getActiveReferralParams(): Record<string, string> {
     const campaign = urlCamp || localStorage.getItem('asterra_utm_campaign') || localStorage.getItem('asterra_campaign');
     const source = urlSource || localStorage.getItem('asterra_utm_source');
     const medium = urlMedium || localStorage.getItem('asterra_utm_medium');
+    const sessionId = getReferralSessionId();
 
     if (ref && ref.trim()) params.ref = ref.trim().toUpperCase();
     if (campaign && campaign.trim()) {
@@ -46,6 +77,7 @@ export function getActiveReferralParams(): Record<string, string> {
     }
     if (source && source.trim()) params.utm_source = source.trim();
     if (medium && medium.trim()) params.utm_medium = medium.trim();
+    if (sessionId) params.referral_session_id = sessionId;
   } catch {}
 
   return params;
@@ -60,7 +92,7 @@ export function appendReferralParams(url: string): string {
     const dummyBase = 'https://asterrastore.biz.id';
     const parsed = new URL(url, dummyBase);
     for (const [key, value] of Object.entries(activeParams)) {
-      if (!parsed.searchParams.has(key)) {
+      if (key !== 'referral_session_id' && !parsed.searchParams.has(key)) {
         parsed.searchParams.set(key, value);
       }
     }

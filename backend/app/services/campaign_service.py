@@ -428,3 +428,15 @@ class CampaignService:
 
         cls.save_campaigns()
         return True
+
+    @classmethod
+    def get_campaign_by_slug_or_id(cls, identifier: str) -> Optional[Dict[str, Any]]:
+        """Finds a campaign by exact id or slug."""
+        if not identifier:
+            return None
+        clean_id = str(identifier).strip()
+        clean_slug = clean_id.lower()
+        for c in cls.get_all_campaigns():
+            if str(c.get("id")) == clean_id or str(c.get("slug", "")).lower() == clean_slug:
+                return c
+        return None

@@ -69,6 +69,10 @@ class OrderService:
         o["referralCode"] = ref_code
         o["referral_code"] = ref_code
 
+        ref_sess_id = o.get("referral_session_id") or o.get("referralSessionId")
+        o["referralSessionId"] = ref_sess_id
+        o["referral_session_id"] = ref_sess_id
+
         sales_p_id = o.get("sales_partner_id") or o.get("salesPartnerId")
         o["salesPartnerId"] = sales_p_id
         o["sales_partner_id"] = sales_p_id
@@ -403,6 +407,12 @@ class OrderService:
                 print(f"[OrderService] Campaign lookup note: {e}")
 
         ref_code = (payload.get("referral_code") or payload.get("referralCode") or "").strip().upper()
+        ref_sess_id = (
+            payload.get("referral_session_id")
+            or payload.get("referralSessionId")
+            or payload.get("sessionId")
+            or ""
+        ).strip() or None
 
         # 2. Lifetime 1-Time Referral Discount Eligibility Enforcement
         if referral_discount > 0:
@@ -463,6 +473,7 @@ class OrderService:
                     updated_at=now,
                     expires_at=now + timedelta(hours=expiry_hours),
                     referral_code=ref_code or None,
+                    referral_session_id=ref_sess_id,
                     sales_partner_id=sales_partner_id,
                     recruiter_partner_id=recruiter_partner_id,
                 )
@@ -485,6 +496,19 @@ class OrderService:
                 db.commit()
                 db.refresh(order_record)
                 normalized = cls._normalize_order(order_record.to_dict())
+
+                # Claim active referral session in DB
+                if ref_code or ref_sess_id:
+                    try:
+                        from app.services.referral_service import ReferralService
+                        ReferralService.claim_session(
+                            order_id=order_id,
+                            ref_code=ref_code,
+                            user_email=customer_email,
+                            session_id=ref_sess_id,
+                        )
+                    except Exception as e:
+                        print(f"[OrderService] ReferralSession claim note: {e}")
             finally:
                 db.close()
         except Exception as e:

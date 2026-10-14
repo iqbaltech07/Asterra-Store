@@ -23,6 +23,12 @@ export interface CreateOrderPayload {
   payment_method?: string;
   promo_code?: string;
   referral_code?: string;
+  referral_session_id?: string;
+  referral_discount?: number;
+  campaign_id?: string;
+  campaign_slug?: string;
+  campaign_discount?: number;
+  utm_campaign?: string;
   customer_contact?: {
     name: string;
     email: string;

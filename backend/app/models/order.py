@@ -48,6 +48,7 @@ class Order(Base):
     payment_status = Column(String, nullable=True)
     customer_notes = Column(Text, nullable=True)
     referral_code = Column(String, nullable=True)
+    referral_session_id = Column(String, nullable=True)
     sales_partner_id = Column(String, nullable=True)
     recruiter_partner_id = Column(String, nullable=True)
     promo_discount = Column(Integer, default=0)
@@ -78,6 +79,7 @@ class Order(Base):
             "paymentStatus": self.payment_status,
             "customerNotes": self.customer_notes,
             "referralCode": self.referral_code,
+            "referralSessionId": self.referral_session_id,
             "salesPartnerId": self.sales_partner_id,
             "recruiterPartnerId": self.recruiter_partner_id,
             "promoDiscount": self.promo_discount,
@@ -93,6 +95,7 @@ class Order(Base):
             "created_at": (self.created_at.isoformat() + "Z") if self.created_at else None,
             "updated_at": (self.updated_at.isoformat() + "Z") if self.updated_at else None,
             "referral_code": self.referral_code,
+            "referral_session_id": self.referral_session_id,
             "sales_partner_id": self.sales_partner_id,
             "recruiter_partner_id": self.recruiter_partner_id,
             "promo_discount": self.promo_discount,
