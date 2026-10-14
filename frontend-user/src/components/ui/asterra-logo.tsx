@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 
 export interface AsterraLogoProps {
   variant?: 'navbar' | 'light-bg' | 'dark-bg' | 'mark-only' | 'app-icon';
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
   showBadge?: boolean;
   badgeText?: string;
   showTagline?: boolean;
@@ -29,6 +29,7 @@ export function AsterraLogo({
     md: 'h-7 sm:h-8',
     lg: 'h-9 sm:h-10',
     xl: 'h-11 sm:h-12',
+    '2xl': 'h-14 sm:h-16',
   }[size];
 
   const markHeightClass = {
@@ -36,7 +37,37 @@ export function AsterraLogo({
     md: 'h-7 w-10',
     lg: 'h-9 w-12',
     xl: 'h-11 w-16',
+    '2xl': 'h-14 w-20',
   }[size];
+
+  // Proportional sizing config for navbar animated planet + wordmark lockup
+  const navbarSizeConfig = {
+    sm: {
+      planet: 'h-7 sm:h-8',
+      wordmark: 'h-[13px] sm:h-[15px]',
+      overlap: '-mr-1 sm:-mr-2.5',
+    },
+    md: {
+      planet: 'h-8 sm:h-9',
+      wordmark: 'h-[15px] sm:h-[18px]',
+      overlap: '-mr-1.5 md:-mr-3.5 lg:-mr-4',
+    },
+    lg: {
+      planet: 'h-10 sm:h-12',
+      wordmark: 'h-[19px] sm:h-[23px]',
+      overlap: '-mr-2 sm:-mr-3.5 md:-mr-4.5',
+    },
+    xl: {
+      planet: 'h-12 sm:h-14 md:h-16',
+      wordmark: 'h-[22px] sm:h-[26px] md:h-[30px]',
+      overlap: '-mr-2.5 sm:-mr-4 md:-mr-5',
+    },
+    '2xl': {
+      planet: 'h-16 sm:h-20',
+      wordmark: 'h-[30px] sm:h-[38px]',
+      overlap: '-mr-3.5 sm:-mr-5 md:-mr-6',
+    },
+  }[size || 'md'];
 
   const logoSrc = isDarkBg
     ? '/images/brand/logo-light-ntg.png'
@@ -51,7 +82,7 @@ export function AsterraLogo({
       {variant === 'navbar' ? (
         <div className="inline-flex items-center">
           {/* Animated Asterra Planet (152 frames, 20fps, alpha, navbar-optimized) */}
-          <div className="relative shrink-0 flex items-center justify-center -mr-1.5 md:-mr-3.5 lg:-mr-4">
+          <div className={cn('relative shrink-0 flex items-center justify-center', navbarSizeConfig.overlap)}>
             <picture className="flex items-center justify-center pointer-events-none select-none">
               <source srcSet="/assets/asterra-planet-navbar.webp" type="image/webp" />
               <img
@@ -61,7 +92,7 @@ export function AsterraLogo({
                 height={107}
                 decoding="async"
                 draggable={false}
-                className="h-8 sm:h-9 w-auto object-contain pointer-events-none select-none transition-transform duration-200 group-hover:scale-105"
+                className={cn('w-auto object-contain pointer-events-none select-none transition-transform duration-200 group-hover:scale-105', navbarSizeConfig.planet)}
                 onError={(e) => {
                   e.currentTarget.src = '/images/brand/asterra-mark.png';
                 }}
@@ -76,7 +107,7 @@ export function AsterraLogo({
               width={381}
               height={49}
               priority
-              className="h-[15px] sm:h-[18px] w-auto object-contain shrink-0"
+              className={cn('w-auto object-contain shrink-0', navbarSizeConfig.wordmark)}
             />
           </div>
         </div>

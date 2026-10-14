@@ -1,8 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import Image from 'next/image';
-import { prefersReducedMotion } from '@/lib/animations/gsap-utils';
+import React, { useState, useEffect, useRef } from 'react';
+import { AsterraLogo } from '@/components/ui/asterra-logo';
 
 export type TaskStatus = 'pending' | 'success' | 'fallback';
 
@@ -71,7 +70,6 @@ export function HomepagePreloader({
   const maxReachedRef = useRef(0);
   const animFrameRef = useRef<number | null>(null);
   const isCompletedRef = useRef(false);
-  const isReducedMotion = useMemo(() => prefersReducedMotion(), []);
 
   // Check sessionStorage so internal client-side navigation doesn't replay the preloader
   useEffect(() => {
@@ -145,6 +143,8 @@ export function HomepagePreloader({
     if (!shouldRender || typeof window === 'undefined') return;
 
     const promoIconUrls = [
+      '/assets/asterra-planet-navbar.webp',
+      '/images/brand/asterra-wordmark-light.png',
       '/images/brand/asterra-mark.png',
       '/images/apps/gemini.png',
       '/images/apps/chatgpt.png',
@@ -311,145 +311,59 @@ export function HomepagePreloader({
   if (!shouldRender) return null;
 
   return (
-    <>
-      <style>{`
-        @keyframes orbitSpinClockwise {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-        @keyframes orbitSpinCounterClockwise {
-          from { transform: rotate(360deg); }
-          to { transform: rotate(0deg); }
-        }
-        @keyframes planetPulse {
-          0%, 100% { transform: scale(1); opacity: 0.98; }
-          50% { transform: scale(1.025); opacity: 1; }
-        }
-      `}</style>
+    <div
+      role="status"
+      aria-live="polite"
+      aria-label="Memuat AsterraStore"
+      className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#0C121E] select-none transition-all duration-450 ease-out ${
+        isExiting
+          ? 'opacity-0 scale-[1.015] pointer-events-none'
+          : 'opacity-100 scale-100'
+      }`}
+    >
+      {/* Ambient Warm Glow */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[320px] sm:w-[440px] h-[320px] sm:h-[440px] bg-[#C96F55]/12 rounded-full blur-[100px] pointer-events-none" />
+      </div>
 
-      <div
-        role="status"
-        aria-live="polite"
-        aria-label="Memuat AsterraStore"
-        className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#0C121E] select-none transition-all duration-450 ease-out ${
-          isExiting
-            ? 'opacity-0 scale-[1.015] pointer-events-none'
-            : 'opacity-100 scale-100'
-        }`}
-      >
-        {/* Ambient Warm Glow */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[320px] sm:w-[440px] h-[320px] sm:h-[440px] bg-[#C96F55]/12 rounded-full blur-[100px] pointer-events-none" />
+      {/* Centerpiece Container */}
+      <div className="relative z-10 flex flex-col items-center max-w-sm px-6 text-center">
+        {/* Official Animated Asterra Navbar Logo (Identical animation, speed, frames, & white wordmark) */}
+        <div className="mb-7 sm:mb-8 flex items-center justify-center">
+          <AsterraLogo
+            variant="navbar"
+            size="xl"
+            linkToHome={false}
+            className="pointer-events-none drop-shadow-[0_4px_24px_rgba(201,111,85,0.25)]"
+          />
         </div>
 
-        {/* Centerpiece Container */}
-        <div className="relative z-10 flex flex-col items-center max-w-sm px-6 text-center">
-          {/* Orbital Brand Centerpiece */}
-          <div className="relative w-32 h-32 sm:w-36 sm:h-36 flex items-center justify-center mb-6">
-            {/* SVG Orbital Track Geometry */}
-            <svg
-              className="absolute inset-0 w-full h-full pointer-events-none"
-              viewBox="0 0 144 144"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              {/* Outer Subtle Orbit */}
-              <circle
-                cx="72"
-                cy="72"
-                r="68"
-                stroke="rgba(255, 255, 255, 0.08)"
-                strokeWidth="1"
-                strokeDasharray="4 6"
-              />
-              {/* Main Accent Orbit */}
-              <circle
-                cx="72"
-                cy="72"
-                r="56"
-                stroke="rgba(201, 111, 85, 0.35)"
-                strokeWidth="1.2"
-              />
-            </svg>
-
-            {/* Rotating Orbit Ring with Glowing Satellite Node */}
-            <div
-              className="absolute inset-2 rounded-full pointer-events-none"
-              style={{
-                animation: isReducedMotion ? 'none' : 'orbitSpinClockwise 10s linear infinite',
-              }}
-            >
-              {/* Orbiting Satellite Particle */}
-              <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-[#C96F55] shadow-[0_0_12px_#C96F55]" />
-            </div>
-
-            {/* Counter-rotating Inner Ring with Secondary Soft Node */}
-            <div
-              className="absolute inset-4 rounded-full pointer-events-none"
-              style={{
-                animation: isReducedMotion ? 'none' : 'orbitSpinCounterClockwise 7s linear infinite',
-              }}
-            >
-              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-white/50 shadow-[0_0_8px_rgba(255,255,255,0.4)]" />
-            </div>
-
-            {/* Central Official Asterra Planet Mark */}
-            <div
-              className="relative z-10 w-20 h-20 sm:w-22 sm:h-22 flex items-center justify-center drop-shadow-[0_4px_20px_rgba(201,111,85,0.3)]"
-              style={{
-                animation: isReducedMotion ? 'none' : 'planetPulse 3s ease-in-out infinite',
-              }}
-            >
-              <Image
-                src="/images/brand/asterra-mark.png"
-                alt="Asterra Store Planet"
-                width={160}
-                height={160}
-                priority
-                className="w-full h-full object-contain select-none"
-              />
-            </div>
+        {/* Real-Time Progress Bar & Metrics */}
+        <div className="w-64 sm:w-72 space-y-2.5">
+          {/* Dynamic Status and Percentage */}
+          <div className="flex items-center justify-between text-xs font-medium tracking-tight">
+            <span className="text-white/70 text-[11px] truncate pr-2 text-left">
+              {statusText}
+            </span>
+            <span className="font-mono font-bold text-white tracking-wider text-[11px] shrink-0">
+              {displayProgress}%
+            </span>
           </div>
 
-          {/* Official Wordmark Text */}
-          <div className="mb-8">
-            <Image
-              src="/images/brand/asterra-wordmark-light.png"
-              alt="ASTERRASTORE"
-              width={260}
-              height={36}
-              priority
-              className="h-4 sm:h-5 w-auto object-contain mx-auto opacity-95 select-none"
+          {/* Progress Track */}
+          <div className="relative w-full h-[3px] bg-white/[0.08] rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-[#C96F55] via-[#E07A5F] to-white rounded-full transition-all duration-150 ease-out shadow-[0_0_10px_rgba(201,111,85,0.7)]"
+              style={{ width: `${displayProgress}%` }}
             />
           </div>
 
-          {/* Real-Time Progress Bar & Metrics */}
-          <div className="w-64 sm:w-72 space-y-2.5">
-            {/* Dynamic Status and Percentage */}
-            <div className="flex items-center justify-between text-xs font-medium tracking-tight">
-              <span className="text-white/70 text-[11px] truncate pr-2 text-left">
-                {statusText}
-              </span>
-              <span className="font-mono font-bold text-white tracking-wider text-[11px] shrink-0">
-                {displayProgress}%
-              </span>
-            </div>
-
-            {/* Progress Track */}
-            <div className="relative w-full h-[3px] bg-white/[0.08] rounded-full overflow-hidden">
-              <div
-                className="h-full bg-gradient-to-r from-[#C96F55] via-[#E07A5F] to-white rounded-full transition-all duration-150 ease-out shadow-[0_0_10px_rgba(201,111,85,0.7)]"
-                style={{ width: `${displayProgress}%` }}
-              />
-            </div>
-
-            {/* Minimalist Sub-Status Footer */}
-            <div className="pt-1 text-[10px] text-white/35 tracking-widest uppercase font-mono">
-              Lisensi & Akun Digital Resmi
-            </div>
+          {/* Minimalist Sub-Status Footer */}
+          <div className="pt-1 text-[10px] text-white/35 tracking-widest uppercase font-mono">
+            Lisensi & Akun Digital Resmi
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
