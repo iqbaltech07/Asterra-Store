@@ -1014,25 +1014,14 @@ export default function HomePage() {
           - Immediately visible in first viewport!
         */}
         <section id="produk-unggulan" aria-label="Produk Unggulan Asterra" data-gsap="featured-section" className="mb-6 sm:mb-8">
-          {/* Section Heading & Subtitle / Live Campaign Countdown */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-4 mb-2.5 sm:mb-3 px-0.5">
+          {/* Section Heading & Subtitle */}
+          <div className="flex items-center justify-between mb-2.5 sm:mb-3 px-0.5">
             <h2 data-gsap="section-heading" className="text-sm sm:text-base md:text-lg font-black tracking-tight text-[#121A2A]">
               Produk Unggulan & Lisensi Resmi
             </h2>
-
-            {isMounted && !isSectionExpired && countdownText ? (
-              <div
-                data-gsap="section-countdown"
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#C96F55]/10 border border-[#C96F55]/25 text-[#C96F55] text-xs sm:text-[13px] font-semibold shadow-2xs self-start sm:self-auto select-none"
-              >
-                <span className="shrink-0 text-xs">⏳</span>
-                <span className="font-medium tracking-tight">{countdownText}</span>
-              </div>
-            ) : (
-              <span data-gsap="hero-text" className="text-[11px] sm:text-xs text-[#121A2A]/55 font-medium hidden sm:inline">
-                Garansi 100% Penggantian · Aktivasi Instan
-              </span>
-            )}
+            <span data-gsap="hero-text" className="text-[11px] sm:text-xs text-[#121A2A]/55 font-medium hidden sm:inline">
+              Garansi 100% Penggantian · Aktivasi Instan
+            </span>
           </div>
 
           {/* Selector Tabs: [ 🔥 Promo ] [ Terlaris ] [ Terbaru ] */}
@@ -1092,6 +1081,19 @@ export default function HomePage() {
               <FontAwesomeIcon icon={faArrowRight} className="w-3 h-3" />
             </Link>
           </div>
+
+          {/* Live Campaign Countdown (Ditempatkan di bawah tab selector Promo, Terlaris, Terbaru) */}
+          {isMounted && !isSectionExpired && countdownText && (
+            <div className="mb-3 sm:mb-3.5 flex items-center justify-between px-0.5">
+              <div
+                data-gsap="section-countdown"
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#C96F55]/10 border border-[#C96F55]/25 text-[#C96F55] text-xs sm:text-[13px] font-semibold shadow-2xs select-none"
+              >
+                <span className="shrink-0 text-xs">⏳</span>
+                <span className="font-medium tracking-tight">{countdownText}</span>
+              </div>
+            </div>
+          )}
 
           {/* STATIC PRODUCT GRID (4 columns desktop, 2 columns mobile) */}
           {isCatalogLoading ? (
