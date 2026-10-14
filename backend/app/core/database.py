@@ -5,7 +5,7 @@ from sqlalchemy.pool import NullPool
 from app.config import settings
 
 # Engine configuration for PostgreSQL / Supabase
-db_url = settings.DATABASE_URL or ""
+db_url = settings.DIRECT_URL or settings.DATABASE_URL or ""
 if "pgbouncer=true" in db_url:
     db_url = db_url.replace("?pgbouncer=true", "")
 

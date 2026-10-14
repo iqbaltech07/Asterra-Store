@@ -435,6 +435,28 @@ class OrderService:
 
                 server_campaign_discount = tot_c_disc
 
+        # Resolve campaign reference from incoming checkout payload (e.g. from campaign promo link)
+        incoming_camp = (
+            payload.get("campaign_id")
+            or payload.get("campaignId")
+            or payload.get("campaign_slug")
+            or payload.get("campaignSlug")
+            or payload.get("utm_campaign")
+            or payload.get("campaign")
+            or ""
+        ).strip()
+
+        if not canonical_campaign_id and incoming_camp:
+            for c in active_camps:
+                c_id_str = str(c.get("id") or "").strip()
+                c_slug_str = str(c.get("slug") or "").strip().lower()
+                if c_id_str == incoming_camp or c_slug_str == incoming_camp.lower():
+                    canonical_campaign_id = c.get("id")
+                    matched_campaign = c
+                    break
+            if not canonical_campaign_id:
+                canonical_campaign_id = incoming_camp
+
         campaign_discount = server_campaign_discount
 
         # 3. Voucher Promo Code Validation
@@ -504,7 +526,7 @@ class OrderService:
                     raw_amount=raw_total,
                     promo_discount=promo_discount,
                     referral_discount=referral_discount,
-                    campaign_id=canonical_campaign_id or campaign_id,
+                    campaign_id=canonical_campaign_id or None,
                     campaign_discount=campaign_discount,
                     unique_code=unique_code,
                     payment_mode=payload.get("payment_mode") or payload.get("paymentMode") or "manual",
@@ -561,13 +583,19 @@ class OrderService:
         # 5. Reload and sync cache
         cls.load_orders(force_reload=True)
 
-        # 6. Allocate Waterfall Commission to Sales Partner
+        # 6. Allocate Waterfall Commission to Sales Partner & Sync to DB Commissions/Ledger SSOT
+        try:
+            from app.services.referral_profit_service import ReferralProfitService
+            ReferralProfitService.sync_order_commissions_and_ledger(order_id, "pending")
+        except Exception as e:
+            print(f"[OrderService] Commission and ledger sync note: {e}")
+
         if partner:
             try:
                 from app.services.partner_service import PartnerService
                 comm_rate = float(partner.get("rate", 10.0))
                 camp_name = None
-                target_camp_id = canonical_campaign_id or campaign_id
+                target_camp_id = canonical_campaign_id
 
                 if matched_campaign:
                     override = float(matched_campaign.get("affiliateBonusPercent") or matched_campaign.get("affiliateCommissionOverride") or 0)
@@ -613,7 +641,7 @@ class OrderService:
                 print(f"[OrderService] Commission allocation error: {e}")
 
         # 7. Telemetry tracking for campaign
-        target_camp_id = canonical_campaign_id or campaign_id
+        target_camp_id = canonical_campaign_id
         if target_camp_id:
             try:
                 from app.services.campaign_service import CampaignService
@@ -678,7 +706,13 @@ class OrderService:
         # 2. Reload and sync cache
         cls.load_orders(force_reload=True)
 
-        # 3. Synchronize Partner Commissions Status
+        # 3. Synchronize Partner Commissions & Profit Ledger Status in PostgreSQL DB
+        try:
+            from app.services.referral_profit_service import ReferralProfitService
+            ReferralProfitService.sync_order_commissions_and_ledger(clean_id, new_status)
+        except Exception as e:
+            print(f"[OrderService] Referral profit ledger sync error on status update: {e}")
+
         try:
             from app.services.partner_service import PartnerService
             partners = PartnerService.load_partners()

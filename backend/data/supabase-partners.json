@@ -23,13 +23,13 @@
     "code": "AST-FOUNDER",
     "tier": "Standard (10%)",
     "rate": 10,
-    "totalClicks": 5,
+    "totalClicks": 8,
     "bankName": null,
     "bankAccount": null,
     "status": "active",
     "referredById": null,
     "createdAt": "2026-10-06T22:41:10.252000",
-    "updatedAt": "2026-10-07T08:15:18.771000"
+    "updatedAt": "2026-10-14T08:30:17.129000"
   },
   {
     "id": "cmuxcxrbm0001kx04jk0guqdl",
@@ -39,13 +39,13 @@
     "code": "AST-CEO-9MD2",
     "tier": "Standard (10%)",
     "rate": 10,
-    "totalClicks": 2,
+    "totalClicks": 3,
     "bankName": null,
     "bankAccount": null,
     "status": "active",
     "referredById": "cmux9j2i40000l904uw42qkef",
     "createdAt": "2026-10-07T00:16:34.450000",
-    "updatedAt": "2026-10-07T00:22:39.218000"
+    "updatedAt": "2026-10-14T09:01:06.478000"
   },
   {
     "id": "cmuxio9jd0000jt04o1d1zcn6",

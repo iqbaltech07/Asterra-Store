@@ -7,6 +7,8 @@ from app.models.promo import PromoCode
 from app.models.banner import PromoBanner
 from app.models.campaign import PromoCampaign
 from app.models.referral_session import ReferralSession
+from app.models.commission import Commission
+from app.models.profit_ledger import ProfitLedger
 
 __all__ = [
     "Product",
@@ -19,4 +21,6 @@ __all__ = [
     "PromoBanner",
     "PromoCampaign",
     "ReferralSession",
+    "Commission",
+    "ProfitLedger",
 ]
