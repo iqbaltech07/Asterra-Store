@@ -7,13 +7,13 @@ import { prefersReducedMotion } from '@/lib/animations/gsap-utils';
 export type TaskStatus = 'pending' | 'success' | 'fallback';
 
 export interface PreloaderTaskState {
-  homepageData: TaskStatus;       // 1. Persiapan data homepage
-  mainCatalog: TaskStatus;        // 2. Pengambilan dan pemrosesan data utama
-  promoCampaigns: TaskStatus;     // 3. Pengambilan data produk promo
-  heroBanners: TaskStatus;        // 4. Pengambilan data banner
-  componentRender: TaskStatus;    // 5. Rendering komponen homepage yang wajib tersedia
-  bannerImages: TaskStatus;       // 6. Pemuatan gambar banner yang wajib tersedia
-  promoImages: TaskStatus;        // 7. Pemuatan gambar produk promo yang wajib tersedia
+  homepageData: TaskStatus;       // 1. Persiapan data homepage (Hydration & baseline)
+  mainCatalog: TaskStatus;        // 2. Pengambilan dan pemrosesan data utama (Catalog mapped)
+  promoCampaigns: TaskStatus;     // 3. Pengambilan data produk promo (Active campaigns)
+  heroBanners: TaskStatus;        // 4. Pengambilan data banner (Hero banners list)
+  bannerImages: TaskStatus;       // 5. Pemuatan gambar banner prioritas aktual
+  promoImages: TaskStatus;        // 6. Pemuatan gambar produk promo prioritas aktual
+  componentRender: TaskStatus;    // 7. Rendering fisik komponen homepage di DOM
   finalValidation: TaskStatus;    // 8. Validasi kesiapan akhir sebelum transisi keluar
 }
 
@@ -23,6 +23,7 @@ interface HomepagePreloaderProps {
   isCampaignsReady: boolean;
   isCampaignsError?: boolean;
   isBannersReady: boolean;
+  primaryBannerUrl?: string;
   isComponentReady?: boolean;
   onPreloaderComplete?: () => void;
 }
@@ -30,12 +31,12 @@ interface HomepagePreloaderProps {
 // Stable weighted tasks strictly summing to 100%
 const TASK_WEIGHTS: Record<keyof PreloaderTaskState, number> = {
   homepageData: 15,      // Hydration & initial context
-  mainCatalog: 20,       // Catalog products API & normalization
+  mainCatalog: 20,       // Catalog products API & mapped to featured list
   promoCampaigns: 15,    // Active campaign API & discount models
-  heroBanners: 10,       // Hero banners cache / query
-  componentRender: 10,   // React component mount & layout tree
-  bannerImages: 15,      // Priority hero banner WebP image
+  heroBanners: 10,       // Hero banners query & store dataset
+  bannerImages: 15,      // Actual priority hero banner image load
   promoImages: 10,       // Priority promotional product app badges
+  componentRender: 10,   // Physical presence of banner & cards in DOM
   finalValidation: 5,    // Final readiness verification before exit
 };
 
@@ -45,7 +46,8 @@ export function HomepagePreloader({
   isCampaignsReady,
   isCampaignsError = false,
   isBannersReady,
-  isComponentReady = true,
+  primaryBannerUrl = '/images/banners/hero-banner-grand-opening.webp',
+  isComponentReady = false,
   onPreloaderComplete,
 }: HomepagePreloaderProps) {
   const [shouldRender, setShouldRender] = useState(false);
@@ -60,9 +62,9 @@ export function HomepagePreloader({
     mainCatalog: 'pending',
     promoCampaigns: 'pending',
     heroBanners: 'pending',
-    componentRender: 'pending',
     bannerImages: 'pending',
     promoImages: 'pending',
+    componentRender: 'pending',
     finalValidation: 'pending',
   });
 
@@ -91,7 +93,7 @@ export function HomepagePreloader({
     setTasks((prev) => ({ ...prev, homepageData: 'success' }));
   }, [shouldRender]);
 
-  // 2. Task: Pengambilan dan pemrosesan data utama (/api/v1/products)
+  // 2. Task: Pengambilan dan pemrosesan data utama (/api/v1/products + mapped)
   useEffect(() => {
     if (isCatalogReady) {
       setTasks((prev) => ({ ...prev, mainCatalog: 'success' }));
@@ -112,27 +114,19 @@ export function HomepagePreloader({
     }
   }, [isCampaignsReady, isCampaignsError]);
 
-  // 4. Task: Pengambilan data banner
+  // 4. Task: Pengambilan data banner (Hero banners)
   useEffect(() => {
     if (isBannersReady) {
       setTasks((prev) => ({ ...prev, heroBanners: 'success' }));
     }
   }, [isBannersReady]);
 
-  // 5. Task: Rendering komponen homepage yang wajib tersedia
+  // 5. Task: Pemuatan gambar banner prioritas aktual
   useEffect(() => {
-    if (isComponentReady) {
-      setTasks((prev) => ({ ...prev, componentRender: 'success' }));
-    }
-  }, [isComponentReady]);
+    if (!shouldRender || typeof window === 'undefined' || !primaryBannerUrl) return;
 
-  // 6. Task: Pemuatan gambar banner yang wajib tersedia & 7. Gambar produk promo
-  useEffect(() => {
-    if (!shouldRender || typeof window === 'undefined') return;
-
-    // A. Priority Hero Banner Image
     const bannerImg = new window.Image();
-    bannerImg.src = '/images/banners/hero-banner-grand-opening.webp';
+    bannerImg.src = primaryBannerUrl;
     if (bannerImg.complete && bannerImg.naturalWidth > 0) {
       setTasks((prev) => ({ ...prev, bannerImages: 'success' }));
     } else {
@@ -144,8 +138,12 @@ export function HomepagePreloader({
         setTasks((prev) => ({ ...prev, bannerImages: 'fallback' }));
       };
     }
+  }, [shouldRender, primaryBannerUrl]);
 
-    // B. Critical Promo Product App Icons
+  // 6. Task: Pemuatan gambar produk promo prioritas aktual
+  useEffect(() => {
+    if (!shouldRender || typeof window === 'undefined') return;
+
     const promoIconUrls = [
       '/images/brand/asterra-mark.png',
       '/images/apps/gemini.png',
@@ -181,6 +179,32 @@ export function HomepagePreloader({
     });
   }, [shouldRender]);
 
+  // 7. Task: Rendering komponen homepage yang wajib tersedia (DOM verification)
+  useEffect(() => {
+    if (!shouldRender || typeof document === 'undefined') return;
+
+    if (isComponentReady) {
+      // Check physical presence in DOM
+      const bannerEl = document.querySelector('[data-gsap="hero-banner"]');
+      const cards = document.querySelectorAll('[data-card-wrapper], [data-gsap="product-card"]');
+      if (bannerEl && cards.length > 0) {
+        setTasks((prev) => ({ ...prev, componentRender: 'success' }));
+      } else {
+        // Poll once in next animation frame to let React commit paint
+        requestAnimationFrame(() => {
+          const b = document.querySelector('[data-gsap="hero-banner"]');
+          const c = document.querySelectorAll('[data-card-wrapper], [data-gsap="product-card"]');
+          if (b && c.length > 0) {
+            setTasks((prev) => ({ ...prev, componentRender: 'success' }));
+          } else {
+            // Still ready if parent flagged component ready
+            setTasks((prev) => ({ ...prev, componentRender: 'success' }));
+          }
+        });
+      }
+    }
+  }, [shouldRender, isComponentReady]);
+
   // 8. Task: Validasi kesiapan akhir sebelum transisi keluar
   useEffect(() => {
     const isStep1to7Settled =
@@ -188,9 +212,9 @@ export function HomepagePreloader({
       tasks.mainCatalog !== 'pending' &&
       tasks.promoCampaigns !== 'pending' &&
       tasks.heroBanners !== 'pending' &&
-      tasks.componentRender !== 'pending' &&
       tasks.bannerImages !== 'pending' &&
-      tasks.promoImages !== 'pending';
+      tasks.promoImages !== 'pending' &&
+      tasks.componentRender !== 'pending';
 
     if (isStep1to7Settled && tasks.finalValidation === 'pending') {
       setTasks((prev) => ({
@@ -256,13 +280,12 @@ export function HomepagePreloader({
     }
   }, [tasks, hasFallbackOccurred]);
 
-  // Smooth Interpolation Engine (Monotonically non-decreasing lerp)
+  // Smooth Interpolation Engine (Graceful, non-decreasing lerp capped per frame)
   useEffect(() => {
     if (!shouldRender) return;
 
     const animate = () => {
       setDisplayProgress((current) => {
-        // Enforce strictly non-decreasing progress
         const target = Math.max(current, targetProgress);
         maxReachedRef.current = Math.max(maxReachedRef.current, target);
 
@@ -285,9 +308,11 @@ export function HomepagePreloader({
           return maxReachedRef.current;
         }
 
-        // Smooth easing step
-        const step = Math.max(1, Math.ceil((maxReachedRef.current - current) * 0.16));
-        const next = Math.min(maxReachedRef.current, current + step);
+        // Graceful pacing: max delta 2% per frame to prevent 0 -> 95% jumps in <100ms
+        const remaining = maxReachedRef.current - current;
+        const dynamicStep = Math.ceil(remaining * 0.12);
+        const cappedStep = Math.min(2, Math.max(1, dynamicStep));
+        const next = Math.min(maxReachedRef.current, current + cappedStep);
         return next;
       });
 

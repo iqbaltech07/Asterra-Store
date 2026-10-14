@@ -41,7 +41,7 @@ import { getRecentlyViewed, RecentlyViewedItem } from '@/lib/services/recently-v
 import { ProductItem } from '@/lib/products-data';
 import { HeroBannerSwiper } from '@/components/home/hero-banner-swiper';
 import { HomepagePreloader } from '@/components/home/homepage-preloader';
-import { animateHomepageHero } from '@/lib/animations/gsap-utils';
+import { useHeroBanners } from '@/lib/hooks/use-hero-banners';
 
 // Helper to render crisp, brand-accurate badges for the top digital applications
 function AppBrandBadge({ name }: { name: string }) {
@@ -544,6 +544,90 @@ function ShowcaseLoopingCard({
   );
 }
 
+// Dedicated Section Countdown Badge: Isolates 1s timer inside itself to prevent HomePage from re-rendering every second
+function FeaturedSectionCountdownBadge({
+  activeCampaigns,
+  featuredApps,
+}: {
+  activeCampaigns: ActiveCampaign[];
+  featuredApps: ApplicationGroupItem[];
+}) {
+  const [countdownText, setCountdownText] = useState('');
+  const [isSectionExpired, setIsSectionExpired] = useState(true);
+
+  const relevantFeaturedCampaigns = useMemo(() => {
+    if (!activeCampaigns || activeCampaigns.length === 0 || !featuredApps || featuredApps.length === 0) {
+      return [];
+    }
+    const matched = activeCampaigns.filter((camp: ActiveCampaign) => {
+      if (!isCampaignActiveNow(camp)) return false;
+      return featuredApps.some((app) =>
+        isProductInCampaign(app, camp) ||
+        (app.items && app.items.some((item) =>
+          isProductInCampaign({ id: item.id, name: item.name, category: item.category?.name }, camp)
+        ))
+      );
+    });
+    return sortCampaignsByPriority(matched);
+  }, [activeCampaigns, featuredApps]);
+
+  useEffect(() => {
+    if (relevantFeaturedCampaigns.length === 0) {
+      setCountdownText('');
+      setIsSectionExpired(true);
+      return;
+    }
+
+    const updateCountdown = () => {
+      let activeRep: ActiveCampaign | null = null;
+      let cdResult: ReturnType<typeof getCampaignCountdown> | null = null;
+
+      for (const camp of relevantFeaturedCampaigns) {
+        const res = getCampaignCountdown(camp.endsAt || camp.endDate);
+        if (!res.isExpired) {
+          activeRep = camp;
+          cdResult = res;
+          break;
+        }
+      }
+
+      if (!activeRep || !cdResult || cdResult.isExpired) {
+        setCountdownText('');
+        setIsSectionExpired(true);
+        return;
+      }
+
+      const hasDifferentEndDates = relevantFeaturedCampaigns.some((c) => {
+        const cEnd = c.endsAt || c.endDate;
+        const repEnd = activeRep?.endsAt || activeRep?.endDate;
+        return cEnd !== repEnd;
+      });
+
+      const label = hasDifferentEndDates && activeRep.name ? `${activeRep.name}: ` : '';
+      setCountdownText(`${label}${cdResult.countdownText}`);
+      setIsSectionExpired(false);
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+    return () => clearInterval(interval);
+  }, [relevantFeaturedCampaigns]);
+
+  if (isSectionExpired || !countdownText) return null;
+
+  return (
+    <div className="mb-3 sm:mb-3.5 flex items-center justify-between px-0.5">
+      <div
+        data-gsap="section-countdown"
+        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#C96F55]/10 border border-[#C96F55]/25 text-[#C96F55] text-xs sm:text-[13px] font-semibold shadow-2xs select-none"
+      >
+        <span className="shrink-0 text-xs">⏳</span>
+        <span className="font-medium tracking-tight">{countdownText}</span>
+      </div>
+    </div>
+  );
+}
+
 export default function HomePage() {
   const [activeNotification, setActiveNotification] = useState<string | null>(null);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
@@ -582,6 +666,9 @@ export default function HomePage() {
   }, []);
 
   const hasActiveCampaign = activeCampaigns.length > 0;
+
+  // Shared hero banners query
+  const { banners: heroBanners, isLoading: isBannersLoading, primaryBannerUrl } = useHeroBanners();
 
   // Dynamic products fetched from catalog API (cached via shared query)
   const { data: catalogResponse, isLoading, isError: isCatalogError } = useCatalogProducts();
@@ -813,79 +900,12 @@ export default function HomePage() {
     return allMapped.slice(0, 8);
   }, [allProducts, appConfigurations, activeCategory, activeCampaigns]);
 
-  // Section Countdown State for Featured Products ("Produk Unggulan & Lisensi Resmi")
-  const [countdownText, setCountdownText] = useState<string>('');
-  const [isSectionExpired, setIsSectionExpired] = useState<boolean>(true);
+  // Client-mounted tracking
   const [isMounted, setIsMounted] = useState<boolean>(false);
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
-
-  // Determine active campaigns applying to current featuredApps
-  const relevantFeaturedCampaigns = useMemo(() => {
-    if (!activeCampaigns || activeCampaigns.length === 0 || !featuredApps || featuredApps.length === 0) {
-      return [];
-    }
-
-    const matched = activeCampaigns.filter((camp: ActiveCampaign) => {
-      if (!isCampaignActiveNow(camp)) return false;
-      return featuredApps.some((app) =>
-        isProductInCampaign(app, camp) ||
-        (app.items && app.items.some((item) =>
-          isProductInCampaign({ id: item.id, name: item.name, category: item.category?.name }, camp)
-        ))
-      );
-    });
-
-    return sortCampaignsByPriority(matched);
-  }, [activeCampaigns, featuredApps]);
-
-  useEffect(() => {
-    if (!isMounted || relevantFeaturedCampaigns.length === 0) {
-      setCountdownText('');
-      setIsSectionExpired(true);
-      return;
-    }
-
-    const updateCountdown = () => {
-      // Find the first non-expired campaign in deterministic priority order
-      let activeRep: ActiveCampaign | null = null;
-      let cdResult: ReturnType<typeof getCampaignCountdown> | null = null;
-
-      for (const camp of relevantFeaturedCampaigns) {
-        const res = getCampaignCountdown(camp.endsAt || camp.endDate);
-        if (!res.isExpired) {
-          activeRep = camp;
-          cdResult = res;
-          break;
-        }
-      }
-
-      if (!activeRep || !cdResult || cdResult.isExpired) {
-        setCountdownText('');
-        setIsSectionExpired(true);
-        return;
-      }
-
-      // Check if multiple campaigns with different end dates exist among relevant featured campaigns
-      const hasDifferentEndDates = relevantFeaturedCampaigns.some((c) => {
-        const cEnd = c.endsAt || c.endDate;
-        const repEnd = activeRep?.endsAt || activeRep?.endDate;
-        return cEnd !== repEnd;
-      });
-
-      // If different campaigns have different end dates, label with campaign name to prevent misleading users
-      const label = hasDifferentEndDates && activeRep.name ? `${activeRep.name}: ` : '';
-      setCountdownText(`${label}${cdResult.countdownText}`);
-      setIsSectionExpired(false);
-    };
-
-    updateCountdown();
-    const interval = setInterval(updateCountdown, 1000);
-
-    return () => clearInterval(interval);
-  }, [isMounted, relevantFeaturedCampaigns]);
 
   // Product Looping Showcase: Curated list of popular accounts that stays completely independent of the selector
   const showcaseApps = useMemo(() => {
@@ -1000,18 +1020,13 @@ export default function HomePage() {
     <div className="min-h-screen bg-white text-[#121A2A] flex flex-col selection:bg-[#C96F55]/20 selection:text-[#C96F55]">
       {/* Real-Time AsterraStore Preloader Engine */}
       <HomepagePreloader
-        isCatalogReady={!isCatalogLoading && !!catalogResponse?.data}
+        isCatalogReady={!isCatalogLoading && !!catalogResponse?.data && featuredApps.length > 0}
         isCatalogError={isCatalogError}
         isCampaignsReady={isCampaignsLoaded}
         isCampaignsError={isCampaignsError}
-        isBannersReady={true}
-        isComponentReady={isMounted}
-        onPreloaderComplete={() => {
-          if (typeof window !== 'undefined') {
-            const mainEl = document.getElementById('main-content') || document.body;
-            animateHomepageHero(mainEl as HTMLElement);
-          }
-        }}
+        isBannersReady={!isBannersLoading && heroBanners.length > 0}
+        primaryBannerUrl={primaryBannerUrl}
+        isComponentReady={isMounted && featuredApps.length > 0 && heroBanners.length > 0}
       />
 
       {/* Toast Notification */}
@@ -1107,17 +1122,12 @@ export default function HomePage() {
             </Link>
           </div>
 
-          {/* Live Campaign Countdown (Ditempatkan di bawah tab selector Promo, Terlaris, Terbaru) */}
-          {isMounted && !isSectionExpired && countdownText && (
-            <div className="mb-3 sm:mb-3.5 flex items-center justify-between px-0.5">
-              <div
-                data-gsap="section-countdown"
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#C96F55]/10 border border-[#C96F55]/25 text-[#C96F55] text-xs sm:text-[13px] font-semibold shadow-2xs select-none"
-              >
-                <span className="shrink-0 text-xs">⏳</span>
-                <span className="font-medium tracking-tight">{countdownText}</span>
-              </div>
-            </div>
+          {/* Live Campaign Countdown (Isolated component to avoid re-rendering entire homepage every 1s) */}
+          {isMounted && (
+            <FeaturedSectionCountdownBadge
+              activeCampaigns={activeCampaigns}
+              featuredApps={featuredApps}
+            />
           )}
 
           {/* STATIC PRODUCT GRID (4 columns desktop, 2 columns mobile) */}
