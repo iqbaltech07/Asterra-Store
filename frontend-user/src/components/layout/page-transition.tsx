@@ -46,7 +46,14 @@ export function PageTransition({ children }: PageTransitionProps) {
     let cleanupScroll: (() => void) | undefined;
 
     if (pathname === '/') {
-      cleanupEntrance = animateHomepageHero(container);
+      try {
+        const isInitialPreload = typeof window !== 'undefined' && sessionStorage.getItem('asterra_home_preloaded') !== 'true';
+        if (!isInitialPreload) {
+          cleanupEntrance = animateHomepageHero(container);
+        }
+      } catch {
+        cleanupEntrance = animateHomepageHero(container);
+      }
       cleanupScroll = setupHomepageScrollReveal(container);
     } else if (pathname === '/products') {
       cleanupEntrance = animateProductsPage(container);
