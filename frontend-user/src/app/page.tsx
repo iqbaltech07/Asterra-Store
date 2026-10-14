@@ -40,6 +40,8 @@ import { QuickViewModal, QuickViewProductData } from '@/components/products/quic
 import { getRecentlyViewed, RecentlyViewedItem } from '@/lib/services/recently-viewed';
 import { ProductItem } from '@/lib/products-data';
 import { HeroBannerSwiper } from '@/components/home/hero-banner-swiper';
+import { HomepagePreloader } from '@/components/home/homepage-preloader';
+import { animateHomepageHero } from '@/lib/animations/gsap-utils';
 
 // Helper to render crisp, brand-accurate badges for the top digital applications
 function AppBrandBadge({ name }: { name: string }) {
@@ -558,6 +560,8 @@ export default function HomePage() {
 
   // Active Campaign Status for live promotional discounts & badges
   const [activeCampaigns, setActiveCampaigns] = useState<any[]>([]);
+  const [isCampaignsLoaded, setIsCampaignsLoaded] = useState(false);
+  const [isCampaignsError, setIsCampaignsError] = useState(false);
 
   useEffect(() => {
     setRecentlyViewed(getRecentlyViewed());
@@ -569,13 +573,18 @@ export default function HomePage() {
           setActiveCampaigns(json.data);
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        setIsCampaignsError(true);
+      })
+      .finally(() => {
+        setIsCampaignsLoaded(true);
+      });
   }, []);
 
   const hasActiveCampaign = activeCampaigns.length > 0;
 
   // Dynamic products fetched from catalog API (cached via shared query)
-  const { data: catalogResponse, isLoading } = useCatalogProducts();
+  const { data: catalogResponse, isLoading, isError: isCatalogError } = useCatalogProducts();
   const isCatalogLoading = isLoading || !catalogResponse?.data;
 
   const allProducts = useMemo(
@@ -989,6 +998,22 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-white text-[#121A2A] flex flex-col selection:bg-[#C96F55]/20 selection:text-[#C96F55]">
+      {/* Real-Time AsterraStore Preloader Engine */}
+      <HomepagePreloader
+        isCatalogReady={!isCatalogLoading && !!catalogResponse?.data}
+        isCatalogError={isCatalogError}
+        isCampaignsReady={isCampaignsLoaded}
+        isCampaignsError={isCampaignsError}
+        isBannersReady={true}
+        isComponentReady={isMounted}
+        onPreloaderComplete={() => {
+          if (typeof window !== 'undefined') {
+            const mainEl = document.getElementById('main-content') || document.body;
+            animateHomepageHero(mainEl as HTMLElement);
+          }
+        }}
+      />
+
       {/* Toast Notification */}
       {activeNotification && (
         <div className="fixed bottom-20 sm:bottom-6 right-6 z-50 bg-[#121A2A] border border-white/15 text-white px-4 py-3 rounded-xl shadow-editorial flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2 duration-200">
