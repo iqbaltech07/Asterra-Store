@@ -1,7 +1,9 @@
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 import json
 from sqlalchemy import Column, String, Integer, Float, Boolean, DateTime, Text
 from app.core.database import Base
+
+WIB = timezone(timedelta(hours=7))
 
 class PromoCampaign(Base):
     __tablename__ = "promo_campaigns"
@@ -23,10 +25,13 @@ class PromoCampaign(Base):
     target_categories = Column(Text, default="[]")  # JSON array of category names
     target_products = Column(Text, default="[]")    # JSON array of product IDs
 
+    # Prioritas Campaign jika Bertabrakan (Angka lebih tinggi = prioritas lebih tinggi)
+    priority = Column(Integer, default=0)
+
     # Booster Komisi Affiliate Mitra
     affiliate_commission_override = Column(Float, nullable=True)  # e.g. 15.0 (%)
 
-    # Jadwal & Status
+    # Jadwal & Status (Zona Operasional Asia/Jakarta)
     starts_at = Column(DateTime, nullable=False)
     ends_at = Column(DateTime, nullable=False)
     is_active = Column(Boolean, default=True)
@@ -39,13 +44,13 @@ class PromoCampaign(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     def get_status(self) -> str:
-        """Determines computed status dynamically: 'draft' | 'running' | 'scheduled' | 'ended'"""
+        """Determines computed status dynamically: 'draft' | 'running' | 'scheduled' | 'ended' using Asia/Jakarta."""
         if not self.is_active:
             return "draft"
-        now = datetime.utcnow()
-        if self.starts_at and now < self.starts_at:
+        now_wib = datetime.now(WIB).replace(tzinfo=None)
+        if self.starts_at and now_wib < self.starts_at:
             return "scheduled"
-        if self.ends_at and now >= self.ends_at:
+        if self.ends_at and now_wib >= self.ends_at:
             return "ended"
         return "running"
 
@@ -69,6 +74,14 @@ class PromoCampaign(Base):
         elif self.target_scope == "specific_products":
             target_cat_display = f"{len(prod_list)} Produk Khusus"
 
+        starts_iso = None
+        if self.starts_at:
+            starts_iso = self.starts_at.strftime("%Y-%m-%dT%H:%M:%S+07:00") if "+" not in self.starts_at.isoformat() else self.starts_at.isoformat()
+
+        ends_iso = None
+        if self.ends_at:
+            ends_iso = self.ends_at.strftime("%Y-%m-%dT%H:%M:%S+07:00") if "+" not in self.ends_at.isoformat() else self.ends_at.isoformat()
+
         return {
             "id": self.id,
             "name": self.name,
@@ -77,12 +90,13 @@ class PromoCampaign(Base):
             "bannerUrl": self.banner_url or "",
             "startDate": self.starts_at.strftime("%Y-%m-%d") if self.starts_at else None,
             "endDate": self.ends_at.strftime("%Y-%m-%d") if self.ends_at else None,
-            "startsAt": self.starts_at.isoformat() if self.starts_at else None,
-            "endsAt": self.ends_at.isoformat() if self.ends_at else None,
+            "startsAt": starts_iso,
+            "endsAt": ends_iso,
             "targetScope": self.target_scope,
             "targetCategory": target_cat_display,
             "targetCategories": cat_list,
             "targetProducts": prod_list,
+            "priority": self.priority or 0,
             "discountType": self.discount_type,
             "discountValue": self.discount_value,
             "maxDiscountAmount": self.max_discount_amount,

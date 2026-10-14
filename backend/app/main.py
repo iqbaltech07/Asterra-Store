@@ -1169,8 +1169,9 @@ async def delete_promo_banner(banner_id: str):
 # ------------------------------------------
 @api_router.get("/campaigns/active", tags=["Campaigns"])
 @api_router.get("/campaigns", tags=["Campaigns"])
-def get_active_campaigns():
+def get_active_campaigns(response: Response):
     """Returns currently running campaigns evaluated against live time-window."""
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     campaigns = CampaignService.get_active_campaigns()
     return {
         "success": True,
@@ -1183,12 +1184,14 @@ def evaluate_product_campaign_price(
     product_id: str = Query(..., alias="productId"),
     category: Optional[str] = Query(None),
     price: float = Query(..., alias="price"),
+    slug: Optional[str] = Query(None),
 ):
     """O(1) in-memory evaluation for product campaign discount and affiliate booster rate."""
     evaluation = CampaignService.evaluate_product_campaign(
         product_id=product_id,
         category_name=category,
         original_price=price,
+        product_slug=slug,
     )
     return {
         "success": True,

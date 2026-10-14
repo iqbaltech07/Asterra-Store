@@ -1,6 +1,9 @@
 'use client';
 
+import React, { useMemo } from 'react';
 import { useCartStore } from '@/store/use-cart-store';
+import { useQuery } from '@tanstack/react-query';
+import { calculateCampaignPrice, ActiveCampaign } from '@/lib/utils/promo-pricing';
 import { Button } from '@/components/ui/button';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -20,8 +23,43 @@ interface CartDrawerProps {
 }
 
 export function CartDrawer({ isOpen, onClose, onCheckout }: CartDrawerProps) {
-  const { items, removeItem, updateQuantity, getTotalAmount, getTotalItems, clearCart } =
+  const { items, removeItem, updateQuantity, getTotalItems, clearCart } =
     useCartStore();
+
+  const { data: campaignsRes } = useQuery<{ success: boolean; data: ActiveCampaign[] }>({
+    queryKey: ['active-campaigns'],
+    queryFn: async () => {
+      const res = await fetch('/api/v1/campaigns/active');
+      if (!res.ok) return { success: false, data: [] };
+      return res.json();
+    },
+    staleTime: 30000,
+  });
+  const activeCampaigns = useMemo(() => campaignsRes?.data || [], [campaignsRes]);
+
+  const itemsWithPricing = useMemo(() => {
+    return items.map((item) => {
+      const promoCalc = calculateCampaignPrice(item.priceNumeric, item, activeCampaigns);
+      return {
+        ...item,
+        promoCalc,
+        effectiveUnitPrice: promoCalc.discountedPrice,
+        unitSavings: promoCalc.discountAmount,
+        lineTotal: promoCalc.discountedPrice * item.quantity,
+        normalLineTotal: item.priceNumeric * item.quantity,
+      };
+    });
+  }, [items, activeCampaigns]);
+
+  const totalNormalAmount = useMemo(() => {
+    return itemsWithPricing.reduce((acc, curr) => acc + curr.normalLineTotal, 0);
+  }, [itemsWithPricing]);
+
+  const totalCampaignSavings = useMemo(() => {
+    return itemsWithPricing.reduce((acc, curr) => acc + curr.unitSavings * curr.quantity, 0);
+  }, [itemsWithPricing]);
+
+  const totalPayableAmount = totalNormalAmount - totalCampaignSavings;
 
   if (!isOpen) return null;
 
@@ -63,7 +101,7 @@ export function CartDrawer({ isOpen, onClose, onCheckout }: CartDrawerProps) {
 
         {/* Items List */}
         <div className="flex-1 overflow-y-auto p-5 space-y-4">
-          {items.length === 0 ? (
+          {itemsWithPricing.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-3">
               <div className="w-12 h-12 rounded-full bg-white border border-[rgba(18,26,42,0.08)] flex items-center justify-center text-[#121A2A]/40">
                 <FontAwesomeIcon icon={faBagShopping} className="w-6 h-6" />
@@ -77,7 +115,7 @@ export function CartDrawer({ isOpen, onClose, onCheckout }: CartDrawerProps) {
               </Button>
             </div>
           ) : (
-            items.map((item) => {
+            itemsWithPricing.map((item) => {
               const itemOutOfStock =
                 item.isOutOfStock || (item.stock !== undefined && item.stock <= 0);
 
@@ -92,6 +130,11 @@ export function CartDrawer({ isOpen, onClose, onCheckout }: CartDrawerProps) {
                     <div className="min-w-0 flex-1 pr-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-[11px] text-[#C96F55] font-semibold">{item.category}</span>
+                        {item.promoCalc.hasPromo && (
+                          <span className="text-[9px] px-1.5 py-0.2 rounded font-black bg-gradient-to-r from-[#DC2626] to-[#C96F55] text-white">
+                            {item.promoCalc.discountBadge}
+                          </span>
+                        )}
                         {itemOutOfStock && (
                           <span className="text-[10px] px-2 py-0.5 rounded bg-status-error text-white font-semibold shadow-xs shrink-0">
                             Stok Habis
@@ -111,9 +154,27 @@ export function CartDrawer({ isOpen, onClose, onCheckout }: CartDrawerProps) {
                   </div>
 
                   <div className="flex items-center justify-between pt-2 border-t border-[rgba(18,26,42,0.06)]">
-                    <span className="font-bold text-sm text-[#121A2A]">
-                      Rp {(item.priceNumeric * item.quantity).toLocaleString('id-ID')}
-                    </span>
+                    <div>
+                      {item.promoCalc.hasPromo ? (
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-1.5 leading-none">
+                            <span className="text-[10px] text-[#121A2A]/40 line-through font-semibold">
+                              Rp {item.normalLineTotal.toLocaleString('id-ID')}
+                            </span>
+                            <span className="text-[8px] font-black text-[#DC2626] bg-[#DC2626]/10 px-1 py-0.2 rounded border border-[#DC2626]/20">
+                              {item.promoCalc.savingsText}
+                            </span>
+                          </div>
+                          <span className="font-black text-sm text-[#C96F55] block">
+                            Rp {item.lineTotal.toLocaleString('id-ID')}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="font-bold text-sm text-[#121A2A]">
+                          Rp {item.normalLineTotal.toLocaleString('id-ID')}
+                        </span>
+                      )}
+                    </div>
 
                     <div className="flex items-center gap-2 bg-[#F8FAFC] border border-[rgba(18,26,42,0.1)] rounded-md px-2 py-0.5">
                       <button
@@ -155,8 +216,14 @@ export function CartDrawer({ isOpen, onClose, onCheckout }: CartDrawerProps) {
             <div className="space-y-1.5 text-xs">
               <div className="flex justify-between text-[#121A2A]/60">
                 <span>Subtotal ({getTotalItems()} item)</span>
-                <span className="font-semibold text-[#121A2A]">Rp {getTotalAmount().toLocaleString('id-ID')}</span>
+                <span className="font-semibold text-[#121A2A]">Rp {totalNormalAmount.toLocaleString('id-ID')}</span>
               </div>
+              {totalCampaignSavings > 0 && (
+                <div className="flex justify-between text-[#DC2626] font-semibold">
+                  <span>Diskon Promo Campaign</span>
+                  <span>-Rp {totalCampaignSavings.toLocaleString('id-ID')}</span>
+                </div>
+              )}
               <div className="flex justify-between text-[#121A2A]/60">
                 <span>Biaya Layanan & PPN</span>
                 <span className="text-status-success font-medium">Gratis (Rp 0)</span>
@@ -164,7 +231,7 @@ export function CartDrawer({ isOpen, onClose, onCheckout }: CartDrawerProps) {
               <div className="flex justify-between text-sm font-bold text-[#121A2A] pt-2.5 border-t border-[rgba(18,26,42,0.08)]">
                 <span>Total Pembayaran</span>
                 <span className="text-[#C96F55] text-base font-extrabold font-mono">
-                  Rp {getTotalAmount().toLocaleString('id-ID')}
+                  Rp {totalPayableAmount.toLocaleString('id-ID')}
                 </span>
               </div>
             </div>

@@ -150,11 +150,16 @@ export function QuickViewModal({ product, isOpen, onClose, activeCampaigns = [] 
                       {promoCalc.originalPriceFormatted}
                     </span>
                     <span className="text-[10px] font-black text-[#DC2626] bg-[#DC2626]/10 border border-[#DC2626]/25 px-2 py-0.5 rounded-full inline-flex items-center gap-1 shadow-2xs">
-                      🔥 HEMAT {promoCalc.discountBadge.replace('-', '')}
+                      🔥 {promoCalc.discountBadge}
                     </span>
                     <span className="text-[10px] font-bold text-[#C96F55] bg-[rgba(201,111,85,0.08)] px-1.5 py-0.5 rounded">
                       {promoCalc.savingsText}
                     </span>
+                    {promoCalc.endDateFormatted && (
+                      <span className="text-[10px] font-medium text-[#121A2A]/70 bg-black/5 px-2 py-0.5 rounded-full">
+                        ⏳ {promoCalc.endDateFormatted}
+                      </span>
+                    )}
                   </div>
                   <div className="w-full flex items-baseline gap-2 mt-0.5">
                     <span className="text-xl sm:text-2xl font-black text-[#C96F55] tracking-tight">

@@ -48,9 +48,9 @@ export function ProductCard({
     {
       id: product.id,
       name: product.name,
-      category: product.category?.name,
-      popular: product.popular,
-      isPromo: (product as unknown as { isPromo?: boolean })?.isPromo,
+      category: product.category,
+      categoryId: product.category?.id,
+      categoryName: product.category?.name,
     },
     activeCampaigns
   );
@@ -72,7 +72,7 @@ export function ProductCard({
           {isPromo && (
             <div className="absolute top-2 left-2 z-10 flex items-center gap-1 bg-gradient-to-r from-[#DC2626] to-[#C96F55] text-white text-[9px] sm:text-[10px] font-black px-2 py-0.5 rounded-full shadow-md border border-white/20 select-none">
               <span className="text-[10px] leading-none">🔥</span>
-              <span>DISKON {campaignPrice.discountBadge.replace('-', '')}</span>
+              <span>{campaignPrice.discountBadge}</span>
             </div>
           )}
 
@@ -178,9 +178,11 @@ export function ProductCard({
                 <span className="text-[10px] sm:text-[11px] text-[#121A2A]/45 line-through font-semibold leading-none">
                   {campaignPrice.originalPriceFormatted}
                 </span>
-                <span className="text-[9px] font-black text-[#DC2626] bg-[#DC2626]/10 px-1.5 py-0.2 rounded border border-[#DC2626]/20 leading-tight">
-                  Hemat Rp {campaignPrice.discountAmount.toLocaleString('id-ID')}
-                </span>
+                {campaignPrice.endDateFormatted && (
+                  <span className="text-[9px] font-bold text-[#C96F55] bg-[rgba(201,111,85,0.08)] px-1.5 py-0.5 rounded border border-[rgba(201,111,85,0.2)] leading-tight whitespace-nowrap">
+                    {campaignPrice.endDateFormatted}
+                  </span>
+                )}
               </div>
               <span
                 data-gsap="product-price"

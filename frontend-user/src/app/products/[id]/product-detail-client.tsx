@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { useCartStore } from '@/store/use-cart-store';
 import { appendReferralParams } from '@/lib/utils/referral';
@@ -26,7 +26,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { ProductCard } from '@/components/products/product-card';
 import { ProductItem } from '@/lib/products-data';
-import { calculateCampaignPrice, ActiveCampaign } from '@/lib/utils/promo-pricing';
+import { calculateCampaignPrice, getCampaignCountdown, ActiveCampaign } from '@/lib/utils/promo-pricing';
 import { ParsedVariant, cleanHtmlContent } from '@/lib/services/product-variant-parser';
 import { saveRecentlyViewed } from '@/lib/services/recently-viewed';
 import { animateProductDetailPage } from '@/lib/animations/gsap-utils';
@@ -257,12 +257,19 @@ function getVariantDetails(
 
 export function ProductDetailClient({ id, initialData }: ProductDetailClientProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const [quantity, setQuantity] = useState(1);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
   const [notification, setNotification] = useState<string | null>(null);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [activeTab, setActiveTab] = useState<'benefit' | 'garansi' | 'deskripsi'>('deskripsi');
+  const [isMounted, setIsMounted] = useState<boolean>(false);
+  const [countdownText, setCountdownText] = useState<string>('');
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const { items: cartItems, addItem } = useCartStore();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -515,7 +522,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
     },
     staleTime: 60000,
   });
-  const activeCampaigns = campaignsRes?.data || [];
+  const activeCampaigns = useMemo(() => campaignsRes?.data || [], [campaignsRes]);
 
   const campaignPrice = useMemo(() => {
     return calculateCampaignPrice(
@@ -525,12 +532,32 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
         slug: (product as unknown as { slug?: string })?.slug || id,
         category: product?.category?.name,
         name: product?.name,
-        popular: product?.popular,
-        isPromo: (product as unknown as { isPromo?: boolean })?.isPromo,
       },
       activeCampaigns
     );
   }, [totalPrice, product, id, activeCampaigns]);
+
+  // Real-time promo countdown timer synchronized with campaign expiration
+  useEffect(() => {
+    if (!campaignPrice.hasPromo || !campaignPrice.endsAt) {
+      setCountdownText('');
+      return;
+    }
+
+    const updateCountdown = () => {
+      const cd = getCampaignCountdown(campaignPrice.endsAt);
+      if (cd.isExpired) {
+        setCountdownText('Promo telah berakhir');
+        queryClient.invalidateQueries({ queryKey: ['active-campaigns'] });
+      } else {
+        setCountdownText(cd.countdownText);
+      }
+    };
+
+    updateCountdown();
+    const timer = setInterval(updateCountdown, 1000);
+    return () => clearInterval(timer);
+  }, [campaignPrice.hasPromo, campaignPrice.endsAt, queryClient]);
 
   const isOutOfStock =
     (product?.stock !== undefined && product.stock <= 0) ||
@@ -901,21 +928,37 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
 
                   {/* Promo Callout Banner for Discounted Products */}
                   {campaignPrice.hasPromo && (
-                    <div className="bg-gradient-to-r from-[#DC2626]/8 via-[#C96F55]/10 to-transparent border border-[#DC2626]/20 rounded-xl p-2.5 sm:p-3 mb-2 flex items-center justify-between gap-2 shadow-2xs select-none">
-                      <div className="flex items-center gap-2">
-                        <span className="text-base sm:text-lg">⚡</span>
-                        <div>
-                          <span className="text-xs font-bold text-[#121A2A] block leading-tight">
-                            Harga Diskon Terbatas Sedang Aktif!
-                          </span>
-                          <span className="text-[10px] sm:text-[11px] text-[#121A2A]/70 block mt-0.5">
-                            Dapatkan akses premium hemat {campaignPrice.discountBadge.replace('-', '')} untuk aktivasi instan hari ini.
-                          </span>
+                    <div className="bg-gradient-to-br from-[#FFF5F3] via-[#FEF2F2] to-white border border-[#DC2626]/25 rounded-2xl p-3.5 sm:p-4 mb-3 space-y-2.5 shadow-xs select-none">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-2">
+                            <span className="text-base sm:text-lg">🔥</span>
+                            <span className="text-sm sm:text-base font-black text-[#121A2A] tracking-tight">
+                              {campaignPrice.campaignName || 'Promo Spesial Asterra'}
+                            </span>
+                          </div>
+                          <p className="text-[11px] sm:text-xs text-[#121A2A]/70">
+                            Diskon khusus <strong className="text-[#DC2626]">{campaignPrice.discountBadge}</strong> berlaku untuk seluruh pesanan yang memenuhi syarat.
+                          </p>
                         </div>
+                        <span className="text-[10px] sm:text-xs font-black text-white bg-gradient-to-r from-[#DC2626] to-[#C96F55] px-2.5 py-1 rounded-lg shadow-2xs shrink-0">
+                          {campaignPrice.discountBadge}
+                        </span>
                       </div>
-                      <span className="text-[10px] sm:text-[11px] font-black text-white bg-gradient-to-r from-[#DC2626] to-[#C96F55] px-2.5 py-1 rounded-lg shadow-xs shrink-0">
-                        {campaignPrice.discountBadge}
-                      </span>
+
+                      <div className="pt-2 border-t border-[rgba(220,38,38,0.12)] flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px]">
+                        {campaignPrice.periodFormatted && (
+                          <div className="flex items-center gap-1.5 text-[#121A2A]/75">
+                            <FontAwesomeIcon icon={faClock} className="w-3 h-3 text-[#C96F55]" />
+                            <span>Periode promo: <strong className="text-[#121A2A] font-semibold">{campaignPrice.periodFormatted}</strong></span>
+                          </div>
+                        )}
+                        {isMounted && countdownText && (
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#DC2626]/10 text-[#DC2626] font-semibold text-[11px] border border-[#DC2626]/20">
+                            <span className="font-mono font-bold tracking-tight">⏳ {countdownText}</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
 
@@ -924,11 +967,11 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                     {campaignPrice.hasPromo ? (
                       <div className="space-y-1.5">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-xs sm:text-sm text-[#121A2A]/45 line-through font-semibold block">
-                            {campaignPrice.originalPriceFormatted}
+                          <span className="text-xs sm:text-sm text-[#121A2A]/50 font-medium">
+                            Harga normal: <span className="line-through font-semibold text-[#121A2A]/60">{campaignPrice.originalPriceFormatted}</span>
                           </span>
                           <span className="text-[10px] sm:text-[11px] font-black text-[#DC2626] bg-[#DC2626]/10 border border-[#DC2626]/25 px-2 py-0.5 rounded-full inline-flex items-center gap-1 shadow-2xs">
-                            🔥 HEMAT {campaignPrice.discountBadge.replace('-', '')}
+                            {campaignPrice.discountBadge}
                           </span>
                           <span className="text-[10px] sm:text-[11px] font-bold text-[#C96F55] bg-[rgba(201,111,85,0.08)] px-2 py-0.5 rounded-md">
                             {campaignPrice.savingsText}
@@ -1267,6 +1310,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                         <ProductCard
                           product={relProductItem}
                           isSelected={isSelected}
+                          activeCampaigns={activeCampaigns}
                           onAddToCart={(p) => {
                             if (!isAuthenticated) {
                               setIsAuthModalOpen(true);

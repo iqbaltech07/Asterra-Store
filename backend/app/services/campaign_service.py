@@ -3,7 +3,7 @@ import re
 import json
 import uuid
 import pathlib
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from typing import Dict, Any, List, Optional
 
 from sqlalchemy import text
@@ -13,13 +13,55 @@ from app.models.campaign import PromoCampaign
 DATA_DIR = pathlib.Path(__file__).resolve().parent.parent.parent / "data"
 CAMPAIGNS_FILE = DATA_DIR / "supabase-campaigns.json"
 
+WIB = timezone(timedelta(hours=7))
+
+
+def parse_wib_datetime(val: Any, is_end: bool = False) -> datetime:
+    """Parses date/datetime string into naive WIB datetime for consistent comparison."""
+    if isinstance(val, datetime):
+        if val.tzinfo is not None:
+            return val.astimezone(WIB).replace(tzinfo=None)
+        return val
+    s = str(val).strip()
+    if not s:
+        return datetime.now(WIB).replace(tzinfo=None)
+    try:
+        if "T" in s:
+            dt = datetime.fromisoformat(s.replace("Z", "+00:00"))
+            if dt.tzinfo is not None:
+                return dt.astimezone(WIB).replace(tzinfo=None)
+            return dt
+        else:
+            d = datetime.strptime(s[:10], "%Y-%m-%d")
+            if is_end:
+                return d.replace(hour=23, minute=59, second=59)
+            return d.replace(hour=0, minute=0, second=0)
+    except Exception:
+        return datetime.now(WIB).replace(tzinfo=None)
+
+
+def get_campaign_sort_key(c: Dict[str, Any]):
+    """
+    Deterministic priority comparator:
+    1. priority DESC (higher integer first)
+    2. targetScope specificity: specific_products (3) > category (2) > all (1)
+    3. startsAt ASC (earliest start time)
+    4. id ASC (stable deterministic tie-break)
+    """
+    p = int(c.get("priority") or 0)
+    scope = c.get("targetScope", "all")
+    scope_rank = 3 if scope == "specific_products" else (2 if scope == "category" else 1)
+    starts = str(c.get("startsAt") or c.get("startDate") or "")
+    cid = str(c.get("id") or "")
+    return (-p, -scope_rank, starts, cid)
+
 
 class CampaignService:
     _campaigns: Optional[List[Dict[str, Any]]] = None
 
     @classmethod
     def ensure_table(cls):
-        """Ensures promo_campaigns table exists in database and orders table has campaign columns."""
+        """Ensures promo_campaigns table exists in database and has all required columns."""
         try:
             if engine is not None:
                 Base.metadata.create_all(bind=engine, tables=[PromoCampaign.__table__])
@@ -27,6 +69,7 @@ class CampaignService:
                     with engine.connect() as conn:
                         conn.execute(text("ALTER TABLE orders ADD COLUMN IF NOT EXISTS campaign_id VARCHAR;"))
                         conn.execute(text("ALTER TABLE orders ADD COLUMN IF NOT EXISTS campaign_discount INTEGER DEFAULT 0;"))
+                        conn.execute(text("ALTER TABLE promo_campaigns ADD COLUMN IF NOT EXISTS priority INTEGER DEFAULT 0;"))
                         conn.commit()
                 except Exception:
                     pass
@@ -93,24 +136,24 @@ class CampaignService:
     def get_all_campaigns(cls, filter_status: Optional[str] = None) -> List[Dict[str, Any]]:
         """Returns all campaigns with computed status and optional status filtering."""
         all_items = cls.load_campaigns()
-        now = datetime.utcnow()
+        now_wib = datetime.now(WIB).replace(tzinfo=None)
 
         processed = []
         for c in all_items:
-            # Recompute dynamic status
+            # Recompute dynamic status against Asia/Jakarta (WIB) operational clock
             is_active = c.get("isActive", True)
             status = "draft" if not is_active else "running"
 
-            starts_at_str = c.get("startsAt") or c.get("startDate")
-            ends_at_str = c.get("endsAt") or c.get("endDate")
+            starts_val = c.get("startsAt") or c.get("startDate")
+            ends_val = c.get("endsAt") or c.get("endDate")
 
-            if is_active and starts_at_str and ends_at_str:
+            if is_active and starts_val and ends_val:
                 try:
-                    s_dt = datetime.fromisoformat(starts_at_str.replace("Z", "+00:00")).replace(tzinfo=None)
-                    e_dt = datetime.fromisoformat(ends_at_str.replace("Z", "+00:00")).replace(tzinfo=None)
-                    if now < s_dt:
+                    s_dt = parse_wib_datetime(starts_val, is_end=False)
+                    e_dt = parse_wib_datetime(ends_val, is_end=True)
+                    if now_wib < s_dt:
                         status = "scheduled"
-                    elif now >= e_dt:
+                    elif now_wib >= e_dt:
                         status = "ended"
                     else:
                         status = "running"
@@ -122,13 +165,16 @@ class CampaignService:
             if not filter_status or filter_status == "all" or status == filter_status:
                 processed.append(c_copy)
 
+        # Sort campaigns deterministically
+        processed.sort(key=get_campaign_sort_key)
         return processed
 
     @classmethod
     def get_active_campaigns(cls) -> List[Dict[str, Any]]:
         """
         Returns only currently running, active campaigns (Time-Window Evaluation).
-        Ultra-fast O(1) in-memory filter.
+        Determines campaigns where now >= startAt and now < endAt in Asia/Jakarta.
+        Sorted deterministically by priority, scope specificity, start time, and ID.
         """
         return cls.get_all_campaigns(filter_status="running")
 
@@ -138,18 +184,22 @@ class CampaignService:
         product_id: str,
         category_name: Optional[str] = None,
         original_price: float = 0.0,
+        product_slug: Optional[str] = None,
     ) -> Optional[Dict[str, Any]]:
         """
-        Pure function O(1) in-memory pricing evaluation.
-        Determines if a product is eligible for an active campaign discount,
-        and computes discounted amount and affiliate booster rate.
+        Pure function deterministic pricing evaluation.
+        Evaluates a product against active campaigns using strict collision priority rules.
+        Only ONE campaign is applied (no stacking of discounts).
         """
         active_campaigns = cls.get_active_campaigns()
         if not active_campaigns or original_price <= 0:
             return None
 
         clean_cat = (category_name or "").strip().lower()
+        clean_pid = (product_id or "").strip().lower()
+        clean_slug = (product_slug or "").strip().lower()
 
+        # active_campaigns is already sorted by priority, specificity, startsAt, id
         for camp in active_campaigns:
             scope = camp.get("targetScope", "all")
             eligible = False
@@ -157,12 +207,25 @@ class CampaignService:
             if scope == "all":
                 eligible = True
             elif scope == "category":
-                target_cats = [c.lower() for c in camp.get("targetCategories", [])]
-                if clean_cat in target_cats or any(tc in clean_cat for tc in target_cats):
-                    eligible = True
+                target_cats = [str(c).lower().strip() for c in camp.get("targetCategories", []) if c]
+                if clean_cat:
+                    # Match exact, or slugified match (e.g. 'apps-streaming' vs 'Apps & Streaming')
+                    clean_cat_slug = re.sub(r"[^a-z0-9]+", "-", clean_cat).strip("-")
+                    for tc in target_cats:
+                        tc_clean = tc.lower().strip()
+                        tc_slug = re.sub(r"[^a-z0-9]+", "-", tc_clean).strip("-")
+                        if (
+                            clean_cat == tc_clean
+                            or tc_clean in clean_cat
+                            or clean_cat in tc_clean
+                            or clean_cat_slug == tc_slug
+                            or tc_slug in clean_cat_slug
+                        ):
+                            eligible = True
+                            break
             elif scope == "specific_products":
-                target_prods = camp.get("targetProducts", [])
-                if product_id in target_prods:
+                target_prods = [str(p).lower().strip() for p in camp.get("targetProducts", []) if p]
+                if (clean_pid and clean_pid in target_prods) or (clean_slug and clean_slug in target_prods):
                     eligible = True
 
             if eligible:
@@ -182,6 +245,7 @@ class CampaignService:
                 else:  # fixed
                     discount_amount = min(dval, original_price)
 
+                discount_amount = round(discount_amount)
                 final_price = max(0.0, original_price - discount_amount)
 
                 return {
@@ -190,10 +254,14 @@ class CampaignService:
                     "campaignSlug": camp.get("slug"),
                     "discountType": dtype,
                     "discountValue": dval,
-                    "discountAmount": round(discount_amount),
-                    "finalPrice": round(final_price),
-                    "originalPrice": round(original_price),
+                    "discountAmount": int(discount_amount),
+                    "finalPrice": int(round(final_price)),
+                    "originalPrice": int(round(original_price)),
                     "affiliateBonusPercent": camp.get("affiliateBonusPercent") or camp.get("affiliateCommissionOverride") or 10.0,
+                    "startDate": camp.get("startDate"),
+                    "endDate": camp.get("endDate"),
+                    "startsAt": camp.get("startsAt"),
+                    "endsAt": camp.get("endsAt"),
                 }
 
         return None
@@ -207,30 +275,20 @@ class CampaignService:
 
         slug = payload.get("slug") or re.sub(r"[^a-zA-Z0-9]+", "-", name.lower()).strip("-")
         camp_id = f"camp_{uuid.uuid4().hex[:10]}"
-        now_iso = datetime.utcnow().isoformat()
+        now_wib = datetime.now(WIB).replace(tzinfo=None)
 
-        starts_at_str = payload.get("startDate") or payload.get("startsAt") or now_iso
-        ends_at_str = payload.get("endDate") or payload.get("endsAt") or now_iso
+        starts_at_str = payload.get("startDate") or payload.get("startsAt") or now_wib.strftime("%Y-%m-%d")
+        ends_at_str = payload.get("endDate") or payload.get("endsAt") or now_wib.strftime("%Y-%m-%d")
 
-        # Parse Datetimes
-        try:
-            if "T" in starts_at_str:
-                parsed_s = datetime.fromisoformat(starts_at_str.replace("Z", "+00:00")).replace(tzinfo=None)
-            else:
-                parsed_s = datetime.strptime(starts_at_str[:10], "%Y-%m-%d")
-        except Exception:
-            parsed_s = datetime.utcnow()
-
-        try:
-            if "T" in ends_at_str:
-                parsed_e = datetime.fromisoformat(ends_at_str.replace("Z", "+00:00")).replace(tzinfo=None)
-            else:
-                parsed_e = datetime.strptime(ends_at_str[:10], "%Y-%m-%d").replace(hour=23, minute=59, second=59)
-        except Exception:
-            parsed_e = parsed_s
+        parsed_s = parse_wib_datetime(starts_at_str, is_end=False)
+        parsed_e = parse_wib_datetime(ends_at_str, is_end=True)
 
         cats = payload.get("targetCategories") or []
         prods = payload.get("targetProducts") or []
+        priority_val = int(payload.get("priority") or 0)
+
+        s_iso = parsed_s.strftime("%Y-%m-%dT%H:%M:%S+07:00")
+        e_iso = parsed_e.strftime("%Y-%m-%dT%H:%M:%S+07:00")
 
         campaign_dict = {
             "id": camp_id,
@@ -240,12 +298,13 @@ class CampaignService:
             "bannerUrl": payload.get("bannerUrl") or "",
             "startDate": parsed_s.strftime("%Y-%m-%d"),
             "endDate": parsed_e.strftime("%Y-%m-%d"),
-            "startsAt": parsed_s.isoformat(),
-            "endsAt": parsed_e.isoformat(),
+            "startsAt": s_iso,
+            "endsAt": e_iso,
             "targetScope": payload.get("targetScope", "all"),
             "targetCategory": ", ".join(cats) if cats else "Semua Kategori",
             "targetCategories": cats,
             "targetProducts": prods,
+            "priority": priority_val,
             "discountType": payload.get("discountType", "percentage"),
             "discountValue": float(payload.get("discountValue") or 15.0),
             "maxDiscountAmount": float(payload.get("maxDiscountAmount") or 50000.0),
@@ -253,13 +312,13 @@ class CampaignService:
             "minOrderAmount": float(payload.get("minPurchase") or payload.get("minOrderAmount") or 0.0),
             "affiliateBonusPercent": float(payload.get("affiliateBonusPercent") or payload.get("affiliateCommissionOverride") or 10.0),
             "affiliateCommissionOverride": float(payload.get("affiliateCommissionOverride") or payload.get("affiliateBonusPercent") or 10.0),
-            "status": "running" if payload.get("isActive", True) and parsed_s <= datetime.utcnow() < parsed_e else "scheduled",
+            "status": "running" if payload.get("isActive", True) and parsed_s <= now_wib < parsed_e else "scheduled",
             "isActive": payload.get("isActive", True),
             "totalOrders": 0,
             "revenue": 0.0,
             "conversionRate": 0.0,
-            "createdAt": now_iso,
-            "updatedAt": now_iso,
+            "createdAt": datetime.utcnow().isoformat(),
+            "updatedAt": datetime.utcnow().isoformat(),
         }
 
         # 1. DB Save
@@ -281,6 +340,7 @@ class CampaignService:
                         target_scope=campaign_dict["targetScope"],
                         target_categories=json.dumps(cats),
                         target_products=json.dumps(prods),
+                        priority=priority_val,
                         affiliate_commission_override=campaign_dict["affiliateBonusPercent"],
                         starts_at=parsed_s,
                         ends_at=parsed_e,
@@ -315,7 +375,7 @@ class CampaignService:
         for field in [
             "name", "slug", "tagline", "bannerUrl", "discountType", "discountValue",
             "maxDiscountAmount", "minPurchase", "minOrderAmount", "targetScope",
-            "targetCategories", "targetProducts", "affiliateBonusPercent",
+            "targetCategories", "targetProducts", "priority", "affiliateBonusPercent",
             "affiliateCommissionOverride", "isActive"
         ]:
             if field in payload:
@@ -323,13 +383,15 @@ class CampaignService:
 
         if "startDate" in payload or "startsAt" in payload:
             s_val = payload.get("startsAt") or payload.get("startDate")
-            target["startDate"] = s_val[:10]
-            target["startsAt"] = s_val if "T" in s_val else f"{s_val}T00:00:00"
+            parsed_s = parse_wib_datetime(s_val, is_end=False)
+            target["startDate"] = parsed_s.strftime("%Y-%m-%d")
+            target["startsAt"] = parsed_s.strftime("%Y-%m-%dT%H:%M:%S+07:00")
 
         if "endDate" in payload or "endsAt" in payload:
             e_val = payload.get("endsAt") or payload.get("endDate")
-            target["endDate"] = e_val[:10]
-            target["endsAt"] = e_val if "T" in e_val else f"{e_val}T23:59:59"
+            parsed_e = parse_wib_datetime(e_val, is_end=True)
+            target["endDate"] = parsed_e.strftime("%Y-%m-%d")
+            target["endsAt"] = parsed_e.strftime("%Y-%m-%dT%H:%M:%S+07:00")
 
         target["updatedAt"] = datetime.utcnow().isoformat()
 
@@ -350,8 +412,13 @@ class CampaignService:
                         if "targetScope" in payload: db_row.target_scope = payload["targetScope"]
                         if "targetCategories" in payload: db_row.target_categories = json.dumps(payload["targetCategories"])
                         if "targetProducts" in payload: db_row.target_products = json.dumps(payload["targetProducts"])
+                        if "priority" in payload: db_row.priority = int(payload["priority"])
                         if "affiliateBonusPercent" in payload: db_row.affiliate_commission_override = float(payload["affiliateBonusPercent"])
                         if "isActive" in payload: db_row.is_active = bool(payload["isActive"])
+                        if "startDate" in payload or "startsAt" in payload:
+                            db_row.starts_at = parse_wib_datetime(payload.get("startsAt") or payload.get("startDate"), is_end=False)
+                        if "endDate" in payload or "endsAt" in payload:
+                            db_row.ends_at = parse_wib_datetime(payload.get("endsAt") or payload.get("endDate"), is_end=True)
                         db_row.updated_at = datetime.utcnow()
                         db.commit()
                 finally:
@@ -364,7 +431,7 @@ class CampaignService:
 
     @classmethod
     def toggle_active(cls, campaign_id: str, is_active: Optional[bool] = None) -> Optional[Dict[str, Any]]:
-        """Quick toggle switch for enabling/disabling a campaign."""
+        """Quick toggle switch for enabling/disabling a campaign immediately (killswitch)."""
         items = cls.load_campaigns()
         target = next((c for c in items if c.get("id") == campaign_id), None)
         if not target:

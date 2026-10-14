@@ -357,10 +357,23 @@ class OrderService:
         order_id = f"AST-ORD-{today_str}-{rand_code}"
 
         items = payload.get("items", [])
-        raw_total = sum(
-            int(item.get("unit_price") or item.get("price") or 0) * int(item.get("quantity", 1))
-            for item in items
-        )
+        
+        # Load catalog products to ensure valid base pricing and prevent tampering
+        from app.services.catalog_service import CatalogService
+        catalog_products = {str(p.get("id")): p for p in CatalogService.load_products()}
+        
+        verified_raw_total = 0
+        for item in items:
+            p_id = str(item.get("product_id") or item.get("productId") or "")
+            cat_prod = catalog_products.get(p_id)
+            catalog_price = int(cat_prod.get("price")) if (cat_prod and cat_prod.get("price") is not None) else int(item.get("unit_price") or item.get("price") or 0)
+            item["unit_price"] = catalog_price
+            item["price"] = catalog_price
+            qty = max(1, int(item.get("quantity", 1)))
+            item["quantity"] = qty
+            verified_raw_total += catalog_price * qty
+        
+        raw_total = verified_raw_total
 
         contact = payload.get("customer_contact", {})
         customer_email = (contact.get("email") or payload.get("customerEmail") or "buyer@asterra.store").strip()
@@ -377,35 +390,66 @@ class OrderService:
         unique_code = random.randint(100, 999) if enable_unique else 0
         expiry_hours = int(pay_cfg.get("order_expiry_hours") or pay_cfg.get("orderExpiryHours") or 24)
 
-        promo_discount = int(payload.get("promo_discount") or payload.get("promoDiscount") or 0)
-        referral_discount = int(payload.get("referral_discount") or payload.get("referralDiscount") or 0)
-        campaign_discount = int(payload.get("campaign_discount") or payload.get("campaignDiscount") or 0)
+        # 2. Authoritative Campaign Re-Validation on Server (Time-window & Eligibility check)
+        from app.services.campaign_service import CampaignService
+        active_camps = CampaignService.get_active_campaigns()
         
-        raw_camp = (
-            payload.get("campaign_id") or
-            payload.get("campaignId") or
-            payload.get("campaign_slug") or
-            payload.get("campaignSlug") or
-            payload.get("campaign") or
-            payload.get("utm_campaign")
-        )
-        campaign_id = str(raw_camp).strip() if raw_camp else None
+        server_campaign_discount = 0
+        canonical_campaign_id = None
         matched_campaign = None
-        canonical_campaign_id = campaign_id
-        if campaign_id:
-            try:
-                from app.services.campaign_service import CampaignService
-                all_camps = CampaignService.get_all_campaigns()
-                for c in all_camps:
-                    c_id = str(c.get("id") or "").strip()
-                    c_slug = str(c.get("slug") or "").strip().lower()
-                    if c_id == campaign_id or c_slug == campaign_id.lower():
-                        matched_campaign = c
-                        canonical_campaign_id = c_id
-                        break
-            except Exception as e:
-                print(f"[OrderService] Campaign lookup note: {e}")
 
+        if active_camps and raw_total > 0:
+            item_discounts = []
+            matched_camp_map = {}
+            for item in items:
+                p_id = str(item.get("product_id") or item.get("productId") or "")
+                cat_prod = catalog_products.get(p_id) or {}
+                cat_name = cat_prod.get("categoryName") or (cat_prod.get("category", {}).get("name") if isinstance(cat_prod.get("category"), dict) else str(cat_prod.get("category") or ""))
+                p_slug = cat_prod.get("slug")
+                unit_p = int(item.get("unit_price") or 0)
+                qty = int(item.get("quantity", 1))
+
+                eval_res = CampaignService.evaluate_product_campaign(
+                    product_id=p_id,
+                    category_name=cat_name,
+                    original_price=unit_p,
+                    product_slug=p_slug,
+                )
+                if eval_res and eval_res.get("discountAmount", 0) > 0:
+                    d_amt = int(eval_res["discountAmount"]) * qty
+                    c_id = eval_res["campaignId"]
+                    item_discounts.append((c_id, d_amt))
+                    if c_id not in matched_camp_map:
+                        matched_camp_map[c_id] = next((c for c in active_camps if c.get("id") == c_id), None)
+
+            if item_discounts:
+                top_camp_id = item_discounts[0][0]
+                primary_camp = matched_camp_map.get(top_camp_id)
+                canonical_campaign_id = top_camp_id
+                matched_campaign = primary_camp
+
+                tot_c_disc = sum(d for _, d in item_discounts)
+                max_d = float(primary_camp.get("maxDiscountAmount") or 0) if primary_camp else 0
+                if max_d > 0 and tot_c_disc > max_d:
+                    tot_c_disc = int(max_d)
+
+                server_campaign_discount = tot_c_disc
+
+        campaign_discount = server_campaign_discount
+
+        # 3. Voucher Promo Code Validation
+        promo_discount = 0
+        promo_code = (payload.get("promo_code") or payload.get("promoCode") or "").strip().upper()
+        if promo_code:
+            try:
+                from app.services.promo_service import PromoService
+                val_res = PromoService.validate_promo(promo_code, raw_total)
+                if val_res.get("valid"):
+                    promo_discount = int(val_res.get("discountAmount", 0))
+            except Exception as e:
+                print(f"[OrderService] Promo voucher validate note: {e}")
+
+        # 4. Lifetime 1-Time Referral Discount Eligibility Enforcement
         ref_code = (payload.get("referral_code") or payload.get("referralCode") or "").strip().upper()
         ref_sess_id = (
             payload.get("referral_session_id")
@@ -413,8 +457,7 @@ class OrderService:
             or payload.get("sessionId")
             or ""
         ).strip() or None
-
-        # 2. Lifetime 1-Time Referral Discount Eligibility Enforcement
+        referral_discount = int(payload.get("referral_discount") or payload.get("referralDiscount") or 0)
         if referral_discount > 0:
             import re
             clean_email = customer_email.lower().strip()

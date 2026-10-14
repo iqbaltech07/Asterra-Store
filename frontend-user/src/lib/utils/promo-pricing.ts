@@ -1,8 +1,9 @@
 /**
- * Dynamic Campaign & Promo Pricing Engine
+ * Dynamic Campaign & Promo Pricing Engine (AsterraStore)
  *
- * Provides genuine promotional pricing and crossed-out original prices calculated
- * directly against active campaigns (discountType: percentage/fixed, targetScope, discountValue).
+ * Provides genuine promotional pricing calculated strictly against active campaigns
+ * (Admin Console -> Marketing & Growth -> Campaign) using authoritative normal product prices.
+ * Strictly adheres to non-overlapping priority rules, live time windows, and Asia/Jakarta timezone.
  */
 
 export interface ActiveCampaign {
@@ -14,18 +15,27 @@ export interface ActiveCampaign {
   targetCategories?: string[];
   targetCategory?: string;
   targetProducts?: string[];
+  priority?: number;
   discountType?: 'percentage' | 'fixed' | string;
   discountValue?: number;
   maxDiscountAmount?: number;
   minPurchase?: number;
   minOrderAmount?: number;
+  startDate?: string;
+  endDate?: string;
+  startsAt?: string;
+  endsAt?: string;
   status?: string;
   isActive?: boolean;
+  affiliateBonusPercent?: number;
+  affiliateCommissionOverride?: number;
 }
 
 export interface CalculatedPromoPrice {
   hasPromo: boolean;
+  campaignId?: string;
   campaignName?: string;
+  campaignSlug?: string;
   discountType?: string;
   discountValue?: number;
   originalPrice: number;
@@ -33,43 +43,209 @@ export interface CalculatedPromoPrice {
   discountedPrice: number;
   discountedPriceFormatted: string;
   discountAmount: number;
+  savings?: number;
   discountBadge: string;
   savingsText?: string;
+  startDate?: string;
+  endDate?: string;
+  startsAt?: string;
+  endsAt?: string;
+  endDateFormatted?: string;
+  periodFormatted?: string;
+}
+
+/**
+ * Formats campaign end date into a clear, readable Indonesian text (e.g. "Berakhir 26 Okt 2026").
+ * Always evaluates using Asia/Jakarta timezone to prevent date shifts.
+ */
+export function formatCampaignEndDate(endsAtOrDate?: string): string {
+  if (!endsAtOrDate) return '';
+  try {
+    const raw = endsAtOrDate.trim();
+    // If only date string (YYYY-MM-DD), append T23:59:59+07:00
+    const isoString = raw.length === 10 ? `${raw}T23:59:59+07:00` : (raw.includes('+') || raw.endsWith('Z') ? raw : `${raw}+07:00`);
+    const date = new Date(isoString);
+    if (isNaN(date.getTime())) return '';
+
+    const formatter = new Intl.DateTimeFormat('id-ID', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      timeZone: 'Asia/Jakarta',
+    });
+    return `Berakhir ${formatter.format(date)}`;
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * Formats campaign start and end dates into an Indonesian period string (e.g. "12–26 Oktober 2026").
+ */
+export function formatCampaignPeriod(startsAtOrDate?: string, endsAtOrDate?: string): string {
+  if (!startsAtOrDate || !endsAtOrDate) return '';
+  try {
+    const sRaw = startsAtOrDate.trim();
+    const eRaw = endsAtOrDate.trim();
+    const sIso = sRaw.length === 10 ? `${sRaw}T00:00:00+07:00` : (sRaw.includes('+') || sRaw.endsWith('Z') ? sRaw : `${sRaw}+07:00`);
+    const eIso = eRaw.length === 10 ? `${eRaw}T23:59:59+07:00` : (eRaw.includes('+') || eRaw.endsWith('Z') ? eRaw : `${eRaw}+07:00`);
+
+    const sDate = new Date(sIso);
+    const eDate = new Date(eIso);
+    if (isNaN(sDate.getTime()) || isNaN(eDate.getTime())) return '';
+
+    const sDay = sDate.toLocaleDateString('id-ID', { day: 'numeric', timeZone: 'Asia/Jakarta' });
+    const eDay = eDate.toLocaleDateString('id-ID', { day: 'numeric', timeZone: 'Asia/Jakarta' });
+    const sMonth = sDate.toLocaleDateString('id-ID', { month: 'long', timeZone: 'Asia/Jakarta' });
+    const eMonth = eDate.toLocaleDateString('id-ID', { month: 'long', timeZone: 'Asia/Jakarta' });
+    const sYear = sDate.toLocaleDateString('id-ID', { year: 'numeric', timeZone: 'Asia/Jakarta' });
+    const eYear = eDate.toLocaleDateString('id-ID', { year: 'numeric', timeZone: 'Asia/Jakarta' });
+
+    if (sYear !== eYear) {
+      return `${sDay} ${sMonth} ${sYear} – ${eDay} ${eMonth} ${eYear}`;
+    }
+    if (sMonth !== eMonth) {
+      return `${sDay} ${sMonth} – ${eDay} ${eMonth} ${eYear}`;
+    }
+    return `${sDay}–${eDay} ${eMonth} ${eYear}`;
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * Computes remaining time until campaign ends.
+ * Stops cleanly at 0 without negative numbers.
+ */
+export function getCampaignCountdown(endsAtOrDate?: string): {
+  isExpired: boolean;
+  totalSeconds: number;
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+  countdownText: string;
+} {
+  if (!endsAtOrDate) {
+    return { isExpired: true, totalSeconds: 0, days: 0, hours: 0, minutes: 0, seconds: 0, countdownText: 'Promo berakhir' };
+  }
+  try {
+    const raw = endsAtOrDate.trim();
+    const isoString = raw.length === 10 ? `${raw}T23:59:59+07:00` : (raw.includes('+') || raw.endsWith('Z') ? raw : `${raw}+07:00`);
+    const endMs = new Date(isoString).getTime();
+    if (isNaN(endMs)) {
+      return { isExpired: true, totalSeconds: 0, days: 0, hours: 0, minutes: 0, seconds: 0, countdownText: 'Promo berakhir' };
+    }
+
+    const nowMs = Date.now();
+    const diffMs = endMs - nowMs;
+
+    if (diffMs <= 0) {
+      return { isExpired: true, totalSeconds: 0, days: 0, hours: 0, minutes: 0, seconds: 0, countdownText: 'Promo berakhir' };
+    }
+
+    const totalSeconds = Math.floor(diffMs / 1000);
+    const days = Math.floor(totalSeconds / 86400);
+    const hours = Math.floor((totalSeconds % 86400) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const timeFormatted = `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+
+    const countdownText = days > 0
+      ? `Promo berakhir dalam ${days} hari ${timeFormatted}`
+      : `Promo berakhir dalam ${timeFormatted}`;
+
+    return {
+      isExpired: false,
+      totalSeconds,
+      days,
+      hours,
+      minutes,
+      seconds,
+      countdownText,
+    };
+  } catch {
+    return { isExpired: true, totalSeconds: 0, days: 0, hours: 0, minutes: 0, seconds: 0, countdownText: 'Promo berakhir' };
+  }
+}
+
+/**
+ * Checks if a campaign is currently valid within its live time-window (now >= startsAt && now < endsAt).
+ */
+export function isCampaignActiveNow(campaign: ActiveCampaign): boolean {
+  if (!campaign || campaign.isActive === false || campaign.status === 'ended') {
+    return false;
+  }
+  const endsVal = campaign.endsAt || campaign.endDate;
+  if (endsVal) {
+    const raw = endsVal.trim();
+    const isoString = raw.length === 10 ? `${raw}T23:59:59+07:00` : (raw.includes('+') || raw.endsWith('Z') ? raw : `${raw}+07:00`);
+    const endMs = new Date(isoString).getTime();
+    if (!isNaN(endMs) && Date.now() >= endMs) {
+      return false;
+    }
+  }
+  const startsVal = campaign.startsAt || campaign.startDate;
+  if (startsVal) {
+    const raw = startsVal.trim();
+    const isoString = raw.length === 10 ? `${raw}T00:00:00+07:00` : (raw.includes('+') || raw.endsWith('Z') ? raw : `${raw}+07:00`);
+    const startMs = new Date(isoString).getTime();
+    if (!isNaN(startMs) && Date.now() < startMs) {
+      return false;
+    }
+  }
+  return true;
 }
 
 /**
  * Checks if a product or application matches an active campaign.
  */
 export function isProductInCampaign(
-  product: {
-    id?: string;
-    slug?: string;
-    category?: string | { id?: string; name?: string };
-    categoryId?: string;
-    name?: string;
-    tags?: string[];
-  },
+  product: any,
   campaign: ActiveCampaign
 ): boolean {
-  if (!campaign || campaign.status === 'ended' || campaign.isActive === false) {
+  if (!isCampaignActiveNow(campaign)) {
     return false;
   }
+
   const scope = campaign.targetScope || 'all';
   if (scope === 'all') return true;
 
   if (scope === 'category') {
-    const cats = (campaign.targetCategories || [campaign.targetCategory || ''])
+    const targetCats = (campaign.targetCategories || [campaign.targetCategory || ''])
       .filter(Boolean)
       .map((c) => c.toLowerCase().trim());
+
     const rawCat = product.category;
-    const prodCat = (
+    const catName = (
       typeof rawCat === 'string'
         ? rawCat
         : rawCat && typeof rawCat === 'object'
         ? rawCat.name || ''
-        : ''
+        : product.categoryName || ''
     ).toLowerCase().trim();
-    return cats.some((c) => prodCat.includes(c) || c.includes(prodCat));
+
+    const catId = (
+      rawCat && typeof rawCat === 'object' ? rawCat.id || '' : product.categoryId || ''
+    ).toLowerCase().trim();
+
+    const catSlug = catName.replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+    return targetCats.some((tc) => {
+      const tcClean = tc.toLowerCase().trim();
+      const tcSlug = tcClean.replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      return (
+        catName === tcClean ||
+        catName.includes(tcClean) ||
+        tcClean.includes(catName) ||
+        catId === tcClean ||
+        catSlug === tcSlug ||
+        catSlug.includes(tcSlug) ||
+        tcSlug.includes(catSlug)
+      );
+    });
   }
 
   if (scope === 'specific_products') {
@@ -84,21 +260,45 @@ export function isProductInCampaign(
 }
 
 /**
- * Calculates genuine campaign discount and crossed-out price based on active campaigns,
- * with retail anchor psychological pricing fallback for promo/popular products.
+ * Sorts active campaigns by deterministic priority:
+ * 1. priority DESC
+ * 2. Scope specificity: specific_products (3) > category (2) > all (1)
+ * 3. startsAt ASC (earliest start first)
+ * 4. id ASC (stable tie-break)
+ */
+export function sortCampaignsByPriority(campaigns: ActiveCampaign[]): ActiveCampaign[] {
+  return [...campaigns].sort((a, b) => {
+    const pA = Number(a.priority || 0);
+    const pB = Number(b.priority || 0);
+    if (pB !== pA) return pB - pA;
+
+    const getScopeRank = (scope?: string) => {
+      if (scope === 'specific_products') return 3;
+      if (scope === 'category') return 2;
+      return 1;
+    };
+    const sA = getScopeRank(a.targetScope);
+    const sB = getScopeRank(b.targetScope);
+    if (sB !== sA) return sB - sA;
+
+    const startA = a.startsAt || a.startDate || '';
+    const startB = b.startsAt || b.startDate || '';
+    if (startA !== startB) return startA.localeCompare(startB);
+
+    return String(a.id || '').localeCompare(String(b.id || ''));
+  });
+}
+
+/**
+ * Calculates genuine campaign discount and crossed-out price based on active campaigns.
+ * Strictly adheres to:
+ * - Harga promo = harga normal * (1 - persentase diskon / 100)
+ * - Single campaign application when overlapping (highest deterministic priority, no stacking)
+ * - Returns to normal price when campaign ends (no fake markup)
  */
 export function calculateCampaignPrice(
   price: number,
-  product: {
-    id?: string;
-    slug?: string;
-    category?: string | { id?: string; name?: string };
-    categoryId?: string;
-    name?: string;
-    tags?: string[];
-    popular?: boolean;
-    isPromo?: boolean;
-  } = {},
+  product: any = {},
   activeCampaigns: ActiveCampaign[] = []
 ): CalculatedPromoPrice {
   if (!price || price <= 0) {
@@ -109,74 +309,71 @@ export function calculateCampaignPrice(
       discountedPrice: 0,
       discountedPriceFormatted: 'Rp 0',
       discountAmount: 0,
+      savings: 0,
       discountBadge: '',
       savingsText: '',
     };
   }
 
-  // 1. Check if matching any active campaign
-  const campaign = (activeCampaigns || []).find((c) => isProductInCampaign(product, c));
+  // 1. Filter and sort matching active campaigns deterministically
+  const sorted = sortCampaignsByPriority(activeCampaigns);
+  const campaign = sorted.find((c) => isProductInCampaign(product, c));
 
   if (campaign) {
-    let discount = 0;
-    if (campaign.discountType === 'percentage') {
-      const pct = Number(campaign.discountValue || 0);
-      discount = Math.round((price * pct) / 100);
-    } else {
-      discount = Number(campaign.discountValue || 0);
+    const minP = Number(campaign.minPurchase || campaign.minOrderAmount || 0);
+    if (price >= minP) {
+      let discount = 0;
+      if (campaign.discountType === 'percentage') {
+        const pct = Number(campaign.discountValue || 0);
+        discount = Math.round((price * pct) / 100);
+      } else {
+        discount = Number(campaign.discountValue || 0);
+      }
+
+      const maxDisc = Number(campaign.maxDiscountAmount || 0);
+      if (maxDisc > 0 && discount > maxDisc) {
+        discount = maxDisc;
+      }
+
+      discount = Math.min(price, Math.max(0, discount));
+      const discountedPrice = Math.max(0, price - discount);
+
+      if (discount > 0) {
+        const discountBadge =
+          campaign.discountType === 'percentage'
+            ? `DISKON ${campaign.discountValue}%`
+            : `-Rp ${discount.toLocaleString('id-ID')}`;
+
+        const endsVal = campaign.endsAt || campaign.endDate;
+        const startsVal = campaign.startsAt || campaign.startDate;
+
+        return {
+          hasPromo: true,
+          campaignId: campaign.id,
+          campaignName: campaign.name,
+          campaignSlug: campaign.slug,
+          discountType: campaign.discountType,
+          discountValue: campaign.discountValue,
+          originalPrice: price,
+          originalPriceFormatted: `Rp ${price.toLocaleString('id-ID')}`,
+          discountedPrice,
+          discountedPriceFormatted: `Rp ${discountedPrice.toLocaleString('id-ID')}`,
+          discountAmount: discount,
+          savings: discount,
+          discountBadge,
+          savingsText: `Hemat Rp ${discount.toLocaleString('id-ID')}`,
+          startDate: campaign.startDate,
+          endDate: campaign.endDate,
+          startsAt: campaign.startsAt,
+          endsAt: campaign.endsAt,
+          endDateFormatted: formatCampaignEndDate(endsVal),
+          periodFormatted: formatCampaignPeriod(startsVal, endsVal),
+        };
+      }
     }
-
-    const maxDisc = Number(campaign.maxDiscountAmount || 0);
-    if (maxDisc > 0 && discount > maxDisc) {
-      discount = maxDisc;
-    }
-
-    discount = Math.min(price, Math.max(0, discount));
-    const discountedPrice = Math.max(0, price - discount);
-
-    const discountBadge =
-      campaign.discountType === 'percentage'
-        ? `-${campaign.discountValue}%`
-        : `-Rp ${discount.toLocaleString('id-ID')}`;
-
-    return {
-      hasPromo: discount > 0,
-      campaignName: campaign.name,
-      discountType: campaign.discountType,
-      discountValue: campaign.discountValue,
-      originalPrice: price,
-      originalPriceFormatted: `Rp ${price.toLocaleString('id-ID')}`,
-      discountedPrice,
-      discountedPriceFormatted: `Rp ${discountedPrice.toLocaleString('id-ID')}`,
-      discountAmount: discount,
-      discountBadge,
-      savingsText: `Hemat Rp ${discount.toLocaleString('id-ID')}`,
-    };
   }
 
-  // 2. Check if product is marked as promo item (popular / promo in name / isPromo flag)
-  if (isPromoItem(product, activeCampaigns)) {
-    const anchor = getDummyOriginalPrice(price);
-    const originalPrice = anchor.originalPrice;
-    const discountAmount = Math.max(0, originalPrice - price);
-    const pct = Math.round((discountAmount / originalPrice) * 100);
-    const discountBadge = `-${pct}%`;
-
-    return {
-      hasPromo: true,
-      campaignName: 'Promo Diskon',
-      discountType: 'percentage',
-      discountValue: pct,
-      originalPrice,
-      originalPriceFormatted: anchor.originalPriceFormatted,
-      discountedPrice: price,
-      discountedPriceFormatted: `Rp ${price.toLocaleString('id-ID')}`,
-      discountAmount,
-      discountBadge,
-      savingsText: `Hemat Rp ${discountAmount.toLocaleString('id-ID')}`,
-    };
-  }
-
+  // No active promo applies: return pure regular price
   return {
     hasPromo: false,
     originalPrice: price,
@@ -184,134 +381,33 @@ export function calculateCampaignPrice(
     discountedPrice: price,
     discountedPriceFormatted: `Rp ${price.toLocaleString('id-ID')}`,
     discountAmount: 0,
+    savings: 0,
     discountBadge: '',
     savingsText: '',
   };
 }
 
 /**
- * Backward compatibility fallback anchor price generator.
- * Follows retail psychological anchor pricing:
- * - < 10,000: ~40% markup, rounded to nearest 1,000 (e.g. 4,000 -> 6,000)
- * - 10,000 - 100,000: ~35% markup, rounded to nearest 1,000 (e.g. 21,000 -> 30,000, 18,000 -> 25,000)
- * - > 100,000: ~30% markup, rounded to nearest 5,000
- */
-export function getDummyOriginalPrice(price: number): {
-  originalPrice: number;
-  originalPriceFormatted: string;
-} {
-  if (!price || price <= 0) {
-    return { originalPrice: 0, originalPriceFormatted: '' };
-  }
-
-  let markup = 1.35;
-  let roundBase = 1000;
-
-  if (price < 10000) {
-    markup = 1.4;
-    roundBase = 1000;
-  } else if (price >= 100000) {
-    markup = 1.3;
-    roundBase = 5000;
-  }
-
-  const rawOriginal = Math.ceil((price * markup) / roundBase) * roundBase;
-  const originalPrice = rawOriginal <= price ? price + roundBase : rawOriginal;
-
-  return {
-    originalPrice,
-    originalPriceFormatted: `Rp ${originalPrice.toLocaleString('id-ID')}`,
-  };
-}
-
-/**
- * Check if a product item or app configuration has active Promo status.
+ * Checks if a product matches an active campaign.
  */
 export function isPromoItem(item?: unknown, activeCampaigns: ActiveCampaign[] = []): boolean {
-  if (!item || typeof item !== 'object') return false;
+  if (!item || typeof item !== 'object' || activeCampaigns.length === 0) return false;
   const anyItem = item as Record<string, unknown>;
 
-  // 1. Check if matching any active campaign
-  if (activeCampaigns.length > 0) {
-    const isMatching = activeCampaigns.some((c) =>
-      isProductInCampaign(
-        {
-          id: (anyItem.id as string) || undefined,
-          slug: (anyItem.slug as string) || undefined,
-          category: (anyItem.category as string) || undefined,
-          name: (anyItem.name as string) || undefined,
-        },
-        c
-      )
-    );
-    if (isMatching) return true;
-  }
+  const rawCat = anyItem.category;
+  const catName = typeof rawCat === 'string' ? rawCat : (rawCat && typeof rawCat === 'object' ? (rawCat as { name?: string }).name : '');
 
-  // 2. Explicit promo flags
-  if (anyItem.isPromo === true) return true;
-  if (anyItem.isCampaignActive === true) return true;
-  if (Boolean(anyItem.campaignId || anyItem.campaign || anyItem.campaignSlug)) return true;
-
-  // 3. Popular products are promo / featured deals in AsterraStore
-  if (anyItem.popular === true) return true;
-
-  // 4. Promo keywords in badges or titles
-  if (
-    typeof anyItem.badgeLabel === 'string' &&
-    (anyItem.badgeLabel.toLowerCase().includes('promo') ||
-      anyItem.badgeLabel.toLowerCase().includes('sale') ||
-      anyItem.badgeLabel.toLowerCase().includes('laris') ||
-      anyItem.badgeLabel.toLowerCase().includes('flash') ||
-      anyItem.badgeLabel.toLowerCase().includes('diskon'))
-  )
-    return true;
-
-  if (
-    typeof anyItem.badge === 'string' &&
-    (anyItem.badge.toLowerCase().includes('promo') ||
-      anyItem.badge.toLowerCase().includes('sale') ||
-      anyItem.badge.toLowerCase().includes('laris') ||
-      anyItem.badge.toLowerCase().includes('flash') ||
-      anyItem.badge.toLowerCase().includes('diskon'))
-  )
-    return true;
-
-  if (
-    typeof anyItem.name === 'string' &&
-    (anyItem.name.toLowerCase().includes('promo') ||
-      anyItem.name.toLowerCase().includes('sale') ||
-      anyItem.name.toLowerCase().includes('diskon'))
-  )
-    return true;
-
-  if (
-    typeof anyItem.status === 'string' &&
-    (anyItem.status.toLowerCase().includes('promo') || anyItem.status.toLowerCase().includes('sale'))
-  )
-    return true;
-
-  if (
-    typeof anyItem.categoryTag === 'string' &&
-    anyItem.categoryTag.toLowerCase().includes('promo')
-  )
-    return true;
-
-  if (
-    Array.isArray(anyItem.tags) &&
-    anyItem.tags.some(
-      (t) =>
-        typeof t === 'string' &&
-        (t.toLowerCase().includes('promo') ||
-          t.toLowerCase().includes('sale') ||
-          t.toLowerCase().includes('diskon'))
+  return activeCampaigns.some((c) =>
+    isProductInCampaign(
+      {
+        id: (anyItem.id as string) || undefined,
+        slug: (anyItem.slug as string) || undefined,
+        category: catName || undefined,
+        categoryId: (anyItem.categoryId as string) || undefined,
+        categoryName: (anyItem.categoryName as string) || undefined,
+        name: (anyItem.name as string) || undefined,
+      },
+      c
     )
-  )
-    return true;
-
-  // 5. Explicitly treat CapCut products as promo items
-  const nameStr = typeof anyItem.name === 'string' ? anyItem.name.toLowerCase() : '';
-  const slugStr = typeof anyItem.slug === 'string' ? anyItem.slug.toLowerCase() : '';
-  if (nameStr.includes('capcut') || slugStr.includes('capcut')) return true;
-
-  return false;
+  );
 }

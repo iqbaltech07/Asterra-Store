@@ -9,6 +9,7 @@ import { useAuthStore } from '@/store/use-auth-store';
 import { useSession } from '@/lib/auth-client';
 import { PublicPaymentConfig } from '@/types/payment';
 import { OrdersApi, PromosApi, PaymentConfigApi } from '@/lib/api-client';
+import { calculateCampaignPrice, ActiveCampaign } from '@/lib/utils/promo-pricing';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faLock, faCheck } from '@fortawesome/free-solid-svg-icons';
 import { CheckoutEmptyState } from '@/components/checkout/checkout-empty-state';
@@ -153,16 +154,23 @@ function CheckoutPageContent() {
     if (!activeCampaigns.length) return null;
     if (activeCampaignSlug) {
       const found = activeCampaigns.find(
-        (c: { slug?: string; id?: string; status?: string; isActive?: boolean }) =>
+        (c: ActiveCampaign) =>
           (c.slug === activeCampaignSlug || c.id === activeCampaignSlug) &&
           c.status !== 'ended' &&
           c.isActive !== false
       );
       if (found) return found;
     }
-    // Do not fall back to activeCampaigns[0] if user didn't arrive via a campaign link
-    return null;
-  }, [activeCampaigns, activeCampaignSlug]);
+    // Automatically identify campaign that provides discount to cart items
+    for (const item of items) {
+      const promoCalc = calculateCampaignPrice(item.priceNumeric, item, activeCampaigns);
+      if (promoCalc.hasPromo && promoCalc.campaignName) {
+        const found = activeCampaigns.find((c: ActiveCampaign) => c.name === promoCalc.campaignName);
+        if (found) return found;
+      }
+    }
+    return activeCampaigns[0] || null;
+  }, [activeCampaigns, activeCampaignSlug, items]);
 
   // Purge campaign parameter ONLY when campaign has explicitly ended
   useEffect(() => {
@@ -525,48 +533,16 @@ function CheckoutPageContent() {
 
   // Real-time Campaign Discount Computation
   const campaignDiscount = useMemo(() => {
-    if (!matchingCampaign) return 0;
-    const minOrder = Number(matchingCampaign.minPurchase || matchingCampaign.minOrderAmount || 0);
-    if (subtotal < minOrder) return 0;
-
+    if (!activeCampaigns.length || !items.length) return 0;
     let totalDiscount = 0;
     for (const item of items) {
-      const scope = matchingCampaign.targetScope || 'all';
-      let eligible = false;
-      if (scope === 'all') {
-        eligible = true;
-      } else if (scope === 'category') {
-        const cats = (matchingCampaign.targetCategories || []).map((c: string) => c.toLowerCase());
-        const itemCat = ((item as { category?: string }).category || '').toLowerCase();
-        if (cats.includes(itemCat) || cats.some((c: string) => itemCat.includes(c))) {
-          eligible = true;
-        }
-      } else if (scope === 'specific_products') {
-        const prods = matchingCampaign.targetProducts || [];
-        if (prods.includes(item.id)) {
-          eligible = true;
-        }
-      }
-
-      if (eligible) {
-        const itemTotal = item.priceNumeric * item.quantity;
-        if (matchingCampaign.discountType === 'percentage') {
-          const pct = Number(matchingCampaign.discountValue || 0);
-          totalDiscount += Math.round((itemTotal * pct) / 100);
-        } else {
-          const fixedVal = Number(matchingCampaign.discountValue || 0);
-          totalDiscount += Math.min(fixedVal * item.quantity, itemTotal);
-        }
+      const promoCalc = calculateCampaignPrice(item.priceNumeric, item, activeCampaigns);
+      if (promoCalc.hasPromo) {
+        totalDiscount += promoCalc.discountAmount * item.quantity;
       }
     }
-
-    const maxDisc = Number(matchingCampaign.maxDiscountAmount || 0);
-    if (maxDisc > 0 && totalDiscount > maxDisc) {
-      totalDiscount = maxDisc;
-    }
-
     return Math.max(0, totalDiscount);
-  }, [matchingCampaign, items, subtotal]);
+  }, [activeCampaigns, items]);
 
   const finalTotal = Math.max(0, subtotal - discountAmount - referralDiscount - campaignDiscount);
 

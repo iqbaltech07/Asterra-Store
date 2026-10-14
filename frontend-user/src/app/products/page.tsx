@@ -5,7 +5,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { useCatalogProducts } from '@/lib/hooks/use-catalog-products';
-import { calculateCampaignPrice, isPromoItem } from '@/lib/utils/promo-pricing';
+import { calculateCampaignPrice, isPromoItem, ActiveCampaign } from '@/lib/utils/promo-pricing';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -97,6 +98,18 @@ function ProductsContent() {
     () => catalogResponse?.data || [],
     [catalogResponse?.data]
   );
+
+  // Fetch active campaigns for real-time promotional pricing
+  const { data: campaignsRes } = useQuery<{ success: boolean; data: ActiveCampaign[] }>({
+    queryKey: ['active-campaigns'],
+    queryFn: async () => {
+      const res = await fetch('/api/v1/campaigns/active');
+      if (!res.ok) return { success: false, data: [] };
+      return res.json();
+    },
+    staleTime: 30000,
+  });
+  const activeCampaigns = useMemo(() => campaignsRes?.data || [], [campaignsRes]);
 
   // Extract dynamic categories from real products with intentional priority order
   const categories = useMemo(() => {
@@ -421,6 +434,7 @@ function ProductsContent() {
                   isSelected={isSelected}
                   onAddToCart={handleAddToCart}
                   priorityImage={idx < 6}
+                  activeCampaigns={activeCampaigns}
                 />
               );
             })}
@@ -436,7 +450,7 @@ function ProductsContent() {
                 (product.stock !== undefined && product.stock <= 0) ||
                 product.providerStatus === 'empty' ||
                 product.status === 'out_of_stock';
-              const promoCalc = calculateCampaignPrice(product.price, product);
+              const promoCalc = calculateCampaignPrice(product.price, product, activeCampaigns);
 
               return (
                 <div
@@ -451,7 +465,7 @@ function ProductsContent() {
                   <div className="flex items-start sm:items-center gap-4">
                     <div className="w-20 h-20 rounded-xl overflow-hidden bg-[#F8FAFC] shrink-0 border border-[rgba(18,26,42,0.08)] relative">
                       {promoCalc.hasPromo && (
-                        <div className="absolute top-1 left-1 z-10 bg-gradient-to-r from-[#DC2626] to-[#C96F55] text-white text-[8px] font-black px-1.5 py-0.2 rounded shadow-xs">
+                        <div className="absolute top-1 left-1 z-10 bg-gradient-to-r from-[#DC2626] to-[#C96F55] text-white text-[8px] font-black px-1.5 py-0.5 rounded shadow-xs">
                           {promoCalc.discountBadge}
                         </div>
                       )}
@@ -471,7 +485,12 @@ function ProductsContent() {
                         <span className="text-xs font-semibold text-[#C96F55]">{product.category.name}</span>
                         {promoCalc.hasPromo && (
                           <span className="text-[10px] px-2 py-0.5 rounded-full bg-gradient-to-r from-[#DC2626]/12 to-[#C96F55]/15 border border-[#DC2626]/25 text-[#DC2626] font-bold inline-flex items-center gap-1">
-                            🔥 DISKON {promoCalc.discountBadge.replace('-', '')}
+                            🔥 {promoCalc.discountBadge}
+                          </span>
+                        )}
+                        {promoCalc.hasPromo && promoCalc.endDateFormatted && (
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-[rgba(18,26,42,0.05)] text-[#121A2A]/70 font-medium">
+                            ⏳ {promoCalc.endDateFormatted}
                           </span>
                         )}
                         {product.popular && !promoCalc.hasPromo && (

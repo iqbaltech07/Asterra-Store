@@ -342,7 +342,7 @@ function FeaturedGridCard({
           </span>
           {isPromo && (
             <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-black bg-gradient-to-r from-[#DC2626] to-[#C96F55] text-white shadow-2xs leading-none select-none">
-              🔥 DISKON {promoCalc.discountBadge?.replace('-', '') || 'PROMO'}
+              🔥 {promoCalc.discountBadge}
             </span>
           )}
           {!isPromo && app.badgeLabel && (
@@ -357,13 +357,18 @@ function FeaturedGridCard({
       <div className="pt-2 border-t border-[rgba(18,26,42,0.06)] mt-2 sm:mt-2.5 flex items-center justify-between">
         <div className="flex flex-col min-w-0">
           {isPromo && (
-            <div className="flex items-center gap-1 leading-none">
+            <div className="flex items-center gap-1 leading-none flex-wrap">
               <span className="text-[10px] sm:text-[11px] text-[#121A2A]/40 line-through font-semibold leading-none block">
                 {promoCalc.originalPriceFormatted}
               </span>
               <span className="text-[8px] font-black text-[#DC2626] bg-[#DC2626]/10 px-1 py-0.2 rounded border border-[#DC2626]/20">
                 {promoCalc.savingsText}
               </span>
+              {promoCalc.endDateFormatted && (
+                <span className="text-[9px] font-medium text-[#121A2A]/60 block">
+                  • {promoCalc.endDateFormatted}
+                </span>
+              )}
             </div>
           )}
           <Link
@@ -472,7 +477,7 @@ function ShowcaseLoopingCard({
           </span>
           {isPromo && (
             <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-black bg-gradient-to-r from-[#DC2626] to-[#C96F55] text-white shadow-2xs leading-none select-none">
-              🔥 DISKON {promoCalc.discountBadge?.replace('-', '') || 'PROMO'}
+              🔥 {promoCalc.discountBadge}
             </span>
           )}
           {!isPromo && (
@@ -486,13 +491,18 @@ function ShowcaseLoopingCard({
       <div className="pt-2 border-t border-[rgba(18,26,42,0.06)] mt-2 flex items-center justify-between">
         <div className="flex flex-col min-w-0">
           {isPromo && (
-            <div className="flex items-center gap-1 leading-none">
+            <div className="flex items-center gap-1 leading-none flex-wrap">
               <span className="text-[10px] sm:text-[11px] text-[#121A2A]/40 line-through font-semibold leading-none block">
                 {promoCalc.originalPriceFormatted}
               </span>
               <span className="text-[8px] font-black text-[#DC2626] bg-[#DC2626]/10 px-1 py-0.2 rounded border border-[#DC2626]/20">
                 {promoCalc.savingsText}
               </span>
+              {promoCalc.endDateFormatted && (
+                <span className="text-[9px] font-medium text-[#121A2A]/60 block">
+                  • {promoCalc.endDateFormatted}
+                </span>
+              )}
             </div>
           )}
           <Link
