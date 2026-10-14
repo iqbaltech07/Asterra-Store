@@ -1464,7 +1464,7 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="space-y-2.5 max-w-4xl">
+          <div className="space-y-2.5 w-full">
             {faqItems.map((faq, idx) => {
               const isOpen = openFaqIndex === idx;
               return (

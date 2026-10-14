@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCheck, faArrowRight } from '@fortawesome/free-solid-svg-icons';
+import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { ProductItem } from '@/lib/products-data';
 import { calculateCampaignPrice, getCampaignCountdown, ActiveCampaign } from '@/lib/utils/promo-pricing';
 import { useQuery } from '@tanstack/react-query';
@@ -53,16 +53,16 @@ export function ProductPromoCountdownBadge({
 
 interface ProductCardProps {
   product: ProductItem & { providerCode?: string };
-  isSelected: boolean;
-  onAddToCart: (product: ProductItem) => void;
+  isSelected?: boolean;
+  onAddToCart?: (product: ProductItem) => void;
   priorityImage?: boolean;
   activeCampaigns?: ActiveCampaign[];
 }
 
 export function ProductCard({
   product,
-  isSelected,
-  onAddToCart,
+  isSelected: _isSelected,
+  onAddToCart: _onAddToCart,
   priorityImage = false,
   activeCampaigns: propCampaigns,
 }: ProductCardProps) {
@@ -242,34 +242,28 @@ export function ProductCard({
         </div>
 
         <div className="flex items-center shrink-0">
-          <Button
-            size="sm"
-            data-gsap="product-button"
-            variant={isOutOfStock ? 'outline' : isSelected ? 'secondary' : 'default'}
-            className={`h-7 sm:h-8.5 px-2.5 sm:px-3.5 text-[11px] sm:text-xs font-semibold rounded-lg sm:rounded-xl transition-all active:scale-95 ${
-              isSelected
-                ? 'bg-[rgba(201,111,85,0.12)] text-[#C96F55] border border-[rgba(201,111,85,0.4)]'
-                : isOutOfStock
-                ? 'border-[rgba(18,26,42,0.2)] text-[#121A2A]/50'
-                : 'bg-[#C96F55] hover:bg-[#B86047] text-[#F7F5EF] shadow-xs'
-            }`}
-            disabled={isOutOfStock}
-            onClick={() => !isOutOfStock && onAddToCart(product)}
-          >
-            {isOutOfStock ? (
-              'Habis'
-            ) : isSelected ? (
-              <>
-                <FontAwesomeIcon icon={faCheck} className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#C96F55] mr-0.5 sm:mr-1" />
-                <span>Dipilih</span>
-              </>
-            ) : (
-              <>
-                <FontAwesomeIcon icon={faArrowRight} className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-0.5 sm:mr-1" />
-                <span>Pilih</span>
-              </>
-            )}
-          </Button>
+          <Link href={`/products/${product.id}`} prefetch={true}>
+            <Button
+              size="sm"
+              data-gsap="product-button"
+              variant={isOutOfStock ? 'outline' : 'default'}
+              className={`h-7 sm:h-8.5 px-2.5 sm:px-3.5 text-[11px] sm:text-xs font-semibold rounded-lg sm:rounded-xl transition-all active:scale-95 ${
+                isOutOfStock
+                  ? 'border-[rgba(18,26,42,0.2)] text-[#121A2A]/50'
+                  : 'bg-[#C96F55] hover:bg-[#B86047] text-[#F7F5EF] shadow-xs cursor-pointer'
+              }`}
+              disabled={isOutOfStock}
+            >
+              {isOutOfStock ? (
+                'Habis'
+              ) : (
+                <>
+                  <FontAwesomeIcon icon={faArrowRight} className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-0.5 sm:mr-1" />
+                  <span>Pilih</span>
+                </>
+              )}
+            </Button>
+          </Link>
         </div>
       </div>
     </Card>

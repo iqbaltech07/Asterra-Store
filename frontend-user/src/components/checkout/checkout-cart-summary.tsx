@@ -8,6 +8,7 @@ import {
   faCreditCard,
   faShieldHalved,
   faCircleExclamation,
+  faTrashCan,
 } from '@fortawesome/free-solid-svg-icons';
 import { CheckoutVoucherSection } from './checkout-voucher-section';
 
@@ -59,6 +60,7 @@ interface CheckoutCartSummaryProps {
   } | null;
   onValidateBeforeCheckout?: () => boolean;
   onConfirmOrder?: () => void;
+  onRemoveItem?: (id: string) => void;
 }
 
 export function CheckoutCartSummary({
@@ -84,6 +86,7 @@ export function CheckoutCartSummary({
   promoFeedback,
   onValidateBeforeCheckout,
   onConfirmOrder,
+  onRemoveItem,
 }: CheckoutCartSummaryProps) {
   const [isConfirmOpen, setIsConfirmOpen] = React.useState(false);
 
@@ -138,9 +141,21 @@ export function CheckoutCartSummary({
                   </span>
                 )}
               </div>
-              <span className="font-bold text-[#121A2A] shrink-0">
-                Rp {(item.priceNumeric * item.quantity).toLocaleString('id-ID')}
-              </span>
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="font-bold text-[#121A2A]">
+                  Rp {(item.priceNumeric * item.quantity).toLocaleString('id-ID')}
+                </span>
+                {onRemoveItem && (
+                  <button
+                    type="button"
+                    onClick={() => onRemoveItem(item.id)}
+                    className="w-5 h-5 rounded hover:bg-red-50 text-red-400 hover:text-red-600 flex items-center justify-center transition-colors cursor-pointer"
+                    title="Hapus dari pesanan"
+                  >
+                    <FontAwesomeIcon icon={faTrashCan} className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
             </div>
           );
         })}

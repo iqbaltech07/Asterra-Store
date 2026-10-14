@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { useRouter, usePathname } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faLock,
@@ -25,11 +25,10 @@ export function AuthRequiredModal({
   isOpen,
   onClose,
   title = 'Silakan Masuk ke Akun Anda',
-  message = 'Untuk menambahkan produk ke keranjang belanja atau melakukan checkout pesanan, Anda wajib masuk terlebih dahulu.',
+  message = 'Untuk melakukan pemesanan atau checkout produk resmi Asterra Store, Anda wajib masuk terlebih dahulu.',
   callbackUrl,
 }: AuthRequiredModalProps) {
   const [mounted, setMounted] = useState(false);
-  const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
@@ -69,23 +68,21 @@ export function AuthRequiredModal({
   const registerUrl = `/register?callbackUrl=${encodeURIComponent(effectiveCallback)}`;
 
   const handleNavigateToLogin = (e: React.MouseEvent) => {
-    if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) {
-      return;
-    }
     e.preventDefault();
     e.stopPropagation();
     onClose();
-    router.push(loginUrl);
+    if (typeof window !== 'undefined') {
+      window.location.assign(loginUrl);
+    }
   };
 
   const handleNavigateToRegister = (e: React.MouseEvent) => {
-    if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) {
-      return;
-    }
     e.preventDefault();
     e.stopPropagation();
     onClose();
-    router.push(registerUrl);
+    if (typeof window !== 'undefined') {
+      window.location.assign(registerUrl);
+    }
   };
 
   const modalJSX = (
@@ -174,7 +171,7 @@ export function AuthRequiredModal({
         {/* Modal Footer Note */}
         <div className="px-6 py-3 bg-[#F8FAFC] border-t border-[rgba(18,26,42,0.08)] text-center">
           <p className="text-[11px] text-[#121A2A]/60">
-            Sudah punya akun? Masuk untuk melanjutkan belanja Anda dengan aman.
+            Sudah punya akun? Masuk untuk melanjutkan pemesanan Anda dengan aman.
           </p>
         </div>
       </div>

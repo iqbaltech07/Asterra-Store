@@ -55,7 +55,7 @@ const GATEWAY_PAYMENT_METHODS: PaymentMethodOption[] = [
 function CheckoutPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { items, hasHydrated, getTotalAmount, getTotalItems, clearCart } = useCartStore();
+  const { items, hasHydrated, getTotalAmount, getTotalItems, clearCart, removeItem } = useCartStore();
   const { data: session, isPending: isSessionPending } = useSession();
   const { user: legacyUser } = useAuthStore();
   const isAuthenticated = Boolean(session?.user || legacyUser);
@@ -872,6 +872,7 @@ function CheckoutPageContent() {
                     promoFeedback={promoFeedback}
                     onValidateBeforeCheckout={handleValidateBeforeCheckout}
                     onConfirmOrder={() => handleSubmitOrder()}
+                    onRemoveItem={removeItem}
                   />
                 </div>
               </div>

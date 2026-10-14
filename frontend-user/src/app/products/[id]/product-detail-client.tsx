@@ -271,7 +271,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
     setIsMounted(true);
   }, []);
 
-  const { items: cartItems, addItem } = useCartStore();
+  const { items: cartItems, addItem, clearCart } = useCartStore();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const { data: session } = useSession();
   const { user: legacyUser } = useAuthStore();
@@ -605,7 +605,19 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
       showNotification(`Maaf, stok produk ${variantDetails.title} saat ini habis.`);
       return;
     }
-    handleAddToCart();
+    clearCart();
+    const finalId = activeVariant ? activeVariant.id : product.id;
+    for (let i = 0; i < quantity; i++) {
+      addItem({
+        id: finalId,
+        name: variantDetails.title,
+        category: product.category.name,
+        priceFormatted: `Rp ${currentPrice.toLocaleString('id-ID')}`,
+        priceNumeric: currentPrice,
+        stock: activeVariant?.stock ?? product.stock,
+        isOutOfStock: false,
+      });
+    }
     router.push(appendReferralParams('/checkout'));
   };
 
