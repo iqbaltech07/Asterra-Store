@@ -28,7 +28,14 @@ import {
   faSpotify,
 } from '@fortawesome/free-brands-svg-icons';
 import { useCatalogProducts } from '@/lib/hooks/use-catalog-products';
-import { calculateCampaignPrice, isProductInCampaign, ActiveCampaign } from '@/lib/utils/promo-pricing';
+import {
+  calculateCampaignPrice,
+  isProductInCampaign,
+  isCampaignActiveNow,
+  sortCampaignsByPriority,
+  getCampaignCountdown,
+  ActiveCampaign,
+} from '@/lib/utils/promo-pricing';
 import { QuickViewModal, QuickViewProductData } from '@/components/products/quick-view-modal';
 import { getRecentlyViewed, RecentlyViewedItem } from '@/lib/services/recently-viewed';
 import { ProductItem } from '@/lib/products-data';
@@ -364,11 +371,6 @@ function FeaturedGridCard({
               <span className="text-[8px] font-black text-[#DC2626] bg-[#DC2626]/10 px-1 py-0.2 rounded border border-[#DC2626]/20">
                 {promoCalc.savingsText}
               </span>
-              {promoCalc.endDateFormatted && (
-                <span className="text-[9px] font-medium text-[#121A2A]/60 block">
-                  • {promoCalc.endDateFormatted}
-                </span>
-              )}
             </div>
           )}
           <Link
@@ -498,11 +500,6 @@ function ShowcaseLoopingCard({
               <span className="text-[8px] font-black text-[#DC2626] bg-[#DC2626]/10 px-1 py-0.2 rounded border border-[#DC2626]/20">
                 {promoCalc.savingsText}
               </span>
-              {promoCalc.endDateFormatted && (
-                <span className="text-[9px] font-medium text-[#121A2A]/60 block">
-                  • {promoCalc.endDateFormatted}
-                </span>
-              )}
             </div>
           )}
           <Link
@@ -807,6 +804,80 @@ export default function HomePage() {
     return allMapped.slice(0, 8);
   }, [allProducts, appConfigurations, activeCategory, activeCampaigns]);
 
+  // Section Countdown State for Featured Products ("Produk Unggulan & Lisensi Resmi")
+  const [countdownText, setCountdownText] = useState<string>('');
+  const [isSectionExpired, setIsSectionExpired] = useState<boolean>(true);
+  const [isMounted, setIsMounted] = useState<boolean>(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Determine active campaigns applying to current featuredApps
+  const relevantFeaturedCampaigns = useMemo(() => {
+    if (!activeCampaigns || activeCampaigns.length === 0 || !featuredApps || featuredApps.length === 0) {
+      return [];
+    }
+
+    const matched = activeCampaigns.filter((camp: ActiveCampaign) => {
+      if (!isCampaignActiveNow(camp)) return false;
+      return featuredApps.some((app) =>
+        isProductInCampaign(app, camp) ||
+        (app.items && app.items.some((item) =>
+          isProductInCampaign({ id: item.id, name: item.name, category: item.category?.name }, camp)
+        ))
+      );
+    });
+
+    return sortCampaignsByPriority(matched);
+  }, [activeCampaigns, featuredApps]);
+
+  useEffect(() => {
+    if (!isMounted || relevantFeaturedCampaigns.length === 0) {
+      setCountdownText('');
+      setIsSectionExpired(true);
+      return;
+    }
+
+    const updateCountdown = () => {
+      // Find the first non-expired campaign in deterministic priority order
+      let activeRep: ActiveCampaign | null = null;
+      let cdResult: ReturnType<typeof getCampaignCountdown> | null = null;
+
+      for (const camp of relevantFeaturedCampaigns) {
+        const res = getCampaignCountdown(camp.endsAt || camp.endDate);
+        if (!res.isExpired) {
+          activeRep = camp;
+          cdResult = res;
+          break;
+        }
+      }
+
+      if (!activeRep || !cdResult || cdResult.isExpired) {
+        setCountdownText('');
+        setIsSectionExpired(true);
+        return;
+      }
+
+      // Check if multiple campaigns with different end dates exist among relevant featured campaigns
+      const hasDifferentEndDates = relevantFeaturedCampaigns.some((c) => {
+        const cEnd = c.endsAt || c.endDate;
+        const repEnd = activeRep?.endsAt || activeRep?.endDate;
+        return cEnd !== repEnd;
+      });
+
+      // If different campaigns have different end dates, label with campaign name to prevent misleading users
+      const label = hasDifferentEndDates && activeRep.name ? `${activeRep.name}: ` : '';
+      setCountdownText(`${label}${cdResult.countdownText}`);
+      setIsSectionExpired(false);
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+
+    return () => clearInterval(interval);
+  }, [isMounted, relevantFeaturedCampaigns]);
+
   // Product Looping Showcase: Curated list of popular accounts that stays completely independent of the selector
   const showcaseApps = useMemo(() => {
     const showcaseNames = ['Canva', 'ChatGPT', 'Netflix', 'YouTube', 'CapCut', 'Google Gemini', 'Spotify', 'Vidio', 'Alight Motion', 'iQIYI'];
@@ -943,14 +1014,25 @@ export default function HomePage() {
           - Immediately visible in first viewport!
         */}
         <section id="produk-unggulan" aria-label="Produk Unggulan Asterra" data-gsap="featured-section" className="mb-6 sm:mb-8">
-          {/* Section Heading & Subtitle */}
-          <div className="flex items-center justify-between mb-2.5 sm:mb-3 px-0.5">
+          {/* Section Heading & Subtitle / Live Campaign Countdown */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-4 mb-2.5 sm:mb-3 px-0.5">
             <h2 data-gsap="section-heading" className="text-sm sm:text-base md:text-lg font-black tracking-tight text-[#121A2A]">
               Produk Unggulan & Lisensi Resmi
             </h2>
-            <span data-gsap="hero-text" className="text-[11px] sm:text-xs text-[#121A2A]/55 font-medium hidden sm:inline">
-              Garansi 100% Penggantian · Aktivasi Instan
-            </span>
+
+            {isMounted && !isSectionExpired && countdownText ? (
+              <div
+                data-gsap="section-countdown"
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#C96F55]/10 border border-[#C96F55]/25 text-[#C96F55] text-xs sm:text-[13px] font-semibold shadow-2xs self-start sm:self-auto select-none"
+              >
+                <span className="shrink-0 text-xs">⏳</span>
+                <span className="font-medium tracking-tight">{countdownText}</span>
+              </div>
+            ) : (
+              <span data-gsap="hero-text" className="text-[11px] sm:text-xs text-[#121A2A]/55 font-medium hidden sm:inline">
+                Garansi 100% Penggantian · Aktivasi Instan
+              </span>
+            )}
           </div>
 
           {/* Selector Tabs: [ 🔥 Promo ] [ Terlaris ] [ Terbaru ] */}
