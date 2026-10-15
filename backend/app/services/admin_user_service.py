@@ -117,17 +117,14 @@ class AdminUserService:
         email = payload.get("email", "").strip().lower()
         username = payload.get("username", "").strip() or email.split("@")[0]
         name = payload.get("name") or username.capitalize()
+        from app.core.security import get_password_hash
+
         role = payload.get("role", "admin")
         is_active = bool(payload.get("isActive", True))
-        password = payload.get("password", "")
+        password = str(payload.get("password", "")).strip()
 
-        # Default hash or bcrypt if available
-        password_hash = "$2b$10$kzfa/ronlVttUQVWrnH6Oe7A8TSS/hw.qCIB7Os9bpASvI6BnY1oO"
-        try:
-            import bcrypt
-            password_hash = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
-        except Exception:
-            pass
+        # Reliable password hashing
+        password_hash = get_password_hash(password) if password else "$2b$10$kzfa/ronlVttUQVWrnH6Oe7A8TSS/hw.qCIB7Os9bpASvI6BnY1oO"
 
         now_dt = datetime.utcnow()
         new_id = f"adm-{int(now_dt.timestamp() * 1000)}"
@@ -162,7 +159,6 @@ class AdminUserService:
                 db.close()
         except Exception as e:
             print(f"[AdminUserService] Error saving to Supabase: {e}")
-            # In case Supabase commit fails
             return {"success": False, "message": f"Gagal menyimpan ke database Supabase: {str(e)}"}
 
         # 2. Reload and sync cache
@@ -171,12 +167,18 @@ class AdminUserService:
 
     @classmethod
     def update_admin(cls, admin_id: str, payload: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        # 1. Update in Supabase
+        clean_id = str(admin_id).strip()
+        from app.core.security import get_password_hash
+        # 1. Update in Supabase PostgreSQL
         updated_dict = None
         try:
             db = SessionLocal()
             try:
-                admin_obj = db.query(AdminUser).filter(AdminUser.id == admin_id).first()
+                admin_obj = db.query(AdminUser).filter(
+                    (AdminUser.id == clean_id)
+                    | (AdminUser.email.ilike(clean_id))
+                    | (AdminUser.username.ilike(clean_id))
+                ).first()
                 if admin_obj:
                     if "name" in payload and payload["name"] is not None:
                         admin_obj.name = payload["name"]
@@ -185,11 +187,9 @@ class AdminUserService:
                     if "isActive" in payload and payload["isActive"] is not None:
                         admin_obj.is_active = bool(payload["isActive"])
                     if "password" in payload and payload["password"]:
-                        try:
-                            import bcrypt
-                            admin_obj.password_hash = bcrypt.hashpw(payload["password"].encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
-                        except Exception:
-                            pass
+                        raw_pw = str(payload["password"]).strip()
+                        if raw_pw:
+                            admin_obj.password_hash = get_password_hash(raw_pw)
                     admin_obj.updated_at = datetime.utcnow()
                     db.commit()
                     db.refresh(admin_obj)
@@ -199,18 +199,50 @@ class AdminUserService:
         except Exception as e:
             print(f"[AdminUserService] Error updating in Supabase: {e}")
 
-        # 2. Refresh cache
+        # 2. Also ensure local cache and fallback file are synchronized
+        admins = cls.load_admins()
+        matched = next(
+            (a for a in admins if str(a.get("id")) == clean_id or str(a.get("email", "")).lower() == clean_id.lower() or str(a.get("username", "")).lower() == clean_id.lower()),
+            None
+        )
+        if matched:
+            if "name" in payload and payload["name"] is not None:
+                matched["name"] = payload["name"]
+            if "role" in payload and payload["role"] is not None:
+                matched["role"] = payload["role"]
+            if "isActive" in payload and payload["isActive"] is not None:
+                matched["isActive"] = bool(payload["isActive"])
+            if "password" in payload and payload["password"]:
+                raw_pw = str(payload["password"]).strip()
+                if raw_pw:
+                    matched["passwordHash"] = get_password_hash(raw_pw)
+            cls.save_admins()
+            if not updated_dict:
+                updated_dict = {
+                    "id": matched.get("id"),
+                    "username": matched.get("username"),
+                    "email": matched.get("email"),
+                    "name": matched.get("name"),
+                    "role": matched.get("role", "admin"),
+                    "isActive": matched.get("isActive", True),
+                }
+
+        # 3. Reload cache
         cls.load_admins(force_reload=True)
         return updated_dict
 
     @classmethod
     def delete_admin(cls, admin_id: str) -> bool:
-        # 1. Delete in Supabase
+        clean_id = str(admin_id).strip()
         deleted = False
         try:
             db = SessionLocal()
             try:
-                admin_obj = db.query(AdminUser).filter(AdminUser.id == admin_id).first()
+                admin_obj = db.query(AdminUser).filter(
+                    (AdminUser.id == clean_id)
+                    | (AdminUser.email.ilike(clean_id))
+                    | (AdminUser.username.ilike(clean_id))
+                ).first()
                 if admin_obj:
                     db.delete(admin_obj)
                     db.commit()
@@ -220,6 +252,11 @@ class AdminUserService:
         except Exception as e:
             print(f"[AdminUserService] Error deleting in Supabase: {e}")
 
-        # 2. Refresh cache
+        # Also remove from local list
+        if cls._admins:
+            cls._admins = [a for a in cls._admins if str(a.get("id")) != clean_id and str(a.get("email", "")).lower() != clean_id.lower()]
+            cls.save_admins()
+            deleted = True
+
         cls.load_admins(force_reload=True)
         return deleted

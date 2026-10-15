@@ -479,33 +479,65 @@ function CheckoutPageContent() {
 
   const isManualMode = paymentConfig?.mode === 'manual';
 
-  // Dynamic payment methods based on server mode
-  const currentPaymentMethods: PaymentMethodOption[] = isManualMode
-    ? [
-        {
-          id: 'manual_bca',
-          name: paymentConfig?.bank?.name || 'Bank Central Asia (BCA)',
-          description: `No. Rek: ${paymentConfig?.bank?.account_number || '8965123456'} a.n ${
-            paymentConfig?.bank?.account_name || 'Asterra Store Official'
-          }`,
-          category: 'bank_manual',
-        },
-        {
-          id: 'manual_qris',
-          name: 'QRIS Statis Toko',
-          description: `Scan QRIS Semua Bank & E-Wallet (${paymentConfig?.qris?.merchant_name || 'ASTERRA STORE'})`,
-          category: 'qris',
-        },
-        {
-          id: 'manual_dana',
-          name: 'Transfer E-Wallet DANA',
-          description: `No. HP: ${paymentConfig?.dana?.number || '081234567890'} a.n ${
-            paymentConfig?.dana?.account_name || 'Asterra Store'
-          }`,
-          category: 'ewallet',
-        },
-      ]
-    : GATEWAY_PAYMENT_METHODS;
+  // Dynamic payment methods based on server mode with active/inactive channel filtering
+  const currentPaymentMethods: PaymentMethodOption[] = useMemo(() => {
+    if (!isManualMode) return GATEWAY_PAYMENT_METHODS;
+    const isBankOn = (paymentConfig?.isBankActive ?? paymentConfig?.is_bank_active ?? paymentConfig?.bank?.is_active) !== false;
+    const isQrisOn = (paymentConfig?.isQrisActive ?? paymentConfig?.is_qris_active ?? paymentConfig?.qris?.is_active) !== false;
+    const isDanaOn = (paymentConfig?.isDanaActive ?? paymentConfig?.is_dana_active ?? paymentConfig?.dana?.is_active) !== false;
+
+    const list: PaymentMethodOption[] = [];
+    if (isBankOn) {
+      list.push({
+        id: 'manual_bca',
+        name: paymentConfig?.bank?.name || 'Bank Central Asia (BCA)',
+        description: `No. Rek: ${paymentConfig?.bank?.account_number || '8965123456'} a.n ${
+          paymentConfig?.bank?.account_name || 'Asterra Store Official'
+        }`,
+        category: 'bank_manual',
+      });
+    }
+    if (isQrisOn) {
+      list.push({
+        id: 'manual_qris',
+        name: 'QRIS Statis Toko',
+        description: `Scan QRIS Semua Bank & E-Wallet (${paymentConfig?.qris?.merchant_name || 'ASTERRA STORE'})`,
+        category: 'qris',
+      });
+    }
+    if (isDanaOn) {
+      list.push({
+        id: 'manual_dana',
+        name: 'Transfer E-Wallet DANA',
+        description: `No. HP: ${paymentConfig?.dana?.number || '081234567890'} a.n ${
+          paymentConfig?.dana?.account_name || 'Asterra Store'
+        }`,
+        category: 'ewallet',
+      });
+    }
+    // Fallback if all disabled
+    if (list.length === 0) {
+      list.push({
+        id: 'manual_bca',
+        name: paymentConfig?.bank?.name || 'Bank Central Asia (BCA)',
+        description: `No. Rek: ${paymentConfig?.bank?.account_number || '8965123456'} a.n ${
+          paymentConfig?.bank?.account_name || 'Asterra Store Official'
+        }`,
+        category: 'bank_manual',
+      });
+    }
+    return list;
+  }, [isManualMode, paymentConfig]);
+
+  // Ensure selectedMethod is valid among active channels
+  useEffect(() => {
+    if (currentPaymentMethods.length > 0) {
+      const exists = currentPaymentMethods.some((m) => m.id === selectedMethod);
+      if (!exists) {
+        setSelectedMethod(currentPaymentMethods[0].id);
+      }
+    }
+  }, [currentPaymentMethods, selectedMethod]);
 
   // 2. TanStack Mutation: Validate Promo Voucher
   const validatePromoMutation = useMutation({

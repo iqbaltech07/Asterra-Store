@@ -492,6 +492,7 @@ function ProductsContent() {
                         {promoCalc.hasPromo && (
                           <ProductPromoCountdownBadge
                             endsAtOrDate={promoCalc.endsAt || promoCalc.endDate}
+                            startsAtOrDate={promoCalc.startsAt || promoCalc.startDate}
                             className="text-[10px] px-2 py-0.5 rounded-full bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.25)] text-[#C96F55] font-semibold inline-flex items-center"
                           />
                         )}

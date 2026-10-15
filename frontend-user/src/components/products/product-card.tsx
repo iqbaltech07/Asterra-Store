@@ -13,9 +13,11 @@ import { useQuery } from '@tanstack/react-query';
 
 export function ProductPromoCountdownBadge({
   endsAtOrDate,
+  startsAtOrDate,
   className = 'text-[9px] font-bold text-[#C96F55] bg-[rgba(201,111,85,0.08)] px-1.5 py-0.5 rounded border border-[rgba(201,111,85,0.2)] leading-tight whitespace-nowrap inline-flex items-center',
 }: {
   endsAtOrDate?: string;
+  startsAtOrDate?: string;
   className?: string;
 }) {
   const [countdownStr, setCountdownStr] = React.useState<string>('');
@@ -32,18 +34,18 @@ export function ProductPromoCountdownBadge({
     }
 
     const update = () => {
-      const cd = getCampaignCountdown(endsAtOrDate);
+      const cd = getCampaignCountdown(endsAtOrDate, startsAtOrDate);
       if (cd.isExpired) {
         setCountdownStr('');
-        const timePart = `${String(cd.hours).padStart(2, '0')}:${String(cd.minutes).padStart(2, '0')}:${String(cd.seconds).padStart(2, '0')}`;
-        setCountdownStr(`⏳ ${timePart}`);
+      } else {
+        setCountdownStr(`⏳ ${cd.timeFormatted}`);
       }
     };
 
     update();
     const interval = setInterval(update, 1000);
     return () => clearInterval(interval);
-  }, [endsAtOrDate]);
+  }, [endsAtOrDate, startsAtOrDate]);
 
   if (!isMounted || !countdownStr) return null;
 
@@ -220,6 +222,7 @@ export function ProductCard({
                 </span>
                 <ProductPromoCountdownBadge
                   endsAtOrDate={campaignPrice.endsAt || campaignPrice.endDate}
+                  startsAtOrDate={campaignPrice.startsAt || campaignPrice.startDate}
                 />
               </div>
               <span

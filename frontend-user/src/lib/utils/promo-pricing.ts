@@ -117,55 +117,78 @@ export function formatCampaignPeriod(startsAtOrDate?: string, endsAtOrDate?: str
  * Computes remaining time until campaign ends.
  * Stops cleanly at 0 without negative numbers.
  */
-export function getCampaignCountdown(endsAtOrDate?: string): {
+export function getCampaignCountdown(endsAtOrDate?: string, startsAtOrDate?: string): {
   isExpired: boolean;
+  isUpcoming: boolean;
   totalSeconds: number;
   days: number;
   hours: number;
   minutes: number;
   seconds: number;
+  timeFormatted: string;
   countdownText: string;
 } {
   if (!endsAtOrDate) {
-    return { isExpired: true, totalSeconds: 0, days: 0, hours: 0, minutes: 0, seconds: 0, countdownText: 'Promo berakhir' };
+    return { isExpired: true, isUpcoming: false, totalSeconds: 0, days: 0, hours: 0, minutes: 0, seconds: 0, timeFormatted: '00:00:00', countdownText: 'Promo berakhir' };
   }
   try {
-    const raw = endsAtOrDate.trim();
-    const isoString = raw.length === 10 ? `${raw}T23:59:59+07:00` : (raw.includes('+') || raw.endsWith('Z') ? raw : `${raw}+07:00`);
-    const endMs = new Date(isoString).getTime();
-    if (isNaN(endMs)) {
-      return { isExpired: true, totalSeconds: 0, days: 0, hours: 0, minutes: 0, seconds: 0, countdownText: 'Promo berakhir' };
-    }
+    const parseIso = (rawStr: string, isEnd = true) => {
+      const raw = rawStr.trim();
+      if (raw.length === 10) {
+        return `${raw}T${isEnd ? '23:59:59' : '00:00:00'}+07:00`;
+      }
+      return raw.includes('+') || raw.endsWith('Z') ? raw : `${raw}+07:00`;
+    };
 
     const nowMs = Date.now();
-    const diffMs = endMs - nowMs;
+    const endMs = new Date(parseIso(endsAtOrDate, true)).getTime();
 
-    if (diffMs <= 0) {
-      return { isExpired: true, totalSeconds: 0, days: 0, hours: 0, minutes: 0, seconds: 0, countdownText: 'Promo berakhir' };
+    if (isNaN(endMs) || nowMs >= endMs) {
+      return { isExpired: true, isUpcoming: false, totalSeconds: 0, days: 0, hours: 0, minutes: 0, seconds: 0, timeFormatted: '00:00:00', countdownText: 'Promo berakhir' };
     }
 
-    const totalSeconds = Math.floor(diffMs / 1000);
+    let isUpcoming = false;
+    let targetDiffMs = endMs - nowMs;
+    let prefix = 'Promo berakhir dalam';
+
+    if (startsAtOrDate) {
+      const startMs = new Date(parseIso(startsAtOrDate, false)).getTime();
+      if (!isNaN(startMs) && nowMs < startMs) {
+        isUpcoming = true;
+        targetDiffMs = startMs - nowMs;
+        prefix = 'Promo dimulai dalam';
+      }
+    }
+
+    const totalSeconds = Math.max(0, Math.floor(targetDiffMs / 1000));
     const days = Math.floor(totalSeconds / 86400);
     const hours = Math.floor((totalSeconds % 86400) / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const seconds = totalSeconds % 60;
 
     const pad = (n: number) => String(n).padStart(2, '0');
-    const timeFormatted = `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+    let timeFormatted = '';
+    if (days > 0) {
+      timeFormatted = `${days} hari ${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+    } else {
+      timeFormatted = `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+    }
 
-    const countdownText = `Promo berakhir dalam ${timeFormatted}`;
+    const countdownText = `${prefix} ${timeFormatted}`;
 
     return {
       isExpired: false,
+      isUpcoming,
       totalSeconds,
       days,
       hours,
       minutes,
       seconds,
+      timeFormatted,
       countdownText,
     };
   } catch {
-    return { isExpired: true, totalSeconds: 0, days: 0, hours: 0, minutes: 0, seconds: 0, countdownText: 'Promo berakhir' };
+    return { isExpired: true, isUpcoming: false, totalSeconds: 0, days: 0, hours: 0, minutes: 0, seconds: 0, timeFormatted: '00:00:00', countdownText: 'Promo berakhir' };
   }
 }
 

@@ -19,6 +19,9 @@ class PaymentSetting(Base):
     instructions = Column(Text, nullable=True)
     enable_unique_code = Column(Boolean, default=True)
     order_expiry_hours = Column(Integer, default=24)
+    is_bank_active = Column(Boolean, default=True)
+    is_qris_active = Column(Boolean, default=True)
+    is_dana_active = Column(Boolean, default=True)
     cs_email = Column(String, nullable=True)
     cs_whatsapp_numbers = Column(ARRAY(String), default=[])
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -30,6 +33,12 @@ class PaymentSetting(Base):
             "bankName": self.bank_name,
             "bankAccountNumber": self.bank_account_number,
             "bankAccountName": self.bank_account_name,
+            "isBankActive": True if self.is_bank_active is None else self.is_bank_active,
+            "isQrisActive": True if self.is_qris_active is None else self.is_qris_active,
+            "isDanaActive": True if self.is_dana_active is None else self.is_dana_active,
+            "is_bank_active": True if self.is_bank_active is None else self.is_bank_active,
+            "is_qris_active": True if self.is_qris_active is None else self.is_qris_active,
+            "is_dana_active": True if self.is_dana_active is None else self.is_dana_active,
             "qrisImageUrl": self.qris_image_url,
             "qrisMerchantName": self.qris_merchant_name,
             "danaNumber": self.dana_number,

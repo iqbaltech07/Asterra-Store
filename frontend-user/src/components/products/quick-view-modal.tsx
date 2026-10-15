@@ -159,6 +159,7 @@ export function QuickViewModal({ product, isOpen, onClose, activeCampaigns = [] 
                     {promoCalc.hasPromo && (
                       <ProductPromoCountdownBadge
                         endsAtOrDate={promoCalc.endsAt || promoCalc.endDate}
+                        startsAtOrDate={promoCalc.startsAt || promoCalc.startDate}
                         className="text-[10px] font-semibold text-[#C96F55] bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.25)] px-2 py-0.5 rounded-full inline-flex items-center"
                       />
                     )}

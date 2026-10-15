@@ -615,30 +615,120 @@ class PartnerService:
             "payoutRequests": [],
         }
 
+        # 1. Persist to PostgreSQL sales_partners table
+        try:
+            db = SessionLocal()
+            try:
+                p_obj = SalesPartner(
+                    id=new_partner["id"],
+                    name=name,
+                    email=email,
+                    whatsapp=whatsapp,
+                    code=custom_code,
+                    tier="Standard (10%)",
+                    rate=10,
+                    total_clicks=0,
+                    bank_name=new_partner["bankName"],
+                    bank_account=new_partner["bankAccount"],
+                    status="active",
+                    referred_by_id=recruiter_id,
+                )
+                db.add(p_obj)
+                db.commit()
+            finally:
+                db.close()
+        except Exception as e:
+            print(f"[PartnerService] Error creating partner in DB: {e}")
+
         partners.append(new_partner)
         cls.save_partners()
 
-        # Also register sales admin account in supabase-admins.json so they can log in
+        # 2. Persist sales account directly to AdminUser table with secure password hash
+        raw_pass = str(payload.get("password") or "AsterraSales#2026").strip()
+        username = f"sales-{custom_code.lower().replace('-', '')}"
         try:
-            if ADMINS_FILE.exists():
-                admins = json.loads(ADMINS_FILE.read_text(encoding="utf-8"))
-                username = f"sales-{custom_code.lower().replace('-', '')}"
-                new_admin = {
-                    "id": f"adm-sales-{int(datetime.utcnow().timestamp())}",
-                    "username": username,
-                    "email": email,
-                    "name": name,
-                    "role": "sales",
-                    "isActive": True,
-                    "createdAt": now_iso,
-                    "updatedAt": now_iso,
-                }
-                admins.append(new_admin)
-                ADMINS_FILE.write_text(json.dumps(admins, indent=2, ensure_ascii=False), encoding="utf-8")
+            from app.core.security import get_password_hash
+            from app.models.admin_user import AdminUser
+            pw_hash = get_password_hash(raw_pass)
+
+            db = SessionLocal()
+            try:
+                existing_admin = db.query(AdminUser).filter(
+                    (AdminUser.email.ilike(email)) | (AdminUser.username.ilike(username))
+                ).first()
+                if existing_admin:
+                    existing_admin.password_hash = pw_hash
+                    existing_admin.role = "sales"
+                    existing_admin.is_active = True
+                    db.commit()
+                else:
+                    admin_rec = AdminUser(
+                        id=f"adm-sales-{int(datetime.utcnow().timestamp())}",
+                        username=username,
+                        email=email,
+                        name=name,
+                        password_hash=pw_hash,
+                        role="sales",
+                        is_active=True,
+                    )
+                    db.add(admin_rec)
+                    db.commit()
+            finally:
+                db.close()
         except Exception as e:
-            print(f"[PartnerService] Error creating admin mirror: {e}")
+            print(f"[PartnerService] Error creating AdminUser for partner: {e}")
+
+        # Also refresh admin user cache
+        from app.services.admin_user_service import AdminUserService
+        AdminUserService.load_admins(force_reload=True)
 
         return {"success": True, "message": "Pendaftaran mitra sales berhasil!", "partner": new_partner}
+
+    @classmethod
+    def sync_missing_sales_admins(cls) -> int:
+        """Ensures every registered partner has an active sales AdminUser account for seamless login."""
+        from app.core.security import get_password_hash
+        from app.models.admin_user import AdminUser
+        partners = cls.load_partners()
+        synced_count = 0
+        try:
+            db = SessionLocal()
+            try:
+                for p in partners:
+                    p_email = str(p.get("email", "")).strip().lower()
+                    p_code = str(p.get("code", "")).strip().upper()
+                    p_name = p.get("name") or f"Sales {p_code}"
+                    if not p_email:
+                        continue
+                    username = f"sales-{p_code.lower().replace('-', '')}"
+
+                    existing = db.query(AdminUser).filter(
+                        (AdminUser.email.ilike(p_email)) | (AdminUser.username.ilike(username))
+                    ).first()
+
+                    if not existing:
+                        default_hash = get_password_hash("AsterraSales#2026")
+                        new_sales_user = AdminUser(
+                            id=f"adm-sales-{int(datetime.utcnow().timestamp())}-{p_code[:4]}",
+                            username=username,
+                            email=p_email,
+                            name=p_name,
+                            password_hash=default_hash,
+                            role="sales",
+                            is_active=True,
+                        )
+                        db.add(new_sales_user)
+                        db.commit()
+                        synced_count += 1
+            finally:
+                db.close()
+        except Exception as e:
+            print(f"[PartnerService] Error syncing missing sales admins: {e}")
+
+        if synced_count > 0:
+            from app.services.admin_user_service import AdminUserService
+            AdminUserService.load_admins(force_reload=True)
+        return synced_count
 
     @classmethod
     def submit_payout(cls, payload: Dict[str, Any]) -> Dict[str, Any]:

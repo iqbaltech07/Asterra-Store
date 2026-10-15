@@ -337,7 +337,7 @@ class OrderService:
             try:
                 order_obj = db.query(Order).options(joinedload(Order.items)).filter(Order.id == clean_id).first()
                 if order_obj:
-                    return cls._normalize_order(order_obj.to_dict())
+                    return order_obj.to_dict()
             finally:
                 db.close()
         except Exception:

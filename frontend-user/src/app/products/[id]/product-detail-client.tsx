@@ -547,7 +547,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
     }
 
     const updateCountdown = () => {
-      const cd = getCampaignCountdown(campaignPrice.endsAt);
+      const cd = getCampaignCountdown(campaignPrice.endsAt, campaignPrice.startsAt);
       if (cd.isExpired) {
         setCountdownText('Promo telah berakhir');
         queryClient.invalidateQueries({ queryKey: ['active-campaigns'] });
@@ -559,7 +559,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
     updateCountdown();
     const timer = setInterval(updateCountdown, 1000);
     return () => clearInterval(timer);
-  }, [campaignPrice.hasPromo, campaignPrice.endsAt, queryClient]);
+  }, [campaignPrice.hasPromo, campaignPrice.endsAt, campaignPrice.startsAt, queryClient]);
 
   const isOutOfStock =
     (product?.stock !== undefined && product.stock <= 0) ||

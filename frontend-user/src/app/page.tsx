@@ -580,7 +580,7 @@ function FeaturedSectionCountdownBadge({
       let cdResult: ReturnType<typeof getCampaignCountdown> | null = null;
 
       for (const camp of relevantFeaturedCampaigns) {
-        const res = getCampaignCountdown(camp.endsAt || camp.endDate);
+        const res = getCampaignCountdown(camp.endsAt || camp.endDate, camp.startsAt || camp.startDate);
         if (!res.isExpired) {
           activeRep = camp;
           cdResult = res;

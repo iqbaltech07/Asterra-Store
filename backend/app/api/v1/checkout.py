@@ -13,19 +13,70 @@ router = APIRouter()
 from app.core.cache import cache
 
 def mask_order_for_public(order: dict, is_owner_or_admin: bool) -> dict:
-    if is_owner_or_admin:
-        return order
     o = dict(order)
-    phone = str(o.get("customerWhatsapp") or "")
-    if phone and len(phone) > 6:
-        o["customerWhatsapp"] = f"{phone[:3]}****{phone[-4:]}"
-    name = str(o.get("customerName") or "")
-    if name and len(name) > 2:
-        o["customerName"] = f"{name[0]}***{name[-1]}"
-    email = str(o.get("customerEmail") or "")
-    if email and "@" in email:
-        parts = email.split("@")
-        o["customerEmail"] = f"{parts[0][:2]}***@{parts[1]}"
+    phone = str(o.get("customerWhatsapp") or o.get("customer_whatsapp") or "")
+    name = str(o.get("customerName") or o.get("customer_name") or "")
+    email = str(o.get("customerEmail") or o.get("customer_email") or "")
+
+    masked_phone = f"{phone[:3]}****{phone[-4:]}" if len(phone) > 6 else phone
+    masked_name = f"{name[0]}***{name[-1]}" if len(name) > 2 else (name or "Pelanggan Asterra")
+    masked_email = f"{email.split('@')[0][:2]}***@{email.split('@')[1]}" if ("@" in email and len(email.split('@')[0]) > 2) else email
+
+    # Build customer_display
+    if not o.get("customer_display"):
+        if masked_name and masked_phone:
+            o["customer_display"] = f"{masked_name} ({masked_phone})"
+        elif masked_name:
+            o["customer_display"] = masked_name
+        else:
+            o["customer_display"] = "Pelanggan Asterra"
+
+    if not is_owner_or_admin:
+        o["customerWhatsapp"] = masked_phone
+        o["customer_whatsapp"] = masked_phone
+        o["customerName"] = masked_name
+        o["customer_name"] = masked_name
+        o["customerEmail"] = masked_email
+        o["customer_email"] = masked_email
+
+    # Map public fields
+    raw_id = o.get("raw_id") or o.get("id") or o.get("orderId") or ""
+    o["raw_id"] = raw_id
+    if not o.get("id"):
+        o["id"] = raw_id
+
+    st = str(o.get("order_status") or o.get("status") or "pending").lower()
+    if st in ["completed", "paid", "settlement"]:
+        st = "completed"
+    elif st in ["processing", "process"]:
+        st = "processing"
+    elif st in ["cancelled", "expired", "failed"]:
+        st = "cancelled"
+    else:
+        st = "pending"
+    o["order_status"] = st
+    o["status"] = st
+
+    if not o.get("order_date"):
+        o["order_date"] = o.get("createdAt") or o.get("created_at") or ""
+
+    items = o.get("items") or []
+    if not o.get("items_count"):
+        o["items_count"] = sum(int(item.get("quantity", 1)) for item in items) if items else 1
+
+    if not o.get("product_name"):
+        if items:
+            first_name = items[0].get("productName") or items[0].get("product_name") or "Lisensi Digital"
+            if len(items) > 1:
+                o["product_name"] = f"{first_name} (+{len(items)-1} produk lain)"
+            else:
+                o["product_name"] = first_name
+        else:
+            o["product_name"] = o.get("productName") or "Lisensi Digital"
+
+    if not o.get("items_summary"):
+        o["items_summary"] = o.get("product_name") or ""
+
     return o
 
 # ------------------------------------------
@@ -152,6 +203,7 @@ def get_orders(
     phone: Optional[str] = None,
     search: Optional[str] = None,
     status: Optional[str] = None,
+    public: Optional[bool] = False,
     page: int = 1,
     limit: int = 20,
 ):
@@ -162,11 +214,14 @@ def get_orders(
         p = verify_admin_session_token(admin_token)
         is_admin = p and p.get("role") in ["admin", "superadmin"]
 
-    # Security Guard: Anonymous callers without email/phone cannot scrape all database orders!
-    if not is_admin and not email and not phone and not search:
+    is_public = bool(public) or request.query_params.get("public") == "true"
+
+    # Security Guard: Anonymous callers without email/phone cannot scrape all database orders unless public list is requested
+    if not is_admin and not is_public and not email and not phone and not search:
         return {
             "success": True,
             "data": [],
+            "total": 0,
             "pagination": {
                 "total_items": 0,
                 "current_page": 1,
@@ -181,6 +236,7 @@ def get_orders(
     return {
         "success": True,
         "data": orders,
+        "total": result["total"],
         "pagination": {
             "total_items": result["total"],
             "current_page": result["page"],

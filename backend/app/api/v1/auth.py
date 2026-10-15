@@ -34,14 +34,48 @@ async def admin_auth_login(request: Request):
         )
 
     clean = email_or_user.lower()
+    clean_stripped = clean.replace("-", "")
+
+    # 1. Look up in AdminUserService by email or username
     admin_match = AdminUserService.find_by_email(clean)
     if not admin_match:
         admins = AdminUserService.load_admins()
-        admin_match = next((a for a in admins if str(a.get("username", "")).lower() == clean), None)
+        admin_match = next(
+            (
+                a for a in admins
+                if str(a.get("username", "")).lower() == clean
+                or str(a.get("username", "")).lower().replace("-", "") == clean_stripped
+                or str(a.get("username", "")).lower() == f"sales-{clean_stripped}"
+            ),
+            None,
+        )
 
-    partner_match = None
-    if not admin_match:
-        partner_match = PartnerService.find_by_email(clean) or PartnerService.find_by_code(clean)
+    # 2. Check partner service if not directly found in admin
+    partner_match = PartnerService.find_by_email(clean) or PartnerService.find_by_code(clean)
+    if partner_match and not admin_match:
+        p_email = str(partner_match.get("email", "")).lower()
+        p_code = str(partner_match.get("code", "")).lower().replace("-", "")
+        admins = AdminUserService.load_admins()
+        admin_match = next(
+            (
+                a for a in admins
+                if str(a.get("email", "")).lower() == p_email
+                or str(a.get("username", "")).lower().replace("-", "") in [f"sales{p_code}", p_code]
+            ),
+            None,
+        )
+        if not admin_match:
+            # Sync to AdminUser table on-the-fly
+            PartnerService.sync_missing_sales_admins()
+            admins = AdminUserService.load_admins(force_reload=True)
+            admin_match = next(
+                (
+                    a for a in admins
+                    if str(a.get("email", "")).lower() == p_email
+                    or str(a.get("username", "")).lower().replace("-", "") in [f"sales{p_code}", p_code]
+                ),
+                None,
+            )
 
     if not admin_match and not partner_match:
         return JSONResponse(
@@ -55,89 +89,75 @@ async def admin_auth_login(request: Request):
             },
         )
 
-    # 1. Verify administrator credentials
-    if admin_match:
-        if not admin_match.get("isActive", True):
-            return JSONResponse(
-                status_code=403,
-                content={
-                    "success": False,
-                    "error": {
-                        "code": "ACCOUNT_DISABLED",
-                        "message": "Akun administrator ini telah dinonaktifkan.",
-                    },
+    # 3. Check account active status
+    if admin_match and not admin_match.get("isActive", True):
+        return JSONResponse(
+            status_code=403,
+            content={
+                "success": False,
+                "error": {
+                    "code": "ACCOUNT_DISABLED",
+                    "message": "Akun ini telah dinonaktifkan oleh Administrator.",
                 },
-            )
+            },
+        )
 
+    if partner_match and partner_match.get("status") == "inactive":
+        return JSONResponse(
+            status_code=403,
+            content={
+                "success": False,
+                "error": {
+                    "code": "ACCOUNT_DISABLED",
+                    "message": "Akun kemitraan sales ini sedang non-aktif.",
+                },
+            },
+        )
+
+    # 4. Password verification
+    stored_hash = ""
+    if admin_match:
         stored_hash = admin_match.get("passwordHash") or admin_match.get("password_hash") or ""
+    elif partner_match:
+        stored_hash = partner_match.get("passwordHash") or partner_match.get("password_hash") or ""
+
+    is_valid = False
+    if stored_hash:
         is_valid = verify_password(password, stored_hash)
 
-        # Fallback to configured ADMIN_PASSWORD for root admin if hash is missing/initial setup
-        if not is_valid and settings.ADMIN_PASSWORD:
-            if clean in ["admin", settings.ADMIN_EMAIL.lower()] and password == settings.ADMIN_PASSWORD:
+    # Fallback to defaults only if hash not yet saved or matching root config
+    if not is_valid:
+        if admin_match and clean in ["admin", settings.ADMIN_EMAIL.lower()] and settings.ADMIN_PASSWORD:
+            if password == settings.ADMIN_PASSWORD:
                 is_valid = True
-
-        if not is_valid:
-            return JSONResponse(
-                status_code=401,
-                content={
-                    "success": False,
-                    "error": {
-                        "code": "INVALID_CREDENTIALS",
-                        "message": "Email/username atau kata sandi tidak valid.",
-                    },
-                },
-            )
-
-        user_id = admin_match.get("id")
-        canonical_email = admin_match.get("email")
-        role = admin_match.get("role", "admin")
-        display_name = admin_match.get("name", "Administrator")
-
-    # 2. Verify sales partner credentials
-    else:
-        if partner_match.get("status") == "inactive":
-            return JSONResponse(
-                status_code=403,
-                content={
-                    "success": False,
-                    "error": {
-                        "code": "ACCOUNT_DISABLED",
-                        "message": "Akun kemitraan sales ini sedang non-aktif.",
-                    },
-                },
-            )
-
-        admins = AdminUserService.load_admins()
-        p_email = str(partner_match.get("email", "")).lower()
-        p_admin_record = next((a for a in admins if str(a.get("email", "")).lower() == p_email), None)
-        stored_hash = p_admin_record.get("passwordHash") if p_admin_record else (partner_match.get("passwordHash") or partner_match.get("password_hash"))
-
-        is_valid = False
-        if stored_hash:
-            is_valid = verify_password(password, stored_hash)
-        else:
+        elif not stored_hash and partner_match:
             partner_code = str(partner_match.get("code", "")).strip().upper()
             partner_wa = str(partner_match.get("whatsapp", "")).strip()
             if password in [partner_code, partner_wa, "AsterraSales#2026", settings.ADMIN_PASSWORD]:
                 is_valid = True
 
-        if not is_valid:
-            return JSONResponse(
-                status_code=401,
-                content={
-                    "success": False,
-                    "error": {
-                        "code": "INVALID_CREDENTIALS",
-                        "message": "Kredensial mitra sales tidak valid.",
-                    },
+    if not is_valid:
+        return JSONResponse(
+            status_code=401,
+            content={
+                "success": False,
+                "error": {
+                    "code": "INVALID_CREDENTIALS",
+                    "message": "Email/username atau kata sandi tidak valid.",
                 },
-            )
+            },
+        )
 
-        user_id = partner_match.get("id")
-        canonical_email = partner_match.get("email")
+    # Determine role and identity
+    role = "admin"
+    if admin_match and admin_match.get("role"):
+        role = admin_match.get("role", "admin")
+    elif partner_match:
         role = "sales"
-        display_name = partner_match.get("name", "Mitra Sales")
+
+    user_id = (admin_match.get("id") if admin_match else None) or (partner_match.get("id") if partner_match else "adm-root")
+    canonical_email = (admin_match.get("email") if admin_match else None) or (partner_match.get("email") if partner_match else clean)
+    display_name = (admin_match.get("name") if admin_match else None) or (partner_match.get("name") if partner_match else "Pengguna")
 
     token = create_admin_session_token(
         id_val=user_id,

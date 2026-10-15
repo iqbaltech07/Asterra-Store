@@ -1,6 +1,12 @@
 export interface PaymentConfig {
   id: string;
   mode: 'gateway' | 'manual';
+  isBankActive?: boolean;
+  isQrisActive?: boolean;
+  isDanaActive?: boolean;
+  is_bank_active?: boolean;
+  is_qris_active?: boolean;
+  is_dana_active?: boolean;
   bankName: string;
   bankAccountNumber: string;
   bankAccountName: string;
@@ -19,18 +25,27 @@ export interface PaymentConfig {
 
 export interface PublicPaymentConfig {
   mode: 'gateway' | 'manual';
+  isBankActive?: boolean;
+  isQrisActive?: boolean;
+  isDanaActive?: boolean;
+  is_bank_active?: boolean;
+  is_qris_active?: boolean;
+  is_dana_active?: boolean;
   bank: {
     name: string;
     account_number: string;
     account_name: string;
+    is_active?: boolean;
   };
   qris: {
     image_url: string;
     merchant_name: string;
+    is_active?: boolean;
   };
   dana: {
     number: string;
     account_name: string;
+    is_active?: boolean;
   };
   confirmation_whatsapp: string;
   cs_email: string;

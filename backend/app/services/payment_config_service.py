@@ -23,6 +23,12 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "csWhatsappNumbers": ["081234567890"],
     "enableUniqueCode": True,
     "orderExpiryHours": 24,
+    "isBankActive": True,
+    "isQrisActive": True,
+    "isDanaActive": True,
+    "is_bank_active": True,
+    "is_qris_active": True,
+    "is_dana_active": True,
     "bank": {
         "name": "Bank Central Asia (BCA)",
         "account_number": "8965123456",
@@ -108,6 +114,22 @@ class PaymentConfigService:
             enable_unique = merged.get("enable_unique_code", True)
         enable_unique = bool(enable_unique)
 
+        # Support active toggles for payment channels (BCA, QRIS, DANA)
+        is_bank_active = merged.get("isBankActive")
+        if is_bank_active is None:
+            is_bank_active = merged.get("is_bank_active", True)
+        is_bank_active = bool(is_bank_active)
+
+        is_qris_active = merged.get("isQrisActive")
+        if is_qris_active is None:
+            is_qris_active = merged.get("is_qris_active", True)
+        is_qris_active = bool(is_qris_active)
+
+        is_dana_active = merged.get("isDanaActive")
+        if is_dana_active is None:
+            is_dana_active = merged.get("is_dana_active", True)
+        is_dana_active = bool(is_dana_active)
+
         expiry_hrs = merged.get("orderExpiryHours")
         if expiry_hrs is None:
             expiry_hrs = merged.get("order_expiry_hours", 24)
@@ -120,6 +142,13 @@ class PaymentConfigService:
 
         cls._config = {
             "mode": mode,
+            # Channel Active Status
+            "isBankActive": is_bank_active,
+            "isQrisActive": is_qris_active,
+            "isDanaActive": is_dana_active,
+            "is_bank_active": is_bank_active,
+            "is_qris_active": is_qris_active,
+            "is_dana_active": is_dana_active,
             # CamelCase
             "bankName": bank_name,
             "bankAccountNumber": bank_acc,
@@ -152,14 +181,17 @@ class PaymentConfigService:
                 "name": bank_name,
                 "account_number": bank_acc,
                 "account_name": bank_holder,
+                "is_active": is_bank_active,
             },
             "qris": {
                 "image_url": qris_url,
                 "merchant_name": qris_merchant,
+                "is_active": is_qris_active,
             },
             "dana": {
                 "number": dana_num,
                 "account_name": dana_acc,
+                "is_active": is_dana_active,
             },
             "manualAccounts": merged.get("manualAccounts", DEFAULT_CONFIG["manualAccounts"]),
         }
@@ -176,6 +208,15 @@ class PaymentConfigService:
                     db.add(setting)
 
                 if "mode" in payload: setting.mode = payload["mode"]
+                if "isBankActive" in payload or "is_bank_active" in payload:
+                    val = payload.get("isBankActive") if "isBankActive" in payload else payload.get("is_bank_active")
+                    setting.is_bank_active = bool(val)
+                if "isQrisActive" in payload or "is_qris_active" in payload:
+                    val = payload.get("isQrisActive") if "isQrisActive" in payload else payload.get("is_qris_active")
+                    setting.is_qris_active = bool(val)
+                if "isDanaActive" in payload or "is_dana_active" in payload:
+                    val = payload.get("isDanaActive") if "isDanaActive" in payload else payload.get("is_dana_active")
+                    setting.is_dana_active = bool(val)
                 if "bankName" in payload or "bank_name" in payload:
                     setting.bank_name = payload.get("bankName") or payload.get("bank_name")
                 if "bankAccountNumber" in payload or "bank_account_number" in payload:
