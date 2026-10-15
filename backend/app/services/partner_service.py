@@ -15,6 +15,7 @@ ADMINS_FILE = DATA_DIR / "supabase-admins.json"
 
 class PartnerService:
     _partners: Optional[List[Dict[str, Any]]] = None
+    _last_loaded: Optional[datetime] = None
 
     @classmethod
     def load_partners(cls, force_reload: bool = False) -> List[Dict[str, Any]]:
@@ -22,7 +23,13 @@ class PartnerService:
         Loads partners directly from Supabase PostgreSQL sales_partners table.
         Falls back to local clean JSON file if offline.
         """
-        if cls._partners is not None and not force_reload:
+        now = datetime.utcnow()
+        if (
+            cls._partners is not None
+            and not force_reload
+            and cls._last_loaded is not None
+            and (now - cls._last_loaded).total_seconds() < 5
+        ):
             return cls._partners
 
         # 1. Try querying Supabase PostgreSQL
@@ -33,6 +40,7 @@ class PartnerService:
                 if db_partners:
                     data = [p.to_dict() for p in db_partners]
                     cls._partners = data
+                    cls._last_loaded = datetime.utcnow()
                     cls.save_partners()
                     return data
             finally:
@@ -46,6 +54,7 @@ class PartnerService:
                 data = json.loads(PARTNERS_FILE.read_text(encoding="utf-8"))
                 if isinstance(data, list):
                     cls._partners = data
+                    cls._last_loaded = datetime.utcnow()
                     return data
             except Exception as e:
                 print(f"[PartnerService] Error loading partners fallback: {e}")
@@ -81,7 +90,6 @@ class PartnerService:
     @classmethod
     def get_all_partners(cls) -> List[Dict[str, Any]]:
         partners = cls.load_partners()
-        orders = cls.load_orders()
 
         # Build order counts and metrics per partner
         enriched = []
@@ -91,9 +99,22 @@ class PartnerService:
 
             partner_orders = cls.get_orders_for_partner(p_id or p_code)
 
+            # Sum revenue from all paid and successful orders
             total_revenue = sum(
-                float(o.get("totalAmount", 0)) for o in partner_orders
-                if str(o.get("status", "")).lower() in ["completed", "paid", "settlement"]
+                float(
+                    o.get("totalAmount")
+                    if o.get("totalAmount") is not None
+                    else (o.get("total_amount") if o.get("total_amount") is not None else o.get("amount", 0.0))
+                )
+                for o in partner_orders
+                if str(o.get("status") or o.get("order_status") or "").lower() in [
+                    "completed", "paid", "settlement", "processing", "process", "diproses", "selesai", "done"
+                ]
+            )
+
+            pending_comm = sum(
+                float(o.get("commission", 0)) for o in partner_orders
+                if o.get("commissionStatus") == "pending"
             )
 
             final_comm = sum(
@@ -114,6 +135,7 @@ class PartnerService:
                 "totalOrders": len(partner_orders),
                 "totalRevenue": total_revenue,
                 "unpaidCommission": available_unpaid,
+                "pendingCommission": pending_comm,
                 "paidCommission": paid_commission,
                 "_count": {"orders": len(partner_orders)},
             })
@@ -289,14 +311,16 @@ class PartnerService:
             pass
 
         orders = cls.load_orders()
-        p_code = str(partner.get("code", "")).upper()
-        p_id = partner.get("id")
+        p_code = str(partner.get("code") or "").strip().upper()
+        p_id = str(partner.get("id") or "").strip()
 
-        matched = [
-            o for o in orders
-            if str(o.get("referralCode", "")).upper() == p_code
-            or str(o.get("salesPartnerId", "")) == str(p_id)
-        ]
+        matched = []
+        for o in orders:
+            o_code = str(o.get("referralCode") or o.get("referral_code") or "").strip().upper()
+            o_pid = str(o.get("salesPartnerId") or o.get("sales_partner_id") or "").strip()
+            notes = str(o.get("customerNotes") or o.get("customer_notes") or "").upper()
+            if (p_code and (o_code == p_code or f"[SALES REF: {p_code}]" in notes)) or (p_id and o_pid == p_id):
+                matched.append(o)
 
         # Fetch existing commissions from database for these orders
         comm_map = {}
@@ -317,14 +341,18 @@ class PartnerService:
 
         for o in matched:
             clean_id = str(o.get("id", "")).strip().upper()
-            email = o.get("customerEmail", "buyer@asterra.store")
+            email = o.get("customerEmail") or o.get("customer_email") or "buyer@asterra.store"
             masked_email = email[:2] + "***@" + email.split("@")[1] if "@" in email else "Pelanggan"
-            cust_name = o.get("customerName", "Pelanggan")
+            cust_name = o.get("customerName") or o.get("customer_name") or "Pelanggan"
             masked_name = cust_name[0] + "***" if len(cust_name) > 1 else cust_name
 
             items = o.get("items", [])
             prod_names = ", ".join(i.get("productName") or i.get("product_name") or "Layanan" for i in items) or "Produk Digital"
-            total = float(o.get("totalAmount", 0))
+            total = float(
+                o.get("totalAmount")
+                if o.get("totalAmount") is not None
+                else (o.get("total_amount") if o.get("total_amount") is not None else o.get("amount", 0.0))
+            )
 
             o_status = str(o.get("status") or o.get("order_status") or "").lower()
 
@@ -391,10 +419,12 @@ class PartnerService:
 
             if comm_rec and comm_rec.status:
                 comm_status = comm_rec.status
-            elif o_status in ["cancelled", "refunded", "expired"]:
+            elif o_status in ["cancelled", "refunded", "expired", "failed", "batal"]:
                 comm_status = "reversed"
-            elif o_status in ["completed", "paid", "settlement"]:
+            elif o_status in ["completed", "paid", "settlement", "done", "selesai"]:
                 comm_status = "final" if now >= holding_until_dt else "pending"
+            elif o_status in ["processing", "process", "diproses"]:
+                comm_status = "pending"
             else:
                 comm_status = "pending"
 

@@ -39,6 +39,7 @@ interface AffiliatePartner {
   totalOrders: number;
   totalRevenue: number;
   unpaidCommission: number;
+  pendingCommission: number;
   paidCommission: number;
   bankName: string;
   bankAccount: string;
@@ -65,7 +66,7 @@ export function AdminAffiliateTab({ onNotify }: AdminAffiliateTabProps) {
   const fetchAffiliates = async () => {
     try {
       setIsLoading(true);
-      const res = await fetch('/api/v1/admin/affiliates');
+      const res = await fetch('/api/v1/admin/affiliates', { cache: 'no-store' });
       if (res.ok) {
         const json = await res.json();
         if (json.success && Array.isArray(json.data)) {
@@ -74,19 +75,22 @@ export function AdminAffiliateTab({ onNotify }: AdminAffiliateTabProps) {
             id: p.id,
             name: p.name,
             email: p.email,
-            whatsapp: p.whatsapp,
+            whatsapp: p.whatsapp || '-',
             code: p.code,
-            tier: p.tier,
-            rate: p.rate,
-            totalClicks: p.totalClicks,
-            totalOrders: p._count?.orders || 0,
-            status: p.status,
+            tier: p.tier || 'Standard (10%)',
+            rate: p.rate || 10,
+            totalClicks: p.totalClicks || 0,
+            totalOrders: p.totalOrders ?? (p._count?.orders || 0),
+            status: p.status || 'active',
             bankName: p.bankName || '-',
             bankAccount: p.bankAccount || '-',
-            joinedAt: new Date(p.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }),
-            totalRevenue: 0, 
-            unpaidCommission: 0,
-            paidCommission: 0,
+            joinedAt: p.createdAt
+              ? new Date(p.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+              : (p.joinedAt || '-'),
+            totalRevenue: Number(p.totalRevenue) || 0,
+            unpaidCommission: Number(p.unpaidCommission) || 0,
+            pendingCommission: Number(p.pendingCommission) || 0,
+            paidCommission: Number(p.paidCommission) || 0,
           }));
           setAffiliates(mappedData);
         }
@@ -205,6 +209,7 @@ export function AdminAffiliateTab({ onNotify }: AdminAffiliateTabProps) {
   const totalSalesRevenue = affiliates.reduce((acc, curr) => acc + curr.totalRevenue, 0);
   const totalPaidCommission = affiliates.reduce((acc, curr) => acc + curr.paidCommission, 0);
   const totalUnpaidCommission = affiliates.reduce((acc, curr) => acc + curr.unpaidCommission, 0);
+  const totalPendingCommission = affiliates.reduce((acc, curr) => acc + (curr.pendingCommission || 0), 0);
 
   return (
     <div className="space-y-6">
@@ -269,9 +274,13 @@ export function AdminAffiliateTab({ onNotify }: AdminAffiliateTabProps) {
             <Clock className="w-4 h-4 text-status-warning" />
           </div>
           <div className="text-2xl font-bold text-status-warning">
-            Rp {totalUnpaidCommission.toLocaleString('id-ID')}
+            Rp {(totalUnpaidCommission + totalPendingCommission).toLocaleString('id-ID')}
           </div>
-          <span className="text-[11px] text-foreground-muted">Perlu diproses transfer</span>
+          <span className="text-[11px] text-foreground-muted">
+            {totalPendingCommission > 0
+              ? `Siap: Rp ${totalUnpaidCommission.toLocaleString('id-ID')} • Hold: Rp ${totalPendingCommission.toLocaleString('id-ID')}`
+              : 'Perlu diproses transfer'}
+          </span>
         </div>
 
         <div className="bg-surface border border-border rounded-xl p-4 sm:p-5 shadow-xs">
@@ -440,25 +449,42 @@ export function AdminAffiliateTab({ onNotify }: AdminAffiliateTabProps) {
                       </div>
                     </td>
 
-                    {/* Unpaid Commission */}
+                    {/* Unpaid / Pending Commission */}
                     <td className="py-3.5 px-4 text-right">
                       <div className="font-bold text-status-warning text-xs">
-                        Rp {partner.unpaidCommission.toLocaleString('id-ID')}
+                        Rp {(partner.unpaidCommission + (partner.pendingCommission || 0)).toLocaleString('id-ID')}
                       </div>
                       <div className="text-[10px] text-foreground-muted font-mono">
-                        {partner.bankName} - {partner.bankAccount}
+                        {partner.pendingCommission > 0 && partner.unpaidCommission > 0 ? (
+                          <span title="Komisi siap cair vs masa garansi holding">
+                            Siap: Rp {partner.unpaidCommission.toLocaleString('id-ID')} | Hold: Rp {partner.pendingCommission.toLocaleString('id-ID')}
+                          </span>
+                        ) : partner.pendingCommission > 0 ? (
+                          <span title="Dalam masa garansi holding 3 hari">
+                            Hold Garansi (3 Hari)
+                          </span>
+                        ) : partner.unpaidCommission > 0 ? (
+                          <span className="text-status-success font-semibold">
+                            Siap Dicairkan
+                          </span>
+                        ) : partner.bankName && partner.bankName !== '-' ? (
+                          `${partner.bankName} - ${partner.bankAccount}`
+                        ) : (
+                          '- - -'
+                        )}
                       </div>
                     </td>
 
                     {/* Actions */}
                     <td className="py-3.5 px-4 text-right">
                       <div className="flex items-center justify-end gap-1.5">
-                        {partner.unpaidCommission > 0 && (
+                        {(partner.unpaidCommission > 0 || (partner.pendingCommission || 0) > 0) && (
                           <Button
                             size="sm"
                             variant="outline"
                             onClick={() => setSelectedPartnerForPayout(partner)}
                             className="h-7 text-[11px] px-2 text-status-warning border-status-warning/40 hover:bg-status-warning/10"
+                            title="Proses Pencairan Komisi"
                           >
                             <Wallet className="w-3 h-3 mr-1" />
                             Bayar Komisi
@@ -631,7 +657,7 @@ export function AdminAffiliateTab({ onNotify }: AdminAffiliateTabProps) {
             <p className="text-foreground-muted">
               Anda akan mencatat pembayaran komisi sebesar{' '}
               <strong className="text-foreground font-bold">
-                Rp {selectedPartnerForPayout.unpaidCommission.toLocaleString('id-ID')}
+                Rp {(selectedPartnerForPayout.unpaidCommission || selectedPartnerForPayout.pendingCommission || 0).toLocaleString('id-ID')}
               </strong>{' '}
               kepada:
             </p>
