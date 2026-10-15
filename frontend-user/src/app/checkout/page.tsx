@@ -93,43 +93,24 @@ function CheckoutPageContent() {
 
   // Auto-detect & persist referral code & campaign from query params or localStorage
   useEffect(() => {
-    let activeRef = searchParams.get('ref');
-    if (!activeRef && typeof window !== 'undefined') {
-      try {
-        activeRef = localStorage.getItem('asterra_ref');
-      } catch (_) {}
-    }
-    if (activeRef && activeRef.trim()) {
-      const cleanRef = activeRef.trim().toUpperCase();
-      setReferralCode(cleanRef);
-      if (typeof window !== 'undefined') {
-        try {
-          localStorage.setItem('asterra_ref', cleanRef);
-          document.cookie = `asterra_ref=${encodeURIComponent(cleanRef)}; path=/; max-age=2592000; SameSite=Lax`;
-          // Preserve parameter in address bar if not present
-          if (!searchParams.get('ref')) {
-            const url = new URL(window.location.href);
-            url.searchParams.set('ref', cleanRef);
-            const campaign =
-              localStorage.getItem('asterra_campaign') ||
-              localStorage.getItem('asterra_utm_campaign');
-            if (campaign && !url.searchParams.has('campaign')) {
-              url.searchParams.set('campaign', campaign);
-            }
-            window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
-          }
-        } catch (_) {}
-      }
-    }
-
     // Detect campaign parameter
     const urlCamp = searchParams.get('campaign') || searchParams.get('utm_campaign');
     let campVal = urlCamp;
-    if (!campVal && typeof window !== 'undefined') {
+    let isRefClaimed = false;
+
+    if (typeof window !== 'undefined') {
       try {
-        campVal = localStorage.getItem('asterra_campaign') || localStorage.getItem('asterra_utm_campaign');
+        isRefClaimed = localStorage.getItem('asterra_ref_claimed') === 'true';
+        if (!campVal) {
+          campVal =
+            localStorage.getItem('asterra_campaign') ||
+            localStorage.getItem('asterra_utm_campaign');
+        }
       } catch (_) {}
     }
+
+    const hasCampaign = Boolean(campVal && campVal.trim());
+
     if (campVal && campVal.trim()) {
       const cleanCamp = campVal.trim();
       setActiveCampaignSlug(cleanCamp);
@@ -145,6 +126,57 @@ function CheckoutPageContent() {
             window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
           }
         } catch (_) {}
+      }
+    }
+
+    // Rule: Jika parameter ref / session ref sudah terpakai (claimed), maka hapus.
+    // Pengecualian: jika ada parameter campaign, maka tidak di-hapus.
+    if (isRefClaimed && !hasCampaign) {
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.removeItem('asterra_ref');
+          localStorage.removeItem('asterra_referral_session_id');
+          document.cookie = 'asterra_ref=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+          document.cookie = 'asterra_referral_session_id=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+
+          if (searchParams.get('ref')) {
+            const url = new URL(window.location.href);
+            url.searchParams.delete('ref');
+            window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
+          }
+        } catch (_) {}
+      }
+      setReferralCode('');
+      setReferralPartner(null);
+      setReferralDiscount(0);
+    } else {
+      let activeRef = searchParams.get('ref');
+      if (!activeRef && typeof window !== 'undefined') {
+        try {
+          activeRef = localStorage.getItem('asterra_ref');
+        } catch (_) {}
+      }
+      if (activeRef && activeRef.trim()) {
+        const cleanRef = activeRef.trim().toUpperCase();
+        setReferralCode(cleanRef);
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('asterra_ref', cleanRef);
+            document.cookie = `asterra_ref=${encodeURIComponent(cleanRef)}; path=/; max-age=2592000; SameSite=Lax`;
+            // Preserve parameter in address bar if not present
+            if (!searchParams.get('ref')) {
+              const url = new URL(window.location.href);
+              url.searchParams.set('ref', cleanRef);
+              const campaign =
+                localStorage.getItem('asterra_campaign') ||
+                localStorage.getItem('asterra_utm_campaign');
+              if (campaign && !url.searchParams.has('campaign')) {
+                url.searchParams.set('campaign', campaign);
+              }
+              window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
+            }
+          } catch (_) {}
+        }
       }
     }
   }, [searchParams]);
@@ -571,9 +603,16 @@ function CheckoutPageContent() {
       const createdOrder = orderData.order;
 
       // Rule 3: Perilaku parameter URL
-      // Setelah user berhasil mengklaim diskon referral, parameter ref harus dihapus dari URL.
-      // Pengecualian: jika parameter campaign juga tersedia, parameter ref tidak boleh dihapus.
-      if (referralDiscount > 0) {
+      // Setelah user berhasil mengklaim referral / memakai referral, parameter ref & session ref harus dihapus dari URL & storage.
+      // Pengecualian: jika parameter campaign juga tersedia, parameter ref & session ref tidak boleh dihapus.
+      const hasReferralUsage = Boolean(
+        referralCode ||
+        referralPartner ||
+        referralDiscount > 0 ||
+        (typeof window !== 'undefined' && localStorage.getItem('asterra_referral_session_id'))
+      );
+
+      if (hasReferralUsage) {
         setIsReferralDiscountUsed(true);
         setReferralDiscount(0);
 
@@ -583,7 +622,11 @@ function CheckoutPageContent() {
             const hasCampaignParam =
               currentUrl.searchParams.has('campaign') ||
               currentUrl.searchParams.has('utm_campaign') ||
-              Boolean(activeCampaignSlug);
+              Boolean(activeCampaignSlug) ||
+              Boolean(localStorage.getItem('asterra_campaign')) ||
+              Boolean(localStorage.getItem('asterra_utm_campaign'));
+
+            localStorage.setItem('asterra_ref_claimed', 'true');
 
             if (!hasCampaignParam) {
               if (currentUrl.searchParams.has('ref')) {
@@ -594,14 +637,12 @@ function CheckoutPageContent() {
                   currentUrl.pathname + currentUrl.search + currentUrl.hash
                 );
               }
-              localStorage.setItem('asterra_ref_claimed', 'true');
               localStorage.removeItem('asterra_ref');
               localStorage.removeItem('asterra_referral_session_id');
               document.cookie = 'asterra_ref=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
               document.cookie = 'asterra_referral_session_id=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
             } else {
               // Jika campaign tersedia bersamaan, parameter ref tidak boleh dihapus (misal ref=AST-Founder-SAGE&campaign=flash-sales-10-10)
-              localStorage.setItem('asterra_ref_claimed', 'true');
             }
           } catch {}
         }

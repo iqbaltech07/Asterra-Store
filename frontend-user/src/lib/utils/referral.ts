@@ -43,11 +43,30 @@ export function getActiveReferralParams(): Record<string, string> {
     const urlSource = urlParams.get('utm_source');
     const urlMedium = urlParams.get('utm_medium');
 
-    if (urlRef && urlRef.trim()) {
-      const code = urlRef.trim().toUpperCase();
-      localStorage.setItem('asterra_ref', code);
-      document.cookie = `asterra_ref=${encodeURIComponent(code)}; path=/; max-age=2592000; SameSite=Lax`;
+    const isRefClaimed = localStorage.getItem('asterra_ref_claimed') === 'true';
+    const storedCamp =
+      localStorage.getItem('asterra_campaign') ||
+      localStorage.getItem('asterra_utm_campaign') ||
+      '';
+    const hasCampaign = Boolean(urlCamp || storedCamp);
+
+    // Rule: jika parameter ref / session ref sudah terpakai (claimed), maka hapus
+    // Pengecualian: jika ada parameter campaign, maka tidak dihapus
+    if (isRefClaimed && !hasCampaign) {
+      try {
+        localStorage.removeItem('asterra_ref');
+        localStorage.removeItem('asterra_referral_session_id');
+        document.cookie = 'asterra_ref=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+        document.cookie = 'asterra_referral_session_id=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+      } catch {}
+    } else {
+      if (urlRef && urlRef.trim()) {
+        const code = urlRef.trim().toUpperCase();
+        localStorage.setItem('asterra_ref', code);
+        document.cookie = `asterra_ref=${encodeURIComponent(code)}; path=/; max-age=2592000; SameSite=Lax`;
+      }
     }
+
     if (urlCamp && urlCamp.trim()) {
       const cName = urlCamp.trim();
       localStorage.setItem('asterra_utm_campaign', cName);
@@ -64,11 +83,11 @@ export function getActiveReferralParams(): Record<string, string> {
       document.cookie = `asterra_utm_medium=${encodeURIComponent(urlMedium.trim())}; path=/; max-age=2592000; SameSite=Lax`;
     }
 
-    const ref = urlRef || localStorage.getItem('asterra_ref');
+    const ref = (!isRefClaimed || hasCampaign) ? (urlRef || localStorage.getItem('asterra_ref')) : null;
     const campaign = urlCamp || localStorage.getItem('asterra_utm_campaign') || localStorage.getItem('asterra_campaign');
     const source = urlSource || localStorage.getItem('asterra_utm_source');
     const medium = urlMedium || localStorage.getItem('asterra_utm_medium');
-    const sessionId = getReferralSessionId();
+    const sessionId = (!isRefClaimed || hasCampaign) ? getReferralSessionId() : null;
 
     if (ref && ref.trim()) params.ref = ref.trim().toUpperCase();
     if (campaign && campaign.trim()) {

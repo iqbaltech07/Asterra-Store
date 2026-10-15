@@ -13,16 +13,55 @@ function ReferralTrackerInner() {
     const urlSource = searchParams.get('utm_source');
     const urlMedium = searchParams.get('utm_medium');
 
-    // 1. If URL has ref parameter, store in localStorage & cookies
-    const normalizedCode = urlRef && urlRef.trim() ? urlRef.trim().toUpperCase() : '';
-    if (normalizedCode) {
+    let isRefClaimed = false;
+    let storedCamp = '';
+    let storedRef = '';
+    if (typeof window !== 'undefined') {
       try {
-        localStorage.setItem('asterra_ref', normalizedCode);
-        document.cookie = `asterra_ref=${encodeURIComponent(
-          normalizedCode
-        )}; path=/; max-age=2592000; SameSite=Lax`;
-      } catch {
-        // ignore storage errors
+        isRefClaimed = localStorage.getItem('asterra_ref_claimed') === 'true';
+        storedCamp =
+          localStorage.getItem('asterra_campaign') ||
+          localStorage.getItem('asterra_utm_campaign') ||
+          '';
+        storedRef = localStorage.getItem('asterra_ref') || '';
+      } catch {}
+    }
+
+    const hasCampaign = Boolean(urlCampaign || storedCamp);
+
+    // Rule: Jika parameter ref / session ref sudah terpakai (claimed), maka hapus.
+    // Pengecualian: jika ada parameter campaign, maka TIDAK di-hapus.
+    if (isRefClaimed && !hasCampaign) {
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.removeItem('asterra_ref');
+          localStorage.removeItem('asterra_referral_session_id');
+          document.cookie = 'asterra_ref=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+          document.cookie = 'asterra_referral_session_id=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+
+          const currentUrl = new URL(window.location.href);
+          if (currentUrl.searchParams.has('ref')) {
+            currentUrl.searchParams.delete('ref');
+            window.history.replaceState(
+              window.history.state,
+              '',
+              currentUrl.pathname + currentUrl.search + currentUrl.hash
+            );
+          }
+        } catch {}
+      }
+    } else {
+      // 1. If URL has ref parameter, store in localStorage & cookies
+      const normalizedCode = urlRef && urlRef.trim() ? urlRef.trim().toUpperCase() : '';
+      if (normalizedCode) {
+        try {
+          localStorage.setItem('asterra_ref', normalizedCode);
+          document.cookie = `asterra_ref=${encodeURIComponent(
+            normalizedCode
+          )}; path=/; max-age=2592000; SameSite=Lax`;
+        } catch {
+          // ignore storage errors
+        }
       }
     }
 
@@ -60,6 +99,11 @@ function ReferralTrackerInner() {
     }
 
     // 3. Dispatch click telemetry to server (Hybrid Cookie + DB Session)
+    // Only track referral code click if not claimed or if campaign is present
+    const normalizedCode =
+      (!isRefClaimed || hasCampaign) && urlRef && urlRef.trim()
+        ? urlRef.trim().toUpperCase()
+        : '';
     if (normalizedCode || normalizedCamp) {
       const sessionTrackedKey = `asterra_tracked_${normalizedCode || 'none'}_${normalizedCamp || 'none'}`;
       if (typeof window !== 'undefined' && !sessionStorage.getItem(sessionTrackedKey)) {
@@ -105,16 +149,6 @@ function ReferralTrackerInner() {
         (pathname || '').startsWith('/products/');
 
       if (isAllowed) {
-        let storedRef = '';
-        let storedCamp = '';
-        try {
-          storedRef = localStorage.getItem('asterra_ref') || '';
-          storedCamp =
-            localStorage.getItem('asterra_campaign') ||
-            localStorage.getItem('asterra_utm_campaign') ||
-            '';
-        } catch {}
-
         // Check campaign status if storedCamp exists: purge campaign and claimed ref if campaign has ended
         if (storedCamp) {
           fetch('/api/v1/campaigns/active')
@@ -183,14 +217,13 @@ function ReferralTrackerInner() {
         const currentUrl = new URL(window.location.href);
         let urlModified = false;
 
-        const isRefClaimed = localStorage.getItem('asterra_ref_claimed') === 'true';
-        const hasCampaign =
-          currentUrl.searchParams.has('campaign') ||
-          currentUrl.searchParams.has('utm_campaign') ||
-          Boolean(storedCamp);
-
-        // Jika referral discount sudah pernah diklaim dan tidak ada campaign, jangan auto-inject 'ref' ke URL
-        if (storedRef && !currentUrl.searchParams.has('ref') && (!isRefClaimed || hasCampaign)) {
+        // Jika referral sudah claimed dan tidak ada campaign, pastikan ref dihapus jika masih ada di URL
+        if (isRefClaimed && !hasCampaign) {
+          if (currentUrl.searchParams.has('ref')) {
+            currentUrl.searchParams.delete('ref');
+            urlModified = true;
+          }
+        } else if (storedRef && !currentUrl.searchParams.has('ref')) {
           currentUrl.searchParams.set('ref', storedRef);
           urlModified = true;
         }

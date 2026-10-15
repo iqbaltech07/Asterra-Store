@@ -58,3 +58,4 @@ certificates/
 graphify-out/cache/
 graphify-out/transcripts/
 graphify-out/.*
+graphify-out/20*/
