@@ -1,3 +1,20 @@
+/**
+ * @archive
+ * COMPONENT: HomepagePreloader (AsterraStore Initial Splash/Loading Screen Engine)
+ * STATUS: Archived on user request (Instant direct rendering mode active)
+ *
+ * DESCRIPTION:
+ * Official Orbital Centerpiece with 3D Animated Planet (152 frames, 20fps),
+ * Wordmark brand lighting, dynamic weighted 8-task progress engine,
+ * and graceful exit transition.
+ *
+ * TO RESTORE:
+ * 1. Move or import this component in frontend-user/src/app/page.tsx:
+ *    import { HomepagePreloader } from '@/components/home/archive/homepage-preloader';
+ * 2. Add <HomepagePreloader ... /> inside the Homepage component.
+ * 3. Update frontend-user/src/components/layout/page-transition.tsx to synchronize with preloader exit.
+ */
+
 'use client';
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
@@ -16,7 +33,7 @@ export interface PreloaderTaskState {
   finalValidation: TaskStatus;    // 8. Validasi kesiapan akhir sebelum transisi keluar
 }
 
-interface HomepagePreloaderProps {
+export interface HomepagePreloaderProps {
   isCatalogReady: boolean;
   isCatalogError?: boolean;
   isCampaignsReady: boolean;
@@ -450,3 +467,5 @@ export function HomepagePreloader({
     </>
   );
 }
+
+export default HomepagePreloader;

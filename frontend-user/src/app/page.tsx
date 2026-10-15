@@ -10,7 +10,6 @@ import {
   faCreditCard,
   faLayerGroup,
   faHeadphones,
-  faCircleCheck,
   faArrowRight,
   faPlus,
   faMinus,
@@ -40,8 +39,6 @@ import { QuickViewModal, QuickViewProductData } from '@/components/products/quic
 import { getRecentlyViewed, RecentlyViewedItem } from '@/lib/services/recently-viewed';
 import { ProductItem } from '@/lib/products-data';
 import { HeroBannerSwiper } from '@/components/home/hero-banner-swiper';
-import { HomepagePreloader } from '@/components/home/homepage-preloader';
-import { useHeroBanners } from '@/lib/hooks/use-hero-banners';
 
 // Helper to render crisp, brand-accurate badges for the top digital applications
 function AppBrandBadge({ name }: { name: string }) {
@@ -629,7 +626,6 @@ function FeaturedSectionCountdownBadge({
 }
 
 export default function HomePage() {
-  const [activeNotification, setActiveNotification] = useState<string | null>(null);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
 
   // 1. Selector category state: ONLY PROMO, TERLARIS, TERBARU. (PROMO is default & priority)
@@ -644,8 +640,6 @@ export default function HomePage() {
 
   // Active Campaign Status for live promotional discounts & badges
   const [activeCampaigns, setActiveCampaigns] = useState<any[]>([]);
-  const [isCampaignsLoaded, setIsCampaignsLoaded] = useState(false);
-  const [isCampaignsError, setIsCampaignsError] = useState(false);
 
   useEffect(() => {
     setRecentlyViewed(getRecentlyViewed());
@@ -658,20 +652,12 @@ export default function HomePage() {
         }
       })
       .catch(() => {
-        setIsCampaignsError(true);
-      })
-      .finally(() => {
-        setIsCampaignsLoaded(true);
+        // Fallback to empty campaigns gracefully
       });
   }, []);
 
-  const hasActiveCampaign = activeCampaigns.length > 0;
-
-  // Shared hero banners query
-  const { banners: heroBanners, isLoading: isBannersLoading, primaryBannerUrl } = useHeroBanners();
-
   // Dynamic products fetched from catalog API (cached via shared query)
-  const { data: catalogResponse, isLoading, isError: isCatalogError } = useCatalogProducts();
+  const { data: catalogResponse, isLoading } = useCatalogProducts();
   const isCatalogLoading = isLoading || !catalogResponse?.data;
 
   const allProducts = useMemo(
@@ -982,13 +968,6 @@ export default function HomePage() {
     setIsQuickViewOpen(true);
   };
 
-  const showNotification = (message: string) => {
-    setActiveNotification(message);
-    setTimeout(() => {
-      setActiveNotification(null);
-    }, 3500);
-  };
-
   const faqItems = [
     {
       q: 'Bagaimana cara membeli produk di Asterra Store?',
@@ -1018,24 +997,6 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-white text-[#121A2A] flex flex-col selection:bg-[#C96F55]/20 selection:text-[#C96F55]">
-      {/* Real-Time AsterraStore Preloader Engine */}
-      <HomepagePreloader
-        isCatalogReady={!isCatalogLoading && (!!catalogResponse?.data || isCatalogError)}
-        isCatalogError={isCatalogError}
-        isCampaignsReady={isCampaignsLoaded}
-        isCampaignsError={isCampaignsError}
-        isBannersReady={!isBannersLoading && heroBanners.length > 0}
-        primaryBannerUrl={primaryBannerUrl}
-        isComponentReady={isMounted && heroBanners.length > 0 && !isCatalogLoading && isCampaignsLoaded}
-      />
-      {/* Toast Notification */}
-      {activeNotification && (
-        <div className="fixed bottom-20 sm:bottom-6 right-6 z-50 bg-[#121A2A] border border-white/15 text-white px-4 py-3 rounded-xl shadow-editorial flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2 duration-200">
-          <FontAwesomeIcon icon={faCircleCheck} className="w-4 h-4 text-[#C96F55] shrink-0" />
-          <span className="text-sm font-medium">{activeNotification}</span>
-        </div>
-      )}
-
       {/* Main Content Container */}
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-2 sm:pt-3 pb-8 sm:pb-12 w-full overflow-hidden">
         {/*
