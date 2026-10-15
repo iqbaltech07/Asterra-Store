@@ -15,6 +15,7 @@ try:
     from app.main import app
 except Exception as e:
     err_tb = traceback.format_exc()
+    err_msg = str(e)
     print("FATAL ERROR IMPORTING app.main:\n" + err_tb, flush=True)
     from fastapi import FastAPI
     from fastapi.responses import JSONResponse
@@ -27,7 +28,7 @@ except Exception as e:
             content={
                 "status": "error",
                 "message": "FastAPI failed to import app.main",
-                "exception": str(e),
+                "exception": err_msg,
                 "traceback": err_tb.splitlines(),
                 "sys_path": sys.path,
                 "cwd": os.getcwd(),
