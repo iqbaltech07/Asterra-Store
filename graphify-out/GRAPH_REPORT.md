@@ -1,495 +1,513 @@
-# Graph Report - Asterra Store  (2026-10-13)
+# Graph Report - Asterra Store  (2026-10-15)
 
 ## Corpus Check
-- Large corpus: 439 files · ~3,206,948 words. Semantic extraction will be expensive (many Claude tokens). Consider running on a subfolder.
+- Large corpus: 453 files · ~3,299,266 words. Semantic extraction will be expensive (many Claude tokens). Consider running on a subfolder.
 
 ## Summary
-- 2010 nodes · 4145 edges · 112 communities (83 shown, 29 thin omitted)
-- Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 123 edges (avg confidence: 0.92)
+- 2011 nodes · 4148 edges · 120 communities (86 shown, 34 thin omitted)
+- Extraction: 98% EXTRACTED · 2% INFERRED · 0% AMBIGUOUS · INFERRED: 100 edges (avg confidence: 0.91)
 - Token cost: 0 input · 0 output
 
 ## Community Hubs (Navigation)
-- Catalog: Page
-- Catalog: Gsap Utils
-- Catalog: Campaign Service
-- Payment: Order
-- Payment: Readme
-- Catalog: Page
-- Catalog: Gsap Utils
-- Catalog: Gsap Utils
-- Payment: Main
-- Auth: Package
-- Orders: Admin System Settings Suite
-- Affiliate: Use Auth Store
-- Payment: Orders Data
-- Auth: Package
-- Auth: Package
-- Orders: Asterra Referral Profit Model
-- Payment: Page
-- Orders: Main
-- Orders: Orders Data
-- Payment: Select
-- Orders: Error
-- Catalog: Catalog Service
-- Admin: Dropdown Menu
-- Catalog: Product Relevance
-- Orders: Page
-- Payment: Admin Finance Suite
-- Marketing: Banner Service
-- Core: Dropdown Menu
-- Auth: Package
-- Orders: Orders Data
-- Motion: Test Motion System
-- Affiliate: Next
-- Payment: Api Client
-- Orders: Partner Service
-- Auth: Package
-- Auth: Package
-- Affiliate: Asterra Architecture Decoupling Plan
-- Affiliate: Layout
-- Core: Tsconfig
-- Core: Tsconfig
-- Core: Tsconfig
-- Admin: Admin User Service
-- Core: Eslint
-- Payment: Admin Marketing Suite
-- Affiliate: Package
-- Marketing: Heroui Alert Dialog
-- Marketing: Heroui Alert Dialog
-- Auth: Use Auth Store
-- Catalog: Asterra Architecture Decoupling Complete
-- Core: Package
-- Auth: Route
-- Marketing: Heroui Alert Dialog
-- Core: Package
-- Core: Package
-- Catalog: Generate Product Excel
-- Orders: Notification Sound
-- Orders: Notification Sound
-- Orders: Notification Sound
-- Orders: Skill
-- Core: Index
-- Payment: Payment Config Service
-- Core: Readme
-- Core: Chunk Recovery
-- Affiliate: Switch Env
-- Core: Troubleshooting Vercel Python Uv Deployment
-- Orders: Page
-- Core: Security
-- Affiliate: Asterra Referral Profit Architecture
-- Core: Package
-- Admin: Proxy
-- Core: Package
-- Admin: Proxy
-- Core: Package
-- Admin: Proxy
-- Catalog: Sync Supabase To Json
-- Core: Skill
-- Core: Asterra Milestone 50 Pricing Sync
-- Core: Postcss
-- Catalog: Admin Analytics Suite
-- Core: Tailwind
-- Core: Use Cart Store
-- Core: Apply Excel Prices To Db
-- Catalog: Troubleshooting Catalog Category Sync Fix
-- Affiliate: Admin Console Modular Architecture
-- Payment: Tripay Service
-- Core: Asterra Fastapi Unified Integration
-- Core: Config
-- Admin: Audit Log Service
-- Core: Promo Pricing
-- Core: Promo Pricing
-- Core: Test Audit
-- Affiliate: Referral
-- Affiliate: Referral
-- Core: Package
-- Core: Package
-- Core: Package
-- Auth: Auth Client
-- Auth: Auth Client
-- Auth: Auth Client
-- Core: Pyproject
+- Community 0
+- Community 1
+- Community 2
+- Community 3
+- Community 4
+- Community 5
+- Community 6
+- Community 7
+- Community 8
+- Community 9
+- Community 10
+- Community 11
+- Community 12
+- Community 13
+- Community 14
+- Community 15
+- Community 16
+- Community 17
+- Community 18
+- Community 19
+- Community 20
+- Community 21
+- Community 22
+- Community 23
+- Community 24
+- Community 25
+- Community 26
+- Community 27
+- Community 28
+- Community 29
+- Community 30
+- Community 31
+- Community 32
+- Community 33
+- Community 34
+- Community 35
+- Community 36
+- Community 37
+- Community 38
+- Community 39
+- Community 40
+- Community 41
+- Community 42
+- Community 43
+- Community 44
+- Community 45
+- Community 46
+- Community 47
+- Community 48
+- Community 50
+- Community 51
+- Community 52
+- Community 53
+- Community 54
+- Community 55
+- Community 56
+- Community 57
+- Community 58
+- Community 59
+- Community 60
+- Community 61
+- Community 62
+- Community 63
+- Community 64
+- Community 65
+- Community 66
+- Community 67
+- Community 68
+- Community 69
+- Community 70
+- Community 71
+- Community 72
+- Community 73
+- Community 74
+- Community 75
+- Community 76
+- Community 77
+- Community 78
+- Community 79
+- Community 80
+- Community 81
+- Community 82
+- Community 83
+- Community 84
+- Community 85
+- Community 86
+- Community 87
+- Community 88
+- Community 89
+- Community 90
+- Community 91
+- Community 92
+- Community 94
+- Community 95
+- Community 96
+- Community 97
+- Community 98
+- Community 99
+- Community 100
+- Community 101
+- Community 103
+- Community 105
+- Community 116
+- Community 117
+- Community 118
+- Community 119
 
 ## God Nodes (most connected - your core abstractions)
-1. `Button` - 48 edges
-2. `Input` - 40 edges
-3. `Button` - 40 edges
-4. `CatalogService` - 35 edges
-5. `Badge()` - 35 edges
-6. `cn()` - 35 edges
+1. `react` - 101 edges
+2. `@fortawesome/free-solid-svg-icons` - 57 edges
+3. `@fortawesome/react-fontawesome` - 57 edges
+4. `next` - 54 edges
+5. `Button` - 44 edges
+6. `Input` - 36 edges
 7. `cn()` - 35 edges
 8. `cn()` - 35 edges
-9. `PartnerService` - 27 edges
-10. `AdminPage()` - 27 edges
+9. `cn()` - 35 edges
+10. `Badge()` - 32 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `create_admin_product()` --uses--> `CatalogService`  [INFERRED]
-  backend/app/main.py → backend/app/services/catalog_service.py
-- `update_admin_product()` --uses--> `CatalogService`  [INFERRED]
-  backend/app/main.py → backend/app/services/catalog_service.py
-- `bulk_status_products()` --uses--> `CatalogService`  [INFERRED]
-  backend/app/main.py → backend/app/services/catalog_service.py
-- `bulk_delete_products()` --uses--> `CatalogService`  [INFERRED]
-  backend/app/main.py → backend/app/services/catalog_service.py
-- `import_admin_vip_service()` --uses--> `CatalogService`  [INFERRED]
-  backend/app/main.py → backend/app/services/catalog_service.py
+- `PromoService` --uses--> `PromoCode`  [INFERRED]
+  backend/app/services/promo_service.py → backend/app/models/promo.py
+- `AnalyticsService` --uses--> `OrderService`  [INFERRED]
+  backend/app/services/analytics_service.py → backend/app/services/order_service.py
+- `AnalyticsService` --uses--> `PartnerService`  [INFERRED]
+  backend/app/services/analytics_service.py → backend/app/services/partner_service.py
+- `get_admin_affiliates()` --uses--> `PartnerService`  [INFERRED]
+  backend/app/main.py → backend/app/services/partner_service.py
+- `get_sales_network()` --uses--> `PartnerService`  [INFERRED]
+  backend/app/main.py → backend/app/services/partner_service.py
 
 ## Import Cycles
 - None detected.
 
-## Communities (112 total, 29 thin omitted)
+## Communities (120 total, 34 thin omitted)
 
-### Community 0 - "Catalog: Page"
-Cohesion: 0.05
-Nodes (61): DaftarSalesContent(), DaftarSalesPage(), PartnerResult, ErrorBoundary(), ErrorProps, GlobalError(), GlobalErrorProps, NotFound() (+53 more)
-
-### Community 1 - "Catalog: Gsap Utils"
+### Community 0 - "Community 0"
 Cohesion: 0.06
-Nodes (63): GlobalError(), GlobalErrorProps, metadata, organizationJsonLd, plusJakartaSans, RootLayout(), ReferralTracker(), ReferralTrackerInner() (+55 more)
+Nodes (50): AppBrandBadge(), ApplicationGroupItem, FeaturedGridCard(), FeaturedGridCardSkeleton(), HomePage(), ShowcaseLoopingCard(), ShowcaseLoopingCardSkeleton(), fetchActiveProducts() (+42 more)
 
-### Community 2 - "Catalog: Campaign Service"
-Cohesion: 0.06
-Nodes (14): create_admin_campaign(), delete_admin_campaign(), delete_admin_promo(), evaluate_product_campaign_price(), get_active_campaigns(), get_admin_campaigns(), get_admin_promos(), toggle_admin_campaign() (+6 more)
+### Community 1 - "Community 1"
+Cohesion: 0.08
+Nodes (42): NotFound(), AdminAnalyticsSuite(), AdminAnalyticsSuiteProps, AffiliatePerformanceItem, AnalyticsSuiteData, FinancialReportData, ProductPerformanceItem, SalesTimeSeriesItem (+34 more)
 
-### Community 3 - "Payment: Order"
-Cohesion: 0.09
-Nodes (8): get_media_file(), upload_admin_media(), AdminUser, PromoBanner, Order, OrderItem, SalesPartner, PromoCode
-
-### Community 4 - "Payment: Readme"
+### Community 2 - "Community 2"
 Cohesion: 0.04
 Nodes (54): 10 Operasional Pemeliharaan  Skrip Bantu, 11 Protokol Keamanan  Hardening Produksi, 1 Backend backendenvexamplefilecIqbalDevelopmentProject20LibraryNextJSAsterra20Storebackendenvexample, 1 Gerbang Pembayaran Tripay appservicestripay_service, 1 Kloning repository, 1 Ringkasan Eksekutif  Identitas Proyek, 2 Frontend Applications frontend-envexample, 2 Setup Virtual Environment Python untuk Backend (+46 more)
 
-### Community 5 - "Catalog: Page"
-Cohesion: 0.10
-Nodes (38): AppBrandBadge(), ApplicationGroupItem, FeaturedGridCard(), FeaturedGridCardSkeleton(), HomePage(), ShowcaseLoopingCard(), ShowcaseLoopingCardSkeleton(), DurationOption (+30 more)
-
-### Community 6 - "Catalog: Gsap Utils"
+### Community 3 - "Community 3"
 Cohesion: 0.11
-Nodes (41): animateButton(), animateCenterReveal(), animateDaftarSalesPage(), animateFadeUp(), animateFloatingButton(), animateGeneralSubpage(), animateHeroMasterSequence, animateHomepageHero() (+33 more)
+Nodes (43): PageTransition(), PageTransitionProps, animateButton(), animateCenterReveal(), animateDaftarSalesPage(), animateFadeUp(), animateFloatingButton(), animateGeneralSubpage() (+35 more)
 
-### Community 7 - "Catalog: Gsap Utils"
-Cohesion: 0.11
-Nodes (41): animateButton(), animateCenterReveal(), animateDaftarSalesPage(), animateFadeUp(), animateFloatingButton(), animateGeneralSubpage(), animateHeroMasterSequence, animateHomepageHero() (+33 more)
-
-### Community 8 - "Payment: Main"
-Cohesion: 0.11
-Nodes (32): admin_auth_logout(), admin_auth_me(), auth_login(), auth_register(), bulk_delete_products(), bulk_status_products(), create_admin_affiliate(), create_admin_product() (+24 more)
-
-### Community 9 - "Auth: Package"
-Cohesion: 0.05
-Nodes (43): author, description, autoprefixer, bcryptjs, better-auth, clsx, eslint, eslint-config-next (+35 more)
-
-### Community 10 - "Orders: Admin System Settings Suite"
+### Community 4 - "Community 4"
 Cohesion: 0.08
-Nodes (29): AdminAffiliateTabProps, AffiliatePartner, INITIAL_AFFILIATES, AdminCategoriesTabProps, CategoryItem, INITIAL_CATEGORIES, AdminCustomersTabProps, CustomerItem (+21 more)
+Nodes (26): nextConfig, @fortawesome/free-solid-svg-icons, nextConfig, nextConfig, ErrorBoundary(), ErrorProps, GlobalError(), GlobalErrorProps (+18 more)
 
-### Community 11 - "Affiliate: Use Auth Store"
+### Community 5 - "Community 5"
+Cohesion: 0.11
+Nodes (42): animateButton(), animateCenterReveal(), animateDaftarSalesPage(), animateFadeUp(), animateFloatingButton(), animateGeneralSubpage(), animateHeroMasterSequence, animateHomepageHero() (+34 more)
+
+### Community 6 - "Community 6"
 Cohesion: 0.06
-Nodes (24): authClient, env, CustomerLogoutOptions, getAppBaseUrl(), AuthState, useAuthStore, UserProfile, CartItem (+16 more)
+Nodes (43): author, description, autoprefixer, bcryptjs, clsx, eslint, eslint-config-next, @fortawesome/free-regular-svg-icons (+35 more)
 
-### Community 12 - "Payment: Orders Data"
+### Community 7 - "Community 7"
+Cohesion: 0.11
+Nodes (41): animateButton(), animateCenterReveal(), animateDaftarSalesPage(), animateFadeUp(), animateFloatingButton(), animateGeneralSubpage(), animateHeroMasterSequence, animateHomepageHero() (+33 more)
+
+### Community 8 - "Community 8"
+Cohesion: 0.09
+Nodes (31): admin_auth_me(), api_root_redirect(), api_v1_docs_redirect(), api_v1_openapi_redirect(), create_admin_session_token(), delete_admin_product(), delete_admin_promo(), delete_admin_user() (+23 more)
+
+### Community 9 - "Community 9"
 Cohesion: 0.06
 Nodes (30): CreateOrderPayload, OrdersApi, OrdersApiResponse, PaymentConfigApi, PaymentConfigResponse, ProductsApi, PromosApi, PromoValidationResponse (+22 more)
 
-### Community 13 - "Auth: Package"
+### Community 10 - "Community 10"
 Cohesion: 0.05
 Nodes (41): author, description, autoprefixer, bcryptjs, better-auth, clsx, eslint, eslint-config-next (+33 more)
 
-### Community 14 - "Auth: Package"
-Cohesion: 0.05
-Nodes (41): author, description, autoprefixer, bcryptjs, better-auth, clsx, eslint, eslint-config-next (+33 more)
+### Community 11 - "Community 11"
+Cohesion: 0.08
+Nodes (26): DurationOption, FaqItem, getVariantDetails(), ProductDetailClient(), ProductDetailClientProps, RelatedProduct, SpecItem, VariantDetails (+18 more)
 
-### Community 15 - "Orders: Asterra Referral Profit Model"
+### Community 12 - "Community 12"
 Cohesion: 0.05
 Nodes (39): 10 Transaksi yang Tidak Menghasilkan Komisi, 11 Aturan Customer Referral, 12 Prioritas Referral, 13 Model Ekonomi, 14 Guardrail Margin Produk, 15 Contoh Kasus Lengkap, 16 Aturan Anti-Salah Konsep, 17 Rumus Implementasi (+31 more)
 
-### Community 16 - "Payment: Page"
+### Community 13 - "Community 13"
 Cohesion: 0.09
-Nodes (30): CheckoutPage(), CheckoutPageContent(), GATEWAY_PAYMENT_METHODS, getStatusBadge(), getTimelineStep(), isOrderExpired(), OrderCountdownBadge(), PrivateOrderContent() (+22 more)
+Nodes (6): create_admin_campaign(), delete_admin_campaign(), toggle_admin_campaign(), update_admin_campaign(), CampaignService, ReferralProfitService
 
-### Community 17 - "Orders: Main"
+### Community 14 - "Community 14"
 Cohesion: 0.11
-Nodes (19): api_root_redirect(), api_v1_docs_redirect(), api_v1_openapi_redirect(), cancel_order(), get_admin_customers(), get_admin_order_by_id(), get_admin_orders(), get_analytics_overview() (+11 more)
+Nodes (28): CheckoutPage(), CheckoutPageContent(), GATEWAY_PAYMENT_METHODS, getStatusBadge(), getTimelineStep(), isOrderExpired(), OrderCountdownBadge(), PrivateOrderContent() (+20 more)
 
-### Community 18 - "Orders: Orders Data"
-Cohesion: 0.11
-Nodes (27): LogsApiResponse, AdminOrdersTab(), OrderActorBadge(), OrderStatusBadge(), OrderDetailModal(), OrderDetailModalProps, OrderFiltersBar(), OrderMetricsCards() (+19 more)
+### Community 15 - "Community 15"
+Cohesion: 0.14
+Nodes (4): Product, AnalyticsService, CatalogService, FinanceService
 
-### Community 19 - "Payment: Select"
-Cohesion: 0.20
-Nodes (30): AdminPage(), TAB_TITLES, AdminAffiliateTab(), AdminAnalyticsSuite(), AdminCategoriesTab(), AdminCustomersTab(), AdminDashboardTab(), AdminFinanceSuite() (+22 more)
+### Community 16 - "Community 16"
+Cohesion: 0.09
+Nodes (22): better-auth, ADMIN_COOKIE_NAME, applySecurityHeaders(), config, getAdminSecret(), proxy(), verifyAdminToken(), authClient (+14 more)
 
-### Community 20 - "Orders: Error"
-Cohesion: 0.13
-Nodes (17): ErrorProps, NotFound(), AffiliatePage(), metadata, ErrorBoundary(), ErrorProps, NotFound(), AuthRequiredModalProps (+9 more)
+### Community 17 - "Community 17"
+Cohesion: 0.09
+Nodes (19): @fortawesome/fontawesome-svg-core, metadata, plusJakartaSans, RootLayout(), GsapProvider(), QueryProvider(), metadata, plusJakartaSans (+11 more)
 
-### Community 21 - "Catalog: Catalog Service"
-Cohesion: 0.15
-Nodes (9): delete_admin_product(), get_admin_products(), get_admin_vip_services(), get_product_by_id(), get_products(), sync_vip_services(), toggle_admin_product_status(), Product (+1 more)
+### Community 18 - "Community 18"
+Cohesion: 0.08
+Nodes (19): zustand, CustomerLogoutOptions, AuthState, useAuthStore, UserProfile, CartItem, CartState, useCartStore (+11 more)
 
-### Community 22 - "Admin: Dropdown Menu"
+### Community 19 - "Community 19"
 Cohesion: 0.16
 Nodes (22): AdminLoginPage(), AsterraLogo(), AsterraLogoProps, Card, CardContent, CardDescription, CardFooter, CardHeader (+14 more)
 
-### Community 23 - "Catalog: Product Relevance"
-Cohesion: 0.11
-Nodes (25): fetchActiveProducts(), fetchProductById(), generateMetadata(), PageProps, ProductDetailPage(), ProductDetailData, ParsedProductSpecs, parseProductDurations() (+17 more)
-
-### Community 24 - "Orders: Page"
-Cohesion: 0.21
-Nodes (20): LoginFormContent(), LoginPage(), formatDate(), formatIDR(), Order, OrderItem, ProfileApiResponse, ProfilePage() (+12 more)
-
-### Community 25 - "Payment: Admin Finance Suite"
-Cohesion: 0.10
-Nodes (21): AdminDashboardTabProps, AdminFinanceSuiteProps, ExpenseItem, FinanceSummary, JournalEntry, PaymentChannel, ProfitDistributionSummary, ProfitLedgerEntry (+13 more)
-
-### Community 26 - "Marketing: Banner Service"
-Cohesion: 0.16
-Nodes (5): delete_promo_banner(), get_promo_banner_detail(), get_promo_banners(), upload_promo_banner(), BannerService
-
-### Community 27 - "Core: Dropdown Menu"
+### Community 20 - "Community 20"
 Cohesion: 0.15
-Nodes (18): Badge(), BadgeProps, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuRadioItem, DropdownMenuSeparator (+10 more)
+Nodes (14): cancel_order(), create_order(), get_admin_order_by_id(), get_admin_orders(), get_order_by_id(), get_orders(), get_user_profile(), pay_order() (+6 more)
 
-### Community 28 - "Auth: Package"
-Cohesion: 0.08
-Nodes (24): dependencies, bcryptjs, better-auth, clsx, @fortawesome/fontawesome-svg-core, @fortawesome/free-brands-svg-icons, @fortawesome/free-regular-svg-icons, @fortawesome/free-solid-svg-icons (+16 more)
+### Community 21 - "Community 21"
+Cohesion: 0.21
+Nodes (21): @fortawesome/free-brands-svg-icons, LoginFormContent(), LoginPage(), formatDate(), formatIDR(), Order, OrderItem, ProfileApiResponse (+13 more)
 
-### Community 29 - "Orders: Orders Data"
+### Community 22 - "Community 22"
+Cohesion: 0.13
+Nodes (19): @fortawesome/react-fontawesome, AffiliatePage(), metadata, NotFound(), CartItemSummary, CheckoutCartSummary(), CheckoutCartSummaryProps, CheckoutCustomerForm() (+11 more)
+
+### Community 23 - "Community 23"
 Cohesion: 0.11
-Nodes (16): OrdersApiResponse, addGlobalLog(), addGlobalOrder(), globalForOrders, INITIAL_LOGS, INITIAL_ORDERS, Order, OrderItem (+8 more)
+Nodes (20): admin_auth_logout(), auth_login(), auth_register(), bulk_delete_products(), bulk_status_products(), create_admin_product(), create_admin_promo(), create_admin_user() (+12 more)
 
-### Community 30 - "Motion: Test Motion System"
+### Community 24 - "Community 24"
+Cohesion: 0.13
+Nodes (8): catch_all(), get_media_file(), catch_all(), deploy_banner(), deploy_logo(), run_migration(), step1_convert_images(), step2_update_db()
+
+### Community 25 - "Community 25"
+Cohesion: 0.14
+Nodes (6): delete_promo_banner(), get_promo_banner_detail(), get_promo_banners(), toggle_promo_banner_status(), upload_promo_banner(), BannerService
+
+### Community 26 - "Community 26"
+Cohesion: 0.12
+Nodes (19): SalesRootPage(), SalesPortalPage(), TAB_TITLES, AdminSidebar(), AdminSidebarProps, AdminTab, NavGroup, NavSubItem (+11 more)
+
+### Community 27 - "Community 27"
+Cohesion: 0.10
+Nodes (18): @prisma/client, formatRupiah(), fs, path, prisma, { PrismaClient }, updateDatabasePrices(), fs (+10 more)
+
+### Community 28 - "Community 28"
+Cohesion: 0.16
+Nodes (20): Badge(), BadgeProps, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuRadioItem, DropdownMenuSeparator (+12 more)
+
+### Community 29 - "Community 29"
+Cohesion: 0.16
+Nodes (20): @radix-ui/react-dropdown-menu, @radix-ui/react-select, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuRadioItem, DropdownMenuSeparator (+12 more)
+
+### Community 30 - "Community 30"
 Cohesion: 0.15
 Nodes (12): CDPClient, delay(), getWebSocketDebuggerUrl(), runTest(), evaluate(), setViewport(), CDPClient, delay() (+4 more)
 
-### Community 31 - "Affiliate: Next"
+### Community 31 - "Community 31"
 Cohesion: 0.09
-Nodes (8): nextConfig, nextConfig, nextConfig, INITIAL_STOREFRONT_BANNERS, PromoBannerItem, Header(), HeaderProps, AsterraLogoProps
+Nodes (23): dependencies, bcryptjs, better-auth, clsx, @fortawesome/fontawesome-svg-core, @fortawesome/free-brands-svg-icons, @fortawesome/free-regular-svg-icons, @fortawesome/free-solid-svg-icons (+15 more)
 
-### Community 32 - "Payment: Api Client"
+### Community 32 - "Community 32"
 Cohesion: 0.11
-Nodes (18): AdminProductsResponse, VipServicesResponse, CreateOrderPayload, OrdersApi, PaymentConfigApi, PaymentConfigResponse, ProductsApi, PromosApi (+10 more)
+Nodes (15): addGlobalLog(), addGlobalOrder(), globalForOrders, INITIAL_LOGS, INITIAL_ORDERS, Order, OrderItem, OrderLog (+7 more)
 
-### Community 33 - "Orders: Partner Service"
-Cohesion: 0.27
-Nodes (7): get_admin_affiliates(), get_sales_campaigns(), get_sales_me(), get_sales_network(), get_sales_orders(), validate_referral(), PartnerService
-
-### Community 34 - "Auth: Package"
+### Community 33 - "Community 33"
 Cohesion: 0.09
 Nodes (22): dependencies, bcryptjs, better-auth, clsx, @fortawesome/fontawesome-svg-core, @fortawesome/free-brands-svg-icons, @fortawesome/free-regular-svg-icons, @fortawesome/free-solid-svg-icons (+14 more)
 
-### Community 35 - "Auth: Package"
+### Community 34 - "Community 34"
 Cohesion: 0.09
 Nodes (22): dependencies, bcryptjs, better-auth, clsx, @fortawesome/fontawesome-svg-core, @fortawesome/free-brands-svg-icons, @fortawesome/free-regular-svg-icons, @fortawesome/free-solid-svg-icons (+14 more)
 
-### Community 36 - "Affiliate: Asterra Architecture Decoupling Plan"
+### Community 36 - "Community 36"
+Cohesion: 0.31
+Nodes (7): admin_auth_login(), create_admin_affiliate(), get_sales_me(), get_sales_orders(), register_sales_affiliate(), request_sales_payout(), PartnerService
+
+### Community 37 - "Community 37"
 Cohesion: 0.10
 Nodes (19): 1 Executive Summary  Problem Statement, 2 Target Visi 4 Repositori Terpisah, 3 Struktur Folder 4 Proyek Mandiri, 4 Spesifikasi Teknis FastAPI Core Backend, 5 Pembersihan Core Asterra Store Customer App, 6 Arsitektur Keamanan  Autentikasi, 7 Roadmap Eksekusi Bertahap Phased Milestones, Asterra Store  Architecture Decoupling  Multi-Project Separation Plan (+11 more)
 
-### Community 37 - "Affiliate: Layout"
+### Community 38 - "Community 38"
 Cohesion: 0.15
-Nodes (10): metadata, plusJakartaSans, RootLayout(), GsapProvider(), QueryProvider(), metadata, plusJakartaSans, RootLayout() (+2 more)
+Nodes (14): AdminPage(), AdminMarketingSuite(), AdminMarketingSuiteProps, BannerItem, CampaignItem, INITIAL_BANNERS, AdminPaymentSettingsTab(), AdminSidebar() (+6 more)
 
-### Community 38 - "Core: Tsconfig"
+### Community 39 - "Community 39"
 Cohesion: 0.11
 Nodes (18): compilerOptions, allowJs, esModuleInterop, incremental, isolatedModules, jsx, lib, module (+10 more)
 
-### Community 39 - "Core: Tsconfig"
+### Community 40 - "Community 40"
 Cohesion: 0.11
 Nodes (18): compilerOptions, allowJs, esModuleInterop, incremental, isolatedModules, jsx, lib, module (+10 more)
 
-### Community 40 - "Core: Tsconfig"
+### Community 41 - "Community 41"
 Cohesion: 0.11
 Nodes (18): compilerOptions, allowJs, esModuleInterop, incremental, isolatedModules, jsx, lib, module (+10 more)
 
-### Community 41 - "Admin: Admin User Service"
-Cohesion: 0.24
-Nodes (4): admin_auth_login(), delete_admin_user(), get_admin_users(), AdminUserService
+### Community 42 - "Community 42"
+Cohesion: 0.15
+Nodes (15): lucide-react, AdminDashboardTabProps, AdminSidebarProps, AdminTab, NavGroup, NavSubItem, NetworkBonusLogItem, NetworkDataResponse (+7 more)
 
-### Community 42 - "Core: Eslint"
+### Community 43 - "Community 43"
 Cohesion: 0.13
-Nodes (12): compat, __dirname, eslintConfig, __filename, compat, __dirname, eslintConfig, __filename (+4 more)
+Nodes (13): LogsApiResponse, addGlobalLog(), addGlobalOrder(), globalForOrders, INITIAL_LOGS, INITIAL_ORDERS, OrderItem, OrderLog (+5 more)
 
-### Community 43 - "Payment: Admin Marketing Suite"
+### Community 44 - "Community 44"
+Cohesion: 0.11
+Nodes (17): description, name, private, scripts, build, build:admin, build:all, build:sales (+9 more)
+
+### Community 45 - "Community 45"
 Cohesion: 0.13
-Nodes (11): AdminMarketingSuiteProps, BannerItem, CampaignItem, INITIAL_BANNERS, AdminPaymentSettingsTabProps, ACCEPTED_TYPES, ImageUploadDropzoneProps, UploadMode (+3 more)
+Nodes (13): compat, __dirname, eslintConfig, __filename, @eslint/eslintrc, compat, __dirname, eslintConfig (+5 more)
 
-### Community 44 - "Affiliate: Package"
-Cohesion: 0.12
-Nodes (16): description, name, private, scripts, build:admin, build:all, build:sales, build:user (+8 more)
+### Community 46 - "Community 46"
+Cohesion: 0.16
+Nodes (11): AdminAffiliateTab(), AdminAffiliateTabProps, AffiliatePartner, INITIAL_AFFILIATES, AdminPaymentSettingsTabProps, authClient, env, getAppBaseUrl() (+3 more)
 
-### Community 45 - "Marketing: Heroui Alert Dialog"
+### Community 47 - "Community 47"
+Cohesion: 0.18
+Nodes (11): ErrorBoundary(), ErrorProps, GlobalError(), GlobalErrorProps, NotFound(), Button, ButtonProps, CHUNK_ERROR_PATTERNS (+3 more)
+
+### Community 48 - "Community 48"
+Cohesion: 0.16
+Nodes (4): Settings, Config, upload_admin_media(), TripayService
+
+### Community 50 - "Community 50"
+Cohesion: 0.26
+Nodes (11): TAB_TITLES, VipServicesResponse, AdminUserItem, AdminUsersTab(), AdminUsersTabProps, SelectContent, SelectItem, SelectScrollDownButton (+3 more)
+
+### Community 51 - "Community 51"
 Cohesion: 0.17
 Nodes (9): AlertDialog, AlertDialogBackdrop(), AlertDialogCloseTrigger(), AlertDialogContainer(), AlertDialogContext, AlertDialogContextType, AlertDialogFooter(), AlertDialogTrigger() (+1 more)
 
-### Community 46 - "Marketing: Heroui Alert Dialog"
+### Community 52 - "Community 52"
 Cohesion: 0.17
 Nodes (9): AlertDialog, AlertDialogBackdrop(), AlertDialogCloseTrigger(), AlertDialogContainer(), AlertDialogContext, AlertDialogContextType, AlertDialogFooter(), AlertDialogTrigger() (+1 more)
 
-### Community 47 - "Auth: Use Auth Store"
-Cohesion: 0.22
-Nodes (9): LainnyaSidebar(), MobileBottomNav(), CustomerLogoutOptions, performCustomerLogout(), AuthState, useAuthStore, UserProfile, NavigationState (+1 more)
-
-### Community 48 - "Catalog: Asterra Architecture Decoupling Complete"
+### Community 54 - "Community 54"
 Cohesion: 0.13
 Nodes (14): Atau Build Individual, Build Semua 4 Sub-Proyek, Development, Jalankan Admin Console Port 3001, Jalankan FastAPI Python Engine Port 8000, Jalankan Nextjs BFF API Port 4000, Jalankan Sales Console Port 3002, Jalankan Storefront Pembeli Port 3000 (+6 more)
 
-### Community 49 - "Core: Package"
+### Community 55 - "Community 55"
 Cohesion: 0.13
 Nodes (15): devDependencies, autoprefixer, eslint, eslint-config-next, @eslint/eslintrc, exceljs, postcss, prettier (+7 more)
 
-### Community 50 - "Auth: Route"
-Cohesion: 0.18
-Nodes (9): GET, POST, appBaseUrl, auth, env, globalForPrisma, prisma, getAppBaseUrl() (+1 more)
-
-### Community 51 - "Marketing: Heroui Alert Dialog"
+### Community 56 - "Community 56"
 Cohesion: 0.18
 Nodes (8): AlertDialogBackdrop(), AlertDialogCloseTrigger(), AlertDialogContainer(), AlertDialogContext, AlertDialogContextType, AlertDialogFooter(), AlertDialogTrigger(), useAlertDialog()
 
-### Community 52 - "Core: Package"
-Cohesion: 0.14
-Nodes (14): devDependencies, autoprefixer, eslint, eslint-config-next, @eslint/eslintrc, exceljs, postcss, prettier (+6 more)
-
-### Community 53 - "Core: Package"
-Cohesion: 0.14
-Nodes (14): devDependencies, autoprefixer, eslint, eslint-config-next, @eslint/eslintrc, exceljs, postcss, prettier (+6 more)
-
-### Community 54 - "Catalog: Generate Product Excel"
+### Community 57 - "Community 57"
 Cohesion: 0.21
-Nodes (11): ExcelJS, fs, generateExcel(), getAccountType(), getAvailabilityStatus(), getBrandAndApp(), getCleanProductName(), path (+3 more)
+Nodes (3): expire_affiliate_sessions(), track_affiliate_click(), ReferralService
 
-### Community 55 - "Orders: Notification Sound"
+### Community 58 - "Community 58"
+Cohesion: 0.14
+Nodes (14): devDependencies, autoprefixer, eslint, eslint-config-next, @eslint/eslintrc, exceljs, postcss, prettier (+6 more)
+
+### Community 59 - "Community 59"
+Cohesion: 0.14
+Nodes (14): devDependencies, autoprefixer, eslint, eslint-config-next, @eslint/eslintrc, exceljs, postcss, prettier (+6 more)
+
+### Community 60 - "Community 60"
+Cohesion: 0.31
+Nodes (10): SalesLoginContent(), SalesLoginPage(), AsterraLogo(), AsterraLogoProps, Card, CardContent, CardDescription, CardFooter (+2 more)
+
+### Community 61 - "Community 61"
+Cohesion: 0.21
+Nodes (12): exceljs, ExcelJS, fs, generateExcel(), getAccountType(), getAvailabilityStatus(), getBrandAndApp(), getCleanProductName() (+4 more)
+
+### Community 62 - "Community 62"
+Cohesion: 0.33
+Nodes (8): OrderActorBadge(), OrderStatusBadge(), OrderDetailModalProps, OrderTableRowProps, Order, formatDateTimeIndo(), formatWhatsAppUrl(), generateOrderValidationText()
+
+### Community 63 - "Community 63"
+Cohesion: 0.29
+Nodes (10): @tanstack/react-query, formatRelativeTime(), getStatusBadge(), GlobalOrdersContent(), GlobalOrdersPage(), GlobalOrdersPageSkeleton(), GlobalOrdersSkeleton(), parseSafeDate() (+2 more)
+
+### Community 64 - "Community 64"
+Cohesion: 0.24
+Nodes (9): AdminProductsResponse, CatalogProductsResponse, fetchCatalogProducts(), useCatalogProducts(), ProductItem, PRODUCTS_CATALOG, ManagedProduct, ManagedProductItem (+1 more)
+
+### Community 65 - "Community 65"
+Cohesion: 0.24
+Nodes (8): ErrorBoundary(), ErrorProps, GlobalError(), GlobalErrorProps, CHUNK_ERROR_PATTERNS, CHUNK_RECOVERY_KEY, isChunkLoadError(), tryRecoverFromChunkError()
+
+### Community 66 - "Community 66"
 Cohesion: 0.27
 Nodes (4): notificationSound, NotificationSoundPlayer, playOrderNotificationSound(), SoundType
 
-### Community 56 - "Orders: Notification Sound"
+### Community 67 - "Community 67"
 Cohesion: 0.27
 Nodes (4): notificationSound, NotificationSoundPlayer, playOrderNotificationSound(), SoundType
 
-### Community 57 - "Orders: Notification Sound"
+### Community 68 - "Community 68"
 Cohesion: 0.27
 Nodes (4): notificationSound, NotificationSoundPlayer, playOrderNotificationSound(), SoundType
 
-### Community 58 - "Orders: Skill"
+### Community 69 - "Community 69"
 Cohesion: 0.18
 Nodes (10): Anti-Hallucination Directives  Design Hierarchy, Core Workflow Lifecycle, Direct Native Commands Ultra-Fast 10ms Execution, Moryn Agent Skill, Single Source of Truth SSOT Priority Rules, Step 1 Read Blueprint in Order Personalization  Structure  PRD  Design  Active Task, Step 2 Start the Task, Step 3 Implement Changes with Mandatory Autonomous Component Discovery (+2 more)
 
-### Community 60 - "Payment: Payment Config Service"
-Cohesion: 0.31
-Nodes (4): get_admin_payment_config(), get_payment_config(), PaymentSetting, PaymentConfigService
+### Community 71 - "Community 71"
+Cohesion: 0.18
+Nodes (10): AdminFinanceSuite(), AdminFinanceSuiteProps, ExpenseItem, FinanceSummary, JournalEntry, PaymentChannel, ProfitDistributionSummary, ProfitLedgerEntry (+2 more)
 
-### Community 61 - "Core: Readme"
+### Community 72 - "Community 72"
+Cohesion: 0.35
+Nodes (8): AdminOrdersTab(), OrderDetailModal(), OrderFiltersBar(), OrderFiltersBarProps, OrderMetrics, OrderMetricsCards(), OrderMetricsCardsProps, OrderTableRow()
+
+### Community 73 - "Community 73"
 Cohesion: 0.20
 Nodes (9): 1 Setup Python Environment, 2 Jalankan Server FastAPI, Asterra Store  Core Backend Service Pure FastAPI, Atau langsung dari folder backend, Dari root project, Install dependencies, Quick Start, Setup virtual environment (+1 more)
 
-### Community 62 - "Core: Chunk Recovery"
+### Community 74 - "Community 74"
+Cohesion: 0.20
+Nodes (8): CreateOrderPayload, OrdersApi, OrdersApiResponse, PaymentConfigApi, PaymentConfigResponse, ProductsApi, PromosApi, PromoValidationResponse
+
+### Community 75 - "Community 75"
 Cohesion: 0.27
-Nodes (7): ErrorBoundary(), GlobalError(), GlobalErrorProps, CHUNK_ERROR_PATTERNS, CHUNK_RECOVERY_KEY, isChunkLoadError(), tryRecoverFromChunkError()
+Nodes (7): DaftarSalesContent(), DaftarSalesPage(), PartnerResult, Badge(), BadgeProps, Input, InputProps
 
-### Community 63 - "Affiliate: Switch Env"
-Cohesion: 0.22
-Nodes (4): fs, path, projects, targetArg
-
-### Community 64 - "Core: Troubleshooting Vercel Python Uv Deployment"
+### Community 76 - "Community 76"
 Cohesion: 0.22
 Nodes (8): 1 Perbarui python-version ke 312, 2 Selaraskan pyprojecttoml ke Python 312  Konfigurasi Vercel Entrypoint, 3 Generate  Komit uvlock Bersih, 4 Normalisasi Skema Database URI SQLAlchemy 20, Best Practice  Solution, Problem Summary, Root Cause Analysis, Troubleshooting Vercel Python uv Sync Interpreter Version Mismatch
 
-### Community 65 - "Orders: Page"
-Cohesion: 0.39
-Nodes (8): formatRelativeTime(), getStatusBadge(), GlobalOrdersContent(), GlobalOrdersPage(), GlobalOrdersPageSkeleton(), GlobalOrdersSkeleton(), PublicOrder, STATUS_FILTERS
+### Community 79 - "Community 79"
+Cohesion: 0.43
+Nodes (4): get_admin_payment_config(), get_payment_config(), update_admin_payment_config(), PaymentConfigService
 
-### Community 67 - "Affiliate: Asterra Referral Profit Architecture"
+### Community 80 - "Community 80"
 Cohesion: 0.25
 Nodes (7): 1 Latar Belakang  Prinsip Utama, 2 Alur  Rumus Waterfall PL, 3 Komponen Teknis  Layanan, 4 Section 8 Audit Trail, Asterra Store  Referral  Profit Distribution Architecture, Hukum Mutlak Strict Zero-Tolerance Protocol, Jaminan Integer Rounding  Presisi
 
-### Community 68 - "Core: Package"
+### Community 81 - "Community 81"
 Cohesion: 0.25
 Nodes (8): scripts, build, dev, export:excel, format, format:check, lint, start
 
-### Community 69 - "Admin: Proxy"
-Cohesion: 0.43
-Nodes (6): ADMIN_COOKIE_NAME, applySecurityHeaders(), config, getAdminSecret(), proxy(), verifyAdminToken()
-
-### Community 70 - "Core: Package"
+### Community 82 - "Community 82"
 Cohesion: 0.25
 Nodes (8): scripts, build, dev, export:excel, format, format:check, lint, start
 
-### Community 71 - "Admin: Proxy"
-Cohesion: 0.43
-Nodes (6): ADMIN_COOKIE_NAME, applySecurityHeaders(), config, getAdminSecret(), proxy(), verifyAdminToken()
-
-### Community 72 - "Core: Package"
+### Community 83 - "Community 83"
 Cohesion: 0.25
 Nodes (8): scripts, build, dev, export:excel, format, format:check, lint, start
 
-### Community 73 - "Admin: Proxy"
+### Community 84 - "Community 84"
 Cohesion: 0.43
 Nodes (6): ADMIN_COOKIE_NAME, applySecurityHeaders(), config, getAdminSecret(), proxy(), verifyAdminToken()
 
-### Community 74 - "Catalog: Sync Supabase To Json"
-Cohesion: 0.32
-Nodes (7): exportAll(), formatProduct(), fs, mapCategory(), path, prisma, { PrismaClient }
-
-### Community 75 - "Core: Skill"
+### Community 85 - "Community 85"
 Cohesion: 0.29
 Nodes (6): Design principles, Frontend Design, Ground it in the subject, More on writing in design, Process brainstorm explore plan critique build critique again, Restraint and self-critique
 
-### Community 76 - "Core: Asterra Milestone 50 Pricing Sync"
+### Community 86 - "Community 86"
 Cohesion: 0.29
 Nodes (6): 1 Latar Belakang  Rasional Bisnis, 2 Rincian Perubahan Harga Produk 37 Produk Utama, 3 Standardisasi Workbook  Perapihan Semua Tabel, 4 Perintah Operasional Terkait, Asterra Store  Milestone 50 Final Pricing  Database Sync, Standar Struktur 4 Sheet
 
-### Community 77 - "Core: Postcss"
+### Community 87 - "Community 87"
+Cohesion: 0.29
+Nodes (4): tailwindcss, config, config, config
+
+### Community 88 - "Community 88"
 Cohesion: 0.29
 Nodes (3): config, config, config
 
-### Community 78 - "Catalog: Admin Analytics Suite"
-Cohesion: 0.29
-Nodes (6): AdminAnalyticsSuiteProps, AffiliatePerformanceItem, AnalyticsSuiteData, FinancialReportData, ProductPerformanceItem, SalesTimeSeriesItem
-
-### Community 79 - "Core: Tailwind"
-Cohesion: 0.29
-Nodes (3): config, config, config
-
-### Community 80 - "Core: Use Cart Store"
-Cohesion: 0.38
-Nodes (5): CartDrawer(), CartDrawerProps, CartItem, CartState, useCartStore
-
-### Community 81 - "Core: Apply Excel Prices To Db"
-Cohesion: 0.33
-Nodes (6): formatRupiah(), fs, path, prisma, { PrismaClient }, updateDatabasePrices()
-
-### Community 82 - "Catalog: Troubleshooting Catalog Category Sync Fix"
+### Community 89 - "Community 89"
 Cohesion: 0.33
 Nodes (5): 1 Problem Gejala Bug, 2 Root Cause Penyebab Utama, 3 Solution Solusi yang Diterapkan, 4 Verification  Results, Storefront Catalog Category and AI Tools Synchronization Fix
 
-### Community 83 - "Affiliate: Admin Console Modular Architecture"
+### Community 90 - "Community 90"
 Cohesion: 0.40
 Nodes (4): 1 Executive Summary  Design Constitution, 2 Component Structure, 4 Sales Partner Registration System daftar-sales, Asterra Store Admin Console  Modular Architecture  24 Menu Directives
 
-### Community 85 - "Core: Asterra Fastapi Unified Integration"
+### Community 92 - "Community 92"
 Cohesion: 0.40
 Nodes (4): Hasil Verifikasi Integrasi, Integrasi Backend FastAPI Asterra Store, Ringkasan Masalah  Akar Penyebab 404, Solusi  Integrasi yang Diterapkan
 
 ## Knowledge Gaps
-- **292 isolated node(s):** `asterra-backend`, `@fortawesome/fontawesome-svg-core`, `@fortawesome/free-brands-svg-icons`, `@fortawesome/free-regular-svg-icons`, `@fortawesome/free-solid-svg-icons` (+287 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 976 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **29 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **232 isolated node(s):** `{ signIn, signOut, useSession }`, `{ signIn, signOut, useSession }`, `{ signIn, signOut, useSession }`, `asterra-backend`, `clsx` (+227 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 930 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **34 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `swiper` connect `Auth: Package` to `Affiliate: Next`?**
-  _High betweenness centrality (0.065) - this node is a cross-community bridge._
-- **What connects `asterra-backend`, `@fortawesome/fontawesome-svg-core`, `@fortawesome/free-brands-svg-icons` to the rest of the system?**
-  _292 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `Catalog: Page` be split into smaller, more focused modules?**
-  _Cohesion score 0.051061388410786 - nodes in this community are weakly interconnected._
-- **Why does `@prisma/client` connect `Auth: Route` to `Core: Apply Excel Prices To Db`, `Auth: Package`, `Catalog: Sync Supabase To Json`, `Catalog: Generate Product Excel`?**
-  _High betweenness centrality (0.026) - this node is a cross-community bridge._
-- **Should `Catalog: Gsap Utils` be split into smaller, more focused modules?**
-  _Cohesion score 0.06027306027306027 - nodes in this community are weakly interconnected._
-- **Why does `dependencies` connect `Auth: Package` to `Auth: Package`?**
-  _High betweenness centrality (0.017) - this node is a cross-community bridge._
-- **Should `Catalog: Campaign Service` be split into smaller, more focused modules?**
-  _Cohesion score 0.057859703020993344 - nodes in this community are weakly interconnected._
+- **Why does `react` connect `Community 22` to `Community 0`, `Community 1`, `Community 3`, `Community 4`, `Community 5`, `Community 6`, `Community 7`, `Community 11`, `Community 14`, `Community 17`, `Community 19`, `Community 21`, `Community 26`, `Community 28`, `Community 29`, `Community 38`, `Community 42`, `Community 46`, `Community 47`, `Community 50`, `Community 51`, `Community 52`, `Community 56`, `Community 60`, `Community 62`, `Community 63`, `Community 65`, `Community 71`, `Community 72`, `Community 75`?**
+  _High betweenness centrality (0.101) - this node is a cross-community bridge._
+- **What connects `{ signIn, signOut, useSession }`, `{ signIn, signOut, useSession }`, `{ signIn, signOut, useSession }` to the rest of the system?**
+  _232 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Should `Community 0` be split into smaller, more focused modules?**
+  _Cohesion score 0.06384180790960452 - nodes in this community are weakly interconnected._
+- **Why does `next` connect `Community 4` to `Community 0`, `Community 1`, `Community 3`, `Community 6`, `Community 11`, `Community 14`, `Community 16`, `Community 17`, `Community 19`, `Community 21`, `Community 22`, `Community 26`, `Community 42`, `Community 47`, `Community 50`, `Community 60`, `Community 63`, `Community 65`, `Community 75`, `Community 84`?**
+  _High betweenness centrality (0.051) - this node is a cross-community bridge._
+- **Should `Community 1` be split into smaller, more focused modules?**
+  _Cohesion score 0.07811447811447811 - nodes in this community are weakly interconnected._
+- **Why does `@tanstack/react-query` connect `Community 63` to `Community 0`, `Community 1`, `Community 4`, `Community 6`, `Community 9`, `Community 11`, `Community 14`, `Community 17`, `Community 18`, `Community 19`, `Community 21`, `Community 22`, `Community 26`, `Community 42`, `Community 50`, `Community 60`, `Community 64`, `Community 72`, `Community 75`?**
+  _High betweenness centrality (0.044) - this node is a cross-community bridge._
+- **Should `Community 2` be split into smaller, more focused modules?**
+  _Cohesion score 0.03636363636363636 - nodes in this community are weakly interconnected._

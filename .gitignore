@@ -57,3 +57,4 @@ certificates/
 # Graphify temporary caches
 graphify-out/cache/
 graphify-out/transcripts/
+graphify-out/.*

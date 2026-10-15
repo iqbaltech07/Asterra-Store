@@ -58,10 +58,14 @@ def get_campaign_sort_key(c: Dict[str, Any]):
 
 class CampaignService:
     _campaigns: Optional[List[Dict[str, Any]]] = None
+    _table_ensured: bool = False
 
     @classmethod
-    def ensure_table(cls):
-        """Ensures promo_campaigns table exists in database and has all required columns."""
+    def ensure_table(cls, force: bool = False):
+        """Ensures promo_campaigns table exists in database and has all required columns (runs once per process)."""
+        if cls._table_ensured and not force:
+            return
+        cls._table_ensured = True
         try:
             if engine is not None:
                 Base.metadata.create_all(bind=engine, tables=[PromoCampaign.__table__])

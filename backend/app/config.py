@@ -39,22 +39,19 @@ class Settings(BaseSettings):
     HOST: str = os.getenv("HOST", "0.0.0.0")
     PORT: int = int(os.getenv("PORT", "8000"))
     
-    # Database (Supabase PostgreSQL)
-    DATABASE_URL: str = os.getenv(
-        "DATABASE_URL", 
-        "postgresql://postgres.kszyhgyddstbdooxsnuo:Asterra!Database@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
-    )
+    # Database (Supabase PostgreSQL via Environment Variable)
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "")
     DIRECT_URL: str = os.getenv("DIRECT_URL", "")
     
     # Security & JWT Authentication
     SECRET_KEY: str = (
         os.getenv("SECRET_KEY") 
         or os.getenv("JWT_SECRET") 
-        or "asterra_jwt_secret_production_key_super_secure_2026"
+        or "asterra_jwt_secret_dev_fallback_key_2026"
     )
     ADMIN_SESSION_SECRET: str = os.getenv("ADMIN_SESSION_SECRET", "")
     ADMIN_EMAIL: str = os.getenv("ADMIN_EMAIL", "admin@asterra.store")
-    ADMIN_PASSWORD: str = os.getenv("ADMIN_PASSWORD", "AsterraAdmin#2026")
+    ADMIN_PASSWORD: str = os.getenv("ADMIN_PASSWORD", "")
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7 # 7 days
     

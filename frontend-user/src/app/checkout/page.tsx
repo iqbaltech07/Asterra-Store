@@ -326,39 +326,6 @@ function CheckoutPageContent() {
     return 'manual_bca';
   });
 
-  // Real-time synchronization of server payment settings (unique code toggle, expiry hours, admin WA, CS contact)
-  useEffect(() => {
-    fetch('/api/v1/payment-config')
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.success && json.data) {
-          const cfg = json.data;
-          const mergedConfig: PublicPaymentConfig = {
-            mode: cfg.mode || 'manual',
-            bank: cfg.bank || DEFAULT_PUBLIC_CONFIG.bank,
-            qris: cfg.qris || DEFAULT_PUBLIC_CONFIG.qris,
-            dana: cfg.dana || DEFAULT_PUBLIC_CONFIG.dana,
-            confirmation_whatsapp:
-              cfg.confirmation_whatsapp || cfg.confirmationWhatsapp || DEFAULT_PUBLIC_CONFIG.confirmation_whatsapp,
-            instructions: cfg.instructions || DEFAULT_PUBLIC_CONFIG.instructions,
-            enable_unique_code:
-              cfg.enable_unique_code !== undefined
-                ? Boolean(cfg.enable_unique_code)
-                : cfg.enableUniqueCode !== undefined
-                ? Boolean(cfg.enableUniqueCode)
-                : false,
-            order_expiry_hours: Number(cfg.order_expiry_hours || cfg.orderExpiryHours || 24),
-            cs_email: cfg.cs_email || cfg.csEmail || 'cs@asterra.store',
-            cs_whatsapp_numbers: cfg.cs_whatsapp_numbers || cfg.csWhatsappNumbers || ['6281234567890'],
-          };
-          setPaymentConfig(mergedConfig);
-          try {
-            localStorage.setItem('asterra_payment_config', JSON.stringify(mergedConfig));
-          } catch {}
-        }
-      })
-      .catch(() => {});
-  }, []);
 
   // Auto-fill from active Better Auth session or legacy auth store
   useEffect(() => {

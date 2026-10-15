@@ -269,7 +269,8 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
 
   useEffect(() => {
     setIsMounted(true);
-  }, []);
+    router.prefetch('/checkout');
+  }, [router]);
 
   const { items: cartItems, addItem, clearCart } = useCartStore();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);

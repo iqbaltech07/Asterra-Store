@@ -67,20 +67,6 @@ class PromoService:
         promo = next((p for p in promos if p.get("code", "").upper() == clean_code), None)
 
         if not promo:
-            # Fallback pattern for dynamic promotional codes
-            if clean_code.startswith("AST") or "DISKON" in clean_code or "PROMO" in clean_code:
-                discount_amount = min(20000.0, round(subtotal * 0.1))
-                return {
-                    "valid": True,
-                    "code": clean_code,
-                    "description": f"Kupon Diskon {clean_code}",
-                    "discountType": "percentage",
-                    "discountValue": 10,
-                    "discountAmount": discount_amount,
-                    "finalTotal": max(0.0, subtotal - discount_amount),
-                    "minOrderAmount": 0,
-                    "message": "Kupon berhasil diterapkan!",
-                }
             return {
                 "valid": False,
                 "error": f"Kode promo '{code}' tidak valid atau telah kedaluwarsa.",
@@ -92,6 +78,44 @@ class PromoService:
                 "valid": False,
                 "error": f"Kode promo '{clean_code}' sudah tidak aktif.",
                 "message": "Kode promo tidak aktif.",
+            }
+
+        # Check start_date
+        start_date_str = promo.get("startDate") or promo.get("start_date")
+        if start_date_str:
+            try:
+                start_dt = datetime.fromisoformat(str(start_date_str).replace("Z", "+00:00"))
+                if datetime.utcnow().timestamp() < start_dt.timestamp():
+                    return {
+                        "valid": False,
+                        "error": f"Kode promo '{clean_code}' baru dapat digunakan mulai {start_dt.strftime('%d-%m-%Y')}.",
+                        "message": "Kode promo belum aktif.",
+                    }
+            except Exception:
+                pass
+
+        # Check expires_at
+        expires_at_str = promo.get("expiresAt") or promo.get("expires_at")
+        if expires_at_str:
+            try:
+                exp_dt = datetime.fromisoformat(str(expires_at_str).replace("Z", "+00:00"))
+                if datetime.utcnow().timestamp() > exp_dt.timestamp():
+                    return {
+                        "valid": False,
+                        "error": f"Kode promo '{clean_code}' telah kedaluwarsa.",
+                        "message": "Kode promo telah kedaluwarsa.",
+                    }
+            except Exception:
+                pass
+
+        # Check usage limit
+        usage_limit = promo.get("usageLimit") or promo.get("usage_limit")
+        used_count = int(promo.get("usedCount") or promo.get("used_count") or 0)
+        if usage_limit is not None and int(usage_limit) > 0 and used_count >= int(usage_limit):
+            return {
+                "valid": False,
+                "error": f"Batas kuota penggunaan kode promo '{clean_code}' telah habis.",
+                "message": "Kuota promo telah habis.",
             }
 
         min_order = float(promo.get("minOrderAmount") or 0)
@@ -124,6 +148,34 @@ class PromoService:
             "minOrderAmount": min_order,
             "message": "Kupon promo berhasil digunakan!",
         }
+
+    @classmethod
+    def record_usage(cls, code: str) -> bool:
+        """Increments usedCount when promo is successfully used in an order."""
+        clean_code = code.strip().upper()
+        promos = cls.load_promos()
+        matched = next((p for p in promos if p.get("code", "").upper() == clean_code), None)
+        if not matched:
+            return False
+
+        current_used = int(matched.get("usedCount") or 0)
+        matched["usedCount"] = current_used + 1
+
+        # Sync to Supabase PostgreSQL
+        try:
+            db = SessionLocal()
+            try:
+                db_promo = db.query(PromoCode).filter(PromoCode.code == clean_code).first()
+                if db_promo:
+                    db_promo.used_count = (db_promo.used_count or 0) + 1
+                    db.commit()
+            finally:
+                db.close()
+        except Exception as e:
+            print(f"[PromoService] Supabase record_usage note: {e}")
+
+        cls.save_promos()
+        return True
 
     @classmethod
     def get_all_promos(cls) -> Dict[str, Any]:

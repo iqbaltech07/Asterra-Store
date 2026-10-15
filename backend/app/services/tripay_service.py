@@ -1,4 +1,4 @@
-﻿import hmac
+import hmac
 import hashlib
 from typing import Dict, Any, Optional
 from app.config import settings
@@ -17,10 +17,13 @@ class TripayService:
         return signature
 
     @staticmethod
-    def verify_callback_signature(callback_json: Dict[str, Any], received_signature: str) -> bool:
+    def verify_callback_signature(raw_body: bytes, received_signature: str) -> bool:
         private_key = settings.TRIPAY_PRIVATE_KEY
-        # Recreate HMAC from raw callback body
-        merchant_ref = callback_json.get("merchant_ref", "")
-        amount = callback_json.get("total_amount", 0)
-        expected_sig = TripayService.generate_signature(merchant_ref, amount)
+        if not private_key or not received_signature:
+            return False
+        expected_sig = hmac.new(
+            private_key.encode("utf-8"),
+            raw_body,
+            hashlib.sha256
+        ).hexdigest()
         return hmac.compare_digest(expected_sig, received_signature)

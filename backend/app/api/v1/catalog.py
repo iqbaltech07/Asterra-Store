@@ -1,0 +1,558 @@
+import os
+import pathlib
+import re
+import hashlib
+from datetime import datetime
+from typing import Optional, List, Dict, Any
+
+import httpx
+from fastapi import APIRouter, Request, Response, HTTPException, Query, UploadFile, File, Form
+
+from app.config import settings
+from app.services.catalog_service import CatalogService
+from app.services.banner_service import BannerService
+
+router = APIRouter()
+
+ALLOWED_MIME_TYPES = [
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "image/gif",
+    "image/svg+xml",
+    "image/avif",
+]
+MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+
+from app.core.cache import cache
+
+# ------------------------------------------
+# 1. Product Catalog Endpoints (Storefront & Admin)
+# ------------------------------------------
+@router.get("/products", tags=["Catalog"])
+def get_products(
+    request: Request,
+    response: Response,
+    category: Optional[str] = None,
+    search: Optional[str] = None,
+):
+    cache_key = f"cat_{category or 'all'}_s_{search or 'none'}"
+    etag = cache.generate_etag("catalog", cache_key)
+    if cache.is_not_modified(request, etag):
+        return cache.not_modified_response(etag, max_age=60)
+
+    cached_data = cache.get("catalog", cache_key)
+    if cached_data is None:
+        products = CatalogService.get_products(category=category, search=search)
+        cached_data = {
+            "success": True,
+            "message": "Products retrieved successfully",
+            "data": products,
+            "total": len(products),
+            "timestamp": datetime.utcnow().isoformat(),
+        }
+        cache.set("catalog", cache_key, cached_data, ttl=60)
+
+    cache.apply_headers(response, etag=etag, max_age=60)
+    return cached_data
+
+@router.get("/products/{product_id}", tags=["Catalog"])
+def get_product_by_id(product_id: str, request: Request, response: Response):
+    cache_key = f"prod_{product_id}"
+    etag = cache.generate_etag("catalog", cache_key)
+    if cache.is_not_modified(request, etag):
+        return cache.not_modified_response(etag, max_age=60)
+
+    cached_prod = cache.get("catalog", cache_key)
+    if cached_prod is None:
+        product = CatalogService.get_product_by_id(product_id)
+        if not product:
+            raise HTTPException(status_code=404, detail="Produk tidak ditemukan")
+        cached_prod = product
+        cache.set("catalog", cache_key, cached_prod, ttl=60)
+
+    cache.apply_headers(response, etag=etag, max_age=60)
+    return {
+        "success": True,
+        "data": cached_prod,
+    }
+
+@router.get("/admin/products", tags=["Admin Products"])
+def get_admin_products(
+    status: Optional[str] = None,
+    category: Optional[str] = None,
+    search: Optional[str] = None,
+):
+    result = CatalogService.get_admin_products(status=status, category=category, search=search)
+    return {
+        "success": True,
+        "data": result["products"],
+        "total": result["total"],
+        "metrics": result["metrics"],
+    }
+
+@router.post("/admin/products", tags=["Admin Products"])
+async def create_admin_product(request: Request):
+    payload = await request.json()
+    new_product = CatalogService.create_product(payload)
+    cache.invalidate("catalog")
+    return {
+        "success": True,
+        "message": f"Produk '{new_product.get('name')}' berhasil ditambahkan ke katalog.",
+        "data": new_product,
+    }
+
+@router.patch("/admin/products/{product_id}", tags=["Admin Products"])
+async def update_admin_product(product_id: str, request: Request):
+    payload = await request.json()
+    updated = CatalogService.update_product(product_id, payload)
+    if not updated:
+        raise HTTPException(status_code=404, detail="Produk tidak ditemukan untuk diperbarui.")
+    cache.invalidate("catalog")
+    return {
+        "success": True,
+        "message": f"Produk '{updated.get('name')}' berhasil diperbarui.",
+        "data": updated,
+    }
+
+@router.delete("/admin/products/{product_id}", tags=["Admin Products"])
+def delete_admin_product(product_id: str):
+    deleted = CatalogService.delete_product(product_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Produk tidak ditemukan untuk dihapus.")
+    cache.invalidate("catalog")
+    return {
+        "success": True,
+        "message": "Produk berhasil dihapus dari katalog.",
+    }
+
+@router.post("/admin/products/{product_id}/toggle-status", tags=["Admin Products"])
+def toggle_admin_product_status(product_id: str):
+    new_status = CatalogService.toggle_status(product_id)
+    if not new_status:
+        raise HTTPException(status_code=404, detail="Produk tidak ditemukan.")
+    label = "diaktifkan" if new_status == "active" else "diarsipkan"
+    cache.invalidate("catalog")
+    return {
+        "success": True,
+        "message": f"Status produk berhasil {label}.",
+        "status": new_status,
+    }
+
+@router.post("/admin/products/bulk-status", tags=["Admin Products"])
+async def bulk_status_products(request: Request):
+    payload = await request.json()
+    ids = payload.get("ids", [])
+    status = payload.get("status", "active")
+    count = CatalogService.bulk_status(ids, status)
+    label = "diaktifkan" if status == "active" else "diarsipkan"
+    cache.invalidate("catalog")
+    return {
+        "success": True,
+        "message": f"{count} produk massal berhasil {label}.",
+        "updatedCount": count,
+    }
+
+@router.post("/admin/products/bulk-delete", tags=["Admin Products"])
+async def bulk_delete_products(request: Request):
+    payload = await request.json()
+    ids = payload.get("ids", [])
+    count = CatalogService.bulk_delete(ids)
+    cache.invalidate("catalog")
+    return {
+        "success": True,
+        "message": f"{count} produk massal berhasil dihapus.",
+        "deletedCount": count,
+    }
+
+# ------------------------------------------
+# 1.1 VIP Reseller Explorer Endpoints
+# ------------------------------------------
+@router.get("/admin/vip-services", tags=["Admin VIP"])
+def get_admin_vip_services(
+    search: Optional[str] = None,
+    type: Optional[str] = None,
+    status: Optional[str] = None,
+    limit: int = 2500,
+):
+    result = CatalogService.search_vip_services(search=search, vip_type=type, vip_status=status, limit=limit)
+    return result
+
+@router.post("/admin/vip-services", tags=["Admin VIP"])
+async def import_admin_vip_service(request: Request):
+    payload = await request.json()
+    imported = CatalogService.import_vip_service(payload)
+    return {
+        "success": True,
+        "message": f"Layanan '{imported.get('name')}' berhasil diimpor ke katalog Asterra Store.",
+        "data": imported,
+    }
+
+@router.post("/admin/sync-vip", tags=["Admin VIP"])
+def sync_vip_services():
+    products = CatalogService.load_products()
+    return {
+        "success": True,
+        "message": f"Berhasil menyinkronkan {len(products)} produk dari gerbang VIP Reseller.",
+        "totalSynced": len(products),
+    }
+
+@router.post("/admin/refresh-stock", tags=["Admin VIP"])
+def refresh_stock():
+    return {
+        "success": True,
+        "message": "Pengecekan live status stok seluruh supplier VIP Reseller selesai.",
+    }
+
+# ------------------------------------------
+# 1.2 Media Streaming (Blob & Local Files)
+# ------------------------------------------
+@router.get("/media/{media_path:path}", tags=["Media"])
+async def get_media_file(media_path: str):
+    token = settings.BLOB_READ_WRITE_TOKEN or os.getenv("BLOB_READ_WRITE_TOKEN", "")
+    if token:
+        parts = token.split("_")
+        store_id = parts[3] if len(parts) >= 4 else None
+        if store_id:
+            blob_url = f"https://{store_id}.private.blob.vercel-storage.com/{media_path}"
+            headers = {"Authorization": f"Bearer {token}"}
+            try:
+                async with httpx.AsyncClient(timeout=15.0) as client:
+                    res = await client.get(blob_url, headers=headers)
+                    if res.status_code == 200:
+                        content_type = res.headers.get("content-type", "image/png")
+                        return Response(
+                            content=res.content,
+                            media_type=content_type,
+                            headers={
+                                "Content-Type": content_type,
+                                "Cache-Control": "public, max-age=31536000, immutable",
+                            },
+                        )
+            except Exception as e:
+                print(f"[MediaAPI] Error fetching blob {media_path}: {e}")
+
+    # Fallback to local public file
+    local_path = pathlib.Path(__file__).resolve().parent.parent.parent.parent / "public" / media_path
+    if local_path.exists() and local_path.is_file():
+        content_type = "image/png"
+        if local_path.suffix.lower() in [".jpg", ".jpeg"]:
+            content_type = "image/jpeg"
+        elif local_path.suffix.lower() == ".webp":
+            content_type = "image/webp"
+        return Response(
+            content=local_path.read_bytes(),
+            media_type=content_type,
+            headers={"Cache-Control": "public, max-age=86400"},
+        )
+
+    default_banner = pathlib.Path(__file__).resolve().parent.parent.parent.parent / "public" / "images" / "default-product-banner.png"
+    if default_banner.exists() and default_banner.is_file():
+        return Response(
+            content=default_banner.read_bytes(),
+            media_type="image/png",
+            headers={"Cache-Control": "public, max-age=86400"},
+        )
+
+    raise HTTPException(status_code=404, detail="File media tidak ditemukan")
+
+# ------------------------------------------
+# 1.3 Admin Media Upload
+# ------------------------------------------
+@router.post("/admin/upload", tags=["Admin Media"])
+async def upload_admin_media(
+    file: UploadFile = File(None),
+    folder: str = Form("products"),
+    productName: Optional[str] = Form(None),
+    productId: Optional[str] = Form(None),
+    isSpecialPromo: Optional[str] = Form("false"),
+):
+    if not file:
+        return {
+            "success": True,
+            "url": "/images/default-product-banner.png",
+            "viewUrl": "/images/default-product-banner.png",
+            "data": {
+                "viewUrl": "/images/default-product-banner.png",
+                "url": "/images/default-product-banner.png",
+                "pathname": "images/default-product-banner.png",
+                "deduplicated": True,
+            },
+            "message": "Menggunakan banner default.",
+        }
+
+    content_type = file.content_type or "image/png"
+    if content_type not in ALLOWED_MIME_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Format file '{content_type}' tidak didukung. Harap unggah format JPG, PNG, WEBP, GIF, SVG, atau AVIF.",
+        )
+
+    content = await file.read()
+    if len(content) > MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=400,
+            detail="Ukuran file melebihi batas maksimal 5MB.",
+        )
+
+    is_promo = str(isSpecialPromo).strip().lower() in ["true", "1", "yes"]
+    target_prod_name = (productName or "").strip()
+    target_prod_id = (productId or "").strip()
+
+    matched_product = None
+    if target_prod_id or target_prod_name:
+        matched_product = CatalogService.find_product_by_id_or_name(
+            product_id=target_prod_id or None,
+            product_name=target_prod_name or None,
+        )
+
+    if matched_product and folder == "products":
+        existing_banner = matched_product.get("imageUrl") or ""
+        has_official_banner = (
+            bool(existing_banner)
+            and not existing_banner.endswith("default-product-banner.png")
+            and len(existing_banner) > 5
+        )
+        if has_official_banner and not is_promo:
+            prod_display_name = matched_product.get("name") or target_prod_name
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    f"Produk '{prod_display_name}' sudah memiliki banner resmi ({existing_banner}). "
+                    "Upload banner produk reguler ditolak untuk mencegah duplikasi dan redundansi aset. "
+                    "Silakan centang 'Banner Promo Khusus' jika ingin mengunggah banner promosi tertentu."
+                ),
+            )
+
+    raw_filename = file.filename or "image.webp"
+    ext = raw_filename.split(".")[-1].lower() if "." in raw_filename else "webp"
+    if ext not in ["jpg", "jpeg", "png", "webp", "gif", "svg", "avif"]:
+        ext = "webp"
+
+    base_label = target_prod_name or (matched_product.get("name") if matched_product else "") or raw_filename.rsplit(".", 1)[0]
+    prod_slug = re.sub(r"[^a-zA-Z0-9]+", "-", base_label.lower()).strip("-")
+    if not prod_slug:
+        prod_slug = "banner"
+    prod_slug = prod_slug[:50]
+
+    content_hash = hashlib.sha256(content).hexdigest()[:12]
+    prefix = "promo-" if (is_promo and folder == "products") else ""
+    pathname = f"{folder}/{prefix}{prod_slug}-{content_hash}.{ext}"
+
+    token = settings.BLOB_READ_WRITE_TOKEN or os.getenv("BLOB_READ_WRITE_TOKEN", "")
+    blob_url = None
+    deduplicated = False
+
+    if token:
+        parts = token.split("_")
+        store_id = parts[3] if len(parts) >= 4 else None
+
+        if store_id:
+            try:
+                async with httpx.AsyncClient(timeout=10.0) as check_client:
+                    check_res = await check_client.head(
+                        f"https://{store_id}.private.blob.vercel-storage.com/{pathname}",
+                        headers={"Authorization": f"Bearer {token}"},
+                    )
+                    if check_res.status_code == 200:
+                        blob_url = f"https://{store_id}.private.blob.vercel-storage.com/{pathname}"
+                        deduplicated = True
+            except Exception as e:
+                print(f"[UploadAPI] Check-before-upload error (ignorable): {e}")
+
+        if not blob_url:
+            put_url = f"https://blob.vercel-storage.com/?pathname={pathname}"
+            put_headers = {
+                "authorization": f"Bearer {token}",
+                "x-api-version": "12",
+                "x-vercel-blob-access": "private",
+                "x-content-type": content_type,
+                "x-allow-overwrite": "1",
+                "x-add-random-suffix": "0",
+            }
+            try:
+                async with httpx.AsyncClient(timeout=30.0) as upload_client:
+                    upload_res = await upload_client.put(put_url, content=content, headers=put_headers)
+                    if upload_res.status_code == 200:
+                        res_json = upload_res.json()
+                        blob_url = res_json.get("url")
+                    else:
+                        print(f"[UploadAPI] Vercel Blob PUT error ({upload_res.status_code}): {upload_res.text}")
+            except Exception as upload_err:
+                print(f"[UploadAPI] Exception uploading to Vercel Blob: {upload_err}")
+
+    if not blob_url:
+        public_dir = pathlib.Path(__file__).resolve().parent.parent.parent.parent / "public" / folder
+        public_dir.mkdir(parents=True, exist_ok=True)
+        file_path = public_dir / f"{prefix}{prod_slug}-{content_hash}.{ext}"
+        file_path.write_bytes(content)
+        blob_url = f"/api/v1/media/{pathname}"
+
+    view_url = f"/api/v1/media/{pathname}"
+    msg = (
+        "Banner sudah ada di storage (deduplicated). Tidak ada upload ulang."
+        if deduplicated
+        else ("Banner promo khusus berhasil diunggah ke Vercel Blob." if is_promo else "Banner produk berhasil diunggah ke Vercel Blob (Private Mode).")
+    )
+
+    return {
+        "success": True,
+        "url": blob_url,
+        "viewUrl": view_url,
+        "data": {
+            "viewUrl": view_url,
+            "url": blob_url,
+            "pathname": pathname,
+            "deduplicated": deduplicated,
+            "isSpecialPromo": is_promo,
+            "productName": target_prod_name or prod_slug,
+        },
+        "message": msg,
+    }
+
+# ------------------------------------------
+# 1.4 Promo Banner Endpoints (Storefront & Admin)
+# ------------------------------------------
+@router.post("/banners", tags=["Promo Banners"])
+@router.post("/admin/banners", tags=["Promo Banners"])
+async def upload_promo_banner(
+    file: UploadFile = File(...),
+    title: str = Form(...),
+    description: Optional[str] = Form(""),
+    ctaText: Optional[str] = Form("Beli Sekarang"),
+    cta_text: Optional[str] = Form(None),
+    bannerType: Optional[str] = Form("hero"),
+    banner_type: Optional[str] = Form(None),
+    linkUrl: Optional[str] = Form(None),
+    link_url: Optional[str] = Form(None),
+    destinationUrl: Optional[str] = Form(None),
+    targetPage: Optional[str] = Form("home"),
+    target_page: Optional[str] = Form(None),
+    displayOrder: Optional[int] = Form(0),
+    display_order: Optional[int] = Form(None),
+    isActive: Optional[bool] = Form(True),
+    is_active: Optional[bool] = Form(None),
+    expiresAt: Optional[str] = Form(None),
+    expires_at: Optional[str] = Form(None),
+    scheduledUntil: Optional[str] = Form(None),
+    id: Optional[str] = Form(None),
+):
+    final_link = destinationUrl or link_url if (destinationUrl or link_url) is not None else linkUrl
+    final_target = target_page if target_page is not None else (targetPage or "home")
+    final_order = display_order if display_order is not None else (displayOrder if displayOrder is not None else 0)
+    final_active = is_active if is_active is not None else (isActive if isActive is not None else True)
+    final_cta = cta_text if cta_text is not None else (ctaText or "Beli Sekarang")
+    final_type = banner_type if banner_type is not None else (bannerType or "hero")
+    final_expires = expires_at or scheduledUntil if (expires_at or scheduledUntil) is not None else expiresAt
+
+    content_type = file.content_type or "image/webp"
+    content = await file.read()
+
+    try:
+        res = await BannerService.upload_banner(
+            content=content,
+            filename=file.filename or "banner.webp",
+            content_type=content_type,
+            title=title,
+            description=description or "",
+            cta_text=final_cta,
+            banner_type=final_type,
+            link_url=final_link,
+            target_page=final_target,
+            display_order=int(final_order),
+            is_active=bool(final_active),
+            expires_at=final_expires,
+            banner_id=id,
+        )
+        cache.invalidate("banners")
+        return res
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Gagal mengunggah banner: {str(e)}")
+
+@router.patch("/banners/{banner_id}/toggle-status", tags=["Promo Banners"])
+@router.patch("/admin/banners/{banner_id}/toggle-status", tags=["Promo Banners"])
+async def toggle_promo_banner_status(banner_id: str, request: Request):
+    new_status = None
+    try:
+        body = await request.json()
+        if "isActive" in body:
+            new_status = bool(body["isActive"])
+        elif "status" in body:
+            new_status = body["status"] == "active"
+    except Exception:
+        pass
+
+    updated = BannerService.toggle_status(banner_id, new_status=new_status)
+    if not updated:
+        raise HTTPException(status_code=404, detail="Banner tidak ditemukan.")
+    cache.invalidate("banners")
+    return {
+        "success": True,
+        "data": updated,
+        "message": f"Status banner '{updated.get('title')}' berhasil diubah.",
+    }
+
+@router.get("/banners", tags=["Promo Banners"])
+@router.get("/admin/banners", tags=["Promo Banners"])
+def get_promo_banners(
+    request: Request,
+    response: Response,
+    active_only: bool = Query(True, alias="activeOnly"),
+    target_page: Optional[str] = Query(None, alias="targetPage"),
+    banner_type: Optional[str] = Query(None, alias="bannerType"),
+):
+    cache_key = f"b_{active_only}_{target_page or 'all'}_{banner_type or 'all'}"
+    etag = cache.generate_etag("banners", cache_key)
+    if cache.is_not_modified(request, etag):
+        return cache.not_modified_response(etag, max_age=120)
+
+    banners = cache.get("banners", cache_key)
+    if banners is None:
+        banners = BannerService.get_banners(
+            active_only=active_only,
+            target_page=target_page,
+            banner_type=banner_type,
+        )
+        cache.set("banners", cache_key, banners, ttl=120)
+
+    cache.apply_headers(response, etag=etag, max_age=120)
+    return {
+        "success": True,
+        "data": banners,
+        "total": len(banners),
+    }
+
+@router.get("/banners/{banner_id}", tags=["Promo Banners"])
+@router.get("/admin/banners/{banner_id}", tags=["Promo Banners"])
+def get_promo_banner_detail(banner_id: str, request: Request, response: Response):
+    cache_key = f"b_detail_{banner_id}"
+    etag = cache.generate_etag("banners", cache_key)
+    if cache.is_not_modified(request, etag):
+        return cache.not_modified_response(etag, max_age=120)
+
+    banner = cache.get("banners", cache_key)
+    if banner is None:
+        banner = BannerService.get_banner_by_id(banner_id)
+        if not banner:
+            raise HTTPException(status_code=404, detail="Banner tidak ditemukan.")
+        cache.set("banners", cache_key, banner, ttl=120)
+
+    cache.apply_headers(response, etag=etag, max_age=120)
+    return {
+        "success": True,
+        "data": banner,
+    }
+
+@router.delete("/banners/{banner_id}", tags=["Promo Banners"])
+@router.delete("/admin/banners/{banner_id}", tags=["Promo Banners"])
+async def delete_promo_banner(banner_id: str):
+    success = await BannerService.delete_banner(banner_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Banner tidak ditemukan atau sudah dihapus.")
+    cache.invalidate("banners")
+    return {
+        "success": True,
+        "message": f"Banner {banner_id} berhasil dihapus dari sistem dan storage.",
+    }
