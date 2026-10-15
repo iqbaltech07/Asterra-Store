@@ -46,11 +46,11 @@ def mask_order_for_public(order: dict, is_owner_or_admin: bool) -> dict:
         o["id"] = raw_id
 
     st = str(o.get("order_status") or o.get("status") or "pending").lower()
-    if st in ["completed", "paid", "settlement"]:
+    if st in ["completed", "done", "selesai"]:
         st = "completed"
-    elif st in ["processing", "process"]:
+    elif st in ["processing", "process", "paid", "settlement", "diproses"]:
         st = "processing"
-    elif st in ["cancelled", "expired", "failed"]:
+    elif st in ["cancelled", "expired", "failed", "batal"]:
         st = "cancelled"
     else:
         st = "pending"
@@ -232,7 +232,8 @@ def get_orders(
         }
 
     result = OrderService.get_orders(status=status, search=search or phone, email=email, page=page, limit=limit)
-    orders = [mask_order_for_public(o, is_admin) for o in result["orders"]]
+    is_owner_or_admin = is_admin or (not is_public and bool(email or search or phone))
+    orders = [mask_order_for_public(o, is_owner_or_admin) for o in result["orders"]]
     return {
         "success": True,
         "data": orders,
@@ -338,7 +339,7 @@ async def tripay_webhook(request: Request):
     if status == "PAID":
         updated = OrderService.update_status(
             merchant_ref,
-            "completed",
+            "processing",
             notes=f"Pembayaran otomatis terverifikasi Tripay ({payload.get('payment_method')}) Ref: {payload.get('reference')}",
         )
         return {"success": True, "message": "Pembayaran berhasil diverifikasi", "order": updated}

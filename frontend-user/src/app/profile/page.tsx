@@ -110,20 +110,24 @@ export default function ProfilePage() {
   const [editName, setEditName] = useState('');
   const [editPhone, setEditPhone] = useState('');
 
+  const customerEmail =
+    session?.user?.email ||
+    (typeof window !== 'undefined' ? localStorage.getItem('asterra_customer_email') || '' : '');
+
   // Fetch full profile info from server
   const { data: profileData, isLoading: isProfileLoading } = useQuery<ProfileApiResponse>({
-    queryKey: ['user-profile', session?.user?.email],
+    queryKey: ['user-profile', customerEmail],
     queryFn: async () => {
-      const email = session?.user?.email;
-      const url = email
-        ? `/api/v1/users/profile?email=${encodeURIComponent(email)}`
+      const url = customerEmail
+        ? `/api/v1/users/profile?email=${encodeURIComponent(customerEmail)}`
         : '/api/v1/users/profile';
-      const res = await fetch(url);
+      const res = await fetch(url, { cache: 'no-store' });
       if (!res.ok) throw new Error('Gagal mengambil data profil');
       return res.json();
     },
-    enabled: !!session?.user?.email,
-    staleTime: 5 * 60 * 1000,
+    enabled: !!customerEmail,
+    staleTime: 10000,
+    refetchOnWindowFocus: true,
   });
 
   const profile = profileData?.data;
@@ -206,7 +210,6 @@ export default function ProfilePage() {
   const getOrderStatusBadge = (status: string) => {
     switch ((status || 'pending').toLowerCase()) {
       case 'completed':
-      case 'paid':
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
             <FontAwesomeIcon icon={faCircleCheck} className="w-3 h-3 text-emerald-600" />
@@ -214,9 +217,11 @@ export default function ProfilePage() {
           </span>
         );
       case 'processing':
+      case 'paid':
+      case 'settlement':
         return (
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-[rgba(201,111,85,0.08)] text-[#C96F55] border border-[rgba(201,111,85,0.25)]">
-            <FontAwesomeIcon icon={faStar} className="w-3 h-3 text-[#C96F55]" />
+            <FontAwesomeIcon icon={faClock} className="w-3 h-3 text-[#C96F55]" />
             <span>Sedang Diproses</span>
           </span>
         );
@@ -667,11 +672,16 @@ export default function ProfilePage() {
                             >
                               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 pb-2.5">
                                 <div className="flex items-center gap-2">
-                                  <span className="font-mono text-xs font-bold text-navy-900">
-                                    #{order.id.slice(0, 10).toUpperCase()}
-                                  </span>
+                                  <Link
+                                    href={`/order?id=${order.id}`}
+                                    className="font-mono text-xs font-bold text-navy-900 hover:text-accent hover:underline flex items-center gap-1"
+                                    title="Lihat status dan lisensi pesanan ini"
+                                  >
+                                    <span>#{order.id}</span>
+                                    <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="w-2.5 h-2.5 text-accent" />
+                                  </Link>
                                   <span className="text-[11px] text-slate-500">
-                                    {formatDate(order.createdAt)}
+                                    • {formatDate(order.createdAt)}
                                   </span>
                                 </div>
 

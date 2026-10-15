@@ -13,6 +13,7 @@ LEGACY_ORDERS_FILE = DATA_DIR / "orders.json"
 
 class OrderService:
     _orders: Optional[List[Dict[str, Any]]] = None
+    _last_loaded: Optional[datetime] = None
 
     @classmethod
     def _normalize_iso(cls, dt_str: Optional[str]) -> str:
@@ -195,7 +196,13 @@ class OrderService:
         Loads orders directly from Supabase PostgreSQL database.
         Falls back to local clean JSON files if Supabase is offline.
         """
-        if cls._orders is not None and not force_reload:
+        now = datetime.utcnow()
+        if (
+            cls._orders is not None
+            and not force_reload
+            and cls._last_loaded is not None
+            and (now - cls._last_loaded).total_seconds() < 5
+        ):
             return cls._orders
 
         # 1. Try querying Supabase PostgreSQL
@@ -206,6 +213,7 @@ class OrderService:
                 if db_orders:
                     normalized = [cls._normalize_order(o.to_dict()) for o in db_orders]
                     cls._orders = normalized
+                    cls._last_loaded = datetime.utcnow()
                     cls.save_orders()
                     return normalized
             finally:
@@ -290,7 +298,11 @@ class OrderService:
 
         if email and email.strip():
             clean_email = email.lower().strip()
-            filtered = [f for f in filtered if clean_email in str(f.get("customerEmail", "")).lower()]
+            filtered = [
+                f for f in filtered 
+                if clean_email in str(f.get("customerEmail") or f.get("customer_email") or "").lower()
+                or any(clean_email in str(it.get("targetEmail") or it.get("target_email") or "").lower() for it in f.get("items", []))
+            ]
 
         if search and search.strip():
             q = search.lower().strip()

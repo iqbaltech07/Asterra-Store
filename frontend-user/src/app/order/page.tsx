@@ -257,7 +257,7 @@ function PrivateOrderContent() {
   const paramEmail = searchParams.get('email');
 
   const [selectedStatus, setSelectedStatus] = useState('all');
-  const [searchQuery, setSearchQuery] = useState(paramOrderId || '');
+  const [searchQuery, setSearchQuery] = useState('');
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(paramOrderId || null);
   const [notification, setNotification] = useState<string | null>(null);
 
@@ -287,7 +287,6 @@ function PrivateOrderContent() {
       }
     }
     if (paramOrderId) {
-      setSearchQuery(paramOrderId);
       setExpandedOrderId(paramOrderId);
     }
   }, [paramEmail, paramOrderId, guestEmail]);

@@ -303,21 +303,62 @@ def get_user_profile(email: Optional[str] = None, request: Request = None):
 
     clean_email = user_email.lower().strip() if user_email else ""
     orders = OrderService.load_orders()
-    user_orders = []
+    raw_user_orders = []
     if clean_email:
-        user_orders = [
+        raw_user_orders = [
             o for o in orders
             if clean_email in str(o.get("customerEmail") or o.get("customer_email") or "").lower()
+            or any(clean_email in str(it.get("targetEmail") or it.get("target_email") or "").lower() for it in o.get("items", []))
         ]
+
+    # Normalize orders for frontend compatibility
+    user_orders = []
+    for o in raw_user_orders:
+        ord_copy = dict(o)
+        raw_st = str(ord_copy.get("status") or ord_copy.get("order_status") or "pending").lower()
+        if raw_st in ["completed", "done", "selesai"]:
+            st = "completed"
+        elif raw_st in ["processing", "process", "paid", "settlement", "diproses"]:
+            st = "processing"
+        elif raw_st in ["cancelled", "expired", "failed", "batal"]:
+            st = "cancelled"
+        else:
+            st = "pending"
+
+        ord_copy["status"] = st
+        ord_copy["order_status"] = st
+
+        tot = ord_copy.get("totalAmount") if ord_copy.get("totalAmount") is not None else ord_copy.get("total_amount", 0)
+        ord_copy["totalAmount"] = tot
+        ord_copy["total_amount"] = tot
+
+        dt = ord_copy.get("createdAt") or ord_copy.get("created_at") or ord_copy.get("order_date") or ""
+        ord_copy["createdAt"] = dt
+        ord_copy["created_at"] = dt
+
+        # Normalize items structure
+        norm_items = []
+        for it in ord_copy.get("items", []):
+            it_dict = dict(it)
+            p_name = it_dict.get("productName") or it_dict.get("product_name") or "Layanan Digital"
+            it_dict["productName"] = p_name
+            it_dict["product_name"] = p_name
+            p_price = it_dict.get("price") if it_dict.get("price") is not None else it_dict.get("unit_price", 0)
+            it_dict["price"] = p_price
+            it_dict["unit_price"] = p_price
+            norm_items.append(it_dict)
+        ord_copy["items"] = norm_items
+
+        user_orders.append(ord_copy)
 
     total_orders = len(user_orders)
     completed_orders = sum(
         1 for o in user_orders
-        if str(o.get("status") or o.get("order_status") or "").lower() in ["completed", "paid", "settlement"]
+        if o.get("status") == "completed"
     )
     pending_orders = sum(
         1 for o in user_orders
-        if str(o.get("status") or o.get("order_status") or "").lower() == "pending"
+        if o.get("status") in ["pending", "processing"]
     )
 
     first_order = user_orders[0] if user_orders else {}
@@ -330,8 +371,19 @@ def get_user_profile(email: Optional[str] = None, request: Request = None):
         p = verify_admin_session_token(admin_token)
         is_admin = p and p.get("role") in ["admin", "superadmin"]
 
-    customer_token = (request.cookies.get("asterra_token") or "") if request else ""
-    is_owner = is_admin or bool(customer_token)
+    has_customer_session = False
+    if request:
+        has_customer_session = any(
+            bool(request.cookies.get(c))
+            for c in [
+                "better-auth.session_token",
+                "__Secure-better-auth.session_token",
+                "asterra_token",
+                "asterra_session",
+            ]
+        ) or bool(request.headers.get("authorization"))
+
+    is_owner = is_admin or has_customer_session or bool(clean_email)
 
     masked_phone = phone
     if phone and len(phone) > 6 and not is_owner:
@@ -345,9 +397,9 @@ def get_user_profile(email: Optional[str] = None, request: Request = None):
         "success": True,
         "data": {
             "id": f"usr-{clean_email or '1'}",
-            "name": masked_name,
+            "name": name if is_owner else masked_name,
             "email": clean_email or "customer@asterra.store",
-            "phone": masked_phone,
+            "phone": phone if is_owner else masked_phone,
             "role": "customer",
             "orders": user_orders if is_owner else [],
             "stats": {
