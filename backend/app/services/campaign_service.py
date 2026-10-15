@@ -9,6 +9,7 @@ from typing import Dict, Any, List, Optional
 from sqlalchemy import text
 from app.core.database import SessionLocal, engine, Base
 from app.models.campaign import PromoCampaign
+from app.core.cache import cache
 
 DATA_DIR = pathlib.Path(__file__).resolve().parent.parent.parent / "data"
 CAMPAIGNS_FILE = DATA_DIR / "supabase-campaigns.json"
@@ -146,23 +147,25 @@ class CampaignService:
         for c in all_items:
             # Recompute dynamic status against Asia/Jakarta (WIB) operational clock
             is_active = c.get("isActive", True)
-            status = "draft" if not is_active else "running"
+            if not is_active:
+                status = "ended"
+            else:
+                status = "running"
+                starts_val = c.get("startsAt") or c.get("startDate")
+                ends_val = c.get("endsAt") or c.get("endDate")
 
-            starts_val = c.get("startsAt") or c.get("startDate")
-            ends_val = c.get("endsAt") or c.get("endDate")
-
-            if is_active and starts_val and ends_val:
-                try:
-                    s_dt = parse_wib_datetime(starts_val, is_end=False)
-                    e_dt = parse_wib_datetime(ends_val, is_end=True)
-                    if now_wib < s_dt:
-                        status = "scheduled"
-                    elif now_wib >= e_dt:
-                        status = "ended"
-                    else:
-                        status = "running"
-                except Exception:
-                    pass
+                if starts_val and ends_val:
+                    try:
+                        s_dt = parse_wib_datetime(starts_val, is_end=False)
+                        e_dt = parse_wib_datetime(ends_val, is_end=True)
+                        if now_wib < s_dt:
+                            status = "scheduled"
+                        elif now_wib >= e_dt:
+                            status = "ended"
+                        else:
+                            status = "running"
+                    except Exception:
+                        pass
 
             c_copy = dict(c)
             c_copy["status"] = status
@@ -371,7 +374,7 @@ class CampaignService:
     def update_campaign(cls, campaign_id: str, payload: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Updates an existing campaign in DB and cache."""
         items = cls.load_campaigns()
-        target = next((c for c in items if c.get("id") == campaign_id), None)
+        target = next((c for c in items if c.get("id") == campaign_id or c.get("slug") == campaign_id), None)
         if not target:
             return None
 
@@ -397,6 +400,29 @@ class CampaignService:
             target["endDate"] = parsed_e.strftime("%Y-%m-%d")
             target["endsAt"] = parsed_e.strftime("%Y-%m-%dT%H:%M:%S+07:00")
 
+        # Dynamically recompute status based on updated activity and operational window
+        is_active = bool(target.get("isActive", True))
+        if not is_active:
+            target["status"] = "ended"
+        else:
+            now_wib = datetime.now(WIB).replace(tzinfo=None)
+            starts_val = target.get("startsAt") or target.get("startDate")
+            ends_val = target.get("endsAt") or target.get("endDate")
+            if starts_val and ends_val:
+                try:
+                    s_dt = parse_wib_datetime(starts_val, is_end=False)
+                    e_dt = parse_wib_datetime(ends_val, is_end=True)
+                    if now_wib < s_dt:
+                        target["status"] = "scheduled"
+                    elif now_wib >= e_dt:
+                        target["status"] = "ended"
+                    else:
+                        target["status"] = "running"
+                except Exception:
+                    target["status"] = "running"
+            else:
+                target["status"] = "running"
+
         target["updatedAt"] = datetime.utcnow().isoformat()
 
         # Update DB
@@ -404,7 +430,9 @@ class CampaignService:
             db = SessionLocal() if SessionLocal else None
             if db:
                 try:
-                    db_row = db.query(PromoCampaign).filter(PromoCampaign.id == campaign_id).first()
+                    db_row = db.query(PromoCampaign).filter(
+                        (PromoCampaign.id == campaign_id) | (PromoCampaign.slug == campaign_id)
+                    ).first()
                     if db_row:
                         if "name" in payload: db_row.name = payload["name"]
                         if "tagline" in payload: db_row.tagline = payload["tagline"]
@@ -431,25 +459,30 @@ class CampaignService:
             print(f"[CampaignService] DB update note: {e}")
 
         cls.save_campaigns()
+        cache.invalidate("campaigns", "catalog")
         return target
 
     @classmethod
     def toggle_active(cls, campaign_id: str, is_active: Optional[bool] = None) -> Optional[Dict[str, Any]]:
         """Quick toggle switch for enabling/disabling a campaign immediately (killswitch)."""
         items = cls.load_campaigns()
-        target = next((c for c in items if c.get("id") == campaign_id), None)
+        target = next((c for c in items if c.get("id") == campaign_id or c.get("slug") == campaign_id), None)
         if not target:
             return None
 
-        new_val = is_active if is_active is not None else not target.get("isActive", True)
-        return cls.update_campaign(campaign_id, {"isActive": new_val})
+        current_active = bool(target.get("isActive", True))
+        new_val = is_active if is_active is not None else not current_active
+        return cls.update_campaign(target.get("id") or campaign_id, {"isActive": new_val})
 
     @classmethod
     def delete_campaign(cls, campaign_id: str) -> bool:
         """Deletes a campaign from DB and cache."""
         items = cls.load_campaigns()
         initial_len = len(items)
-        cls._campaigns = [c for c in items if c.get("id") != campaign_id]
+        cls._campaigns = [
+            c for c in items
+            if c.get("id") != campaign_id and c.get("slug") != campaign_id
+        ]
 
         if len(cls._campaigns) == initial_len:
             return False
@@ -459,7 +492,9 @@ class CampaignService:
             db = SessionLocal() if SessionLocal else None
             if db:
                 try:
-                    db_row = db.query(PromoCampaign).filter(PromoCampaign.id == campaign_id).first()
+                    db_row = db.query(PromoCampaign).filter(
+                        (PromoCampaign.id == campaign_id) | (PromoCampaign.slug == campaign_id)
+                    ).first()
                     if db_row:
                         db.delete(db_row)
                         db.commit()
@@ -469,6 +504,7 @@ class CampaignService:
             print(f"[CampaignService] DB delete note: {e}")
 
         cls.save_campaigns()
+        cache.invalidate("campaigns", "catalog")
         return True
 
     @classmethod

@@ -29,11 +29,12 @@ export function CartDrawer({ isOpen, onClose, onCheckout }: CartDrawerProps) {
   const { data: campaignsRes } = useQuery<{ success: boolean; data: ActiveCampaign[] }>({
     queryKey: ['active-campaigns'],
     queryFn: async () => {
-      const res = await fetch('/api/v1/campaigns/active');
+      const res = await fetch('/api/v1/campaigns/active', { cache: 'no-cache' });
       if (!res.ok) return { success: false, data: [] };
       return res.json();
     },
-    staleTime: 30000,
+    staleTime: 5000,
+    refetchOnWindowFocus: true,
   });
   const activeCampaigns = useMemo(() => campaignsRes?.data || [], [campaignsRes]);
 

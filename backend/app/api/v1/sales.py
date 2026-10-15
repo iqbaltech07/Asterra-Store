@@ -221,16 +221,16 @@ from app.core.cache import cache
 @router.get("/campaigns/active", tags=["Campaigns"])
 @router.get("/campaigns", tags=["Campaigns"])
 def get_active_campaigns(request: Request, response: Response):
-    etag = cache.generate_etag("campaigns")
-    if cache.is_not_modified(request, etag):
-        return cache.not_modified_response(etag, max_age=30)
-
     campaigns = cache.get("campaigns", "active")
     if campaigns is None:
         campaigns = CampaignService.get_active_campaigns()
-        cache.set("campaigns", "active", campaigns, ttl=30)
+        cache.set("campaigns", "active", campaigns, ttl=60)
 
-    cache.apply_headers(response, etag=etag, max_age=30)
+    etag = cache.generate_etag("campaigns", content=campaigns)
+    if cache.is_not_modified(request, etag):
+        return cache.not_modified_response(etag, max_age=0)
+
+    cache.apply_headers(response, etag=etag, mode="revalidate")
     return {
         "success": True,
         "data": campaigns,
@@ -257,8 +257,10 @@ def evaluate_product_campaign_price(
     }
 
 @router.get("/admin/campaigns", tags=["Admin Campaigns"])
-def get_admin_campaigns(status: Optional[str] = Query(None)):
+def get_admin_campaigns(status: Optional[str] = Query(None), response: Response = None):
     campaigns = CampaignService.get_all_campaigns(filter_status=status)
+    if response:
+        response.headers["Cache-Control"] = "no-cache, must-revalidate"
     return {
         "success": True,
         "data": campaigns,
@@ -270,7 +272,7 @@ async def create_admin_campaign(request: Request):
     payload = await request.json()
     try:
         created = CampaignService.create_campaign(payload)
-        cache.invalidate("campaigns")
+        cache.invalidate("campaigns", "catalog")
         return {
             "success": True,
             "message": f"Campaign '{created.get('name')}' berhasil diluncurkan.",
@@ -288,7 +290,7 @@ async def update_admin_campaign(campaign_id: str, request: Request):
     updated = CampaignService.update_campaign(campaign_id, payload)
     if not updated:
         raise HTTPException(status_code=404, detail="Campaign tidak ditemukan.")
-    cache.invalidate("campaigns")
+    cache.invalidate("campaigns", "catalog")
     return {
         "success": True,
         "message": f"Campaign '{updated.get('name')}' berhasil diperbarui.",
@@ -302,7 +304,7 @@ def toggle_admin_campaign(campaign_id: str):
     if not updated:
         raise HTTPException(status_code=404, detail="Campaign tidak ditemukan.")
     label = "diaktifkan" if updated.get("isActive") else "dinonaktifkan"
-    cache.invalidate("campaigns")
+    cache.invalidate("campaigns", "catalog")
     return {
         "success": True,
         "message": f"Campaign '{updated.get('name')}' berhasil {label}.",
@@ -314,7 +316,7 @@ def delete_admin_campaign(campaign_id: str):
     success = CampaignService.delete_campaign(campaign_id)
     if not success:
         raise HTTPException(status_code=404, detail="Campaign tidak ditemukan.")
-    cache.invalidate("campaigns")
+    cache.invalidate("campaigns", "catalog")
     return {
         "success": True,
         "message": "Campaign berhasil dihapus dari sistem.",

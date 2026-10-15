@@ -73,12 +73,13 @@ export function ProductCard({
   const { data: campaignsRes } = useQuery<{ success: boolean; data: ActiveCampaign[] }>({
     queryKey: ['active-campaigns'],
     queryFn: async () => {
-      const res = await fetch('/api/v1/campaigns/active');
+      const res = await fetch('/api/v1/campaigns/active', { cache: 'no-cache' });
       if (!res.ok) return { success: false, data: [] };
       return res.json();
     },
     enabled: !propCampaigns,
-    staleTime: 60000,
+    staleTime: 5000,
+    refetchOnWindowFocus: true,
   });
 
   const activeCampaigns = propCampaigns || campaignsRes?.data || [];

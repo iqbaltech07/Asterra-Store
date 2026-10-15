@@ -151,7 +151,7 @@ function ReferralTrackerInner() {
       if (isAllowed) {
         // Check campaign status if storedCamp exists: purge campaign and claimed ref if campaign has ended
         if (storedCamp) {
-          fetch('/api/v1/campaigns/active')
+          fetch('/api/v1/campaigns/active', { cache: 'no-cache' })
             .then((r) => r.json())
             .then((res) => {
               if (!res || !Array.isArray(res?.data)) return; // Do not purge if API failed or offline
@@ -164,7 +164,7 @@ function ReferralTrackerInner() {
                   c.isActive !== false
               );
 
-              // If campaign is no longer running / has ended, clean it up
+              // If campaign is no longer running / has ended / deleted, clean it up
               if (!isStillActive) {
                 try {
                   localStorage.removeItem('asterra_campaign');
@@ -208,12 +208,26 @@ function ReferralTrackerInner() {
                     currentUrl.pathname + currentUrl.search + currentUrl.hash
                   );
                 }
+              } else {
+                // If campaign is verified active, preserve in URL if missing
+                const currentUrl = new URL(window.location.href);
+                if (
+                  !currentUrl.searchParams.has('campaign') &&
+                  !currentUrl.searchParams.has('utm_campaign')
+                ) {
+                  currentUrl.searchParams.set('campaign', storedCamp);
+                  window.history.replaceState(
+                    window.history.state,
+                    '',
+                    currentUrl.pathname + currentUrl.search + currentUrl.hash
+                  );
+                }
               }
             })
             .catch(() => {});
         }
 
-        // Auto-inject missing parameters into URL
+        // Auto-inject missing referral parameters into URL
         const currentUrl = new URL(window.location.href);
         let urlModified = false;
 
@@ -225,15 +239,6 @@ function ReferralTrackerInner() {
           }
         } else if (storedRef && !currentUrl.searchParams.has('ref')) {
           currentUrl.searchParams.set('ref', storedRef);
-          urlModified = true;
-        }
-
-        if (
-          storedCamp &&
-          !currentUrl.searchParams.has('campaign') &&
-          !currentUrl.searchParams.has('utm_campaign')
-        ) {
-          currentUrl.searchParams.set('campaign', storedCamp);
           urlModified = true;
         }
 

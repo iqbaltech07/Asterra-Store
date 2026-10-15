@@ -44,9 +44,9 @@ class PromoCampaign(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     def get_status(self) -> str:
-        """Determines computed status dynamically: 'draft' | 'running' | 'scheduled' | 'ended' using Asia/Jakarta."""
+        """Determines computed status dynamically: 'running' | 'scheduled' | 'ended' using Asia/Jakarta."""
         if not self.is_active:
-            return "draft"
+            return "ended"
         now_wib = datetime.now(WIB).replace(tzinfo=None)
         if self.starts_at and now_wib < self.starts_at:
             return "scheduled"

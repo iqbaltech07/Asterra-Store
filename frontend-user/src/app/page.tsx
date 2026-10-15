@@ -644,15 +644,17 @@ export default function HomePage() {
   useEffect(() => {
     setRecentlyViewed(getRecentlyViewed());
 
-    fetch('/api/v1/campaigns/active')
+    fetch('/api/v1/campaigns/active', { cache: 'no-cache' })
       .then((res) => res.json())
       .then((json) => {
         if (json.success && Array.isArray(json.data)) {
           setActiveCampaigns(json.data);
+        } else {
+          setActiveCampaigns([]);
         }
       })
       .catch(() => {
-        // Fallback to empty campaigns gracefully
+        setActiveCampaigns([]);
       });
   }, []);
 

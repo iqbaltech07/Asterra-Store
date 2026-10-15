@@ -79,12 +79,13 @@ function CheckoutPageContent() {
 
   // 0. Fetch active running promo campaigns
   const { data: activeCampaignsData } = useQuery({
-    queryKey: ['active-promo-campaigns'],
+    queryKey: ['active-campaigns'],
     queryFn: async () => {
-      const res = await fetch('/api/v1/campaigns/active');
+      const res = await fetch('/api/v1/campaigns/active', { cache: 'no-cache' });
       return res.json();
     },
-    staleTime: 30000,
+    staleTime: 5000,
+    refetchOnWindowFocus: true,
   });
 
   const activeCampaigns = useMemo(() => {
@@ -188,38 +189,41 @@ function CheckoutPageContent() {
       const found = activeCampaigns.find(
         (c: ActiveCampaign) =>
           (c.slug === activeCampaignSlug || c.id === activeCampaignSlug) &&
-          c.status !== 'ended' &&
+          c.status === 'running' &&
           c.isActive !== false
       );
       if (found) return found;
+      // If a specific campaign was specified but is not currently running/active, do not match any fallback
+      return null;
     }
     // Automatically identify campaign that provides discount to cart items
     for (const item of items) {
       const promoCalc = calculateCampaignPrice(item.priceNumeric, item, activeCampaigns);
       if (promoCalc.hasPromo && promoCalc.campaignName) {
-        const found = activeCampaigns.find((c: ActiveCampaign) => c.name === promoCalc.campaignName);
+        const found = activeCampaigns.find(
+          (c: ActiveCampaign) =>
+            c.name === promoCalc.campaignName &&
+            c.status === 'running' &&
+            c.isActive !== false
+        );
         if (found) return found;
       }
     }
-    return activeCampaigns[0] || null;
+    return activeCampaigns.find((c: ActiveCampaign) => c.status === 'running' && c.isActive !== false) || null;
   }, [activeCampaigns, activeCampaignSlug, items]);
 
-  // Purge campaign parameter ONLY when campaign has explicitly ended
+  // Purge campaign parameter if campaign has ended, is inactive, or has been deleted
   useEffect(() => {
-    if (activeCampaignsData && activeCampaignSlug && activeCampaigns.length > 0) {
-      const isExplicitlyEnded = activeCampaigns.some(
-        (c: { slug?: string; id?: string; status?: string; isActive?: boolean }) =>
+    if (activeCampaignsData && activeCampaignSlug) {
+      const isStillActive = activeCampaigns.some(
+        (c: ActiveCampaign) =>
           (c.slug === activeCampaignSlug || c.id === activeCampaignSlug) &&
-          (c.status === 'ended' || c.isActive === false)
+          c.status === 'running' &&
+          c.isActive !== false
       );
 
-      const hasExplicitParam =
-        typeof window !== 'undefined' &&
-        (new URL(window.location.href).searchParams.has('campaign') ||
-          new URL(window.location.href).searchParams.has('utm_campaign'));
-
-      if (isExplicitlyEnded && !hasExplicitParam) {
-        // Campaign has explicitly ended! Clean up
+      if (!isStillActive) {
+        // Campaign has ended, inactive, or was deleted! Clean up immediately
         setActiveCampaignSlug('');
         if (typeof window !== 'undefined') {
           try {
@@ -244,6 +248,28 @@ function CheckoutPageContent() {
               '',
               currentUrl.pathname + currentUrl.search + currentUrl.hash
             );
+          }
+
+          // If referral discount was already claimed previously, also purge ref now that campaign has ended/deleted
+          const isClaimed = localStorage.getItem('asterra_ref_claimed') === 'true';
+          if (isClaimed) {
+            try {
+              localStorage.removeItem('asterra_ref');
+              localStorage.removeItem('asterra_referral_session_id');
+              document.cookie = 'asterra_ref=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+              document.cookie = 'asterra_referral_session_id=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+              if (currentUrl.searchParams.has('ref')) {
+                currentUrl.searchParams.delete('ref');
+                window.history.replaceState(
+                  window.history.state,
+                  '',
+                  currentUrl.pathname + currentUrl.search + currentUrl.hash
+                );
+              }
+            } catch {}
+            setReferralCode('');
+            setReferralPartner(null);
+            setReferralDiscount(0);
           }
         }
       }

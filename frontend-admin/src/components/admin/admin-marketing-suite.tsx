@@ -26,6 +26,7 @@ import { ImageUploadDropzone } from '@/components/admin/image-upload-dropzone';
 interface CampaignItem {
   id: string;
   name: string;
+  slug?: string;
   tagline: string;
   startDate: string;
   endDate: string;
@@ -35,6 +36,7 @@ interface CampaignItem {
   minPurchase: number;
   affiliateBonusPercent: number;
   status: 'running' | 'scheduled' | 'ended' | 'draft';
+  isActive?: boolean;
   totalOrders: number;
   revenue: number;
   conversionRate: number;
@@ -169,11 +171,27 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
     return () => clearInterval(timer);
   }, [banners, isPreviewPaused]);
 
+  const getAuthHeaders = useCallback((withContentType = true) => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('asterra_admin_token') : null;
+    const headers: Record<string, string> = {};
+    if (withContentType) {
+      headers['Content-Type'] = 'application/json';
+    }
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    return headers;
+  }, []);
+
   // Load Campaigns from Backend API (Directly from real database)
   const loadCampaignsFromApi = useCallback(async () => {
     setIsLoadingCampaigns(true);
     try {
-      const res = await fetch('/api/v1/admin/campaigns');
+      const res = await fetch('/api/v1/admin/campaigns', {
+        headers: getAuthHeaders(false),
+        cache: 'no-cache',
+        credentials: 'include',
+      });
       if (res.ok) {
         const json = await res.json();
         if (json.success && Array.isArray(json.data)) {
@@ -188,7 +206,7 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
     } finally {
       setIsLoadingCampaigns(false);
     }
-  }, []);
+  }, [getAuthHeaders]);
 
   useEffect(() => {
     loadCampaignsFromApi();
@@ -237,7 +255,8 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
       if (editingCampaign) {
         const res = await fetch(`/api/v1/admin/campaigns/${editingCampaign.id}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAuthHeaders(true),
+          credentials: 'include',
           body: JSON.stringify(payload),
         });
 
@@ -247,18 +266,18 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
             setCampaigns((prev) =>
               prev.map((c) => (c.id === editingCampaign.id ? { ...c, ...json.data } : c))
             );
+            onNotify?.(`Campaign "${campName}" berhasil diperbarui.`);
           }
         } else {
-          // Local fallback update
-          setCampaigns((prev) =>
-            prev.map((c) => (c.id === editingCampaign.id ? { ...c, ...payload, id: c.id } : c))
-          );
+          const errJson = await res.json().catch(() => ({}));
+          const errMsg = errJson.detail || errJson.error || errJson.message || `Gagal memperbarui campaign "${campName}".`;
+          onNotify?.(errMsg);
         }
-        onNotify?.(`Campaign "${campName}" berhasil diperbarui.`);
       } else {
         const res = await fetch('/api/v1/admin/campaigns', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAuthHeaders(true),
+          credentials: 'include',
           body: JSON.stringify(payload),
         });
 
@@ -266,33 +285,18 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
           const json = await res.json();
           if (json.success && json.data) {
             setCampaigns((prev) => [json.data, ...prev]);
+            onNotify?.(`Campaign promosi "${campName}" berhasil diluncurkan!`);
           }
         } else {
-          // Local fallback creation
-          const newCamp: CampaignItem = {
-            id: `camp-${Date.now()}`,
-            name: campName,
-            tagline: campTagline,
-            startDate: campStartDate,
-            endDate: campEndDate,
-            targetCategory: campCategory,
-            discountType: campDiscountType,
-            discountValue: campDiscountValue,
-            minPurchase: campMinPurchase,
-            affiliateBonusPercent: campAffiliateBonus,
-            status: 'running',
-            totalOrders: 0,
-            revenue: 0,
-            conversionRate: 0,
-          };
-          setCampaigns((prev) => [newCamp, ...prev]);
+          const errJson = await res.json().catch(() => ({}));
+          const errMsg = errJson.detail || errJson.error || errJson.message || `Gagal membuat campaign "${campName}".`;
+          onNotify?.(errMsg);
         }
-        onNotify?.(`Campaign promosi "${campName}" berhasil diluncurkan!`);
       }
       setIsCampaignModalOpen(false);
     } catch (err) {
       console.error('Save campaign error:', err);
-      onNotify?.(`Campaign "${campName}" berhasil disimpan.`);
+      onNotify?.(`Terjadi kesalahan jaringan saat menyimpan campaign.`);
       setIsCampaignModalOpen(false);
     } finally {
       setIsSavingCampaign(false);
@@ -303,46 +307,57 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
     try {
       const res = await fetch(`/api/v1/admin/campaigns/${id}/toggle`, {
         method: 'PATCH',
+        headers: getAuthHeaders(true),
+        credentials: 'include',
       });
       if (res.ok) {
         const json = await res.json();
         if (json.success && json.data) {
           setCampaigns((prev) =>
-            prev.map((c) => (c.id === id ? { ...c, status: json.data.status, isActive: json.data.isActive } : c))
+            prev.map((c) =>
+              c.id === id || c.slug === id
+                ? { ...c, ...json.data, status: json.data.status, isActive: json.data.isActive }
+                : c
+            )
           );
-          onNotify?.(`Status campaign berhasil diubah.`);
+          onNotify?.(json.message || `Status campaign berhasil diubah.`);
           return;
         }
+      } else {
+        const errJson = await res.json().catch(() => ({}));
+        const errMsg = errJson.detail || errJson.error || errJson.message || 'Gagal mengubah status campaign di server.';
+        onNotify?.(errMsg);
+        return;
       }
     } catch (err) {
-      console.warn('API toggle failed, falling back to local toggle:', err);
+      console.error('API toggle failed:', err);
+      onNotify?.('Terjadi kesalahan jaringan saat mengubah status campaign.');
     }
-
-    setCampaigns((prev) =>
-      prev.map((c) => {
-        if (c.id === id) {
-          const next = c.status === 'running' ? 'ended' : 'running';
-          onNotify?.(`Status campaign "${c.name}" diubah ke ${next}.`);
-          return { ...c, status: next };
-        }
-        return c;
-      })
-    );
   };
 
   const handleDeleteCampaign = async (id: string, name: string) => {
     if (!window.confirm(`Hapus campaign "${name}" dari sistem?`)) return;
 
     try {
-      await fetch(`/api/v1/admin/campaigns/${id}`, {
+      const res = await fetch(`/api/v1/admin/campaigns/${id}`, {
         method: 'DELETE',
+        headers: getAuthHeaders(true),
+        credentials: 'include',
       });
+      if (res.ok) {
+        setCampaigns((prev) => prev.filter((c) => c.id !== id && c.slug !== id));
+        onNotify?.(`Campaign "${name}" berhasil dihapus.`);
+        return;
+      } else {
+        const errJson = await res.json().catch(() => ({}));
+        const errMsg = errJson.detail || errJson.error || errJson.message || 'Gagal menghapus campaign di server.';
+        onNotify?.(errMsg);
+        return;
+      }
     } catch (err) {
-      console.warn('API delete failed, local removal:', err);
+      console.error('API delete failed:', err);
+      onNotify?.('Terjadi kesalahan jaringan saat menghapus campaign.');
     }
-
-    setCampaigns((prev) => prev.filter((c) => c.id !== id));
-    onNotify?.(`Campaign "${name}" berhasil dihapus.`);
   };
 
   // Banner API Handlers
@@ -535,10 +550,12 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
   if (activeTab === 'campaigns') {
     const totalRevenue = campaigns.reduce((acc, c) => acc + c.revenue, 0);
     const totalOrders = campaigns.reduce((acc, c) => acc + c.totalOrders, 0);
-    const activeCount = campaigns.filter((c) => c.status === 'running').length;
+    const activeCount = campaigns.filter((c) => c.status === 'running' && c.isActive !== false).length;
 
     const filteredCampaigns = campaigns.filter((c) => {
       if (campaignFilter === 'all') return true;
+      if (campaignFilter === 'running') return c.status === 'running' && c.isActive !== false;
+      if (campaignFilter === 'ended') return c.status === 'ended' || c.status === 'draft' || c.isActive === false;
       return c.status === campaignFilter;
     });
 
@@ -703,7 +720,7 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
                   onClick={() => toggleCampaignStatus(camp.id)}
                   className="text-xs h-8 border-border"
                 >
-                  {camp.status === 'running' ? (
+                  {camp.status === 'running' && camp.isActive !== false ? (
                     <>
                       <EyeOff className="w-3.5 h-3.5 mr-1 text-foreground-muted" />
                       <span>Hentikan Promo</span>
