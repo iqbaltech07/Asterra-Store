@@ -769,7 +769,8 @@ function CheckoutPageContent() {
         }
 
         showNotification('Pesanan berhasil dibuat. Mengarahkan ke status pesanan.');
-        router.push('/orders');
+        const emailQuery = targetEmail.trim() ? `&email=${encodeURIComponent(targetEmail.trim())}` : '';
+        router.push(`/order?id=${createdOrder.id}${emailQuery}`);
       }
     },
     onError: (err: unknown) => {
@@ -954,8 +955,12 @@ function CheckoutPageContent() {
         customerName={customerName}
         targetEmail={targetEmail}
         onClose={() => {
+          const orderId = activeManualModal?.orderId;
           setActiveManualModal(null);
-          router.push('/orders');
+          if (orderId) {
+            const emailQuery = targetEmail.trim() ? `&email=${encodeURIComponent(targetEmail.trim())}` : '';
+            router.push(`/order?id=${orderId}${emailQuery}`);
+          }
         }}
         onCopy={handleCopy}
         copiedKey={copiedKey}

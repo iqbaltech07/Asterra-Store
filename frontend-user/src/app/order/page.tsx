@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Order } from '@/lib/orders-data';
@@ -251,20 +252,45 @@ function PrivateOrdersPageSkeleton() {
 
 function PrivateOrderContent() {
   const { data: session } = useSession();
+  const searchParams = useSearchParams();
+  const paramOrderId = searchParams.get('id') || searchParams.get('orderId');
+  const paramEmail = searchParams.get('email');
+
   const [selectedStatus, setSelectedStatus] = useState('all');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState(paramOrderId || '');
+  const [expandedOrderId, setExpandedOrderId] = useState<string | null>(paramOrderId || null);
   const [notification, setNotification] = useState<string | null>(null);
 
-  // Individual Order Scoping: Session Email or Guest Email from localStorage
+  // Individual Order Scoping: Session Email, URL param, or Guest Email from localStorage
   const [guestEmail, setGuestEmail] = useState<string>(() => {
     if (typeof window !== 'undefined') {
+      const urlEmail = new URLSearchParams(window.location.search).get('email');
+      if (urlEmail) {
+        localStorage.setItem('asterra_customer_email', urlEmail);
+        return urlEmail;
+      }
       return localStorage.getItem('asterra_customer_email') || '';
     }
     return '';
   });
   const [emailInput, setEmailInput] = useState('');
   const [isSubmittingLookup, setIsSubmittingLookup] = useState(false);
+
+  // Sync query parameters when navigating from checkout or direct tracking links
+  useEffect(() => {
+    if (paramEmail && paramEmail !== guestEmail) {
+      setGuestEmail(paramEmail);
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('asterra_customer_email', paramEmail);
+        } catch {}
+      }
+    }
+    if (paramOrderId) {
+      setSearchQuery(paramOrderId);
+      setExpandedOrderId(paramOrderId);
+    }
+  }, [paramEmail, paramOrderId, guestEmail]);
 
   // Effective email to filter orders
   const activeEmail = session?.user?.email || guestEmail;
@@ -287,20 +313,40 @@ function PrivateOrderContent() {
 
   // PERSONAL / PRIVATE ORDERS QUERY
   const { data, isLoading, isFetching, error, refetch, isRefetching } = useQuery<{ success: boolean; data: Order[] }>({
-    queryKey: ['private-orders', selectedStatus, activeEmail],
+    queryKey: ['private-orders', selectedStatus, activeEmail, paramOrderId],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (selectedStatus !== 'all') params.append('status', selectedStatus);
-      if (activeEmail) params.append('email', activeEmail);
+      if (activeEmail) {
+        params.append('email', activeEmail);
+      } else if (paramOrderId) {
+        params.append('search', paramOrderId);
+      }
       const res = await fetch(`/api/v1/orders?${params.toString()}`);
       if (!res.ok) throw new Error('Gagal mengambil riwayat pesanan');
       return res.json();
     },
-    enabled: Boolean(activeEmail),
-    staleTime: 10000,
-    refetchInterval: 15000, // Background polling fallback ensures orders stay synchronized even if SSE is buffered or proxy returns 502
+    enabled: Boolean(activeEmail || paramOrderId),
+    staleTime: 5000,
+    refetchInterval: 12000, // Background polling fallback ensures orders stay synchronized even if SSE is buffered or proxy returns 502
     placeholderData: (previousData) => previousData,
   });
+
+  // Auto-expand and notify if viewing a specific order from checkout redirect
+  useEffect(() => {
+    if (paramOrderId && data?.data && data.data.length > 0) {
+      const target = data.data.find(
+        (o) => (o.id || '').toUpperCase() === paramOrderId.toUpperCase()
+      );
+      if (target) {
+        setExpandedOrderId(target.id);
+        const st = String(target.order_status || (target as unknown as { status?: string }).status || '').toLowerCase();
+        if (['completed', 'processing', 'paid', 'settlement'].includes(st)) {
+          showNotification(`Pesanan #${target.id} aktif. Lisensi & status sedang diproses!`);
+        }
+      }
+    }
+  }, [paramOrderId, data]);
 
   // Reset lookup submitting flag once data or error arrives
   useEffect(() => {

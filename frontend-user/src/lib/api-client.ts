@@ -130,6 +130,10 @@ export const OrdersApi = {
     return requestJson<{ success: boolean; data: Order }>(`/api/v1/admin/orders/${orderId}`);
   },
 
+  async getPublicOrderById(orderId: string) {
+    return requestJson<{ success: boolean; data: Order }>(`/api/v1/orders/${orderId}`);
+  },
+
   async create(payload: CreateOrderPayload) {
     return requestJson<{ success: boolean; order: Order; message?: string }>('/api/v1/orders', {
       method: 'POST',
