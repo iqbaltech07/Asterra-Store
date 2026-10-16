@@ -47,6 +47,7 @@ export function AdminLogsTab() {
       if (!res.ok) throw new Error('Gagal memuat log aktivitas');
       return res.json();
     },
+    staleTime: 5 * 60 * 1000,
   });
 
   const rawLogs = logsData?.data || [];

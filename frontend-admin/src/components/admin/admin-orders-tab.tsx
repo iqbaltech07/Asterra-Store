@@ -110,6 +110,7 @@ export function AdminOrdersTab() {
         status: statusFilter,
         search: searchQuery,
       }),
+    staleTime: 5 * 60 * 1000,
   });
 
   const orders = ordersData?.data || [];

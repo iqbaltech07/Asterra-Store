@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faTag,
@@ -75,7 +75,10 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
     }
   }, [onNotify]);
 
+  const hasFetchedRef = useRef(false);
   useEffect(() => {
+    if (hasFetchedRef.current) return;
+    hasFetchedRef.current = true;
     fetchPromos();
   }, [fetchPromos]);
 

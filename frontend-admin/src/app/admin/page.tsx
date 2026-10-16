@@ -181,9 +181,20 @@ export default function AdminPage() {
     }
   };
 
-  // Navigation tab
+  // Navigation tab & visited tabs cache (Single Page Application memory retention)
   const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
+  const [visitedTabs, setVisitedTabs] = useState<Set<AdminTab>>(() => new Set(['dashboard']));
   const [isSidebarMobileOpen, setIsSidebarMobileOpen] = useState(false);
+
+  // Lazily register visited tabs so each menu only mounts and requests API 1x
+  useEffect(() => {
+    setVisitedTabs((prev) => {
+      if (prev.has(activeTab)) return prev;
+      const next = new Set(prev);
+      next.add(activeTab);
+      return next;
+    });
+  }, [activeTab]);
 
   // Role-based Access Control guard for active tab
   useEffect(() => {
@@ -965,18 +976,21 @@ export default function AdminPage() {
           )}
 
           {/* TAB 0: DASHBOARD OVERVIEW */}
-          {activeTab === 'dashboard' && (
-            <AdminDashboardTab
-              metrics={metrics}
-              onNavigateTab={setActiveTab}
-              onOpenCreateProduct={handleOpenCreate}
-              onSyncVip={() => syncVipMutation.mutate()}
-              isSyncingVip={syncVipMutation.isPending}
-            />
+          {visitedTabs.has('dashboard') && (
+            <div className={activeTab === 'dashboard' ? 'block' : 'hidden'}>
+              <AdminDashboardTab
+                metrics={metrics}
+                onNavigateTab={setActiveTab}
+                onOpenCreateProduct={handleOpenCreate}
+                onSyncVip={() => syncVipMutation.mutate()}
+                isSyncingVip={syncVipMutation.isPending}
+              />
+            </div>
           )}
 
           {/* TAB 1: MANAGED PRODUCTS */}
-          {activeTab === 'products' && (
+          {visitedTabs.has('products') && (
+          <div className={activeTab === 'products' ? 'block' : 'hidden'}>
           <div className="space-y-6">
             {/* Filter & Search Bar */}
             <div className="bg-surface border border-border rounded-xl p-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
@@ -1395,26 +1409,40 @@ export default function AdminPage() {
               </div>
             )}
           </div>
+          </div>
         )}
 
         {/* TAB 2: USER ORDERS MANAGEMENT */}
-        {activeTab === 'orders' && <AdminOrdersTab />}
+        {visitedTabs.has('orders') && (
+          <div className={activeTab === 'orders' ? 'block' : 'hidden'}>
+            <AdminOrdersTab />
+          </div>
+        )}
 
         {/* TAB 3: ACTIVITY & AUDIT LOGS */}
-        {activeTab === 'logs' && <AdminLogsTab />}
+        {visitedTabs.has('logs') && (
+          <div className={activeTab === 'logs' ? 'block' : 'hidden'}>
+            <AdminLogsTab />
+          </div>
+        )}
 
         {/* TAB 4: PAYMENT MODE SWITCHER & SETTINGS */}
-        {activeTab === 'payment-settings' && (
-          <AdminPaymentSettingsTab onNotify={showNotification} />
+        {visitedTabs.has('payment-settings') && (
+          <div className={activeTab === 'payment-settings' ? 'block' : 'hidden'}>
+            <AdminPaymentSettingsTab onNotify={showNotification} />
+          </div>
         )}
 
         {/* TAB 5: PROMO & VOUCHER CODE MANAGEMENT */}
-        {activeTab === 'promos' && (
-          <AdminPromosTab onNotify={showNotification} />
+        {visitedTabs.has('promos') && (
+          <div className={activeTab === 'promos' ? 'block' : 'hidden'}>
+            <AdminPromosTab onNotify={showNotification} />
+          </div>
         )}
 
         {/* TAB 6: VIP RESELLER EXPLORER */}
-        {activeTab === 'vip-explorer' && (
+        {visitedTabs.has('vip-explorer') && (
+          <div className={activeTab === 'vip-explorer' ? 'block' : 'hidden'}>
           <div className="space-y-6">
             <div className="bg-surface border border-border rounded-xl p-5 space-y-4">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-border">
@@ -1652,104 +1680,142 @@ export default function AdminPage() {
             </div>
           )}
           </div>
+          </div>
         )}
 
         {/* TAB 7: KELOLA ADMIN */}
-        {activeTab === 'admins' && (
-          <AdminUsersTab
-            currentAdminEmail={adminUser?.email}
-            onNotify={showNotification}
-          />
+        {visitedTabs.has('admins') && (
+          <div className={activeTab === 'admins' ? 'block' : 'hidden'}>
+            <AdminUsersTab
+              currentAdminEmail={adminUser?.email}
+              onNotify={showNotification}
+            />
+          </div>
         )}
 
         {/* TAB 8: AFFILIATE & SALES SYSTEM */}
-        {activeTab === 'affiliate' && (
-          <AdminAffiliateTab onNotify={showNotification} />
+        {visitedTabs.has('affiliate') && (
+          <div className={activeTab === 'affiliate' ? 'block' : 'hidden'}>
+            <AdminAffiliateTab onNotify={showNotification} />
+          </div>
         )}
 
         {/* TAB 9: KATEGORI */}
-        {activeTab === 'categories' && (
-          <AdminCategoriesTab
-            onNotify={showNotification}
-            onFilterCategoryInProducts={(cat) => {
-              setCategoryFilter(cat);
-              setActiveTab('products');
-            }}
-          />
+        {visitedTabs.has('categories') && (
+          <div className={activeTab === 'categories' ? 'block' : 'hidden'}>
+            <AdminCategoriesTab
+              onNotify={showNotification}
+              onFilterCategoryInProducts={(cat) => {
+                setCategoryFilter(cat);
+                setActiveTab('products');
+              }}
+            />
+          </div>
         )}
 
         {/* TAB 10: PROVIDER & SUPPLIER */}
-        {activeTab === 'providers' && (
-          <AdminProvidersTab
-            metrics={metrics}
-            onNotify={showNotification}
-            onSyncVip={() => syncVipMutation.mutate()}
-          />
+        {visitedTabs.has('providers') && (
+          <div className={activeTab === 'providers' ? 'block' : 'hidden'}>
+            <AdminProvidersTab
+              metrics={metrics}
+              onNotify={showNotification}
+              onSyncVip={() => syncVipMutation.mutate()}
+            />
+          </div>
         )}
 
         {/* TAB 11: PELANGGAN (CRM 360) */}
-        {activeTab === 'customers' && (
-          <AdminCustomersTab onNotify={showNotification} />
+        {visitedTabs.has('customers') && (
+          <div className={activeTab === 'customers' ? 'block' : 'hidden'}>
+            <AdminCustomersTab onNotify={showNotification} />
+          </div>
         )}
 
         {/* TAB 12: REFUND & KOMPLAIN */}
-        {activeTab === 'refunds' && (
-          <AdminRefundsTab onNotify={showNotification} />
+        {visitedTabs.has('refunds') && (
+          <div className={activeTab === 'refunds' ? 'block' : 'hidden'}>
+            <AdminRefundsTab onNotify={showNotification} />
+          </div>
         )}
 
         {/* TAB 13: MARKETING & GROWTH (Campaigns & Banners) */}
-        {(activeTab === 'campaigns' || activeTab === 'banners') && (
-          <AdminMarketingSuite
-            activeTab={activeTab}
-            onNotify={showNotification}
-          />
+        {(visitedTabs.has('campaigns') || visitedTabs.has('banners')) && (
+          <div className={activeTab === 'campaigns' || activeTab === 'banners' ? 'block' : 'hidden'}>
+            <AdminMarketingSuite
+              activeTab={activeTab as any}
+              onNotify={showNotification}
+            />
+          </div>
         )}
 
         {/* TAB 14: KEUANGAN (Wallets, Revenue, Expenses, Profit, Transactions) */}
-        {(activeTab === 'wallets' ||
-          activeTab === 'revenue' ||
-          activeTab === 'expenses' ||
-          activeTab === 'profit' ||
-          activeTab === 'financial-transactions') && (
-          <AdminFinanceSuite
-            activeTab={activeTab}
-            metrics={metrics}
-            onNotify={showNotification}
-          />
+        {(visitedTabs.has('wallets') ||
+          visitedTabs.has('revenue') ||
+          visitedTabs.has('expenses') ||
+          visitedTabs.has('profit') ||
+          visitedTabs.has('financial-transactions')) && (
+          <div className={
+            activeTab === 'wallets' ||
+            activeTab === 'revenue' ||
+            activeTab === 'expenses' ||
+            activeTab === 'profit' ||
+            activeTab === 'financial-transactions'
+              ? 'block'
+              : 'hidden'
+          }>
+            <AdminFinanceSuite
+              activeTab={activeTab as any}
+              metrics={metrics}
+              onNotify={showNotification}
+            />
+          </div>
         )}
 
         {/* TAB 15: ANALYTICS & LAPORAN */}
-        {(activeTab === 'sales-summary' ||
-          activeTab === 'product-performance' ||
-          activeTab === 'affiliate-performance' ||
-          activeTab === 'financial-reports') && (
-          <AdminAnalyticsSuite
-            activeTab={activeTab}
-            onNotify={showNotification}
-          />
+        {(visitedTabs.has('sales-summary') ||
+          visitedTabs.has('product-performance') ||
+          visitedTabs.has('affiliate-performance') ||
+          visitedTabs.has('financial-reports')) && (
+          <div className={
+            activeTab === 'sales-summary' ||
+            activeTab === 'product-performance' ||
+            activeTab === 'affiliate-performance' ||
+            activeTab === 'financial-reports'
+              ? 'block'
+              : 'hidden'
+          }>
+            <AdminAnalyticsSuite
+              activeTab={activeTab as any}
+              onNotify={showNotification}
+            />
+          </div>
         )}
 
         {/* TAB 16: SISTEM & KONFIGURASI (Notifications & Store Settings) */}
-        {(activeTab === 'notifications' || activeTab === 'store-settings') && (
-          <AdminSystemSettingsSuite
-            activeTab={activeTab}
-            onNotify={showNotification}
-          />
+        {(visitedTabs.has('notifications') || visitedTabs.has('store-settings')) && (
+          <div className={activeTab === 'notifications' || activeTab === 'store-settings' ? 'block' : 'hidden'}>
+            <AdminSystemSettingsSuite
+              activeTab={activeTab as any}
+              onNotify={showNotification}
+            />
+          </div>
         )}
 
         {/* TAB 17: PORTAL PENJUALAN (SALES SUITE) */}
-        {(activeTab === 'sales-overview' ||
-          activeTab === 'sales-catalog' ||
-          activeTab === 'sales-links' ||
-          activeTab === 'sales-orders' ||
-          activeTab === 'sales-network' ||
-          activeTab === 'sales-wallet' ||
-          activeTab === 'sales-academy') && (
-          <SalesConsoleSuite
-            activeTab={activeTab}
-            onTabChange={(tab) => setActiveTab(tab)}
-            adminUser={adminUser}
-          />
+        {(visitedTabs.has('sales-overview') ||
+          visitedTabs.has('sales-catalog') ||
+          visitedTabs.has('sales-links') ||
+          visitedTabs.has('sales-orders') ||
+          visitedTabs.has('sales-network') ||
+          visitedTabs.has('sales-wallet') ||
+          visitedTabs.has('sales-academy')) && (
+          <div className={activeTab.startsWith('sales-') ? 'block' : 'hidden'}>
+            <SalesConsoleSuite
+              activeTab={activeTab}
+              onTabChange={(tab) => setActiveTab(tab)}
+              adminUser={adminUser}
+            />
+          </div>
         )}
       </main>
 

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Share2,
   Users,
@@ -102,7 +102,10 @@ export function AdminAffiliateTab({ onNotify }: AdminAffiliateTabProps) {
     }
   };
 
+  const hasFetchedRef = useRef(false);
   useEffect(() => {
+    if (hasFetchedRef.current) return;
+    hasFetchedRef.current = true;
     fetchAffiliates();
   }, []);
 

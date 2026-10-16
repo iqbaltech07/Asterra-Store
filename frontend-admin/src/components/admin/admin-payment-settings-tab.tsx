@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faCreditCard,
@@ -100,9 +100,12 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
     }
   }, [onNotify]);
 
+  const hasFetchedRef = useRef(false);
   useEffect(() => {
-    fetchSettings();
     setCurrentBaseUrl(getAppBaseUrl());
+    if (hasFetchedRef.current) return;
+    hasFetchedRef.current = true;
+    fetchSettings();
   }, [fetchSettings]);
 
   const handleCopy = (text: string, key: string) => {

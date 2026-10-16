@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faShieldHalved,
@@ -115,7 +115,10 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
     }
   }, [getAdminHeaders, onNotify]);
 
+  const hasInitialFetchedRef = useRef(false);
   useEffect(() => {
+    if (hasInitialFetchedRef.current) return;
+    hasInitialFetchedRef.current = true;
     fetchAdmins();
   }, [fetchAdmins]);
 

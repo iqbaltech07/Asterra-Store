@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   TrendingUp,
   ShoppingBag,
@@ -54,62 +55,49 @@ export function AdminDashboardTab({
   isSyncingVip,
 }: AdminDashboardTabProps) {
   const [salesPeriod, setSalesPeriod] = useState<'daily' | 'weekly' | 'monthly'>('weekly');
-  const [dashboardOverview, setDashboardOverview] = useState<any | null>(null);
-  const [liveAffiliates, setLiveAffiliates] = useState<any[]>([]);
-  const [liveOrders, setLiveOrders] = useState<any[]>([]);
-  const [liveOrderMetrics, setLiveOrderMetrics] = useState<{
-    total?: number;
-    completed?: number;
-    processing?: number;
-    pending?: number;
-    cancelled?: number;
-    failed?: number;
-    totalRevenue?: number;
-  } | null>(null);
 
-  useEffect(() => {
-    fetch('/api/v1/admin/analytics/overview')
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.success && json.data) {
-          setDashboardOverview(json.data);
-        }
-      })
-      .catch((err) => console.warn('Failed to fetch analytics overview:', err));
+  const { data: dashboardOverview = null } = useQuery({
+    queryKey: ['admin-dashboard-overview'],
+    queryFn: async () => {
+      const res = await fetch('/api/v1/admin/analytics/overview');
+      const json = await res.json();
+      return json.success && json.data ? json.data : null;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-    fetch('/api/v1/admin/affiliates')
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.success && Array.isArray(json.data)) {
-          setLiveAffiliates(json.data);
-        }
-      })
-      .catch((err) => console.warn('Failed to fetch affiliates for dashboard:', err));
+  const { data: liveAffiliates = [] } = useQuery({
+    queryKey: ['admin-dashboard-affiliates'],
+    queryFn: async () => {
+      const res = await fetch('/api/v1/admin/affiliates');
+      const json = await res.json();
+      return json.success && Array.isArray(json.data) ? json.data : [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-    fetch('/api/v1/admin/orders?limit=6')
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.success) {
-          if (json.metrics) {
-            setLiveOrderMetrics(json.metrics);
-          }
-          if (Array.isArray(json.data)) {
-            setLiveOrders(json.data);
-          }
-        }
-      })
-      .catch((err) => console.warn('Failed to fetch orders for dashboard:', err));
-  }, []);
+  const { data: ordersResponse = null } = useQuery({
+    queryKey: ['admin-dashboard-orders'],
+    queryFn: async () => {
+      const res = await fetch('/api/v1/admin/orders?limit=6');
+      const json = await res.json();
+      return json.success ? json : null;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const liveOrders = ordersResponse?.data || [];
+  const liveOrderMetrics = ordersResponse?.metrics || null;
 
   const totalReferralRevenue =
     dashboardOverview?.affiliateSnapshot?.totalReferralRevenue ??
-    liveAffiliates.reduce((acc, a) => acc + (a.totalRevenue || 0), 0);
+    liveAffiliates.reduce((acc: number, a: any) => acc + (a.totalRevenue || 0), 0);
   const totalPaidReferralCommission =
     dashboardOverview?.affiliateSnapshot?.totalPaidCommission ??
-    liveAffiliates.reduce((acc, a) => acc + (a.paidCommission || 0), 0);
+    liveAffiliates.reduce((acc: number, a: any) => acc + (a.paidCommission || 0), 0);
   const topPartner =
     dashboardOverview?.affiliateSnapshot?.topPartner ??
-    [...liveAffiliates].sort((a, b) => (b.totalRevenue || 0) - (a.totalRevenue || 0))[0];
+    [...liveAffiliates].sort((a: any, b: any) => (b.totalRevenue || 0) - (a.totalRevenue || 0))[0];
 
   const salesData: { label: string; orders: number; revenue: number }[] =
     (dashboardOverview?.salesData && dashboardOverview.salesData[salesPeriod]) || [

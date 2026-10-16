@@ -576,6 +576,10 @@ export function AdminSidebar({
   };
 
   const handleSelectTab = (tab: AdminTab) => {
+    if (tab === activeTab) {
+      onCloseMobile();
+      return;
+    }
     onTabChange(tab);
     onCloseMobile();
   };

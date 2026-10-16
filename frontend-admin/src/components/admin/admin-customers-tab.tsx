@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   Users,
   Search,
@@ -50,23 +51,18 @@ interface AdminCustomersTabProps {
 }
 
 export function AdminCustomersTab({ onNotify }: AdminCustomersTabProps) {
-  const [customers, setCustomers] = useState<CustomerItem[]>(INITIAL_CUSTOMERS);
-  const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerItem | null>(null);
 
-  useEffect(() => {
-    setIsLoading(true);
-    fetch('/api/v1/admin/customers')
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.success && Array.isArray(json.data)) {
-          setCustomers(json.data);
-        }
-      })
-      .catch((err) => console.warn('Failed to load customers from API:', err))
-      .finally(() => setIsLoading(false));
-  }, []);
+  const { data: customers = [], isLoading } = useQuery<CustomerItem[]>({
+    queryKey: ['admin-customers'],
+    queryFn: async () => {
+      const res = await fetch('/api/v1/admin/customers');
+      const json = await res.json();
+      return json.success && Array.isArray(json.data) ? json.data : [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   const filteredCustomers = customers.filter((c) => {
     const q = searchQuery.toLowerCase();
