@@ -16,83 +16,90 @@ import {
   faShieldHalved,
   faReceipt,
   faUserCheck,
+  faBolt,
 } from '@fortawesome/free-solid-svg-icons';
-
-interface PublicOrder {
-  id: string;
-  raw_id: string;
-  product_name: string;
-  items_summary: string;
-  items_count: number;
-  order_status: 'pending' | 'processing' | 'completed' | 'cancelled';
-  order_date: string;
-  customer_display: string;
-}
+import {
+  useDynamicOrderActivities,
+  formatRelativeTime,
+  parseSafeDate,
+  PublicOrder,
+} from '@/lib/hooks/use-dynamic-orders';
+import { useCatalogProducts } from '@/lib/hooks/use-catalog-products';
+import { ProductCard } from '@/components/products/product-card';
 
 const STATUS_FILTERS = [
   { value: 'all', label: 'Semua Status' },
-  { value: 'completed', label: 'Selesai' },
-  { value: 'processing', label: 'Sedang Diproses' },
+  { value: 'completed', label: 'Sukses' },
+  { value: 'processing', label: 'Processing' },
   { value: 'pending', label: 'Menunggu Pembayaran' },
   { value: 'cancelled', label: 'Dibatalkan' },
 ];
 
-function getStatusBadge(status: PublicOrder['order_status']) {
+function getStatusBadge(
+  status: PublicOrder['order_status'],
+  isDynamic?: boolean,
+  remainingSeconds?: number
+) {
   switch (status) {
     case 'completed':
       return (
-        <span data-gsap="order-status" className="text-[11px] px-2.5 py-0.5 rounded-full bg-status-success/15 text-status-success font-medium inline-flex items-center gap-1">
-          <FontAwesomeIcon icon={faCircleCheck} className="w-3 h-3" />
-          <span>Selesai</span>
+        <span
+          data-gsap="order-status"
+          className="text-[11px] px-2.5 py-0.5 rounded-full bg-status-success/15 text-status-success font-medium inline-flex items-center gap-1.5 transition-all duration-300"
+        >
+          <FontAwesomeIcon icon={faCircleCheck} className="w-3 h-3 text-status-success" />
+          <span>Sukses</span>
         </span>
       );
     case 'processing':
       return (
-        <span data-gsap="order-status" className="text-[11px] px-2.5 py-0.5 rounded-full bg-status-info/15 text-status-info font-medium inline-flex items-center gap-1">
-          <FontAwesomeIcon icon={faClock} className="w-3 h-3" />
-          <span>Di Proses</span>
+        <span
+          data-gsap="order-status"
+          className="text-[11px] px-2.5 py-0.5 rounded-full bg-status-info/15 text-status-info font-medium inline-flex items-center gap-1.5 animate-pulse"
+        >
+          <FontAwesomeIcon
+            icon={faClock}
+            className="w-3 h-3 animate-spin text-status-info"
+            style={{ animationDuration: '3s' }}
+          />
+          <span>Processing</span>
+          {remainingSeconds !== undefined && remainingSeconds > 0 && (
+            <span className="text-[10px] opacity-75 font-mono">
+              ({Math.ceil(remainingSeconds / 60)}m)
+            </span>
+          )}
         </span>
       );
     case 'pending':
       return (
-        <span data-gsap="order-status" className="text-[11px] px-2.5 py-0.5 rounded-full bg-status-warning/15 text-status-warning font-medium inline-flex items-center gap-1">
+        <span
+          data-gsap="order-status"
+          className="text-[11px] px-2.5 py-0.5 rounded-full bg-status-warning/15 text-status-warning font-medium inline-flex items-center gap-1"
+        >
           <FontAwesomeIcon icon={faCircleExclamation} className="w-3 h-3" />
           <span>Menunggu Pembayaran</span>
         </span>
       );
     case 'cancelled':
       return (
-        <span data-gsap="order-status" className="text-[11px] px-2.5 py-0.5 rounded-full bg-status-error/15 text-status-error font-medium inline-flex items-center gap-1">
+        <span
+          data-gsap="order-status"
+          className="text-[11px] px-2.5 py-0.5 rounded-full bg-status-error/15 text-status-error font-medium inline-flex items-center gap-1"
+        >
           <FontAwesomeIcon icon={faCircleExclamation} className="w-3 h-3" />
           <span>Dibatalkan</span>
         </span>
       );
     default:
       return (
-        <span data-gsap="order-status" className="text-[11px] px-2.5 py-0.5 rounded-full bg-surface-raised text-foreground-muted font-medium">
+        <span
+          data-gsap="order-status"
+          className="text-[11px] px-2.5 py-0.5 rounded-full bg-surface-raised text-foreground-muted font-medium"
+        >
           {status}
         </span>
       );
   }
-}
-
-function parseSafeDate(dateString: string): Date {
-  if (!dateString) return new Date();
-  const normalized = dateString.endsWith('Z') || dateString.includes('+') ? dateString : `${dateString}Z`;
-  const parsed = new Date(normalized);
-  return isNaN(parsed.getTime()) ? new Date() : parsed;
-}
-
-function formatRelativeTime(dateString: string): string {
-  if (!dateString) return '-';
-  const date = parseSafeDate(dateString);
-  const now = new Date();
-  const diffInSeconds = Math.max(0, Math.floor((now.getTime() - date.getTime()) / 1000));
-
-  if (diffInSeconds < 60) return 'Baru saja';
-  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} menit lalu`;
-  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} jam lalu`;
-  return `${Math.floor(diffInSeconds / 86400)} hari lalu`;
 }
 
 // Realistic Order Cards Skeleton matching actual UI card structure
@@ -179,14 +186,11 @@ function GlobalOrdersContent() {
     data: PublicOrder[];
     total: number;
   }>({
-    queryKey: ['global-orders', selectedStatus],
+    queryKey: ['global-orders'],
     queryFn: async () => {
       const params = new URLSearchParams();
       params.append('public', 'true');
-      if (selectedStatus !== 'all') {
-        params.append('status', selectedStatus);
-      }
-      const res = await fetch(`/api/v1/orders?${params.toString()}`);
+      const res = await fetch('/api/v1/orders?' + params.toString());
       if (!res.ok) throw new Error('Gagal mengambil data pesanan publik');
       return res.json();
     },
@@ -195,22 +199,37 @@ function GlobalOrdersContent() {
     refetchInterval: 30000, // Background sync every 30s
   });
 
-  const orders = useMemo(() => {
+  const rawOrders = useMemo(() => {
     return data?.data || [];
   }, [data]);
 
+  // Hook Aktivitas Dinamis Frontend
+  const { processedOrders, now } = useDynamicOrderActivities(rawOrders);
+
+  // Fetch Catalog Products untuk rekomendasi jika antrean transaksi kosong
+  const { data: catalogResponse } = useCatalogProducts();
+  const catalogProducts = useMemo(() => {
+    return catalogResponse?.data || [];
+  }, [catalogResponse?.data]);
+
   const filteredOrders = useMemo(() => {
-    if (!searchQuery.trim()) return orders;
+    let list = processedOrders;
+    if (selectedStatus !== 'all') {
+      list = list.filter((order) => order.effectiveStatus === selectedStatus);
+    }
+    if (!searchQuery.trim()) return list;
     const q = searchQuery.toLowerCase().trim();
-    return orders.filter((order) => {
-      const idMatch = (order.id || '').toLowerCase().includes(q) || (order.raw_id || '').toLowerCase().includes(q);
+    return list.filter((order) => {
+      const idMatch =
+        (order.id || '').toLowerCase().includes(q) ||
+        (order.raw_id || '').toLowerCase().includes(q);
       const productMatch =
         (order.product_name || '').toLowerCase().includes(q) ||
         (order.items_summary || '').toLowerCase().includes(q);
       const customerMatch = (order.customer_display || '').toLowerCase().includes(q);
       return idMatch || productMatch || customerMatch;
     });
-  }, [orders, searchQuery]);
+  }, [processedOrders, selectedStatus, searchQuery]);
 
   // Initial loading state (no cached data yet)
   const isInitialLoading = isLoading && !data;
@@ -329,99 +348,152 @@ function GlobalOrdersContent() {
           </div>
         )}
 
-        {/* Empty State */}
-        {!isInitialLoading && !error && filteredOrders.length === 0 && (
-          <div className="bg-surface border border-border rounded-xl p-12 text-center space-y-4 max-w-md mx-auto my-12">
-            <div className="w-12 h-12 rounded-xl bg-surface-raised border border-border flex items-center justify-center mx-auto text-foreground-muted">
-              <FontAwesomeIcon icon={faBox} className="w-6 h-6" />
-            </div>
-            <div className="space-y-1">
-              <h3 className="text-base font-bold text-foreground">Tidak Ada Pesanan</h3>
-              <p className="text-xs text-foreground-muted">
-                {selectedStatus !== 'all' || searchQuery
-                  ? 'Tidak ada pesanan yang sesuai dengan filter atau kata kunci saat ini.'
-                  : 'Belum ada transaksi pesanan yang tercatat dalam sistem.'}
-              </p>
-            </div>
-            {selectedStatus !== 'all' || searchQuery ? (
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => {
-                  setSelectedStatus('all');
-                  setSearchQuery('');
-                }}
-              >
-                Reset Filter
-              </Button>
-            ) : (
+        {/* Empty State when no real transactions exist in database */}
+        {!isInitialLoading && !error && rawOrders.length === 0 && (
+          <div className="space-y-8 my-8">
+            <div className="bg-surface border border-border rounded-xl p-8 text-center space-y-3 max-w-md mx-auto">
+              <div className="w-12 h-12 rounded-xl bg-surface-raised border border-border flex items-center justify-center mx-auto text-primary">
+                <FontAwesomeIcon icon={faBox} className="w-6 h-6" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-base font-bold text-foreground">Belum Ada Transaksi Aktif</h3>
+                <p className="text-xs text-foreground-muted">
+                  Antrean transaksi saat ini sedang kosong. Silakan jelajahi lisensi digital resmi dan promo aktif di bawah ini.
+                </p>
+              </div>
               <Link href="/products">
-                <Button size="sm" className="gap-2">
+                <Button size="sm" className="gap-2 mt-2">
                   <span>Mulai Belanja</span>
                   <FontAwesomeIcon icon={faArrowRight} className="w-3.5 h-3.5" />
                 </Button>
               </Link>
+            </div>
+
+            {/* Rekomendasi Produk Pilihan & Promo Aktif */}
+            {catalogProducts.length > 0 && (
+              <div className="space-y-4 pt-4 border-t border-border">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="p-1.5 rounded-lg bg-primary/10 text-primary">
+                      <FontAwesomeIcon icon={faBolt} className="w-4 h-4" />
+                    </span>
+                    <div>
+                      <h2 className="text-base font-bold text-foreground">Rekomendasi Produk & Promo Aktif</h2>
+                      <p className="text-xs text-foreground-muted">Produk digital resmi terpopuler dengan garansi aktif.</p>
+                    </div>
+                  </div>
+                  <Link href="/products" className="text-xs font-semibold text-primary hover:underline flex items-center gap-1">
+                    <span>Lihat Semua</span>
+                    <FontAwesomeIcon icon={faArrowRight} className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {catalogProducts.slice(0, 4).map((product) => (
+                    <ProductCard key={product.id} product={product} />
+                  ))}
+                </div>
+              </div>
             )}
+          </div>
+        )}
+
+        {/* Empty State when filters or search query return 0 results */}
+        {!isInitialLoading && !error && rawOrders.length > 0 && filteredOrders.length === 0 && (
+          <div className="bg-surface border border-border rounded-xl p-8 text-center space-y-3 max-w-md mx-auto my-8">
+            <div className="w-10 h-10 rounded-xl bg-surface-raised border border-border flex items-center justify-center mx-auto text-foreground-muted">
+              <FontAwesomeIcon icon={faMagnifyingGlass} className="w-4 h-4" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-sm font-bold text-foreground">Tidak Ada Pesanan Ditemukan</h3>
+              <p className="text-xs text-foreground-muted">
+                Tidak ada pesanan yang sesuai dengan filter status atau kata kunci pencarian Anda.
+              </p>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setSelectedStatus('all');
+                setSearchQuery('');
+              }}
+            >
+              Reset Filter & Pencarian
+            </Button>
           </div>
         )}
 
         {/* Global Orders List */}
         {!isInitialLoading && !error && filteredOrders.length > 0 && (
           <div className={`space-y-3 transition-opacity duration-150 ${isFetching ? 'opacity-85' : 'opacity-100'}`}>
-            {filteredOrders.map((order) => (
-              <div
-                key={order.id + order.order_date}
-                data-gsap="order-card"
-                className="bg-surface border border-border rounded-xl p-4 sm:p-5 transition-all duration-150 hover:border-primary/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-              >
-                <div className="flex items-start gap-3.5">
-                  <div className="w-10 h-10 rounded-xl bg-surface-raised border border-border flex items-center justify-center text-primary shrink-0 mt-0.5">
-                    <FontAwesomeIcon icon={faBox} className="w-4 h-4" />
-                  </div>
-                  <div data-gsap="order-info" className="space-y-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-mono font-bold text-sm text-foreground">
-                        {order.id}
-                      </span>
-                      <span className="text-foreground-muted text-xs">—</span>
-                      <span className="text-xs text-foreground font-medium inline-flex items-center gap-1">
-                        <FontAwesomeIcon icon={faUserCheck} className="w-3 h-3 text-foreground-muted" />
-                        <span>{order.customer_display}</span>
-                      </span>
+            {filteredOrders.map((order) => {
+              const displayDate = order.effectiveDate || order.order_date;
+              return (
+                <div
+                  key={order.id + displayDate}
+                  data-gsap="order-card"
+                  className="bg-surface border border-border rounded-xl p-4 sm:p-5 transition-all duration-150 hover:border-primary/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                >
+                  <div className="flex items-start gap-3.5">
+                    <div className="w-10 h-10 rounded-xl bg-surface-raised border border-border flex items-center justify-center text-primary shrink-0 mt-0.5">
+                      <FontAwesomeIcon icon={faBox} className="w-4 h-4" />
                     </div>
-                    <p className="text-xs font-semibold text-foreground">
-                      {order.product_name}
-                    </p>
-                    <div className="flex flex-wrap items-center gap-2 text-[11px] text-foreground-muted">
-                      <span>{order.items_count} item lisensi</span>
-                      <span>—</span>
-                      <span>{formatRelativeTime(order.order_date)}</span>
-                      <span>—</span>
-                      <span>
-                        {parseSafeDate(order.order_date).toLocaleDateString('id-ID', {
-                          day: 'numeric',
-                          month: 'short',
-                          year: 'numeric',
-                        })}{' '}
-                        {parseSafeDate(order.order_date).toLocaleTimeString('id-ID', {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}{' '}
-                        WIB
-                      </span>
+                    <div data-gsap="order-info" className="space-y-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-mono font-bold text-sm text-foreground">
+                          {order.id}
+                        </span>
+                        <span className="text-foreground-muted text-xs">—</span>
+                        <span className="text-xs text-foreground font-medium inline-flex items-center gap-1">
+                          <FontAwesomeIcon icon={faUserCheck} className="w-3 h-3 text-foreground-muted" />
+                          <span>{order.customer_display}</span>
+                        </span>
+                      </div>
+                      <p className="text-xs font-semibold text-foreground">
+                        {order.product_name}
+                      </p>
+                      <div className="flex flex-wrap items-center gap-2 text-[11px] text-foreground-muted">
+                        <span>{order.items_count} item lisensi</span>
+                        <span>—</span>
+                        <span>{formatRelativeTime(displayDate, now)}</span>
+                        <span>—</span>
+                        <span>
+                          {parseSafeDate(displayDate).toLocaleDateString('id-ID', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric',
+                          })}{' '}
+                          {parseSafeDate(displayDate).toLocaleTimeString('id-ID', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}{' '}
+                          WIB
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-border">
-                  <div className="flex items-center gap-1.5 text-[11px] text-foreground-muted">
-                    <FontAwesomeIcon icon={faShieldHalved} className="w-3 h-3 text-status-success" />
-                    <span>Garansi Resmi</span>
+                  <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-border">
+                    {order.effectiveStatus === 'processing' ? (
+                      <div className="flex items-center gap-1.5 text-[11px] text-foreground-muted">
+                        <span className="w-1.5 h-1.5 rounded-full bg-status-info animate-ping" />
+                        <span>Estimasi 5-8 Menit</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1.5 text-[11px] text-foreground-muted">
+                        <FontAwesomeIcon icon={faShieldHalved} className="w-3 h-3 text-status-success" />
+                        <span>Garansi Resmi</span>
+                      </div>
+                    )}
+                    {getStatusBadge(
+                      order.effectiveStatus,
+                      order.isDynamicActivity,
+                      order.remainingProcessingSeconds
+                    )}
                   </div>
-                  {getStatusBadge(order.order_status)}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
