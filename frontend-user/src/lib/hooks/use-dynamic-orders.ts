@@ -34,7 +34,7 @@ export interface ProcessedOrder extends PublicOrder {
   effectiveDate: string;
 }
 
-const STORAGE_KEY = 'asterra_orders_dynamic_timeline_v2';
+const STORAGE_KEY = 'asterra_orders_dynamic_timeline_v3';
 export const MIN_TOTAL_DURATION_MS = 3 * 60 * 1000; // 3 menit (180.000 ms)
 export const MAX_TOTAL_DURATION_MS = 8 * 60 * 1000; // 8 menit (480.000 ms)
 export const UPDATE_INTERVAL_MS = 3000;             // 3 detik interval agar halaman tetap ringan
@@ -98,16 +98,45 @@ export const DEMO_PRODUCTS: DemoProductTemplate[] = [
   },
 ];
 
-const DEMO_CUSTOMERS = [
-  'Pelanggan Demo #A12',
-  'Pengguna Demo (ID-38)',
-  'Pelanggan Demo #B45',
-  'Pengguna Demo (ID-71)',
-  'Pelanggan Demo #C29',
-  'Pengguna Demo (ID-54)',
-  'Pelanggan Demo #D88',
-  'Pengguna Demo (ID-92)',
+/**
+ * Kumpulan nama samaran konsisten dan natural:
+ * Pola: Huruf awal kapital, 4 asterisk, huruf akhir kecil (X****y)
+ * Tanpa awalan huruf M mendominasi dan tanpa embel-embel ID pelanggan buatan / label Demo.
+ */
+export const MASKED_CUSTOMERS: string[] = [
+  'A****a', // Adinda / Anisa
+  'R****n', // Rayhan / Ridwan
+  'D****i', // Dewi / Dwiki
+  'F****a', // Farida / Fatiya
+  'N****i', // Nabila / Novita
+  'Y****a', // Yudha / Yoga
+  'S****a', // Salsa / Safira
+  'K****n', // Kevin / Krisna
+  'B****g', // Bintang / Bambang
+  'Z****a', // Zahra / Zaskia
+  'G****g', // Gilang / Galang
+  'H****a', // Hendra / Hanifa
+  'I****m', // Ilham / Ikhram
+  'C****a', // Citra / Clarissa
+  'W****u', // Wahyu / Wisnu
+  'P****a', // Pratama / Pandu
+  'T****h', // Teguh / Thoriq
+  'E****o', // Eko / Erlangga
+  'L****s', // Laras / Lestari
+  'V****a', // Vania / Valerie
+  'J****n', // Jonathan / Johan
+  'O****a', // Olivia / Oktavia
 ];
+
+/**
+ * Memilih nama samaran yang belum digunakan pada aktivitas yang terlihat bersamaan
+ */
+export function pickNonOverlappingCustomer(existingNames: string[] = []): string {
+  const used = new Set(existingNames);
+  const available = MASKED_CUSTOMERS.filter((n) => !used.has(n));
+  const pool = available.length > 0 ? available : MASKED_CUSTOMERS;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
 
 /**
  * Menghasilkan total durasi bervariasi antara 3–8 menit (180.000 - 480.000 ms)
@@ -228,19 +257,28 @@ export function writeStoredTimeline(activities: DynamicActivity[]) {
 
 /**
  * Membuat objek aktivitas baru dengan variasi konten produk yang tidak berulang
+ * dan nama samaran natural tanpa label demo
  */
 function createNewDynamicActivity(
   startTime: number,
   lastProductIndex: number,
-  lastDurationMs?: number
+  lastDurationMs?: number,
+  existingCustomerNames: string[] = []
 ): DynamicActivity {
+  const now = new Date(startTime);
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
   const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-  const id = `AST-ACT-${randomSuffix}`;
+  const id = `AST-ORD-${y}${m}${d}-${randomSuffix}`;
 
   // Pastikan produk berikutnya berbeda dari produk sebelumnya (variasi konten)
-  const productIndex = (lastProductIndex + 1 + Math.floor(Math.random() * (DEMO_PRODUCTS.length - 1))) % DEMO_PRODUCTS.length;
+  const productIndex =
+    (lastProductIndex + 1 + Math.floor(Math.random() * (DEMO_PRODUCTS.length - 1))) %
+    DEMO_PRODUCTS.length;
   const prod = DEMO_PRODUCTS[productIndex];
-  const customer = DEMO_CUSTOMERS[Math.floor(Math.random() * DEMO_CUSTOMERS.length)];
+  // Pilih nama samaran yang tidak duplikat dengan aktivitas yang sedang tampil bersamaan
+  const customer = pickNonOverlappingCustomer(existingCustomerNames);
 
   // Total durasi bervariasi antara 3–8 menit (misal 3m, 4m, 5m, 6m, 7m, 8m)
   const totalDurationMs = getRandomTotalDuration(lastDurationMs);
@@ -263,34 +301,43 @@ function createNewDynamicActivity(
 
 /**
  * Inisialisasi awal jadwal tumpang tindih (overlapping schedule)
- * Menghasilkan 3 aktivitas dengan waktu mulai bertingkat (staggered) dan durasi berbeda
- * sehingga pengunjung langsung dapat mengamati beberapa aktivitas berstatus Processing bersamaan
- * dan transisi status independen secara real-time.
+ * Menghasilkan 3 aktivitas dengan waktu mulai bertingkat (staggered), durasi berbeda,
+ * serta nama samaran yang berbeda satu sama lain.
  */
 function initializeOverlappingSchedule(now: number): DynamicActivity[] {
-  // Aktivitas 1: Dimulai ~1.8 menit lalu, total durasi 3.5 menit (segera transisi ke Sukses)
+  // Aktivitas 1: Dimulai ~1.8 menit lalu, total durasi 3.5 menit
   const act1Duration = 3.5 * 60 * 1000;
   const act1Trans = Math.round(act1Duration * 0.65); // ~2.27m
   const act1 = {
-    ...createNewDynamicActivity(now - 110 * 1000, 0, act1Duration),
+    ...createNewDynamicActivity(now - 110 * 1000, 0, act1Duration, []),
     totalDurationMs: act1Duration,
     transitionMs: act1Trans,
   };
 
-  // Aktivitas 2: Dimulai ~1 menit lalu, total durasi 6 menit (masih aktif di Processing)
+  // Aktivitas 2: Dimulai ~1 menit lalu, total durasi 6 menit
   const act2Duration = 6 * 60 * 1000;
   const act2Trans = Math.round(act2Duration * 0.65); // ~3.9m
   const act2 = {
-    ...createNewDynamicActivity(now - 60 * 1000, act1.productIndex, act2Duration),
+    ...createNewDynamicActivity(
+      now - 60 * 1000,
+      act1.productIndex,
+      act2Duration,
+      [act1.customer_display]
+    ),
     totalDurationMs: act2Duration,
     transitionMs: act2Trans,
   };
 
-  // Aktivitas 3: Dimulai ~15 detik lalu, total durasi 4.5 menit (baru mulai Processing)
+  // Aktivitas 3: Dimulai ~15 detik lalu, total durasi 4.5 menit
   const act3Duration = 4.5 * 60 * 1000;
   const act3Trans = Math.round(act3Duration * 0.65); // ~2.9m
   const act3 = {
-    ...createNewDynamicActivity(now - 15 * 1000, act2.productIndex, act3Duration),
+    ...createNewDynamicActivity(
+      now - 15 * 1000,
+      act2.productIndex,
+      act3Duration,
+      [act1.customer_display, act2.customer_display]
+    ),
     totalDurationMs: act3Duration,
     transitionMs: act3Trans,
   };
@@ -305,7 +352,7 @@ function initializeOverlappingSchedule(now: number): DynamicActivity[] {
  * - Jadwal aktivitas tumpang tindih (overlapping): beberapa aktivitas boleh Processing bersamaan.
  * - Jarak antarkemunculan bervariasi dalam hitungan menit (1–3 aktivitas baru dalam 8 menit).
  * - Variasi konten produk terjamin tidak mengulang item yang sama berturut-turut.
- * - Menggunakan identitas khusus demo (tidak disajikan sebagai bukti pelanggan nyata).
+ * - Menggunakan nama samaran konsisten dan natural (X****y) tanpa label demo.
  * - Pengelolaan waktu berbasis waktu sistem aktual (Date.now()) dengan pembersihan timer aman.
  */
 export function useDynamicOrderActivities(rawOrders: PublicOrder[]) {
@@ -351,7 +398,7 @@ export function useDynamicOrderActivities(rawOrders: PublicOrder[]) {
     const newest = activities[0];
     const timeSinceNewestMs = currentSystemTime - newest.startTime;
 
-    // Jarak antarkemunculan bervariasi dalam hitungan menit: antara 1.5 sampai 2.5 menit (90.000 - 150.000 ms)
+    // Jarak antarkemunculan bervariasi dalam hitungan menit: ~2 menit (120.000 ms)
     const staggerIntervalMs = 2 * 60 * 1000;
 
     // Hitung jumlah aktivitas yang dimulai dalam rentang 8 menit terakhir
@@ -361,10 +408,12 @@ export function useDynamicOrderActivities(rawOrders: PublicOrder[]) {
 
     // Boleh ada 1–3 aktivitas baru dalam rentang 8 menit
     if (timeSinceNewestMs >= staggerIntervalMs && activitiesInLast8Min.length < 3) {
+      const currentNames = activities.slice(0, 5).map((a) => a.customer_display);
       const newAct = createNewDynamicActivity(
         currentSystemTime,
         newest.productIndex,
-        newest.totalDurationMs
+        newest.totalDurationMs,
+        currentNames
       );
 
       // Pertahankan riwayat (maksimum 12 aktivitas terakhir agar storage tetap bersih)
