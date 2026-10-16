@@ -203,7 +203,7 @@ function GlobalOrdersContent() {
     return data?.data || [];
   }, [data]);
 
-  // Hook Aktivitas Dinamis Frontend
+  // Hook Aktivitas Dinamis Frontend dengan jadwal bervariasi dan tumpang tindih
   const { processedOrders, now } = useDynamicOrderActivities(rawOrders);
 
   // Fetch Catalog Products untuk rekomendasi jika antrean transaksi kosong
@@ -348,8 +348,8 @@ function GlobalOrdersContent() {
           </div>
         )}
 
-        {/* Empty State when no real transactions exist in database */}
-        {!isInitialLoading && !error && rawOrders.length === 0 && (
+        {/* Empty State when no transactions exist at all */}
+        {!isInitialLoading && !error && processedOrders.length === 0 && (
           <div className="space-y-8 my-8">
             <div className="bg-surface border border-border rounded-xl p-8 text-center space-y-3 max-w-md mx-auto">
               <div className="w-12 h-12 rounded-xl bg-surface-raised border border-border flex items-center justify-center mx-auto text-primary">
@@ -399,7 +399,7 @@ function GlobalOrdersContent() {
         )}
 
         {/* Empty State when filters or search query return 0 results */}
-        {!isInitialLoading && !error && rawOrders.length > 0 && filteredOrders.length === 0 && (
+        {!isInitialLoading && !error && processedOrders.length > 0 && filteredOrders.length === 0 && (
           <div className="bg-surface border border-border rounded-xl p-8 text-center space-y-3 max-w-md mx-auto my-8">
             <div className="w-10 h-10 rounded-xl bg-surface-raised border border-border flex items-center justify-center mx-auto text-foreground-muted">
               <FontAwesomeIcon icon={faMagnifyingGlass} className="w-4 h-4" />
@@ -477,7 +477,7 @@ function GlobalOrdersContent() {
                     {order.effectiveStatus === 'processing' ? (
                       <div className="flex items-center gap-1.5 text-[11px] text-foreground-muted">
                         <span className="w-1.5 h-1.5 rounded-full bg-status-info animate-ping" />
-                        <span>Estimasi 5-8 Menit</span>
+                        <span>Estimasi 3-8 Menit</span>
                       </div>
                     ) : (
                       <div className="flex items-center gap-1.5 text-[11px] text-foreground-muted">
