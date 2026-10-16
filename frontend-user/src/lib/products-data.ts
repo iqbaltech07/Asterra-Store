@@ -15,6 +15,8 @@ export interface ProductItem {
   imageUrl: string;
   popular?: boolean;
   brand?: string;
+  providerCode?: string;
+  provider_code?: string;
   guaranteeTitle?: string;
   guaranteeDesc?: string;
   processTitle?: string;

@@ -203,14 +203,14 @@ function GlobalOrdersContent() {
     return data?.data || [];
   }, [data]);
 
-  // Hook Aktivitas Dinamis Frontend dengan jadwal bervariasi dan tumpang tindih
-  const { processedOrders, now } = useDynamicOrderActivities(rawOrders);
-
-  // Fetch Catalog Products untuk rekomendasi jika antrean transaksi kosong
-  const { data: catalogResponse } = useCatalogProducts();
+  // Fetch Catalog Products untuk rekomendasi dan sinkronisasi aktivitas transaksi publik
+  const { data: catalogResponse, isLoading: isCatalogLoading } = useCatalogProducts();
   const catalogProducts = useMemo(() => {
     return catalogResponse?.data || [];
   }, [catalogResponse?.data]);
+
+  // Hook Aktivitas Dinamis Frontend tersinkronisasi dengan katalog produk aktif
+  const { processedOrders, now } = useDynamicOrderActivities(rawOrders, catalogProducts);
 
   const filteredOrders = useMemo(() => {
     let list = processedOrders;
@@ -222,7 +222,9 @@ function GlobalOrdersContent() {
     return list.filter((order) => {
       const idMatch =
         (order.id || '').toLowerCase().includes(q) ||
-        (order.raw_id || '').toLowerCase().includes(q);
+        (order.raw_id || '').toLowerCase().includes(q) ||
+        (order.product_id || '').toLowerCase().includes(q) ||
+        (order.product_sku || '').toLowerCase().includes(q);
       const productMatch =
         (order.product_name || '').toLowerCase().includes(q) ||
         (order.items_summary || '').toLowerCase().includes(q);
@@ -231,8 +233,8 @@ function GlobalOrdersContent() {
     });
   }, [processedOrders, selectedStatus, searchQuery]);
 
-  // Initial loading state (no cached data yet)
-  const isInitialLoading = isLoading && !data;
+  // Initial loading state (tunggu hingga data pesanan atau katalog awal tersedia)
+  const isInitialLoading = (isLoading && !data) || (isCatalogLoading && !catalogResponse);
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col font-sans selection:bg-primary/20 selection:text-primary">
@@ -477,7 +479,7 @@ function GlobalOrdersContent() {
                     {order.effectiveStatus === 'processing' ? (
                       <div className="flex items-center gap-1.5 text-[11px] text-foreground-muted">
                         <span className="w-1.5 h-1.5 rounded-full bg-status-info animate-ping" />
-                        <span>Estimasi 3-8 Menit</span>
+                        <span>Estimasi 10-30 Menit</span>
                       </div>
                     ) : (
                       <div className="flex items-center gap-1.5 text-[11px] text-foreground-muted">
