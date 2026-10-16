@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { parseProductDurations } from '@/lib/services/product-duration';
@@ -8,21 +9,50 @@ import { ProductItem } from '@/lib/products-data';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || process.env.BACKEND_URL || 'http://localhost:8000';
 
-async function fetchActiveProducts(): Promise<ProductItem[]> {
+// Server-side in-memory micro-cache (60 seconds) for catalog products
+let catalogMemoryCache: { data: ProductItem[]; timestamp: number } | null = null;
+const CATALOG_CACHE_TTL = 60 * 1000;
+
+async function fetchActiveProductsImpl(): Promise<ProductItem[]> {
+  const now = Date.now();
+  if (catalogMemoryCache && now - catalogMemoryCache.timestamp < CATALOG_CACHE_TTL) {
+    return catalogMemoryCache.data;
+  }
   try {
-    const res = await fetch(`${BACKEND_URL}/api/v1/products`, { next: { revalidate: 60 } });
-    if (!res.ok) return [];
+    const res = await fetch(`${BACKEND_URL}/api/v1/products`, {
+      next: { revalidate: 60 },
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!res.ok) return catalogMemoryCache?.data || [];
     const json = await res.json();
-    return json.data || [];
+    const products: ProductItem[] = json.data || [];
+    if (products.length > 0) {
+      catalogMemoryCache = { data: products, timestamp: now };
+    }
+    return products;
   } catch (err) {
     console.error('[Product Detail] Failed to fetch products from backend:', err);
-    return [];
+    return catalogMemoryCache?.data || [];
   }
 }
 
-async function fetchProductById(id: string): Promise<ProductItem | null> {
+// React cache deduplicates concurrent calls between generateMetadata and ProductDetailPage
+const fetchActiveProducts = cache(fetchActiveProductsImpl);
+
+async function fetchProductByIdImpl(id: string, activeProducts?: ProductItem[]): Promise<ProductItem | null> {
+  // Check in-memory active products first to eliminate redundant network roundtrip
+  if (activeProducts && activeProducts.length > 0) {
+    const found = activeProducts.find(
+      (p) => p.id === id || p.providerCode === id || (p as any).provider_code === id
+    );
+    if (found) return found;
+  }
+
   try {
-    const res = await fetch(`${BACKEND_URL}/api/v1/products/${id}`, { next: { revalidate: 60 } });
+    const res = await fetch(`${BACKEND_URL}/api/v1/products/${id}`, {
+      next: { revalidate: 60 },
+      signal: AbortSignal.timeout(5000),
+    });
     if (!res.ok) return null;
     const json = await res.json();
     if (!json || json.success === false) return null;
@@ -33,6 +63,8 @@ async function fetchProductById(id: string): Promise<ProductItem | null> {
   }
 }
 
+const fetchProductById = cache(fetchProductByIdImpl);
+
 interface PageProps {
   params: Promise<{ id: string }>;
 }
@@ -41,7 +73,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { id } = await params;
   const activeProducts = await fetchActiveProducts();
   const familyData = resolveProductFamily(id, activeProducts);
-  const baseProduct = await fetchProductById(id);
+  const baseProduct = await fetchProductById(id, activeProducts);
 
   const product = familyData
     ? {
@@ -114,7 +146,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
   const { id } = await params;
   const activeProducts = await fetchActiveProducts();
   const familyData = resolveProductFamily(id, activeProducts);
-  const baseProduct = await fetchProductById(id);
+  const baseProduct = await fetchProductById(id, activeProducts);
 
   if (!familyData && (!baseProduct || baseProduct.status === 'archived')) {
     notFound();
