@@ -80,3 +80,76 @@ export function getAppBaseUrl(
   // 6. Default local development URL
   return 'http://localhost:3000';
 }
+
+/**
+ * Validate and sanitize redirect URLs to ensure they only point to safe internal relative paths.
+ * Prevents Open Redirect vulnerabilities (e.g. //evil.com, https://evil.com, javascript:).
+ */
+export function getSafeInternalRedirectUrl(
+  targetUrl: string | null | undefined,
+  fallback: string = '/'
+): string {
+  if (!targetUrl || typeof targetUrl !== 'string') {
+    return fallback;
+  }
+
+  const trimmed = targetUrl.trim();
+  if (!trimmed) {
+    return fallback;
+  }
+
+  // Reject javascript:, data:, vbscript: protocols
+  if (/^(javascript|data|vbscript):/i.test(trimmed)) {
+    return fallback;
+  }
+
+  // Reject protocol-relative URLs (e.g. //evil.com, /\evil.com, or \evil.com)
+  if (trimmed.startsWith('//') || trimmed.startsWith('/\\') || trimmed.startsWith('\\')) {
+    return fallback;
+  }
+
+  // If it is a valid relative path starting with /
+  if (trimmed.startsWith('/')) {
+    // Avoid redirecting to /login itself to prevent redirect loops
+    if (trimmed === '/login' || trimmed.startsWith('/login?')) {
+      return fallback;
+    }
+    return trimmed;
+  }
+
+  // If an absolute URL was passed, verify its origin matches the application domain
+  try {
+    const parsed = new URL(trimmed);
+    const appBase = getAppBaseUrl();
+    const appOrigin = new URL(appBase).origin.toLowerCase();
+    const parsedOrigin = parsed.origin.toLowerCase();
+
+    const allowedOrigins = [
+      appOrigin,
+      'https://asterrastore.biz.id',
+      'https://www.asterrastore.biz.id',
+      'https://asterrastore.vercel.app',
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'http://127.0.0.1:3000',
+      'http://127.0.0.1:3001',
+    ];
+
+    if (
+      allowedOrigins.some(
+        (allowed) => parsedOrigin === allowed || parsedOrigin.endsWith('.asterrastore.biz.id')
+      )
+    ) {
+      const pathWithQuery = parsed.pathname + parsed.search + parsed.hash;
+      if (pathWithQuery === '/login' || pathWithQuery.startsWith('/login?')) {
+        return fallback;
+      }
+      return pathWithQuery;
+    }
+  } catch {
+    // Parsing failed, not a valid URL
+  }
+
+  return fallback;
+}
+

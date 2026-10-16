@@ -1,8 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
+import { getSafeInternalRedirectUrl } from '@/lib/utils/url';
+import { appendReferralParams } from '@/lib/utils/referral';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -27,8 +29,10 @@ import {
   faShieldHalved,
 } from '@fortawesome/free-solid-svg-icons';
 
-export default function RegisterPage() {
-  const router = useRouter();
+function RegisterFormContent() {
+  const searchParams = useSearchParams();
+  const rawCallback = searchParams.get('callbackUrl') || '/';
+  const safeCallback = getSafeInternalRedirectUrl(rawCallback, '/');
   const { login } = useAuthStore();
 
   const [name, setName] = useState('');
@@ -90,9 +94,9 @@ export default function RegisterPage() {
       // Update Zustand state
       login(data.user);
 
-      setSuccessMessage('Pendaftaran berhasil! Mengalihkan ke halaman utama...');
+      setSuccessMessage('Pendaftaran berhasil! Mengalihkan ke halaman tujuan...');
       setTimeout(() => {
-        window.location.href = '/';
+        window.location.href = appendReferralParams(safeCallback);
       }, 500);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Terjadi kesalahan sistem.';
@@ -251,7 +255,7 @@ export default function RegisterPage() {
 
             <p className="text-xs text-center text-[#121A2A]/60">
               Sudah memiliki akun?{' '}
-              <Link href="/login" className="text-[#C96F55] font-bold hover:underline">
+              <Link href={`/login?callbackUrl=${encodeURIComponent(safeCallback)}`} className="text-[#C96F55] font-bold hover:underline">
                 Masuk di sini
               </Link>
             </p>
@@ -259,5 +263,22 @@ export default function RegisterPage() {
         </form>
       </Card>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-white flex items-center justify-center">
+          <div className="flex items-center gap-3 text-sm text-[#121A2A]/70">
+            <FontAwesomeIcon icon={faSpinner} className="w-4 h-4 animate-spin text-[#C96F55]" />
+            <span>Memuat halaman pendaftaran...</span>
+          </div>
+        </div>
+      }
+    >
+      <RegisterFormContent />
+    </Suspense>
   );
 }

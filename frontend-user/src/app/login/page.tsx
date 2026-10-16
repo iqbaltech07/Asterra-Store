@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -11,9 +11,11 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { signIn } from '@/lib/auth-client';
+import { signIn, useSession } from '@/lib/auth-client';
+import { useAuthStore } from '@/store/use-auth-store';
 import { AsterraLogo } from '@/components/ui/asterra-logo';
 import { appendReferralParams } from '@/lib/utils/referral';
+import { getSafeInternalRedirectUrl } from '@/lib/utils/url';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faArrowLeft,
@@ -28,10 +30,23 @@ function LoginFormContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const rawCallback = searchParams.get('callbackUrl') || '/';
-  const callbackUrl = appendReferralParams(rawCallback);
+  const safeCallback = getSafeInternalRedirectUrl(rawCallback, '/');
+  const callbackUrl = appendReferralParams(safeCallback);
 
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const { data: session, isPending } = useSession();
+  const { user: legacyUser } = useAuthStore();
+  const isAuthenticated = Boolean(session?.user || legacyUser);
+
+  // If customer is already authenticated, redirect safely to intended target or /profile
+  useEffect(() => {
+    if (!isPending && isAuthenticated) {
+      const target = getSafeInternalRedirectUrl(rawCallback, '/profile');
+      router.replace(appendReferralParams(target));
+    }
+  }, [isPending, isAuthenticated, rawCallback, router]);
 
   // Social Provider Login (Google)
   const handleGoogleLogin = async () => {

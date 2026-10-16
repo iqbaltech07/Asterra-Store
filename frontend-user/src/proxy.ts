@@ -152,38 +152,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     }
   }
 
-  // 4. Customer Login Portal (/login)
-  if (pathname === '/login') {
-    const customerSession =
-      request.cookies.get('better-auth.session_token')?.value ||
-      request.cookies.get('__Secure-better-auth.session_token')?.value ||
-      request.cookies.get('asterra_token')?.value ||
-      request.cookies.get('asterra_session')?.value;
 
-    // If customer is already logged in -> redirect to /profile (or callbackUrl)
-    if (customerSession) {
-      const callbackUrl = request.nextUrl.searchParams.get('callbackUrl') || '/profile';
-      const redirectUrl = new URL(callbackUrl, request.url);
-
-      const cookieRef = request.cookies.get('asterra_ref')?.value;
-      const cookieCamp =
-        request.cookies.get('asterra_campaign')?.value ||
-        request.cookies.get('asterra_utm_campaign')?.value;
-
-      if (cookieRef && !redirectUrl.searchParams.has('ref')) {
-        redirectUrl.searchParams.set('ref', cookieRef);
-      }
-      if (
-        cookieCamp &&
-        !redirectUrl.searchParams.has('campaign') &&
-        !redirectUrl.searchParams.has('utm_campaign')
-      ) {
-        redirectUrl.searchParams.set('campaign', cookieCamp);
-      }
-
-      return NextResponse.redirect(redirectUrl);
-    }
-  }
 
   return applySecurityHeaders(NextResponse.next());
 }
@@ -205,7 +174,6 @@ export const config = {
     '/sales/:path*',
     '/api/v1/admin/:path*',
     '/profile/:path*',
-    '/login',
   ],
 };
 

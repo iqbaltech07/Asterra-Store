@@ -3,6 +3,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { usePathname } from 'next/navigation';
+import Link from 'next/link';
+import { getSafeInternalRedirectUrl } from '@/lib/utils/url';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faLock,
@@ -63,26 +65,21 @@ export function AuthRequiredModal({
     typeof window !== 'undefined'
       ? window.location.pathname + window.location.search
       : pathname || '/';
-  const effectiveCallback = callbackUrl || currentPathWithSearch || '/';
+  const effectiveCallback = getSafeInternalRedirectUrl(
+    callbackUrl || currentPathWithSearch || '/',
+    '/'
+  );
   const loginUrl = `/login?callbackUrl=${encodeURIComponent(effectiveCallback)}`;
   const registerUrl = `/register?callbackUrl=${encodeURIComponent(effectiveCallback)}`;
 
   const handleNavigateToLogin = (e: React.MouseEvent) => {
-    e.preventDefault();
     e.stopPropagation();
     onClose();
-    if (typeof window !== 'undefined') {
-      window.location.assign(loginUrl);
-    }
   };
 
   const handleNavigateToRegister = (e: React.MouseEvent) => {
-    e.preventDefault();
     e.stopPropagation();
     onClose();
-    if (typeof window !== 'undefined') {
-      window.location.assign(registerUrl);
-    }
   };
 
   const modalJSX = (
@@ -149,22 +146,22 @@ export function AuthRequiredModal({
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-3 pt-1">
-            <a
+            <Link
               href={loginUrl}
               onClick={handleNavigateToLogin}
               className="flex-1 inline-flex items-center justify-center whitespace-nowrap rounded-xl transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C96F55]/40 bg-[#C96F55] text-white hover:bg-[#B86047] active:bg-[#A9553E] shadow-sm font-bold text-xs sm:text-sm h-11 gap-2 cursor-pointer active:scale-98"
             >
               <FontAwesomeIcon icon={faRightToBracket} className="text-xs pointer-events-none" />
               <span>Masuk Sekarang</span>
-            </a>
-            <a
+            </Link>
+            <Link
               href={registerUrl}
               onClick={handleNavigateToRegister}
               className="flex-1 inline-flex items-center justify-center whitespace-nowrap rounded-xl transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#121A2A]/20 border border-[rgba(18,26,42,0.15)] bg-white hover:bg-[#F8FAFC] active:bg-white text-[#121A2A] font-semibold text-xs sm:text-sm h-11 gap-2 cursor-pointer active:scale-98"
             >
               <FontAwesomeIcon icon={faUserPlus} className="text-xs pointer-events-none" />
               <span>Daftar Akun Baru</span>
-            </a>
+            </Link>
           </div>
         </div>
 
