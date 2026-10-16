@@ -44,7 +44,7 @@ export interface HomepagePreloaderProps {
   onPreloaderComplete?: () => void;
 }
 
-// Track if homepage has already been preloaded during client-side SPA navigation (resets on page refresh / F5)
+// Track if homepage has already been preloaded during client-side SPA navigation
 let hasPreloadedInSpa = false;
 
 // Stable weighted tasks strictly summing to 100%
@@ -91,16 +91,22 @@ export function HomepagePreloader({
   const animFrameRef = useRef<number | null>(null);
   const isCompletedRef = useRef(false);
 
-  // Clean up any stale sessionStorage lock and ensure preloader appears on initial visit & refresh (F5)
+  // Check if preloader has already completed in this session (e.g. page refresh / F5)
   useEffect(() => {
     try {
-      sessionStorage.removeItem('asterra_home_preloaded');
-    } catch {}
-
-    if (hasPreloadedInSpa) {
-      onPreloaderComplete?.();
-      return;
+      const alreadyPreloaded = sessionStorage.getItem('asterra_home_preloaded');
+      if (alreadyPreloaded === 'true' || hasPreloadedInSpa) {
+        hasPreloadedInSpa = true;
+        onPreloaderComplete?.();
+        return;
+      }
+    } catch {
+      if (hasPreloadedInSpa) {
+        onPreloaderComplete?.();
+        return;
+      }
     }
+
     setShouldRender(true);
   }, [onPreloaderComplete]);
 
@@ -297,7 +303,7 @@ export function HomepagePreloader({
               setIsExiting(true);
               hasPreloadedInSpa = true;
               try {
-                sessionStorage.removeItem('asterra_home_preloaded');
+                sessionStorage.setItem('asterra_home_preloaded', 'true');
               } catch {}
               // Complete callback after exit animation finishes
               setTimeout(() => {

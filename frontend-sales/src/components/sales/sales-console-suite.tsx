@@ -33,7 +33,6 @@ import {
   Users,
   ExternalLink,
   Flame,
-  Tag,
   Calendar,
 } from 'lucide-react';
 import { AdminTab } from '@/components/admin/admin-sidebar';

@@ -7,7 +7,6 @@
 
 import { signOut } from '@/lib/auth-client';
 import { useAuthStore } from '@/store/use-auth-store';
-import { useCartStore } from '@/store/use-cart-store';
 import type { QueryClient } from '@tanstack/react-query';
 
 export interface CustomerLogoutOptions {
@@ -30,10 +29,6 @@ export async function performCustomerLogout(options?: CustomerLogoutOptions): Pr
     useAuthStore.getState().logout();
   } catch {}
 
-  // 3. Clear cart store so previous user's cart is not left for the next session
-  try {
-    useCartStore.getState().clearCart();
-  } catch {}
 
   // 4. Remove all user-identifying customer keys from localStorage
   if (typeof window !== 'undefined') {

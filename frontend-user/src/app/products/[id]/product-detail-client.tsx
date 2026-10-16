@@ -272,7 +272,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
     router.prefetch('/checkout');
   }, [router]);
 
-  const { items: cartItems, addItem, clearCart } = useCartStore();
+  const { addItem, clearCart } = useCartStore();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const { data: session } = useSession();
   const { user: legacyUser } = useAuthStore();
@@ -574,29 +574,6 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
     }, 3500);
   };
 
-  const handleAddToCart = () => {
-    if (!isAuthenticated) {
-      setIsAuthModalOpen(true);
-      return;
-    }
-    if (!product || isOutOfStock) {
-      showNotification(`Maaf, stok produk ${variantDetails.title} saat ini habis.`);
-      return;
-    }
-    const finalId = activeVariant ? activeVariant.id : product.id;
-    for (let i = 0; i < quantity; i++) {
-      addItem({
-        id: finalId,
-        name: variantDetails.title,
-        category: product.category.name,
-        priceFormatted: `Rp ${currentPrice.toLocaleString('id-ID')}`,
-        priceNumeric: currentPrice,
-        stock: activeVariant?.stock ?? product.stock,
-        isOutOfStock: false,
-      });
-    }
-    showNotification(`Berhasil menambahkan ${quantity}x ${variantDetails.title} ke keranjang.`);
-  };
 
   const handleBuyNow = () => {
     if (!isAuthenticated) {
@@ -1303,8 +1280,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                 {/* 3 cards per row desktop, 2 cards per row mobile */}
                 <div data-gsap="product-detail-related" className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-6">
                   {product.relatedProducts.map((rel) => {
-                    const isSelected = cartItems.some((item) => item.id === rel.id);
-                    const relProductItem: ProductItem = {
+                          const relProductItem: ProductItem = {
                       id: rel.id,
                       name: rel.name,
                       category: rel.category,
@@ -1323,24 +1299,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                       <div key={rel.id} data-gsap="related-product-card">
                         <ProductCard
                           product={relProductItem}
-                          isSelected={isSelected}
                           activeCampaigns={activeCampaigns}
-                          onAddToCart={(p) => {
-                            if (!isAuthenticated) {
-                              setIsAuthModalOpen(true);
-                              return;
-                            }
-                            addItem({
-                              id: p.id,
-                              name: p.name,
-                              category: p.category.name,
-                              priceFormatted: p.priceFormatted,
-                              priceNumeric: p.price,
-                              stock: p.stock,
-                              isOutOfStock: false,
-                            });
-                            showNotification(`${p.name} ditambahkan ke keranjang.`);
-                          }}
                         />
                       </div>
                     );

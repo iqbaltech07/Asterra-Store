@@ -1,6 +1,5 @@
 import React from 'react';
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import Image from 'next/image';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -15,7 +14,6 @@ import {
   faHandshake,
   faCoins,
   faCircleCheck,
-  faHeadset,
 } from '@fortawesome/free-solid-svg-icons';
 import { Button } from '@/components/ui/button';
 

@@ -2,19 +2,8 @@
 
 import React, { useState } from 'react';
 import {
-  AlertCircle,
-  CheckCircle2,
-  Clock,
-  Filter,
-  Search,
   MessageSquare,
-  ShieldCheck,
-  RotateCcw,
   Check,
-  X,
-  FileText,
-  CreditCard,
-  Send,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

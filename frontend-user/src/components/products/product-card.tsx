@@ -54,16 +54,12 @@ export function ProductPromoCountdownBadge({
 
 interface ProductCardProps {
   product: ProductItem & { providerCode?: string };
-  isSelected?: boolean;
-  onAddToCart?: (product: ProductItem) => void;
   priorityImage?: boolean;
   activeCampaigns?: ActiveCampaign[];
 }
 
 export function ProductCard({
   product,
-  isSelected: _isSelected,
-  onAddToCart: _onAddToCart,
   priorityImage = false,
   activeCampaigns: propCampaigns,
 }: ProductCardProps) {

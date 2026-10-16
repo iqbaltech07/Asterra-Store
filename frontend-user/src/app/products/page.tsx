@@ -19,7 +19,6 @@ import {
   faList,
   faArrowRight,
 } from '@fortawesome/free-solid-svg-icons';
-import { useCartStore } from '@/store/use-cart-store';
 import { useSession } from '@/lib/auth-client';
 import { useAuthStore } from '@/store/use-auth-store';
 import { AuthRequiredModal } from '@/components/auth/auth-required-modal';
@@ -74,7 +73,6 @@ function ProductsContent() {
     if (cat !== null) setSelectedCategory(resolveCategoryParam(cat));
   }, [searchParams]);
 
-  const { items: cartItems, addItem, removeItem } = useCartStore();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const { data: session } = useSession();
   const { user: legacyUser } = useAuthStore();
@@ -173,39 +171,6 @@ function ProductsContent() {
     [filteredProducts, visibleCount]
   );
 
-  const handleAddToCart = (product: ProductItem) => {
-    const isOutOfStock =
-      (product.stock !== undefined && product.stock <= 0) ||
-      product.providerStatus === 'empty' ||
-      product.status === 'out_of_stock';
-
-    if (!isAuthenticated) {
-      setIsAuthModalOpen(true);
-      return;
-    }
-
-    if (isOutOfStock) {
-      showNotification(`Maaf, stok ${product.name} sedang habis.`);
-      return;
-    }
-
-    const isAlreadyInCart = cartItems.some((item) => item.id === product.id);
-    if (isAlreadyInCart) {
-      removeItem(product.id);
-      showNotification(`${product.name} dihapus dari keranjang pesanan.`);
-    } else {
-      addItem({
-        id: product.id,
-        name: product.name,
-        category: product.category.name,
-        priceFormatted: product.priceFormatted,
-        priceNumeric: product.price,
-        stock: product.stock,
-        isOutOfStock: false,
-      });
-      showNotification(`Berhasil menambahkan ${product.name} ke keranjang pesanan.`);
-    }
-  };
 
   const handleResetFilters = () => {
     setSelectedCategory('Semua');
@@ -426,19 +391,14 @@ function ProductsContent() {
         {/* Products Listing Grid */}
         {!isLoading && !error && products.length > 0 && viewMode === 'grid' && (
           <div data-gsap="product-grid" key={`grid-${selectedCategory}-${sortBy}`} className="grid grid-cols-2 gap-3 md:gap-5 lg:grid-cols-3">
-            {products.map((product, idx) => {
-              const isSelected = cartItems.some((item) => item.id === product.id);
-              return (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  isSelected={isSelected}
-                  onAddToCart={handleAddToCart}
-                  priorityImage={idx < 6}
-                  activeCampaigns={activeCampaigns}
-                />
-              );
-            })}
+            {products.map((product, idx) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                priorityImage={idx < 6}
+                activeCampaigns={activeCampaigns}
+              />
+            ))}
           </div>
         )}
 
@@ -446,7 +406,6 @@ function ProductsContent() {
         {!isLoading && !error && products.length > 0 && viewMode === 'list' && (
           <div key={`list-${selectedCategory}-${sortBy}`} className="space-y-4">
             {products.map((product, idx) => {
-              const isSelected = cartItems.some((item) => item.id === product.id);
               const isOutOfStock =
                 (product.stock !== undefined && product.stock <= 0) ||
                 product.providerStatus === 'empty' ||

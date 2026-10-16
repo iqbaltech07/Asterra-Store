@@ -29,11 +29,6 @@ const nextConfig: NextConfig = {
         destination: `${storeUrl}/checkout/:path*`,
         permanent: false,
       },
-      {
-        source: '/cart/:path*',
-        destination: `${storeUrl}/cart/:path*`,
-        permanent: false,
-      },
     ];
   },
   async rewrites() {

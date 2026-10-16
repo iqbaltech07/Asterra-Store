@@ -4,19 +4,8 @@ import React, { useState } from 'react';
 import {
   Server,
   RefreshCw,
-  Plus,
   Key,
-  CheckCircle2,
-  AlertTriangle,
   Activity,
-  ShieldCheck,
-  Wallet,
-  Clock,
-  ExternalLink,
-  Code,
-  Zap,
-  Radio,
-  Sliders,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
