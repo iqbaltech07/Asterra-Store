@@ -199,7 +199,7 @@ export function LainnyaSidebar() {
             </Link>
           ) : (
             <Link
-              href="/login"
+              href={pathname && pathname !== '/' && pathname !== '/login' && pathname !== '/register' ? `/login?callbackUrl=${encodeURIComponent(pathname)}` : '/login'}
               onClick={closeSidebar}
               className="p-3.5 rounded-2xl bg-[#182235] border border-white/10 flex items-center justify-between hover:border-[#C96F55]/40 transition-colors group"
             >

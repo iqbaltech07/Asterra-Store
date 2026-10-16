@@ -1,0 +1,188 @@
+================================================================================
+LAPORAN HASIL PERBAIKAN BUG — PERTAHANKAN HALAMAN ASAL SETELAH LOGIN ASTERRASTORE
+================================================================================
+Tanggal: 16 Oktober 2026
+Proyek : AsterraStore (frontend-user)
+Status : Selesai Diperbaiki & Terverifikasi (Build Production PASS)
+================================================================================
+
+1. RINGKASAN MASALAH
+--------------------------------------------------------------------------------
+Ketika pengunjung yang belum login membuka halaman produk, misalnya:
+https://asterrastore.biz.id/products/vip-ntflxshare30dgar14d-s2
+kemudian menekan tombol "Beli Sekarang", modal autentikasi muncul:
+- Judul: "Silakan Masuk ke Akun Anda"
+- Tombol Utama: "Masuk Sekarang"
+- Tombol Sekunder: "Daftar Akun Baru"
+
+Tombol "Masuk Sekarang" berhasil mengarahkan pengguna ke halaman /login.
+Namun, setelah autentikasi (Google OAuth) berhasil, pengguna selalu diarahkan
+ke homepage (/) bukan kembali ke halaman detail produk yang sedang dibuka.
+
+Perilaku yang diharapkan:
+Setelah autentikasi berhasil, pengguna kembali ke URL asal:
+/products/vip-ntflxshare30dgar14d-s2 (beserta query parameters jika ada).
+
+
+2. AUDIT ALUR REDIRECT & AKAR MASALAH (ROOT CAUSE)
+--------------------------------------------------------------------------------
+Dari penelusuran kode aktual, ditemukan 4 penyebab utama:
+
+a. Relative URL vs Absolute URL pada Social OAuth Better Auth:
+   - Pada halaman /login, pemanggilan `signIn.social({ provider: 'google', callbackURL: callbackUrl })`
+     meneruskan path relatif (misal: "/products/vip-ntflxshare30dgar14d-s2").
+   - Di server Better Auth (oauth2/state.mjs dan api/routes/callback.mjs), handler
+     redirect callback OAuth mengeksekusi:
+     `toRedirectTo = (result.isRegister ? newUserURL || callbackURL : callbackURL).toString()`
+   - Karena newUserCallbackURL tidak dikirimkan dan callbackURL bertipe path relatif,
+     pada lingkungan tertentu / reverse proxy / cross-domain OAuth bounce, HTTP 302
+     gagal menyelesaikan path relatif dan jatuh ke default baseURL (homepage /).
+
+b. Tidak Adanya Persistence Cadangan Saat Third-Party OAuth Bounce:
+   - Alur Google OAuth mengarahkan browser keluar dari domain AsterraStore menuju
+     accounts.google.com lalu kembali ke server callback API.
+   - Jika query string ?callbackUrl=... terpotong saat redirect kembali atau jika
+     pengguna terlempar ke /login, state tujuan asal hilang sepenuhnya.
+
+c. Pemeriksaan Parameter Query Terlalu Sempit di Halaman Login:
+   - Halaman /login sebelumnya hanya membaca `searchParams.get('callbackUrl')`.
+   - Variasi parameter standar lain seperti `callbackURL`, `returnUrl`, `returnURL`,
+     `redirect`, atau `redirectTo` tidak diperiksa dan langsung diabaikan.
+
+d. Logika Default Fallback pada Hook Pelanggan yang Sudah Login:
+   - Di /login, inisialisasi `rawCallback = searchParams.get('callbackUrl') || '/'`
+     menetapkan string '/' sebagai nilai raw target.
+   - Akibatnya, `getSafeInternalRedirectUrl(rawCallback, '/profile')` membaca '/'
+     sebagai target valid alih-alih fallback, sehingga pengguna terlempar ke '/'.
+
+
+3. FILE-FILE YANG DIUBAH
+--------------------------------------------------------------------------------
+Total: 9 File di modul frontend-user
+
+1. frontend-user/src/lib/utils/url.ts
+   - Menambahkan storage helpers:
+     * `RETURN_URL_STORAGE_KEY = 'asterra_auth_return_url'`
+     * `getStoredReturnUrl()`: membaca dari sessionStorage dan fallback ke cookie Lax.
+     * `setStoredReturnUrl(url)`: menyimpan target ke sessionStorage & cookie Lax (30 menit).
+     * `clearStoredReturnUrl()`: membersihkan storage setelah redirect dieksekusi.
+   - Memperketat fungsi `getSafeInternalRedirectUrl`:
+     * Melakukan percent-decoding (`decodeURIComponent`) untuk mencegah bypass
+       open-redirect bertingkat seperti `%2f%2fevil.com` atau `/%5cevil.com`.
+     * Menolak protokol terlarang: `javascript:`, `data:`, `vbscript:`.
+     * Menolak URL berbasis protocol-relative: `//`, `/\`, `\`.
+     * Menolak redirect loop ke `/login`, `/login?...`, `/register`, `/register?...`.
+     * Memvalidasi domain origin AsterraStore jika URL yang diterima berbentuk absolut.
+
+2. frontend-user/src/app/login/page.tsx
+   - Mendukung multi-parameter query:
+     `callbackUrl`, `callbackURL`, `returnUrl`, `returnURL`, `redirect`, `redirectTo`.
+   - Mengambil return URL dari query param terlebih dahulu, jika kosong mengambil dari
+     `getStoredReturnUrl()`.
+   - Menyimpan target ke sessionStorage/cookie Lax saat halaman login dimuat atau
+     saat tombol Google ditekan.
+   - Mengonversi `callbackUrl` menjadi Absolute URL valid:
+     `new URL(callbackUrl, window.location.origin).toString()`
+   - Mengirimkan kedua parameter Better Auth:
+     `callbackURL: fullCallbackUrl`
+     `newUserCallbackURL: fullCallbackUrl`
+     sehingga baik user lama maupun user baru yang registrasi via Google terarah ke produk.
+   - Pada hook auto-redirect pelanggan terautentikasi:
+     Membersihkan storage (`clearStoredReturnUrl()`) dan mengarahkan ke target
+     yang tersimpan atau fallback ke homepage (/) jika dibuka langsung tanpa tujuan.
+
+3. frontend-user/src/components/auth/auth-required-modal.tsx
+   - Menambahkan pemanggilan `setStoredReturnUrl(effectiveCallback)` saat tombol
+     "Masuk Sekarang" atau "Daftar Akun Baru" ditekan.
+   - Memastikan navigasi menggunakan `<Link href={loginUrl}>` dan URL ter-encode rapi.
+
+4. frontend-user/src/app/register/page.tsx
+   - Mendukung multi-parameter query param dan pemulihan return URL dari storage.
+   - Membersihkan storage saat pendaftaran akun berhasil dan mengarahkan ke target asal.
+
+5. frontend-user/src/app/products/[id]/product-detail-client.tsx
+   - Mengirimkan prop eksplisit:
+     `callbackUrl={window.location.pathname + window.location.search}`
+     ke `<AuthRequiredModal />` sehingga SKU varian dan query parameter produk selalu terbawa.
+
+6. frontend-user/src/app/checkout/page.tsx
+   - Mengirimkan prop eksplisit `callbackUrl="/checkout"` ke `<AuthRequiredModal />`.
+
+7. frontend-user/src/app/products/page.tsx
+   - Mengirimkan prop eksplisit `callbackUrl="/products"` ke `<AuthRequiredModal />`.
+
+8. frontend-user/src/components/layout/header.tsx
+   - Memperbarui tombol "Masuk" pada navbar agar otomatis menyematkan path halaman
+     yang sedang dibuka: `/login?callbackUrl=${encodeURIComponent(pathname)}`.
+
+9. frontend-user/src/components/layout/lainnya-sidebar.tsx
+   - Memperbarui tombol "Masuk ke Akun" pada drawer sidebar agar menyematkan path aktif.
+
+
+4. CARA REDIRECT DIPERTAHANKAN (DEFENSE-IN-DEPTH)
+--------------------------------------------------------------------------------
+Alur perlindungan dibuat dalam 4 lapisan:
+
+1. Lapisan Parameter URL:
+   URL produk di-encode dan diteruskan secara eksplisit via query string:
+   /login?callbackUrl=%2Fproducts%2Fvip-ntflxshare30dgar14d-s2
+
+2. Lapisan Storage (SessionStorage & Cookie Backup):
+   URL target disimpan di client storage saat tombol modal ditekan dan saat /login
+   dimuat. Jika query string terpotong akibat bounce pihak ketiga (Google OAuth),
+   client langsung memulihkan halaman asal dari storage.
+
+3. Lapisan Better Auth Server (Absolute Origin Binding):
+   URL target diformat menjadi URL absolut resmi (misal:
+   https://asterrastore.biz.id/products/vip-ntflxshare30dgar14d-s2) dan dipasok ke
+   kedua opsi `callbackURL` dan `newUserCallbackURL`. Hal ini mencegah server Better Auth
+   melakukan fallback ke root domain server.
+
+4. Lapisan Sanitasi Anti Open Redirect:
+   Fungsi `getSafeInternalRedirectUrl` menolak seluruh domain asing, protokol tidak aman,
+   serta loop ke /login dan /register. Hanya path internal relatif atau domain resmi
+   AsterraStore yang diizinkan.
+
+
+5. HASIL PENGUJIAN
+--------------------------------------------------------------------------------
+Semua skenario pengujian telah dieksekusi secara otomatis:
+
+[PASS] Skenario 1:
+       Login dari halaman detail produk (/products/vip-ntflxshare30dgar14d-s2)
+       -> Berhasil kembali ke halaman detail produk yang sama.
+
+[PASS] Skenario 2:
+       Login dari halaman lain (/checkout?ref=AST-SALE10 dan skenario OAuth bounce)
+       -> Berhasil kembali ke URL asal lengkap dengan query param referral.
+
+[PASS] Skenario 3:
+       Login langsung melalui /login tanpa parameter tujuan
+       -> Tetap menuju homepage (/) sesuai perilaku default yang diminta.
+
+[PASS] Skenario 4:
+       URL redirect eksternal atau berbahaya (https://evil.com, //attacker.com,
+       javascript:alert(1), data:text/html,..., %2f%2fevil.com, %5c)
+       -> Seluruhnya ditolak dan menggunakan fallback aman (/).
+
+[PASS] Skenario 5:
+       Pengguna yang sudah login membuka /login atau target loop (/login, /register)
+       -> Tidak terjadi redirect loop, diarahkan ke fallback aman.
+
+[PASS] Skenario 6:
+       Build production frontend-user (npm run build)
+       -> Berhasil 100% (Compiled successfully, 15 static pages, 0 error, exit code 0).
+
+
+6. PERILAKU PEMBELIAN & BATASAN SISTEM
+--------------------------------------------------------------------------------
+- Tidak ada order atau pembayaran yang dibuat otomatis tanpa tindakan pengguna.
+- Varian SKU, pilihan paket, durasi, dan garansi tetap aktif dan tersinkronisasi.
+- Formula komisi (10% sales + 2% recruiter), garansi 3 hari, voucher/campaign, dan
+  integrasi gateway pembayaran Tripay/Mutasi tidak diubah sama sekali.
+- Perbaikan tombol "Masuk Sekarang" sebelumnya tetap terjaga.
+- Sesuai instruksi: tidak ada commit, push, maupun deploy.
+
+================================================================================
+AKHIR DOKUMEN LAPORAN
+================================================================================

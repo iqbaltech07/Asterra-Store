@@ -15,7 +15,7 @@ import { signIn, useSession } from '@/lib/auth-client';
 import { useAuthStore } from '@/store/use-auth-store';
 import { AsterraLogo } from '@/components/ui/asterra-logo';
 import { appendReferralParams } from '@/lib/utils/referral';
-import { getSafeInternalRedirectUrl } from '@/lib/utils/url';
+import { getSafeInternalRedirectUrl, getStoredReturnUrl, setStoredReturnUrl, clearStoredReturnUrl } from '@/lib/utils/url';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faArrowLeft,
@@ -29,8 +29,20 @@ import { faGoogle } from '@fortawesome/free-brands-svg-icons';
 function LoginFormContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const rawCallback = searchParams.get('callbackUrl') || '/';
-  const safeCallback = getSafeInternalRedirectUrl(rawCallback, '/');
+
+  // Support all common query parameter names: callbackUrl, callbackURL, returnUrl, returnURL, redirect, redirectTo
+  const queryCallback =
+    searchParams.get('callbackUrl') ||
+    searchParams.get('callbackURL') ||
+    searchParams.get('returnUrl') ||
+    searchParams.get('returnURL') ||
+    searchParams.get('redirect') ||
+    searchParams.get('redirectTo');
+
+  // Determine effective target: query parameter first, then stored return URL (if arriving from OAuth bounce)
+  const storedCallback = typeof window !== 'undefined' ? getStoredReturnUrl() : null;
+  const rawCallback = queryCallback || storedCallback || null;
+  const safeCallback = rawCallback ? getSafeInternalRedirectUrl(rawCallback, '/') : '/';
   const callbackUrl = appendReferralParams(safeCallback);
 
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
@@ -40,10 +52,24 @@ function LoginFormContent() {
   const { user: legacyUser } = useAuthStore();
   const isAuthenticated = Boolean(session?.user || legacyUser);
 
-  // If customer is already authenticated, redirect safely to intended target or /profile
+  // If query parameter was provided on /login, save it into session storage & cookie so OAuth redirects can't lose it
+  useEffect(() => {
+    if (queryCallback) {
+      const sanitized = getSafeInternalRedirectUrl(queryCallback, '');
+      if (sanitized && sanitized !== '/' && sanitized !== '/login') {
+        setStoredReturnUrl(sanitized);
+      }
+    }
+  }, [queryCallback]);
+
+  // If customer is already authenticated (or just completed login), redirect to target or homepage
   useEffect(() => {
     if (!isPending && isAuthenticated) {
-      const target = getSafeInternalRedirectUrl(rawCallback, '/profile');
+      const target = rawCallback
+        ? getSafeInternalRedirectUrl(rawCallback, '/')
+        : '/';
+
+      clearStoredReturnUrl();
       router.replace(appendReferralParams(target));
     }
   }, [isPending, isAuthenticated, rawCallback, router]);
@@ -54,9 +80,21 @@ function LoginFormContent() {
     setErrorMessage(null);
 
     try {
+      // Ensure return target is safely persisted across third-party OAuth redirect
+      if (safeCallback && safeCallback !== '/' && safeCallback !== '/login') {
+        setStoredReturnUrl(safeCallback);
+      }
+
+      // Build absolute URL for Better Auth so server OAuth callback redirect has zero ambiguity
+      const fullCallbackUrl =
+        typeof window !== 'undefined'
+          ? new URL(callbackUrl, window.location.origin).toString()
+          : callbackUrl;
+
       const res = await signIn.social({
         provider: 'google',
-        callbackURL: callbackUrl,
+        callbackURL: fullCallbackUrl,
+        newUserCallbackURL: fullCallbackUrl,
       });
 
       if (res?.error) {

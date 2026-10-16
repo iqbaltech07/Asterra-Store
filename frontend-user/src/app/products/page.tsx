@@ -556,6 +556,7 @@ function ProductsContent() {
       <AuthRequiredModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
+        callbackUrl="/products"
       />
     </div>
   );

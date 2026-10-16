@@ -82,6 +82,53 @@ export function getAppBaseUrl(
 }
 
 /**
+ * Key for preserving return URL across auth session and OAuth bounces
+ */
+export const RETURN_URL_STORAGE_KEY = 'asterra_auth_return_url';
+
+/**
+ * Retrieve saved return URL from sessionStorage or fallback cookie
+ */
+export function getStoredReturnUrl(): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const fromSession = sessionStorage.getItem(RETURN_URL_STORAGE_KEY);
+    if (fromSession && fromSession.trim()) {
+      return fromSession.trim();
+    }
+    const match = document.cookie.match(new RegExp('(^|;\\s*)' + RETURN_URL_STORAGE_KEY + '=([^;]+)'));
+    if (match && match[2]) {
+      return decodeURIComponent(match[2].trim());
+    }
+  } catch {}
+  return null;
+}
+
+/**
+ * Persist return URL safely in sessionStorage and short-lived cookie
+ */
+export function setStoredReturnUrl(url: string | null | undefined): void {
+  if (typeof window === 'undefined' || !url) return;
+  const safe = getSafeInternalRedirectUrl(url, '');
+  if (!safe || safe === '/' || safe === '/login' || safe === '/register') return;
+  try {
+    sessionStorage.setItem(RETURN_URL_STORAGE_KEY, safe);
+    document.cookie = `${RETURN_URL_STORAGE_KEY}=${encodeURIComponent(safe)}; path=/; max-age=1800; SameSite=Lax`;
+  } catch {}
+}
+
+/**
+ * Clear persisted return URL once consumed or upon manual navigation
+ */
+export function clearStoredReturnUrl(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    sessionStorage.removeItem(RETURN_URL_STORAGE_KEY);
+    document.cookie = `${RETURN_URL_STORAGE_KEY}=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax`;
+  } catch {}
+}
+
+/**
  * Validate and sanitize redirect URLs to ensure they only point to safe internal relative paths.
  * Prevents Open Redirect vulnerabilities (e.g. //evil.com, https://evil.com, javascript:).
  */
@@ -103,15 +150,39 @@ export function getSafeInternalRedirectUrl(
     return fallback;
   }
 
+  // Check percent-decoded string to catch obfuscated bypasses (%2f%2fevil.com, /%5cevil.com)
+  let decoded = trimmed;
+  try {
+    decoded = decodeURIComponent(trimmed);
+  } catch {}
+
+  if (/^(javascript|data|vbscript):/i.test(decoded)) {
+    return fallback;
+  }
+
   // Reject protocol-relative URLs (e.g. //evil.com, /\evil.com, or \evil.com)
-  if (trimmed.startsWith('//') || trimmed.startsWith('/\\') || trimmed.startsWith('\\')) {
+  if (
+    trimmed.startsWith('//') ||
+    trimmed.startsWith('/\\') ||
+    trimmed.startsWith('\\') ||
+    decoded.startsWith('//') ||
+    decoded.startsWith('/\\') ||
+    decoded.startsWith('\\')
+  ) {
     return fallback;
   }
 
   // If it is a valid relative path starting with /
   if (trimmed.startsWith('/')) {
-    // Avoid redirecting to /login itself to prevent redirect loops
-    if (trimmed === '/login' || trimmed.startsWith('/login?')) {
+    // Avoid redirecting to /login or /register itself to prevent redirect loops
+    if (
+      trimmed === '/login' ||
+      trimmed.startsWith('/login?') ||
+      trimmed.startsWith('/login/') ||
+      trimmed === '/register' ||
+      trimmed.startsWith('/register?') ||
+      trimmed.startsWith('/register/')
+    ) {
       return fallback;
     }
     return trimmed;
@@ -141,7 +212,14 @@ export function getSafeInternalRedirectUrl(
       )
     ) {
       const pathWithQuery = parsed.pathname + parsed.search + parsed.hash;
-      if (pathWithQuery === '/login' || pathWithQuery.startsWith('/login?')) {
+      if (
+        pathWithQuery === '/login' ||
+        pathWithQuery.startsWith('/login?') ||
+        pathWithQuery.startsWith('/login/') ||
+        pathWithQuery === '/register' ||
+        pathWithQuery.startsWith('/register?') ||
+        pathWithQuery.startsWith('/register/')
+      ) {
         return fallback;
       }
       return pathWithQuery;
@@ -152,4 +230,3 @@ export function getSafeInternalRedirectUrl(
 
   return fallback;
 }
-

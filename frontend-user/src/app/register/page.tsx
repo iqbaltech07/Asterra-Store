@@ -3,7 +3,7 @@
 import { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { getSafeInternalRedirectUrl } from '@/lib/utils/url';
+import { getSafeInternalRedirectUrl, getStoredReturnUrl, clearStoredReturnUrl } from '@/lib/utils/url';
 import { appendReferralParams } from '@/lib/utils/referral';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,8 +31,14 @@ import {
 
 function RegisterFormContent() {
   const searchParams = useSearchParams();
-  const rawCallback = searchParams.get('callbackUrl') || '/';
-  const safeCallback = getSafeInternalRedirectUrl(rawCallback, '/');
+  const queryCallback =
+    searchParams.get('callbackUrl') ||
+    searchParams.get('callbackURL') ||
+    searchParams.get('returnUrl') ||
+    searchParams.get('redirect');
+  const storedCallback = typeof window !== 'undefined' ? getStoredReturnUrl() : null;
+  const rawCallback = queryCallback || storedCallback || null;
+  const safeCallback = rawCallback ? getSafeInternalRedirectUrl(rawCallback, '/') : '/';
   const { login } = useAuthStore();
 
   const [name, setName] = useState('');
@@ -94,6 +100,7 @@ function RegisterFormContent() {
       // Update Zustand state
       login(data.user);
 
+      clearStoredReturnUrl();
       setSuccessMessage('Pendaftaran berhasil! Mengalihkan ke halaman tujuan...');
       setTimeout(() => {
         window.location.href = appendReferralParams(safeCallback);

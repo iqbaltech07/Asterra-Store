@@ -971,6 +971,7 @@ function CheckoutPageContent() {
       <AuthRequiredModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
+        callbackUrl="/checkout"
       />
     </div>
   );

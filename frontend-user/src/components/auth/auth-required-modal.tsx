@@ -4,7 +4,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { getSafeInternalRedirectUrl } from '@/lib/utils/url';
+import { getSafeInternalRedirectUrl, setStoredReturnUrl } from '@/lib/utils/url';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faLock,
@@ -74,11 +74,17 @@ export function AuthRequiredModal({
 
   const handleNavigateToLogin = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (effectiveCallback && effectiveCallback !== '/') {
+      setStoredReturnUrl(effectiveCallback);
+    }
     onClose();
   };
 
   const handleNavigateToRegister = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (effectiveCallback && effectiveCallback !== '/') {
+      setStoredReturnUrl(effectiveCallback);
+    }
     onClose();
   };
 

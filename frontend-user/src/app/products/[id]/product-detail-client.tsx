@@ -1357,6 +1357,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
       <AuthRequiredModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
+        callbackUrl={typeof window !== 'undefined' ? window.location.pathname + window.location.search : `/products/${id}`}
       />
     </div>
   );

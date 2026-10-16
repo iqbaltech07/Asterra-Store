@@ -167,7 +167,7 @@ export function Header({ onNotify: _onNotify }: HeaderProps) {
             </Link>
           ) : (
             <div data-gsap="nav-action" className="flex items-center">
-              <Link href="/login">
+              <Link href={pathname && pathname !== '/' && pathname !== '/login' && pathname !== '/register' ? `/login?callbackUrl=${encodeURIComponent(pathname)}` : '/login'}>
                 <Button
                   size="sm"
                   className="bg-[#C96F55] hover:bg-[#B86047] text-[#F7F5EF] font-semibold text-xs sm:text-sm h-8 sm:h-9 px-3.5 sm:px-5 rounded-xl shadow-xs transition-transform active:scale-95"
