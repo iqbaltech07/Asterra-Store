@@ -2,7 +2,9 @@
 
 import { useState, useMemo, useEffect, Suspense } from 'react';
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
+import { STATIC_DEMO_ORDERS, isOrdersDemoEnabled } from '@/lib/demo/demo-orders';
 import { Button } from '@/components/ui/button';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -170,6 +172,11 @@ function GlobalOrdersPageSkeleton() {
 }
 
 function GlobalOrdersContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const demoParam = searchParams.get('demo');
+  const isDemoActive = isOrdersDemoEnabled(demoParam);
+
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -201,17 +208,28 @@ function GlobalOrdersContent() {
       items_per_page: number;
     };
   }>({
-    queryKey: ['global-orders', selectedStatus, searchQuery, currentPage],
+    queryKey: [
+      'global-orders',
+      isDemoActive ? 'demo-active' : selectedStatus,
+      isDemoActive ? '' : searchQuery,
+      isDemoActive ? 1 : currentPage,
+    ],
     queryFn: async () => {
       const params = new URLSearchParams();
       params.append('public', 'true');
-      params.append('page', String(currentPage));
-      params.append('limit', String(itemsPerPage));
-      if (selectedStatus !== 'all') {
-        params.append('status', selectedStatus);
-      }
-      if (searchQuery.trim()) {
-        params.append('search', searchQuery.trim());
+      if (!isDemoActive) {
+        params.append('page', String(currentPage));
+        params.append('limit', String(itemsPerPage));
+        if (selectedStatus !== 'all') {
+          params.append('status', selectedStatus);
+        }
+        if (searchQuery.trim()) {
+          params.append('search', searchQuery.trim());
+        }
+      } else {
+        // When demo mode is active, fetch real orders (page 1, up to 50) to merge with deterministic demo orders
+        params.append('page', '1');
+        params.append('limit', '50');
       }
       const res = await fetch('/api/v1/orders?' + params.toString());
       if (!res.ok) throw new Error('Gagal mengambil data pesanan publik');
@@ -222,12 +240,62 @@ function GlobalOrdersContent() {
     refetchInterval: 15000, // Background sync every 15s keeps list updated across all browsers
   });
 
-  const orders = useMemo(() => {
-    return data?.data || [];
-  }, [data]);
+  // Base list of orders
+  const allOrders = useMemo<PublicOrder[]>(() => {
+    const realOrders = (data?.data || []).map((o) => ({ ...o, is_demo: false }));
+    if (!isDemoActive) {
+      return realOrders;
+    }
+    // Merge real database orders with static deterministic demo orders
+    const combined = [...realOrders, ...STATIC_DEMO_ORDERS];
+    return combined.sort((a, b) => {
+      const dateA = new Date(a.order_date || a.created_at || a.createdAt || '').getTime() || 0;
+      const dateB = new Date(b.order_date || b.created_at || b.createdAt || '').getTime() || 0;
+      return dateB - dateA;
+    });
+  }, [data?.data, isDemoActive]);
 
-  const totalItems = data?.pagination?.total_items ?? data?.total ?? orders.length;
-  const totalPages = data?.pagination?.total_pages ?? Math.max(1, Math.ceil(totalItems / itemsPerPage));
+  // Apply filters (status & search)
+  const filteredOrders = useMemo<PublicOrder[]>(() => {
+    if (!isDemoActive) {
+      return allOrders;
+    }
+    let list = allOrders;
+    if (selectedStatus !== 'all') {
+      list = list.filter((o) => (o.order_status || o.status) === selectedStatus);
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      list = list.filter((o) =>
+        (o.id && o.id.toLowerCase().includes(q)) ||
+        (o.product_name && o.product_name.toLowerCase().includes(q)) ||
+        (o.customer_display && o.customer_display.toLowerCase().includes(q))
+      );
+    }
+    return list;
+  }, [allOrders, isDemoActive, selectedStatus, searchQuery]);
+
+  const totalItems = isDemoActive
+    ? filteredOrders.length
+    : (data?.pagination?.total_items ?? data?.total ?? filteredOrders.length);
+
+  const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
+
+  const orders = useMemo<PublicOrder[]>(() => {
+    if (!isDemoActive) {
+      return filteredOrders;
+    }
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredOrders.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredOrders, isDemoActive, currentPage, itemsPerPage]);
+
+  const handleToggleDemo = () => {
+    const nextVal = !isDemoActive;
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('demo', String(nextVal));
+    router.push(`/orders?${params.toString()}`);
+    setCurrentPage(1);
+  };
 
   // Fetch Catalog Products untuk rekomendasi jika antrean transaksi kosong
   const { data: catalogResponse, isLoading: isCatalogLoading } = useCatalogProducts();
@@ -287,11 +355,32 @@ function GlobalOrdersContent() {
         {/* Page Header */}
         <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 data-gsap="orders-title" className="text-xl sm:text-2xl font-black text-foreground tracking-tight">
-              Daftar Pesanan
-            </h1>
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 data-gsap="orders-title" className="text-xl sm:text-2xl font-black text-foreground tracking-tight">
+                Daftar Pesanan
+              </h1>
+              <button
+                type="button"
+                onClick={handleToggleDemo}
+                className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold transition-all border cursor-pointer inline-flex items-center gap-1.5 ${
+                  isDemoActive
+                    ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30 hover:bg-amber-500/25'
+                    : 'bg-surface text-foreground-muted border-border hover:text-foreground hover:border-primary/40'
+                }`}
+                title={
+                  isDemoActive
+                    ? 'Mode Demo Aktif: Menampilkan simulasi aktivitas toko + transaksi riil. Klik untuk hanya menampilkan transaksi database asli.'
+                    : 'Mode Demo Nonaktif: Hanya menampilkan transaksi database asli. Klik untuk menampilkan aktivitas demo.'
+                }
+              >
+                <span className={`w-2 h-2 rounded-full ${isDemoActive ? 'bg-amber-500 animate-pulse' : 'bg-gray-400'}`} />
+                <span>Mode Demo: {isDemoActive ? 'Aktif' : 'Nonaktif'}</span>
+              </button>
+            </div>
             <p data-gsap="orders-desc" className="text-xs text-foreground-muted mt-1">
-              Daftar transaksi lisensi dan akun digital pelanggan Asterra Store.
+              {isDemoActive
+                ? 'Daftar transaksi lisensi dan akun digital pelanggan Asterra Store (Termasuk simulasi aktivitas demo).'
+                : 'Daftar transaksi lisensi dan akun digital pelanggan Asterra Store (Hanya transaksi riil terverifikasi).'}
             </p>
           </div>
 
@@ -474,6 +563,16 @@ function GlobalOrdersContent() {
                           <span className="font-mono font-bold text-sm text-foreground">
                             {order.id}
                           </span>
+                          {order.is_demo && (
+                            <span
+                              data-gsap="order-demo-badge"
+                              className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 font-semibold border border-amber-500/30 inline-flex items-center gap-1"
+                              title="Pesanan simulasi deterministik (Demo)"
+                            >
+                              <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                              Demo
+                            </span>
+                          )}
                           <span className="text-foreground-muted text-xs">—</span>
                           <span className="text-xs text-foreground font-medium inline-flex items-center gap-1">
                             <FontAwesomeIcon icon={faUserCheck} className="w-3 h-3 text-foreground-muted" />
