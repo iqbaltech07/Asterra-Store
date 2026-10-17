@@ -151,9 +151,10 @@ export function hashPRNG(seed: number, stream: number): number {
 /**
  * Generator timeline simulasi deterministik global.
  * Menghitung gelombang pesanan (setiap 3–8 menit), pesanan dalam gelombang (jarak 1–10 menit),
- * serta siklus status independen:
+ * serta siklus status independen dengan pembatasan maksimal 3 pesanan Processing:
  * - Menunggu Pembayaran -> Processing setelah 1–3 menit
- * - Processing -> Sukses setelah 10–30 menit sejak masuk Processing
+ * - Processing -> Sukses setelah 10–30 menit sejak masuk Processing, ATAU dipercepat menjadi Sukses
+ *   ketika slot Processing (maksimal 3) penuh dan ada pesanan baru yang masuk ke Processing.
  */
 export function getDeterministicSimulationOrders(
   now: number,
@@ -161,98 +162,170 @@ export function getDeterministicSimulationOrders(
 ): PublicOrder[] {
   let waveTime = GLOBAL_SIMULATION_EPOCH;
   let waveIdx = 0;
-  const rawOrders: (PublicOrder & { _orderTime: number })[] = [];
 
-  // Hitung jadwal gelombang hingga batas waktu saat ini (plus buffer 10 menit untuk safety)
+  interface RawOrderCandidate {
+    id: string;
+    raw_id: string;
+    product_name: string;
+    items_summary: string;
+    items_count: number;
+    order_date: string;
+    created_at: string;
+    createdAt: string;
+    customer_display: string;
+    product_sku: string;
+    warranty: string | null;
+    _orderTime: number;
+    _processingStartTime: number;
+    _naturalCompletedStartTime: number;
+    _effectiveCompletedStartTime: number;
+  }
+
+  const rawCandidates: RawOrderCandidate[] = [];
+
+  // 1. Hitung jadwal seluruh kandidat pesanan sepanjang timeline deterministik
   while (waveTime <= now + 600000) {
-    // 1. Jarak antargelombang: 3–8 menit (180.000 hingga 480.000 ms)
+    // Jarak antargelombang: 3–8 menit (180.000 hingga 480.000 ms)
     const waveIntervalMs = 180000 + Math.floor(hashPRNG(waveIdx, 1) * 300000);
 
-    // 2. Jumlah pesanan dalam gelombang: 1–3 pesanan
+    // Jumlah pesanan dalam gelombang: 1–3 pesanan
     const orderCountInWave = 1 + Math.floor(hashPRNG(waveIdx, 2) * 3);
 
     let curOrderTime = waveTime;
     for (let i = 0; i < orderCountInWave; i++) {
       if (i > 0) {
-        // 3. Jarak antarpesanan dalam gelombang: 1–10 menit (60.000 hingga 600.000 ms)
+        // Jarak antarpesanan dalam gelombang: 1–10 menit (60.000 hingga 600.000 ms)
         const orderSpacingMs = 60000 + Math.floor(hashPRNG(waveIdx * 10 + i, 3) * 540000);
         curOrderTime += orderSpacingMs;
       }
 
-      // Jangan tampilkan pesanan masa depan yang belum tiba waktunya
-      if (curOrderTime <= now) {
-        // 4. Durasi transisi status:
-        // Menunggu Pembayaran -> Processing: 1–3 menit (60.000 hingga 180.000 ms)
-        const pendingDurationMs = 60000 + Math.floor(hashPRNG(waveIdx * 10 + i, 4) * 120000);
+      // Durasi transisi status:
+      // Menunggu Pembayaran -> Processing: 1–3 menit (60.000 hingga 180.000 ms)
+      const pendingDurationMs = 60000 + Math.floor(hashPRNG(waveIdx * 10 + i, 4) * 120000);
 
-        // Processing -> Sukses: 10–30 menit (600.000 hingga 1.800.000 ms)
-        const processingDurationMs = 600000 + Math.floor(hashPRNG(waveIdx * 10 + i, 5) * 1200000);
+      // Processing -> Sukses: 10–30 menit (600.000 hingga 1.800.000 ms)
+      const processingDurationMs = 600000 + Math.floor(hashPRNG(waveIdx * 10 + i, 5) * 1200000);
 
-        const processingStartTime = curOrderTime + pendingDurationMs;
-        const completedStartTime = processingStartTime + processingDurationMs;
+      const processingStartTime = curOrderTime + pendingDurationMs;
+      const naturalCompletedStartTime = processingStartTime + processingDurationMs;
 
-        let status: PublicOrder['order_status'] = 'completed';
-        if (now < processingStartTime) {
-          status = 'pending';
-        } else if (now < completedStartTime) {
-          status = 'processing';
-        }
+      // Format tanggal Asia/Jakarta (WIB: UTC+7)
+      const wibDate = new Date(curOrderTime + 7 * 3600000);
+      const yyyy = wibDate.getUTCFullYear();
+      const mm = String(wibDate.getUTCMonth() + 1).padStart(2, '0');
+      const dd = String(wibDate.getUTCDate()).padStart(2, '0');
+      const dateKey = `${yyyy}${mm}${dd}`;
 
-        // Format tanggal Asia/Jakarta (WIB: UTC+7)
-        const wibDate = new Date(curOrderTime + 7 * 3600000);
-        const yyyy = wibDate.getUTCFullYear();
-        const mm = String(wibDate.getUTCMonth() + 1).padStart(2, '0');
-        const dd = String(wibDate.getUTCDate()).padStart(2, '0');
-        const dateKey = `${yyyy}${mm}${dd}`;
+      // ID pesanan konsisten format AST-ORD-YYYYMMDD-NNNN (cegah tabrakan dengan 7615)
+      let orderNum = 1000 + Math.floor(hashPRNG(waveIdx * 10 + i, 6) * 8990);
+      if (orderNum === 7615) orderNum = 7616;
+      const id = `AST-ORD-${dateKey}-${orderNum}`;
 
-        // ID pesanan konsisten format AST-ORD-YYYYMMDD-NNNN (cegah tabrakan dengan 7615)
-        let orderNum = 1000 + Math.floor(hashPRNG(waveIdx * 10 + i, 6) * 8990);
-        if (orderNum === 7615) orderNum = 7616;
-        const id = `AST-ORD-${dateKey}-${orderNum}`;
+      // Nama pelanggan bervariasi deterministik dan acak merata
+      const customerIdx =
+        (Math.floor(hashPRNG(waveIdx * 10 + i, 7) * MASKED_CUSTOMER_NAMES.length) + (waveIdx * 3 + i)) %
+        MASKED_CUSTOMER_NAMES.length;
+      const customer_display = MASKED_CUSTOMER_NAMES[customerIdx];
 
-        // Nama pelanggan bervariasi deterministik dan acak merata
-        const customerIdx =
-          (Math.floor(hashPRNG(waveIdx * 10 + i, 7) * MASKED_CUSTOMER_NAMES.length) + (waveIdx * 3 + i)) %
-          MASKED_CUSTOMER_NAMES.length;
-        const customer_display = MASKED_CUSTOMER_NAMES[customerIdx];
+      // Produk aktif dari katalog
+      const productIdx =
+        (Math.floor(hashPRNG(waveIdx * 10 + i, 8) * ACTIVE_CATALOG_PRODUCTS.length) + (waveIdx * 2 + i)) %
+        ACTIVE_CATALOG_PRODUCTS.length;
+      const product = ACTIVE_CATALOG_PRODUCTS[productIdx];
 
-        // Produk aktif dari katalog
-        const productIdx =
-          (Math.floor(hashPRNG(waveIdx * 10 + i, 8) * ACTIVE_CATALOG_PRODUCTS.length) + (waveIdx * 2 + i)) %
-          ACTIVE_CATALOG_PRODUCTS.length;
-        const product = ACTIVE_CATALOG_PRODUCTS[productIdx];
+      const dateIso = new Date(curOrderTime).toISOString();
 
-        const dateIso = new Date(curOrderTime).toISOString();
-
-        rawOrders.push({
-          id,
-          raw_id: `sim-${waveIdx}-${i}`,
-          product_name: product.name,
-          items_summary: product.name,
-          items_count: 1,
-          order_status: status,
-          status,
-          order_date: dateIso,
-          created_at: dateIso,
-          createdAt: dateIso,
-          customer_display,
-          product_sku: product.sku,
-          process_estimate: status === 'processing' ? 'Estimasi 5-15 Menit' : undefined,
-          warranty_info: status === 'completed' ? product.warranty : null,
-          _orderTime: curOrderTime,
-        });
-      }
+      rawCandidates.push({
+        id,
+        raw_id: `sim-${waveIdx}-${i}`,
+        product_name: product.name,
+        items_summary: product.name,
+        items_count: 1,
+        order_date: dateIso,
+        created_at: dateIso,
+        createdAt: dateIso,
+        customer_display,
+        product_sku: product.sku,
+        warranty: product.warranty,
+        _orderTime: curOrderTime,
+        _processingStartTime: processingStartTime,
+        _naturalCompletedStartTime: naturalCompletedStartTime,
+        _effectiveCompletedStartTime: naturalCompletedStartTime,
+      });
     }
 
     waveTime += waveIntervalMs;
     waveIdx++;
   }
 
-  // Urutkan pesanan dari yang paling baru ke terlama
-  rawOrders.sort((a, b) => b._orderTime - a._orderTime);
+  // 2. Simulasi antrean FIFO Processing (maksimal 3 pesanan Processing bersamaan)
+  // Urutkan secara deterministik berdasarkan _processingStartTime
+  rawCandidates.sort((a, b) => a._processingStartTime - b._processingStartTime);
 
-  // Ambil hingga batas maxOrders untuk riwayat pagination
-  return rawOrders.slice(0, maxOrders);
+  let activeProcessingQueue: { orderIndex: number; effectiveCompletedStartTime: number }[] = [];
+
+  for (let k = 0; k < rawCandidates.length; k++) {
+    const candidate = rawCandidates[k];
+    const pStart = candidate._processingStartTime;
+
+    // Bersihkan pesanan yang sudah selesai secara alami sebelum pStart
+    activeProcessingQueue = activeProcessingQueue.filter(
+      (item) => item.effectiveCompletedStartTime > pStart
+    );
+
+    // Jika antrean Processing sudah mencapai 3, pesanan tertua dipercepat menjadi Sukses pada pStart
+    if (activeProcessingQueue.length >= 3) {
+      const oldest = activeProcessingQueue.shift()!;
+      rawCandidates[oldest.orderIndex]._effectiveCompletedStartTime = pStart;
+    }
+
+    // Masukkan pesanan baru ke antrean Processing
+    activeProcessingQueue.push({
+      orderIndex: k,
+      effectiveCompletedStartTime: candidate._naturalCompletedStartTime,
+    });
+  }
+
+  // 3. Filter hanya pesanan yang sudah muncul pada waktu 'now' (curOrderTime <= now)
+  const appearedOrders: PublicOrder[] = [];
+
+  for (const candidate of rawCandidates) {
+    if (candidate._orderTime <= now) {
+      let status: PublicOrder['order_status'] = 'completed';
+      if (now < candidate._processingStartTime) {
+        status = 'pending';
+      } else if (now < candidate._effectiveCompletedStartTime) {
+        status = 'processing';
+      }
+
+      appearedOrders.push({
+        id: candidate.id,
+        raw_id: candidate.raw_id,
+        product_name: candidate.product_name,
+        items_summary: candidate.items_summary,
+        items_count: candidate.items_count,
+        order_status: status,
+        status,
+        order_date: candidate.order_date,
+        created_at: candidate.created_at,
+        createdAt: candidate.createdAt,
+        customer_display: candidate.customer_display,
+        product_sku: candidate.product_sku,
+        process_estimate: status === 'processing' ? 'Estimasi 5-15 Menit' : undefined,
+        warranty_info: status === 'completed' ? candidate.warranty : null,
+      });
+    }
+  }
+
+  // 4. Urutkan pesanan dari yang paling baru ke terlama
+  appearedOrders.sort((a, b) => {
+    const timeA = new Date(a.order_date).getTime();
+    const timeB = new Date(b.order_date).getTime();
+    return timeB - timeA;
+  });
+
+  // 5. Kembalikan hingga batas maxOrders untuk riwayat pagination
+  return appearedOrders.slice(0, maxOrders);
 }
 
 const LEGACY_STORAGE_KEYS = [

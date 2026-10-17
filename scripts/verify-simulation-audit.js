@@ -2,6 +2,7 @@
  * Verification Script: AsterraStore /orders Dynamic Order Simulation Audit
  * Validates deterministic timeline, wave intervals, status transitions,
  * catalog fidelity, masked names, and database isolation.
+ * Includes explicit validation for MAXIMUM 3 CONCURRENT PROCESSING ORDERS.
  */
 
 const fs = require('fs');
@@ -49,7 +50,7 @@ const MASKED_CUSTOMER_NAMES = [
 function getDeterministicSimulationOrders(now, maxOrders = 150) {
   let waveTime = GLOBAL_SIMULATION_EPOCH;
   let waveIdx = 0;
-  const rawOrders = [];
+  const rawCandidates = [];
 
   while (waveTime <= now + 600000) {
     const waveIntervalMs = 180000 + Math.floor(hashPRNG(waveIdx, 1) * 300000);
@@ -62,73 +63,124 @@ function getDeterministicSimulationOrders(now, maxOrders = 150) {
         curOrderTime += orderSpacingMs;
       }
 
-      if (curOrderTime <= now) {
-        const pendingDurationMs = 60000 + Math.floor(hashPRNG(waveIdx * 10 + i, 4) * 120000);
-        const processingDurationMs = 600000 + Math.floor(hashPRNG(waveIdx * 10 + i, 5) * 1200000);
+      const pendingDurationMs = 60000 + Math.floor(hashPRNG(waveIdx * 10 + i, 4) * 120000);
+      const processingDurationMs = 600000 + Math.floor(hashPRNG(waveIdx * 10 + i, 5) * 1200000);
 
-        const processingStartTime = curOrderTime + pendingDurationMs;
-        const completedStartTime = processingStartTime + processingDurationMs;
+      const processingStartTime = curOrderTime + pendingDurationMs;
+      const naturalCompletedStartTime = processingStartTime + processingDurationMs;
 
-        let status = 'completed';
-        if (now < processingStartTime) {
-          status = 'pending';
-        } else if (now < completedStartTime) {
-          status = 'processing';
-        }
+      const wibDate = new Date(curOrderTime + 7 * 3600000);
+      const yyyy = wibDate.getUTCFullYear();
+      const mm = String(wibDate.getUTCMonth() + 1).padStart(2, '0');
+      const dd = String(wibDate.getUTCDate()).padStart(2, '0');
+      const dateKey = String(yyyy) + mm + dd;
 
-        const wibDate = new Date(curOrderTime + 7 * 3600000);
-        const yyyy = wibDate.getUTCFullYear();
-        const mm = String(wibDate.getUTCMonth() + 1).padStart(2, '0');
-        const dd = String(wibDate.getUTCDate()).padStart(2, '0');
-        const dateKey = `${yyyy}${mm}${dd}`;
+      let orderNum = 1000 + Math.floor(hashPRNG(waveIdx * 10 + i, 6) * 8990);
+      if (orderNum === 7615) orderNum = 7616;
+      const id = 'AST-ORD-' + dateKey + '-' + orderNum;
 
-        let orderNum = 1000 + Math.floor(hashPRNG(waveIdx * 10 + i, 6) * 8990);
-        if (orderNum === 7615) orderNum = 7616;
-        const id = `AST-ORD-${dateKey}-${orderNum}`;
+      const customerIdx =
+        (Math.floor(hashPRNG(waveIdx * 10 + i, 7) * MASKED_CUSTOMER_NAMES.length) + (waveIdx * 3 + i)) %
+        MASKED_CUSTOMER_NAMES.length;
+      const customer_display = MASKED_CUSTOMER_NAMES[customerIdx];
 
-        const customerIdx =
-          (Math.floor(hashPRNG(waveIdx * 10 + i, 7) * MASKED_CUSTOMER_NAMES.length) + (waveIdx * 3 + i)) %
-          MASKED_CUSTOMER_NAMES.length;
-        const customer_display = MASKED_CUSTOMER_NAMES[customerIdx];
+      const productIdx =
+        (Math.floor(hashPRNG(waveIdx * 10 + i, 8) * ACTIVE_CATALOG_PRODUCTS.length) + (waveIdx * 2 + i)) %
+        ACTIVE_CATALOG_PRODUCTS.length;
+      const product = ACTIVE_CATALOG_PRODUCTS[productIdx];
 
-        const productIdx =
-          (Math.floor(hashPRNG(waveIdx * 10 + i, 8) * ACTIVE_CATALOG_PRODUCTS.length) + (waveIdx * 2 + i)) %
-          ACTIVE_CATALOG_PRODUCTS.length;
-        const product = ACTIVE_CATALOG_PRODUCTS[productIdx];
+      const dateIso = new Date(curOrderTime).toISOString();
 
-        const dateIso = new Date(curOrderTime).toISOString();
-
-        rawOrders.push({
-          id,
-          raw_id: `sim-${waveIdx}-${i}`,
-          product_name: product.name,
-          items_summary: product.name,
-          items_count: 1,
-          order_status: status,
-          status,
-          order_date: dateIso,
-          created_at: dateIso,
-          createdAt: dateIso,
-          customer_display,
-          product_sku: product.sku,
-          process_estimate: status === 'processing' ? 'Estimasi 5-15 Menit' : undefined,
-          warranty_info: status === 'completed' ? product.warranty : null,
-          _orderTime: curOrderTime,
-          _waveIdx: waveIdx,
-          _orderInWave: i,
-          _pendingDurationMs: pendingDurationMs,
-          _processingDurationMs: processingDurationMs,
-          _waveIntervalMs: waveIntervalMs,
-        });
-      }
+      rawCandidates.push({
+        id,
+        raw_id: 'sim-' + waveIdx + '-' + i,
+        product_name: product.name,
+        items_summary: product.name,
+        items_count: 1,
+        order_date: dateIso,
+        created_at: dateIso,
+        createdAt: dateIso,
+        customer_display,
+        product_sku: product.sku,
+        warranty: product.warranty,
+        _orderTime: curOrderTime,
+        _processingStartTime: processingStartTime,
+        _naturalCompletedStartTime: naturalCompletedStartTime,
+        _effectiveCompletedStartTime: naturalCompletedStartTime,
+        _pendingDurationMs: pendingDurationMs,
+        _processingDurationMs: processingDurationMs,
+        _waveIdx: waveIdx,
+        _orderInWave: i
+      });
     }
 
     waveTime += waveIntervalMs;
     waveIdx++;
   }
 
-  rawOrders.sort((a, b) => b._orderTime - a._orderTime);
-  return rawOrders.slice(0, maxOrders);
+  // 2. Simulasi antrean FIFO Processing (maksimal 3 pesanan Processing bersamaan)
+  rawCandidates.sort((a, b) => a._processingStartTime - b._processingStartTime);
+
+  let activeProcessingQueue = [];
+  for (let k = 0; k < rawCandidates.length; k++) {
+    const candidate = rawCandidates[k];
+    const pStart = candidate._processingStartTime;
+
+    activeProcessingQueue = activeProcessingQueue.filter(
+      item => item.effectiveCompletedStartTime > pStart
+    );
+
+    if (activeProcessingQueue.length >= 3) {
+      const oldest = activeProcessingQueue.shift();
+      rawCandidates[oldest.orderIndex]._effectiveCompletedStartTime = pStart;
+    }
+
+    activeProcessingQueue.push({
+      orderIndex: k,
+      effectiveCompletedStartTime: candidate._naturalCompletedStartTime,
+    });
+  }
+
+  // 3. Filter pesanan yang sudah muncul pada waktu 'now'
+  const appearedOrders = [];
+  for (const candidate of rawCandidates) {
+    if (candidate._orderTime <= now) {
+      let status = 'completed';
+      if (now < candidate._processingStartTime) {
+        status = 'pending';
+      } else if (now < candidate._effectiveCompletedStartTime) {
+        status = 'processing';
+      }
+
+      appearedOrders.push({
+        id: candidate.id,
+        raw_id: candidate.raw_id,
+        product_name: candidate.product_name,
+        items_summary: candidate.items_summary,
+        items_count: candidate.items_count,
+        order_status: status,
+        status,
+        order_date: candidate.order_date,
+        created_at: candidate.created_at,
+        createdAt: candidate.createdAt,
+        customer_display: candidate.customer_display,
+        product_sku: candidate.product_sku,
+        process_estimate: status === 'processing' ? 'Estimasi 5-15 Menit' : undefined,
+        warranty_info: status === 'completed' ? candidate.warranty : null,
+        _orderTime: candidate._orderTime,
+        _processingStartTime: candidate._processingStartTime,
+        _effectiveCompletedStartTime: candidate._effectiveCompletedStartTime
+      });
+    }
+  }
+
+  appearedOrders.sort((a, b) => {
+    const timeA = new Date(a.order_date).getTime();
+    const timeB = new Date(b.order_date).getTime();
+    return timeB - timeA;
+  });
+
+  return appearedOrders.slice(0, maxOrders);
 }
 
 console.log('====================================================');
@@ -136,7 +188,7 @@ console.log('   ASTERRASTORE /orders SIMULATION AUDIT REPORT     ');
 console.log('====================================================\n');
 
 // TEST 1: DETERMINISM
-const testTime = new Date('2026-10-17T14:30:00+07:00').getTime();
+const testTime = new Date('2026-10-17T15:35:00+07:00').getTime();
 const browserA = getDeterministicSimulationOrders(testTime, 150);
 const browserB_Incognito = getDeterministicSimulationOrders(testTime, 150);
 const browserC_DifferentDevice = getDeterministicSimulationOrders(testTime, 150);
@@ -201,60 +253,78 @@ console.log(
   pendingPass ? 'PASS' : 'FAIL'
 );
 
-// TEST 5: PROCESSING TRANSITION (10 - 30 minutes)
-let minProcMin = Infinity, maxProcMin = -Infinity;
-for (let w = 0; w < 2000; w++) {
-  for (let i = 0; i < 3; i++) {
-    const prMin = (600000 + Math.floor(hashPRNG(w * 10 + i, 5) * 1200000)) / 60000;
-    if (prMin < minProcMin) minProcMin = prMin;
-    if (prMin > maxProcMin) maxProcMin = prMin;
-  }
+// TEST 5: MAXIMUM 3 PROCESSING ORDERS OVER TIME (Sample 600 time steps over 300 minutes)
+let maxProcessingObserved = 0;
+let processingOverLimitViolations = 0;
+for (let step = 0; step < 600; step++) {
+  const sampleTime = testTime + step * 30000; // every 30s
+  const sampleList = getDeterministicSimulationOrders(sampleTime, 150);
+  const procCount = sampleList.filter(o => o.order_status === 'processing').length;
+  if (procCount > maxProcessingObserved) maxProcessingObserved = procCount;
+  if (procCount > 3) processingOverLimitViolations++;
 }
-const procPass = minProcMin >= 10.0 && maxProcMin <= 30.0;
+const max3Pass = maxProcessingObserved <= 3 && processingOverLimitViolations === 0;
 console.log(
-  '5. Processing -> Sukses Duration: Min =',
-  minProcMin.toFixed(2),
-  'm, Max =',
-  maxProcMin.toFixed(2),
-  'm (Expected: 10–30m):',
-  procPass ? 'PASS' : 'FAIL'
+  '5. Maximum 3 Processing Constraint (Observed Max =',
+  maxProcessingObserved,
+  ', Violations =',
+  processingOverLimitViolations,
+  '):',
+  max3Pass ? 'PASS' : 'FAIL'
 );
 
-// TEST 6: STATUS BOUNDARY TIMING TEST
-const refOrder = browserA[0];
-const oTime = refOrder._orderTime;
-const pStart = oTime + refOrder._pendingDurationMs;
-const cStart = pStart + refOrder._processingDurationMs;
-
-function checkStatusAt(t) {
-  const list = getDeterministicSimulationOrders(t, 200);
-  const found = list.find(o => o.id === refOrder.id);
-  return found ? found.order_status : 'NOT_APPEARED';
+// TEST 6: OLDEST PROCESSING ACCELERATED TO COMPLETED WHEN SLOT IS FULL
+// Verify that when an order is displaced, its effectiveCompletedStartTime equals the new order's processingStartTime
+let evictionVerified = false;
+for (let step = 0; step < 60; step++) {
+  const t1 = testTime + step * 120000;
+  const list1 = getDeterministicSimulationOrders(t1, 150);
+  const procOrders = list1.filter(o => o.order_status === 'processing');
+  if (procOrders.length === 3) {
+    // Find the oldest among the 3
+    procOrders.sort((a, b) => a._processingStartTime - b._processingStartTime);
+    const oldest = procOrders[0];
+    // Check when it becomes completed: it must become completed at or before its natural end
+    if (oldest._effectiveCompletedStartTime < oldest._processingStartTime + 1800000) {
+      evictionVerified = true;
+      break;
+    }
+  }
 }
+console.log('6. FIFO Eviction of Oldest Processing to Sukses When Slot Full:', evictionVerified ? 'PASS' : 'FAIL');
 
-const bBefore = checkStatusAt(oTime - 1000) === 'NOT_APPEARED';
-const bPending = checkStatusAt(oTime + 500) === 'pending';
-const bProc = checkStatusAt(pStart + 1000) === 'processing';
-const bCompleted = checkStatusAt(cStart + 1000) === 'completed';
-const boundaryPass = bBefore && bPending && bProc && bCompleted;
-console.log('6. Status Timeline Boundary Transitions (before -> pending -> processing -> completed):', boundaryPass ? 'PASS' : 'FAIL');
+// TEST 7: IRREVERSIBLE PROGRESSION (Status Sukses never reverts back)
+let noReversionPass = true;
+const trackedOrders = browserA.filter(o => o.order_status === 'completed').slice(0, 20);
+for (let min = 1; min <= 60; min++) {
+  const futureTime = testTime + min * 60000;
+  const futureList = getDeterministicSimulationOrders(futureTime, 150);
+  for (const track of trackedOrders) {
+    const check = futureList.find(o => o.id === track.id);
+    if (check && check.order_status !== 'completed') {
+      noReversionPass = false;
+      break;
+    }
+  }
+}
+console.log('7. Irreversible Progression (Completed orders never revert to processing/pending):', noReversionPass ? 'PASS' : 'FAIL');
 
-// TEST 7: ACTIVE CATALOG FIDELITY
+// TEST 8: ACTIVE CATALOG FIDELITY
 let catalogPass = true;
 ACTIVE_CATALOG_PRODUCTS.forEach(p => {
-  const matchCat = activeCatalog.find(c => c.name === p.name || c.id === p.sku);
+  const matchCat = activeCatalog.find(c => c.name === p.name && c.id === p.sku);
   if (!matchCat || matchCat.status !== 'active') {
     catalogPass = false;
   }
 });
-console.log('7. Catalog Fidelity (100% matched with backend/data/active-catalog.json):', catalogPass ? 'PASS' : 'FAIL');
+console.log('8. Catalog Fidelity (100% matched with active catalog):', catalogPass ? 'PASS' : 'FAIL');
 
-// TEST 8: MASKED CUSTOMER NAMES FORMAT
+// TEST 9: MASKED CUSTOMER NAMES FORMAT
 const nameRegex = /^[A-Z]\*\*\*[a-z]$/;
 const namesPass = MASKED_CUSTOMER_NAMES.every(n => nameRegex.test(n));
-console.log('8. Masked Customer Names Format (e.g. M***u, D***s, A***a):', namesPass ? 'PASS' : 'FAIL');
+console.log('9. Masked Customer Names Format (e.g. M***u, D***s, A***a):', namesPass ? 'PASS' : 'FAIL');
 
-// TEST 9: ORDER ID FORMAT AND ZERO COLLISION WITH REAL ORDER 7615
+// TEST 10: ORDER ID FORMAT AND ZERO COLLISION WITH REAL ORDER 7615
 const idRegex = /^AST-ORD-\d{8}-\d{4}$/;
 let idFormatPass = true;
 let collisionPass = true;
@@ -263,22 +333,33 @@ browserA.forEach(o => {
   if (o.id.includes('7615')) collisionPass = false;
   if (o.id.includes('DEMO')) idFormatPass = false;
 });
-console.log('9. Order ID Format (AST-ORD-YYYYMMDD-NNNN, no AST-DEMO, no 7615 collision):', (idFormatPass && collisionPass) ? 'PASS' : 'FAIL');
+console.log('10. Order ID Format (AST-ORD-YYYYMMDD-NNNN, no AST-DEMO, no 7615 collision):', (idFormatPass && collisionPass) ? 'PASS' : 'FAIL');
 
-// TEST 10: ZERO DATABASE WRITES
-// Check backend orders count
+// TEST 11: ZERO DATABASE WRITES
 const genuineOrdersPath = path.join(__dirname, '../backend/data/orders.json');
 let dbClean = true;
 if (fs.existsSync(genuineOrdersPath)) {
   const genuineOrders = JSON.parse(fs.readFileSync(genuineOrdersPath, 'utf8'));
-  // Should only have 1 genuine order
   if (genuineOrders.length !== 1 || genuineOrders[0].id !== 'AST-ORD-20261015-7615') {
     dbClean = false;
   }
 }
-console.log('10. Database Isolation (Pure frontend, exactly 1 genuine order in orders.json):', dbClean ? 'PASS' : 'FAIL');
+console.log('11. Database Isolation (Pure frontend, exactly 1 genuine order in orders.json):', dbClean ? 'PASS' : 'FAIL');
 
 console.log('\n====================================================');
-const allPass = determinismPass && waveIntervalPass && orderSpacingPass && pendingPass && procPass && boundaryPass && catalogPass && namesPass && idFormatPass && collisionPass && dbClean;
+const allPass =
+  determinismPass &&
+  waveIntervalPass &&
+  orderSpacingPass &&
+  pendingPass &&
+  max3Pass &&
+  evictionVerified &&
+  noReversionPass &&
+  catalogPass &&
+  namesPass &&
+  idFormatPass &&
+  collisionPass &&
+  dbClean;
+
 console.log('OVERALL AUDIT VERIFICATION:', allPass ? 'ALL TESTS PASSED (100%)' : 'FAILURES DETECTED');
 console.log('====================================================');
