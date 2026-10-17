@@ -25,6 +25,7 @@ import {
   formatRelativeTime,
   parseSafeDate,
   clearLegacySyntheticTimelineStorage,
+  getDeterministicSimulationOrders,
 } from '@/lib/hooks/use-dynamic-orders';
 import { useCatalogProducts } from '@/lib/hooks/use-catalog-products';
 import { ProductCard } from '@/components/products/product-card';
@@ -169,178 +170,6 @@ function GlobalOrdersPageSkeleton() {
   );
 }
 
-/**
- * Aktivitas pesanan dummy langsung di frontend untuk meramaikan tampilan /orders.
- * Deterministik dan konsisten di semua browser (normal & incognito).
- * Pesanan recent berstatus 'processing' dan bertransisi otomatis ke 'completed' setelah 6 menit (5-8 menit).
- */
-function getFrontendDummyOrders(now: number): PublicOrder[] {
-  const CYCLE_MS = 15 * 60 * 1000;
-  const TRANSITION_MS = 6 * 60 * 1000;
-  const slot = Math.floor(now / CYCLE_MS);
-  const recentOrderTimeMs = slot * CYCLE_MS + 2 * 60 * 1000;
-  const effectiveRecentMs = now >= recentOrderTimeMs ? recentOrderTimeMs : (slot - 1) * CYCLE_MS + 2 * 60 * 1000;
-  const elapsed = now - effectiveRecentMs;
-  const isRecentProcessing = elapsed < TRANSITION_MS;
-
-  const recentOrder: PublicOrder = {
-    id: 'AST-ORD-20261017-9102',
-    raw_id: 'dummy-9102',
-    product_name: 'CapCut Pro Shared 1 Bulan [1 Device - 2 User] [Garansi 7 Hari]',
-    items_summary: 'CapCut Pro Shared 1 Bulan [1 Device - 2 User] [Garansi 7 Hari]',
-    items_count: 1,
-    order_status: isRecentProcessing ? 'processing' : 'completed',
-    status: isRecentProcessing ? 'processing' : 'completed',
-    order_date: new Date(effectiveRecentMs).toISOString(),
-    created_at: new Date(effectiveRecentMs).toISOString(),
-    createdAt: new Date(effectiveRecentMs).toISOString(),
-    customer_display: 'D***s',
-    product_sku: 'vip-capcutshared1bln-s2',
-    process_estimate: isRecentProcessing ? 'Estimasi 5-10 Menit' : undefined,
-    warranty_info: isRecentProcessing ? null : 'Garansi 7 Hari',
-  };
-
-  const fixedOrders: PublicOrder[] = [
-    {
-      id: 'AST-ORD-20261017-8421',
-      raw_id: 'dummy-8421',
-      product_name: 'Google AI Pro Private 18 Bulan [Garansi 1 Bulan]',
-      items_summary: 'Google AI Pro Private 18 Bulan [Garansi 1 Bulan]',
-      items_count: 1,
-      order_status: 'completed',
-      status: 'completed',
-      order_date: '2026-10-17T03:15:00.000Z',
-      created_at: '2026-10-17T03:15:00.000Z',
-      createdAt: '2026-10-17T03:15:00.000Z',
-      customer_display: 'A***a',
-      product_sku: 'prod-muniiqze-jyh0',
-      warranty_info: 'Garansi 1 Bulan',
-    },
-    {
-      id: 'AST-ORD-20261016-7230',
-      raw_id: 'dummy-7230',
-      product_name: 'Netflix Premium Shared 30 Hari [1 Profile] [Garansi 14 Hari]',
-      items_summary: 'Netflix Premium Shared 30 Hari [1 Profile] [Garansi 14 Hari]',
-      items_count: 1,
-      order_status: 'completed',
-      status: 'completed',
-      order_date: '2026-10-16T13:20:00.000Z',
-      created_at: '2026-10-16T13:20:00.000Z',
-      createdAt: '2026-10-16T13:20:00.000Z',
-      customer_display: 'F***n',
-      product_sku: 'vip-ntflxshare30dgar14d-s2',
-      warranty_info: 'Garansi 14 Hari',
-    },
-    {
-      id: 'AST-ORD-20261016-6512',
-      raw_id: 'dummy-6512',
-      product_name: 'Vidio Premier Platinum Shared 1 Bulan',
-      items_summary: 'Vidio Premier Platinum Shared 1 Bulan',
-      items_count: 1,
-      order_status: 'completed',
-      status: 'completed',
-      order_date: '2026-10-16T08:10:00.000Z',
-      created_at: '2026-10-16T08:10:00.000Z',
-      createdAt: '2026-10-16T08:10:00.000Z',
-      customer_display: 'K***a',
-      product_sku: 'vip-vidioshared-s1',
-      warranty_info: 'Garansi Resmi',
-    },
-    {
-      id: 'AST-ORD-20261016-6104',
-      raw_id: 'dummy-6104',
-      product_name: 'Spotify Premium Anggota 1 Bulan [Invite] [Reg Indonesia]',
-      items_summary: 'Spotify Premium Anggota 1 Bulan [Invite] [Reg Indonesia]',
-      items_count: 1,
-      order_status: 'completed',
-      status: 'completed',
-      order_date: '2026-10-16T04:35:00.000Z',
-      created_at: '2026-10-16T04:35:00.000Z',
-      createdAt: '2026-10-16T04:35:00.000Z',
-      customer_display: 'S***a',
-      product_sku: 'vip-spyinvt1bln-s1',
-      warranty_info: 'Garansi Resmi',
-    },
-    {
-      id: 'AST-ORD-20261015-5820',
-      raw_id: 'dummy-5820',
-      product_name: 'YouTube Premium Family Anggota 1 Bulan [Invite] [Garansi 1x]',
-      items_summary: 'YouTube Premium Family Anggota 1 Bulan [Invite] [Garansi 1x]',
-      items_count: 1,
-      order_status: 'completed',
-      status: 'completed',
-      order_date: '2026-10-15T02:20:00.000Z',
-      created_at: '2026-10-15T02:20:00.000Z',
-      createdAt: '2026-10-15T02:20:00.000Z',
-      customer_display: 'B***i',
-      product_sku: 'vip-ytpreminvt1bln-s3',
-      warranty_info: 'Garansi 1x Invite Ulang',
-    },
-    {
-      id: 'AST-ORD-20261014-5120',
-      raw_id: 'dummy-5120',
-      product_name: 'iQIYI Premium Shared 1 Bulan',
-      items_summary: 'iQIYI Premium Shared 1 Bulan',
-      items_count: 1,
-      order_status: 'completed',
-      status: 'completed',
-      order_date: '2026-10-14T11:30:00.000Z',
-      created_at: '2026-10-14T11:30:00.000Z',
-      createdAt: '2026-10-14T11:30:00.000Z',
-      customer_display: 'M***y',
-      product_sku: 'vip-iqiyishared-s1',
-      warranty_info: 'Garansi Resmi',
-    },
-    {
-      id: 'AST-ORD-20261014-4672',
-      raw_id: 'dummy-4672',
-      product_name: 'Canva Pro Anggota 1 Tahun [Garansi 12 Bulan]',
-      items_summary: 'Canva Pro Anggota 1 Tahun [Garansi 12 Bulan]',
-      items_count: 1,
-      order_status: 'completed',
-      status: 'completed',
-      order_date: '2026-10-14T07:10:00.000Z',
-      created_at: '2026-10-14T07:10:00.000Z',
-      createdAt: '2026-10-14T07:10:00.000Z',
-      customer_display: 'E***o',
-      product_sku: 'vip-canvaanggota12bln-s1',
-      warranty_info: 'Garansi 12 Bulan',
-    },
-    {
-      id: 'AST-ORD-20261013-4319',
-      raw_id: 'dummy-4319',
-      product_name: 'Bstation Premium Shared 1 Bulan [1 Device]',
-      items_summary: 'Bstation Premium Shared 1 Bulan [1 Device]',
-      items_count: 1,
-      order_status: 'completed',
-      status: 'completed',
-      order_date: '2026-10-13T14:15:00.000Z',
-      created_at: '2026-10-13T14:15:00.000Z',
-      createdAt: '2026-10-13T14:15:00.000Z',
-      customer_display: 'T***o',
-      product_sku: 'vip-bspremshrd1bln-s1',
-      warranty_info: 'Garansi Resmi',
-    },
-    {
-      id: 'AST-ORD-20261012-3211',
-      raw_id: 'dummy-3211',
-      product_name: 'ChatGPT Plus Private 1 Bulan [Garansi 28 Hari]',
-      items_summary: 'ChatGPT Plus Private 1 Bulan [Garansi 28 Hari]',
-      items_count: 1,
-      order_status: 'completed',
-      status: 'completed',
-      order_date: '2026-10-12T09:30:00.000Z',
-      created_at: '2026-10-12T09:30:00.000Z',
-      createdAt: '2026-10-12T09:30:00.000Z',
-      customer_display: 'N***a',
-      product_sku: 'vip-chatgptplus1bgar28d-s1',
-      warranty_info: 'Garansi 28 Hari',
-    },
-  ];
-
-  return [recentOrder, ...fixedOrders];
-}
-
 function GlobalOrdersContent() {
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -353,11 +182,11 @@ function GlobalOrdersContent() {
     clearLegacySyntheticTimelineStorage();
   }, []);
 
-  // Update relative time reference & dynamic status transitions every 10 seconds
+  // Update relative time reference & dynamic status transitions every 5 seconds
   useEffect(() => {
     const timer = setInterval(() => {
       setNow(Date.now());
-    }, 10000);
+    }, 5000);
     return () => clearInterval(timer);
   }, []);
 
@@ -371,7 +200,7 @@ function GlobalOrdersContent() {
       current_page: number;
       total_pages: number;
       items_per_page: number;
-    };
+      };
   }>({
     queryKey: ['global-orders', 'public-all'],
     queryFn: async () => {
@@ -388,11 +217,11 @@ function GlobalOrdersContent() {
     refetchInterval: 15000, // Background sync every 15s keeps list updated across all browsers
   });
 
-  // Gabungkan transaksi asli dari database dengan pesanan dummy frontend
+  // Gabungkan transaksi asli dari database dengan pesanan simulasi deterministik global
   const allOrders = useMemo<PublicOrder[]>(() => {
     const realOrders = data?.data || [];
-    const dummyOrders = getFrontendDummyOrders(now);
-    const combined = [...realOrders, ...dummyOrders];
+    const simulatedOrders = getDeterministicSimulationOrders(now, 150);
+    const combined = [...realOrders, ...simulatedOrders];
     return combined.sort((a, b) => {
       const dateA = new Date(a.order_date || a.created_at || a.createdAt || '').getTime() || 0;
       const dateB = new Date(b.order_date || b.created_at || b.createdAt || '').getTime() || 0;
