@@ -2,9 +2,7 @@
 
 import { useState, useMemo, useEffect, Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { STATIC_DEMO_ORDERS, isOrdersDemoEnabled } from '@/lib/demo/demo-orders';
 import { Button } from '@/components/ui/button';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -171,12 +169,134 @@ function GlobalOrdersPageSkeleton() {
   );
 }
 
-function GlobalOrdersContent() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const demoParam = searchParams.get('demo');
-  const isDemoActive = isOrdersDemoEnabled(demoParam);
+/**
+ * Aktivitas pesanan dummy langsung di frontend untuk meramaikan tampilan /orders.
+ * Deterministik dan konsisten di semua browser (normal & incognito).
+ * Pesanan recent berstatus 'processing' dan bertransisi otomatis ke 'completed' setelah 6 menit (5-8 menit).
+ */
+function getFrontendDummyOrders(now: number): PublicOrder[] {
+  const CYCLE_MS = 15 * 60 * 1000;
+  const TRANSITION_MS = 6 * 60 * 1000;
+  const slot = Math.floor(now / CYCLE_MS);
+  const recentOrderTimeMs = slot * CYCLE_MS + 2 * 60 * 1000;
+  const effectiveRecentMs = now >= recentOrderTimeMs ? recentOrderTimeMs : (slot - 1) * CYCLE_MS + 2 * 60 * 1000;
+  const elapsed = now - effectiveRecentMs;
+  const isRecentProcessing = elapsed < TRANSITION_MS;
 
+  const recentOrder: PublicOrder = {
+    id: 'AST-ORD-20261017-9102',
+    raw_id: 'dummy-9102',
+    product_name: 'CapCut Pro Shared 1 Bulan [1 Device - 2 User] [Garansi 7 Hari]',
+    items_summary: 'CapCut Pro Shared 1 Bulan [1 Device - 2 User] [Garansi 7 Hari]',
+    items_count: 1,
+    order_status: isRecentProcessing ? 'processing' : 'completed',
+    status: isRecentProcessing ? 'processing' : 'completed',
+    order_date: new Date(effectiveRecentMs).toISOString(),
+    created_at: new Date(effectiveRecentMs).toISOString(),
+    createdAt: new Date(effectiveRecentMs).toISOString(),
+    customer_display: 'D***s',
+    product_sku: 'vip-capcutshared1bln-s2',
+    process_estimate: isRecentProcessing ? 'Estimasi 5-10 Menit' : undefined,
+    warranty_info: isRecentProcessing ? null : 'Garansi 7 Hari',
+  };
+
+  const fixedOrders: PublicOrder[] = [
+    {
+      id: 'AST-ORD-20261017-8421',
+      raw_id: 'dummy-8421',
+      product_name: 'Google AI Pro Private 18 Bulan [Garansi 1 Bulan]',
+      items_summary: 'Google AI Pro Private 18 Bulan [Garansi 1 Bulan]',
+      items_count: 1,
+      order_status: 'completed',
+      status: 'completed',
+      order_date: '2026-10-17T03:15:00.000Z',
+      created_at: '2026-10-17T03:15:00.000Z',
+      createdAt: '2026-10-17T03:15:00.000Z',
+      customer_display: 'A***a',
+      product_sku: 'prod-muniiqze-jyh0',
+      warranty_info: 'Garansi 1 Bulan',
+    },
+    {
+      id: 'AST-ORD-20261016-7230',
+      raw_id: 'dummy-7230',
+      product_name: 'Netflix Premium Shared 30 Hari [1 Profile] [Garansi 14 Hari]',
+      items_summary: 'Netflix Premium Shared 30 Hari [1 Profile] [Garansi 14 Hari]',
+      items_count: 1,
+      order_status: 'completed',
+      status: 'completed',
+      order_date: '2026-10-16T13:20:00.000Z',
+      created_at: '2026-10-16T13:20:00.000Z',
+      createdAt: '2026-10-16T13:20:00.000Z',
+      customer_display: 'F***n',
+      product_sku: 'vip-ntflxshare30dgar14d-s2',
+      warranty_info: 'Garansi 14 Hari',
+    },
+    {
+      id: 'AST-ORD-20261016-6512',
+      raw_id: 'dummy-6512',
+      product_name: 'Vidio Premier Platinum Shared 1 Bulan',
+      items_summary: 'Vidio Premier Platinum Shared 1 Bulan',
+      items_count: 1,
+      order_status: 'completed',
+      status: 'completed',
+      order_date: '2026-10-16T08:10:00.000Z',
+      created_at: '2026-10-16T08:10:00.000Z',
+      createdAt: '2026-10-16T08:10:00.000Z',
+      customer_display: 'K***a',
+      product_sku: 'vip-vidioshared-s1',
+      warranty_info: 'Garansi Resmi',
+    },
+    {
+      id: 'AST-ORD-20261014-5120',
+      raw_id: 'dummy-5120',
+      product_name: 'iQIYI Premium Shared 1 Bulan',
+      items_summary: 'iQIYI Premium Shared 1 Bulan',
+      items_count: 1,
+      order_status: 'completed',
+      status: 'completed',
+      order_date: '2026-10-14T11:30:00.000Z',
+      created_at: '2026-10-14T11:30:00.000Z',
+      createdAt: '2026-10-14T11:30:00.000Z',
+      customer_display: 'M***y',
+      product_sku: 'vip-iqiyishared-s1',
+      warranty_info: 'Garansi Resmi',
+    },
+    {
+      id: 'AST-ORD-20261013-4319',
+      raw_id: 'dummy-4319',
+      product_name: 'Bstation Premium Shared 1 Bulan [1 Device]',
+      items_summary: 'Bstation Premium Shared 1 Bulan [1 Device]',
+      items_count: 1,
+      order_status: 'completed',
+      status: 'completed',
+      order_date: '2026-10-13T14:15:00.000Z',
+      created_at: '2026-10-13T14:15:00.000Z',
+      createdAt: '2026-10-13T14:15:00.000Z',
+      customer_display: 'T***o',
+      product_sku: 'vip-bspremshrd1bln-s1',
+      warranty_info: 'Garansi Resmi',
+    },
+    {
+      id: 'AST-ORD-20261012-3211',
+      raw_id: 'dummy-3211',
+      product_name: 'ChatGPT Plus Private 1 Bulan [Garansi 28 Hari]',
+      items_summary: 'ChatGPT Plus Private 1 Bulan [Garansi 28 Hari]',
+      items_count: 1,
+      order_status: 'completed',
+      status: 'completed',
+      order_date: '2026-10-12T09:30:00.000Z',
+      created_at: '2026-10-12T09:30:00.000Z',
+      createdAt: '2026-10-12T09:30:00.000Z',
+      customer_display: 'N***a',
+      product_sku: 'vip-chatgptplus1bgar28d-s1',
+      warranty_info: 'Garansi 28 Hari',
+    },
+  ];
+
+  return [recentOrder, ...fixedOrders];
+}
+
+function GlobalOrdersContent() {
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -188,7 +308,7 @@ function GlobalOrdersContent() {
     clearLegacySyntheticTimelineStorage();
   }, []);
 
-  // Update relative time reference every 10 seconds
+  // Update relative time reference & dynamic status transitions every 10 seconds
   useEffect(() => {
     const timer = setInterval(() => {
       setNow(Date.now());
@@ -196,7 +316,7 @@ function GlobalOrdersContent() {
     return () => clearInterval(timer);
   }, []);
 
-  // Fetch Public Orders from single canonical backend endpoint with pagination & filtering
+  // Fetch Public Orders from single canonical backend endpoint
   const { data, isLoading, isFetching, error, refetch, isRefetching } = useQuery<{
     success: boolean;
     data: PublicOrder[];
@@ -208,29 +328,12 @@ function GlobalOrdersContent() {
       items_per_page: number;
     };
   }>({
-    queryKey: [
-      'global-orders',
-      isDemoActive ? 'demo-active' : selectedStatus,
-      isDemoActive ? '' : searchQuery,
-      isDemoActive ? 1 : currentPage,
-    ],
+    queryKey: ['global-orders', 'public-all'],
     queryFn: async () => {
       const params = new URLSearchParams();
       params.append('public', 'true');
-      if (!isDemoActive) {
-        params.append('page', String(currentPage));
-        params.append('limit', String(itemsPerPage));
-        if (selectedStatus !== 'all') {
-          params.append('status', selectedStatus);
-        }
-        if (searchQuery.trim()) {
-          params.append('search', searchQuery.trim());
-        }
-      } else {
-        // When demo mode is active, fetch real orders (page 1, up to 50) to merge with deterministic demo orders
-        params.append('page', '1');
-        params.append('limit', '50');
-      }
+      params.append('page', '1');
+      params.append('limit', '50');
       const res = await fetch('/api/v1/orders?' + params.toString());
       if (!res.ok) throw new Error('Gagal mengambil data pesanan publik');
       return res.json();
@@ -240,26 +343,20 @@ function GlobalOrdersContent() {
     refetchInterval: 15000, // Background sync every 15s keeps list updated across all browsers
   });
 
-  // Base list of orders
+  // Gabungkan transaksi asli dari database dengan pesanan dummy frontend
   const allOrders = useMemo<PublicOrder[]>(() => {
-    const realOrders = (data?.data || []).map((o) => ({ ...o, is_demo: false }));
-    if (!isDemoActive) {
-      return realOrders;
-    }
-    // Merge real database orders with static deterministic demo orders
-    const combined = [...realOrders, ...STATIC_DEMO_ORDERS];
+    const realOrders = data?.data || [];
+    const dummyOrders = getFrontendDummyOrders(now);
+    const combined = [...realOrders, ...dummyOrders];
     return combined.sort((a, b) => {
       const dateA = new Date(a.order_date || a.created_at || a.createdAt || '').getTime() || 0;
       const dateB = new Date(b.order_date || b.created_at || b.createdAt || '').getTime() || 0;
       return dateB - dateA;
     });
-  }, [data?.data, isDemoActive]);
+  }, [data?.data, now]);
 
-  // Apply filters (status & search)
+  // Filter status dan pencarian
   const filteredOrders = useMemo<PublicOrder[]>(() => {
-    if (!isDemoActive) {
-      return allOrders;
-    }
     let list = allOrders;
     if (selectedStatus !== 'all') {
       list = list.filter((o) => (o.order_status || o.status) === selectedStatus);
@@ -273,29 +370,15 @@ function GlobalOrdersContent() {
       );
     }
     return list;
-  }, [allOrders, isDemoActive, selectedStatus, searchQuery]);
+  }, [allOrders, selectedStatus, searchQuery]);
 
-  const totalItems = isDemoActive
-    ? filteredOrders.length
-    : (data?.pagination?.total_items ?? data?.total ?? filteredOrders.length);
-
+  const totalItems = filteredOrders.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
 
   const orders = useMemo<PublicOrder[]>(() => {
-    if (!isDemoActive) {
-      return filteredOrders;
-    }
     const startIndex = (currentPage - 1) * itemsPerPage;
     return filteredOrders.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredOrders, isDemoActive, currentPage, itemsPerPage]);
-
-  const handleToggleDemo = () => {
-    const nextVal = !isDemoActive;
-    const params = new URLSearchParams(searchParams.toString());
-    params.set('demo', String(nextVal));
-    router.push(`/orders?${params.toString()}`);
-    setCurrentPage(1);
-  };
+  }, [filteredOrders, currentPage, itemsPerPage]);
 
   // Fetch Catalog Products untuk rekomendasi jika antrean transaksi kosong
   const { data: catalogResponse, isLoading: isCatalogLoading } = useCatalogProducts();
@@ -355,32 +438,11 @@ function GlobalOrdersContent() {
         {/* Page Header */}
         <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="flex flex-wrap items-center gap-3">
-              <h1 data-gsap="orders-title" className="text-xl sm:text-2xl font-black text-foreground tracking-tight">
-                Daftar Pesanan
-              </h1>
-              <button
-                type="button"
-                onClick={handleToggleDemo}
-                className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold transition-all border cursor-pointer inline-flex items-center gap-1.5 ${
-                  isDemoActive
-                    ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30 hover:bg-amber-500/25'
-                    : 'bg-surface text-foreground-muted border-border hover:text-foreground hover:border-primary/40'
-                }`}
-                title={
-                  isDemoActive
-                    ? 'Mode Demo Aktif: Menampilkan simulasi aktivitas toko + transaksi riil. Klik untuk hanya menampilkan transaksi database asli.'
-                    : 'Mode Demo Nonaktif: Hanya menampilkan transaksi database asli. Klik untuk menampilkan aktivitas demo.'
-                }
-              >
-                <span className={`w-2 h-2 rounded-full ${isDemoActive ? 'bg-amber-500 animate-pulse' : 'bg-gray-400'}`} />
-                <span>Mode Demo: {isDemoActive ? 'Aktif' : 'Nonaktif'}</span>
-              </button>
-            </div>
+            <h1 data-gsap="orders-title" className="text-xl sm:text-2xl font-black text-foreground tracking-tight">
+              Daftar Pesanan
+            </h1>
             <p data-gsap="orders-desc" className="text-xs text-foreground-muted mt-1">
-              {isDemoActive
-                ? 'Daftar transaksi lisensi dan akun digital pelanggan Asterra Store (Termasuk simulasi aktivitas demo).'
-                : 'Daftar transaksi lisensi dan akun digital pelanggan Asterra Store (Hanya transaksi riil terverifikasi).'}
+              Daftar transaksi lisensi dan akun digital pelanggan Asterra Store.
             </p>
           </div>
 
@@ -563,16 +625,6 @@ function GlobalOrdersContent() {
                           <span className="font-mono font-bold text-sm text-foreground">
                             {order.id}
                           </span>
-                          {order.is_demo && (
-                            <span
-                              data-gsap="order-demo-badge"
-                              className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 font-semibold border border-amber-500/30 inline-flex items-center gap-1"
-                              title="Pesanan simulasi deterministik (Demo)"
-                            >
-                              <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                              Demo
-                            </span>
-                          )}
                           <span className="text-foreground-muted text-xs">—</span>
                           <span className="text-xs text-foreground font-medium inline-flex items-center gap-1">
                             <FontAwesomeIcon icon={faUserCheck} className="w-3 h-3 text-foreground-muted" />

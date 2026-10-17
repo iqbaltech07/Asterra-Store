@@ -16,7 +16,6 @@ export interface PublicOrder {
   product_sku?: string;
   process_estimate?: string;
   warranty_info?: string | null;
-  is_demo?: boolean;
 }
 
 const LEGACY_STORAGE_KEYS = [
