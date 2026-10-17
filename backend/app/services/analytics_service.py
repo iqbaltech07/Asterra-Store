@@ -30,7 +30,10 @@ class AnalyticsService:
         weekly_buckets = {name: {"orders": 0, "revenue": 0.0} for name in weekly_day_map.values()}
         monthly_buckets = {f"Minggu {w}": {"orders": 0, "revenue": 0.0} for w in range(1, 5)}
 
-        now = datetime.utcnow()
+        from datetime import timezone
+        WIB = timezone(timedelta(hours=7))
+        now_wib = datetime.now(WIB)
+        today_date = now_wib.date()
 
         for o in orders:
             status = str(o.get("status", "")).lower()
@@ -40,12 +43,17 @@ class AnalyticsService:
             email = str(o.get("customerEmail") or o.get("customer_email") or "").lower().strip()
             name = o.get("customerName") or o.get("customer_name") or "Pelanggan"
             phone = o.get("customerWhatsapp") or o.get("customer_whatsapp") or ""
-            created_str = o.get("createdAt") or o.get("created_at") or now.isoformat()
+            created_str = o.get("createdAt") or o.get("created_at") or now_wib.isoformat()
 
             try:
-                created_dt = datetime.fromisoformat(created_str.replace("Z", "+00:00")).replace(tzinfo=None)
+                if "Z" in created_str:
+                    created_dt = datetime.fromisoformat(created_str.replace("Z", "+00:00")).astimezone(WIB)
+                elif "+" in created_str:
+                    created_dt = datetime.fromisoformat(created_str).astimezone(WIB)
+                else:
+                    created_dt = datetime.fromisoformat(created_str).replace(tzinfo=timezone.utc).astimezone(WIB)
             except Exception:
-                created_dt = now
+                created_dt = now_wib
 
             if email:
                 if email not in customer_map:
@@ -69,13 +77,14 @@ class AnalyticsService:
                 total_revenue += amt
 
                 # Time-series grouping for charts
-                # 1) Daily bucket (by closest 3-hour mark)
-                hour = created_dt.hour
-                closest_h = min([8, 11, 14, 17, 20, 23], key=lambda x: abs(x - hour))
-                h_key = f"{closest_h:02d}:00"
-                if h_key in daily_buckets:
-                    daily_buckets[h_key]["orders"] += 1
-                    daily_buckets[h_key]["revenue"] += amt
+                # 1) Daily bucket (strictly for today's orders by closest 3-hour mark)
+                if created_dt.date() == today_date:
+                    hour = created_dt.hour
+                    closest_h = min([8, 11, 14, 17, 20, 23], key=lambda x: abs(x - hour))
+                    h_key = f"{closest_h:02d}:00"
+                    if h_key in daily_buckets:
+                        daily_buckets[h_key]["orders"] += 1
+                        daily_buckets[h_key]["revenue"] += amt
 
                 # 2) Weekly bucket (by day of week)
                 day_name = weekly_day_map.get(created_dt.weekday(), "Senin")
@@ -112,14 +121,6 @@ class AnalyticsService:
             elif status in ["cancelled", "expired", "failed"]:
                 cancelled_orders += 1
 
-        # Fallback chart data if day has 0 completed
-        if sum(b["revenue"] for b in daily_buckets.values()) == 0:
-            for k, b in weekly_buckets.items():
-                if b["revenue"] > 0:
-                    daily_buckets["14:00"]["orders"] = b["orders"]
-                    daily_buckets["14:00"]["revenue"] = b["revenue"]
-                    break
-
         sales_chart_data = {
             "daily": [{"label": k, "orders": v["orders"], "revenue": v["revenue"]} for k, v in daily_buckets.items()],
             "weekly": [{"label": k, "orders": v["orders"], "revenue": v["revenue"]} for k, v in weekly_buckets.items()],
@@ -139,17 +140,12 @@ class AnalyticsService:
 
         # 3. Customer metrics
         total_customers = len(customer_map)
-        seven_days_ago = now - timedelta(days=7)
+        seven_days_ago = now_wib - timedelta(days=7)
         new_customers_count = sum(1 for c in customer_map.values() if c["firstOrder"] >= seven_days_ago)
-        if new_customers_count == 0 and total_customers > 0:
-            new_customers_count = total_customers
 
         # 4. Gross Profit & Margins
         gross_profit = profit_summary.get("totalTransactionProfit", 0.0)
-        if gross_profit == 0.0 and total_revenue > 0:
-            gross_profit = round(total_revenue * 0.35, 2)
-
-        profit_margin = round((gross_profit / total_revenue * 100), 1) if total_revenue > 0 else 35.0
+        profit_margin = round((gross_profit / total_revenue * 100), 1) if total_revenue > 0 else 0.0
 
         # 5. Recent real-time transactions
         recent_orders = sorted(
@@ -255,61 +251,49 @@ class AnalyticsService:
                     sold_by_prod[p_name]["rev"] += price * qty if price > 0 else float(o.get("totalAmount", 0))
 
         prod_matrix = []
+        managed_map = {str(p.get("id")): p for p in managed_products}
+
         for idx, (p_name, s_data) in enumerate(sorted(sold_by_prod.items(), key=lambda x: x[1]["units"], reverse=True)):
             rev = s_data["rev"]
             units = s_data["units"]
-            cogs = round(rev * 0.65)
-            profit = rev - cogs
-            margin_pct = round((profit / rev) * 100, 1) if rev > 0 else 35.0
 
-            # Match category from catalog if possible
-            cat_name = "AI Tools" if ("gemini" in p_name.lower() or "gpt" in p_name.lower()) else "Apps & Streaming"
+            # Lookup providerPrice from catalog if available
+            matched_p = next((p for p in managed_products if p.get("name") == p_name), None)
+            if matched_p and matched_p.get("providerPrice"):
+                cogs = float(matched_p["providerPrice"]) * units
+                cat_name = matched_p.get("category", {}).get("name") if isinstance(matched_p.get("category"), dict) else str(matched_p.get("category") or "Katalog")
+                provider = matched_p.get("provider", "VIP Reseller")
+            else:
+                cogs = round(rev * 0.65)
+                cat_name = "AI Tools" if ("gemini" in p_name.lower() or "gpt" in p_name.lower()) else "Apps & Streaming"
+                provider = "VIP Reseller"
+
+            profit = max(0.0, rev - cogs)
+            margin_pct = round((profit / rev) * 100, 1) if rev > 0 else 0.0
+
             prod_matrix.append({
                 "id": f"perf-{idx + 1}",
                 "name": p_name,
                 "category": cat_name,
-                "provider": "VIP Reseller",
+                "provider": provider,
                 "unitsSold": units,
                 "revenue": rev,
                 "cogs": cogs,
                 "profit": profit,
                 "marginPercent": margin_pct,
                 "refundRate": 0.0,
-                "conversionRate": 12.5,
+                "conversionRate": 100.0,
                 "status": "active",
             })
-
-        # If empty, fallback to catalog items with simulated distribution
-        if not prod_matrix:
-            for idx, p in enumerate(managed_products[:5]):
-                rev = float(p.get("price", 50000)) * 5
-                cogs = float(p.get("providerPrice", 30000)) * 5
-                profit = rev - cogs
-                prod_matrix.append({
-                    "id": p.get("id"),
-                    "name": p.get("name"),
-                    "category": p.get("category", {}).get("name", "Katalog"),
-                    "provider": p.get("provider", "native"),
-                    "unitsSold": 5,
-                    "revenue": rev,
-                    "cogs": cogs,
-                    "profit": profit,
-                    "marginPercent": round((profit / rev) * 100, 1) if rev > 0 else 40.0,
-                    "refundRate": 0.0,
-                    "conversionRate": 10.0,
-                    "status": p.get("status", "active"),
-                })
 
         # 3. Affiliate Telemetry Matrix
         aff_matrix = []
         for a in partners:
-            clicks = a.get("totalClicks") or (a.get("totalOrders", 0) * 8 + 15)
-            orders_count = a.get("totalOrders", 0)
+            clicks = int(a.get("totalClicks") or 0)
+            orders_count = int(a.get("totalOrders", 0))
             conv_rate = round((orders_count / clicks * 100), 1) if clicks > 0 else 0.0
             rev = float(a.get("totalRevenue", 0))
             comm = float(a.get("paidCommission", 0) + a.get("unpaidCommission", 0))
-            if comm == 0 and rev > 0:
-                comm = round(rev * 0.10)
 
             aff_matrix.append({
                 "code": a.get("code"),
@@ -327,7 +311,7 @@ class AnalyticsService:
         discounts = profit_summary.get("totalDiscounts", 0.0)
         net_rev = profit_summary.get("totalNetRevenue", 0.0)
         cogs = profit_summary.get("totalCostOfGoods", 0.0)
-        gross_profit = net_rev - cogs
+        gross_profit = max(0.0, net_rev - cogs)
         pg_fees = profit_summary.get("totalPaymentFees", 0.0)
         commissions = profit_summary.get("totalSalesCommission", 0.0) + profit_summary.get("totalRecruitmentBonus", 0.0)
         transaction_profit = profit_summary.get("totalTransactionProfit", max(0.0, gross_profit - pg_fees))
@@ -372,13 +356,13 @@ class AnalyticsService:
             for o in completed_orders
             if "tripay" in str(o.get("paymentMode", "")).lower() or "qris" in str(o.get("paymentMethod", "")).lower()
         )
-        vip_deposit = 1250000.0
-        reserve_balance = summary.get("totalBusinessReserve", 3500000.0)
+        vip_deposit = 0.0
+        reserve_balance = summary.get("totalBusinessReserve", 0.0)
 
         # 2. Revenue Breakdown & Channels
         channel_counts = {}
         for o in completed_orders:
-            method = str(o.get("paymentMethod") or o.get("payment_method") or "QRIS").upper()
+            method = str(o.get("paymentMethod") or o.get("payment_method") or "MANUAL_BCA").upper()
             amt = float(o.get("totalAmount") or o.get("rawAmount") or 0.0)
             channel_counts[method] = channel_counts.get(method, 0.0) + amt
 
@@ -417,26 +401,10 @@ class AnalyticsService:
             {
                 "id": "exp-3",
                 "category": "Komisi Mitra Affiliate",
-                "desc": "Bagi hasil 10% transaksi referral mitra aktif",
+                "desc": "Bagi hasil transaksi referral mitra aktif",
                 "amount": commissions_total,
                 "date": datetime.utcnow().strftime("%d %b %Y"),
                 "ref": "AFF-COMM-10",
-            },
-            {
-                "id": "exp-4",
-                "category": "Infrastruktur Cloud & Storage",
-                "desc": "Hosting Vercel Pro & Vercel Blob Private Storage",
-                "amount": 350000.0,
-                "date": "01 " + datetime.utcnow().strftime("%b %Y"),
-                "ref": "VCL-BLOB-01",
-            },
-            {
-                "id": "exp-5",
-                "category": "WhatsApp Notification Bot",
-                "desc": "Fonnte WhatsApp API Gateway Otomatisasi Order",
-                "amount": 100000.0,
-                "date": "01 " + datetime.utcnow().strftime("%b %Y"),
-                "ref": "FONNTE-BOT-01",
             },
         ]
 
@@ -444,7 +412,7 @@ class AnalyticsService:
 
         # 4. Financial Transactions (Ledger Entries as Jurnal Kas Mutasi)
         journal_entries = []
-        running_balance = tripay_settled
+        running_balance = summary.get("totalNetRevenue", 0.0)
         for idx, item in enumerate(ledger_entries[:30]):
             created_str = item.get("createdAt") or datetime.utcnow().isoformat()
             try:
@@ -473,6 +441,38 @@ class AnalyticsService:
                 "date": date_fmt,
             })
 
+        # Accurate WIB time filtering for today and current month revenue
+        from datetime import timezone
+        WIB = timezone(timedelta(hours=7))
+        now_wib = datetime.now(WIB)
+        today_date = now_wib.date()
+        current_year = now_wib.year
+        current_month = now_wib.month
+
+        today_rev = 0.0
+        month_rev = 0.0
+
+        for o in completed_orders:
+            created_str = o.get("createdAt") or o.get("created_at") or ""
+            try:
+                if "Z" in created_str:
+                    c_dt = datetime.fromisoformat(created_str.replace("Z", "+00:00")).astimezone(WIB)
+                elif "+" in created_str:
+                    c_dt = datetime.fromisoformat(created_str).astimezone(WIB)
+                else:
+                    c_dt = datetime.fromisoformat(created_str).replace(tzinfo=timezone.utc).astimezone(WIB)
+            except Exception:
+                c_dt = now_wib
+
+            amt = float(o.get("totalAmount") or o.get("rawAmount") or 0.0)
+            if c_dt.date() == today_date:
+                today_rev += amt
+            if c_dt.year == current_year and c_dt.month == current_month:
+                month_rev += amt
+
+        net_rev_total = summary.get("totalNetRevenue", 0.0)
+        aov = round(net_rev_total / max(1, len(completed_orders))) if completed_orders else 0.0
+
         return {
             "wallets": {
                 "tripayBalance": tripay_settled,
@@ -480,9 +480,9 @@ class AnalyticsService:
                 "reserveBalance": reserve_balance,
             },
             "revenue": {
-                "todayRevenue": sum(o.get("totalAmount", 0) for o in completed_orders[-3:]),
-                "monthRevenue": summary.get("totalNetRevenue", 0.0),
-                "aov": round(summary.get("totalNetRevenue", 0.0) / max(1, len(completed_orders))),
+                "todayRevenue": today_rev,
+                "monthRevenue": month_rev,
+                "aov": aov,
                 "completedOrders": len(completed_orders),
                 "paymentChannels": payment_channels,
             },

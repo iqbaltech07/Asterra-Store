@@ -611,6 +611,28 @@ class OrderService:
         total_amount = subtotal_after_discounts + (unique_code if enable_unique else 0)
 
         # 3. Sales Partner Attribution & Recruiter Network
+        # Recover ref_code from active referral_session_id or customer_notes if not directly passed
+        if not ref_code and ref_sess_id:
+            try:
+                from app.models.referral_session import ReferralSession
+                db_sess = SessionLocal()
+                try:
+                    sess = db_sess.query(ReferralSession).filter(ReferralSession.id == ref_sess_id).first()
+                    if sess and sess.ref_code:
+                        ref_code = sess.ref_code.strip().upper()
+                finally:
+                    db_sess.close()
+            except Exception as e:
+                print(f"[OrderService] Note recovering ref_code from session: {e}")
+
+        if not ref_code:
+            notes_str = str(payload.get("customer_notes") or payload.get("customerNotes") or "")
+            if "[SALES REF:" in notes_str:
+                import re
+                m = re.search(r"\[SALES REF:\s*([^\]]+)\]", notes_str)
+                if m:
+                    ref_code = m.group(1).strip().upper()
+
         sales_partner_id = None
         recruiter_partner_id = None
         partner = None

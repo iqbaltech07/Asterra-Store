@@ -399,8 +399,8 @@ class PartnerService:
                 commission_rate = float(comm_rec.commission_rate if (comm_rec and comm_rec.commission_rate) else partner.get("rate", 10.0))
                 campaign_name = None
 
-            commission = int(comm_rec.commission_amount) if (comm_rec and comm_rec.commission_amount is not None) else round(total * (commission_rate / 100.0))
-            trans_profit = int(comm_rec.transaction_profit) if (comm_rec and comm_rec.transaction_profit is not None) else round(total * 0.3)
+            trans_profit = int(comm_rec.transaction_profit) if (comm_rec and comm_rec.transaction_profit is not None) else max(0, round(total * 0.35))
+            commission = int(comm_rec.commission_amount) if (comm_rec and comm_rec.commission_amount is not None) else round(trans_profit * (commission_rate / 100.0))
 
             created_at_val = o.get("createdAt") or o.get("created_at") or (now.isoformat() + "Z")
             if isinstance(created_at_val, str) and not created_at_val.endswith("Z"):

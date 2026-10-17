@@ -174,8 +174,24 @@ class ReferralProfitService:
                         first_product_id = it.product_id
 
                     prod_obj = db.query(Product).filter(Product.id == it.product_id).first()
+                    provider_price = None
                     if prod_obj and prod_obj.provider_price and prod_obj.provider_price > 0:
-                        total_cog += int(prod_obj.provider_price) * it_qty
+                        provider_price = int(prod_obj.provider_price)
+                    else:
+                        try:
+                            from app.services.catalog_service import CatalogService
+                            for cat_p in CatalogService.load_products():
+                                if str(cat_p.get("id")) == str(it.product_id):
+                                    if cat_p.get("providerPrice"):
+                                        provider_price = int(cat_p["providerPrice"])
+                                    elif cat_p.get("provider_price"):
+                                        provider_price = int(cat_p["provider_price"])
+                                    break
+                        except Exception:
+                            pass
+
+                    if provider_price is not None and provider_price > 0:
+                        total_cog += provider_price * it_qty
                     else:
                         # Fallback standard COG ~65% of selling price
                         total_cog += round(it_price * it_qty * 0.65)
@@ -194,17 +210,16 @@ class ReferralProfitService:
                 direct_transaction_cost = total_cog + payment_fee
                 transaction_profit = max(0, net_revenue - direct_transaction_cost)
 
-                # Sales Commission: percentage of total amount for partner
-                sales_comm_amount = round(float(order.total_amount) * (commission_rate / 100.0)) if partner else 0
+                # Sales Commission: percentage of transaction profit for partner (Strict Asterra Profit Model)
+                sales_comm_amount = round(float(transaction_profit) * (commission_rate / 100.0)) if (partner and transaction_profit > 0) else 0
 
                 # Sponsor Recruiter Bonus: strictly 2% of net transaction profit
                 sponsor_rate = cls.SPONSOR_RATE_DEFAULT if recruiter_id else 0.0
                 sponsor_bonus_amount = round((transaction_profit * 0.02)) if (recruiter_id and transaction_profit > 0) else 0
 
-                # Profit Distribution for Store Reserves (50% CEO, 40% COO, 10% Reserve)
-                ledger_sales_comm = round(transaction_profit * 0.10) if partner else 0
-                distributable_profit = max(0, transaction_profit - ledger_sales_comm - sponsor_bonus_amount)
-                ceo_share = round(distributable_profit * 0.50)
+                # Profit Distribution for Store Reserves (40% CEO, 40% COO, 20% Reserve - 50:50 Founder Parity)
+                distributable_profit = max(0, transaction_profit - sales_comm_amount - sponsor_bonus_amount)
+                ceo_share = round(distributable_profit * 0.40)
                 coo_share = round(distributable_profit * 0.40)
                 business_reserve = distributable_profit - ceo_share - coo_share
 
