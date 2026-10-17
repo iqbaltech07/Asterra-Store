@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, Suspense } from 'react';
+import { useState, useMemo, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -17,12 +17,14 @@ import {
   faReceipt,
   faUserCheck,
   faBolt,
+  faChevronLeft,
+  faChevronRight,
 } from '@fortawesome/free-solid-svg-icons';
 import {
-  useDynamicOrderActivities,
+  PublicOrder,
   formatRelativeTime,
   parseSafeDate,
-  PublicOrder,
+  clearLegacySyntheticTimelineStorage,
 } from '@/lib/hooks/use-dynamic-orders';
 import { useCatalogProducts } from '@/lib/hooks/use-catalog-products';
 import { ProductCard } from '@/components/products/product-card';
@@ -35,11 +37,7 @@ const STATUS_FILTERS = [
   { value: 'cancelled', label: 'Dibatalkan' },
 ];
 
-function getStatusBadge(
-  status: PublicOrder['order_status'],
-  isDynamic?: boolean,
-  remainingSeconds?: number
-) {
+function getStatusBadge(status: PublicOrder['order_status']) {
   switch (status) {
     case 'completed':
       return (
@@ -63,11 +61,6 @@ function getStatusBadge(
             style={{ animationDuration: '3s' }}
           />
           <span>Processing</span>
-          {remainingSeconds !== undefined && remainingSeconds > 0 && (
-            <span className="text-[10px] opacity-75 font-mono">
-              ({Math.ceil(remainingSeconds / 60)}m)
-            </span>
-          )}
         </span>
       );
     case 'pending':
@@ -179,59 +172,78 @@ function GlobalOrdersPageSkeleton() {
 function GlobalOrdersContent() {
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [now, setNow] = useState<number>(() => Date.now());
+  const itemsPerPage = 20;
 
-  // Fetch Public / Global Orders Data from all customers with deduplication and caching
+  // Clean legacy simulation storage on mount
+  useEffect(() => {
+    clearLegacySyntheticTimelineStorage();
+  }, []);
+
+  // Update relative time reference every 10 seconds
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNow(Date.now());
+    }, 10000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Fetch Public Orders from single canonical backend endpoint with pagination & filtering
   const { data, isLoading, isFetching, error, refetch, isRefetching } = useQuery<{
     success: boolean;
     data: PublicOrder[];
     total: number;
+    pagination?: {
+      total_items: number;
+      current_page: number;
+      total_pages: number;
+      items_per_page: number;
+    };
   }>({
-    queryKey: ['global-orders'],
+    queryKey: ['global-orders', selectedStatus, searchQuery, currentPage],
     queryFn: async () => {
       const params = new URLSearchParams();
       params.append('public', 'true');
+      params.append('page', String(currentPage));
+      params.append('limit', String(itemsPerPage));
+      if (selectedStatus !== 'all') {
+        params.append('status', selectedStatus);
+      }
+      if (searchQuery.trim()) {
+        params.append('search', searchQuery.trim());
+      }
       const res = await fetch('/api/v1/orders?' + params.toString());
       if (!res.ok) throw new Error('Gagal mengambil data pesanan publik');
       return res.json();
     },
-    staleTime: 10000, // 10s fresh cache prevents redundant refetches on tab focus
-    placeholderData: (previousData) => previousData, // Seamless UI during filter tab transitions
-    refetchInterval: 30000, // Background sync every 30s
+    staleTime: 5000, // 5s fresh cache
+    placeholderData: (previousData) => previousData, // Seamless UI during pagination and filtering
+    refetchInterval: 15000, // Background sync every 15s keeps list updated across all browsers
   });
 
-  const rawOrders = useMemo(() => {
+  const orders = useMemo(() => {
     return data?.data || [];
   }, [data]);
 
-  // Fetch Catalog Products untuk rekomendasi dan sinkronisasi aktivitas transaksi publik
+  const totalItems = data?.pagination?.total_items ?? data?.total ?? orders.length;
+  const totalPages = data?.pagination?.total_pages ?? Math.max(1, Math.ceil(totalItems / itemsPerPage));
+
+  // Fetch Catalog Products untuk rekomendasi jika antrean transaksi kosong
   const { data: catalogResponse, isLoading: isCatalogLoading } = useCatalogProducts();
   const catalogProducts = useMemo(() => {
     return catalogResponse?.data || [];
   }, [catalogResponse?.data]);
 
-  // Hook Aktivitas Dinamis Frontend tersinkronisasi dengan katalog produk aktif
-  const { processedOrders, now } = useDynamicOrderActivities(rawOrders, catalogProducts);
+  const handleStatusChange = (status: string) => {
+    setSelectedStatus(status);
+    setCurrentPage(1);
+  };
 
-  const filteredOrders = useMemo(() => {
-    let list = processedOrders;
-    if (selectedStatus !== 'all') {
-      list = list.filter((order) => order.effectiveStatus === selectedStatus);
-    }
-    if (!searchQuery.trim()) return list;
-    const q = searchQuery.toLowerCase().trim();
-    return list.filter((order) => {
-      const idMatch =
-        (order.id || '').toLowerCase().includes(q) ||
-        (order.raw_id || '').toLowerCase().includes(q) ||
-        (order.product_id || '').toLowerCase().includes(q) ||
-        (order.product_sku || '').toLowerCase().includes(q);
-      const productMatch =
-        (order.product_name || '').toLowerCase().includes(q) ||
-        (order.items_summary || '').toLowerCase().includes(q);
-      const customerMatch = (order.customer_display || '').toLowerCase().includes(q);
-      return idMatch || productMatch || customerMatch;
-    });
-  }, [processedOrders, selectedStatus, searchQuery]);
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
+    setCurrentPage(1);
+  };
 
   // Initial loading state (tunggu hingga data pesanan atau katalog awal tersedia)
   const isInitialLoading = (isLoading && !data) || (isCatalogLoading && !catalogResponse);
@@ -306,7 +318,7 @@ function GlobalOrdersContent() {
                   <button
                     key={filter.value}
                     type="button"
-                    onClick={() => setSelectedStatus(filter.value)}
+                    onClick={() => handleStatusChange(filter.value)}
                     className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all shrink-0 border cursor-pointer ${
                       isSelected
                         ? 'bg-navy-900 text-white border-navy-900 shadow-xs'
@@ -329,7 +341,7 @@ function GlobalOrdersContent() {
                 type="text"
                 placeholder="Cari ID pesanan / produk..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => handleSearchChange(e.target.value)}
                 className="w-full pl-9 pr-3 py-1.5 rounded-lg bg-surface-raised border border-border text-xs text-foreground placeholder:text-foreground-muted focus:outline-none focus:border-primary"
               />
             </div>
@@ -350,8 +362,8 @@ function GlobalOrdersContent() {
           </div>
         )}
 
-        {/* Empty State when no transactions exist at all */}
-        {!isInitialLoading && !error && processedOrders.length === 0 && (
+        {/* Empty State when no transactions exist at all in store */}
+        {!isInitialLoading && !error && totalItems === 0 && selectedStatus === 'all' && !searchQuery.trim() && (
           <div className="space-y-8 my-8">
             <div className="bg-surface border border-border rounded-xl p-8 text-center space-y-3 max-w-md mx-auto">
               <div className="w-12 h-12 rounded-xl bg-surface-raised border border-border flex items-center justify-center mx-auto text-primary">
@@ -401,7 +413,7 @@ function GlobalOrdersContent() {
         )}
 
         {/* Empty State when filters or search query return 0 results */}
-        {!isInitialLoading && !error && processedOrders.length > 0 && filteredOrders.length === 0 && (
+        {!isInitialLoading && !error && totalItems === 0 && (selectedStatus !== 'all' || searchQuery.trim() !== '') && (
           <div className="bg-surface border border-border rounded-xl p-8 text-center space-y-3 max-w-md mx-auto my-8">
             <div className="w-10 h-10 rounded-xl bg-surface-raised border border-border flex items-center justify-center mx-auto text-foreground-muted">
               <FontAwesomeIcon icon={faMagnifyingGlass} className="w-4 h-4" />
@@ -418,6 +430,7 @@ function GlobalOrdersContent() {
               onClick={() => {
                 setSelectedStatus('all');
                 setSearchQuery('');
+                setCurrentPage(1);
               }}
             >
               Reset Filter & Pencarian
@@ -426,76 +439,149 @@ function GlobalOrdersContent() {
         )}
 
         {/* Global Orders List */}
-        {!isInitialLoading && !error && filteredOrders.length > 0 && (
-          <div className={`space-y-3 transition-opacity duration-150 ${isFetching ? 'opacity-85' : 'opacity-100'}`}>
-            {filteredOrders.map((order) => {
-              const displayDate = order.effectiveDate || order.order_date;
-              return (
-                <div
-                  key={order.id + displayDate}
-                  data-gsap="order-card"
-                  className="bg-surface border border-border rounded-xl p-4 sm:p-5 transition-all duration-150 hover:border-primary/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-                >
-                  <div className="flex items-start gap-3.5">
-                    <div className="w-10 h-10 rounded-xl bg-surface-raised border border-border flex items-center justify-center text-primary shrink-0 mt-0.5">
-                      <FontAwesomeIcon icon={faBox} className="w-4 h-4" />
-                    </div>
-                    <div data-gsap="order-info" className="space-y-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-mono font-bold text-sm text-foreground">
-                          {order.id}
-                        </span>
-                        <span className="text-foreground-muted text-xs">—</span>
-                        <span className="text-xs text-foreground font-medium inline-flex items-center gap-1">
-                          <FontAwesomeIcon icon={faUserCheck} className="w-3 h-3 text-foreground-muted" />
-                          <span>{order.customer_display}</span>
-                        </span>
+        {!isInitialLoading && !error && orders.length > 0 && (
+          <div className="space-y-4">
+            <div className={`space-y-3 transition-opacity duration-150 ${isFetching ? 'opacity-85' : 'opacity-100'}`}>
+              {orders.map((order) => {
+                const displayDate = order.order_date || order.created_at || order.createdAt || '';
+                const dateObj = parseSafeDate(displayDate);
+
+                // Format with explicit Asia/Jakarta (WIB) timezone for consistency across all visitors
+                const dateFormatted = dateObj.toLocaleDateString('id-ID', {
+                  timeZone: 'Asia/Jakarta',
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric',
+                });
+                const timeFormatted = dateObj.toLocaleTimeString('id-ID', {
+                  timeZone: 'Asia/Jakarta',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                });
+
+                return (
+                  <div
+                    key={order.id}
+                    data-gsap="order-card"
+                    className="bg-surface border border-border rounded-xl p-4 sm:p-5 transition-all duration-150 hover:border-primary/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                  >
+                    <div className="flex items-start gap-3.5">
+                      <div className="w-10 h-10 rounded-xl bg-surface-raised border border-border flex items-center justify-center text-primary shrink-0 mt-0.5">
+                        <FontAwesomeIcon icon={faBox} className="w-4 h-4" />
                       </div>
-                      <p className="text-xs font-semibold text-foreground">
-                        {order.product_name}
-                      </p>
-                      <div className="flex flex-wrap items-center gap-2 text-[11px] text-foreground-muted">
-                        <span>{order.items_count} item lisensi</span>
-                        <span>—</span>
-                        <span>{formatRelativeTime(displayDate, now)}</span>
-                        <span>—</span>
-                        <span>
-                          {parseSafeDate(displayDate).toLocaleDateString('id-ID', {
-                            day: 'numeric',
-                            month: 'short',
-                            year: 'numeric',
-                          })}{' '}
-                          {parseSafeDate(displayDate).toLocaleTimeString('id-ID', {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}{' '}
-                          WIB
-                        </span>
+                      <div data-gsap="order-info" className="space-y-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-mono font-bold text-sm text-foreground">
+                            {order.id}
+                          </span>
+                          <span className="text-foreground-muted text-xs">—</span>
+                          <span className="text-xs text-foreground font-medium inline-flex items-center gap-1">
+                            <FontAwesomeIcon icon={faUserCheck} className="w-3 h-3 text-foreground-muted" />
+                            <span>{order.customer_display}</span>
+                          </span>
+                        </div>
+                        <p className="text-xs font-semibold text-foreground">
+                          {order.product_name}
+                        </p>
+                        <div className="flex flex-wrap items-center gap-2 text-[11px] text-foreground-muted">
+                          <span>{order.items_count} item lisensi</span>
+                          <span>—</span>
+                          <span>{formatRelativeTime(displayDate, now)}</span>
+                          <span>—</span>
+                          <span>
+                            {dateFormatted} {timeFormatted} WIB
+                          </span>
+                        </div>
                       </div>
                     </div>
+
+                    <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-border">
+                      {order.order_status === 'processing' ? (
+                        <div className="flex items-center gap-1.5 text-[11px] text-foreground-muted">
+                          <span className="w-1.5 h-1.5 rounded-full bg-status-info animate-ping" />
+                          <span>{order.process_estimate || 'Estimasi 10-30 Menit'}</span>
+                        </div>
+                      ) : order.order_status === 'completed' ? (
+                        <div className="flex items-center gap-1.5 text-[11px] text-foreground-muted">
+                          <FontAwesomeIcon icon={faShieldHalved} className="w-3 h-3 text-status-success" />
+                          <span>{order.warranty_info || 'Garansi Resmi'}</span>
+                        </div>
+                      ) : null}
+                      {getStatusBadge(order.order_status)}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-border mt-6">
+                <p className="text-xs text-foreground-muted">
+                  Menampilkan <span className="font-semibold text-foreground">{(currentPage - 1) * itemsPerPage + 1}</span>–
+                  <span className="font-semibold text-foreground">{Math.min(currentPage * itemsPerPage, totalItems)}</span> dari{' '}
+                  <span className="font-semibold text-foreground">{totalItems}</span> pesanan
+                </p>
+
+                <div className="flex items-center gap-1.5">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={currentPage <= 1 || isFetching}
+                    onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                    className="h-8 px-3 text-xs gap-1 border-border"
+                  >
+                    <FontAwesomeIcon icon={faChevronLeft} className="w-3 h-3" />
+                    <span>Sebelumnya</span>
+                  </Button>
+
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1)
+                      .filter((pageNum) => {
+                        return (
+                          pageNum === 1 ||
+                          pageNum === totalPages ||
+                          Math.abs(pageNum - currentPage) <= 1
+                        );
+                      })
+                      .map((pageNum, idx, arr) => {
+                        const prevPage = arr[idx - 1];
+                        const showEllipsis = prevPage && pageNum - prevPage > 1;
+
+                        return (
+                          <span key={pageNum} className="flex items-center">
+                            {showEllipsis && (
+                              <span className="px-2 text-xs text-foreground-muted">...</span>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => setCurrentPage(pageNum)}
+                              className={`w-8 h-8 rounded-lg text-xs font-semibold transition-colors ${
+                                currentPage === pageNum
+                                  ? 'bg-navy-900 text-white shadow-xs'
+                                  : 'bg-surface text-foreground-muted hover:text-foreground hover:bg-surface-raised border border-border'
+                              }`}
+                            >
+                              {pageNum}
+                            </button>
+                          </span>
+                        );
+                      })}
                   </div>
 
-                  <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-border">
-                    {order.effectiveStatus === 'processing' ? (
-                      <div className="flex items-center gap-1.5 text-[11px] text-foreground-muted">
-                        <span className="w-1.5 h-1.5 rounded-full bg-status-info animate-ping" />
-                        <span>Estimasi 10-30 Menit</span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-1.5 text-[11px] text-foreground-muted">
-                        <FontAwesomeIcon icon={faShieldHalved} className="w-3 h-3 text-status-success" />
-                        <span>Garansi Resmi</span>
-                      </div>
-                    )}
-                    {getStatusBadge(
-                      order.effectiveStatus,
-                      order.isDynamicActivity,
-                      order.remainingProcessingSeconds
-                    )}
-                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={currentPage >= totalPages || isFetching}
+                    onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                    className="h-8 px-3 text-xs gap-1 border-border"
+                  >
+                    <span>Selanjutnya</span>
+                    <FontAwesomeIcon icon={faChevronRight} className="w-3 h-3" />
+                  </Button>
                 </div>
-              );
-            })}
+              </div>
+            )}
           </div>
         )}
       </div>

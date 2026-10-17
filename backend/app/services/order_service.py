@@ -1,7 +1,7 @@
 import json
 import pathlib
 import random
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Dict, Any, Optional
 from sqlalchemy.orm import joinedload
 from app.core.database import SessionLocal
@@ -214,7 +214,6 @@ class OrderService:
                     normalized = [cls._normalize_order(o.to_dict()) for o in db_orders]
                     cls._orders = normalized
                     cls._last_loaded = datetime.utcnow()
-                    cls.save_orders()
                     return normalized
             finally:
                 db.close()
@@ -263,6 +262,9 @@ class OrderService:
         status: Optional[str] = None,
         search: Optional[str] = None,
         email: Optional[str] = None,
+        period: Optional[str] = None,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
         page: int = 1,
         limit: int = 20,
     ) -> Dict[str, Any]:
@@ -292,10 +294,12 @@ class OrderService:
 
         filtered = all_orders
 
+        # Status filter
         if status and status != "all":
             clean_status = status.lower().strip()
             filtered = [f for f in filtered if str(f.get("status", "")).lower() == clean_status]
 
+        # Email filter
         if email and email.strip():
             clean_email = email.lower().strip()
             filtered = [
@@ -304,6 +308,7 @@ class OrderService:
                 or any(clean_email in str(it.get("targetEmail") or it.get("target_email") or "").lower() for it in f.get("items", []))
             ]
 
+        # Search query filter
         if search and search.strip():
             q = search.lower().strip()
             filtered = [
@@ -319,6 +324,79 @@ class OrderService:
                 )
             ]
 
+        # Date & Period filter based on Asia/Jakarta (WIB = UTC+7)
+        WIB = timezone(timedelta(hours=7))
+        start_dt_utc = None
+        end_dt_utc = None
+
+        if period == "this_week":
+            now_wib = datetime.now(WIB)
+            # Week starts on Monday 00:00:00 WIB and ends Sunday 23:59:59.999999 WIB
+            start_wib = (now_wib - timedelta(days=now_wib.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
+            end_wib = (start_wib + timedelta(days=6)).replace(hour=23, minute=59, second=59, microsecond=999999)
+            start_dt_utc = start_wib.astimezone(timezone.utc).replace(tzinfo=None)
+            end_dt_utc = end_wib.astimezone(timezone.utc).replace(tzinfo=None)
+        elif period == "this_month":
+            import calendar
+            now_wib = datetime.now(WIB)
+            start_wib = now_wib.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            _, last_day = calendar.monthrange(now_wib.year, now_wib.month)
+            end_wib = now_wib.replace(day=last_day, hour=23, minute=59, second=59, microsecond=999999)
+            start_dt_utc = start_wib.astimezone(timezone.utc).replace(tzinfo=None)
+            end_dt_utc = end_wib.astimezone(timezone.utc).replace(tzinfo=None)
+
+        if start_date:
+            try:
+                s_str = str(start_date).strip()
+                if "T" in s_str:
+                    s_dt = datetime.fromisoformat(s_str.replace("Z", "+00:00"))
+                else:
+                    s_dt = datetime.strptime(s_str, "%Y-%m-%d").replace(tzinfo=WIB)
+                start_dt_utc = s_dt.astimezone(timezone.utc).replace(tzinfo=None)
+            except Exception as e:
+                print(f"[OrderService] Warning parsing start_date: {e}")
+
+        if end_date:
+            try:
+                e_str = str(end_date).strip()
+                if "T" in e_str:
+                    e_dt = datetime.fromisoformat(e_str.replace("Z", "+00:00"))
+                else:
+                    e_dt = datetime.strptime(e_str, "%Y-%m-%d").replace(hour=23, minute=59, second=59, microsecond=999999, tzinfo=WIB)
+                end_dt_utc = e_dt.astimezone(timezone.utc).replace(tzinfo=None)
+            except Exception as e:
+                print(f"[OrderService] Warning parsing end_date: {e}")
+
+        def _get_order_dt(o: Dict[str, Any]) -> Optional[datetime]:
+            raw_dt = o.get("created_at") or o.get("createdAt") or o.get("order_date")
+            if not raw_dt:
+                return None
+            try:
+                clean_s = str(raw_dt).replace("Z", "+00:00")
+                parsed = datetime.fromisoformat(clean_s)
+                return parsed.astimezone(timezone.utc).replace(tzinfo=None)
+            except Exception:
+                return None
+
+        if start_dt_utc or end_dt_utc:
+            filtered_by_date = []
+            for o in filtered:
+                odt = _get_order_dt(o)
+                if not odt:
+                    continue
+                if start_dt_utc and odt < start_dt_utc:
+                    continue
+                if end_dt_utc and odt > end_dt_utc:
+                    continue
+                filtered_by_date.append(o)
+            filtered = filtered_by_date
+
+        # Guarantee sorting by creation time: newest first
+        filtered.sort(key=lambda o: _get_order_dt(o) or datetime.min, reverse=True)
+
+        # Pagination calculations (bounded to prevent negative page or abusive limit)
+        page = max(1, int(page))
+        limit = max(1, min(100, int(limit)))
         total = len(filtered)
         total_pages = max(1, (total + limit - 1) // limit)
         start_idx = (page - 1) * limit

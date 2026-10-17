@@ -23,28 +23,15 @@ def mask_order_for_public(order: dict, is_owner_or_admin: bool) -> dict:
     masked_email = f"{email.split('@')[0][:2]}***@{email.split('@')[1]}" if ("@" in email and len(email.split('@')[0]) > 2) else email
 
     # Build customer_display
-    if not o.get("customer_display"):
-        if masked_name and masked_phone:
-            o["customer_display"] = f"{masked_name} ({masked_phone})"
-        elif masked_name:
-            o["customer_display"] = masked_name
-        else:
-            o["customer_display"] = "Pelanggan Asterra"
+    # In public view, NEVER show full phone or full email; show clean masked name
+    if masked_name and masked_name != "Pelanggan Asterra":
+        customer_display = masked_name
+    elif masked_email and "@" in masked_email:
+        customer_display = masked_email
+    else:
+        customer_display = "Pelanggan Terverifikasi"
 
-    if not is_owner_or_admin:
-        o["customerWhatsapp"] = masked_phone
-        o["customer_whatsapp"] = masked_phone
-        o["customerName"] = masked_name
-        o["customer_name"] = masked_name
-        o["customerEmail"] = masked_email
-        o["customer_email"] = masked_email
-
-    # Map public fields
-    raw_id = o.get("raw_id") or o.get("id") or o.get("orderId") or ""
-    o["raw_id"] = raw_id
-    if not o.get("id"):
-        o["id"] = raw_id
-
+    # Status normalization
     st = str(o.get("order_status") or o.get("status") or "pending").lower()
     if st in ["completed", "done", "selesai"]:
         st = "completed"
@@ -54,29 +41,60 @@ def mask_order_for_public(order: dict, is_owner_or_admin: bool) -> dict:
         st = "cancelled"
     else:
         st = "pending"
-    o["order_status"] = st
-    o["status"] = st
 
-    if not o.get("order_date"):
-        o["order_date"] = o.get("createdAt") or o.get("created_at") or ""
+    raw_id = str(o.get("raw_id") or o.get("id") or o.get("orderId") or "")
+    order_date = str(o.get("order_date") or o.get("createdAt") or o.get("created_at") or "")
 
     items = o.get("items") or []
-    if not o.get("items_count"):
-        o["items_count"] = sum(int(item.get("quantity", 1)) for item in items) if items else 1
+    items_count = int(o.get("items_count") or (sum(int(item.get("quantity", 1)) for item in items) if items else 1))
 
-    if not o.get("product_name"):
+    product_name = o.get("product_name") or o.get("productName")
+    if not product_name:
         if items:
             first_name = items[0].get("productName") or items[0].get("product_name") or "Lisensi Digital"
             if len(items) > 1:
-                o["product_name"] = f"{first_name} (+{len(items)-1} produk lain)"
+                product_name = f"{first_name} (+{len(items)-1} produk lain)"
             else:
-                o["product_name"] = first_name
+                product_name = first_name
         else:
-            o["product_name"] = o.get("productName") or "Lisensi Digital"
+            product_name = "Lisensi Digital"
 
-    if not o.get("items_summary"):
-        o["items_summary"] = o.get("product_name") or ""
+    items_summary = str(o.get("items_summary") or product_name or "")
 
+    # STRICT PUBLIC PROJECTION: Prevent leakage of customer email, phone, notes, payment info, prices, tokens, or credentials
+    if not is_owner_or_admin:
+        return {
+            "id": raw_id,
+            "raw_id": raw_id,
+            "product_name": product_name,
+            "items_summary": items_summary,
+            "items_count": items_count,
+            "order_status": st,
+            "status": st,
+            "order_date": order_date,
+            "created_at": order_date,
+            "createdAt": order_date,
+            "customer_display": customer_display,
+            "process_estimate": "Estimasi 10-30 Menit" if st == "processing" else "Garansi Resmi",
+            "warranty_info": "Garansi Resmi" if st == "completed" else None,
+        }
+
+    # For owner or admin, retain authorized operational fields
+    o["raw_id"] = raw_id
+    o["id"] = raw_id
+    o["customer_display"] = customer_display
+    o["customerWhatsapp"] = masked_phone
+    o["customer_whatsapp"] = masked_phone
+    o["customerName"] = masked_name
+    o["customer_name"] = masked_name
+    o["customerEmail"] = masked_email
+    o["customer_email"] = masked_email
+    o["order_status"] = st
+    o["status"] = st
+    o["order_date"] = order_date
+    o["items_count"] = items_count
+    o["product_name"] = product_name
+    o["items_summary"] = items_summary
     return o
 
 # ------------------------------------------
@@ -203,6 +221,9 @@ def get_orders(
     phone: Optional[str] = None,
     search: Optional[str] = None,
     status: Optional[str] = None,
+    period: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
     public: Optional[bool] = False,
     page: int = 1,
     limit: int = 20,
@@ -231,7 +252,16 @@ def get_orders(
             "message": "Silakan cantumkan email atau nomor WhatsApp untuk melacak pesanan Anda.",
         }
 
-    result = OrderService.get_orders(status=status, search=search or phone, email=email, page=page, limit=limit)
+    result = OrderService.get_orders(
+        status=status,
+        search=search or phone,
+        email=email,
+        period=period,
+        start_date=start_date,
+        end_date=end_date,
+        page=page,
+        limit=limit,
+    )
     is_owner_or_admin = is_admin or (not is_public and bool(email or search or phone))
     orders = [mask_order_for_public(o, is_owner_or_admin) for o in result["orders"]]
     return {
@@ -244,6 +274,7 @@ def get_orders(
             "total_pages": result["totalPages"],
             "items_per_page": result["limit"],
         },
+        "period": period or "all",
     }
 
 @router.get("/orders/{order_id}", tags=["Orders"])
