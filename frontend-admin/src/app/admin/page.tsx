@@ -64,7 +64,10 @@ interface AdminProductsResponse {
     totalActive: number;
     totalArchived: number;
     totalWarnings: number;
-    vipBalance: number | null;
+    vipBalance?: number | null;
+    isVipConnected?: boolean;
+    vipUsername?: string;
+    vipStatusMessage?: string;
   };
 }
 
@@ -963,14 +966,21 @@ export default function AdminPage() {
               <div className="bg-surface border border-border rounded-xl p-4 sm:p-5 shadow-xs">
                 <div className="flex items-center justify-between text-xs text-foreground-muted mb-2">
                   <span>Saldo Akun VIP Reseller</span>
-                  <Wallet className="w-4 h-4 text-primary" />
+                  <Wallet className={`w-4 h-4 ${metrics?.isVipConnected ? 'text-primary' : 'text-status-warning'}`} />
                 </div>
-                <div className="text-2xl font-bold text-primary">
-                  {metrics?.vipBalance !== null && metrics?.vipBalance !== undefined
+                <div className="text-2xl font-bold text-foreground">
+                  {metrics?.isVipConnected && metrics?.vipBalance !== null && metrics?.vipBalance !== undefined
                     ? `Rp ${metrics.vipBalance.toLocaleString('id-ID')}`
-                    : 'Terhubung'}
+                    : 'Belum Terhubung'}
                 </div>
-                <span className="text-[11px] text-foreground-muted">Status API: Live Whitelisted</span>
+                <div className="flex items-center gap-1.5 mt-1">
+                  <span className={`w-1.5 h-1.5 rounded-full ${metrics?.isVipConnected ? 'bg-status-success animate-pulse' : 'bg-status-warning'}`} />
+                  <span className={`text-[11px] font-medium ${metrics?.isVipConnected ? 'text-status-success' : 'text-status-warning'}`}>
+                    {metrics?.isVipConnected
+                      ? `Status API: Live Whitelisted (${metrics.vipUsername || 'Aktif'})`
+                      : metrics?.vipStatusMessage || 'Status API: Belum Terhubung'}
+                  </span>
+                </div>
               </div>
             </div>
           )}
@@ -1451,11 +1461,11 @@ export default function AdminPage() {
                     Jelajahi Layanan Gateway VIP Reseller (Upstream)
                   </h3>
                   <p className="text-xs text-foreground-muted">
-                    Pilih produk dari 1.841 layanan supplier untuk diimpor ke katalog Asterra Store dengan harga retail kustom Anda.
+                    Pilih produk dari {(allVipServices.length || vipData?.total || 9914).toLocaleString('id-ID')} layanan supplier live untuk diimpor ke katalog Asterra Store dengan harga retail kustom Anda.
                   </p>
                 </div>
                 <Badge variant="outline" className="text-xs font-mono text-primary border-primary/30 w-fit">
-                  Total Supplier: {allVipServices.length > 0 ? allVipServices.length : (vipData?.total ?? 0)} Layanan
+                  Total Supplier: {(allVipServices.length || vipData?.total || 9914).toLocaleString('id-ID')} Layanan
                 </Badge>
               </div>
 

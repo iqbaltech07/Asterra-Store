@@ -37,6 +37,10 @@ for (const project of projects) {
 
   try {
     fs.copyFileSync(srcPath, destPath);
+    const localPath = path.join(projectDir, '.env.local');
+    if (fs.existsSync(localPath)) {
+      fs.copyFileSync(srcPath, localPath);
+    }
     console.log(`✅ [${project.name.padEnd(14)}] Activated ${sourceFile} -> .env (${project.url})`);
     successCount++;
   } catch (err) {

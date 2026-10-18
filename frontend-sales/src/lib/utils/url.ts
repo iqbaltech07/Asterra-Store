@@ -77,3 +77,5 @@ export function getStoreBaseUrl(): string {
     : 'http://localhost:3000';
 }
 
+export const getStoreUrl = getStoreBaseUrl;
+

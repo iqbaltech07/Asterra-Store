@@ -356,7 +356,9 @@ class AnalyticsService:
             for o in completed_orders
             if "tripay" in str(o.get("paymentMode", "")).lower() or "qris" in str(o.get("paymentMethod", "")).lower()
         )
-        vip_deposit = 0.0
+        from app.services.vip_service import VipService
+        vip_info = VipService.get_profile()
+        vip_deposit = float(vip_info.get("balance") or 0.0) if vip_info.get("connected") else 0.0
         reserve_balance = summary.get("totalBusinessReserve", 0.0)
 
         # 2. Revenue Breakdown & Channels

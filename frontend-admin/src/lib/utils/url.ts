@@ -118,3 +118,6 @@ export function getSalesBaseUrl(): string {
     ? 'https://sales.asterrastore.biz.id'
     : 'http://localhost:3002';
 }
+
+export const getStoreUrl = getStoreBaseUrl;
+export const getSalesUrl = getSalesBaseUrl;

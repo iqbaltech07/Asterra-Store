@@ -190,19 +190,19 @@ async def import_admin_vip_service(request: Request):
 
 @router.post("/admin/sync-vip", tags=["Admin VIP"])
 def sync_vip_services():
-    products = CatalogService.load_products()
-    return {
-        "success": True,
-        "message": f"Berhasil menyinkronkan {len(products)} produk dari gerbang VIP Reseller.",
-        "totalSynced": len(products),
-    }
+    from app.services.vip_service import VipService
+    result = VipService.sync_vip_services()
+    if not result.get("success"):
+        raise HTTPException(status_code=400, detail=result.get("message", "Gagal sinkronisasi VIP Reseller"))
+    return result
 
 @router.post("/admin/refresh-stock", tags=["Admin VIP"])
 def refresh_stock():
-    return {
-        "success": True,
-        "message": "Pengecekan live status stok seluruh supplier VIP Reseller selesai.",
-    }
+    from app.services.vip_service import VipService
+    result = VipService.check_stock()
+    if not result.get("success"):
+        raise HTTPException(status_code=400, detail=result.get("message", "Gagal pengecekan stok live"))
+    return result
 
 # ------------------------------------------
 # 1.2 Media Streaming (Blob & Local Files)

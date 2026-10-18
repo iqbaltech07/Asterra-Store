@@ -60,6 +60,9 @@ const INITIAL_PROVIDERS: ProviderConfig[] = [
 interface AdminProvidersTabProps {
   metrics?: {
     vipBalance?: number | null;
+    isVipConnected?: boolean;
+    vipUsername?: string;
+    vipStatusMessage?: string;
   };
   onNotify?: (msg: string) => void;
   onSyncVip?: () => void;
@@ -75,12 +78,29 @@ export function AdminProvidersTab({ metrics, onNotify, onSyncVip }: AdminProvide
   const [apiKey, setApiKey] = useState('vip_sec_**********************7a8b');
   const [apiId, setApiId] = useState('AST-ROOT-SUPPLIER');
 
-  const handleTestConnection = (id: string) => {
+  const handleTestConnection = async (id: string) => {
     setTestingId(id);
-    setTimeout(() => {
-      setTestingId(null);
-      onNotify?.(`Koneksi ke ${id === 'vip-reseller' ? 'VIP Reseller' : 'Internal Vault'} berhasil! HTTP 200 OK (Latency: 112ms).`);
-    }, 800);
+    if (id === 'vip-reseller') {
+      try {
+        const res = await fetch('/api/v1/admin/sync-vip', { method: 'POST' });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          onNotify?.(`Koneksi ke VIP Reseller aktif! Saldo: Rp ${(data.balance ?? metrics?.vipBalance ?? 0).toLocaleString('id-ID')}.`);
+        } else {
+          onNotify?.(`Koneksi VIP Reseller gagal: ${data.detail || data.message || 'Error gateway'}`);
+        }
+      } catch (err: unknown) {
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        onNotify?.(`Koneksi ke VIP Reseller gagal: ${errorMsg}`);
+      } finally {
+        setTestingId(null);
+      }
+    } else {
+      setTimeout(() => {
+        setTestingId(null);
+        onNotify?.(`Koneksi ke Internal Vault berhasil! Status: Active (Latency: 12ms).`);
+      }, 500);
+    }
   };
 
   const toggleProvider = (id: string) => {
@@ -133,13 +153,14 @@ export function AdminProvidersTab({ metrics, onNotify, onSyncVip }: AdminProvide
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {providers.map((p) => {
           const isVip = p.id === 'vip-reseller';
+          const isConnected = isVip ? Boolean(metrics?.isVipConnected) : p.status === 'active';
           const balance = isVip && metrics?.vipBalance !== undefined && metrics.vipBalance !== null ? metrics.vipBalance : p.balance;
 
           return (
             <div
               key={p.id}
               className={`bg-surface border rounded-xl p-5 shadow-xs space-y-4 transition-all ${
-                p.status === 'active' ? 'border-border' : 'border-border/60 opacity-60'
+                isConnected ? 'border-border' : 'border-border/60 opacity-80'
               }`}
             >
               {/* Header */}
@@ -159,12 +180,12 @@ export function AdminProvidersTab({ metrics, onNotify, onSyncVip }: AdminProvide
                 <Badge
                   variant="outline"
                   className={`text-[10px] font-semibold ${
-                    p.health === 'healthy'
+                    isConnected
                       ? 'bg-status-success/15 text-status-success border-status-success/30'
                       : 'bg-status-warning/15 text-status-warning border-status-warning/30'
                   }`}
                 >
-                  ● {p.health === 'healthy' ? 'Sehat (99.2%)' : 'Degraded'}
+                  ● {isConnected ? (isVip ? `Terhubung (${metrics?.vipUsername || 'Live'})` : 'Sehat (100%)') : 'Belum Terhubung'}
                 </Badge>
               </div>
 

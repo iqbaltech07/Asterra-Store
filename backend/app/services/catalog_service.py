@@ -259,6 +259,9 @@ class CatalogService:
                 or any(query in str(f).lower() for f in p.get("features", []))
             ]
 
+        from app.services.vip_service import VipService
+        vip_info = VipService.get_profile()
+
         return {
             "products": filtered,
             "total": total,
@@ -267,6 +270,10 @@ class CatalogService:
                 "totalActive": total_active,
                 "totalArchived": total_archived,
                 "totalWarnings": total_warnings,
+                "vipBalance": vip_info.get("balance") if vip_info.get("connected") else None,
+                "isVipConnected": bool(vip_info.get("connected")),
+                "vipUsername": vip_info.get("username", ""),
+                "vipStatusMessage": vip_info.get("message", ""),
             },
         }
 

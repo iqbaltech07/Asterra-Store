@@ -230,3 +230,28 @@ export function getSafeInternalRedirectUrl(
 
   return fallback;
 }
+
+/**
+ * Utility to reliably resolve the Sales Portal Base URL
+ */
+export function getSalesBaseUrl(): string {
+  const envSales = process.env.NEXT_PUBLIC_SALES_URL?.trim();
+  if (envSales) {
+    return envSales.replace(/\/+$/, '');
+  }
+
+  if (typeof window !== 'undefined') {
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      return `${window.location.protocol}//${window.location.hostname}:3002`;
+    }
+    return 'https://sales.asterrastore.biz.id';
+  }
+
+  return process.env.NODE_ENV === 'production'
+    ? 'https://sales.asterrastore.biz.id'
+    : 'http://localhost:3002';
+}
+
+export const getSalesUrl = getSalesBaseUrl;
+export const getStoreBaseUrl = getAppBaseUrl;
+export const getStoreUrl = getAppBaseUrl;
