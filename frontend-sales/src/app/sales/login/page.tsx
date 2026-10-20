@@ -31,7 +31,9 @@ import { Suspense } from 'react';
 function SalesLoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get('callbackUrl') || '/sales';
+  const rawCallback = searchParams.get('callbackUrl');
+  const callbackUrl =
+    rawCallback && !rawCallback.includes('/login') ? rawCallback : '/sales';
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

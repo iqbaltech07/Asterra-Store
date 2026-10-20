@@ -95,17 +95,17 @@ export default function AdminLoginPage() {
         localStorage.setItem('asterra_admin_token', data.token);
       }
 
+      const targetUrl = '/admin';
+
       if (data.admin?.role === 'sales') {
-        setSuccessMessage('Login mitra sales berhasil. Mengalihkan ke Portal Sales...');
-        setTimeout(() => {
-          window.location.href = '/sales';
-        }, 300);
+        setSuccessMessage('Login mitra sales berhasil. Mengalihkan ke panel kontrol...');
       } else {
         setSuccessMessage('Otorisasi admin berhasil. Mengalihkan ke panel kontrol...');
-        setTimeout(() => {
-          window.location.href = '/admin';
-        }, 300);
       }
+
+      setTimeout(() => {
+        window.location.href = targetUrl;
+      }, 300);
     },
     onError: (err: unknown) => {
       const message = err instanceof Error ? err.message : 'Terjadi kesalahan autentikasi.';
