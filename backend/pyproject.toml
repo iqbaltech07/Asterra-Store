@@ -3,7 +3,7 @@ name = "asterra-backend"
 version = "1.0.0"
 requires-python = ">=3.12"
 dependencies = [
-    "fastapi>=0.115.0",
+    "fastapi[standard]>=0.115.0",
     "uvicorn>=0.30.0",
     "pydantic>=2.8.0",
     "pydantic-settings>=2.4.0",
