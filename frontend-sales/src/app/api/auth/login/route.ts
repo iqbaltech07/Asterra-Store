@@ -13,7 +13,23 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify(body),
     });
 
-    const data = await backendRes.json();
+    let data;
+    const contentType = backendRes.headers.get('content-type');
+    if (contentType?.includes('application/json')) {
+      data = await backendRes.json();
+    } else {
+      const text = await backendRes.text();
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'BACKEND_ERROR',
+            message: text || 'Backend error',
+          },
+        },
+        { status: backendRes.status || 502 }
+      );
+    }
 
     if (!backendRes.ok || !data.success) {
       return NextResponse.json(data, { status: backendRes.status });
