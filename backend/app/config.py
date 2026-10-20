@@ -49,7 +49,7 @@ class Settings(BaseSettings):
         or os.getenv("JWT_SECRET") 
         or "asterra_jwt_secret_dev_fallback_key_2026"
     )
-    ADMIN_SESSION_SECRET: str = os.getenv("ADMIN_SESSION_SECRET", "")
+    BETTER_AUTH_SECRET: str = os.getenv("BETTER_AUTH_SECRET", "")
     ADMIN_EMAIL: str = os.getenv("ADMIN_EMAIL", "admin@asterra.store")
     ADMIN_PASSWORD: str = os.getenv("ADMIN_PASSWORD", "")
     ALGORITHM: str = "HS256"

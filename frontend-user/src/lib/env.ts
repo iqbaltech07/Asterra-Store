@@ -19,7 +19,6 @@ export const env = {
   // Auth & Security
   BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET || '',
   BETTER_AUTH_URL: process.env.BETTER_AUTH_URL || getAppBaseUrl(),
-  ADMIN_SESSION_SECRET: process.env.ADMIN_SESSION_SECRET || '',
   JWT_SECRET: process.env.JWT_SECRET || '',
 
   // Google OAuth

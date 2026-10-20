@@ -39,13 +39,21 @@ export async function POST(request: NextRequest) {
 
     if (data.token) {
       const isProduction = process.env.NODE_ENV === 'production';
-      response.cookies.set('asterra_admin_session', data.token, {
+      const cookieOpts = {
         httpOnly: true,
         secure: isProduction,
-        sameSite: 'lax',
+        sameSite: 'lax' as const,
         maxAge: 8 * 3600, // 8 jam
         path: '/',
-      });
+      };
+
+      // Better Auth standard session cookies
+      response.cookies.set('better-auth.session_token', data.token, cookieOpts);
+      if (isProduction) {
+        response.cookies.set('__Secure-better-auth.session_token', data.token, cookieOpts);
+      }
+      // Backward compatibility for backend proxy rewrite
+      response.cookies.set('asterra_admin_session', data.token, cookieOpts);
     }
 
     return response;

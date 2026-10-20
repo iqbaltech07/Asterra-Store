@@ -11,10 +11,10 @@ from app.config import settings
 
 def get_admin_auth_secret() -> str:
     return (
-        os.getenv("ADMIN_SESSION_SECRET")
+        os.getenv("BETTER_AUTH_SECRET")
         or os.getenv("JWT_SECRET")
-        or settings.ADMIN_SESSION_SECRET
-        or "asterra_admin_sec_789f28a7c1b54a20b080bfa15c3281c7e930!3odsay8e21"
+        or settings.SECRET_KEY
+        or "asterra_auth_secret_fallback_key_2026"
     )
 
 def create_admin_session_token(id_val: str, email: str, role: str, name: str = "") -> str:

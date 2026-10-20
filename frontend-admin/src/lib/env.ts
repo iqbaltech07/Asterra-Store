@@ -14,7 +14,6 @@ export const env = {
   SALES_URL: getSalesUrl(),
 
   // Security & Route Protection
-  ADMIN_SESSION_SECRET: process.env.ADMIN_SESSION_SECRET || '',
   JWT_SECRET: process.env.JWT_SECRET || '',
 };
 

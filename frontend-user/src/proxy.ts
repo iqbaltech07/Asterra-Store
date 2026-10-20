@@ -1,158 +1,108 @@
 import { NextResponse, type NextRequest } from 'next/server';
-
-export const ADMIN_COOKIE_NAME = 'asterra_admin_session';
-
-function getAdminSecret(): string {
-  return (
-    process.env.ADMIN_SESSION_SECRET ||
-    process.env.JWT_SECRET ||
-    'asterra_admin_fallback_secret_production_2026'
-  );
-}
+import { getSessionCookie } from 'better-auth/cookies';
 
 /**
- * Verify cryptographically signed admin session token using standard Web Crypto API.
- * 100% compatible with Next.js Edge Runtime and Node.js runtimes.
+ * Checks for a valid Better Auth session across requests.
+ * Uses official Better Auth getSessionCookie and checks standard session cookies/tokens.
  */
-async function verifyAdminToken(token: string | undefined | null): Promise<boolean> {
-  if (!token || typeof token !== 'string') return false;
-  const parts = token.split('.');
-  if (parts.length !== 2) return false;
+function getActiveAuthSession(request: NextRequest): string | null {
+  // 1. Official Better Auth session cookie helper
+  const betterAuthCookie = getSessionCookie(request);
+  if (betterAuthCookie) return betterAuthCookie;
 
-  const [payloadBase64, signature] = parts;
+  // 2. Direct session cookie checks
+  const token =
+    request.cookies.get('better-auth.session_token')?.value ||
+    request.cookies.get('__Secure-better-auth.session_token')?.value ||
+    request.cookies.get('asterra_admin_session')?.value ||
+    request.cookies.get('asterra_token')?.value ||
+    request.cookies.get('asterra_session')?.value;
+  if (token) return token;
 
-  try {
-    const encoder = new TextEncoder();
-    const secret = getAdminSecret();
-    const key = await crypto.subtle.importKey(
-      'raw',
-      encoder.encode(secret),
-      { name: 'HMAC', hash: 'SHA-256' },
-      false,
-      ['sign']
-    );
-
-    const sigBuf = await crypto.subtle.sign('HMAC', key, encoder.encode(payloadBase64));
-
-    // Convert sigBuf to base64url string
-    const binary = String.fromCharCode(...new Uint8Array(sigBuf));
-    const expectedSignature = btoa(binary)
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .replace(/=+$/, '');
-
-    if (expectedSignature !== signature) {
-      return false;
-    }
-
-    // Decode and validate payload expiration and role
-    const jsonStr = atob(payloadBase64.replace(/-/g, '+').replace(/_/g, '/'));
-    const payload = JSON.parse(jsonStr);
-
-    if (
-      payload.role !== 'admin' &&
-      payload.role !== 'superadmin' &&
-      payload.role !== 'sales'
-    ) {
-      return false;
-    }
-    if (typeof payload.expiresAt === 'number' && Date.now() > payload.expiresAt) return false;
-
-    return true;
-  } catch {
-    return false;
+  // 3. Authorization Bearer header fallback
+  const authHeader = request.headers.get('authorization');
+  if (authHeader && authHeader.toLowerCase().startsWith('bearer ')) {
+    return authHeader.slice(7).trim();
   }
-}
 
+  return null;
+}
 
 /**
  * Next.js Network Proxy (Middleware) Interceptor
- * Handles route-level authentication, RBAC boundaries, and security headers.
+ * Handles route-level authentication, RBAC boundaries, and security headers via Better Auth.
  */
 export async function proxy(request: NextRequest): Promise<NextResponse> {
   const { pathname, search } = request.nextUrl;
+  const session = getActiveAuthSession(request);
+  const isAuthenticated = Boolean(session);
 
   // 1. Admin Page Routes Protection (/admin/*)
   if (pathname.startsWith('/admin')) {
-    const adminToken = request.cookies.get(ADMIN_COOKIE_NAME)?.value;
-    const isValidAdmin = await verifyAdminToken(adminToken);
-
-    // If already logged in and visiting /admin/login -> redirect to /admin dashboard
     if (pathname === '/admin/login') {
-      if (isValidAdmin) {
+      if (isAuthenticated) {
         return NextResponse.redirect(new URL('/admin', request.url));
       }
       return applySecurityHeaders(NextResponse.next());
     }
 
-    // For any other /admin routes -> require valid admin session
-    if (!isValidAdmin) {
+    if (!isAuthenticated) {
       const loginUrl = new URL('/admin/login', request.url);
       loginUrl.searchParams.set('callbackUrl', pathname + search);
       return NextResponse.redirect(loginUrl);
     }
   }
 
-  // 1b. Sales Portal Page Routes Protection (/sales/*)
+  // 2. Sales Portal Page Routes Protection (/sales/*)
   if (pathname.startsWith('/sales')) {
-    const adminToken = request.cookies.get(ADMIN_COOKIE_NAME)?.value;
-    const isValidUser = await verifyAdminToken(adminToken);
-
     if (pathname === '/sales/login') {
-      if (isValidUser) {
+      if (isAuthenticated) {
         return NextResponse.redirect(new URL('/sales', request.url));
       }
       return applySecurityHeaders(NextResponse.next());
     }
 
-    if (!isValidUser) {
+    if (!isAuthenticated) {
       const loginUrl = new URL('/sales/login', request.url);
       loginUrl.searchParams.set('callbackUrl', pathname + search);
       return NextResponse.redirect(loginUrl);
     }
   }
 
-  // 2. Admin API Route Protection (/api/v1/admin/*)
+  // 3. Admin API Route Protection (/api/v1/admin/*)
   if (pathname.startsWith('/api/v1/admin')) {
-    // Exclude public admin auth endpoints (/api/v1/admin/auth/login, etc.)
     const isAuthRoute =
       pathname.startsWith('/api/v1/admin/auth') ||
       pathname === '/api/v1/admin/login';
 
-    if (!isAuthRoute) {
-      const adminToken =
-        request.cookies.get(ADMIN_COOKIE_NAME)?.value ||
-        request.headers.get('authorization')?.replace(/^Bearer\s+/i, '');
-
-      const isValidAdmin = await verifyAdminToken(adminToken);
-      if (!isValidAdmin) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: 'Unauthorized: Sesi administrator tidak valid atau telah berakhir.',
-          },
-          { status: 401 }
-        );
-      }
+    if (!isAuthRoute && !isAuthenticated) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Unauthorized: Sesi tidak valid atau telah berakhir.',
+        },
+        { status: 401 }
+      );
     }
   }
 
-  // 3. Customer Profile Protection (/profile)
+  // 4. Customer Profile Protection (/profile)
   if (pathname.startsWith('/profile')) {
-    const customerSession =
-      request.cookies.get('better-auth.session_token')?.value ||
-      request.cookies.get('__Secure-better-auth.session_token')?.value ||
-      request.cookies.get('asterra_token')?.value ||
-      request.cookies.get('asterra_session')?.value;
-
-    if (!customerSession) {
+    if (!isAuthenticated) {
       const loginUrl = new URL('/login', request.url);
       loginUrl.searchParams.set('callbackUrl', pathname + search);
       return NextResponse.redirect(loginUrl);
     }
   }
 
-
+  // 5. Customer Login Portal (/login)
+  if (pathname === '/login') {
+    if (isAuthenticated) {
+      const callbackUrl = request.nextUrl.searchParams.get('callbackUrl') || '/profile';
+      const redirectUrl = new URL(callbackUrl, request.url);
+      return NextResponse.redirect(redirectUrl);
+    }
+  }
 
   return applySecurityHeaders(NextResponse.next());
 }
@@ -174,6 +124,7 @@ export const config = {
     '/sales/:path*',
     '/api/v1/admin/:path*',
     '/profile/:path*',
+    '/login',
   ],
 };
 
