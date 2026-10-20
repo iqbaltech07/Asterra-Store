@@ -71,7 +71,10 @@ export default function AdminLoginPage() {
 
   const loginMutation = useMutation({
     mutationFn: async ({ emailVal, passwordVal }: { emailVal: string; passwordVal: string }) => {
-      const response = await fetch('/api/v1/admin/auth/login', {
+      // Memanggil Next.js Route Handler (/api/auth/login) — bukan langsung ke backend.
+      // Route handler ini mem-proxy ke backend dan meng-set cookie asterra_admin_session
+      // dari sisi server Next.js agar middleware (proxy.ts) dapat membacanya.
+      const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: emailVal, password: passwordVal }),
@@ -87,11 +90,9 @@ export default function AdminLoginPage() {
       return data;
     },
     onSuccess: (data) => {
+      // Simpan token ke localStorage sebagai fallback untuk verifyAuth di page component
       if (data.token && typeof window !== 'undefined') {
         localStorage.setItem('asterra_admin_token', data.token);
-      }
-      if (data.token && typeof document !== 'undefined') {
-        document.cookie = `asterra_admin_session=${data.token}; path=/; max-age=28800; SameSite=Lax`;
       }
 
       if (data.admin?.role === 'sales') {
