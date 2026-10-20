@@ -75,9 +75,6 @@ function SalesLoginContent() {
 
   const loginMutation = useMutation({
     mutationFn: async ({ emailVal, passwordVal }: { emailVal: string; passwordVal: string }) => {
-      // Memanggil Next.js Route Handler (/api/auth/login) — bukan langsung ke backend.
-      // Route handler ini mem-proxy ke backend dan meng-set cookie asterra_admin_session
-      // dari sisi server Next.js agar middleware (proxy.ts) dapat membacanya.
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
