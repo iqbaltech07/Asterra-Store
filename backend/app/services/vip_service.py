@@ -482,6 +482,15 @@ class VipService:
                     "message": "Pesanan tidak mengandung produk aktif VIP Reseller. Transaksi ditangani secara manual/in-house.",
                 }
 
+            # Check if automated fulfillment is disabled (maintenance or manual fallback mode)
+            if not getattr(settings, "VIP_RESELLER_AUTO_FULFILLMENT", True):
+                return {
+                    "success": False,
+                    "is_vip": True,
+                    "message": "Otomatisasi VIP Reseller dinonaktifkan (VIP_RESELLER_AUTO_FULFILLMENT=false). Mode manual aktif.",
+                    "order": order.to_dict(),
+                }
+
             # Fulfill the primary VIP service item
             item, prod = vip_items[0]
             target_id = (item.target_email or order.customer_email or item.target_phone or order.customer_whatsapp or "").strip()

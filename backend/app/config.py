@@ -81,6 +81,7 @@ class Settings(BaseSettings):
     VIP_RESELLER_API_KEY: str = os.getenv("VIP_RESELLER_API_KEY", "")
     VIP_RESELLER_SIGN: str = os.getenv("VIP_RESELLER_SIGN", "")
     VIP_RESELLER_SYNC_SECRET: str = os.getenv("VIP_RESELLER_SYNC_SECRET", "")
+    VIP_RESELLER_AUTO_FULFILLMENT: bool = os.getenv("VIP_RESELLER_AUTO_FULFILLMENT", "true").lower() == "true"
     
     # Transactional Email (SMTP)
     SMTP_HOST: str = os.getenv("SMTP_HOST", "localhost")
