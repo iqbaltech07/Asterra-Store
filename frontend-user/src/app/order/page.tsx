@@ -796,6 +796,44 @@ function PrivateOrderContent() {
                             <span className="text-foreground italic">{order.customer_notes}</span>
                           </div>
                         )}
+
+                        {order.provider_note && (
+                          <div className="p-3 bg-primary/10 border border-primary/30 rounded-lg space-y-1 mt-2">
+                            <div className="flex items-center justify-between text-primary font-semibold">
+                              <span>Detail Pengiriman & Kredensial Lisensi (Live Gateway)</span>
+                              {order.provider_status && (
+                                <span className="text-[10px] px-2 py-0.5 rounded bg-primary/20 uppercase font-mono">
+                                  {order.provider_status}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-foreground font-mono bg-surface p-2 rounded border border-border/80 break-all select-all">
+                              {order.provider_note}
+                            </p>
+                          </div>
+                        )}
+
+                        {order.provider === 'vip-reseller' && effectiveStatus === 'processing' && (
+                          <div className="p-2.5 bg-status-info/10 border border-status-info/30 rounded-lg flex items-center justify-between text-xs mt-2">
+                            <div className="flex items-center gap-2 text-status-info">
+                              <FontAwesomeIcon icon={faRotateLeft} className="w-3.5 h-3.5 animate-spin" />
+                              <span>Pesanan sedang diproses instan oleh server VIP Reseller...</span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                try {
+                                  await fetch(`/api/v1/orders/${order.id}/sync-vip`, { method: 'POST' });
+                                  refetch();
+                                  showNotification('Status live berhasil disinkronkan dengan gateway.');
+                                } catch (_) {}
+                              }}
+                              className="text-[11px] font-semibold text-primary hover:underline cursor-pointer"
+                            >
+                              Cek Status Live
+                            </button>
+                          </div>
+                        )}
                       </div>
 
                       <div className="flex items-center gap-2 p-3 bg-surface-raised rounded-lg text-status-success">

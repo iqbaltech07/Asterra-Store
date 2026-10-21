@@ -69,6 +69,20 @@ class OrderNormalizer:
         o["recruiterPartnerId"] = recruiter_p_id
         o["recruiter_partner_id"] = recruiter_p_id
 
+        # Provider (VIP Reseller integration)
+        provider = o.get("provider")
+        provider_trxid = o.get("provider_trxid") or o.get("providerTrxId")
+        provider_status = o.get("provider_status") or o.get("providerStatus")
+        provider_note = o.get("provider_note") or o.get("providerNote")
+
+        o["provider"] = provider
+        o["providerTrxId"] = provider_trxid
+        o["provider_trxid"] = provider_trxid
+        o["providerStatus"] = provider_status
+        o["provider_status"] = provider_status
+        o["providerNote"] = provider_note
+        o["provider_note"] = provider_note
+
         # Status & Dates (guaranteed UTC Z)
         status = str(o.get("status") or o.get("order_status") or "pending").lower()
         o["status"] = status

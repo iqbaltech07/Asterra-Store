@@ -608,7 +608,17 @@ class OrderService:
         except Exception as e:
             print(f"[OrderService] Error updating order status in Supabase: {e}")
 
-        # 2. Sync in-memory cache directly (zero full DB query)
+        # 2. Trigger automated VIP Reseller fulfillment if status transitioned to processing or paid
+        if new_status in ["processing", "paid"] and normalized:
+            try:
+                from app.services.vip_service import VipService
+                vip_res = VipService.fulfill_order_if_vip(clean_id)
+                if vip_res.get("success") and vip_res.get("order"):
+                    normalized = cls._normalize_order(vip_res["order"])
+            except Exception as e:
+                print(f"[OrderService] VIP fulfillment trigger error: {e}")
+
+        # 3. Sync in-memory cache directly (zero full DB query)
         if cls._orders is not None and normalized:
             for idx, o in enumerate(cls._orders):
                 if str(o.get("id", "")).upper() == clean_id:

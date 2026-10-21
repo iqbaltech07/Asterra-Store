@@ -46,6 +46,10 @@ export interface Order {
   promo_code?: string;
   referral_code?: string;
   discount_amount?: number;
+  provider?: string;
+  provider_trxid?: string;
+  provider_status?: string;
+  provider_note?: string;
   logs?: OrderLog[];
   payment?: {
     id: string;

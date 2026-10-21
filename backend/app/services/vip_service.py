@@ -255,3 +255,496 @@ class VipService:
             "totalSynced": total,
             "balance": profile.get("balance"),
         }
+
+    @classmethod
+    def verify_webhook_signature(cls, signature: Optional[str]) -> bool:
+        """
+        Verifies X-Client-Signature from VIP Reseller webhook header.
+        Formula: md5(API ID + API KEY)
+        """
+        if not signature:
+            return False
+        clean_sig = signature.strip().lower()
+        expected = (settings.VIP_RESELLER_SIGN or "").strip().lower()
+        if expected and clean_sig == expected:
+            return True
+        api_id = (settings.VIP_RESELLER_API_ID or "").strip()
+        api_key = (settings.VIP_RESELLER_API_KEY or "").strip()
+        if api_id and api_key:
+            import hashlib
+            calc = hashlib.md5(f"{api_id}{api_key}".encode("utf-8")).hexdigest().lower()
+            return clean_sig == calc
+        return False
+
+    @classmethod
+    def place_order(
+        cls,
+        service_code: str,
+        target_id: str,
+        zone_id: str = "",
+        additional_data: str = ""
+    ) -> Dict[str, Any]:
+        """
+        Places a live digital order through VIP Reseller API (Melakukan Pemesanan).
+        Endpoint: POST https://vip-reseller.co.id/api/game-feature
+        """
+        api_key = (settings.VIP_RESELLER_API_KEY or "").strip()
+        sign = (settings.VIP_RESELLER_SIGN or "").strip()
+        base_url = (settings.VIP_RESELLER_BASE_URL or "https://vip-reseller.co.id/api").rstrip("/")
+
+        if not api_key or not sign:
+            return {
+                "success": False,
+                "message": "Kredensial VIP Reseller (API Key / Sign) belum dikonfigurasi.",
+            }
+
+        clean_service = str(service_code or "").strip()
+        clean_target = str(target_id or "").strip()
+        if not clean_service or not clean_target:
+            return {
+                "success": False,
+                "message": "Parameter 'service' dan 'data_no' (target ID/email) wajib diisi.",
+            }
+
+        post_data = {
+            "key": api_key,
+            "sign": sign,
+            "type": "order",
+            "service": clean_service,
+            "data_no": clean_target,
+            "data_zone": str(zone_id or "").strip(),
+            "post_additional_data": str(additional_data or "").strip(),
+        }
+
+        try:
+            with httpx.Client(timeout=25.0) as client:
+                resp = client.post(
+                    f"{base_url}/game-feature",
+                    data=post_data,
+                )
+                if resp.status_code != 200:
+                    return {
+                        "success": False,
+                        "message": f"Gateway VIP Reseller merespon HTTP {resp.status_code}.",
+                    }
+
+                body = resp.json()
+                if not body.get("result"):
+                    return {
+                        "success": False,
+                        "message": body.get("message", "VIP Reseller menolak pemesanan."),
+                        "raw": body,
+                    }
+
+                data = body.get("data", {})
+                trxid = data.get("trxid")
+                return {
+                    "success": True,
+                    "trxid": trxid,
+                    "data": data.get("data"),
+                    "zone": data.get("zone"),
+                    "service": data.get("service"),
+                    "status": data.get("status") or "waiting",
+                    "note": data.get("note") or "",
+                    "balance": data.get("balance"),
+                    "price": data.get("price"),
+                    "message": body.get("message", "Pesanan berhasil diproses."),
+                    "raw": data,
+                }
+        except Exception as e:
+            return {
+                "success": False,
+                "message": f"Koneksi VIP Reseller order gagal: {str(e)}",
+            }
+
+    @classmethod
+    def check_order_status(cls, trxid: str) -> Dict[str, Any]:
+        """
+        Checks live status of an order on VIP Reseller (Melakukan Cek Status Pesanan).
+        Endpoint: POST https://vip-reseller.co.id/api/game-feature
+        """
+        api_key = (settings.VIP_RESELLER_API_KEY or "").strip()
+        sign = (settings.VIP_RESELLER_SIGN or "").strip()
+        base_url = (settings.VIP_RESELLER_BASE_URL or "https://vip-reseller.co.id/api").rstrip("/")
+
+        clean_trxid = str(trxid or "").strip()
+        if not clean_trxid:
+            return {
+                "success": False,
+                "message": "Parameter trxid transaksi wajib diisi.",
+            }
+
+        if not api_key or not sign:
+            return {
+                "success": False,
+                "message": "Kredensial VIP Reseller belum dikonfigurasi.",
+            }
+
+        post_data = {
+            "key": api_key,
+            "sign": sign,
+            "type": "status",
+            "trxid": clean_trxid,
+        }
+
+        try:
+            with httpx.Client(timeout=15.0) as client:
+                resp = client.post(
+                    f"{base_url}/game-feature",
+                    data=post_data,
+                )
+                if resp.status_code != 200:
+                    return {
+                        "success": False,
+                        "message": f"VIP Reseller HTTP {resp.status_code}",
+                    }
+
+                body = resp.json()
+                if not body.get("result"):
+                    return {
+                        "success": False,
+                        "message": body.get("message", "Detail transaksi tidak ditemukan."),
+                    }
+
+                data_list = body.get("data", [])
+                if not data_list or not isinstance(data_list, list):
+                    return {
+                        "success": False,
+                        "message": "Format respon transaksi VIP kosong.",
+                    }
+
+                item = data_list[0]
+                return {
+                    "success": True,
+                    "trxid": item.get("trxid"),
+                    "data": item.get("data"),
+                    "zone": item.get("zone"),
+                    "service": item.get("service"),
+                    "status": str(item.get("status") or "waiting").lower(),
+                    "note": item.get("note") or "",
+                    "price": item.get("price"),
+                    "message": item.get("message") or body.get("message", "Status ditemukan."),
+                    "raw": item,
+                }
+        except Exception as e:
+            return {
+                "success": False,
+                "message": f"Gagal memeriksa status VIP Reseller: {str(e)}",
+            }
+
+    @classmethod
+    def fulfill_order_if_vip(cls, order_id: str) -> Dict[str, Any]:
+        """
+        Inspects order items in database.
+        ONLY fulfills products imported from VIP Reseller with provider == 'vip-reseller' and active status.
+        Products outside VIP Reseller are untouched.
+        """
+        clean_id = str(order_id or "").strip().upper()
+        if not clean_id:
+            return {"success": False, "is_vip": False, "message": "ID pesanan kosong."}
+
+        from app.models.order import Order
+        db = SessionLocal()
+        try:
+            from sqlalchemy.orm import joinedload
+            order = db.query(Order).options(joinedload(Order.items)).filter(Order.id == clean_id).first()
+            if not order:
+                return {"success": False, "is_vip": False, "message": f"Pesanan {clean_id} tidak ditemukan."}
+
+            # If already has provider_trxid, avoid duplicate order submission
+            if order.provider_trxid:
+                return {
+                    "success": True,
+                    "is_vip": True,
+                    "already_placed": True,
+                    "trxid": order.provider_trxid,
+                    "vip_status": order.provider_status,
+                    "message": f"Pesanan sudah pernah diproses ke VIP Reseller ({order.provider_trxid}).",
+                    "order": order.to_dict(),
+                }
+
+            # Identify VIP items
+            vip_items = []
+            for item in order.items:
+                prod = db.query(Product).filter(
+                    Product.id == item.product_id,
+                    Product.provider == "vip-reseller",
+                    Product.status == "active"
+                ).first()
+                if prod and prod.provider_code:
+                    vip_items.append((item, prod))
+
+            # Strictly filter: products outside VIP Reseller are untouched!
+            if not vip_items:
+                return {
+                    "success": False,
+                    "is_vip": False,
+                    "message": "Pesanan tidak mengandung produk aktif VIP Reseller. Transaksi ditangani secara manual/in-house.",
+                }
+
+            # Fulfill the primary VIP service item
+            item, prod = vip_items[0]
+            target_id = (item.target_email or order.customer_email or item.target_phone or order.customer_whatsapp or "").strip()
+
+            # Optional zone resolution from customer notes if specified
+            target_zone = ""
+            if order.customer_notes and "zone:" in order.customer_notes.lower():
+                import re
+                zm = re.search(r"zone[:\s]+([0-9a-zA-Z_-]+)", order.customer_notes, re.IGNORECASE)
+                if zm:
+                    target_zone = zm.group(1).strip()
+
+            res = cls.place_order(
+                service_code=prod.provider_code,
+                target_id=target_id,
+                zone_id=target_zone,
+            )
+
+            from app.services.audit_log_service import AuditLogService
+            from app.core.cache import cache
+
+            if res.get("success"):
+                trxid = res.get("trxid")
+                vip_status = str(res.get("status") or "waiting").lower()
+                vip_note = str(res.get("note") or "")
+
+                order.provider = "vip-reseller"
+                order.provider_trxid = trxid
+                order.provider_status = vip_status
+                order.provider_note = vip_note
+                order.updated_at = datetime.utcnow()
+
+                if vip_status == "success":
+                    order.status = "completed"
+                    order.paid_at = order.paid_at or datetime.utcnow()
+                    order.payment_status = "settlement"
+                elif vip_status in ["waiting", "processing"]:
+                    order.status = "processing"
+
+                db.commit()
+                db.refresh(order)
+
+                AuditLogService.record_log(
+                    order_id=order.id,
+                    actor="vip_reseller",
+                    action="vip_order_placed",
+                    previous_status="pending",
+                    new_status=order.status,
+                    notes=f"Order diproses ke VIP Reseller. TRX: {trxid}, Status VIP: {vip_status}. {vip_note}".strip(),
+                    customer_name=order.customer_name,
+                    customer_email=order.customer_email,
+                )
+
+                cache.invalidate("orders")
+                from app.services.order_service import OrderService
+                OrderService.load_orders(force_reload=True)
+
+                return {
+                    "success": True,
+                    "is_vip": True,
+                    "trxid": trxid,
+                    "vip_status": vip_status,
+                    "message": "Pesanan berhasil diproses otomatis oleh VIP Reseller.",
+                    "order": order.to_dict(),
+                }
+            else:
+                err_msg = res.get("message", "Gagal melakukan pemesanan ke VIP Reseller.")
+                order.provider = "vip-reseller"
+                order.provider_status = "error"
+                order.provider_note = f"Gagal otomatisasi VIP: {err_msg}"
+                order.updated_at = datetime.utcnow()
+                db.commit()
+                db.refresh(order)
+
+                AuditLogService.record_log(
+                    order_id=order.id,
+                    actor="vip_reseller",
+                    action="vip_order_failed",
+                    previous_status=order.status,
+                    new_status=order.status,
+                    notes=f"VIP Reseller order error: {err_msg}",
+                    customer_name=order.customer_name,
+                    customer_email=order.customer_email,
+                )
+
+                cache.invalidate("orders")
+                from app.services.order_service import OrderService
+                OrderService.load_orders(force_reload=True)
+
+                return {
+                    "success": False,
+                    "is_vip": True,
+                    "message": err_msg,
+                    "order": order.to_dict(),
+                }
+
+        finally:
+            db.close()
+
+    @classmethod
+    def sync_order_live_status(cls, order_id: str) -> Dict[str, Any]:
+        """
+        Synchronizes live status of an order directly from VIP Reseller gateway.
+        """
+        clean_id = str(order_id or "").strip().upper()
+        if not clean_id:
+            return {"success": False, "is_vip": False, "message": "ID pesanan kosong."}
+
+        from app.models.order import Order
+        db = SessionLocal()
+        try:
+            from sqlalchemy.orm import joinedload
+            order = db.query(Order).options(joinedload(Order.items)).filter(Order.id == clean_id).first()
+            if not order:
+                return {"success": False, "is_vip": False, "message": f"Pesanan {clean_id} tidak ditemukan."}
+
+            if order.provider != "vip-reseller" or not order.provider_trxid:
+                return {
+                    "success": False,
+                    "is_vip": False,
+                    "message": "Pesanan ini bukan produk VIP Reseller atau belum diteruskan ke VIP Reseller.",
+                    "order": order.to_dict(),
+                }
+
+            status_res = cls.check_order_status(order.provider_trxid)
+            if not status_res.get("success"):
+                return {
+                    "success": False,
+                    "is_vip": True,
+                    "message": status_res.get("message", "Gagal cek status live."),
+                    "order": order.to_dict(),
+                }
+
+            vip_status = str(status_res.get("status") or "waiting").lower()
+            vip_note = str(status_res.get("note") or "")
+
+            changed = False
+            prev_status = order.status
+            if order.provider_status != vip_status:
+                order.provider_status = vip_status
+                changed = True
+
+            if vip_note and order.provider_note != vip_note:
+                order.provider_note = vip_note
+                changed = True
+
+            if vip_status == "success" and order.status != "completed":
+                order.status = "completed"
+                order.paid_at = order.paid_at or datetime.utcnow()
+                order.payment_status = "settlement"
+                changed = True
+
+            elif vip_status in ["error", "canceled", "failed"]:
+                if order.provider_status != "error":
+                    order.provider_status = "error"
+                    changed = True
+
+            if changed:
+                order.updated_at = datetime.utcnow()
+                db.commit()
+                db.refresh(order)
+
+                from app.services.audit_log_service import AuditLogService
+                from app.core.cache import cache
+
+                action_name = "vip_order_completed" if order.status == "completed" else "vip_status_synced"
+                AuditLogService.record_log(
+                    order_id=order.id,
+                    actor="vip_reseller",
+                    action=action_name,
+                    previous_status=prev_status,
+                    new_status=order.status,
+                    notes=f"Status live disinkronkan dari VIP Reseller: {vip_status}. Note: {vip_note}".strip(),
+                    customer_name=order.customer_name,
+                    customer_email=order.customer_email,
+                )
+
+                cache.invalidate("orders")
+                from app.services.order_service import OrderService
+                OrderService.load_orders(force_reload=True)
+
+            return {
+                "success": True,
+                "is_vip": True,
+                "trxid": order.provider_trxid,
+                "vip_status": vip_status,
+                "status": order.status,
+                "note": order.provider_note,
+                "order": order.to_dict(),
+            }
+
+        finally:
+            db.close()
+
+    @classmethod
+    def handle_webhook(cls, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Processes incoming automated status callback from VIP Reseller.
+        """
+        data = payload.get("data")
+        if not data or not isinstance(data, dict):
+            data = payload
+
+        trxid = str(data.get("trxid") or "").strip()
+        vip_status = str(data.get("status") or "").lower().strip()
+        vip_note = str(data.get("note") or "").strip()
+
+        if not trxid:
+            return {"result": False, "message": "trxid tidak ditemukan dalam payload callback."}
+
+        from app.models.order import Order
+        db = SessionLocal()
+        try:
+            from sqlalchemy.orm import joinedload
+            order = db.query(Order).options(joinedload(Order.items)).filter(Order.provider_trxid == trxid).first()
+            if not order:
+                return {
+                    "result": False,
+                    "message": f"Pesanan dengan provider_trxid '{trxid}' tidak ditemukan di Asterra Store.",
+                }
+
+            prev_status = order.status
+            order.provider_status = vip_status
+            if vip_note:
+                order.provider_note = vip_note
+
+            if vip_status == "success":
+                order.status = "completed"
+                order.paid_at = order.paid_at or datetime.utcnow()
+                order.payment_status = "settlement"
+            elif vip_status in ["error", "canceled", "failed"]:
+                order.provider_status = "error"
+
+            order.updated_at = datetime.utcnow()
+            db.commit()
+            db.refresh(order)
+
+            from app.services.audit_log_service import AuditLogService
+            from app.core.cache import cache
+
+            AuditLogService.record_log(
+                order_id=order.id,
+                actor="vip_webhook",
+                action="vip_webhook_received",
+                previous_status=prev_status,
+                new_status=order.status,
+                notes=f"Callback Webhook VIP Reseller diterima. Status: {vip_status}, Note: {vip_note}".strip(),
+                customer_name=order.customer_name,
+                customer_email=order.customer_email,
+            )
+
+            cache.invalidate("orders")
+            from app.services.order_service import OrderService
+            OrderService.load_orders(force_reload=True)
+
+            return {
+                "result": True,
+                "message": f"Status pesanan {order.id} berhasil diperbarui dari webhook VIP Reseller.",
+                "order_id": order.id,
+                "status": order.status,
+                "vip_status": vip_status,
+            }
+
+        finally:
+            db.close()
+

@@ -106,6 +106,16 @@ def health_check():
         "timestamp": datetime.utcnow().isoformat(),
     }
 
+@app.post("/webhooks/vip-reseller", tags=["Webhooks"], include_in_schema=False)
+async def root_vip_reseller_webhook(request: Request):
+    from app.api.v1.checkout import vip_reseller_webhook
+    return await vip_reseller_webhook(request)
+
+@app.post("/webhooks/tripay", tags=["Webhooks"], include_in_schema=False)
+async def root_tripay_webhook(request: Request):
+    from app.api.v1.checkout import tripay_webhook
+    return await tripay_webhook(request)
+
 from app.core.security_middleware import security_and_rate_limit_middleware
 
 # ------------------------------------------

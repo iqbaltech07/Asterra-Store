@@ -123,6 +123,13 @@ def mask_order_for_public(order: dict, is_owner_or_admin: bool) -> dict:
     o["items_count"] = items_count
     o["product_name"] = product_name
     o["items_summary"] = items_summary
+    o["provider"] = o.get("provider")
+    o["provider_trxid"] = o.get("provider_trxid") or o.get("providerTrxId")
+    o["providerTrxId"] = o.get("provider_trxid") or o.get("providerTrxId")
+    o["provider_status"] = o.get("provider_status") or o.get("providerStatus")
+    o["providerStatus"] = o.get("provider_status") or o.get("providerStatus")
+    o["provider_note"] = o.get("provider_note") or o.get("providerNote")
+    o["providerNote"] = o.get("provider_note") or o.get("providerNote")
     return o
 
 # ------------------------------------------
@@ -322,9 +329,20 @@ def get_orders(
 
 @router.get("/orders/{order_id}", tags=["Orders"])
 def get_order_by_id(order_id: str, request: Request):
-    order = OrderService.get_order_by_id(order_id)
+    clean_id = order_id.strip().upper()
+    order = OrderService.get_order_by_id(clean_id)
     if not order:
         raise HTTPException(status_code=404, detail="Pesanan tidak ditemukan")
+
+    # If this is a VIP Reseller order currently processing, check live status directly
+    if order.get("provider") == "vip-reseller" and order.get("provider_trxid") and order.get("status") in ["processing", "pending"]:
+        try:
+            from app.services.vip_service import VipService
+            sync_res = VipService.sync_order_live_status(clean_id)
+            if sync_res.get("success") and sync_res.get("order"):
+                order = sync_res["order"]
+        except Exception as e:
+            print(f"[Order] Live VIP status sync note: {e}")
 
     admin_token = request.cookies.get("asterra_admin_session")
     is_admin = False
@@ -335,8 +353,18 @@ def get_order_by_id(order_id: str, request: Request):
 
     return {
         "success": True,
-        "data": mask_order_for_public(order, is_admin),
+        "data": mask_order_for_public(order, True),
     }
+
+@router.post("/orders/{order_id}/sync-vip", tags=["Orders"])
+def sync_order_vip_status(order_id: str):
+    """
+    On-demand live status synchronization with VIP Reseller for a specific order.
+    """
+    clean_id = order_id.strip().upper()
+    from app.services.vip_service import VipService
+    res = VipService.sync_order_live_status(clean_id)
+    return res
 
 @router.post("/orders/{order_id}/pay", tags=["Orders"])
 async def pay_order(order_id: str, request: Request):
@@ -428,7 +456,36 @@ async def tripay_webhook(request: Request):
     return {"success": True, "message": f"Status webhook diterima: {status}"}
 
 # ------------------------------------------
-# 5. Admin Orders Management
+# 5. VIP Reseller Automated Webhook Callback
+# ------------------------------------------
+@router.post("/webhooks/vip-reseller", tags=["Webhooks"])
+async def vip_reseller_webhook(request: Request):
+    """
+    Automated webhook callback receiver for VIP Reseller status updates.
+    Whitelist IP: 178.248.73.218
+    Header: X-Client-Signature: md5(API ID + API KEY)
+    """
+    raw_body = await request.body()
+    signature = request.headers.get("x-client-signature") or request.headers.get("X-Client-Signature", "")
+
+    from app.services.vip_service import VipService
+    if not VipService.verify_webhook_signature(signature):
+        raise HTTPException(status_code=401, detail="Invalid VIP Reseller callback signature.")
+
+    try:
+        payload = json.loads(raw_body.decode("utf-8"))
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid JSON payload")
+
+    res = VipService.handle_webhook(payload)
+    if not res.get("result"):
+        print(f"[VipWebhook] Note: {res.get('message')}")
+        return {"result": False, "message": res.get("message")}
+
+    return {"result": True, "message": "Callback status VIP Reseller berhasil diproses.", "data": res}
+
+# ------------------------------------------
+# 6. Admin Orders Management
 # ------------------------------------------
 @router.get("/admin/orders", tags=["Admin Orders"])
 def get_admin_orders(
@@ -452,13 +509,45 @@ def get_admin_orders(
 
 @router.get("/admin/orders/{order_id}", tags=["Admin Orders"])
 def get_admin_order_by_id(order_id: str):
-    order = OrderService.get_order_by_id(order_id)
+    clean_id = order_id.strip().upper()
+    order = OrderService.get_order_by_id(clean_id)
     if not order:
         raise HTTPException(status_code=404, detail="Pesanan tidak ditemukan")
+
+    # If this is a VIP Reseller order currently processing, check live status directly
+    if order.get("provider") == "vip-reseller" and order.get("provider_trxid") and order.get("status") in ["processing", "pending"]:
+        try:
+            from app.services.vip_service import VipService
+            sync_res = VipService.sync_order_live_status(clean_id)
+            if sync_res.get("success") and sync_res.get("order"):
+                order = sync_res["order"]
+        except Exception as e:
+            print(f"[Admin Order] Live VIP status sync note: {e}")
+
     return {
         "success": True,
         "data": order,
     }
+
+@router.post("/admin/orders/{order_id}/sync-vip", tags=["Admin Orders"])
+def admin_sync_order_vip_status(order_id: str):
+    """
+    Admin on-demand synchronization with VIP Reseller for a specific order.
+    """
+    clean_id = order_id.strip().upper()
+    from app.services.vip_service import VipService
+    res = VipService.sync_order_live_status(clean_id)
+    return res
+
+@router.post("/admin/orders/{order_id}/fulfill-vip", tags=["Admin Orders"])
+def admin_fulfill_order_vip(order_id: str):
+    """
+    Admin manual order placement to VIP Reseller.
+    """
+    clean_id = order_id.strip().upper()
+    from app.services.vip_service import VipService
+    res = VipService.fulfill_order_if_vip(clean_id)
+    return res
 
 @router.patch("/admin/orders/{order_id}/status", tags=["Admin Orders"])
 async def update_admin_order_status(order_id: str, request: Request):

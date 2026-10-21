@@ -50,6 +50,10 @@ export interface Order {
   campaign_id?: string;
   campaign_discount?: number;
   discount_amount?: number;
+  provider?: string;
+  provider_trxid?: string;
+  provider_status?: string;
+  provider_note?: string;
   logs?: OrderLog[];
   payment?: {
     id: string;

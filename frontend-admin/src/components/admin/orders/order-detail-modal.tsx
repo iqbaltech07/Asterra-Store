@@ -20,6 +20,7 @@ import {
   faShieldHalved,
   faCheck,
   faClockRotateLeft,
+  faRotateLeft,
 } from '@fortawesome/free-solid-svg-icons';
 import { OrderStatusBadge, OrderActorBadge } from './order-badges';
 import { formatWhatsAppUrl, generateOrderValidationText } from '@/lib/utils/format';
@@ -44,6 +45,8 @@ export function OrderDetailModal({
   const [newStatus, setNewStatus] = useState<string>('pending');
   const [statusNotes, setStatusNotes] = useState<string>('');
   const [isMutationVerified, setIsMutationVerified] = useState<boolean>(false);
+  const [isSyncingVip, setIsSyncingVip] = useState<boolean>(false);
+  const [isFulfillingVip, setIsFulfillingVip] = useState<boolean>(false);
 
   useEffect(() => {
     if (order) {
@@ -52,6 +55,48 @@ export function OrderDetailModal({
       setIsMutationVerified(false);
     }
   }, [order]);
+
+  const handleSyncVip = async () => {
+    if (!order) return;
+    setIsSyncingVip(true);
+    try {
+      const res = await fetch(`/api/v1/admin/orders/${order.id}/sync-vip`, { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        onShowNotification(`Status live VIP berhasil disinkronkan: ${data.vip_status || 'OK'}`);
+        if (data.order?.status) {
+          setNewStatus(data.order.status);
+        }
+      } else {
+        onShowNotification(data.message || 'Gagal menyinkronkan status VIP.');
+      }
+    } catch (_) {
+      onShowNotification('Koneksi ke API VIP gagal.');
+    } finally {
+      setIsSyncingVip(false);
+    }
+  };
+
+  const handleFulfillVip = async () => {
+    if (!order) return;
+    setIsFulfillingVip(true);
+    try {
+      const res = await fetch(`/api/v1/admin/orders/${order.id}/fulfill-vip`, { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        onShowNotification(`Pesanan berhasil dikirim ke VIP Reseller! TRXID: ${data.trxid || ''}`);
+        if (data.order?.status) {
+          setNewStatus(data.order.status);
+        }
+      } else {
+        onShowNotification(data.message || 'Gagal mengirim order ke VIP Reseller.');
+      }
+    } catch (_) {
+      onShowNotification('Koneksi ke API VIP gagal.');
+    } finally {
+      setIsFulfillingVip(false);
+    }
+  };
 
   if (!isOpen || !order) return null;
 
@@ -315,6 +360,68 @@ export function OrderDetailModal({
               </div>
             </div>
           </div>
+
+          {/* VIP Reseller Live Gateway Integration Card */}
+          {order.provider === 'vip-reseller' && (
+            <div className="bg-surface-raised border border-primary/30 rounded-xl p-4 space-y-3 text-xs">
+              <div className="flex items-center justify-between pb-2 border-b border-border/70">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-foreground">Integrasi VIP Reseller (Live Gateway)</span>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-mono uppercase bg-primary/15 text-primary font-bold">
+                    {order.provider_status || 'Waiting'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={isSyncingVip}
+                    onClick={handleSyncVip}
+                    className="h-7 text-[11px] border-border text-foreground hover:bg-surface-hover gap-1"
+                  >
+                    <FontAwesomeIcon icon={faRotateLeft} className={`w-3 h-3 ${isSyncingVip ? 'animate-spin' : ''}`} />
+                    <span>{isSyncingVip ? 'Memeriksa...' : 'Cek Status Live'}</span>
+                  </Button>
+                  {!order.provider_trxid && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      disabled={isFulfillingVip}
+                      onClick={handleFulfillVip}
+                      className="h-7 text-[11px] bg-primary text-white hover:bg-primary/90 gap-1 font-semibold"
+                    >
+                      <span>{isFulfillingVip ? 'Memproses...' : 'Kirim ke VIP'}</span>
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
+                <div className="p-2 bg-surface rounded border border-border/60">
+                  <span className="text-foreground-muted block text-[10px]">TRX ID VIP Reseller:</span>
+                  <span className="font-mono font-semibold text-foreground select-all">
+                    {order.provider_trxid || 'Belum dibuat (Menunggu diproses)'}
+                  </span>
+                </div>
+                <div className="p-2 bg-surface rounded border border-border/60">
+                  <span className="text-foreground-muted block text-[10px]">Status Server Provider:</span>
+                  <span className="font-mono font-semibold text-foreground uppercase">
+                    {order.provider_status || 'waiting'}
+                  </span>
+                </div>
+              </div>
+
+              {order.provider_note && (
+                <div className="p-2.5 bg-surface rounded border border-border/60 space-y-1">
+                  <span className="text-foreground-muted block text-[10px]">Catatan / Serial Key Provider:</span>
+                  <p className="font-mono text-xs text-foreground bg-surface-raised p-2 rounded border border-border/80 break-all select-all">
+                    {order.provider_note}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* MANUAL STATUS CHANGER & ACTIONS */}
           <div className="bg-surface-raised border border-primary/30 rounded-xl p-4 space-y-3">

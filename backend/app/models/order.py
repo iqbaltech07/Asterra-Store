@@ -55,6 +55,10 @@ class Order(Base):
     referral_discount = Column(Integer, default=0)
     campaign_id = Column(String, nullable=True)
     campaign_discount = Column(Integer, default=0)
+    provider = Column(String, nullable=True)
+    provider_trxid = Column(String, nullable=True)
+    provider_status = Column(String, nullable=True)
+    provider_note = Column(Text, nullable=True)
     expires_at = Column(DateTime, nullable=True)
     paid_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -86,6 +90,13 @@ class Order(Base):
             "referralDiscount": self.referral_discount,
             "campaignId": self.campaign_id,
             "campaignDiscount": self.campaign_discount,
+            "provider": self.provider,
+            "providerTrxId": self.provider_trxid,
+            "provider_trxid": self.provider_trxid,
+            "providerStatus": self.provider_status,
+            "provider_status": self.provider_status,
+            "providerNote": self.provider_note,
+            "provider_note": self.provider_note,
             "expiresAt": (self.expires_at.isoformat() + "Z") if self.expires_at else None,
             "paidAt": (self.paid_at.isoformat() + "Z") if self.paid_at else None,
             "createdAt": (self.created_at.isoformat() + "Z") if self.created_at else None,
