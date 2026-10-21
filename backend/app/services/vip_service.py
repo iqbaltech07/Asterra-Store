@@ -306,6 +306,24 @@ class VipService:
                 "message": "Parameter 'service' dan 'data_no' (target ID/email) wajib diisi.",
             }
 
+        # Sandbox / Testing Mode Simulation (Does not deduct real balance)
+        if getattr(settings, "VIP_RESELLER_SANDBOX_MODE", False):
+            import random
+            mock_trxid = f"VP-TEST-{int(time.time())}-{random.randint(1000, 9999)}"
+            return {
+                "success": True,
+                "trxid": mock_trxid,
+                "data": clean_target,
+                "zone": str(zone_id or ""),
+                "service": clean_service,
+                "status": "processing",
+                "note": f"[SANDBOX TEST] Kredensial Lisensi: {clean_target} | Serial: AST-TEST-VIP-2026",
+                "balance": 999999,
+                "price": 0,
+                "message": "Pesanan simulasi berhasil diproses (Sandbox Mode Aktif). Saldo riil tidak terpotong.",
+                "raw": {"trxid": mock_trxid},
+            }
+
         post_data = {
             "key": api_key,
             "sign": sign,
@@ -372,6 +390,21 @@ class VipService:
             return {
                 "success": False,
                 "message": "Parameter trxid transaksi wajib diisi.",
+            }
+
+        # If this is a sandbox test transaction, return completed simulated response
+        if clean_trxid.startswith("VP-TEST-"):
+            return {
+                "success": True,
+                "trxid": clean_trxid,
+                "data": "user.test@asterra.store",
+                "zone": "",
+                "service": "Layanan Uji Coba Sandbox",
+                "status": "success",
+                "note": f"[SANDBOX TEST] Akun Sukses Terkirim: user.test@asterra.store | Pass: DemoPass123!",
+                "price": 0,
+                "message": "Transaksi sandbox selesai (Simulasi).",
+                "raw": {"trxid": clean_trxid},
             }
 
         if not api_key or not sign:
