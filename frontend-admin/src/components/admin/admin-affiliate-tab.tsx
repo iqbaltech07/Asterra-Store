@@ -26,6 +26,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { getStoreBaseUrl } from '@/lib/utils/url';
+import { fetchWithRetry } from '@/lib/api-client';
 
 interface AffiliatePartner {
   id: string;
@@ -66,7 +67,7 @@ export function AdminAffiliateTab({ onNotify }: AdminAffiliateTabProps) {
   const fetchAffiliates = async () => {
     try {
       setIsLoading(true);
-      const res = await fetch('/api/v1/admin/affiliates', { cache: 'no-store' });
+      const res = await fetchWithRetry('/api/v1/admin/affiliates', { cache: 'no-store' });
       if (res.ok) {
         const json = await res.json();
         if (json.success && Array.isArray(json.data)) {

@@ -94,7 +94,9 @@ def api_v1_openapi_redirect():
 def api_root_redirect():
     return root_endpoint()
 
-@app.get("/health", tags=["Health"])
+@app.api_route("/health", methods=["GET", "POST", "HEAD"], tags=["Health"])
+@app.api_route("/healthz", methods=["GET", "POST", "HEAD"], include_in_schema=False)
+@app.api_route("/readyz", methods=["GET", "POST", "HEAD"], include_in_schema=False)
 def health_check():
     return {
         "status": "ok",

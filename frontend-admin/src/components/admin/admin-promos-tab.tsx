@@ -22,6 +22,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { PromoCode } from '@/types/promo';
+import { fetchWithRetry } from '@/lib/api-client';
 
 interface AdminPromosTabProps {
   onNotify: (msg: string) => void;
@@ -61,7 +62,7 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
   const fetchPromos = useCallback(async () => {
     setIsLoading(true);
     try {
-      const res = await fetch('/api/v1/admin/promos');
+      const res = await fetchWithRetry('/api/v1/admin/promos');
       if (!res.ok) throw new Error('Gagal mengambil data promo');
       const json = await res.json();
       if (json.success) {

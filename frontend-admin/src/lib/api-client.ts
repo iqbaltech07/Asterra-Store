@@ -64,27 +64,75 @@ export interface PaymentConfigResponse {
 }
 
 /**
- * Core HTTP Request Wrapper with standard error handling
+ * Robust fetch wrapper with automatic retry on transient cold-start errors (404, 502, 503, 504)
+ */
+export async function fetchWithRetry(
+  url: string,
+  options?: RequestInit,
+  retries: number = 2
+): Promise<Response> {
+  let attempt = 0;
+  while (true) {
+    try {
+      const res = await fetch(url, options);
+      if (!res.ok && (res.status === 404 || res.status >= 502) && attempt < retries) {
+        attempt++;
+        await new Promise((r) => setTimeout(r, 600 * attempt));
+        continue;
+      }
+      return res;
+    } catch (err) {
+      if (attempt < retries) {
+        attempt++;
+        await new Promise((r) => setTimeout(r, 600 * attempt));
+        continue;
+      }
+      throw err;
+    }
+  }
+}
+
+/**
+ * Core HTTP Request Wrapper with standard error handling and cold-start resilience
  */
 async function requestJson<T>(
   url: string,
-  options?: RequestInit
+  options?: RequestInit,
+  retries: number = 2
 ): Promise<T> {
-  const res = await fetch(url, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...(options?.headers || {}),
-    },
-    ...options,
-  });
+  let attempt = 0;
+  while (true) {
+    try {
+      const res = await fetch(url, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(options?.headers || {}),
+        },
+        ...options,
+      });
 
-  const data = await res.json();
-  if (!res.ok || (data && data.success === false)) {
-    const errorMsg = data?.error || data?.message || `Request failed with status ${res.status}`;
-    throw new Error(errorMsg);
+      if (!res.ok && (res.status === 404 || res.status >= 502) && attempt < retries) {
+        attempt++;
+        await new Promise((r) => setTimeout(r, 600 * attempt));
+        continue;
+      }
+
+      const data = await res.json();
+      if (!res.ok || (data && data.success === false)) {
+        const errorMsg = data?.error || data?.message || `Request failed with status ${res.status}`;
+        throw new Error(errorMsg);
+      }
+
+      return data as T;
+    } catch (err) {
+      if (attempt < retries) {
+        attempt++;
+        await new Promise((r) => setTimeout(r, 600 * attempt));
+        continue;
+      }
+      throw err;
+    }
   }
-
-  return data as T;
 }
 
 export interface OrdersApiResponse {
