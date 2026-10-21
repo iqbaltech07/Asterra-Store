@@ -11,6 +11,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { AsterraLogo } from '@/components/ui/asterra-logo';
 import { setupFooterReveal } from '@/lib/animations/gsap-utils';
+import { usePaymentConfig } from '@/lib/hooks/use-payment-config';
 
 interface FooterProps {
   onNotify?: (message: string) => void;
@@ -18,25 +19,11 @@ interface FooterProps {
 
 export function Footer({ onNotify }: FooterProps) {
   const footerRef = useRef<HTMLElement>(null);
-  const [csWhatsapp, setCsWhatsapp] = React.useState('6281234567890');
+  const { primaryWhatsapp } = usePaymentConfig();
+  const csWhatsapp = primaryWhatsapp || '6281234567890';
 
   useEffect(() => {
     const cleanup = setupFooterReveal(footerRef.current);
-    fetch('/api/v1/payment-config')
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.success && json.data) {
-          const num =
-            (Array.isArray(json.data.cs_whatsapp_numbers) && json.data.cs_whatsapp_numbers[0]) ||
-            json.data.confirmation_whatsapp ||
-            json.data.confirmationWhatsapp;
-          if (num) {
-            setCsWhatsapp(num.replace(/\D/g, ''));
-          }
-        }
-      })
-      .catch(() => {});
-
     return () => {
       cleanup?.();
     };

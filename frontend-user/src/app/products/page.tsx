@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { useCatalogProducts } from '@/lib/hooks/use-catalog-products';
+import { useActiveCampaigns } from '@/lib/hooks/use-active-campaigns';
 import { calculateCampaignPrice, isPromoItem, ActiveCampaign } from '@/lib/utils/promo-pricing';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -97,18 +98,8 @@ function ProductsContent() {
     [catalogResponse?.data]
   );
 
-  // Fetch active campaigns for real-time promotional pricing
-  const { data: campaignsRes } = useQuery<{ success: boolean; data: ActiveCampaign[] }>({
-    queryKey: ['active-campaigns'],
-    queryFn: async () => {
-      const res = await fetch('/api/v1/campaigns/active', { cache: 'no-cache' });
-      if (!res.ok) return { success: false, data: [] };
-      return res.json();
-    },
-    staleTime: 5000,
-    refetchOnWindowFocus: true,
-  });
-  const activeCampaigns = useMemo(() => campaignsRes?.data || [], [campaignsRes]);
+  // Fetch active campaigns for real-time promotional pricing (shared query cache)
+  const { campaigns: activeCampaigns } = useActiveCampaigns();
 
   // Extract dynamic categories from real products with intentional priority order
   const categories = useMemo(() => {

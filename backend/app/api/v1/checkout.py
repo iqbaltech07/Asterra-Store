@@ -11,6 +11,34 @@ from app.services.tripay_service import TripayService
 router = APIRouter()
 
 from app.core.cache import cache
+from app.core.redis_client import get_redis_client
+import hashlib
+import time
+
+_local_locks: Dict[str, float] = {}
+
+def acquire_idempotency_lock(key: str, ttl: int = 8) -> bool:
+    """
+    Acquires an atomic idempotency lock via Upstash Redis (SET NX EX)
+    or in-memory timestamp fallback to prevent duplicate submit bug.
+    """
+    now = time.time()
+    redis = get_redis_client()
+    if redis is not None:
+        try:
+            res = redis.set(f"idemp:{key}", "1", ex=ttl, nx=True)
+            return bool(res)
+        except Exception:
+            pass
+
+    expired = [k for k, exp in _local_locks.items() if now > exp]
+    for k in expired:
+        _local_locks.pop(k, None)
+
+    if key in _local_locks:
+        return False
+    _local_locks[key] = now + ttl
+    return True
 
 def mask_order_for_public(order: dict, is_owner_or_admin: bool) -> dict:
     o = dict(order)
@@ -205,6 +233,21 @@ def delete_admin_promo(promo_id: str):
 @router.post("/orders", tags=["Orders"])
 async def create_order(request: Request, background_tasks: BackgroundTasks):
     payload = await request.json()
+
+    # Idempotency Lock: prevents duplicate order creation on double-click
+    idemp_key = request.headers.get("x-idempotency-key")
+    if not idemp_key:
+        cust_email = str(payload.get("customer_email") or payload.get("customerEmail") or "")
+        items_repr = str(payload.get("items") or "")
+        subtotal = str(payload.get("subtotal") or payload.get("total_amount") or "")
+        idemp_key = hashlib.md5(f"{cust_email}:{items_repr}:{subtotal}".encode()).hexdigest()
+
+    if not acquire_idempotency_lock(idemp_key, ttl=8):
+        raise HTTPException(
+            status_code=409,
+            detail="Permintaan pesanan sedang diproses. Mohon tunggu beberapa detik."
+        )
+
     order = OrderService.create_order(payload, background_tasks=background_tasks)
     cache.invalidate("orders")
     return {
@@ -430,3 +473,27 @@ async def update_admin_order_status(order_id: str, request: Request):
         "data": updated,
         "message": f"Status pesanan {order_id} berhasil diubah menjadi {new_status}.",
     }
+
+# ------------------------------------------
+# 6. Internal Automated Webhooks (QStash Cron & Asynchronous Workers)
+# ------------------------------------------
+from app.core.qstash_client import verify_internal_or_qstash_request
+
+@router.post("/internal/cancel-expired-orders", tags=["Internal / QStash"])
+async def trigger_cancel_expired_orders(request: Request):
+    """
+    Automated endpoint invoked by QStash HTTP Cron every 15 minutes
+    (or manually via internal secret header) to cancel unpaid expired orders.
+    """
+    raw_body = await request.body()
+    if not verify_internal_or_qstash_request(request, raw_body):
+        raise HTTPException(status_code=401, detail="Unauthorized internal trigger")
+
+    result = OrderService.cancel_expired_orders()
+    cache.invalidate("orders")
+    return {
+        "success": True,
+        "message": f"Berhasil memproses {result.get('cancelled_count', 0)} pesanan kadaluwarsa.",
+        "data": result,
+    }
+

@@ -19,15 +19,16 @@ if base_env_path.exists():
 if not env_mode:
     env_mode = os.getenv("ENVIRONMENT", os.getenv("APP_ENV", "development")).lower()
 
-# 3. Load environment-specific file with override
-if env_mode in ("production", "prod"):
-    prod_env = BACKEND_DIR / ".env.production"
-    if prod_env.exists():
-        load_dotenv(prod_env, override=True)
-else:
-    dev_env = BACKEND_DIR / ".env.development"
-    if dev_env.exists():
-        load_dotenv(dev_env, override=True)
+# 3. Load environment-specific file with override (only non-empty values overwrite base .env)
+from dotenv import dotenv_values
+prod_env = BACKEND_DIR / ".env.production"
+dev_env = BACKEND_DIR / ".env.development"
+target_env = prod_env if env_mode in ("production", "prod") else dev_env
+if target_env.exists():
+    for k, v in dotenv_values(target_env).items():
+        if v is not None and v.strip():
+            os.environ[k] = v
+
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Asterra Store Core API"
@@ -43,10 +44,9 @@ class Settings(BaseSettings):
     DATABASE_URL: str = os.getenv("DATABASE_URL", "")
     DIRECT_URL: str = os.getenv("DIRECT_URL", "")
     
-    # Security & JWT Authentication
     SECRET_KEY: str = (
-        os.getenv("SECRET_KEY") 
-        or os.getenv("JWT_SECRET") 
+        os.getenv("JWT_SECRET")
+        or os.getenv("SECRET_KEY")
         or "asterra_jwt_secret_dev_fallback_key_2026"
     )
     BETTER_AUTH_SECRET: str = os.getenv("BETTER_AUTH_SECRET", "")
@@ -63,6 +63,17 @@ class Settings(BaseSettings):
     
     # Vercel Blob Storage
     BLOB_READ_WRITE_TOKEN: str = os.getenv("BLOB_READ_WRITE_TOKEN", "")
+    
+    # Upstash Serverless Redis & Cache
+    UPSTASH_REDIS_REST_URL: str = os.getenv("UPSTASH_REDIS_REST_URL", "")
+    UPSTASH_REDIS_REST_TOKEN: str = os.getenv("UPSTASH_REDIS_REST_TOKEN", "")
+    
+    # Upstash QStash (Serverless Background Jobs & Cron)
+    QSTASH_TOKEN: str = os.getenv("QSTASH_TOKEN", "")
+    QSTASH_URL: str = os.getenv("QSTASH_URL", "https://qstash-us-east-1.upstash.io")
+    QSTASH_CURRENT_SIGNING_KEY: str = os.getenv("QSTASH_CURRENT_SIGNING_KEY", "")
+    QSTASH_NEXT_SIGNING_KEY: str = os.getenv("QSTASH_NEXT_SIGNING_KEY", "")
+    INTERNAL_CRON_SECRET: str = os.getenv("INTERNAL_CRON_SECRET", "")
     
     # VIP Reseller Supplier Integration
     VIP_RESELLER_BASE_URL: str = os.getenv("VIP_RESELLER_BASE_URL", "https://vip-reseller.co.id/api")

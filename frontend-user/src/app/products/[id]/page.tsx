@@ -99,7 +99,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       ? `${product.description.slice(0, 150)}... Beli resmi bergaransi di Asterra Store.`
       : `Beli lisensi resmi ${product.name} bergaransi penuh 100% di Asterra Store. Aktivasi instan 1-15 menit, harga Rp ${product.price.toLocaleString('id-ID')}.`;
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://asterrastore.biz.id';
+  const siteUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || 'https://asterrastore.biz.id';
   const productUrl = `${siteUrl}/products/${id}`;
 
   return {
@@ -259,7 +259,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
     })),
   };
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://asterrastore.biz.id';
+  const siteUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || 'https://asterrastore.biz.id';
   const productUrl = `${siteUrl}/products/${initialData.id}`;
 
   // Structured Data (JSON-LD) for Search Engines & AI Crawlers [T21]

@@ -11,43 +11,20 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
 import { animateFloatingButton } from '@/lib/animations/gsap-utils';
+import { usePaymentConfig } from '@/lib/hooks/use-payment-config';
 
 export function FloatingSupport() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
-  const [whatsappNumbers, setWhatsappNumbers] = useState<string[]>(['6281234567890']);
-  const [supportEmail, setSupportEmail] = useState('support@asterra.store');
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   // Do not show on admin pages
   const isAdmin = pathname?.startsWith('/admin');
 
-  // Load configured WhatsApp numbers and email from backend
-  useEffect(() => {
-    if (isAdmin) return;
-
-    fetch('/api/v1/payment-config')
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.success && json.data) {
-          const waList = json.data.cs_whatsapp_numbers || json.data.csWhatsappNumbers;
-          const confWa = json.data.confirmation_whatsapp || json.data.confirmationWhatsapp;
-          const email = json.data.cs_email || json.data.csEmail;
-
-          if (Array.isArray(waList) && waList.length > 0) {
-            setWhatsappNumbers(waList);
-          } else if (confWa) {
-            setWhatsappNumbers([confWa]);
-          }
-          if (email) {
-            setSupportEmail(email);
-          }
-        }
-      })
-      .catch(() => {
-        // Fallback to default
-      });
-  }, [isAdmin]);
+  // Load configured WhatsApp numbers and email via shared React Query hook
+  const { whatsappNumbers, supportEmail } = usePaymentConfig({
+    enabled: !isAdmin,
+  });
 
   // Entrance motion: scale from 0.7, rotation from -10deg
   useEffect(() => {

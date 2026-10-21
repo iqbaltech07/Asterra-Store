@@ -7,6 +7,9 @@ from sqlalchemy.orm import joinedload
 from app.core.database import SessionLocal
 from app.models.order import Order, OrderItem
 
+from app.services.order_normalizer import OrderNormalizer
+from app.services.order_tasks import OrderPostTasks
+
 DATA_DIR = pathlib.Path(__file__).resolve().parent.parent.parent / "data"
 ORDERS_FILE = DATA_DIR / "supabase-orders.json"
 LEGACY_ORDERS_FILE = DATA_DIR / "orders.json"
@@ -17,178 +20,11 @@ class OrderService:
 
     @classmethod
     def _normalize_iso(cls, dt_str: Optional[str]) -> str:
-        if not dt_str:
-            return datetime.utcnow().isoformat() + "Z"
-        s = str(dt_str).strip()
-        if not s.endswith("Z") and "+" not in s:
-            return s + "Z"
-        return s
+        return OrderNormalizer.normalize_iso(dt_str)
 
     @classmethod
     def _normalize_order(cls, order: Dict[str, Any]) -> Dict[str, Any]:
-        if not isinstance(order, dict):
-            return order
-
-        o = dict(order)
-
-        # Amounts
-        tot = o.get("total_amount") if o.get("total_amount") is not None else o.get("totalAmount", 0)
-        tot_val = float(tot) if tot is not None else 0.0
-        raw = o.get("raw_amount") if o.get("raw_amount") is not None else o.get("rawAmount", tot_val)
-        raw_val = float(raw) if raw is not None else tot_val
-        unique = o.get("unique_code") if o.get("unique_code") is not None else o.get("uniqueCode", 0)
-        unique_val = int(unique) if unique is not None else 0
-
-        o["totalAmount"] = tot_val
-        o["total_amount"] = tot_val
-        o["amount"] = tot_val
-        o["rawAmount"] = raw_val
-        o["raw_amount"] = raw_val
-        o["uniqueCode"] = unique_val
-        o["unique_code"] = unique_val
-
-        # Campaign & Promo & Referral discounts
-        promo_disc = int(o.get("promo_discount") if o.get("promo_discount") is not None else o.get("promoDiscount", 0))
-        ref_disc = int(o.get("referral_discount") if o.get("referral_discount") is not None else o.get("referralDiscount", 0))
-        camp_disc = int(o.get("campaign_discount") if o.get("campaign_discount") is not None else o.get("campaignDiscount", 0))
-
-        o["promoDiscount"] = promo_disc
-        o["promo_discount"] = promo_disc
-        o["referralDiscount"] = ref_disc
-        o["referral_discount"] = ref_disc
-        o["campaignDiscount"] = camp_disc
-        o["campaign_discount"] = camp_disc
-        o["discountAmount"] = promo_disc + ref_disc + camp_disc
-        o["discount_amount"] = promo_disc + ref_disc + camp_disc
-
-        # Campaign and Referral attribution
-        camp_id = o.get("campaign_id") or o.get("campaignId")
-        o["campaignId"] = camp_id
-        o["campaign_id"] = camp_id
-
-        ref_code = o.get("referral_code") or o.get("referralCode")
-        o["referralCode"] = ref_code
-        o["referral_code"] = ref_code
-
-        ref_sess_id = o.get("referral_session_id") or o.get("referralSessionId")
-        o["referralSessionId"] = ref_sess_id
-        o["referral_session_id"] = ref_sess_id
-
-        sales_p_id = o.get("sales_partner_id") or o.get("salesPartnerId")
-        o["salesPartnerId"] = sales_p_id
-        o["sales_partner_id"] = sales_p_id
-
-        recruiter_p_id = o.get("recruiter_partner_id") or o.get("recruiterPartnerId")
-        o["recruiterPartnerId"] = recruiter_p_id
-        o["recruiter_partner_id"] = recruiter_p_id
-
-        # Status & Dates (guaranteed UTC Z)
-        status = str(o.get("status") or o.get("order_status") or "pending").lower()
-        o["status"] = status
-        o["order_status"] = status
-
-        created = cls._normalize_iso(o.get("createdAt") or o.get("created_at") or o.get("order_date"))
-        o["createdAt"] = created
-        o["created_at"] = created
-        o["order_date"] = created
-
-        updated = cls._normalize_iso(o.get("updatedAt") or o.get("updated_at") or created)
-        o["updatedAt"] = updated
-        o["updated_at"] = updated
-
-        expires_val = o.get("expiresAt") or o.get("expires_at")
-        if not expires_val:
-            try:
-                dt = datetime.fromisoformat(created.replace("Z", "+00:00"))
-                expires = cls._normalize_iso((dt + timedelta(hours=24)).isoformat())
-            except Exception:
-                expires = cls._normalize_iso((datetime.utcnow() + timedelta(hours=24)).isoformat())
-        else:
-            expires = cls._normalize_iso(expires_val)
-        o["expiresAt"] = expires
-        o["expires_at"] = expires
-
-        if o.get("paidAt") or o.get("paid_at"):
-            paid_val = cls._normalize_iso(o.get("paidAt") or o.get("paid_at"))
-            o["paidAt"] = paid_val
-            o["paid_at"] = paid_val
-
-        # Contact info
-        cust_email = o.get("customerEmail") or o.get("customer_email") or ""
-        cust_name = o.get("customerName") or o.get("customer_name") or ""
-        cust_phone = o.get("customerWhatsapp") or o.get("customer_whatsapp") or ""
-        cust_notes = o.get("customerNotes") or o.get("customer_notes") or ""
-
-        o["customerEmail"] = cust_email
-        o["customer_email"] = cust_email
-        o["customerName"] = cust_name
-        o["customer_name"] = cust_name
-        o["customerWhatsapp"] = cust_phone
-        o["customer_whatsapp"] = cust_phone
-        o["customerNotes"] = cust_notes
-        o["customer_notes"] = cust_notes
-
-        # Public Display Attributes
-        if cust_name and len(cust_name) > 2:
-            o["customer_display"] = f"{cust_name[0]}***{cust_name[-1]}"
-        elif cust_email and "@" in cust_email:
-            parts = cust_email.split("@")
-            o["customer_display"] = f"{parts[0][:2]}***@{parts[1]}"
-        else:
-            o["customer_display"] = "Pelanggan Terverifikasi"
-
-        o["raw_id"] = o.get("id", "")
-
-        # Payment details
-        pay_mode = o.get("paymentMode") or o.get("payment_mode") or "manual"
-        pay_method = o.get("paymentMethod") or o.get("payment_method") or "manual_bca"
-        pay_status = o.get("paymentStatus") or o.get("payment_status") or "pending"
-
-        o["paymentMode"] = pay_mode
-        o["payment_mode"] = pay_mode
-        o["paymentMethod"] = pay_method
-        o["payment_method"] = pay_method
-        o["paymentStatus"] = pay_status
-        o["payment_status"] = pay_status
-
-        if not o.get("payment") or not isinstance(o.get("payment"), dict):
-            o["payment"] = {
-                "id": f"PAY-{o.get('id', '')}",
-                "payment_method": pay_method,
-                "transaction_id": o.get("paymentReference") or f"TRX-{o.get('id', '')}",
-                "payment_status": pay_status,
-                "amount": tot_val,
-            }
-
-        # Normalize items
-        items = o.get("items", [])
-        norm_items = []
-        for it in items:
-            it_dict = dict(it) if isinstance(it, dict) else {}
-            p_id = it_dict.get("productId") or it_dict.get("product_id") or "item"
-            p_name = it_dict.get("productName") or it_dict.get("product_name") or "Layanan Digital"
-            price = it_dict.get("price") if it_dict.get("price") is not None else it_dict.get("unit_price", 0)
-            price_val = float(price) if price is not None else 0.0
-            qty = int(it_dict.get("quantity", 1))
-
-            it_dict["productId"] = p_id
-            it_dict["product_id"] = p_id
-            it_dict["productName"] = p_name
-            it_dict["product_name"] = p_name
-            it_dict["price"] = price_val
-            it_dict["unit_price"] = price_val
-            it_dict["quantity"] = qty
-
-            norm_items.append(it_dict)
-
-        o["items"] = norm_items
-        o["items_count"] = len(norm_items)
-        first_prod = norm_items[0]["productName"] if len(norm_items) > 0 else "Layanan Digital"
-        o["product_name"] = first_prod
-        o["productName"] = first_prod
-        o["items_summary"] = ", ".join(i.get("productName", "") for i in norm_items) or first_prod
-
-        return o
+        return OrderNormalizer.normalize_order(order)
 
     @classmethod
     def load_orders(cls, force_reload: bool = False) -> List[Dict[str, Any]]:
@@ -707,112 +543,26 @@ class OrderService:
         else:
             cls._orders = [normalized]
 
-        # 6. Secondary post-order tasks (commissions, referral claiming, audit logs, telemetries, backup disk)
         def _execute_post_order_tasks():
-            cls.save_orders()
-
-            # Claim active referral session in DB
-            if ref_code or ref_sess_id:
-                try:
-                    from app.services.referral_service import ReferralService
-                    ReferralService.claim_session(
-                        order_id=order_id,
-                        ref_code=ref_code,
-                        user_email=customer_email,
-                        session_id=ref_sess_id,
-                    )
-                except Exception as e:
-                    print(f"[OrderService] ReferralSession claim note: {e}")
-
-            if promo_code and promo_discount > 0:
-                try:
-                    from app.services.promo_service import PromoService
-                    PromoService.record_usage(promo_code)
-                except Exception as e:
-                    print(f"[OrderService] Promo record_usage note: {e}")
-
-            try:
-                from app.services.referral_profit_service import ReferralProfitService
-                ReferralProfitService.sync_order_commissions_and_ledger(order_id, "pending")
-            except Exception as e:
-                print(f"[OrderService] Commission and ledger sync note: {e}")
-
-            if partner:
-                try:
-                    from app.services.partner_service import PartnerService
-                    comm_rate = float(partner.get("rate", 10.0))
-                    camp_name = None
-                    target_camp_id = canonical_campaign_id
-
-                    if matched_campaign:
-                        override = float(matched_campaign.get("affiliateBonusPercent") or matched_campaign.get("affiliateCommissionOverride") or 0)
-                        if override > 0:
-                            comm_rate = override
-                        camp_name = matched_campaign.get("name")
-                    elif target_camp_id:
-                        try:
-                            from app.services.campaign_service import CampaignService
-                            for c in CampaignService.get_all_campaigns():
-                                c_id = str(c.get("id") or "").strip()
-                                c_slug = str(c.get("slug") or "").strip().lower()
-                                if c_id == str(target_camp_id) or c_slug == str(target_camp_id).lower():
-                                    override = float(c.get("affiliateBonusPercent") or c.get("affiliateCommissionOverride") or 0)
-                                    if override > 0:
-                                        comm_rate = override
-                                    camp_name = c.get("name")
-                                    break
-                        except Exception:
-                            pass
-                    elif campaign_discount > 0:
-                        comm_rate = 15.0
-
-                    cogs = sum(
-                        int(catalog_products.get(str(it.get("product_id") or it.get("productId") or ""), {}).get("providerPrice") or 0) * int(it.get("quantity", 1))
-                        for it in items
-                    )
-                    transaction_profit = max(0, subtotal_after_discounts - cogs)
-                    comm_amount = round(transaction_profit * (comm_rate / 100.0)) if transaction_profit > 0 else 0
-                    comm_item = {
-                        "id": f"comm-{int(now.timestamp() * 1000)}-{random.randint(100, 999)}",
-                        "orderId": order_id,
-                        "orderTotal": total_amount,
-                        "orderProfit": transaction_profit,
-                        "commissionAmount": comm_amount,
-                        "commissionRate": comm_rate,
-                        "campaignId": target_camp_id,
-                        "campaignName": camp_name,
-                        "status": "pending",
-                        "holdingUntil": (now + timedelta(days=3)).isoformat() + "Z",
-                        "createdAt": now.isoformat() + "Z",
-                    }
-                    if "commissions" not in partner:
-                        partner["commissions"] = []
-                    partner["commissions"].insert(0, comm_item)
-                    PartnerService.save_partners()
-                except Exception as e:
-                    print(f"[OrderService] Commission allocation error: {e}")
-
-            if canonical_campaign_id:
-                try:
-                    from app.services.campaign_service import CampaignService
-                    CampaignService.record_campaign_order(str(canonical_campaign_id), float(total_amount))
-                except Exception:
-                    pass
-
-            try:
-                from app.services.audit_log_service import AuditLogService
-                AuditLogService.record_log(
-                    order_id=order_id,
-                    actor="customer",
-                    action="order_created",
-                    previous_status=None,
-                    new_status="pending",
-                    notes=f"Pesanan {order_id} dibuat oleh {customer_name} ({customer_email}) dengan total Rp {total_amount:,.0f}".replace(",", "."),
-                    customer_name=customer_name,
-                    customer_email=customer_email,
-                )
-            except Exception as e:
-                print(f"[OrderService] Audit log error: {e}")
+            OrderPostTasks.execute(
+                order_id=order_id,
+                customer_name=customer_name,
+                customer_email=customer_email,
+                total_amount=total_amount,
+                subtotal_after_discounts=subtotal_after_discounts,
+                items=items,
+                ref_code=ref_code,
+                ref_sess_id=ref_sess_id,
+                promo_code=promo_code,
+                promo_discount=promo_discount,
+                partner=partner,
+                matched_campaign=matched_campaign,
+                canonical_campaign_id=canonical_campaign_id,
+                campaign_discount=campaign_discount,
+                catalog_products=catalog_products,
+                now=now,
+                save_orders_func=cls.save_orders,
+            )
 
         if background_tasks is not None:
             background_tasks.add_task(_execute_post_order_tasks)
@@ -913,3 +663,47 @@ class OrderService:
             print(f"[OrderService] Status audit log note: {e}")
 
         return normalized
+
+    @classmethod
+    def cancel_expired_orders(cls) -> Dict[str, Any]:
+        """
+        Scans for pending orders whose expires_at timestamp is in the past,
+        and transitions them to 'cancelled' status. (Invoked via QStash Cron)
+        """
+        now = datetime.utcnow()
+        cancelled_ids = []
+
+        try:
+            db = SessionLocal()
+            try:
+                expired_records = db.query(Order).filter(
+                    Order.status == "pending",
+                    Order.expires_at != None,
+                    Order.expires_at < now,
+                ).all()
+
+                for rec in expired_records:
+                    cancelled_ids.append(rec.id)
+            finally:
+                db.close()
+        except Exception as e:
+            print(f"[OrderService] DB scan expired orders error: {e}")
+
+        # Update in-memory cache and record audit log for each cancelled order
+        for oid in cancelled_ids:
+            try:
+                cls.update_status(
+                    oid,
+                    "cancelled",
+                    notes="Dibatalkan otomatis karena batas waktu pembayaran habis (QStash Cron)"
+                )
+            except Exception as err:
+                print(f"[OrderService] Error updating expired order {oid}: {err}")
+
+        return {
+            "success": True,
+            "cancelled_count": len(cancelled_ids),
+            "cancelled_ids": cancelled_ids,
+            "timestamp": now.isoformat(),
+        }
+

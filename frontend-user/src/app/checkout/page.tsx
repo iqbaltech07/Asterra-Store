@@ -9,6 +9,7 @@ import { useAuthStore } from '@/store/use-auth-store';
 import { useSession } from '@/lib/auth-client';
 import { PublicPaymentConfig } from '@/types/payment';
 import { OrdersApi, PromosApi, PaymentConfigApi } from '@/lib/api-client';
+import { usePaymentConfig } from '@/lib/hooks/use-payment-config';
 import { calculateCampaignPrice, ActiveCampaign } from '@/lib/utils/promo-pricing';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faLock, faCheck } from '@fortawesome/free-solid-svg-icons';
@@ -445,12 +446,8 @@ function CheckoutPageContent() {
     }, 4000);
   };
 
-  // 1. TanStack Query: Fetch active payment config
-  const { data: configData } = useQuery({
-    queryKey: ['public-payment-config'],
-    queryFn: () => PaymentConfigApi.getPublicConfig(),
-    staleTime: 60000,
-  });
+  // 1. TanStack Query: Fetch active payment config (shared query cache)
+  const { data: configData } = usePaymentConfig();
 
   useEffect(() => {
     if (configData?.success && configData.data) {

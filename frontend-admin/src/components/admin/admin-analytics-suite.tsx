@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   TrendingUp,
   TrendingDown,
@@ -97,21 +98,19 @@ export function AdminAnalyticsSuite({ activeTab, onNotify }: AdminAnalyticsSuite
   const [productSearch, setProductSearch] = useState('');
   const [productCategoryFilter, setProductCategoryFilter] = useState('all');
   const [selectedProductDetail, setSelectedProductDetail] = useState<ProductPerformanceItem | null>(null);
-  const [suiteData, setSuiteData] = useState<AnalyticsSuiteData | null>(null);
-  const [isLoadingSuite, setIsLoadingSuite] = useState(false);
+  const { data: suiteResponse, isLoading: isLoadingSuite } = useQuery<{ success: boolean; data: AnalyticsSuiteData }>({
+    queryKey: ['admin-analytics-suite'],
+    queryFn: async () => {
+      const res = await fetch('/api/v1/admin/analytics/suite');
+      if (!res.ok) throw new Error('Failed to fetch analytics suite data');
+      return res.json();
+    },
+    staleTime: 3 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
 
-  useEffect(() => {
-    setIsLoadingSuite(true);
-    fetch('/api/v1/admin/analytics/suite')
-      .then((res) => res.json())
-      .then((json) => {
-        if (json.success && json.data) {
-          setSuiteData(json.data);
-        }
-      })
-      .catch((err) => console.warn('Failed to fetch analytics suite data:', err))
-      .finally(() => setIsLoadingSuite(false));
-  }, []);
+  const suiteData = suiteResponse?.data || null;
 
   const salesTimeSeries = suiteData?.salesTimeSeries || [];
   const productPerformanceData = suiteData?.productPerformanceData || [];

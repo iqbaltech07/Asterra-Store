@@ -2,6 +2,7 @@
 
 import { useEffect, Suspense } from 'react';
 import { useSearchParams, usePathname } from 'next/navigation';
+import { fetchActiveCampaigns } from '@/lib/hooks/use-active-campaigns';
 
 function ReferralTrackerInner() {
   const searchParams = useSearchParams();
@@ -151,10 +152,9 @@ function ReferralTrackerInner() {
       if (isAllowed) {
         // Check campaign status if storedCamp exists: purge campaign and claimed ref if campaign has ended
         if (storedCamp) {
-          fetch('/api/v1/campaigns/active', { cache: 'no-cache' })
-            .then((r) => r.json())
+          fetchActiveCampaigns()
             .then((res) => {
-              if (!res || !Array.isArray(res?.data)) return; // Do not purge if API failed or offline
+              if (!res || !Array.isArray(res?.data)) return;
               const activeList = res.data;
 
               const isStillActive = activeList.some(

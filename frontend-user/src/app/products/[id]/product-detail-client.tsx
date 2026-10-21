@@ -24,236 +24,35 @@ import {
   faShareNodes,
   faHeart,
 } from '@fortawesome/free-solid-svg-icons';
-import { ProductCard } from '@/components/products/product-card';
-import { ProductItem } from '@/lib/products-data';
-import { calculateCampaignPrice, getCampaignCountdown, ActiveCampaign } from '@/lib/utils/promo-pricing';
-import { ParsedVariant, cleanHtmlContent } from '@/lib/services/product-variant-parser';
+import { useActiveCampaigns } from '@/lib/hooks/use-active-campaigns';
+import { calculateCampaignPrice, getCampaignCountdown } from '@/lib/utils/promo-pricing';
+import { ParsedVariant } from '@/lib/services/product-variant-parser';
 import { saveRecentlyViewed } from '@/lib/services/recently-viewed';
 import { animateProductDetailPage } from '@/lib/animations/gsap-utils';
+import type {
+  DurationOption,
+  SpecItem,
+  FaqItem,
+  RelatedProduct,
+  ProductDetailData,
+  ProductDetailClientProps,
+  VariantDetails,
+} from '@/components/products/product-detail/types';
+import { getVariantDetails } from '@/components/products/product-detail/variant-helper';
+import { ProductDetailTabs } from '@/components/products/product-detail/product-detail-tabs';
+import { ProductDetailSpecs } from '@/components/products/product-detail/product-detail-specs';
+import { ProductDetailFaqs } from '@/components/products/product-detail/product-detail-faqs';
+import { ProductDetailRelated } from '@/components/products/product-detail/product-detail-related';
 
-export interface DurationOption {
-  id: string;
-  label: string;
-  price: number;
-  multiplier: number;
-}
-
-export interface SpecItem {
-  label: string;
-  value: string;
-}
-
-export interface FaqItem {
-  question: string;
-  answer: string;
-}
-
-export interface RelatedProduct {
-  id: string;
-  name: string;
-  category: { id: string; name: string };
-  price: number;
-  priceFormatted: string;
-  imageUrl: string;
-  stock?: number;
-  providerStatus?: string;
-  brand?: string;
-  providerCode?: string;
-}
-
-export interface ProductDetailData {
-  id: string;
-  name: string;
-  category: { id: string; name: string };
-  price: number;
-  priceFormatted: string;
-  description: string;
-  features: string[];
-  status: 'active' | 'out_of_stock' | 'archived';
-  providerStatus?: 'available' | 'empty' | 'maintenance' | 'unknown' | string;
-  stock?: number;
-  imageUrl: string;
-  popular?: boolean;
-  brand?: string;
-  providerCode?: string;
-  guaranteeTitle?: string | null;
-  guaranteeDesc?: string | null;
-  processTitle?: string | null;
-  processDesc?: string | null;
-  privacyTitle?: string | null;
-  privacyDesc?: string | null;
-  durations: DurationOption[];
-  specifications: SpecItem[];
-  faqs: FaqItem[];
-  relatedProducts: RelatedProduct[];
-  variants?: ParsedVariant[];
-  selectedVariant?: ParsedVariant;
-  familySlug?: string;
-  familyImageUrl?: string;
-  rating?: string;
-  soldCount?: number;
-}
-
-interface ProductDetailClientProps {
-  id: string;
-  initialData?: ProductDetailData | null;
-}
-
-interface VariantDetails {
-  title: string;
-  desc: string;
-  features: string[];
-  guaranteeTitle: string;
-  guaranteeDesc: string;
-  processTitle: string;
-  processDesc: string;
-  privacyTitle: string;
-  privacyDesc: string;
-  specifications: SpecItem[];
-  warrantyText: string;
-}
-
-function getVariantDetails(
-  variant: ParsedVariant | null,
-  product: ProductDetailData | undefined
-): VariantDetails {
-  if (!product) {
-    return {
-      title: 'Detail Produk',
-      desc: '',
-      features: [],
-      guaranteeTitle: 'Garansi Penuh',
-      guaranteeDesc: 'Jaminan ganti akun 100%',
-      processTitle: 'Proses Instan',
-      processDesc: '1 - 15 menit selesai',
-      privacyTitle: 'Akun Private',
-      privacyDesc: 'Akses resmi & aman',
-      specifications: [],
-      warrantyText: 'Garansi resmi Asterra Store.',
-    };
-  }
-
-  const type = variant?.type || 'Private';
-  const duration = variant?.duration || '1 Bulan';
-  const warranty = variant?.warranty || '1 Bulan';
-  const paket = variant?.paket || product.name.split('[')[0].trim();
-  const fullName = variant?.name || product.name;
-
-  const isShared = type.toLowerCase().includes('shared');
-  const isInvite = type.toLowerCase().includes('anggota') || type.toLowerCase().includes('invite');
-  const isDesigner = type.toLowerCase().includes('desainer') || type.toLowerCase().includes('head');
-
-  // 1. DYNAMIC DESCRIPTION PER VARIANT (TIPE AKUN, DURASI, GARANSI)
-  let desc = '';
-  if (variant?.description && variant.description.trim().length > 30) {
-    desc = cleanHtmlContent(variant.description);
-  } else {
-    if (isShared) {
-      desc = `${fullName} — Solusi berlangganan super hemat dengan akun Shared resmi. Anda mendapatkan 1 profil khusus dengan PIN pengaman pribadi. Akses lancar, kualitas streaming/fitur premium tertinggi tanpa antrean, dan dilarang merubah data email utama demi kestabilan akun. Dilindungi penuh dengan garansi resmi Asterra Store selama ${warranty}.`;
-    } else if (isInvite) {
-      desc = `${fullName} — Upgrade lisensi resmi via undangan langsung ke akun email pribadi Anda. Tidak perlu login akun baru, seluruh data kerja, template, dan riwayat proyek Anda tersimpan aman 100%. Aktivasi instan 1-15 menit dengan masa aktif ${duration} dan proteksi garansi penggantian resmi ${warranty}.`;
-    } else if (isDesigner) {
-      desc = `${fullName} — Paket lisensi eksklusif dengan otoritas tertinggi untuk desainer & tim profesional. Termasuk fitur kolaborasi tim penuh, cloud workspace terintegrasi, dan prioritas server. Bergaransi resmi ${warranty} dengan masa aktif ${duration}.`;
-    } else {
-      desc = `${fullName} — Akun Private eksklusif full akses 100% milik Anda sendiri. Dilengkapi kredensial privat (email & password), bebas digunakan di berbagai perangkat, tanpa sharing dengan pihak ketiga, dan privasi total terjamin. Diproteksi dengan garansi resmi Asterra Store selama ${warranty} dengan masa aktif penuh ${duration}.`;
-    }
-  }
-
-  // 2. DYNAMIC FEATURES PER VARIANT
-  let features: string[] = [];
-  if (isShared) {
-    features = [
-      '1 Profil Khusus dengan PIN Pengaman Pribadi',
-      `Masa Aktif: ${duration} Berjalan Penuh Tanpa Jeda`,
-      `Proteksi Garansi: ${warranty} Penggantian Akun 100% Resmi`,
-      'Kualitas Streaming & Fitur Premium Maksimal (Ultra HD / 4K / Pro)',
-      'Aktivasi Otomatis & Bantuan WhatsApp CS Siaga 24 Jam',
-    ];
-  } else if (isInvite) {
-    features = [
-      'Undangan Resmi Langsung ke Akun Email Pribadi Anda',
-      'Data Proyek, Desain, dan Template Tersimpan Aman di Email Sendiri',
-      `Masa Aktif Penuh: ${duration}`,
-      `Garansi Resmi: ${warranty} dengan Jaminan Aktif Kembali`,
-      'Bebas Akses Seluruh Fitur Pro & Kolaborasi Workspace',
-    ];
-  } else if (isDesigner) {
-    features = [
-      'Akses Otoritas Penuh & Fitur Kolaborasi Desainer / Tim',
-      'Akses Cloud Storage Besar & Integrasi Brand Kit Lengkap',
-      `Masa Aktif: ${duration} Bergaransi Resmi ${warranty}`,
-      'Semua Aset Desain, Font, dan Ekspor Resolusi Tertinggi Terbuka',
-      'Panduan Aktivasi Instan & Dukungan Prioritas Customer Service',
-    ];
-  } else {
-    // Private
-    features = [
-      'Akun Private Eksklusif (Email & Password Pribadi Tanpa Sharing)',
-      `Masa Aktif: ${duration} Full Coverage`,
-      `Garansi Perlindungan: ${warranty} Penggantian Resmi 100%`,
-      'Bebas Akses Semua Fitur Premium Tanpa Batas Penggunaan',
-      'Dukungan Multi-Device (Web, Android, iOS, Windows, macOS)',
-    ];
-  }
-
-  // If base product has extra features from database, clean and append
-  if (product.features && product.features.length > 0) {
-    const cleanedBase = product.features.map(cleanHtmlContent).filter(Boolean);
-    cleanedBase.slice(0, 3).forEach((f) => {
-      if (!features.some((ef) => ef.toLowerCase().includes(f.toLowerCase().slice(0, 15)))) {
-        features.push(f);
-      }
-    });
-  }
-
-  // 3. DYNAMIC WARRANTY TEXT
-  const warrantyText = `Seluruh transaksi untuk paket ${fullName} dilindungi garansi penggantian resmi Asterra Store selama ${warranty}. Jika akun mengalami kendala login atau masa aktif terputus sebelum ${warranty}, tim CS kami siap memproses penggantian akun baru 100% gratis dalam hitungan menit.`;
-
-  // 4. DYNAMIC CHIPS
-  const guaranteeTitle = `Garansi ${warranty}`;
-  const guaranteeDesc = `Jaminan ganti akun 100%`;
-  const processTitle = `Proses Instan`;
-  const processDesc = `1 - 15 menit selesai`;
-  const privacyTitle = `Akun ${type}`;
-  const privacyDesc = isShared
-    ? '1 Profil PIN aman'
-    : isInvite
-    ? 'Invite email pribadi aman'
-    : 'Ruang kerja aman & personal';
-
-  // 5. DYNAMIC SPECIFICATIONS TABLE
-  const specifications: SpecItem[] = [
-    { label: 'Paket / Nominal', value: paket },
-    { label: 'Tipe Akun', value: `Akun ${type}` },
-    { label: 'Durasi Masa Aktif', value: duration },
-    { label: 'Proteksi Garansi', value: `Garansi ${warranty}` },
-    { label: 'Kode SKU / Layanan', value: variant?.id || product.id },
-    {
-      label: 'Status Ketersediaan',
-      value: variant?.isOutOfStock ? 'Stok Habis' : `Tersedia (${variant?.stock ?? 100} unit)`,
-    },
-    { label: 'Waktu Pengiriman', value: 'Proses Instan (1 - 15 Menit)' },
-    {
-      label: 'Metode Pengiriman',
-      value: isInvite ? 'Email Pribadi (Undangan Resmi)' : 'Kredensial Email & WhatsApp CS',
-    },
-    { label: 'Kompatibilitas', value: 'Web Browser, Windows, macOS, Android, iOS' },
-  ];
-
-  return {
-    title: fullName,
-    desc,
-    features,
-    guaranteeTitle,
-    guaranteeDesc,
-    processTitle,
-    processDesc,
-    privacyTitle,
-    privacyDesc,
-    specifications,
-    warrantyText,
-  };
-}
+export type {
+  DurationOption,
+  SpecItem,
+  FaqItem,
+  RelatedProduct,
+  ProductDetailData,
+  ProductDetailClientProps,
+  VariantDetails,
+};
 
 export function ProductDetailClient({ id, initialData }: ProductDetailClientProps) {
   const router = useRouter();
@@ -516,18 +315,8 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
   const currentPrice = activeVariant ? activeVariant.price : (product?.price || 0);
   const totalPrice = currentPrice * quantity;
 
-  // Genuine Active Campaigns for live strike-through price and promotional badges
-  const { data: campaignsRes } = useQuery<{ success: boolean; data: ActiveCampaign[] }>({
-    queryKey: ['active-campaigns'],
-    queryFn: async () => {
-      const res = await fetch('/api/v1/campaigns/active', { cache: 'no-cache' });
-      if (!res.ok) return { success: false, data: [] };
-      return res.json();
-    },
-    staleTime: 5000,
-    refetchOnWindowFocus: true,
-  });
-  const activeCampaigns = useMemo(() => campaignsRes?.data || [], [campaignsRes]);
+  // Genuine Active Campaigns for live strike-through price and promotional badges (shared query cache)
+  const { campaigns: activeCampaigns } = useActiveCampaigns();
 
   const campaignPrice = useMemo(() => {
     return calculateCampaignPrice(
@@ -789,115 +578,11 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                 </div>
 
                 {/* DESKRIPSI LAYANAN & FITUR UNGGULAN CARD (Dynamic per variant + Capsule Tabs) */}
-                <div data-gsap="product-description" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-4 sm:p-8 space-y-5 sm:space-y-6 shadow-card">
-                  {/* Capsule Tabs: 3 Grid columns on mobile, inline on desktop */}
-                  <div data-gsap="product-tabs" className="bg-[#F1F3F5] rounded-full p-1 grid grid-cols-3 sm:inline-flex items-center gap-1 w-full sm:w-auto">
-                    <button
-                      type="button"
-                      data-active={activeTab === 'deskripsi'}
-                      onClick={() => setActiveTab('deskripsi')}
-                      className={`rounded-full py-1.5 sm:py-2 px-3 sm:px-6 text-xs transition-all duration-200 cursor-pointer text-center ${
-                        activeTab === 'deskripsi'
-                          ? 'bg-white text-[#121A2A] font-bold shadow-xs'
-                          : 'text-[#121A2A]/65 hover:text-[#121A2A] font-medium'
-                      }`}
-                    >
-                      Deskripsi
-                    </button>
-                    <button
-                      type="button"
-                      data-active={activeTab === 'benefit'}
-                      onClick={() => setActiveTab('benefit')}
-                      className={`rounded-full py-1.5 sm:py-2 px-3 sm:px-6 text-xs transition-all duration-200 cursor-pointer text-center ${
-                        activeTab === 'benefit'
-                          ? 'bg-white text-[#121A2A] font-bold shadow-xs'
-                          : 'text-[#121A2A]/65 hover:text-[#121A2A] font-medium'
-                      }`}
-                    >
-                      Benefit
-                    </button>
-                    <button
-                      type="button"
-                      data-active={activeTab === 'garansi'}
-                      onClick={() => setActiveTab('garansi')}
-                      className={`rounded-full py-1.5 sm:py-2 px-3 sm:px-6 text-xs transition-all duration-200 cursor-pointer text-center ${
-                        activeTab === 'garansi'
-                          ? 'bg-white text-[#121A2A] font-bold shadow-xs'
-                          : 'text-[#121A2A]/65 hover:text-[#121A2A] font-medium'
-                      }`}
-                    >
-                      Garansi
-                    </button>
-                  </div>
-
-                  {/* Tab Dynamic Content - Smooth Morph Transition without delay */}
-                  <div
-                    key={`${activeTab}-${variantDetails.title}`}
-                    className="pt-1 min-h-[120px] animate-tab-glide"
-                  >
-                    {activeTab === 'deskripsi' && (
-                      <div className="space-y-4">
-                        <div>
-                          <h2 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#C96F55] mb-2 sm:mb-2.5">
-                            Deskripsi Layanan
-                          </h2>
-                          <p className="text-xs sm:text-sm text-[#121A2A]/85 leading-relaxed whitespace-pre-line">
-                            {variantDetails.desc}
-                          </p>
-                        </div>
-
-                        {/* Fitur Unggulan Yang Anda Dapatkan */}
-                        <div className="pt-4 sm:pt-6 border-t border-[rgba(18,26,42,0.08)]">
-                          <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#121A2A]/70 mb-3 sm:mb-3.5">
-                            Fitur Unggulan Yang Anda Dapatkan
-                          </h3>
-                          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
-                            {variantDetails.features.map((feature, idx) => (
-                              <li key={idx} data-gsap="product-feature" className="flex items-start gap-2 text-xs sm:text-sm text-[#121A2A]/85">
-                                <FontAwesomeIcon icon={faCircleCheck} className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#C96F55] shrink-0 mt-0.5" />
-                                <span>{feature}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      </div>
-                    )}
-
-                    {activeTab === 'benefit' && (
-                      <div className="space-y-3.5 sm:space-y-4">
-                        <div>
-                          <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#C96F55] mb-1.5 sm:mb-2">
-                            Keunggulan Khusus Varian Ini
-                          </h3>
-                          <p className="text-[11px] sm:text-xs text-[#121A2A]/60 mb-3 sm:mb-4">
-                            Fitur dan keistimewaan yang Anda dapatkan untuk paket {variantDetails.title}:
-                          </p>
-                        </div>
-                        <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
-                          {variantDetails.features.map((feature, idx) => (
-                            <li key={idx} data-gsap="product-feature" className="flex items-start gap-2 text-xs sm:text-sm text-[#121A2A]/85 leading-relaxed">
-                              <FontAwesomeIcon icon={faCircleCheck} className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#C96F55] shrink-0 mt-0.5" />
-                              <span>{feature}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-
-                    {activeTab === 'garansi' && (
-                      <div className="space-y-3 sm:space-y-3.5 text-xs sm:text-sm text-[#121A2A]/85 leading-relaxed">
-                        <div className="flex items-center gap-2 text-[#16A34A] font-bold">
-                          <FontAwesomeIcon icon={faShieldHalved} className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
-                          <span>Jaminan {variantDetails.guaranteeTitle} (100% Proteksi Penggantian Akun)</span>
-                        </div>
-                        <p>{variantDetails.warrantyText}</p>
-                        <p className="text-[11px] sm:text-xs text-[#121A2A]/60">
-                          *Klaim garansi mudah dan cepat, cukup konfirmasi nomor Invoice pesanan Anda ke WhatsApp Customer Service Asterra Store.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
+                <ProductDetailTabs
+                  activeTab={activeTab}
+                  setActiveTab={setActiveTab}
+                  variantDetails={variantDetails}
+                />
               </div>
 
               {/* RIGHT COLUMN: PILIHAN PAKET BERLANGGANAN & VARIAN PILLS (Matching user Image 1 & 2) (lg:col-span-5) */}
@@ -1191,125 +876,20 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
             </div>
 
             {/* SPECIFICATION SECTION: INFORMASI & SPESIFIKASI LISENSI (Dynamic per variant) */}
-            <div data-gsap="product-specification" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-4 sm:p-8 shadow-card space-y-3.5 sm:space-y-4">
-              <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#121A2A]/70 pb-2.5 sm:pb-3 border-b border-[rgba(18,26,42,0.08)]">
-                Informasi & Spesifikasi Lisensi
-              </h3>
-
-              <div key={variantDetails.title} className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 sm:gap-y-3 pt-1 animate-text-smooth">
-                {variantDetails.specifications.map((spec, idx) => (
-                  <div
-                    key={idx}
-                    data-gsap="product-spec-row"
-                    className="py-2 flex justify-between items-center text-xs sm:text-sm border-b border-[rgba(18,26,42,0.06)]"
-                  >
-                    <span className="text-[#121A2A]/60 font-medium">{spec.label}</span>
-                    <span className="font-bold text-[#121A2A] text-right truncate max-w-[55%]">{spec.value}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <ProductDetailSpecs variantDetails={variantDetails} />
 
             {/* FAQ SECTION: ACCORDION WITH PLUS/MINUS ICONS */}
-            {product.faqs && product.faqs.length > 0 && (
-              <div data-gsap="product-faq" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-4 sm:p-8 shadow-card space-y-3.5 sm:space-y-4">
-                <div className="pb-2.5 sm:pb-3 border-b border-[rgba(18,26,42,0.08)]">
-                  <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#C96F55]">
-                    Pusat Informasi
-                  </h3>
-                  <h2 className="text-base sm:text-xl font-black text-[#121A2A] mt-0.5 sm:mt-1">
-                    Pertanyaan Umum (FAQ)
-                  </h2>
-                </div>
+            <ProductDetailFaqs
+              faqs={product.faqs}
+              openFaqIndex={openFaqIndex}
+              setOpenFaqIndex={setOpenFaqIndex}
+            />
 
-                <div className="space-y-2.5 sm:space-y-3 pt-1">
-                  {product.faqs.map((faq, idx) => {
-                    const isOpen = openFaqIndex === idx;
-                    return (
-                      <div
-                        key={idx}
-                        data-gsap="product-faq-item"
-                        className="border border-[rgba(18,26,42,0.08)] rounded-xl overflow-hidden transition-colors"
-                      >
-                        <button
-                          type="button"
-                          onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
-                          className="w-full p-3.5 sm:p-4 text-left flex items-center justify-between gap-3 hover:bg-[rgba(18,26,42,0.02)] transition-colors cursor-pointer"
-                        >
-                          <span className="text-xs sm:text-sm font-bold text-[#121A2A]">
-                            {faq.question}
-                          </span>
-                          <span className="w-6 h-6 rounded-lg bg-[rgba(18,26,42,0.05)] flex items-center justify-center text-[#121A2A]/70 shrink-0">
-                            {isOpen ? (
-                              <FontAwesomeIcon icon={faMinus} className="w-3.5 h-3.5 text-[#C96F55]" />
-                            ) : (
-                              <FontAwesomeIcon icon={faPlus} className="w-3.5 h-3.5" />
-                            )}
-                          </span>
-                        </button>
-                        {isOpen && (
-                          <div className="px-3.5 sm:px-4 pb-3.5 sm:pb-4 pt-1 text-xs sm:text-sm text-[#121A2A]/70 border-t border-[rgba(18,26,42,0.06)] leading-relaxed animate-faq-open">
-                            {faq.answer}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* RECOMMENDED PRODUCTS SECTION (3 DESKTOP, 2 MOBILE) */}
-            {product.relatedProducts && product.relatedProducts.length > 0 && (
-              <div data-gsap="related-products" className="space-y-4 sm:space-y-6 pt-2 sm:pt-4">
-                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 pb-2.5 sm:pb-3 border-b border-[rgba(18,26,42,0.1)]">
-                  <div>
-                    <h2 className="text-base sm:text-2xl font-black text-[#121A2A] tracking-tight">
-                      Rekomendasi Produk Lainnya
-                    </h2>
-                    <p className="text-[11px] sm:text-xs text-[#121A2A]/60 mt-0.5">
-                      Pilihan relevan yang paling sering dibeli bersama produk ini
-                    </p>
-                  </div>
-                  <Link
-                    href="/products"
-                    className="text-xs font-bold text-[#C96F55] hover:text-[#B86047] inline-flex items-center gap-1 shrink-0 transition-colors"
-                  >
-                    <span>Lihat Semua Katalog</span>
-                    <FontAwesomeIcon icon={faArrowRight} className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
-
-                {/* 3 cards per row desktop, 2 cards per row mobile */}
-                <div data-gsap="product-detail-related" className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-6">
-                  {product.relatedProducts.map((rel) => {
-                          const relProductItem: ProductItem = {
-                      id: rel.id,
-                      name: rel.name,
-                      category: rel.category,
-                      price: rel.price,
-                      priceFormatted: rel.priceFormatted,
-                      description: `Layanan digital resmi ${rel.name} bergaransi penuh.`,
-                      features: ['Garansi Penggantian', 'Aktivasi Instan'],
-                      status: 'active',
-                      stock: rel.stock,
-                      providerStatus: rel.providerStatus,
-                      imageUrl: rel.imageUrl,
-                      brand: rel.brand || rel.category?.name || 'Asterra',
-                    };
-
-                    return (
-                      <div key={rel.id} data-gsap="related-product-card">
-                        <ProductCard
-                          product={relProductItem}
-                          activeCampaigns={activeCampaigns}
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
+            {/* RECOMMENDED PRODUCTS SECTION */}
+            <ProductDetailRelated
+              relatedProducts={product.relatedProducts}
+              activeCampaigns={activeCampaigns}
+            />
           </div>
         )}
       </main>

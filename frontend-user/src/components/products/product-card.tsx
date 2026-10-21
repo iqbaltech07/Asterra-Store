@@ -9,7 +9,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { ProductItem } from '@/lib/products-data';
 import { calculateCampaignPrice, getCampaignCountdown, ActiveCampaign } from '@/lib/utils/promo-pricing';
-import { useQuery } from '@tanstack/react-query';
+import { useActiveCampaigns } from '@/lib/hooks/use-active-campaigns';
 
 export function ProductPromoCountdownBadge({
   endsAtOrDate,
@@ -68,19 +68,8 @@ export function ProductCard({
     product.providerStatus === 'empty' ||
     product.status === 'out_of_stock';
 
-  const { data: campaignsRes } = useQuery<{ success: boolean; data: ActiveCampaign[] }>({
-    queryKey: ['active-campaigns'],
-    queryFn: async () => {
-      const res = await fetch('/api/v1/campaigns/active', { cache: 'no-cache' });
-      if (!res.ok) return { success: false, data: [] };
-      return res.json();
-    },
-    enabled: !propCampaigns,
-    staleTime: 5000,
-    refetchOnWindowFocus: true,
-  });
-
-  const activeCampaigns = propCampaigns || campaignsRes?.data || [];
+  const { campaigns: sharedCampaigns } = useActiveCampaigns({ enabled: !propCampaigns });
+  const activeCampaigns = propCampaigns || sharedCampaigns;
   const campaignPrice = calculateCampaignPrice(
     product.price,
     {
