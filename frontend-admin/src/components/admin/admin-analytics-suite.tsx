@@ -80,11 +80,38 @@ interface FinancialReportData {
   businessReserve: number;
 }
 
+interface CategoryDistributionItem {
+  name: string;
+  revenue: number;
+  percentage: number;
+  formatted: string;
+}
+
+interface PaymentMethodDistributionItem {
+  name: string;
+  orders: number;
+  percentage: number;
+  formatted: string;
+}
+
+interface ChannelAcquisitionItem {
+  name: string;
+  orders: number;
+  percentage: number;
+}
+
+interface SuiteBreakdownData {
+  categoryDistribution?: CategoryDistributionItem[];
+  paymentMethodDistribution?: PaymentMethodDistributionItem[];
+  channelAcquisition?: ChannelAcquisitionItem[];
+}
+
 interface AnalyticsSuiteData {
   salesTimeSeries: SalesTimeSeriesItem[];
   productPerformanceData: ProductPerformanceItem[];
   affiliatePerformanceData: AffiliatePerformanceItem[];
   financialReport: FinancialReportData;
+  breakdown?: SuiteBreakdownData;
 }
 
 interface AdminAnalyticsSuiteProps {
@@ -237,7 +264,7 @@ export function AdminAnalyticsSuite({ activeTab, onNotify }: AdminAnalyticsSuite
                       </div>
                     ) : (
                       salesTimeSeries.map((s, idx) => {
-                        const heightPercent = Math.min(100, Math.max(15, Math.round((s.revenue / maxRev) * 100)));
+                        const heightPercent = maxRev > 0 && s.revenue > 0 ? Math.min(100, Math.max(8, Math.round((s.revenue / maxRev) * 100))) : 0;
                         return (
                           <div key={idx} className="flex-1 flex flex-col items-center gap-2 group relative">
                             {/* Tooltip on hover */}
@@ -271,35 +298,27 @@ export function AdminAnalyticsSuite({ activeTab, onNotify }: AdminAnalyticsSuite
               <PieChart className="w-3.5 h-3.5 text-foreground-muted" />
             </h3>
             <div className="space-y-2 text-xs">
-              <div className="space-y-1">
-                <div className="flex justify-between text-foreground">
-                  <span>Desain & Grafis</span>
-                  <span className="font-mono font-bold">42% (Rp 9.59M)</span>
+              {(!suiteData?.breakdown?.categoryDistribution || suiteData.breakdown.categoryDistribution.length === 0) ? (
+                <div className="py-4 text-center text-foreground-muted text-xs">
+                  Belum ada transaksi kategori tercatat
                 </div>
-                <div className="w-full bg-border rounded-full h-1.5 overflow-hidden">
-                  <div className="bg-primary h-1.5 rounded-full" style={{ width: '42%' }} />
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <div className="flex justify-between text-foreground">
-                  <span>AI Tools & Productivity</span>
-                  <span className="font-mono font-bold">34% (Rp 7.76M)</span>
-                </div>
-                <div className="w-full bg-border rounded-full h-1.5 overflow-hidden">
-                  <div className="bg-status-success h-1.5 rounded-full" style={{ width: '34%' }} />
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <div className="flex justify-between text-foreground">
-                  <span>Streaming & Hiburan</span>
-                  <span className="font-mono font-bold">24% (Rp 5.48M)</span>
-                </div>
-                <div className="w-full bg-border rounded-full h-1.5 overflow-hidden">
-                  <div className="bg-status-warning h-1.5 rounded-full" style={{ width: '24%' }} />
-                </div>
-              </div>
+              ) : (
+                suiteData.breakdown.categoryDistribution.map((cat, idx) => {
+                  const colors = ['bg-primary', 'bg-status-success', 'bg-status-warning', 'bg-status-info'];
+                  const barColor = colors[idx % colors.length];
+                  return (
+                    <div key={cat.name} className="space-y-1">
+                      <div className="flex justify-between text-foreground">
+                        <span className="truncate pr-2">{cat.name}</span>
+                        <span className="font-mono font-bold whitespace-nowrap">{cat.formatted}</span>
+                      </div>
+                      <div className="w-full bg-border rounded-full h-1.5 overflow-hidden">
+                        <div className={`${barColor} h-1.5 rounded-full`} style={{ width: `${Math.min(100, Math.max(2, cat.percentage))}%` }} />
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
 
@@ -310,18 +329,18 @@ export function AdminAnalyticsSuite({ activeTab, onNotify }: AdminAnalyticsSuite
               <Receipt className="w-3.5 h-3.5 text-foreground-muted" />
             </h3>
             <div className="space-y-2 text-xs">
-              <div className="p-2 rounded bg-surface-raised border border-border flex items-center justify-between">
-                <span className="font-medium text-foreground">QRIS Real-Time</span>
-                <span className="font-bold text-primary font-mono">64% (438 Orders)</span>
-              </div>
-              <div className="p-2 rounded bg-surface-raised border border-border flex items-center justify-between">
-                <span className="font-medium text-foreground">BCA Virtual Account</span>
-                <span className="font-bold text-foreground font-mono">22% (150 Orders)</span>
-              </div>
-              <div className="p-2 rounded bg-surface-raised border border-border flex items-center justify-between">
-                <span className="font-medium text-foreground">Bank Transfer Manual</span>
-                <span className="font-bold text-foreground font-mono">14% (96 Orders)</span>
-              </div>
+              {(!suiteData?.breakdown?.paymentMethodDistribution || suiteData.breakdown.paymentMethodDistribution.length === 0) ? (
+                <div className="py-4 text-center text-foreground-muted text-xs">
+                  Belum ada pembayaran transaksi
+                </div>
+              ) : (
+                suiteData.breakdown.paymentMethodDistribution.map((pm) => (
+                  <div key={pm.name} className="p-2 rounded bg-surface-raised border border-border flex items-center justify-between">
+                    <span className="font-medium text-foreground truncate pr-2">{pm.name}</span>
+                    <span className="font-bold text-primary font-mono whitespace-nowrap">{pm.formatted}</span>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
@@ -332,18 +351,24 @@ export function AdminAnalyticsSuite({ activeTab, onNotify }: AdminAnalyticsSuite
               <Share2 className="w-3.5 h-3.5 text-foreground-muted" />
             </h3>
             <div className="space-y-2 text-xs">
-              <div className="p-2 rounded bg-surface-raised border border-border flex items-center justify-between">
-                <span className="font-medium text-foreground">Direct Toko / Search</span>
-                <span className="font-bold text-foreground font-mono">58%</span>
-              </div>
-              <div className="p-2 rounded bg-surface-raised border border-border flex items-center justify-between">
-                <span className="font-medium text-foreground">Mitra Afiliasi & Sales</span>
-                <span className="font-bold text-status-success font-mono">32%</span>
-              </div>
-              <div className="p-2 rounded bg-surface-raised border border-border flex items-center justify-between">
-                <span className="font-medium text-foreground">Campaign Promo / Kupon</span>
-                <span className="font-bold text-status-warning font-mono">10%</span>
-              </div>
+              {(!suiteData?.breakdown?.channelAcquisition || suiteData.breakdown.channelAcquisition.length === 0) ? (
+                <div className="py-4 text-center text-foreground-muted text-xs">
+                  Belum ada data akuisisi saluran
+                </div>
+              ) : (
+                suiteData.breakdown.channelAcquisition.map((ch, idx) => {
+                  const textColors = ['text-foreground', 'text-status-success', 'text-status-warning', 'text-status-info'];
+                  const colorClass = textColors[idx % textColors.length];
+                  return (
+                    <div key={ch.name} className="p-2 rounded bg-surface-raised border border-border flex items-center justify-between">
+                      <span className="font-medium text-foreground truncate pr-2">{ch.name}</span>
+                      <span className={`font-bold font-mono whitespace-nowrap ${colorClass}`}>
+                        {ch.percentage}% ({ch.orders} Orders)
+                      </span>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
         </div>

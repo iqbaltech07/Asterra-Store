@@ -41,9 +41,10 @@ class FinanceService:
 
         for idx, o in enumerate(orders):
             st = str(o.get("status", "")).lower()
-            is_settled = st in ["completed", "paid", "settlement"]
+            pay_st = str(o.get("paymentStatus") or o.get("payment_status") or "").lower()
+            is_cancelled = st in ["cancelled", "expired", "failed", "refunded"]
+            is_settled = (st in ["completed", "paid", "settlement"]) or (pay_st in ["settlement", "paid"] and not is_cancelled)
             is_processing = st == "processing"
-            is_cancelled = st in ["cancelled", "expired", "failed"]
 
             raw_val = o.get("rawAmount") if o.get("rawAmount") is not None else o.get("raw_amount")
             tot_val = o.get("totalAmount") if o.get("totalAmount") is not None else o.get("total_amount")
@@ -109,8 +110,8 @@ class FinanceService:
 
                 entry_status = "available" if is_settled else "pending"
 
-            # Accumulate realized metrics for settled / processing transactions
-            if is_settled or is_processing:
+            # Accumulate realized metrics strictly for settled transactions
+            if is_settled:
                 total_gross_revenue += selling_price
                 total_discounts += discount
                 total_net_revenue += net_rev

@@ -35,25 +35,25 @@ const INITIAL_PROVIDERS: ProviderConfig[] = [
     balance: 0,
     currency: 'IDR',
     health: 'healthy',
-    latencyMs: 114,
-    successRate: 99.2,
-    lastSync: 'Baru saja',
+    latencyMs: 0,
+    successRate: 100,
+    lastSync: 'Siap Diuji',
     status: 'active',
-    totalProducts: 1841,
+    totalProducts: 235,
   },
   {
     id: 'internal-manual',
     name: 'Asterra Internal Vault (Private Accounts)',
     type: 'Direct Fulfillment / Manual Dispatch',
     endpoint: 'internal://fulfillment-service',
-    balance: 5000000,
+    balance: 0,
     currency: 'IDR',
     health: 'healthy',
-    latencyMs: 12,
+    latencyMs: 0,
     successRate: 100,
-    lastSync: 'Real-time',
+    lastSync: 'Tersambung Internal',
     status: 'active',
-    totalProducts: 45,
+    totalProducts: 0,
   },
 ];
 
@@ -221,7 +221,13 @@ export function AdminProvidersTab({ metrics, onNotify, onSyncVip }: AdminProvide
                     Deposit Saldo Supplier
                   </span>
                   <div className="text-lg font-bold text-primary font-mono">
-                    Rp {balance.toLocaleString('id-ID')}
+                    {balance && balance > 0 ? (
+                      `Rp ${balance.toLocaleString('id-ID')}`
+                    ) : (
+                      <span className="text-xs text-foreground-muted font-normal italic">
+                        Belum Tersedia (Perlu Integrasi API Saldo)
+                      </span>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-1.5">

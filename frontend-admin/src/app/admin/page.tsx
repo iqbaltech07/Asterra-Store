@@ -843,13 +843,13 @@ export default function AdminPage() {
 
       {/* Main Content Pane */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Sticky Top Header Bar */}
-        <header className="sticky top-0 z-40 bg-surface/90 backdrop-blur-md border-b border-border px-4 sm:px-8 py-3 flex items-center justify-between shadow-xs">
-          <div className="flex items-center gap-3">
+        {/* Sticky Top Header Bar (Ni ond inspired) */}
+        <header className="sticky top-0 z-40 bg-surface/90 backdrop-blur-md border-b border-border px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-xs">
+          <div className="flex items-center gap-3.5">
             <button
               type="button"
               onClick={() => setIsSidebarMobileOpen(true)}
-              className="lg:hidden p-2 rounded-lg text-foreground-muted hover:text-foreground hover:bg-surface-raised border border-border transition-colors"
+              className="lg:hidden p-2 rounded-xl text-foreground-muted hover:text-foreground hover:bg-surface-secondary border border-border transition-colors motion-pressable"
               aria-label="Buka Menu Sidebar"
             >
               <Menu className="w-5 h-5" />
@@ -862,14 +862,19 @@ export default function AdminPage() {
                   {TAB_TITLES[activeTab]?.category || 'Admin'}
                 </span>
               </div>
-              <h1 className="text-base sm:text-lg font-bold text-foreground tracking-tight leading-tight">
-                {TAB_TITLES[activeTab]?.title || 'Panel Admin'}
-              </h1>
+              <div className="flex items-baseline gap-2.5">
+                <h1 className="text-lg sm:text-xl font-extrabold text-foreground tracking-tight leading-tight">
+                  {TAB_TITLES[activeTab]?.title || 'Panel Admin'}
+                </h1>
+                <span className="hidden sm:inline-block text-[11px] text-foreground-muted font-normal">
+                  • {new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date())}
+                </span>
+              </div>
             </div>
           </div>
 
           {/* Quick Action Buttons for Product / VIP Management */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             {(activeTab === 'products' || activeTab === 'vip-explorer' || activeTab === 'dashboard') &&
               adminUser?.role !== 'sales' && (
               <>
@@ -878,7 +883,7 @@ export default function AdminPage() {
                   size="sm"
                   onClick={() => syncVipMutation.mutate()}
                   disabled={syncVipMutation.isPending}
-                  className="hidden sm:inline-flex text-xs gap-1.5 border-primary/40 text-primary hover:bg-primary/10"
+                  className="hidden sm:inline-flex text-xs gap-1.5 border-primary/30 text-primary hover:bg-primary/10 rounded-xl font-semibold motion-pressable"
                   title="Ambil dan sinkronkan semua layanan dari gateway VIP Reseller"
                 >
                   <DownloadCloud className={`w-3.5 h-3.5 ${syncVipMutation.isPending ? 'animate-bounce' : ''}`} />
@@ -889,13 +894,17 @@ export default function AdminPage() {
                   size="sm"
                   onClick={() => refreshStockMutation.mutate()}
                   disabled={refreshStockMutation.isPending}
-                  className="hidden md:inline-flex text-xs gap-1.5 border-border"
+                  className="hidden md:inline-flex text-xs gap-1.5 border-border rounded-xl font-medium motion-pressable"
                   title="Periksa ketersediaan stok live dari VIP Reseller"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 text-primary ${refreshStockMutation.isPending ? 'animate-spin' : ''}`} />
                   <span>{refreshStockMutation.isPending ? 'Memeriksa...' : 'Cek Stok'}</span>
                 </Button>
-                <Button size="sm" onClick={handleOpenCreate} className="text-xs gap-1.5 shadow-xs">
+                <Button
+                  size="sm"
+                  onClick={handleOpenCreate}
+                  className="text-xs gap-1.5 shadow-xs rounded-xl font-semibold motion-pressable bg-primary hover:bg-primary/90 text-white"
+                >
                   <Plus className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">Tambah Produk</span>
                   <span className="sm:hidden">Tambah</span>
@@ -907,12 +916,27 @@ export default function AdminPage() {
               <Button
                 size="sm"
                 onClick={() => setActiveTab('sales-wallet')}
-                className="text-xs gap-1.5 shadow-xs font-semibold bg-status-success hover:bg-status-success/90 text-white"
+                className="text-xs gap-1.5 shadow-xs font-semibold bg-status-success hover:bg-status-success/90 text-white rounded-xl motion-pressable"
               >
                 <Wallet className="w-3.5 h-3.5" />
                 <span>Dompet Komisi</span>
               </Button>
             )}
+
+            {/* Admin Header User Chip (Ni ond avatar block) */}
+            <div className="hidden xl:flex items-center gap-2 pl-2 border-l border-border">
+              <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold text-xs shrink-0">
+                {adminUser?.email?.charAt(0).toUpperCase() || 'A'}
+              </div>
+              <div className="flex flex-col text-left">
+                <span className="text-xs font-bold text-foreground leading-tight truncate max-w-[110px]">
+                  {adminUser?.name || 'Admin'}
+                </span>
+                <span className="text-[10px] text-foreground-muted capitalize">
+                  {adminUser?.role || 'Staff'}
+                </span>
+              </div>
+            </div>
           </div>
         </header>
 
@@ -930,7 +954,7 @@ export default function AdminPage() {
           {/* Top Summary Metrics Cards - show on products & vip-explorer */}
           {(activeTab === 'products' || activeTab === 'vip-explorer') && (
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-              <div className="bg-surface border border-border rounded-xl p-4 sm:p-5 shadow-xs">
+              <div className="bg-surface border border-border rounded-2xl p-4 sm:p-5 shadow-xs motion-card-interactive">
                 <div className="flex items-center justify-between text-xs text-foreground-muted mb-2">
                   <span>Aktif di Katalog Toko</span>
                   <Eye className="w-4 h-4 text-status-success" />
@@ -941,7 +965,7 @@ export default function AdminPage() {
                 <span className="text-[11px] text-foreground-muted">Muncul di halaman pelanggan</span>
               </div>
 
-              <div className="bg-surface border border-border rounded-xl p-4 sm:p-5 shadow-xs">
+              <div className="bg-surface border border-border rounded-2xl p-4 sm:p-5 shadow-xs motion-card-interactive">
                 <div className="flex items-center justify-between text-xs text-foreground-muted mb-2">
                   <span>Diarsipkan (Draft / Hidden)</span>
                   <EyeOff className="w-4 h-4 text-foreground-muted" />
@@ -952,7 +976,7 @@ export default function AdminPage() {
                 <span className="text-[11px] text-foreground-muted">Disembunyikan dari katalog</span>
               </div>
 
-              <div className="bg-surface border border-border rounded-xl p-4 sm:p-5 shadow-xs">
+              <div className="bg-surface border border-border rounded-2xl p-4 sm:p-5 shadow-xs motion-card-interactive">
                 <div className="flex items-center justify-between text-xs text-foreground-muted mb-2">
                   <span>Perlu Perhatian (Stok VIP Kosong)</span>
                   <AlertTriangle className="w-4 h-4 text-status-warning" />
@@ -963,7 +987,7 @@ export default function AdminPage() {
                 <span className="text-[11px] text-foreground-muted">Produk aktif tapi supplier kosong</span>
               </div>
 
-              <div className="bg-surface border border-border rounded-xl p-4 sm:p-5 shadow-xs">
+              <div className="bg-surface border border-border rounded-2xl p-4 sm:p-5 shadow-xs motion-card-interactive">
                 <div className="flex items-center justify-between text-xs text-foreground-muted mb-2">
                   <span>Saldo Akun VIP Reseller</span>
                   <Wallet className={`w-4 h-4 ${metrics?.isVipConnected ? 'text-primary' : 'text-status-warning'}`} />
@@ -987,7 +1011,7 @@ export default function AdminPage() {
 
           {/* TAB 0: DASHBOARD OVERVIEW */}
           {visitedTabs.has('dashboard') && (
-            <div className={activeTab === 'dashboard' ? 'block' : 'hidden'}>
+            <div className={activeTab === 'dashboard' ? 'block animate-tab-glide' : 'hidden'}>
               <AdminDashboardTab
                 metrics={metrics}
                 onNavigateTab={setActiveTab}
@@ -1000,7 +1024,7 @@ export default function AdminPage() {
 
           {/* TAB 1: MANAGED PRODUCTS */}
           {visitedTabs.has('products') && (
-          <div className={activeTab === 'products' ? 'block' : 'hidden'}>
+          <div className={activeTab === 'products' ? 'block animate-tab-glide' : 'hidden'}>
           <div className="space-y-6">
             {/* Filter & Search Bar */}
             <div className="bg-surface border border-border rounded-xl p-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
@@ -1424,35 +1448,35 @@ export default function AdminPage() {
 
         {/* TAB 2: USER ORDERS MANAGEMENT */}
         {visitedTabs.has('orders') && (
-          <div className={activeTab === 'orders' ? 'block' : 'hidden'}>
+          <div className={activeTab === 'orders' ? 'block animate-tab-glide' : 'hidden'}>
             <AdminOrdersTab />
           </div>
         )}
 
         {/* TAB 3: ACTIVITY & AUDIT LOGS */}
         {visitedTabs.has('logs') && (
-          <div className={activeTab === 'logs' ? 'block' : 'hidden'}>
+          <div className={activeTab === 'logs' ? 'block animate-tab-glide' : 'hidden'}>
             <AdminLogsTab />
           </div>
         )}
 
         {/* TAB 4: PAYMENT MODE SWITCHER & SETTINGS */}
         {visitedTabs.has('payment-settings') && (
-          <div className={activeTab === 'payment-settings' ? 'block' : 'hidden'}>
+          <div className={activeTab === 'payment-settings' ? 'block animate-tab-glide' : 'hidden'}>
             <AdminPaymentSettingsTab onNotify={showNotification} />
           </div>
         )}
 
         {/* TAB 5: PROMO & VOUCHER CODE MANAGEMENT */}
         {visitedTabs.has('promos') && (
-          <div className={activeTab === 'promos' ? 'block' : 'hidden'}>
+          <div className={activeTab === 'promos' ? 'block animate-tab-glide' : 'hidden'}>
             <AdminPromosTab onNotify={showNotification} />
           </div>
         )}
 
         {/* TAB 6: VIP RESELLER EXPLORER */}
         {visitedTabs.has('vip-explorer') && (
-          <div className={activeTab === 'vip-explorer' ? 'block' : 'hidden'}>
+          <div className={activeTab === 'vip-explorer' ? 'block animate-tab-glide' : 'hidden'}>
           <div className="space-y-6">
             <div className="bg-surface border border-border rounded-xl p-5 space-y-4">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-border">
@@ -1695,7 +1719,7 @@ export default function AdminPage() {
 
         {/* TAB 7: KELOLA ADMIN */}
         {visitedTabs.has('admins') && (
-          <div className={activeTab === 'admins' ? 'block' : 'hidden'}>
+          <div className={activeTab === 'admins' ? 'block animate-tab-glide' : 'hidden'}>
             <AdminUsersTab
               currentAdminEmail={adminUser?.email}
               onNotify={showNotification}
@@ -1705,14 +1729,14 @@ export default function AdminPage() {
 
         {/* TAB 8: AFFILIATE & SALES SYSTEM */}
         {visitedTabs.has('affiliate') && (
-          <div className={activeTab === 'affiliate' ? 'block' : 'hidden'}>
+          <div className={activeTab === 'affiliate' ? 'block animate-tab-glide' : 'hidden'}>
             <AdminAffiliateTab onNotify={showNotification} />
           </div>
         )}
 
         {/* TAB 9: KATEGORI */}
         {visitedTabs.has('categories') && (
-          <div className={activeTab === 'categories' ? 'block' : 'hidden'}>
+          <div className={activeTab === 'categories' ? 'block animate-tab-glide' : 'hidden'}>
             <AdminCategoriesTab
               onNotify={showNotification}
               onFilterCategoryInProducts={(cat) => {
@@ -1725,7 +1749,7 @@ export default function AdminPage() {
 
         {/* TAB 10: PROVIDER & SUPPLIER */}
         {visitedTabs.has('providers') && (
-          <div className={activeTab === 'providers' ? 'block' : 'hidden'}>
+          <div className={activeTab === 'providers' ? 'block animate-tab-glide' : 'hidden'}>
             <AdminProvidersTab
               metrics={metrics}
               onNotify={showNotification}
@@ -1736,21 +1760,21 @@ export default function AdminPage() {
 
         {/* TAB 11: PELANGGAN (CRM 360) */}
         {visitedTabs.has('customers') && (
-          <div className={activeTab === 'customers' ? 'block' : 'hidden'}>
+          <div className={activeTab === 'customers' ? 'block animate-tab-glide' : 'hidden'}>
             <AdminCustomersTab onNotify={showNotification} />
           </div>
         )}
 
         {/* TAB 12: REFUND & KOMPLAIN */}
         {visitedTabs.has('refunds') && (
-          <div className={activeTab === 'refunds' ? 'block' : 'hidden'}>
+          <div className={activeTab === 'refunds' ? 'block animate-tab-glide' : 'hidden'}>
             <AdminRefundsTab onNotify={showNotification} />
           </div>
         )}
 
         {/* TAB 13: MARKETING & GROWTH (Campaigns & Banners) */}
         {(visitedTabs.has('campaigns') || visitedTabs.has('banners')) && (
-          <div className={activeTab === 'campaigns' || activeTab === 'banners' ? 'block' : 'hidden'}>
+          <div className={activeTab === 'campaigns' || activeTab === 'banners' ? 'block animate-tab-glide' : 'hidden'}>
             <AdminMarketingSuite
               activeTab={activeTab as any}
               onNotify={showNotification}
@@ -1770,7 +1794,7 @@ export default function AdminPage() {
             activeTab === 'expenses' ||
             activeTab === 'profit' ||
             activeTab === 'financial-transactions'
-              ? 'block'
+              ? 'block animate-tab-glide'
               : 'hidden'
           }>
             <AdminFinanceSuite
@@ -1791,7 +1815,7 @@ export default function AdminPage() {
             activeTab === 'product-performance' ||
             activeTab === 'affiliate-performance' ||
             activeTab === 'financial-reports'
-              ? 'block'
+              ? 'block animate-tab-glide'
               : 'hidden'
           }>
             <AdminAnalyticsSuite
@@ -1803,7 +1827,7 @@ export default function AdminPage() {
 
         {/* TAB 16: SISTEM & KONFIGURASI (Notifications & Store Settings) */}
         {(visitedTabs.has('notifications') || visitedTabs.has('store-settings')) && (
-          <div className={activeTab === 'notifications' || activeTab === 'store-settings' ? 'block' : 'hidden'}>
+          <div className={activeTab === 'notifications' || activeTab === 'store-settings' ? 'block animate-tab-glide' : 'hidden'}>
             <AdminSystemSettingsSuite
               activeTab={activeTab as any}
               onNotify={showNotification}
@@ -1819,7 +1843,7 @@ export default function AdminPage() {
           visitedTabs.has('sales-network') ||
           visitedTabs.has('sales-wallet') ||
           visitedTabs.has('sales-academy')) && (
-          <div className={activeTab.startsWith('sales-') ? 'block' : 'hidden'}>
+          <div className={activeTab.startsWith('sales-') ? 'block animate-tab-glide' : 'hidden'}>
             <SalesConsoleSuite
               activeTab={activeTab}
               onTabChange={(tab) => setActiveTab(tab)}
@@ -1831,8 +1855,8 @@ export default function AdminPage() {
 
       {/* MODAL 1: EDIT / CREATE MANAGED PRODUCT */}
       {(editingProduct || isCreateModalOpen) && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-surface border border-border rounded-xl w-full max-w-lg shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs transition-opacity duration-200 animate-in fade-in">
+          <div className="bg-surface border border-border rounded-2xl w-full max-w-lg shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200 ease-[cubic-bezier(0.16,1,0.3,1)]">
             <div className="flex items-center justify-between border-b border-border pb-3">
               <div>
                 <h3 className="font-bold text-base text-foreground">
@@ -2266,8 +2290,8 @@ export default function AdminPage() {
 
       {/* MODAL 2: IMPORT FROM VIP RESELLER */}
       {importingService && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-surface border border-border rounded-xl w-full max-w-lg shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs transition-opacity duration-200 animate-in fade-in">
+          <div className="bg-surface border border-border rounded-2xl w-full max-w-lg shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200 ease-[cubic-bezier(0.16,1,0.3,1)]">
             <div className="flex items-center justify-between border-b border-border pb-3">
               <div>
                 <h3 className="font-bold text-base text-foreground">
@@ -2527,8 +2551,8 @@ export default function AdminPage() {
 
       {/* Single Product Delete Confirmation Modal [T7] */}
       {deletingProductId && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-surface border border-border rounded-xl max-w-md w-full p-6 shadow-2xl space-y-4">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-surface border border-border rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-in zoom-in-95 duration-200 ease-[cubic-bezier(0.16,1,0.3,1)]">
             <div className="flex items-center gap-3 text-status-error">
               <div className="w-10 h-10 rounded-full bg-status-error/10 border border-status-error/20 flex items-center justify-center">
                 <Trash2 className="w-5 h-5 text-status-error" />
@@ -2572,8 +2596,8 @@ export default function AdminPage() {
 
       {/* Bulk Delete Confirmation Modal [T7] */}
       {isBulkDeleteModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-surface border border-border rounded-xl max-w-md w-full p-6 shadow-2xl space-y-4">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-surface border border-border rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-in zoom-in-95 duration-200 ease-[cubic-bezier(0.16,1,0.3,1)]">
             <div className="flex items-center gap-3 text-status-error">
               <div className="w-10 h-10 rounded-full bg-status-error/10 border border-status-error/20 flex items-center justify-center">
                 <AlertTriangle className="w-5 h-5 text-status-error" />

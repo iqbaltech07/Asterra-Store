@@ -10,7 +10,7 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: '#FFFFFF',
+        background: 'var(--background)',
         surface: {
           DEFAULT: '#FFFFFF',
           secondary: '#F8FAFC',
@@ -28,9 +28,9 @@ const config: Config = {
           subtle: 'rgba(255, 255, 255, 0.08)',
         },
         border: {
-          DEFAULT: 'rgba(18, 26, 42, 0.1)',
-          subtle: 'rgba(18, 26, 42, 0.06)',
-          strong: 'rgba(18, 26, 42, 0.2)',
+          DEFAULT: 'var(--border)',
+          subtle: 'var(--color-border-subtle)',
+          strong: 'var(--color-border-strong)',
           navy: 'rgba(255, 255, 255, 0.12)',
         },
         primary: {

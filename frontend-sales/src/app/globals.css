@@ -3,27 +3,28 @@
 @tailwind utilities;
 
 :root {
-  /* Asterra Store Brand System Tokens - FINAL PALETTE */
+  /* Asterra Store Brand System Tokens - REFINED SAAS PALETTE */
   --color-navy: #121a2a;
   --color-navy-deep: #0c121e;
   --color-navy-surface: #182235;
   --color-navy-surface-2: #1e2a40;
-  --color-navy-border: rgba(18, 26, 42, 0.12);
+  --color-navy-border: rgba(18, 26, 42, 0.08);
 
   --color-accent: #c96f55;
   --color-accent-hover: #b86047;
   --color-accent-soft: rgba(201, 111, 85, 0.08);
   --color-accent-dark: #a9553e;
 
-  --color-bg: #ffffff;
+  /* Off-White Clean Canvas (Ni ond style) */
+  --color-bg: #f4f6f8;
   --color-surface: #ffffff;
   --color-surface-secondary: #f8fafc;
   --color-surface-raised: #ffffff;
   --color-surface-hover: #f1f5f9;
 
-  --color-border: rgba(18, 26, 42, 0.1);
-  --color-border-subtle: rgba(18, 26, 42, 0.06);
-  --color-border-strong: rgba(18, 26, 42, 0.2);
+  --color-border: rgba(18, 26, 42, 0.08);
+  --color-border-subtle: rgba(18, 26, 42, 0.05);
+  --color-border-strong: rgba(18, 26, 42, 0.16);
 
   --color-ink: #121a2a;
   --color-ink-soft: #23314b;
@@ -36,25 +37,36 @@
   --color-danger: #dc2626;
   --color-info: #2563eb;
 
-  /* Radius */
+  /* Radius (Modern Rounded SaaS) */
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 14px;
   --radius-xl: 18px;
-  --radius-card: 12px;
+  --radius-2xl: 20px;
+  --radius-card: 16px;
   --radius-input: 8px;
 
+  /* Motion Tokens */
+  --motion-instant: 100ms;
+  --motion-fast: 150ms;
+  --motion-base: 220ms;
+  --motion-slow: 320ms;
+  --motion-chart: 700ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
   /* Tailwind Semantic Variable Aliases */
-  --background: #ffffff;
+  --background: #f4f6f8;
   --surface: #ffffff;
   --surface-raised: #ffffff;
-  --border: rgba(18, 26, 42, 0.1);
+  --border: rgba(18, 26, 42, 0.08);
   --primary: #c96f55;
   --foreground: #121a2a;
   --foreground-muted: #5f6c80;
   --popover: #ffffff;
   --popover-foreground: #121a2a;
-  --input: rgba(18, 26, 42, 0.12);
+  --input: rgba(18, 26, 42, 0.1);
   --card: #ffffff;
   --card-foreground: #121a2a;
 
@@ -68,7 +80,7 @@ body {
   overflow-x: clip;
   max-width: 100vw;
   width: 100%;
-  background-color: #ffffff;
+  background-color: var(--background);
   color: #121a2a;
   font-family:
     var(--font-jakarta),
@@ -89,61 +101,163 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #ffffff;
+  background: var(--background);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(18, 26, 42, 0.2);
+  background: rgba(18, 26, 42, 0.15);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(18, 26, 42, 0.35);
+  background: rgba(18, 26, 42, 0.28);
 }
 
-/* Seamless GPU-Accelerated Infinite Auto Marquee Carousel */
-@keyframes infinite-scroll {
+/* Base Utility Classes */
+.bg-surface {
+  background-color: var(--surface);
+}
+
+.bg-surface-secondary {
+  background-color: var(--color-surface-secondary);
+}
+
+.bg-surface-raised {
+  background-color: var(--surface-raised);
+}
+
+.border-border {
+  border-color: var(--border);
+}
+
+.text-foreground {
+  color: var(--foreground);
+}
+
+.text-foreground-secondary {
+  color: var(--color-secondary);
+}
+
+.text-foreground-muted {
+  color: var(--foreground-muted);
+}
+
+.text-status-success {
+  color: var(--color-success);
+}
+
+.bg-status-success {
+  background-color: var(--color-success);
+}
+
+.text-status-warning {
+  color: var(--color-warning);
+}
+
+.bg-status-warning {
+  background-color: var(--color-warning);
+}
+
+.text-status-error {
+  color: var(--color-danger);
+}
+
+.bg-status-error {
+  background-color: var(--color-danger);
+}
+
+.bg-status-info {
+  background-color: var(--color-info);
+}
+
+/* Modern Card Shadows & Elevations */
+.shadow-xs {
+  box-shadow: 0 1px 2px 0 rgba(18, 26, 42, 0.04);
+}
+
+.shadow-subtle {
+  box-shadow: 0 2px 8px -2px rgba(18, 26, 42, 0.05), 0 1px 4px -1px rgba(18, 26, 42, 0.03);
+}
+
+.shadow-card-hover {
+  box-shadow: 0 10px 25px -5px rgba(18, 26, 42, 0.08), 0 8px 10px -6px rgba(18, 26, 42, 0.04);
+}
+
+/* ========================================================================= */
+/* MOTION SYSTEM UTILITIES                                                   */
+/* ========================================================================= */
+
+@keyframes cardEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(12px) scale(0.99);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.motion-card-enter {
+  animation: cardEnter 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes barGrow {
+  0% {
+    transform: scaleY(0);
+    opacity: 0;
+  }
+  100% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+.motion-bar-grow {
+  transform-origin: bottom;
+  animation: barGrow 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeInFast {
   from {
-    transform: translate3d(0, 0, 0);
+    opacity: 0;
+    transform: translateY(4px);
   }
   to {
-    transform: translate3d(-50%, 0, 0);
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-.carousel-viewport {
-  overflow: hidden !important;
-  width: 100%;
-  max-width: 100%;
-  contain: paint;
-  scrollbar-width: none !important;
-  -ms-overflow-style: none !important;
+.motion-fade-in {
+  animation: fadeInFast 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-.carousel-viewport::-webkit-scrollbar {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
+/* Interactive Card Hover Transition */
+.motion-card-interactive {
+  transition: transform var(--motion-base) var(--ease-out),
+              box-shadow var(--motion-base) var(--ease-out),
+              border-color var(--motion-fast) var(--ease-out);
 }
 
-.carousel-track {
-  display: flex !important;
-  flex-wrap: nowrap !important;
-  width: max-content !important;
-  flex-shrink: 0 !important;
-  align-items: stretch;
-  will-change: transform;
-  animation: infinite-scroll 60s linear infinite !important;
+.motion-card-interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(18, 26, 42, 0.08), 0 8px 10px -6px rgba(18, 26, 42, 0.04);
+  border-color: rgba(201, 111, 85, 0.3);
 }
 
-.carousel-viewport:hover .carousel-track,
-.carousel-track:hover {
-  animation-play-state: paused !important;
+/* Button & Pill Press Micro-Interaction */
+.motion-pressable {
+  transition: transform var(--motion-instant) var(--ease-out),
+              background-color var(--motion-fast) var(--ease-out),
+              color var(--motion-fast) var(--ease-out);
 }
 
+.motion-pressable:active {
+  transform: scale(0.97);
+}
 
-
-/* Editorial Transitions & GPU Compositing (Apple / Vercel style - smooth, zero blink, zero layout reflow) */
+/* Editorial Page Transitions */
 @keyframes pageEditorialEnter {
   0% {
     opacity: 0.94;
@@ -160,14 +274,16 @@ body {
 @keyframes tabGlideIn {
   0% {
     opacity: 0.90;
+    transform: translateY(4px);
   }
   100% {
     opacity: 1;
+    transform: translateY(0);
   }
 }
 
 .animate-tab-glide {
-  animation: tabGlideIn 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: tabGlideIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes textMorphSmooth {
@@ -198,7 +314,21 @@ body {
   animation: faqSlideDown 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+/* ========================================================================= */
+/* ACCESSIBILITY: STRICT REDUCED MOTION SAFEGUARD                           */
+/* ========================================================================= */
 @media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+
+  .motion-card-enter,
+  .motion-bar-grow,
+  .motion-fade-in,
   .animate-page-enter,
   .animate-tab-glide,
   .animate-text-smooth,
@@ -207,7 +337,9 @@ body {
     opacity: 1 !important;
     transform: none !important;
   }
+
+  .motion-card-interactive:hover,
+  .motion-pressable:active {
+    transform: none !important;
+  }
 }
-
-
-

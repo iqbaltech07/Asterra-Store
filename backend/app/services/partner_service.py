@@ -78,13 +78,8 @@ class PartnerService:
         try:
             from app.services.order_service import OrderService
             return OrderService.load_orders()
-        except Exception:
-            pass
-        if ORDERS_FILE.exists():
-            try:
-                return json.loads(ORDERS_FILE.read_text(encoding="utf-8"))
-            except Exception:
-                pass
+        except Exception as e:
+            print(f"[PartnerService] Error loading orders from OrderService: {e}")
         return []
 
     @classmethod
@@ -197,33 +192,9 @@ class PartnerService:
         if identifier:
             partner = cls.find_by_email(identifier) or cls.find_by_code(identifier) or cls.find_by_id(identifier)
 
-        # Fallback to first active partner if not found
-        if not partner and len(partners) > 0:
-            partner = partners[0]
-
+        # Do not fallback to another partner or return fake dummy metrics
         if not partner:
-            # Minimal default
-            return {
-                "id": "partner-default",
-                "code": "AST-FOUNDER",
-                "name": "Mitra Sales Asterra",
-                "email": "sales@asterra.store",
-                "whatsapp": "081234567890",
-                "tier": "Standard (10%)",
-                "rate": 10,
-                "totalClicks": 128,
-                "totalOrders": 14,
-                "totalRevenue": 1450000,
-                "unpaidCommission": 145000,
-                "pendingCommission": 29000,
-                "paidCommission": 450000,
-                "networkCommission": 34000,
-                "bankName": "Bank Central Asia (BCA)",
-                "bankAccount": "8965123456",
-                "status": "active",
-                "joinedAt": "2026-10-01T00:00:00.000Z",
-                "payoutRequests": [],
-            }
+            return None
 
         p_code = str(partner.get("code", "")).upper()
         p_id = partner.get("id")
@@ -232,7 +203,7 @@ class PartnerService:
 
         total_revenue = sum(
             float(o.get("totalAmount", 0)) for o in partner_orders
-            if str(o.get("status", "")).lower() in ["completed", "paid", "settlement"]
+            if str(o.get("status", "")).lower() in ["completed", "paid", "settlement", "processing"]
         )
 
         pending_comm = sum(
@@ -658,3 +629,65 @@ class PartnerService:
         cls.save_partners()
 
         return {"success": True, "message": "Permintaan pencairan komisi berhasil diajukan dan sedang diproses.", "request": req}
+
+    @classmethod
+    def process_payout(cls, partner_id: str, amount: Optional[float] = None, notes: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Disburses eligible approved commissions (status='final') for the given partner
+        and idempotently marks them as 'paid' in the database.
+        """
+        from app.models.commission import Commission
+        from app.core.database import SessionLocal
+        now = datetime.utcnow()
+        try:
+            db = SessionLocal()
+            try:
+                # Find final commissions for this partner
+                eligible_comms = db.query(Commission).filter(
+                    Commission.partner_id == partner_id,
+                    Commission.status == "final",
+                ).all()
+
+                disbursed_total = 0
+                affected_ids = []
+                for c in eligible_comms:
+                    if amount is not None and disbursed_total + c.commission_amount > amount:
+                        continue
+                    c.status = "paid"
+                    c.released_at = now
+                    c.updated_at = now
+                    disbursed_total += c.commission_amount
+                    affected_ids.append(c.id)
+
+                db.commit()
+
+                # Also update local json partner payout record if present
+                partners = cls.load_partners()
+                for p in partners:
+                    if str(p.get("id")) == str(partner_id) or str(p.get("code")).upper() == str(partner_id).upper():
+                        if "payoutRequests" not in p:
+                            p["payoutRequests"] = []
+                        p["payoutRequests"].insert(0, {
+                            "id": f"pay-{int(now.timestamp())}",
+                            "amount": disbursed_total,
+                            "date": now.strftime("%Y-%m-%d"),
+                            "status": "paid",
+                            "notes": notes or "Pencairan komisi kemitraan sales via Admin",
+                        })
+                        cls.save_partners()
+                        break
+
+                return {
+                    "success": True,
+                    "disbursedAmount": disbursed_total,
+                    "commissionIds": affected_ids,
+                    "message": f"Pencairan komisi sebesar Rp {disbursed_total:,.0f} berhasil dicatat.".replace(",", "."),
+                }
+            finally:
+                db.close()
+        except Exception as e:
+            return {
+                "success": False,
+                "disbursedAmount": 0,
+                "message": f"Gagal memproses pencairan komisi: {e}",
+            }

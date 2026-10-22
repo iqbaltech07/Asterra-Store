@@ -145,80 +145,96 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
     <div className="space-y-6">
       {/* 1. SALES OVERVIEW TAB */}
       {activeTab === 'sales-overview' && (
-        <SalesOverviewTab
-          partner={partner}
-          partnerCode={partnerCode}
-          partnerRate={partnerRate}
-          userName={adminUser?.name}
-          copiedLink={copiedLink}
-          handleCopy={handleCopy}
-          onTabChange={onTabChange}
-          networkData={networkData}
-          isProfileLoading={isProfileLoading}
-          inviteSalesUrl={inviteSalesUrl}
-          campaigns={campaignsRes?.data}
-        />
+        <div className="animate-tab-glide">
+          <SalesOverviewTab
+            partner={partner}
+            partnerCode={partnerCode}
+            partnerRate={partnerRate}
+            userName={adminUser?.name}
+            copiedLink={copiedLink}
+            handleCopy={handleCopy}
+            onTabChange={onTabChange}
+            networkData={networkData}
+            isProfileLoading={isProfileLoading}
+            inviteSalesUrl={inviteSalesUrl}
+            campaigns={campaignsRes?.data}
+          />
+        </div>
       )}
 
       {/* 2. SALES CATALOG TAB */}
       {activeTab === 'sales-catalog' && (
-        <SalesCatalogTab
-          partnerCode={partnerCode}
-          partnerRate={partnerRate}
-          products={productsRes?.data || []}
-          isLoading={isProductsLoading}
-          onTabChange={onTabChange}
-        />
+        <div className="animate-tab-glide">
+          <SalesCatalogTab
+            partnerCode={partnerCode}
+            partnerRate={partnerRate}
+            products={productsRes?.data || []}
+            isLoading={isProductsLoading}
+            onTabChange={onTabChange}
+          />
+        </div>
       )}
 
       {/* 3. SALES LINKS & PROMO COPY GENERATOR TAB */}
       {activeTab === 'sales-links' && (
-        <SalesLinksTab
-          products={productsRes?.data || []}
-          campaigns={campaignsRes?.data || []}
-          partnerCode={partnerCode}
-          partnerRate={partnerRate}
-          copiedLink={copiedLink}
-          handleCopy={handleCopy}
-        />
+        <div className="animate-tab-glide">
+          <SalesLinksTab
+            products={productsRes?.data || []}
+            campaigns={campaignsRes?.data || []}
+            partnerCode={partnerCode}
+            partnerRate={partnerRate}
+            copiedLink={copiedLink}
+            handleCopy={handleCopy}
+          />
+        </div>
       )}
 
       {/* 4. SALES ORDERS TAB */}
       {activeTab === 'sales-orders' && (
-        <SalesOrdersTab
-          partnerCode={partnerCode}
-          partnerRate={partnerRate}
-          orders={ordersRes?.data || []}
-          isLoading={isOrdersLoading}
-          onRefresh={() => refetchOrders()}
-          onTabChange={onTabChange}
-        />
+        <div className="animate-tab-glide">
+          <SalesOrdersTab
+            partnerCode={partnerCode}
+            partnerRate={partnerRate}
+            orders={ordersRes?.data || []}
+            isLoading={isOrdersLoading}
+            onRefresh={() => refetchOrders()}
+            onTabChange={onTabChange}
+          />
+        </div>
       )}
 
       {/* 5. SALES NETWORK & DOWNLINE TEAM TAB */}
       {activeTab === 'sales-network' && (
-        <SalesNetworkTab
-          partnerCode={partnerCode}
-          inviteSalesUrl={inviteSalesUrl}
-          inviteWaMessage={inviteWaMessage}
-          networkData={networkData}
-          isLoading={isNetworkLoading}
-          onRefresh={() => refetchNetwork()}
-          handleCopy={handleCopy}
-          copiedLink={copiedLink}
-        />
+        <div className="animate-tab-glide">
+          <SalesNetworkTab
+            partnerCode={partnerCode}
+            inviteSalesUrl={inviteSalesUrl}
+            inviteWaMessage={inviteWaMessage}
+            networkData={networkData}
+            isLoading={isNetworkLoading}
+            onRefresh={() => refetchNetwork()}
+            handleCopy={handleCopy}
+            copiedLink={copiedLink}
+          />
+        </div>
       )}
 
       {/* 6. SALES WALLET & WITHDRAWAL TAB */}
       {activeTab === 'sales-wallet' && (
-        <SalesWalletTab
-          partner={partner}
-          onRefetchProfile={() => refetchProfile()}
-        />
+        <div className="animate-tab-glide">
+          <SalesWalletTab
+            partner={partner}
+            onRefetchProfile={() => refetchProfile()}
+          />
+        </div>
       )}
 
       {/* 7. SALES ACADEMY & GUIDELINES TAB */}
-      {activeTab === 'sales-academy' && <SalesAcademyTab />}
+      {activeTab === 'sales-academy' && (
+        <div className="animate-tab-glide">
+          <SalesAcademyTab />
+        </div>
+      )}
     </div>
   );
 }
