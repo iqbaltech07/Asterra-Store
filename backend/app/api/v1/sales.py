@@ -39,9 +39,18 @@ async def create_admin_affiliate(request: Request):
 @router.post("/admin/affiliates/payout", tags=["Admin Affiliates"])
 async def process_admin_affiliate_payout(request: Request):
     payload = await request.json()
+    partner_id = payload.get("partnerId") or payload.get("partner_id")
+    if not partner_id:
+        raise HTTPException(status_code=400, detail="partnerId wajib disertakan")
+    amount = payload.get("amount")
+    notes = payload.get("notes")
+    res = PartnerService.process_payout(partner_id=partner_id, amount=amount, notes=notes)
+    if not res.get("success"):
+        return JSONResponse(status_code=400, content=res)
     return {
         "success": True,
-        "message": "Pencairan komisi mitra sales berhasil disetujui dan dicatat.",
+        "message": res.get("message", "Pencairan komisi mitra sales berhasil disetujui dan dicatat."),
+        "data": res,
     }
 
 # ------------------------------------------

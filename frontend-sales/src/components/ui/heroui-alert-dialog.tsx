@@ -93,18 +93,25 @@ export function AlertDialogBackdrop({
   children: React.ReactNode;
   className?: string;
 }) {
-  const { isOpen } = useAlertDialog();
+  const { isOpen, setIsOpen } = useAlertDialog();
 
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          setIsOpen(false);
+        }
+      };
+      window.addEventListener('keydown', handleKeyDown);
+      return () => {
+        document.body.style.overflow = '';
+        window.removeEventListener('keydown', handleKeyDown);
+      };
     } else {
       document.body.style.overflow = '';
     }
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [isOpen]);
+  }, [isOpen, setIsOpen]);
 
   if (!isOpen) return null;
 
@@ -158,7 +165,7 @@ export function AlertDialogDialog({
       aria-modal="true"
       className={
         className ||
-        'relative w-full max-w-[420px] bg-surface border border-border rounded-2xl shadow-2xl p-6 space-y-4 animate-in zoom-in-95 duration-200'
+        'relative w-full max-w-[420px] bg-surface border border-border rounded-2xl shadow-2xl p-6 space-y-4 animate-in zoom-in-95 duration-200 ease-out'
       }
     >
       {children}

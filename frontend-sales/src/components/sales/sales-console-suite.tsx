@@ -37,6 +37,7 @@ import {
 } from 'lucide-react';
 import { AdminTab } from '@/components/admin/admin-sidebar';
 import { getStoreBaseUrl, getAppBaseUrl } from '@/lib/utils/url';
+import { useGsapReveal } from '@/lib/animations/use-gsap-reveal';
 
 interface SalesConsoleProps {
   activeTab: AdminTab;
@@ -392,15 +393,23 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
     },
   });
 
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  useGsapReveal(containerRef, {
+    selector: '.gsap-fade-up',
+    stagger: 0.05,
+    duration: 0.5,
+    deps: [activeTab, isProfileLoading],
+  });
+
   return (
-    <div className="space-y-6">
+    <div ref={containerRef} className="space-y-6">
       {/* ========================================================================= */}
       {/* 1. SALES OVERVIEW TAB */}
       {/* ========================================================================= */}
       {activeTab === 'sales-overview' && (
-        <div className="space-y-6">
+        <div className="space-y-6 animate-tab-glide">
           {/* Welcome & Referral Banner */}
-          <div className="rounded-xl border border-border bg-surface p-6 shadow-xs relative overflow-hidden">
+          <div className="rounded-xl border border-border bg-surface p-6 shadow-xs relative overflow-hidden gsap-fade-up">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
               <div className="space-y-2 max-w-xl">
                 <div
@@ -485,7 +494,7 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
 
           {/* Active Campaign Booster Teaser Banner */}
           {campaignsRes?.data && campaignsRes.data.length > 0 && (
-            <div className="rounded-xl border border-primary/30 bg-primary/10 p-4 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="rounded-xl border border-primary/30 bg-primary/10 p-4 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4 gsap-fade-up">
               <div className="flex items-start gap-3">
                 <div className="w-10 h-10 rounded-xl bg-primary/20 border border-primary/30 flex items-center justify-center shrink-0 text-primary">
                   <Flame className="w-5 h-5 text-primary" />
@@ -589,7 +598,7 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* 1. Saldo Komisi Siap Tarik */}
-              <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-2 relative overflow-hidden">
+              <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-2 relative overflow-hidden motion-card-interactive gsap-fade-up">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-medium text-foreground-muted">Komisi Siap Tarik (Final)</span>
                   <div className="w-8 h-8 rounded-lg bg-status-success/10 text-status-success flex items-center justify-center">
@@ -619,7 +628,7 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
               </div>
 
               {/* 2. Total Pesanan Berhasil */}
-              <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-2">
+              <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-2 motion-card-interactive gsap-fade-up">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-medium text-foreground-muted">Pesanan Referral</span>
                   <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
@@ -638,7 +647,7 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
               </div>
 
               {/* 3. Total Kunjungan Link (Clicks) */}
-              <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-2">
+              <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-2 motion-card-interactive gsap-fade-up">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-medium text-foreground-muted">Total Klik Referral</span>
                   <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center">
@@ -655,7 +664,7 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
               </div>
 
               {/* 4. Tier & Skema Komisi */}
-              <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-2">
+              <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-2 motion-card-interactive gsap-fade-up">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-medium text-foreground-muted">Skema Komisi Anda</span>
                   <div
@@ -713,7 +722,7 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
           )}
 
           {/* Ajak Teman Jadi Sales Callout Banner */}
-          <div className="rounded-xl border border-primary/25 bg-gradient-to-r from-primary/10 via-surface to-primary/5 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="rounded-xl border border-primary/25 bg-gradient-to-r from-primary/10 via-surface to-primary/5 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 gsap-fade-up">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center shrink-0 shadow-sm">
                 <Users className="w-5 h-5" />
@@ -839,7 +848,7 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
       {/* 2. SALES CATALOG TAB */}
       {/* ========================================================================= */}
       {activeTab === 'sales-catalog' && (
-        <div className="space-y-6">
+        <div className="space-y-6 animate-tab-glide">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h2 className="text-lg font-bold text-foreground">Katalog Produk & Estimasi Komisi</h2>
@@ -952,7 +961,7 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
                 return (
                   <div
                     key={p.id}
-                    className="bg-surface border border-border rounded-xl p-4 shadow-xs flex flex-col justify-between space-y-4 hover:border-primary/40 hover:shadow-sm transition-all group"
+                    className="bg-surface border border-border rounded-2xl p-4 shadow-xs flex flex-col justify-between space-y-4 motion-card-interactive group gsap-fade-up"
                   >
                     <div className="space-y-3">
                       {/* Top Badges */}
@@ -1055,7 +1064,7 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
       {/* 3. SALES LINKS & PROMO COPY GENERATOR TAB */}
       {/* ========================================================================= */}
       {activeTab === 'sales-links' && (
-        <div className="space-y-6">
+        <div className="space-y-6 animate-tab-glide">
           <div>
             <h2 className="text-lg font-bold text-foreground">Generator Tautan & Materi Promosi</h2>
             <p className="text-xs text-foreground-muted">
@@ -1424,7 +1433,7 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
       {/* 4. SALES ORDERS TAB */}
       {/* ========================================================================= */}
       {activeTab === 'sales-orders' && (
-        <div className="space-y-8">
+        <div className="space-y-8 animate-tab-glide">
           {/* Header Controls */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
@@ -1722,7 +1731,7 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
       {/* 5. SALES NETWORK & DOWNLINE TEAM TAB */}
       {/* ========================================================================= */}
       {activeTab === 'sales-network' && (
-        <div className="space-y-6">
+        <div className="space-y-6 animate-tab-glide">
           {/* Header & Title */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
@@ -2215,7 +2224,7 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
       {/* 6. SALES WALLET & WITHDRAWAL TAB */}
       {/* ========================================================================= */}
       {activeTab === 'sales-wallet' && (
-        <div className="space-y-6">
+        <div className="space-y-6 animate-tab-glide">
           <div>
             <h2 className="text-lg font-bold text-foreground">Dompet & Pencairan Komisi</h2>
             <p className="text-xs text-foreground-muted">
@@ -2482,7 +2491,7 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
       {/* 6. SALES ACADEMY & GUIDELINES TAB */}
       {/* ========================================================================= */}
       {activeTab === 'sales-academy' && (
-        <div className="space-y-6">
+        <div className="space-y-6 animate-tab-glide">
           <div>
             <h2 className="text-lg font-bold text-foreground">Panduan & Edukasi Kemitraan Sales</h2>
             <p className="text-xs text-foreground-muted">

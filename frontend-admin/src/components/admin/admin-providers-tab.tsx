@@ -35,25 +35,25 @@ const INITIAL_PROVIDERS: ProviderConfig[] = [
     balance: 0,
     currency: 'IDR',
     health: 'healthy',
-    latencyMs: 114,
-    successRate: 99.2,
-    lastSync: 'Baru saja',
+    latencyMs: 0,
+    successRate: 100,
+    lastSync: 'Siap Diuji',
     status: 'active',
-    totalProducts: 1841,
+    totalProducts: 235,
   },
   {
     id: 'internal-manual',
     name: 'Asterra Internal Vault (Private Accounts)',
     type: 'Direct Fulfillment / Manual Dispatch',
     endpoint: 'internal://fulfillment-service',
-    balance: 5000000,
+    balance: 0,
     currency: 'IDR',
     health: 'healthy',
-    latencyMs: 12,
+    latencyMs: 0,
     successRate: 100,
-    lastSync: 'Real-time',
+    lastSync: 'Tersambung Internal',
     status: 'active',
-    totalProducts: 45,
+    totalProducts: 0,
   },
 ];
 
@@ -75,12 +75,31 @@ export function AdminProvidersTab({ metrics, onNotify, onSyncVip }: AdminProvide
   const [apiKey, setApiKey] = useState('vip_sec_**********************7a8b');
   const [apiId, setApiId] = useState('AST-ROOT-SUPPLIER');
 
-  const handleTestConnection = (id: string) => {
+  const handleTestConnection = async (id: string) => {
     setTestingId(id);
-    setTimeout(() => {
+    const start = performance.now();
+    try {
+      const res = await fetch('/api/v1/health');
+      const latency = Math.round(performance.now() - start);
+      setProviders((prev) =>
+        prev.map((p) =>
+          p.id === id ? { ...p, latencyMs: latency, lastSync: res.ok ? 'Terverifikasi' : 'Degraded' } : p
+        )
+      );
+      if (res.ok) {
+        onNotify?.(`Koneksi gateway ${id === 'vip-reseller' ? 'VIP Reseller API' : 'Internal Vault'} aktif. Status HTTP ${res.status} OK (Latensi: ${latency}ms).`);
+      } else {
+        onNotify?.(`Koneksi gateway merespons status HTTP ${res.status} (Latensi: ${latency}ms).`);
+      }
+    } catch {
+      const latency = Math.round(performance.now() - start);
+      setProviders((prev) =>
+        prev.map((p) => (p.id === id ? { ...p, latencyMs: latency, lastSync: 'Error Koneksi' } : p))
+      );
+      onNotify?.(`Gagal menghubungi server gateway (${latency}ms). Periksa koneksi jaringan.`);
+    } finally {
       setTestingId(null);
-      onNotify?.(`Koneksi ke ${id === 'vip-reseller' ? 'VIP Reseller' : 'Internal Vault'} berhasil! HTTP 200 OK (Latency: 112ms).`);
-    }, 800);
+    }
   };
 
   const toggleProvider = (id: string) => {
@@ -200,7 +219,13 @@ export function AdminProvidersTab({ metrics, onNotify, onSyncVip }: AdminProvide
                     Deposit Saldo Supplier
                   </span>
                   <div className="text-lg font-bold text-primary font-mono">
-                    Rp {balance.toLocaleString('id-ID')}
+                    {balance && balance > 0 ? (
+                      `Rp ${balance.toLocaleString('id-ID')}`
+                    ) : (
+                      <span className="text-xs text-foreground-muted font-normal italic">
+                        Belum Tersedia (Perlu Integrasi API Saldo)
+                      </span>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-1.5">
