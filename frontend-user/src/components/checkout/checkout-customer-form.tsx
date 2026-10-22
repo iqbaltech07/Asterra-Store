@@ -62,21 +62,11 @@ export function CheckoutCustomerForm({
     <div className="space-y-6">
       {/* CARD 1: INFORMASI DATA TUJUAN (SESUAI VIP RESELLER) */}
       <div className="bg-white border border-[rgba(18,26,42,0.08)] rounded-2xl p-6 space-y-5 shadow-card">
-        <div className="flex items-center justify-between pb-3 border-b border-[rgba(18,26,42,0.08)]">
-          <div className="flex items-center gap-3">
-            <div className="w-7 h-7 rounded-lg bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.25)] text-[#C96F55] flex items-center justify-center text-xs font-bold shadow-xs">
-              1
-            </div>
-            <div>
-              <h2 className="text-base font-bold text-[#121A2A]">Masukan Data Tujuan</h2>
-              <p className="text-[11px] text-[#121A2A]/60">
-                Data spesifik tujuan pesanan untuk otomatisasi gateway
-              </p>
-            </div>
+        <div className="flex items-center gap-3 pb-3 border-b border-[rgba(18,26,42,0.08)]">
+          <div className="w-7 h-7 rounded-lg bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.25)] text-[#C96F55] flex items-center justify-center text-xs font-bold shadow-xs">
+            1
           </div>
-          <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200/60">
-            Dinamis {reqType.toUpperCase()}
-          </span>
+          <h2 className="text-base font-bold text-[#121A2A]">Masukan Data Tujuan</h2>
         </div>
 
         <div className="space-y-4 pt-1">
@@ -150,12 +140,7 @@ export function CheckoutCustomerForm({
           <div className="w-7 h-7 rounded-lg bg-[rgba(18,26,42,0.06)] border border-[rgba(18,26,42,0.15)] text-[#121A2A] flex items-center justify-center text-xs font-bold shadow-xs">
             2
           </div>
-          <div>
-            <h2 className="text-base font-bold text-[#121A2A]">Informasi Kontak Pemesan</h2>
-            <p className="text-[11px] text-[#121A2A]/60">
-              Untuk pengiriman invoice, resi resmi, dan validasi transaksi
-            </p>
-          </div>
+          <h2 className="text-base font-bold text-[#121A2A]">Informasi Kontak Pemesan</h2>
         </div>
 
         <div className="space-y-4 pt-1">

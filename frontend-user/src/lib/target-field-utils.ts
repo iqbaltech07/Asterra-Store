@@ -28,7 +28,7 @@ export function getProductTargetRequirement(item?: {
   if (phoneKeywords.some((k) => combined.includes(k))) {
     return {
       type: 'phone',
-      label: 'Nomor WhatsApp / HP Anda (Data Tujuan VIP Reseller) *',
+      label: 'Nomor WhatsApp / HP Anda *',
       placeholder: 'Masukan Nomor (contoh: 081234567890)',
       helper: 'Masukan nomor Anda. Akun akan dikirim melalui Riwayat Pesanan dan jangan lupa untuk membaca ketentuan.',
       requiresZone: false,
