@@ -23,6 +23,8 @@ import {
   Users,
   Flame,
 } from 'lucide-react';
+import { useGsapReveal } from '@/lib/animations/use-gsap-reveal';
+import { useCountUp } from '@/lib/hooks/use-count-up';
 import { AdminTab } from '@/components/admin/admin-sidebar';
 import { getStoreBaseUrl } from '@/lib/utils/url';
 import type { SalesProfileData, NetworkDataResponse } from '../types';
@@ -60,7 +62,25 @@ export function SalesOverviewTab({
   inviteSalesUrl,
   campaigns,
 }: SalesOverviewTabProps) {
+  const containerRef = useGsapReveal<HTMLDivElement>();
   const referralUrl = `${getStoreBaseUrl()}/?ref=${partnerCode}`;
+
+  const unpaidCommissionVal = partner?.unpaidCommission ?? 0;
+  const totalOrdersVal = partner?.totalOrders ?? 0;
+  const totalClicksVal = partner?.totalClicks ?? 0;
+
+  const displayUnpaidCommission = useCountUp(unpaidCommissionVal, {
+    formatter: (v) => `Rp ${Math.round(v).toLocaleString('id-ID')}`,
+  });
+  const displayTotalOrders = useCountUp(totalOrdersVal, {
+    formatter: (v) => `${Math.round(v).toLocaleString('id-ID')}`,
+  });
+  const displayTotalClicks = useCountUp(totalClicksVal, {
+    formatter: (v) => `${Math.round(v).toLocaleString('id-ID')}`,
+  });
+  const displayRate = useCountUp(partnerRate, {
+    formatter: (v) => `${Math.round(v)}%`,
+  });
 
   const conversionRate = useMemo(() => {
     if (!partner || !partner.totalClicks || partner.totalClicks === 0) return '0.0%';
@@ -69,7 +89,7 @@ export function SalesOverviewTab({
   }, [partner]);
 
   return (
-    <div className="space-y-6">
+    <div ref={containerRef} className="space-y-6">
       {/* Welcome & Referral Banner */}
       <div className="rounded-xl border border-border bg-surface p-6 shadow-xs relative overflow-hidden">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
@@ -212,7 +232,7 @@ export function SalesOverviewTab({
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Card 1: Saldo Komisi Siap Tarik */}
-          <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-3">
+          <div className="gsap-fade-up motion-card-interactive bg-surface border border-border rounded-xl p-5 shadow-xs space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-foreground-muted">Saldo Siap Tarik</span>
               <div className="w-8 h-8 rounded-lg bg-status-success/10 text-status-success flex items-center justify-center">
@@ -220,7 +240,7 @@ export function SalesOverviewTab({
               </div>
             </div>
             <div className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
-              Rp {(partner?.unpaidCommission || 0).toLocaleString('id-ID')}
+              {displayUnpaidCommission}
             </div>
             <div className="pt-2 border-t border-border space-y-1 text-xs">
               <div className="flex items-center justify-between text-foreground-muted">
@@ -245,7 +265,7 @@ export function SalesOverviewTab({
           </div>
 
           {/* Card 2: Pesanan Referral */}
-          <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-3">
+          <div className="gsap-fade-up motion-card-interactive bg-surface border border-border rounded-xl p-5 shadow-xs space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-foreground-muted">Pesanan Referral</span>
               <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
@@ -253,7 +273,7 @@ export function SalesOverviewTab({
               </div>
             </div>
             <div className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
-              {partner?.totalOrders || 0}
+              {displayTotalOrders}
               <span className="text-sm font-normal text-foreground-muted ml-1">transaksi</span>
             </div>
             <div className="pt-2 border-t border-border space-y-1 text-xs">
@@ -273,7 +293,7 @@ export function SalesOverviewTab({
           </div>
 
           {/* Card 3: Traffic & Klik Referral */}
-          <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-3">
+          <div className="gsap-fade-up motion-card-interactive bg-surface border border-border rounded-xl p-5 shadow-xs space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-foreground-muted">Traffic & Klik Link</span>
               <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center">
@@ -281,7 +301,7 @@ export function SalesOverviewTab({
               </div>
             </div>
             <div className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
-              {partner?.totalClicks || 0}
+              {displayTotalClicks}
               <span className="text-sm font-normal text-foreground-muted ml-1">klik</span>
             </div>
             <div className="pt-2 border-t border-border space-y-1 text-xs">
@@ -297,7 +317,7 @@ export function SalesOverviewTab({
           </div>
 
           {/* Card 4: Tingkat Kemitraan */}
-          <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-3">
+          <div className="gsap-fade-up motion-card-interactive bg-surface border border-border rounded-xl p-5 shadow-xs space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-foreground-muted">Tingkat Kemitraan</span>
               <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center">
@@ -305,7 +325,7 @@ export function SalesOverviewTab({
               </div>
             </div>
             <div className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
-              {partnerRate}%
+              {displayRate}
               <span className="text-sm font-normal text-foreground-muted ml-1">Profit Bersih</span>
             </div>
             <div className="pt-2 border-t border-border space-y-1 text-xs">

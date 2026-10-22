@@ -47,6 +47,15 @@ export function AlertDialogRoot({
     }
   };
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsOpen(false);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen]);
+
   return (
     <AlertDialogContext.Provider value={{ isOpen, setIsOpen }}>
       {React.Children.map(children, (child) => {

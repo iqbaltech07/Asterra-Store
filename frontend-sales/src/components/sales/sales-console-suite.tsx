@@ -142,7 +142,7 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
   );
 
   return (
-    <div className="space-y-6">
+    <div key={activeTab} className="space-y-6 animate-tab-glide">
       {/* 1. SALES OVERVIEW TAB */}
       {activeTab === 'sales-overview' && (
         <SalesOverviewTab

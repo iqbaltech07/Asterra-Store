@@ -31,6 +31,8 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useGsapReveal } from '@/lib/animations/use-gsap-reveal';
+import { useCountUp } from '@/lib/hooks/use-count-up';
 import { AdminTab } from './admin-sidebar';
 
 interface AdminDashboardTabProps {
@@ -54,6 +56,7 @@ export function AdminDashboardTab({
   onSyncVip,
   isSyncingVip,
 }: AdminDashboardTabProps) {
+  const containerRef = useGsapReveal<HTMLDivElement>();
   const [salesPeriod, setSalesPeriod] = useState<'daily' | 'weekly' | 'monthly'>('weekly');
 
   const { data: dashboardOverview = null } = useQuery({
@@ -116,8 +119,25 @@ export function AdminDashboardTab({
       ? dashboardOverview.recentTransactions
       : liveOrders;
 
+  // Numeric count-up transitions for top executive metrics (500ms Monetira cubic curve)
+  const targetRevenue = dashboardOverview?.kpi?.totalRevenue ?? liveOrderMetrics?.totalRevenue ?? 0;
+  const targetOrders = dashboardOverview?.kpi?.totalOrders ?? liveOrderMetrics?.total ?? 0;
+  const targetCustomers = dashboardOverview?.kpi?.totalCustomers ?? 0;
+  const targetProfit = dashboardOverview?.kpi?.grossProfit ?? Math.round((liveOrderMetrics?.totalRevenue || 0) * 0.35);
+  const targetPending = dashboardOverview?.kpi?.pendingOrders ?? liveOrderMetrics?.pending ?? 0;
+
+  const displayRevenue = useCountUp(targetRevenue, {
+    formatter: (v) => `Rp ${Math.round(v).toLocaleString('id-ID')}`,
+  });
+  const displayOrders = useCountUp(targetOrders);
+  const displayCustomers = useCountUp(targetCustomers);
+  const displayProfit = useCountUp(targetProfit, {
+    formatter: (v) => `Rp ${Math.round(v).toLocaleString('id-ID')}`,
+  });
+  const displayPending = useCountUp(targetPending);
+
   return (
-    <div className="space-y-6">
+    <div ref={containerRef} className="space-y-6">
       {/* 1. Critical Alerts Bar (Immediate Actionable Items) */}
       <div className="space-y-2.5">
         {/* Alert 1: Saldo Supplier */}
@@ -182,14 +202,14 @@ export function AdminDashboardTab({
         {/* Revenue */}
         <div
           onClick={() => onNavigateTab('revenue')}
-          className="bg-surface border border-border rounded-xl p-4 shadow-xs hover:border-primary/50 transition-all cursor-pointer group"
+          className="gsap-fade-up motion-card-interactive bg-surface border border-border rounded-xl p-4 shadow-xs hover:border-primary/50 transition-all cursor-pointer group"
         >
           <div className="flex items-center justify-between text-xs text-foreground-muted mb-1.5">
             <span>Total Revenue</span>
             <TrendingUp className="w-4 h-4 text-status-success group-hover:scale-110 transition-transform" />
           </div>
           <div className="text-xl font-bold text-foreground">
-            Rp {(dashboardOverview?.kpi?.totalRevenue ?? liveOrderMetrics?.totalRevenue ?? 0).toLocaleString('id-ID')}
+            {displayRevenue}
           </div>
           <span className="text-[10px] text-status-success font-semibold flex items-center gap-1 mt-1">
             ↑ Terverifikasi Sistem
@@ -199,14 +219,14 @@ export function AdminDashboardTab({
         {/* Total Orders */}
         <div
           onClick={() => onNavigateTab('orders')}
-          className="bg-surface border border-border rounded-xl p-4 shadow-xs hover:border-primary/50 transition-all cursor-pointer group"
+          className="gsap-fade-up motion-card-interactive bg-surface border border-border rounded-xl p-4 shadow-xs hover:border-primary/50 transition-all cursor-pointer group"
         >
           <div className="flex items-center justify-between text-xs text-foreground-muted mb-1.5">
             <span>Total Orders</span>
             <ShoppingBag className="w-4 h-4 text-primary group-hover:scale-110 transition-transform" />
           </div>
           <div className="text-xl font-bold text-foreground">
-            {(dashboardOverview?.kpi?.totalOrders ?? liveOrderMetrics?.total ?? 0).toLocaleString('id-ID')}
+            {displayOrders}
           </div>
           <span className="text-[10px] text-foreground-muted block mt-1">
             {(dashboardOverview?.kpi?.completedOrders ?? liveOrderMetrics?.completed ?? 0)} Selesai diproses
@@ -216,14 +236,14 @@ export function AdminDashboardTab({
         {/* Total Customers */}
         <div
           onClick={() => onNavigateTab('customers')}
-          className="bg-surface border border-border rounded-xl p-4 shadow-xs hover:border-primary/50 transition-all cursor-pointer group"
+          className="gsap-fade-up motion-card-interactive bg-surface border border-border rounded-xl p-4 shadow-xs hover:border-primary/50 transition-all cursor-pointer group"
         >
           <div className="flex items-center justify-between text-xs text-foreground-muted mb-1.5">
             <span>Customers</span>
             <Users className="w-4 h-4 text-primary group-hover:scale-110 transition-transform" />
           </div>
           <div className="text-xl font-bold text-foreground">
-            {(dashboardOverview?.kpi?.totalCustomers ?? 0).toLocaleString('id-ID')}
+            {displayCustomers}
           </div>
           <span className="text-[10px] text-status-success font-semibold block mt-1">
             +{dashboardOverview?.kpi?.newCustomers ?? 0} pelanggan terdata
@@ -233,14 +253,14 @@ export function AdminDashboardTab({
         {/* Gross Profit */}
         <div
           onClick={() => onNavigateTab('profit')}
-          className="bg-surface border border-border rounded-xl p-4 shadow-xs hover:border-primary/50 transition-all cursor-pointer group"
+          className="gsap-fade-up motion-card-interactive bg-surface border border-border rounded-xl p-4 shadow-xs hover:border-primary/50 transition-all cursor-pointer group"
         >
           <div className="flex items-center justify-between text-xs text-foreground-muted mb-1.5">
             <span>Gross Profit</span>
             <Coins className="w-4 h-4 text-status-success group-hover:scale-110 transition-transform" />
           </div>
           <div className="text-xl font-bold text-status-success">
-            Rp {(dashboardOverview?.kpi?.grossProfit ?? Math.round((liveOrderMetrics?.totalRevenue || 0) * 0.35)).toLocaleString('id-ID')}
+            {displayProfit}
           </div>
           <span className="text-[10px] text-foreground-muted block mt-1">
             Estimasi Margin {dashboardOverview?.kpi?.profitMarginPercent ?? 35}%
@@ -250,14 +270,14 @@ export function AdminDashboardTab({
         {/* Pending Orders */}
         <div
           onClick={() => onNavigateTab('orders')}
-          className="bg-surface border border-border rounded-xl p-4 shadow-xs hover:border-status-warning/50 transition-all cursor-pointer group col-span-2 md:col-span-1"
+          className="gsap-fade-up motion-card-interactive bg-surface border border-border rounded-xl p-4 shadow-xs hover:border-status-warning/50 transition-all cursor-pointer group col-span-2 md:col-span-1"
         >
           <div className="flex items-center justify-between text-xs text-foreground-muted mb-1.5">
             <span>Pending Orders</span>
             <Clock className="w-4 h-4 text-status-warning group-hover:scale-110 transition-transform" />
           </div>
           <div className="text-xl font-bold text-status-warning">
-            {(dashboardOverview?.kpi?.pendingOrders ?? liveOrderMetrics?.pending ?? 0).toLocaleString('id-ID')}
+            {displayPending}
           </div>
           <span className="text-[10px] text-status-warning block mt-1">
             Menunggu pembayaran
@@ -268,7 +288,7 @@ export function AdminDashboardTab({
       {/* 3. Sales Trend Visualizer & Top Products Quadrant */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Sales Chart (2 cols) */}
-        <div className="lg:col-span-2 bg-surface border border-border rounded-xl p-5 shadow-xs space-y-4">
+        <div className="lg:col-span-2 bg-surface border border-border rounded-xl p-5 shadow-xs space-y-4 motion-card-interactive">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border">
             <div>
               <h3 className="font-bold text-sm text-foreground flex items-center gap-2">
@@ -280,14 +300,27 @@ export function AdminDashboardTab({
               </p>
             </div>
 
-            {/* Period Switcher */}
-            <div className="flex items-center bg-surface-raised p-1 rounded-lg border border-border text-xs">
+            {/* Period Switcher with Smooth Sliding Indicator */}
+            <div className="relative flex items-center bg-surface-raised p-1 rounded-lg border border-border text-xs min-w-[210px]">
+              {/* Sliding Active Pill */}
+              <div
+                className="absolute top-1 bottom-1 rounded-md bg-primary shadow-xs transition-all duration-200 ease-out z-0 pointer-events-none"
+                style={{
+                  left:
+                    salesPeriod === 'daily'
+                      ? '4px'
+                      : salesPeriod === 'weekly'
+                      ? 'calc(33.333% + 2px)'
+                      : 'calc(66.666% - 1px)',
+                  width: 'calc(33.333% - 3px)',
+                }}
+              />
               <button
                 type="button"
                 onClick={() => setSalesPeriod('daily')}
-                className={`px-2.5 py-1 rounded-md transition-colors ${
+                className={`relative z-10 flex-1 px-2.5 py-1 rounded-md text-center font-medium transition-colors duration-150 ${
                   salesPeriod === 'daily'
-                    ? 'bg-primary text-white font-semibold shadow-xs'
+                    ? 'text-white font-semibold'
                     : 'text-foreground-muted hover:text-foreground'
                 }`}
               >
@@ -296,9 +329,9 @@ export function AdminDashboardTab({
               <button
                 type="button"
                 onClick={() => setSalesPeriod('weekly')}
-                className={`px-2.5 py-1 rounded-md transition-colors ${
+                className={`relative z-10 flex-1 px-2.5 py-1 rounded-md text-center font-medium transition-colors duration-150 ${
                   salesPeriod === 'weekly'
-                    ? 'bg-primary text-white font-semibold shadow-xs'
+                    ? 'text-white font-semibold'
                     : 'text-foreground-muted hover:text-foreground'
                 }`}
               >
@@ -307,9 +340,9 @@ export function AdminDashboardTab({
               <button
                 type="button"
                 onClick={() => setSalesPeriod('monthly')}
-                className={`px-2.5 py-1 rounded-md transition-colors ${
+                className={`relative z-10 flex-1 px-2.5 py-1 rounded-md text-center font-medium transition-colors duration-150 ${
                   salesPeriod === 'monthly'
-                    ? 'bg-primary text-white font-semibold shadow-xs'
+                    ? 'text-white font-semibold'
                     : 'text-foreground-muted hover:text-foreground'
                 }`}
               >
@@ -318,22 +351,25 @@ export function AdminDashboardTab({
             </div>
           </div>
 
-          {/* Bar Chart Visualization */}
+          {/* Bar Chart Visualization with Smooth Transitions */}
           <div className="pt-2">
-            <div className="h-44 flex items-end gap-3 sm:gap-6 justify-between px-2">
+            <div
+              key={salesPeriod}
+              className="h-44 flex items-end gap-3 sm:gap-6 justify-between px-2 animate-tab-glide"
+            >
               {salesData.map((d, idx) => {
                 const heightPercent = Math.max(14, Math.round((d.revenue / maxRevenue) * 100));
 
                 return (
                   <div key={idx} className="flex-1 flex flex-col items-center gap-2 group h-full justify-end">
                     {/* Hover Tooltip Amount */}
-                    <span className="text-[10px] font-mono text-foreground font-semibold opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                      Rp {(d.revenue / 1000).toLocaleString('id-ID')}k
-                    </span>
+                    <div className="text-[10px] font-mono text-foreground font-semibold opacity-0 group-hover:opacity-100 transition-all duration-150 transform -translate-y-1 group-hover:translate-y-0 whitespace-nowrap bg-surface-raised border border-border px-1.5 py-0.5 rounded shadow-xs pointer-events-none">
+                      Rp {d.revenue.toLocaleString('id-ID')}
+                    </div>
 
-                    {/* Bar */}
+                    {/* Animated Bar with smooth height & hover */}
                     <div
-                      className="w-full bg-primary/20 hover:bg-primary rounded-t-md transition-all group-hover:shadow-md cursor-pointer relative"
+                      className="w-full bg-primary/20 hover:bg-primary rounded-t-md group-hover:shadow-md cursor-pointer relative transition-[height,background-color] duration-500 ease-out"
                       style={{ height: `${heightPercent}%` }}
                     >
                       <div className="absolute top-1 left-0 right-0 h-1 bg-primary/40 rounded-t-md" />
@@ -444,7 +480,7 @@ export function AdminDashboardTab({
                   const status = tx.status;
                   const time = tx.time || (tx.createdAt ? new Date(tx.createdAt).toLocaleDateString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '-');
                   return (
-                    <tr key={id} className="hover:bg-surface-raised/40">
+                    <tr key={id} className="hover:bg-surface-raised/70 transition-colors duration-150">
                       <td className="py-2.5 pr-2">
                         <span className="font-mono font-bold text-foreground block">{id}</span>
                         <span className="text-[10px] text-foreground-muted">{customer} • {time}</span>
