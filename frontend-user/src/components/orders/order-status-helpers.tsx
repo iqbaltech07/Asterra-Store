@@ -2,17 +2,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  faClock,
-  faCircleCheck,
-  faCircleExclamation,
-} from '@fortawesome/free-solid-svg-icons';
+import { faClock } from '@fortawesome/free-solid-svg-icons';
 import { Order } from '@/lib/orders-data';
 
 export const STATUS_FILTERS = [
   { value: 'all', label: 'Semua Status' },
   { value: 'pending', label: 'Menunggu Pembayaran' },
-  { value: 'processing', label: 'Sedang Diproses' },
+  { value: 'processing', label: 'Pesanan Diproses' },
   { value: 'completed', label: 'Selesai' },
   { value: 'cancelled', label: 'Dibatalkan' },
 ];
@@ -60,7 +56,7 @@ export function OrderCountdownBadge({
 
   return (
     <span
-      className={`text-[10px] font-mono px-2 py-0.5 rounded border inline-flex items-center gap-1 ${
+      className={`text-[10px] tabular-nums font-medium px-2 py-0.5 rounded border inline-flex items-center gap-1 ${
         isExpired
           ? 'bg-status-error/10 text-status-error border-status-error/30'
           : 'bg-status-warning/10 text-status-warning border-status-warning/30'
@@ -91,44 +87,62 @@ export function getStatusBadge(status: Order['order_status']) {
   switch (status) {
     case 'completed':
       return (
-        <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-status-success/15 text-status-success font-medium inline-flex items-center gap-1">
-          <FontAwesomeIcon icon={faCircleCheck} className="w-3 h-3" />
+        <span className="text-[12px] px-2.5 py-0.5 rounded-full bg-[#dcfae5] text-[#04250e] border border-[#bbf7d0] font-medium inline-flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#16a34a] shrink-0" />
           <span>Selesai</span>
         </span>
       );
     case 'processing':
       return (
-        <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-status-info/15 text-status-info font-medium inline-flex items-center gap-1">
-          <FontAwesomeIcon icon={faClock} className="w-3 h-3" />
-          <span>Di Proses</span>
+        <span className="text-[12px] px-2.5 py-0.5 rounded-full bg-[#e0f2fe] text-[#0369a1] border border-[#bae6fd] font-medium inline-flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#0284c7] shrink-0" />
+          <span>Pesanan Diproses</span>
         </span>
       );
     case 'pending':
       return (
-        <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-status-warning/15 text-status-warning font-medium inline-flex items-center gap-1">
-          <FontAwesomeIcon icon={faCircleExclamation} className="w-3 h-3" />
+        <span className="text-[12px] px-2.5 py-0.5 rounded-full bg-[#fffbeb] text-[#92400e] border border-[#fef3c7] font-medium inline-flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#d97706] shrink-0" />
           <span>Menunggu Pembayaran</span>
         </span>
       );
     case 'cancelled':
       return (
-        <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-status-error/15 text-status-error font-medium inline-flex items-center gap-1">
-          <FontAwesomeIcon icon={faCircleExclamation} className="w-3 h-3" />
+        <span className="text-[12px] px-2.5 py-0.5 rounded-full bg-[#ffedea] text-[#831c1e] border border-[#fecdd3] font-medium inline-flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#dc2626] shrink-0" />
           <span>Dibatalkan</span>
         </span>
       );
     default:
       return (
-        <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-surface-raised text-foreground-muted font-medium">
+        <span className="text-[12px] px-2.5 py-0.5 rounded-full bg-[#f4f4f5] text-[#3f3f46] border border-[#e4e4e7] font-medium">
           {status}
         </span>
       );
   }
 }
 
+export function formatFriendlyPaymentMethod(rawMethod?: string): string {
+  if (!rawMethod) return 'Pembayaran Instan';
+  const m = rawMethod.toLowerCase().trim();
+  if (m === 'manual_qris' || m === 'qris_manual') return 'QRIS (Verifikasi Manual)';
+  if (m === 'manual_bca') return 'Transfer Bank BCA';
+  if (m === 'manual_dana') return 'Transfer DANA';
+  if (m.includes('qris')) return 'QRIS Instan';
+  if (m.includes('bcava') || m === 'bca_va') return 'BCA Virtual Account';
+  if (m.includes('mandiriva') || m === 'mandiri_va') return 'Mandiri Virtual Account';
+  if (m.includes('briva') || m === 'bri_va') return 'BRI Virtual Account';
+  if (m.includes('bniva') || m === 'bni_va') return 'BNI Virtual Account';
+  if (m.includes('dana')) return 'DANA E-Wallet';
+  if (m.includes('ovo')) return 'OVO';
+  if (m.includes('shopeepay')) return 'ShopeePay';
+  if (m.includes('saldo')) return 'Saldo Akun Asterra';
+  return rawMethod.replace(/_/g, ' ').toUpperCase();
+}
+
 export function getTimelineStep(order: Order): number {
   if (order.order_status === 'cancelled') {
-    return 1;
+    return 0;
   }
   if (order.order_status === 'completed') {
     return 4;

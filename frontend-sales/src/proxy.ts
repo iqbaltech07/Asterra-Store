@@ -1,14 +1,30 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { getSessionCookie } from 'better-auth/cookies';
 
+function isValidToken(val?: string | null): boolean {
+  if (!val) return false;
+  const trimmed = val.trim();
+  return (
+    trimmed.length > 10 &&
+    trimmed !== 'undefined' &&
+    trimmed !== 'null' &&
+    trimmed !== 'deleted'
+  );
+}
+
 /**
  * Checks for a valid Better Auth session across requests.
  * Uses official Better Auth getSessionCookie and checks standard session cookies/tokens.
  */
 function getActiveAuthSession(request: NextRequest): string | null {
+  // If request explicitly signals logout, treat as unauthenticated
+  if (request.nextUrl.searchParams.has('logged_out')) {
+    return null;
+  }
+
   // 1. Official Better Auth session cookie helper
   const betterAuthCookie = getSessionCookie(request);
-  if (betterAuthCookie) return betterAuthCookie;
+  if (betterAuthCookie && isValidToken(betterAuthCookie)) return betterAuthCookie;
 
   // 2. Direct session cookie checks
   const token =
@@ -16,12 +32,13 @@ function getActiveAuthSession(request: NextRequest): string | null {
     request.cookies.get('__Secure-better-auth.session_token')?.value ||
     request.cookies.get('asterra_admin_session')?.value ||
     request.cookies.get('asterra_session')?.value;
-  if (token) return token;
+  if (token && isValidToken(token)) return token;
 
   // 3. Authorization Bearer header fallback
   const authHeader = request.headers.get('authorization');
   if (authHeader && authHeader.toLowerCase().startsWith('bearer ')) {
-    return authHeader.slice(7).trim();
+    const bearer = authHeader.slice(7).trim();
+    if (bearer && isValidToken(bearer)) return bearer;
   }
 
   return null;
@@ -36,29 +53,33 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   const session = getActiveAuthSession(request);
   const isAuthenticated = Boolean(session);
 
-  // 1. Admin Page Routes Protection (/admin/*)
+  // 1. Admin Routes in frontend-sales (Redirect to /sales)
   if (pathname.startsWith('/admin')) {
-    if (pathname === '/admin/login') {
-      if (isAuthenticated) {
-        return NextResponse.redirect(new URL('/admin', request.url));
-      }
-      return applySecurityHeaders(NextResponse.next());
-    }
-
-    if (!isAuthenticated) {
-      const loginUrl = new URL('/admin/login', request.url);
-      loginUrl.searchParams.set('callbackUrl', pathname + search);
-      return NextResponse.redirect(loginUrl);
-    }
+    return NextResponse.redirect(new URL('/sales', request.url));
   }
 
   // 2. Sales Portal Page Routes Protection (/sales/*)
   if (pathname.startsWith('/sales')) {
     if (pathname === '/sales/login') {
-      if (isAuthenticated) {
+      const isLoggedOut = request.nextUrl.searchParams.has('logged_out');
+      if (isAuthenticated && !isLoggedOut) {
         return NextResponse.redirect(new URL('/sales', request.url));
       }
-      return applySecurityHeaders(NextResponse.next());
+      
+      const response = applySecurityHeaders(NextResponse.next());
+      // Clean up lingering cookies if explicitly logged out
+      if (isLoggedOut) {
+        const cookieNames = [
+          'better-auth.session_token',
+          '__Secure-better-auth.session_token',
+          'asterra_admin_session',
+          'asterra_session',
+        ];
+        cookieNames.forEach((name) => {
+          response.cookies.delete(name);
+        });
+      }
+      return response;
     }
 
     if (!isAuthenticated) {

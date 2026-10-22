@@ -182,14 +182,69 @@ def validate_referral(
 @router.post("/affiliate/register", tags=["Affiliate"])
 async def register_sales_affiliate(request: Request):
     payload = await request.json()
-    res = PartnerService.register_partner(payload)
+    res = PartnerService.register_partner(payload, require_otp=True)
     if not res.get("success"):
         return JSONResponse(status_code=400, content=res)
     return {
         "success": True,
         "message": res.get("message"),
+        "requireOtp": res.get("requireOtp", False),
+        "email": res.get("email"),
         "data": res.get("partner"),
     }
+
+@router.post("/affiliate/verify-otp", tags=["Affiliate"])
+async def verify_sales_affiliate_otp(request: Request, response: Response):
+    payload = await request.json()
+    email = payload.get("email", "").strip()
+    otp = payload.get("otp", "").strip()
+    if not email or not otp:
+        return JSONResponse(status_code=400, content={"success": False, "message": "Email dan kode OTP wajib diisi."})
+
+    res = PartnerService.verify_partner_otp(email, otp)
+    if not res.get("success"):
+        return JSONResponse(status_code=400, content=res)
+
+    token = res.get("token")
+    if token:
+        is_prod = os.getenv("NODE_ENV") == "production"
+        response.set_cookie(
+            key="asterra_admin_session",
+            value=token,
+            max_age=8 * 3600,
+            httponly=True,
+            samesite="lax",
+            secure=is_prod,
+            path="/"
+        )
+        response.set_cookie(
+            key="better-auth.session_token",
+            value=token,
+            max_age=8 * 3600,
+            httponly=True,
+            samesite="lax",
+            secure=is_prod,
+            path="/"
+        )
+
+    return {
+        "success": True,
+        "message": res.get("message"),
+        "data": res.get("partner"),
+        "token": token,
+    }
+
+@router.post("/affiliate/resend-otp", tags=["Affiliate"])
+async def resend_sales_affiliate_otp(request: Request):
+    payload = await request.json()
+    email = payload.get("email", "").strip()
+    if not email:
+        return JSONResponse(status_code=400, content={"success": False, "message": "Email wajib diisi."})
+
+    res = PartnerService.resend_partner_otp(email)
+    if not res.get("success"):
+        return JSONResponse(status_code=400, content=res)
+    return res
 
 @router.post("/affiliate/track-click", tags=["Affiliate"])
 async def track_affiliate_click(request: Request):

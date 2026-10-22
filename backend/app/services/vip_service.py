@@ -853,6 +853,13 @@ class VipService:
                 db.commit()
                 db.refresh(order)
 
+                if order.status == "completed" and prev_status != "completed":
+                    try:
+                        from app.services.email_service import EmailService
+                        EmailService.send_order_completed_email(order.to_dict())
+                    except Exception as email_err:
+                        print(f"[VipService:check_live] Email completed dispatch note: {email_err}")
+
                 from app.services.audit_log_service import AuditLogService
                 from app.core.cache import cache
 
@@ -927,6 +934,13 @@ class VipService:
             order.updated_at = datetime.utcnow()
             db.commit()
             db.refresh(order)
+
+            if order.status == "completed" and prev_status != "completed":
+                try:
+                    from app.services.email_service import EmailService
+                    EmailService.send_order_completed_email(order.to_dict())
+                except Exception as email_err:
+                    print(f"[VipService:webhook] Email completed dispatch note: {email_err}")
 
             from app.services.audit_log_service import AuditLogService
             from app.core.cache import cache

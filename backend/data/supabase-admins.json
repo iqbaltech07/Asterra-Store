@@ -40,8 +40,8 @@
     "isActive": true,
     "role": "sales",
     "createdAt": "2026-10-06T22:41:11.491000",
-    "updatedAt": "2026-10-15T18:09:47.738000",
-    "passwordHash": "$2b$10$p8cMsuRJoR/n.Wk/k189N.dtF8ks2wZ339mgAy7.OFpjoHo7eIdfy"
+    "updatedAt": "2026-10-15T19:21:45.720000",
+    "passwordHash": "4e93944ed7a96f8197773d0f88db79dd023b4b41695fc6c0761794554789fed9"
   },
   {
     "id": "cmuxcxsa60002kx04gb6ziit5",
@@ -86,5 +86,16 @@
     "createdAt": "2026-10-15T18:56:10.313000",
     "updatedAt": "2026-10-15T18:57:30.527000",
     "passwordHash": "34f9f0eb3d8702048f133a12b4a3ea09ca82b50d53f65be9ccf3f6cf90237358"
+  },
+  {
+    "id": "adm-sales-1792618721",
+    "username": "sales-astsales7md",
+    "email": "sales@asterra.store",
+    "name": "Sales Representative",
+    "isActive": true,
+    "role": "sales",
+    "createdAt": "2026-10-22T04:38:41.694000",
+    "updatedAt": "2026-10-22T04:38:41.694000",
+    "passwordHash": "$2b$12$3VblxmzhoBmQG9CtT5hsKOyN6TvGA2hVLkduA59RjxIB9VPKR85om"
   }
 ]

@@ -1,5 +1,7 @@
 import json
 import pathlib
+import secrets
+import time
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional
 
@@ -16,6 +18,7 @@ ADMINS_FILE = DATA_DIR / "supabase-admins.json"
 class PartnerService:
     _partners: Optional[List[Dict[str, Any]]] = None
     _last_loaded: Optional[datetime] = None
+    _pending_registrations: Dict[str, Dict[str, Any]] = {}
 
     @classmethod
     def load_partners(cls, force_reload: bool = False) -> List[Dict[str, Any]]:
@@ -467,7 +470,7 @@ class PartnerService:
 
 
     @classmethod
-    def register_partner(cls, payload: Dict[str, Any]) -> Dict[str, Any]:
+    def register_partner(cls, payload: Dict[str, Any], require_otp: bool = True) -> Dict[str, Any]:
         partners = cls.load_partners()
         name = payload.get("name", "").strip()
         email = payload.get("email", "").strip().lower()
@@ -475,10 +478,190 @@ class PartnerService:
         custom_code = payload.get("customCode") or payload.get("code")
         ref_by = payload.get("referredByCode") or payload.get("referralCode")
 
-        # Check existing
-        existing = next((p for p in partners if p.get("email", "").lower() == email or p.get("whatsapp") == whatsapp), None)
+        if not name:
+            return {"success": False, "message": "Nama lengkap wajib diisi."}
+        if not email or "@" not in email:
+            return {"success": False, "message": "Format alamat email tidak valid."}
+        if not whatsapp:
+            return {"success": False, "message": "Nomor WhatsApp wajib diisi."}
+
+        # Check existing active partner
+        existing = next(
+            (p for p in partners if (p.get("email", "").lower() == email or p.get("whatsapp") == whatsapp) and str(p.get("status", "")).lower() in ["active", "aktif"]),
+            None
+        )
         if existing:
-            return {"success": False, "message": f"Akun sales dengan email/WhatsApp ini sudah terdaftar (Kode: {existing.get('code')})"}
+            return {"success": False, "message": f"Akun sales dengan email/WhatsApp ini sudah aktif (Kode: {existing.get('code')}). Silakan langsung masuk."}
+
+        # If OTP verification is required (public registration flow)
+        if require_otp:
+            from app.core.cache import SmartCache
+            from app.services.email_service import EmailService
+
+            # Generate 6-digit cryptographic random OTP
+            otp_code = f"{secrets.randbelow(900000) + 100000}"
+            now = time.time()
+            pending_data = {
+                "name": name,
+                "email": email,
+                "whatsapp": whatsapp,
+                "password": str(payload.get("password") or "AsterraSales#2026").strip(),
+                "customCode": custom_code,
+                "referralCode": ref_by,
+                "bankName": payload.get("bankName") or "Bank Central Asia (BCA)",
+                "bankAccount": payload.get("bankAccount") or "-",
+                "otp": otp_code,
+                "attempts": 0,
+                "createdAt": now,
+                "expiresAt": now + 600,  # 10 minutes
+                "lastResendAt": now,
+            }
+
+            # Store in local memory and Upstash Redis cache
+            cls._pending_registrations[email] = pending_data
+            SmartCache.set("sales_reg_otp", email, pending_data, ttl=600)
+
+            # Send email with branded template
+            EmailService.send_otp_email(to_email=email, recipient_name=name, otp_code=otp_code)
+
+            return {
+                "success": True,
+                "requireOtp": True,
+                "email": email,
+                "message": f"Kode OTP verifikasi telah dikirim ke email {email}. Silakan masukkan kode untuk mengaktifkan akun.",
+            }
+
+        # Direct activation path (admin creation or bypassed OTP)
+        return cls._activate_partner_account(payload)
+
+    @classmethod
+    def verify_partner_otp(cls, email: str, otp: str) -> Dict[str, Any]:
+        from app.core.cache import SmartCache
+        email = str(email or "").strip().lower()
+        otp = str(otp or "").strip()
+
+        if not email or not otp:
+            return {"success": False, "message": "Email dan kode OTP wajib diisi."}
+
+        # Retrieve pending registration
+        pending = cls._pending_registrations.get(email)
+        if not pending:
+            cached = SmartCache.get("sales_reg_otp", email)
+            if cached and isinstance(cached, dict):
+                pending = cached
+
+        if not pending:
+            return {
+                "success": False,
+                "message": "Sesi pendaftaran tidak ditemukan atau sudah kedaluwarsa. Silakan daftar kembali.",
+            }
+
+        # Check expiration (10 minutes)
+        if time.time() > pending.get("expiresAt", 0):
+            return {
+                "success": False,
+                "message": "Kode OTP telah kedaluwarsa. Silakan klik 'Kirim Ulang OTP'.",
+            }
+
+        # Check maximum failed attempts
+        if pending.get("attempts", 0) >= 5:
+            return {
+                "success": False,
+                "message": "Terlalu banyak percobaan kode salah. Silakan minta kode OTP baru.",
+            }
+
+        # Verify OTP code
+        if str(pending.get("otp")) != otp:
+            pending["attempts"] = pending.get("attempts", 0) + 1
+            cls._pending_registrations[email] = pending
+            SmartCache.set("sales_reg_otp", email, pending, ttl=600)
+            remaining = max(0, 5 - pending["attempts"])
+            return {
+                "success": False,
+                "message": f"Kode OTP tidak cocok. Sisa kesempatan: {remaining} kali.",
+            }
+
+        # OTP is verified! Activate account
+        result = cls._activate_partner_account(pending)
+        if result.get("success"):
+            # Clean up pending OTP
+            cls._pending_registrations.pop(email, None)
+            SmartCache.set("sales_reg_otp", email, None, ttl=1)
+
+            # Issue authenticated session token
+            from app.core.auth import create_admin_session_token
+            partner = result.get("partner") or {}
+            token = create_admin_session_token(
+                id_val=partner.get("id", f"partner-{int(time.time())}"),
+                email=email,
+                role="sales",
+                name=partner.get("name", ""),
+            )
+            result["token"] = token
+            result["message"] = "Verifikasi email berhasil! Akun mitra sales Anda telah aktif."
+
+        return result
+
+    @classmethod
+    def resend_partner_otp(cls, email: str) -> Dict[str, Any]:
+        from app.core.cache import SmartCache
+        from app.services.email_service import EmailService
+
+        email = str(email or "").strip().lower()
+        if not email:
+            return {"success": False, "message": "Alamat email wajib diisi."}
+
+        pending = cls._pending_registrations.get(email)
+        if not pending:
+            cached = SmartCache.get("sales_reg_otp", email)
+            if cached and isinstance(cached, dict):
+                pending = cached
+
+        if not pending:
+            return {
+                "success": False,
+                "message": "Data pendaftaran tidak ditemukan atau sudah kedaluwarsa. Silakan daftar kembali.",
+            }
+
+        # Rate limit cooldown: 60 seconds
+        now = time.time()
+        elapsed = now - pending.get("lastResendAt", 0)
+        if elapsed < 60:
+            return {
+                "success": False,
+                "message": f"Harap tunggu {int(60 - elapsed)} detik sebelum meminta kode baru.",
+            }
+
+        # Generate new OTP code
+        new_otp = f"{secrets.randbelow(900000) + 100000}"
+        pending["otp"] = new_otp
+        pending["attempts"] = 0
+        pending["expiresAt"] = now + 600
+        pending["lastResendAt"] = now
+
+        cls._pending_registrations[email] = pending
+        SmartCache.set("sales_reg_otp", email, pending, ttl=600)
+
+        # Dispatch email
+        EmailService.send_otp_email(
+            to_email=email,
+            recipient_name=pending.get("name", "Mitra Sales"),
+            otp_code=new_otp
+        )
+
+        return {
+            "success": True,
+            "message": f"Kode OTP baru telah berhasil dikirim ke email {email}.",
+        }
+
+    @classmethod
+    def _activate_partner_account(cls, payload: Dict[str, Any]) -> Dict[str, Any]:
+        partners = cls.load_partners()
+        name = payload.get("name", "").strip()
+        email = payload.get("email", "").strip().lower()
+        whatsapp = payload.get("whatsapp", "").strip()
+        custom_code = payload.get("customCode") or payload.get("code")
+        ref_by = payload.get("referralCode") or payload.get("referredByCode")
 
         # Find recruiter if provided
         recruiter_id = None
@@ -517,28 +700,40 @@ class PartnerService:
         try:
             db = SessionLocal()
             try:
-                p_obj = SalesPartner(
-                    id=new_partner["id"],
-                    name=name,
-                    email=email,
-                    whatsapp=whatsapp,
-                    code=custom_code,
-                    tier="Standard (10%)",
-                    rate=10,
-                    total_clicks=0,
-                    bank_name=new_partner["bankName"],
-                    bank_account=new_partner["bankAccount"],
-                    status="active",
-                    referred_by_id=recruiter_id,
-                )
-                db.add(p_obj)
+                # Remove any existing inactive partner record with same email
+                existing_p = db.query(SalesPartner).filter(SalesPartner.email.ilike(email)).first()
+                if existing_p:
+                    existing_p.name = name
+                    existing_p.whatsapp = whatsapp
+                    existing_p.code = custom_code
+                    existing_p.status = "active"
+                    existing_p.referred_by_id = recruiter_id
+                    new_partner["id"] = existing_p.id
+                else:
+                    p_obj = SalesPartner(
+                        id=new_partner["id"],
+                        name=name,
+                        email=email,
+                        whatsapp=whatsapp,
+                        code=custom_code,
+                        tier="Standard (10%)",
+                        rate=10,
+                        total_clicks=0,
+                        bank_name=new_partner["bankName"],
+                        bank_account=new_partner["bankAccount"],
+                        status="active",
+                        referred_by_id=recruiter_id,
+                    )
+                    db.add(p_obj)
                 db.commit()
             finally:
                 db.close()
         except Exception as e:
-            print(f"[PartnerService] Error creating partner in DB: {e}")
+            print(f"[PartnerService] Error persisting partner to DB: {e}")
 
-        partners.append(new_partner)
+        # Update JSON store
+        cls._partners = [p for p in partners if p.get("email", "").lower() != email]
+        cls._partners.append(new_partner)
         cls.save_partners()
 
         # 2. Persist sales account directly to AdminUser table with secure password hash
@@ -576,7 +771,7 @@ class PartnerService:
         except Exception as e:
             print(f"[PartnerService] Error creating AdminUser for partner: {e}")
 
-        # Also refresh admin user cache
+        # Refresh admin user cache
         from app.services.admin_user_service import AdminUserService
         AdminUserService.load_admins(force_reload=True)
 

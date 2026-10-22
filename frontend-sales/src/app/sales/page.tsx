@@ -66,16 +66,32 @@ export default function SalesPortalPage() {
       if (typeof window !== 'undefined') {
         localStorage.removeItem('asterra_admin_token');
         localStorage.removeItem('asterra_admin_user');
+        localStorage.removeItem('asterra_sales_token');
+        sessionStorage.clear();
+
+        // Expire all auth cookies on client domain
+        const cookieNames = [
+          'better-auth.session_token',
+          '__Secure-better-auth.session_token',
+          'asterra_admin_session',
+          'asterra_session',
+        ];
+        cookieNames.forEach((name) => {
+          document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; Max-Age=0;`;
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; Max-Age=0;`;
+        });
       }
-      await fetch('/api/v1/admin/auth/logout', {
-        method: 'POST',
-        credentials: 'include',
-      });
+
+      // Purge sessions on both Next.js route handler and FastAPI backend
+      await Promise.allSettled([
+        fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }),
+        fetch('/api/v1/admin/auth/logout', { method: 'POST', credentials: 'include' }),
+      ]);
     } catch {
-      // ignore
+      // ignore network errors during logout
     } finally {
       if (typeof window !== 'undefined') {
-        window.location.href = '/sales/login?logged_out=1';
+        window.location.replace('/sales/login?logged_out=1');
       }
     }
   };

@@ -631,7 +631,9 @@ class OrderService:
                         order_obj.payment_status = "cancelled"
                     if notes:
                         curr_notes = order_obj.customer_notes or ""
-                        order_obj.customer_notes = f"{curr_notes} | Admin: {notes}".strip(" | ")
+                        # Only append if not an automated admin status change log
+                        if not notes.lower().startswith("status pesanan diubah"):
+                            order_obj.customer_notes = f"{curr_notes} | Admin: {notes}".strip(" | ")
 
                     db.commit()
                     db.refresh(order_obj)
@@ -704,6 +706,18 @@ class OrderService:
             )
         except Exception as e:
             print(f"[OrderService] Status audit log note: {e}")
+
+        # 5. Dispatch Customer Automated Email Notifications (Completed with Credentials, or Cancelled)
+        if normalized and (prev_st != normalized.get("status") or prev_st != new_status):
+            current_final_status = (normalized.get("status") or new_status).lower()
+            try:
+                from app.services.email_service import EmailService
+                if current_final_status in ["completed", "selesai"]:
+                    EmailService.send_order_completed_email(normalized)
+                elif current_final_status in ["cancelled", "batal", "expired"]:
+                    EmailService.send_order_cancelled_email(normalized, reason=notes)
+            except Exception as email_err:
+                print(f"[OrderService] Customer email notification dispatch note: {email_err}")
 
         return normalized
 

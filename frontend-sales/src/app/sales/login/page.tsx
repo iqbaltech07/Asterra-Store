@@ -267,7 +267,7 @@ function SalesLoginContent() {
 
       {/* Footer Info */}
       <div className="mt-8 text-center text-[11px] text-foreground-muted space-y-1 max-w-sm">
-        <p>Staf Toko / Pengelola Katalog? Masuk melalui <Link href="/admin/login" className="text-primary font-medium hover:underline">Portal Administrator</Link></p>
+        <p>Staf Toko / Pengelola Katalog? Masuk melalui <a href="http://localhost:3001/admin/login" className="text-primary font-medium hover:underline">Portal Administrator (Port 3001)</a></p>
       </div>
     </div>
   );

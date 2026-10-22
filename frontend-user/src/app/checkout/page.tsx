@@ -25,7 +25,13 @@ import {
   ManualPaymentModalData,
 } from '@/components/checkout/checkout-manual-modal';
 import { AuthRequiredModal } from '@/components/auth/auth-required-modal';
-import { getProductTargetRequirement } from '@/lib/target-field-utils';
+import {
+  getProductTargetRequirement,
+  validateTargetValue,
+  validateTargetZone,
+  validateContactEmail,
+  validateContactPhone,
+} from '@/lib/target-field-utils';
 
 const GATEWAY_PAYMENT_METHODS: PaymentMethodOption[] = [
   {
@@ -311,9 +317,10 @@ function CheckoutPageContent() {
     let isCancelled = false;
     const checkRef = async () => {
       try {
+        const effectiveRefEmail = customerEmail.trim() || (targetRequirement.type === 'email' ? targetValue.trim() : '') || session?.user?.email || '';
         const query = new URLSearchParams({
           code: referralCode.trim(),
-          ...(targetEmail.trim() ? { email: targetEmail.trim() } : {}),
+          ...(effectiveRefEmail ? { email: effectiveRefEmail } : {}),
           ...(phoneNumber.trim() ? { phone: phoneNumber.trim() } : {}),
         });
         const res = await fetch(`/api/v1/affiliate/validate-referral?${query.toString()}`);
@@ -353,7 +360,7 @@ function CheckoutPageContent() {
     return () => {
       isCancelled = true;
     };
-  }, [referralCode, targetEmail, phoneNumber]);
+  }, [referralCode, customerEmail, targetValue, phoneNumber, targetRequirement.type]);
 
   // Default fallback ensuring zero-delay rendering for users
   const DEFAULT_PUBLIC_CONFIG: PublicPaymentConfig = {
@@ -408,16 +415,17 @@ function CheckoutPageContent() {
   });
 
 
-  // Auto-fill from active Better Auth session or legacy auth store
+  // Auto-fill customer contact details from active Better Auth session or legacy auth store
+  // NOTE: Target activation data (targetValue/targetZone) must NOT be filled automatically!
   useEffect(() => {
     const authUser = session?.user || legacyUser;
     if (authUser) {
       if (authUser.name) setCustomerName((curr) => curr || authUser.name || '');
-      if (authUser.email) setTargetEmail((curr) => curr || authUser.email || '');
+      if (authUser.email) setCustomerEmail((curr) => curr || authUser.email || '');
     }
   }, [session, legacyUser]);
 
-  // Fetch saved WhatsApp number and verified profile details
+  // Fetch saved WhatsApp number and verified profile details for customer contact (Card 2)
   useEffect(() => {
     if (session?.user) {
       const emailParam = session?.user?.email ? `?email=${encodeURIComponent(session.user.email)}` : '';
@@ -426,7 +434,7 @@ function CheckoutPageContent() {
         .then((json) => {
           if (json.success && json.data) {
             if (json.data.name) setCustomerName((curr) => curr || json.data.name);
-            if (json.data.email) setTargetEmail((curr) => curr || json.data.email);
+            if (json.data.email) setCustomerEmail((curr) => curr || json.data.email);
             if (json.data.phone) setPhoneNumber((curr) => curr || json.data.phone);
           }
         })
@@ -652,38 +660,40 @@ function CheckoutPageContent() {
       return false;
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (customerEmail.trim() && !emailRegex.test(customerEmail.trim())) {
-      showNotification('Format email pemesan tidak valid.');
+    // 1. Zod Validation: Data Tujuan Aktivasi (Card 1)
+    const targetValidation = validateTargetValue(targetRequirement.type, targetValue);
+    if (!targetValidation.isValid) {
+      showNotification(
+        targetValidation.error || `Mohon lengkapi data tujuan (${targetRequirement.label.replace(' *', '')}).`
+      );
       return false;
     }
 
+    // 2. Zod Validation: Server / Zone ID (jika game membutuhkan Zone ID)
+    if (targetRequirement.requiresZone) {
+      const zoneValidation = validateTargetZone(targetZone);
+      if (!zoneValidation.isValid) {
+        showNotification(zoneValidation.error || 'Mohon lengkapi Server / Zone ID game Anda.');
+        return false;
+      }
+    }
+
+    // 3. Zod Validation: Nomor WhatsApp Kontak Pemesan (Card 2)
     if (!phoneNumber.trim()) {
       showNotification('Mohon lengkapi nomor WhatsApp kontak pemesan.');
       return false;
     }
-
-    // Dynamic Target Field Validation
-    const effectiveTarget = (targetValue || targetEmail).trim();
-    if (!effectiveTarget) {
-      showNotification(`Mohon lengkapi ${targetRequirement.label.replace(' *', '')}.`);
+    const phoneValidation = validateContactPhone(phoneNumber);
+    if (!phoneValidation.isValid) {
+      showNotification(phoneValidation.error || 'Nomor WhatsApp kontak pemesan tidak valid.');
       return false;
     }
 
-    if (targetRequirement.type === 'email') {
-      if (!emailRegex.test(effectiveTarget)) {
-        showNotification('Format email aktivasi akun tidak valid.');
-        return false;
-      }
-    } else if (targetRequirement.type === 'phone') {
-      const cleanPhone = effectiveTarget.replace(/\D/g, '');
-      if (cleanPhone.length < 8) {
-        showNotification('Format nomor telepon / WhatsApp tujuan tidak valid (minimal 8 angka).');
-        return false;
-      }
-    } else if (targetRequirement.type === 'game') {
-      if (targetRequirement.requiresZone && !targetZone.trim()) {
-        showNotification('Mohon lengkapi Server / Zone ID game Anda.');
+    // 4. Zod Validation: Email Kontak Pemesan (Invoice) jika diisi
+    if (customerEmail.trim()) {
+      const emailValidation = validateContactEmail(customerEmail);
+      if (!emailValidation.isValid) {
+        showNotification(emailValidation.error || 'Format email pemesan tidak valid.');
         return false;
       }
     }
@@ -750,9 +760,17 @@ function CheckoutPageContent() {
         }
       }
 
+      const invoiceEmail =
+        customerEmail.trim() ||
+        (targetRequirement.type === 'email' ? targetValue.trim() : '') ||
+        session?.user?.email ||
+        '';
+
       if (typeof window !== 'undefined') {
         try {
-          localStorage.setItem('asterra_customer_email', targetEmail.trim());
+          if (invoiceEmail) {
+            localStorage.setItem('asterra_customer_email', invoiceEmail);
+          }
           localStorage.setItem('asterra_last_order_id', createdOrder.id);
         } catch {}
       }
@@ -813,7 +831,7 @@ function CheckoutPageContent() {
         }
 
         showNotification('Pesanan berhasil dibuat. Mengarahkan ke status pesanan.');
-        const emailQuery = targetEmail.trim() ? `&email=${encodeURIComponent(targetEmail.trim())}` : '';
+        const emailQuery = invoiceEmail ? `&email=${encodeURIComponent(invoiceEmail)}` : '';
         router.push(`/order?id=${createdOrder.id}${emailQuery}`);
       }
     },
@@ -832,7 +850,7 @@ function CheckoutPageContent() {
       return;
     }
 
-    const effectiveTarget = (targetValue || targetEmail).trim();
+    const effectiveTarget = targetValue.trim();
     const effectiveEmail = (targetRequirement.type === 'email' ? effectiveTarget : (customerEmail.trim() || session?.user?.email || 'buyer@asterra.store'));
     const effectivePhone = (targetRequirement.type === 'phone' ? effectiveTarget : phoneNumber.trim());
 
@@ -1019,12 +1037,13 @@ function CheckoutPageContent() {
         data={activeManualModal}
         paymentConfig={paymentConfig}
         customerName={customerName}
-        targetEmail={targetEmail}
+        targetEmail={customerEmail.trim() || (targetRequirement.type === 'email' ? targetValue.trim() : '') || session?.user?.email || ''}
         onClose={() => {
           const orderId = activeManualModal?.orderId;
           setActiveManualModal(null);
           if (orderId) {
-            const emailQuery = targetEmail.trim() ? `&email=${encodeURIComponent(targetEmail.trim())}` : '';
+            const invoiceEmail = customerEmail.trim() || (targetRequirement.type === 'email' ? targetValue.trim() : '') || session?.user?.email || '';
+            const emailQuery = invoiceEmail ? `&email=${encodeURIComponent(invoiceEmail)}` : '';
             router.push(`/order?id=${orderId}${emailQuery}`);
           }
         }}

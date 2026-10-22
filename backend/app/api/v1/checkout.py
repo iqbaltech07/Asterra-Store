@@ -40,7 +40,7 @@ def acquire_idempotency_lock(key: str, ttl: int = 8) -> bool:
     _local_locks[key] = now + ttl
     return True
 
-def mask_order_for_public(order: dict, is_owner_or_admin: bool) -> dict:
+def mask_order_for_public(order: dict, is_owner_or_admin: bool, is_admin: bool = False) -> dict:
     o = dict(order)
     phone = str(o.get("customerWhatsapp") or o.get("customer_whatsapp") or "")
     name = str(o.get("customerName") or o.get("customer_name") or "")
@@ -123,13 +123,55 @@ def mask_order_for_public(order: dict, is_owner_or_admin: bool) -> dict:
     o["items_count"] = items_count
     o["product_name"] = product_name
     o["items_summary"] = items_summary
-    o["provider"] = o.get("provider")
-    o["provider_trxid"] = o.get("provider_trxid") or o.get("providerTrxId")
-    o["providerTrxId"] = o.get("provider_trxid") or o.get("providerTrxId")
-    o["provider_status"] = o.get("provider_status") or o.get("providerStatus")
-    o["providerStatus"] = o.get("provider_status") or o.get("providerStatus")
-    o["provider_note"] = o.get("provider_note") or o.get("providerNote")
-    o["providerNote"] = o.get("provider_note") or o.get("providerNote")
+
+    # Internal supplier fields must NEVER be leaked to customer
+    if is_admin:
+        o["provider"] = o.get("provider")
+        o["provider_trxid"] = o.get("provider_trxid") or o.get("providerTrxId")
+        o["providerTrxId"] = o.get("provider_trxid") or o.get("providerTrxId")
+        o["provider_status"] = o.get("provider_status") or o.get("providerStatus")
+        o["providerStatus"] = o.get("provider_status") or o.get("providerStatus")
+        o["provider_note"] = o.get("provider_note") or o.get("providerNote")
+        o["providerNote"] = o.get("provider_note") or o.get("providerNote")
+    else:
+        # For customer / non-admin:
+        # Hide third-party supplier identity and internal technical notes
+        o["provider"] = None
+        o["provider_trxid"] = None
+        o["providerTrxId"] = None
+        o["provider_status"] = None
+        raw_note = str(o.get("provider_note") or o.get("providerNote") or "").strip()
+        # Only suppress provider_note if it contains internal supplier balance/automation error logs
+        is_error_note = any(err_phrase in raw_note.lower() for err_phrase in [
+            "saldo anda tidak cukup",
+            "saldo tidak cukup",
+            "gagal otomatisasi",
+            "gagal order",
+            "insufficient balance",
+            "gagal menghubungkan",
+            "error dari provider",
+            "api error",
+            "gateway error",
+        ])
+        if not is_error_note and raw_note:
+            o["provider_note"] = raw_note
+            o["providerNote"] = raw_note
+        else:
+            o["provider_note"] = None
+            o["providerNote"] = None
+
+        # Clean customer notes from internal admin transition logs
+        raw_cust_notes = str(o.get("customer_notes") or o.get("customerNotes") or "").strip()
+        if raw_cust_notes:
+            parts = [p.strip() for p in raw_cust_notes.split("|") if p.strip()]
+            clean_parts = [
+                p for p in parts
+                if not p.lower().startswith("admin: status pesanan diubah")
+                and not (p.lower().startswith("admin:") and any(s in p.lower() for s in ["processing", "cancelled", "completed", "pending"]))
+            ]
+            clean_notes = " | ".join(clean_parts).strip() if clean_parts else None
+            o["customer_notes"] = clean_notes
+            o["customerNotes"] = clean_notes
     return o
 
 # ------------------------------------------
@@ -331,7 +373,7 @@ def get_orders(
         limit=limit,
     )
     is_owner_or_admin = is_admin or (not is_public and bool(email or search or phone))
-    orders = [mask_order_for_public(o, is_owner_or_admin) for o in result["orders"]]
+    orders = [mask_order_for_public(o, is_owner_or_admin, is_admin=is_admin) for o in result["orders"]]
     return {
         "success": True,
         "data": orders,
@@ -371,7 +413,7 @@ def get_order_by_id(order_id: str, request: Request):
 
     return {
         "success": True,
-        "data": mask_order_for_public(order, True),
+        "data": mask_order_for_public(order, True, is_admin=is_admin),
     }
 
 @router.post("/orders/{order_id}/sync-vip", tags=["Orders"])

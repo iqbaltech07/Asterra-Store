@@ -331,6 +331,7 @@ model User {
   emailVerified Boolean   @default(false) @map("email_verified")
   image         String?
   role          String    @default("customer") // "customer" | "admin"
+  phone         String?
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
 

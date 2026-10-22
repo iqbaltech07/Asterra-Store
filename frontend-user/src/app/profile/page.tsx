@@ -7,7 +7,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useSession, signIn } from '@/lib/auth-client';
+import { useSession, signIn, authClient } from '@/lib/auth-client';
 import { useAuthStore } from '@/store/use-auth-store';
 import { performCustomerLogout } from '@/lib/utils/auth-logout';
 import { AsterraLogo } from '@/components/ui/asterra-logo';
@@ -134,13 +134,15 @@ export default function ProfilePage() {
 
   // Initialize editable fields once profile is loaded
   useEffect(() => {
-    if (profile) {
-      setEditName(profile.name || session?.user?.name || '');
-      setEditPhone(profile.phone || '');
-    } else if (session?.user) {
-      setEditName(session.user.name || '');
+    if (!isEditing) {
+      if (profile) {
+        setEditName(profile.name || session?.user?.name || '');
+        setEditPhone(profile.phone || '');
+      } else if (session?.user) {
+        setEditName(session.user.name || '');
+      }
     }
-  }, [profile, session?.user]);
+  }, [profile, session?.user, isEditing]);
 
   const showNotification = (msg: string) => {
     setNotification(msg);
@@ -151,19 +153,44 @@ export default function ProfilePage() {
 
   // Mutation to update profile
   const updateProfileMutation = useMutation({
-    mutationFn: async (payload: { name: string; phone: string }) => {
+    mutationFn: async (payload: { name: string; phone: string; email?: string }) => {
+      // 1. Sync with Better Auth client session
+      try {
+        if (typeof (authClient as any)?.updateUser === 'function') {
+          await (authClient as any).updateUser({
+            name: payload.name,
+          });
+        }
+      } catch (authErr) {
+        console.warn('[Profile] authClient updateUser note:', authErr);
+      }
+
+      // 2. Persist to backend database (updates "user" table and orders)
       const res = await fetch('/api/v1/users/profile', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-email': payload.email || customerEmail || '',
+        },
+        body: JSON.stringify({
+          name: payload.name,
+          phone: payload.phone,
+          email: payload.email || customerEmail || '',
+        }),
       });
+
       if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error?.message || 'Gagal memperbarui profil');
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error?.message || errorData.message || 'Gagal memperbarui profil');
       }
+
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (resData) => {
+      if (resData?.data) {
+        if (resData.data.name) setEditName(resData.data.name);
+        if (resData.data.phone !== undefined) setEditPhone(resData.data.phone);
+      }
       queryClient.invalidateQueries({ queryKey: ['user-profile'] });
       setIsEditing(false);
       showNotification('Profil akun Anda berhasil diperbarui!');
@@ -183,6 +210,7 @@ export default function ProfilePage() {
     updateProfileMutation.mutate({
       name: editName.trim(),
       phone: editPhone.trim(),
+      email: customerEmail,
     });
   };
 

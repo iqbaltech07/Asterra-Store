@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useMutation } from '@tanstack/react-query';
@@ -23,6 +23,9 @@ import {
   faUsers,
   faXmark,
   faPercent,
+  faEnvelope,
+  faRotateRight,
+  faArrowLeft,
 } from '@fortawesome/free-solid-svg-icons';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -56,10 +59,18 @@ function DaftarSalesContent() {
   const [agreeTerms, setAgreeTerms] = useState(true);
 
   // Status states
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successPartner, setSuccessPartner] = useState<PartnerResult | null>(null);
   const [isCopied, setIsCopied] = useState(false);
+
+  // OTP Verification States
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+  const [pendingOtpEmail, setPendingOtpEmail] = useState('');
+  const [otpDigits, setOtpDigits] = useState<string[]>(['', '', '', '', '', '']);
+  const [resendCountdown, setResendCountdown] = useState(60);
+  const [otpError, setOtpError] = useState<string | null>(null);
+  const [otpSuccessMsg, setOtpSuccessMsg] = useState<string | null>(null);
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   // Referral code real-time validation status
   const [validatingRef, setValidatingRef] = useState(false);
@@ -81,6 +92,17 @@ function DaftarSalesContent() {
       } catch (_) {}
     }
   }, [initialRef]);
+
+  // Resend OTP countdown timer
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (isVerifyingOtp && resendCountdown > 0) {
+      timer = setTimeout(() => {
+        setResendCountdown((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearTimeout(timer);
+  }, [isVerifyingOtp, resendCountdown]);
 
   // Validate referral code when user stops typing or when initialRef is present
   useEffect(() => {
@@ -179,7 +201,19 @@ function DaftarSalesContent() {
       return data;
     },
     onSuccess: (data) => {
-      setSuccessPartner(data.data);
+      if (data.requireOtp) {
+        setIsVerifyingOtp(true);
+        setPendingOtpEmail(data.email || email);
+        setResendCountdown(60);
+        setOtpDigits(['', '', '', '', '', '']);
+        setOtpError(null);
+        setOtpSuccessMsg(null);
+        setTimeout(() => {
+          inputRefs.current[0]?.focus();
+        }, 150);
+      } else {
+        setSuccessPartner(data.data);
+      }
       window.scrollTo({ top: 0, behavior: 'smooth' });
     },
     onError: (err: unknown) => {
@@ -187,6 +221,137 @@ function DaftarSalesContent() {
       setErrorMessage(msg);
     },
   });
+
+  const verifyOtpMutation = useMutation({
+    mutationFn: async (payload: { email: string; otp: string }) => {
+      const res = await fetch('/api/v1/affiliate/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Kode OTP tidak cocok atau sudah kedaluwarsa.');
+      }
+      return data;
+    },
+    onSuccess: (data) => {
+      setSuccessPartner(data.data);
+      setIsVerifyingOtp(false);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    },
+    onError: (err: unknown) => {
+      const msg = err instanceof Error ? err.message : 'Gagal memverifikasi OTP. Silakan periksa kembali.';
+      setOtpError(msg);
+    },
+  });
+
+  const resendOtpMutation = useMutation({
+    mutationFn: async (payload: { email: string }) => {
+      const res = await fetch('/api/v1/affiliate/resend-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Gagal meminta kode OTP baru.');
+      }
+      return data;
+    },
+    onSuccess: (data) => {
+      setResendCountdown(60);
+      setOtpSuccessMsg(data.message || 'Kode OTP baru telah berhasil dikirim ke email Anda.');
+      setOtpError(null);
+      setTimeout(() => setOtpSuccessMsg(null), 6000);
+    },
+    onError: (err: unknown) => {
+      const msg = err instanceof Error ? err.message : 'Gagal mengirim ulang kode OTP.';
+      setOtpError(msg);
+    },
+  });
+
+  const handleOtpChange = (index: number, val: string) => {
+    const cleaned = val.replace(/\D/g, '');
+    if (!cleaned) {
+      const nextDigits = [...otpDigits];
+      nextDigits[index] = '';
+      setOtpDigits(nextDigits);
+      return;
+    }
+
+    if (cleaned.length > 1) {
+      // Pasted or rapid entry
+      const chars = cleaned.slice(0, 6).split('');
+      const nextDigits = [...otpDigits];
+      for (let i = 0; i < 6; i++) {
+        if (chars[i]) nextDigits[i] = chars[i];
+      }
+      setOtpDigits(nextDigits);
+      const focusTarget = Math.min(chars.length, 5);
+      inputRefs.current[focusTarget]?.focus();
+      return;
+    }
+
+    const nextDigits = [...otpDigits];
+    nextDigits[index] = cleaned;
+    setOtpDigits(nextDigits);
+    setOtpError(null);
+
+    if (index < 5) {
+      inputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !otpDigits[index] && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handleOtpPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+    if (!pasted) return;
+
+    const nextDigits = ['', '', '', '', '', ''];
+    for (let i = 0; i < pasted.length; i++) {
+      nextDigits[i] = pasted[i];
+    }
+    setOtpDigits(nextDigits);
+    setOtpError(null);
+    const targetIdx = Math.min(pasted.length, 5);
+    inputRefs.current[targetIdx]?.focus();
+  };
+
+  const handleVerifyOtpSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setOtpError(null);
+    const fullOtp = otpDigits.join('');
+    if (fullOtp.length !== 6) {
+      setOtpError('Harap masukkan 6 digit kode OTP secara lengkap.');
+      return;
+    }
+    verifyOtpMutation.mutate({
+      email: pendingOtpEmail,
+      otp: fullOtp,
+    });
+  };
+
+  const handleResendOtp = () => {
+    if (resendCountdown > 0 || resendOtpMutation.isPending) return;
+    setOtpError(null);
+    resendOtpMutation.mutate({ email: pendingOtpEmail });
+  };
+
+  const handleBackToForm = () => {
+    setIsVerifyingOtp(false);
+    setOtpError(null);
+    setOtpSuccessMsg(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const getReferralUrl = (code: string) => {
     return `${getStoreBaseUrl()}/?ref=${code}`;
@@ -205,9 +370,140 @@ function DaftarSalesContent() {
     <div className="min-h-screen bg-background text-foreground flex flex-col font-sans">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10 w-full space-y-12">
         {/* ================================================================= */}
-        {/* SUCCESS STATE */}
+        {/* OTP VERIFICATION STATE */}
         {/* ================================================================= */}
-        {successPartner ? (
+        {isVerifyingOtp && !successPartner ? (
+          <div className="bg-surface border border-primary/30 rounded-2xl p-6 sm:p-10 shadow-xl space-y-8 max-w-xl mx-auto animate-in fade-in zoom-in-95">
+            <div className="text-center space-y-3">
+              <div className="w-16 h-16 rounded-full bg-primary/10 text-primary border border-primary/25 flex items-center justify-center mx-auto shadow-sm">
+                <FontAwesomeIcon icon={faEnvelope} className="text-2xl" />
+              </div>
+              <Badge variant="outline" className="text-xs font-semibold text-primary border-primary/30 bg-primary/10">
+                Langkah Terakhir • Verifikasi Email
+              </Badge>
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
+                Masukkan Kode Verifikasi OTP
+              </h1>
+              <p className="text-xs sm:text-sm text-foreground-muted leading-relaxed max-w-md mx-auto">
+                Kami telah mengirim 6 digit kode OTP ke alamat email{' '}
+                <strong className="text-foreground font-semibold underline underline-offset-2">{pendingOtpEmail}</strong>.
+                Masukkan kode tersebut di bawah ini untuk mengaktifkan akun kemitraan Anda.
+              </p>
+            </div>
+
+            {/* Error / Success Feedback */}
+            {otpError && (
+              <div className="p-3.5 rounded-lg bg-status-error/15 border border-status-error/30 text-status-error text-xs flex items-center gap-2.5 animate-in fade-in">
+                <FontAwesomeIcon icon={faCircleExclamation} className="text-sm shrink-0" />
+                <span>{otpError}</span>
+              </div>
+            )}
+
+            {otpSuccessMsg && (
+              <div className="p-3.5 rounded-lg bg-status-success/15 border border-status-success/30 text-status-success text-xs flex items-center gap-2.5 animate-in fade-in">
+                <FontAwesomeIcon icon={faCircleCheck} className="text-sm shrink-0" />
+                <span>{otpSuccessMsg}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleVerifyOtpSubmit} className="space-y-6">
+              {/* 6 Digit Input Boxes */}
+              <div>
+                <label className="text-[11px] font-semibold text-foreground-muted block text-center mb-3">
+                  6 DIGIT KODE VERIFIKASI:
+                </label>
+                <div className="flex justify-center items-center gap-2 sm:gap-3" onPaste={handleOtpPaste}>
+                  {otpDigits.map((digit, idx) => (
+                    <input
+                      key={idx}
+                      ref={(el) => {
+                        inputRefs.current[idx] = el;
+                      }}
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      maxLength={1}
+                      value={digit}
+                      onChange={(e) => handleOtpChange(idx, e.target.value)}
+                      onKeyDown={(e) => handleOtpKeyDown(idx, e)}
+                      className="w-10 h-13 sm:w-12 sm:h-16 text-center text-xl sm:text-2xl font-mono font-bold rounded-xl bg-surface-raised border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors shadow-inner"
+                      autoFocus={idx === 0}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <Button
+                type="submit"
+                disabled={otpDigits.join('').length !== 6 || verifyOtpMutation.isPending}
+                className="w-full text-xs font-bold h-11 gap-2 shadow-md cursor-pointer disabled:cursor-not-allowed"
+              >
+                {verifyOtpMutation.isPending ? (
+                  <span>Memverifikasi Akun Sales...</span>
+                ) : (
+                  <>
+                    <FontAwesomeIcon icon={faCircleCheck} className="text-xs" />
+                    <span>Verifikasi & Aktifkan Akun</span>
+                  </>
+                )}
+              </Button>
+
+              {/* Resend OTP & Cooldown */}
+              <div className="flex flex-col sm:flex-row items-center justify-between text-xs pt-1 border-t border-border/70 gap-2">
+                <div className="text-foreground-muted text-[11px] sm:text-xs">
+                  {resendCountdown > 0 ? (
+                    <span>
+                      Kirim ulang kode dalam <strong className="font-mono text-foreground font-semibold">{resendCountdown} detik</strong>
+                    </span>
+                  ) : (
+                    <span>Tidak menerima kode di email?</span>
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  disabled={resendCountdown > 0 || resendOtpMutation.isPending}
+                  onClick={handleResendOtp}
+                  className={`inline-flex items-center gap-1.5 font-semibold text-xs transition-colors ${
+                    resendCountdown > 0 || resendOtpMutation.isPending
+                      ? 'text-foreground-muted/50 cursor-not-allowed'
+                      : 'text-primary hover:underline cursor-pointer'
+                  }`}
+                >
+                  <FontAwesomeIcon
+                    icon={faRotateRight}
+                    className={`text-xs ${resendOtpMutation.isPending ? 'animate-spin' : ''}`}
+                  />
+                  <span>
+                    {resendOtpMutation.isPending ? 'Mengirim ulang...' : 'Kirim Ulang Kode OTP'}
+                  </span>
+                </button>
+              </div>
+
+              {/* Back to form link */}
+              <div className="text-center pt-2">
+                <button
+                  type="button"
+                  onClick={handleBackToForm}
+                  className="inline-flex items-center gap-1.5 text-xs text-foreground-muted hover:text-foreground transition-colors cursor-pointer"
+                >
+                  <FontAwesomeIcon icon={faArrowLeft} className="text-[10px]" />
+                  <span>Salah ketik email? Kembali & ubah data formulir</span>
+                </button>
+              </div>
+            </form>
+
+            <div className="p-3.5 bg-surface-raised border border-border/80 rounded-xl text-[11px] text-foreground-muted space-y-1">
+              <p className="font-semibold text-foreground flex items-center gap-1.5">
+                <FontAwesomeIcon icon={faShieldHalved} className="text-primary text-xs" />
+                <span>Petunjuk Verifikasi:</span>
+              </p>
+              <p>• Jika email belum terlihat di Inbox utama, mohon periksa folder <strong>Spam / Promotions / Update</strong>.</p>
+              <p>• Kode OTP berlaku selama <strong>10 menit</strong>. Akun sales Anda akan langsung aktif setelah kode diverifikasi.</p>
+            </div>
+          </div>
+        ) : successPartner ? (
           <div className="bg-surface border border-status-success/40 rounded-2xl p-6 sm:p-10 shadow-xl space-y-8 animate-in fade-in zoom-in-95">
             <div className="text-center space-y-3 max-w-lg mx-auto">
               <div className="w-16 h-16 rounded-full bg-status-success/15 text-status-success border border-status-success/30 flex items-center justify-center mx-auto shadow-sm">

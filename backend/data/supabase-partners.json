@@ -94,5 +94,21 @@
     "referredById": null,
     "createdAt": "2026-10-07T07:30:43.029000",
     "updatedAt": "2026-10-07T07:30:43.029000"
+  },
+  {
+    "id": "partner-1792618721245",
+    "name": "Sales Representative",
+    "email": "sales@asterra.store",
+    "whatsapp": "081234567890",
+    "code": "AST-SALES-7MD",
+    "tier": "Standard (10%)",
+    "rate": 10,
+    "totalClicks": 0,
+    "bankName": "Bank Central Asia (BCA)",
+    "bankAccount": "-",
+    "status": "active",
+    "referredById": null,
+    "createdAt": "2026-10-22T04:38:41.340000",
+    "updatedAt": "2026-10-22T04:38:41.340000"
   }
 ]

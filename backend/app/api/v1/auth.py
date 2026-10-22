@@ -1,4 +1,5 @@
 import secrets
+from datetime import datetime
 from typing import Optional, List, Dict, Any
 from fastapi import APIRouter, Request, HTTPException
 from fastapi.responses import JSONResponse
@@ -222,7 +223,13 @@ async def admin_auth_me(request: Request):
 @router.post("/admin/auth/logout", tags=["Admin Auth"])
 async def admin_auth_logout():
     response = JSONResponse(content={"success": True, "message": "Logout berhasil."})
-    response.delete_cookie(key="asterra_admin_session", path="/")
+    for cookie_name in [
+        "asterra_admin_session",
+        "better-auth.session_token",
+        "__Secure-better-auth.session_token",
+        "asterra_session",
+    ]:
+        response.delete_cookie(key=cookie_name, path="/")
     return response
 
 # ------------------------------------------
@@ -361,9 +368,29 @@ def get_user_profile(email: Optional[str] = None, request: Request = None):
         if o.get("status") in ["pending", "processing"]
     )
 
+    db_name = None
+    db_phone = None
+    if clean_email:
+        try:
+            from app.core.database import SessionLocal
+            from sqlalchemy import text
+            db = SessionLocal()
+            try:
+                row = db.execute(
+                    text('SELECT name, email, phone FROM "user" WHERE LOWER(email) = LOWER(:email)'),
+                    {"email": clean_email}
+                ).mappings().first()
+                if row:
+                    db_name = row.get("name")
+                    db_phone = row.get("phone")
+            finally:
+                db.close()
+        except Exception as e:
+            print(f"[get_user_profile] DB user lookup note: {e}")
+
     first_order = user_orders[0] if user_orders else {}
-    name = first_order.get("customerName") or first_order.get("customer_name") or "Pelanggan Asterra"
-    phone = first_order.get("customerWhatsapp") or first_order.get("customer_whatsapp") or ""
+    name = db_name or first_order.get("customerName") or first_order.get("customer_name") or "Pelanggan Asterra"
+    phone = db_phone or first_order.get("customerWhatsapp") or first_order.get("customer_whatsapp") or ""
 
     admin_token = request.cookies.get("asterra_admin_session") if request else None
     is_admin = False
@@ -416,13 +443,109 @@ async def update_user_profile(request: Request):
         body = await request.json()
     except Exception:
         body = {}
-    name = body.get("name", "Pelanggan Asterra")
-    phone = body.get("phone", "")
+
+    clean_email = str(
+        body.get("email")
+        or request.headers.get("x-user-email")
+        or request.query_params.get("email")
+        or ""
+    ).strip()
+    name = str(body.get("name") or "").strip()
+    phone = str(body.get("phone") or "").strip()
+
+    if not name:
+        return JSONResponse(
+            status_code=400,
+            content={"success": False, "error": {"message": "Nama lengkap tidak boleh kosong."}}
+        )
+
+    if clean_email:
+        try:
+            from app.core.database import SessionLocal
+            from sqlalchemy import text
+            db = SessionLocal()
+            try:
+                # 1. Update or insert in "user" table
+                existing_user = db.execute(
+                    text('SELECT id FROM "user" WHERE LOWER(email) = LOWER(:email)'),
+                    {"email": clean_email}
+                ).mappings().first()
+
+                if existing_user:
+                    db.execute(
+                        text('UPDATE "user" SET name = :name, phone = :phone, updated_at = :now WHERE LOWER(email) = LOWER(:email)'),
+                        {"name": name, "phone": phone, "now": datetime.utcnow(), "email": clean_email}
+                    )
+                else:
+                    import uuid
+                    user_id = f"usr_{uuid.uuid4().hex[:16]}"
+                    db.execute(
+                        text("INSERT INTO \"user\" (id, name, email, email_verified, role, phone, created_at, updated_at) VALUES (:id, :name, :email, false, 'customer', :phone, :now, :now)"),
+                        {"id": user_id, "name": name, "email": clean_email, "phone": phone, "now": datetime.utcnow()}
+                    )
+
+                # 2. Update customer_name & customer_whatsapp across orders
+                db.execute(
+                    text("UPDATE orders SET customer_name = :name, customer_whatsapp = :phone WHERE LOWER(customer_email) = LOWER(:email)"),
+                    {"name": name, "phone": phone, "email": clean_email}
+                )
+                db.commit()
+            finally:
+                db.close()
+        except Exception as e:
+            print(f"[update_user_profile] DB update error: {e}")
+
+    # 3. Synchronize in-memory cached orders
+    try:
+        orders = OrderService.load_orders()
+        for o in orders:
+            if clean_email and str(o.get("customerEmail") or o.get("customer_email") or "").lower().strip() == clean_email.lower():
+                o["customerName"] = name
+                o["customer_name"] = name
+                o["customerWhatsapp"] = phone
+                o["customer_whatsapp"] = phone
+    except Exception as e:
+        print(f"[update_user_profile] Memory orders update note: {e}")
+
     return {
         "success": True,
         "message": "Profil berhasil diperbarui.",
         "data": {
             "name": name,
+            "email": clean_email,
             "phone": phone,
         },
     }
+
+
+# ------------------------------------------
+# 6. Customer Member Welcome Email Notification
+# ------------------------------------------
+@router.post("/customer/welcome-notification", tags=["Customer Auth"])
+async def send_customer_welcome_notification(request: Request):
+    """
+    Triggers the welcome email notification for a newly registered customer (e.g. via Google OAuth).
+    """
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+
+    email = str(body.get("email") or "").strip().lower()
+    name = str(body.get("name") or "").strip()
+
+    if not email or "@" not in email:
+        return JSONResponse(
+            status_code=400,
+            content={"success": False, "error": {"message": "Email customer valid wajib disertakan."}}
+        )
+
+    from app.services.email_service import EmailService
+    delivered = EmailService.send_welcome_member_email(to_email=email, recipient_name=name)
+
+    return {
+        "success": True,
+        "message": "Email sambutan member Asterra Store berhasil diproses.",
+        "delivered": delivered,
+    }
+

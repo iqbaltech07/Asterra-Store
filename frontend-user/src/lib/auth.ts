@@ -72,6 +72,41 @@ export const auth = betterAuth({
         defaultValue: 'customer',
         required: false,
       },
+      phone: {
+        type: 'string',
+        required: false,
+      },
+    },
+  },
+  databaseHooks: {
+    user: {
+      create: {
+        after: async (user) => {
+          try {
+            const rawBackendUrl =
+              process.env.BACKEND_URL ||
+              process.env.NEXT_PUBLIC_API_URL ||
+              'http://localhost:8000';
+            const apiUrl = rawBackendUrl.startsWith('http')
+              ? rawBackendUrl
+              : `https://${rawBackendUrl}`;
+
+            await fetch(`${apiUrl}/api/v1/customer/welcome-notification`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                email: user.email,
+                name: user.name || '',
+              }),
+            });
+            console.log(`[BetterAuth:Hook] Dispatched welcome email for new user: ${user.email}`);
+          } catch (hookErr) {
+            console.error('[BetterAuth:Hook] Error dispatching welcome email:', hookErr);
+          }
+        },
+      },
     },
   },
   advanced: {

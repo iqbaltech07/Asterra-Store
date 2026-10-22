@@ -10,9 +10,6 @@ import { notificationSound } from '@/lib/utils/notification-sound';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faBox,
-  faClock,
-  faCircleCheck,
-  faCircleExclamation,
   faCopy,
   faCheck,
   faRotateLeft,
@@ -22,18 +19,17 @@ import {
   faShieldHalved,
   faChevronDown,
   faChevronUp,
-  faXmark,
   faCreditCard,
   faReceipt,
+  faHeadset,
 } from '@fortawesome/free-solid-svg-icons';
 import { useSession } from '@/lib/auth-client';
 import {
   CheckoutManualModal,
   ManualPaymentModalData,
 } from '@/components/checkout/checkout-manual-modal';
-import { PaymentConfigApi, OrdersApi } from '@/lib/api-client';
+import { OrdersApi } from '@/lib/api-client';
 import { usePaymentConfig } from '@/lib/hooks/use-payment-config';
-import { PublicPaymentConfig } from '@/types/payment';
 
 import {
   STATUS_FILTERS,
@@ -41,11 +37,51 @@ import {
   isOrderExpired,
   getStatusBadge,
   getTimelineStep,
+  formatFriendlyPaymentMethod,
 } from '@/components/orders/order-status-helpers';
 import {
   PrivateOrdersSkeleton,
   PrivateOrdersPageSkeleton,
 } from '@/components/orders/order-skeletons';
+import { OrderCredentialsCard } from '@/components/orders/order-credentials-card';
+
+function cleanCustomerNotes(rawNotes?: string): string | null {
+  if (!rawNotes) return null;
+  const parts = rawNotes.split('|').map((p) => p.trim()).filter(Boolean);
+  const cleanParts = parts.filter((p) => {
+    const lower = p.toLowerCase();
+    if (lower.startsWith('admin: status pesanan diubah')) return false;
+    if (
+      lower.startsWith('admin:') &&
+      (lower.includes('processing') ||
+        lower.includes('cancelled') ||
+        lower.includes('completed') ||
+        lower.includes('pending'))
+    ) {
+      return false;
+    }
+    return true;
+  });
+  const joined = cleanParts.join(' | ').trim();
+  return joined.length > 0 ? joined : null;
+}
+
+function isSafeLicenseCredential(note?: string): boolean {
+  if (!note) return false;
+  const lower = note.toLowerCase();
+  const errorPhrases = [
+    'saldo anda tidak cukup',
+    'saldo tidak cukup',
+    'gagal otomatisasi',
+    'gagal order',
+    'insufficient balance',
+    'gagal menghubungkan',
+    'error dari provider',
+    'api error',
+    'gateway error',
+  ];
+  return !errorPhrases.some((phrase) => lower.includes(phrase));
+}
 
 function PrivateOrderContent() {
   const { data: session } = useSession();
@@ -57,6 +93,7 @@ function PrivateOrderContent() {
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(paramOrderId || null);
   const [notification, setNotification] = useState<string | null>(null);
+  const [copiedOrderId, setCopiedOrderId] = useState<string | null>(null);
 
   // Individual Order Scoping: Session Email, URL param, or Guest Email from localStorage
   const [guestEmail, setGuestEmail] = useState<string>(() => {
@@ -228,6 +265,15 @@ function PrivateOrderContent() {
     }, 3500);
   };
 
+  const handleCopyOrderId = (orderId: string) => {
+    if (typeof window !== 'undefined') {
+      navigator.clipboard?.writeText(orderId);
+      setCopiedOrderId(orderId);
+      showNotification(`Nomor pesanan #${orderId} berhasil disalin!`);
+      setTimeout(() => setCopiedOrderId(null), 2500);
+    }
+  };
+
   const handleCopyOrderInfo = (order: Order) => {
     if (typeof window !== 'undefined') {
       const orderTotal = Number(
@@ -367,10 +413,8 @@ function PrivateOrderContent() {
     <div className="min-h-screen bg-background text-foreground flex flex-col font-sans selection:bg-primary/20 selection:text-primary">
       {/* Floating Notification */}
       {notification && (
-        <div className="fixed bottom-6 right-6 z-50 bg-surface-raised border border-primary/40 text-foreground px-4 py-3 rounded-lg shadow-xl flex items-center gap-3 animate-in slide-in-from-bottom-5">
-          <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-primary">
-            <FontAwesomeIcon icon={faCheck} className="w-3.5 h-3.5" />
-          </div>
+        <div data-ui="toast" className="fixed bottom-6 right-6 z-50 bg-surface border border-border text-foreground px-4 py-3 rounded-md shadow-lg flex items-center gap-3 animate-in slide-in-from-bottom-5">
+          <FontAwesomeIcon icon={faCheck} className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
           <p className="text-xs font-medium">{notification}</p>
         </div>
       )}
@@ -388,8 +432,8 @@ function PrivateOrderContent() {
 
           <div className="flex items-center gap-2">
             <Link href="/products">
-              <Button size="sm" variant="outline" className="text-xs gap-1.5 border-border h-8">
-                <FontAwesomeIcon icon={faArrowRight} className="w-3.5 h-3.5 text-primary" />
+              <Button size="sm" variant="outline" className="text-xs gap-1.5 border-border h-8 font-medium">
+                <FontAwesomeIcon icon={faArrowRight} className="w-3.5 h-3.5 text-foreground-muted" />
                 <span className="hidden sm:inline">Katalog Produk</span>
               </Button>
             </Link>
@@ -399,14 +443,14 @@ function PrivateOrderContent() {
                 refetch();
                 showNotification('Data riwayat pesanan berhasil diperbarui.');
               }}
-              className={`p-2 rounded-lg bg-surface-raised border border-border text-foreground-muted hover:text-foreground transition-colors cursor-pointer h-8 w-8 flex items-center justify-center ${
+              className={`p-2 rounded-md bg-surface border border-border text-foreground-muted hover:text-foreground transition-colors cursor-pointer h-8 w-8 flex items-center justify-center ${
                 isRefetching ? 'opacity-50' : ''
               }`}
               title="Perbarui Data"
             >
               <FontAwesomeIcon
                 icon={faRotateLeft}
-                className={`w-3.5 h-3.5 ${isRefetching ? 'animate-spin text-primary' : ''}`}
+                className={`w-3.5 h-3.5 ${isRefetching ? 'animate-spin text-foreground' : ''}`}
               />
             </button>
           </div>
@@ -414,7 +458,7 @@ function PrivateOrderContent() {
 
         {/* Email Entry & Lookup Form when unauthenticated and no active email */}
         {!activeEmail && (
-          <div data-gsap="hero-card" className="bg-surface border border-primary/30 rounded-xl p-4 sm:p-5 max-w-xl mx-auto mb-8 shadow-sm">
+          <div data-gsap="hero-card" className="bg-surface border border-border rounded-lg p-4 max-w-xl mx-auto mb-6">
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -436,9 +480,9 @@ function PrivateOrderContent() {
                 placeholder="nama@email.com"
                 value={emailInput}
                 onChange={(e) => setEmailInput(e.target.value)}
-                className="flex-1 px-3 py-2 text-xs rounded-lg bg-surface-raised border border-border text-foreground placeholder:text-foreground-muted focus:outline-none focus:border-primary"
+                className="flex-1 px-3 py-2 text-xs rounded-md bg-surface border border-border text-foreground placeholder:text-foreground-muted focus:outline-none focus:border-foreground"
               />
-              <Button type="submit" size="sm" className="text-xs shrink-0" disabled={isSubmittingLookup}>
+              <Button type="submit" size="sm" className="text-xs shrink-0 font-medium" disabled={isSubmittingLookup}>
                 {isSubmittingLookup ? 'Memuat...' : 'Lihat Pesanan'}
               </Button>
             </form>
@@ -447,14 +491,14 @@ function PrivateOrderContent() {
 
         {/* Active Account / Tracking Banner */}
         {activeEmail && (
-          <div className="bg-surface border border-border rounded-xl px-4 py-3 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div className="bg-surface border border-border rounded-lg px-4 py-3 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
             <div className="flex items-center gap-2.5">
-              <FontAwesomeIcon icon={faReceipt} className="w-3.5 h-3.5 text-primary shrink-0" />
+              <FontAwesomeIcon icon={faReceipt} className="w-3.5 h-3.5 text-foreground-muted shrink-0" />
               <div className="text-foreground">
                 <span className="text-foreground-muted">Menampilkan riwayat pesanan untuk:{' '}</span>
-                <strong className="font-semibold text-primary">{activeEmail}</strong>
+                <strong className="font-medium text-foreground">{activeEmail}</strong>
                 {session?.user?.email && (
-                  <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
+                  <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded bg-muted text-foreground border border-border font-medium">
                     Akun Terverifikasi
                   </span>
                 )}
@@ -464,10 +508,10 @@ function PrivateOrderContent() {
         )}
 
         {/* Filters and Search Bar */}
-        <div className="bg-surface border border-border rounded-xl p-4 sm:p-5 mb-8 space-y-4">
+        <div className="bg-surface border border-border rounded-lg p-3.5 mb-6 space-y-3">
           <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
-            {/* Status Pills */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+            {/* Status Tabs */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
               {STATUS_FILTERS.map((filter) => {
                 const isSelected = selectedStatus === filter.value;
                 return (
@@ -475,10 +519,10 @@ function PrivateOrderContent() {
                     key={filter.value}
                     type="button"
                     onClick={() => setSelectedStatus(filter.value)}
-                    className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all shrink-0 border cursor-pointer ${
+                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors shrink-0 border cursor-pointer ${
                       isSelected
-                        ? 'bg-navy-900 text-white border-navy-900 shadow-xs'
-                        : 'bg-surface text-foreground-muted border-border hover:border-primary/40 hover:text-primary'
+                        ? 'bg-foreground text-background border-foreground'
+                        : 'bg-surface text-foreground-muted border-border hover:text-foreground hover:border-foreground/30'
                     }`}
                   >
                     {filter.label}
@@ -495,7 +539,7 @@ function PrivateOrderContent() {
                 placeholder="Cari ID pesanan / nama produk..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-1.5 rounded-lg bg-surface-raised border border-border text-xs text-foreground placeholder:text-foreground-muted focus:outline-none focus:border-primary"
+                className="w-full pl-9 pr-3 py-1.5 rounded-md bg-surface border border-border text-xs text-foreground placeholder:text-foreground-muted focus:outline-none focus:border-foreground"
               />
             </div>
           </div>
@@ -506,10 +550,10 @@ function PrivateOrderContent() {
 
         {/* Error State */}
         {error && !isInitialLoading && (
-          <div className="bg-surface border border-status-error/40 rounded-xl p-8 text-center space-y-3">
+          <div className="bg-surface border border-border rounded-lg p-8 text-center space-y-3">
             <p className="text-sm font-semibold text-foreground">Gagal memuat riwayat pesanan</p>
             <p className="text-xs text-foreground-muted">Silakan coba beberapa saat lagi.</p>
-            <Button size="sm" onClick={() => refetch()}>
+            <Button size="sm" variant="outline" onClick={() => refetch()}>
               Coba Lagi
             </Button>
           </div>
@@ -517,13 +561,11 @@ function PrivateOrderContent() {
 
         {/* Empty State */}
         {!isInitialLoading && !error && filteredOrders.length === 0 && (
-          <div className="bg-surface border border-border rounded-xl p-12 text-center space-y-4 max-w-md mx-auto my-12">
-            <div className="w-12 h-12 rounded-xl bg-surface-raised border border-border flex items-center justify-center mx-auto text-foreground-muted">
-              <FontAwesomeIcon icon={faBox} className="w-6 h-6" />
-            </div>
+          <div className="bg-surface border border-border rounded-lg p-10 text-center space-y-3 max-w-md mx-auto my-8">
+            <FontAwesomeIcon icon={faBox} className="w-8 h-8 text-foreground-muted/60 mx-auto" />
             <div className="space-y-1">
-              <h3 className="text-base font-bold text-foreground">Belum Ada Riwayat Pesanan</h3>
-              <p className="text-xs text-foreground-muted">
+              <h3 className="text-sm font-semibold text-foreground">Belum Ada Riwayat Pesanan</h3>
+              <p className="text-xs text-foreground-muted leading-relaxed">
                 {selectedStatus !== 'all' || searchQuery
                   ? 'Tidak ada transaksi yang cocok dengan filter atau kata kunci saat ini.'
                   : activeEmail
@@ -539,14 +581,15 @@ function PrivateOrderContent() {
                   setSelectedStatus('all');
                   setSearchQuery('');
                 }}
+                className="text-xs font-medium"
               >
                 Reset Filter
               </Button>
             ) : (
               <Link href="/products">
-                <Button size="sm" className="gap-2">
+                <Button size="sm" className="gap-1.5 text-xs font-medium">
                   <span>Mulai Belanja</span>
-                  <FontAwesomeIcon icon={faArrowRight} className="w-3.5 h-3.5" />
+                  <FontAwesomeIcon icon={faArrowRight} className="w-3 h-3" />
                 </Button>
               </Link>
             )}
@@ -559,7 +602,11 @@ function PrivateOrderContent() {
             {filteredOrders.map((order) => {
               const isExpanded = expandedOrderId === order.id;
               const isExpired = isOrderExpired(order);
-              const rawStatus = (order.order_status || (order as unknown as { status?: string }).status || 'pending').toLowerCase() as Order['order_status'];
+              const rawStatus = (
+                order.order_status ||
+                (order as unknown as { status?: string }).status ||
+                'pending'
+              ).toLowerCase() as Order['order_status'];
               const effectiveStatus: Order['order_status'] =
                 rawStatus === 'pending' && isExpired ? 'cancelled' : rawStatus;
               const step = getTimelineStep({ ...order, order_status: effectiveStatus });
@@ -577,45 +624,57 @@ function PrivateOrderContent() {
                 orderExpiresAt ||
                 new Date().toISOString();
 
+              const rawOrder = order as unknown as Record<string, any>;
+              const promoDiscount = Number(rawOrder.promo_discount ?? rawOrder.promoDiscount ?? 0);
+              const uniqueCode = Number(rawOrder.unique_code ?? rawOrder.uniqueCode ?? 0);
+              const itemsSubtotal = (order.items || []).reduce((acc, it) => {
+                const p = Number(it.unit_price ?? (it as any).price ?? 0);
+                const q = Number(it.quantity ?? 1);
+                return acc + (p * q);
+              }, 0) || orderTotal;
+
+              const cleanNotes = cleanCustomerNotes(order.customer_notes);
+              const isSafeCredential = isSafeLicenseCredential(order.provider_note);
+
               return (
                 <div
                   key={order.id}
-                  className="bg-surface border border-border rounded-xl p-5 sm:p-6 transition-all duration-200 hover:border-primary/40 space-y-5"
+                  className="bg-surface border border-border rounded-lg p-5 space-y-4"
                 >
-                  {/* Card Header: Order ID, Date, Status */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-border">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-lg bg-surface-raised border border-border flex items-center justify-center text-primary shrink-0">
-                        <FontAwesomeIcon icon={faBox} className="w-4 h-4" />
+                  {/* Card Header: Order ID, Date & Total */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-border">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-sm text-foreground tracking-tight tabular-nums">
+                          {order.id}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleCopyOrderId(order.id)}
+                          className="text-foreground-muted hover:text-foreground transition-colors p-0.5 cursor-pointer"
+                          title="Salin Nomor Pesanan"
+                        >
+                          <FontAwesomeIcon
+                            icon={copiedOrderId === order.id ? faCheck : faCopy}
+                            className={`w-3.5 h-3.5 ${copiedOrderId === order.id ? 'text-emerald-600' : ''}`}
+                          />
+                        </button>
                       </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono font-bold text-sm text-foreground">
-                            {order.id}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => handleCopyOrderInfo(order)}
-                            className="text-foreground-muted hover:text-foreground cursor-pointer"
-                            title="Salin Data Pesanan"
-                          >
-                            <FontAwesomeIcon icon={faCopy} className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                        <span className="text-[11px] text-foreground-muted">
-                          Dipesan pada:{' '}
+                      <p className="text-[11px] text-foreground-muted">
+                        Dipesan pada{' '}
+                        <span className="text-foreground">
                           {new Date(orderDateStr).toLocaleDateString('id-ID', {
                             day: 'numeric',
                             month: 'long',
                             year: 'numeric',
                             hour: '2-digit',
                             minute: '2-digit',
-                          })}
+                          })} WIB
                         </span>
-                      </div>
+                      </p>
                     </div>
 
-                    <div className="flex items-center justify-between sm:justify-end gap-2">
+                    <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-border">
                       {effectiveStatus === 'pending' && (
                         <OrderCountdownBadge
                           expiresAt={orderExpiresAt}
@@ -625,235 +684,269 @@ function PrivateOrderContent() {
                         />
                       )}
                       {getStatusBadge(effectiveStatus)}
-                      <span className="text-sm font-bold text-foreground">
-                        Rp {orderTotal.toLocaleString('id-ID')}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* 4-Step Interactive Fulfillment Timeline */}
-                  <div className="py-2">
-                    <span className="text-[11px] font-semibold text-foreground-muted uppercase tracking-wider block mb-3">
-                      Proses Eksekusi Lisensi:
-                    </span>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                      {/* Step 1 */}
-                      <div
-                        className={`p-2.5 rounded-lg flex items-center gap-2.5 text-xs ${
-                          step >= 1
-                            ? 'bg-primary/10 text-primary'
-                            : 'bg-surface-raised text-foreground-muted'
-                        }`}
-                      >
-                        <div
-                          className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                            step >= 1 ? 'bg-primary text-white' : 'bg-surface-hover'
-                          }`}
-                        >
-                          1
-                        </div>
-                        <span className="font-medium">Pesanan Masuk</span>
-                      </div>
-
-                      {/* Step 2 */}
-                      <div
-                        className={`p-2.5 rounded-lg flex items-center gap-2.5 text-xs ${
-                          step >= 2
-                            ? 'bg-primary/10 text-primary'
-                            : 'bg-surface-raised text-foreground-muted'
-                        }`}
-                      >
-                        <div
-                          className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                            step >= 2 ? 'bg-primary text-white' : 'bg-surface-hover'
-                          }`}
-                        >
-                          2
-                        </div>
-                        <span className="font-medium">Pembayaran Terverifikasi</span>
-                      </div>
-
-                      {/* Step 3 */}
-                      <div
-                        className={`p-2.5 rounded-lg flex items-center gap-2.5 text-xs ${
-                          step >= 3
-                            ? 'bg-primary/10 text-primary'
-                            : 'bg-surface-raised text-foreground-muted'
-                        }`}
-                      >
-                        <div
-                          className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                            step >= 3 ? 'bg-primary text-white' : 'bg-surface-hover'
-                          }`}
-                        >
-                          3
-                        </div>
-                        <span className="font-medium">Di Proses</span>
-                      </div>
-
-                      {/* Step 4 */}
-                      <div
-                        className={`p-2.5 rounded-lg flex items-center gap-2.5 text-xs ${
-                          isCancelled
-                            ? 'bg-status-error/15 text-status-error'
-                            : step >= 4
-                            ? 'bg-status-success/15 text-status-success'
-                            : 'bg-surface-raised text-foreground-muted'
-                        }`}
-                      >
-                        <div
-                          className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                            isCancelled
-                              ? 'bg-status-error text-white'
-                              : step >= 4
-                              ? 'bg-status-success text-white'
-                              : 'bg-surface-hover'
-                          }`}
-                        >
-                          {isCancelled ? <FontAwesomeIcon icon={faXmark} className="w-3 h-3" /> : '4'}
-                        </div>
-                        <span className="font-medium">
-                          {isCancelled ? 'Dibatalkan' : 'Selesai'}
+                      <div className="text-right pl-2 sm:border-l sm:border-border">
+                        <span className="text-[10px] text-foreground-muted block uppercase tracking-wider font-medium">
+                          Total
+                        </span>
+                        <span className="text-sm font-semibold text-foreground tabular-nums">
+                          Rp {orderTotal.toLocaleString('id-ID')}
                         </span>
                       </div>
                     </div>
                   </div>
 
+                  {/* Fulfillment Status Section */}
+                  {isCancelled ? (
+                    <div className="rounded-md border border-[#fecdd3] bg-[#ffedea]/60 px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                      <div className="space-y-0.5">
+                        <p className="font-semibold text-[#831c1e]">
+                          Pesanan Dibatalkan
+                        </p>
+                        <p className="text-[12px] text-[#831c1e]/80 leading-normal max-w-xl">
+                          Pesanan ini telah dibatalkan dan proses alokasi lisensi dihentikan.
+                          Jika pembayaran Anda sudah terpotong, silakan hubungi layanan pelanggan untuk verifikasi pengembalian dana.
+                        </p>
+                      </div>
+                      <a
+                        href={`https://wa.me/6281234567890?text=${encodeURIComponent(
+                          `Halo CS Asterra Store, saya ingin konfirmasi terkait kendala pesanan ${order.id}`
+                        )}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="shrink-0"
+                      >
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-xs h-7.5 border-[#fecdd3] text-[#831c1e] hover:bg-[#ffedea] cursor-pointer w-full sm:w-auto font-medium"
+                        >
+                          <FontAwesomeIcon icon={faHeadset} className="w-3 h-3 mr-1.5" />
+                          <span>Bantuan CS</span>
+                        </Button>
+                      </a>
+                    </div>
+                  ) : (
+                    /* Quiet, minimal fulfillment progress track */
+                    <div className="py-1 space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-medium text-foreground">Tahap Proses</span>
+                        <span className="text-[11px] text-foreground-muted">
+                          {effectiveStatus === 'completed'
+                            ? 'Selesai • Lisensi digital siap digunakan'
+                            : effectiveStatus === 'processing'
+                            ? 'Pesanan diproses • Alokasi lisensi aktif'
+                            : step >= 2
+                            ? 'Pembayaran terverifikasi • Menyiapkan pesanan'
+                            : 'Pesanan masuk • Menunggu pembayaran'}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-4 gap-1.5">
+                        <div className={`h-1.5 rounded-full ${step >= 1 ? 'bg-primary' : 'bg-muted'}`} />
+                        <div className={`h-1.5 rounded-full ${step >= 2 ? 'bg-primary' : 'bg-muted'}`} />
+                        <div className={`h-1.5 rounded-full ${step >= 3 ? 'bg-primary' : 'bg-muted'}`} />
+                        <div className={`h-1.5 rounded-full ${step >= 4 ? 'bg-emerald-600' : 'bg-muted'}`} />
+                      </div>
+
+                      <div className="grid grid-cols-4 gap-1.5 text-[11px] leading-tight text-center">
+                        <span className={`break-words ${step >= 1 ? 'text-foreground font-medium' : 'text-foreground-muted'}`}>
+                          Pesanan Masuk
+                        </span>
+                        <span className={`break-words ${step >= 2 ? 'text-foreground font-medium' : 'text-foreground-muted'}`}>
+                          Pembayaran Terverifikasi
+                        </span>
+                        <span className={`break-words ${step >= 3 ? 'text-foreground font-medium' : 'text-foreground-muted'}`}>
+                          Pesanan Diproses
+                        </span>
+                        <span className={`break-words ${step >= 4 ? 'text-emerald-700 font-medium' : 'text-foreground-muted'}`}>
+                          Selesai
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Items List inside Order */}
-                  <div className="space-y-2">
+                  <div className="divide-y divide-border border-y border-border py-0.5">
                     {(order.items || []).map((item) => {
                       const unitPrice = Number(
                         item.unit_price ??
-                        (item as unknown as { price?: number }).price ??
-                        0
+                          (item as unknown as { price?: number }).price ??
+                          0
                       );
                       const itemQty = Number(item.quantity ?? 1);
                       const pName =
                         item.product_name ||
                         (item as unknown as { productName?: string }).productName ||
                         'Layanan Digital';
+                      const targetEmail =
+                        item.purchased_details?.target_email ||
+                        (item as unknown as { targetEmail?: string }).targetEmail ||
+                        order.customer_email ||
+                        (order as unknown as { customerEmail?: string }).customerEmail ||
+                        '';
 
                       return (
                         <div
                           key={item.id}
-                          className="bg-surface-raised rounded-lg p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+                          className="py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs"
                         >
                           <div className="space-y-0.5">
-                            <h4 className="font-semibold text-foreground text-sm">
+                            <h4 className="font-medium text-foreground">
                               {pName}
                             </h4>
                             <div className="flex flex-wrap items-center gap-2 text-foreground-muted text-[11px]">
-                              <span>Jumlah: {itemQty} lisensi</span>
-                              <span>—</span>
-                              <span>
-                                Target Email:{' '}
-                                <strong className="text-foreground">
-                                  {item.purchased_details?.target_email ||
-                                    (item as unknown as { targetEmail?: string }).targetEmail ||
-                                    order.customer_email ||
-                                    (order as unknown as { customerEmail?: string }).customerEmail ||
-                                    'customer@asterra.store'}
-                                </strong>
-                              </span>
+                              <span>{itemQty} lisensi</span>
+                              {targetEmail && (
+                                <span>
+                                  • Akun:{' '}
+                                  <span className="text-foreground font-medium">
+                                    {targetEmail}
+                                  </span>
+                                </span>
+                              )}
                             </div>
                           </div>
 
-                          <div className="text-left sm:text-right">
-                            <span className="font-bold text-foreground block">
+                          <div className="text-left sm:text-right shrink-0">
+                            <span className="font-semibold text-foreground tabular-nums">
                               Rp {(unitPrice * itemQty).toLocaleString('id-ID')}
                             </span>
-                            <span className="text-[10px] text-foreground-muted">
-                              @ Rp {unitPrice.toLocaleString('id-ID')}
-                            </span>
+                            {itemQty > 1 && (
+                              <span className="text-[11px] text-foreground-muted block tabular-nums">
+                                @ Rp {unitPrice.toLocaleString('id-ID')}
+                              </span>
+                            )}
                           </div>
                         </div>
                       );
                     })}
                   </div>
 
+                  {/* Immediate Structured Credentials Box for Completed / Active Orders */}
+                  {isSafeCredential && order.provider_note && (
+                    <OrderCredentialsCard
+                      rawNote={order.provider_note}
+                      onNotification={showNotification}
+                    />
+                  )}
+
                   {/* Expandable Details Section */}
                   {isExpanded && (
-                    <div className="pt-3 border-t border-border space-y-3 text-xs animate-in fade-in duration-150">
-                      <div className="bg-surface-raised rounded-lg p-3 space-y-1.5">
-                        <span className="font-semibold text-foreground block">Rincian Pembayaran</span>
-                        <div className="flex justify-between text-foreground-muted">
-                          <span>Metode Pembayaran:</span>
-                          <span className="text-foreground uppercase font-mono">
-                            {order.payment?.payment_method || 'QRIS / Instant'}
+                    <div className="pt-3 border-t border-border space-y-3 text-xs">
+                      <div className="rounded-md border border-border bg-muted/20 p-3.5 space-y-2.5">
+                        <div className="flex items-center justify-between border-b border-border pb-2">
+                          <span className="font-medium text-foreground text-xs">
+                            Rincian Pembayaran
+                          </span>
+                          <span className="text-[11px] text-foreground-muted tabular-nums">
+                            Ref: {order.payment?.transaction_id || (order.payment as unknown as { payment_reference?: string })?.payment_reference || order.id}
                           </span>
                         </div>
-                        {order.payment?.transaction_id && (
-                          <div className="flex justify-between text-foreground-muted">
-                            <span>ID Transaksi Tripay:</span>
-                            <span className="text-foreground font-mono">
-                              {order.payment.transaction_id}
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-foreground-muted">
+                          <div className="flex justify-between sm:justify-start sm:gap-2">
+                            <span>Metode:</span>
+                            <span className="text-foreground font-medium">
+                              {formatFriendlyPaymentMethod(order.payment?.payment_method)}
                             </span>
                           </div>
-                        )}
-                        {order.customer_notes && (
-                          <div className="flex justify-between text-foreground-muted">
-                            <span>Catatan Pesanan:</span>
-                            <span className="text-foreground italic">{order.customer_notes}</span>
+                          <div className="flex justify-between sm:justify-start sm:gap-2">
+                            <span>Waktu:</span>
+                            <span className="text-foreground font-medium">
+                              {new Date(orderDateStr).toLocaleDateString('id-ID', {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })} WIB
+                            </span>
                           </div>
-                        )}
+                        </div>
 
-                        {order.provider_note && (
-                          <div className="p-3 bg-primary/10 border border-primary/30 rounded-lg space-y-1 mt-2">
-                            <div className="flex items-center justify-between text-primary font-semibold">
-                              <span>Detail Pengiriman & Kredensial Lisensi (Live Gateway)</span>
-                              {order.provider_status && (
-                                <span className="text-[10px] px-2 py-0.5 rounded bg-primary/20 uppercase font-mono">
-                                  {order.provider_status}
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-xs text-foreground font-mono bg-surface p-2 rounded border border-border/80 break-all select-all">
-                              {order.provider_note}
-                            </p>
+                        {/* Price breakdown */}
+                        <div className="border-t border-border pt-2 space-y-1.5 text-foreground-muted">
+                          <div className="flex justify-between">
+                            <span>Harga Produk:</span>
+                            <span className="text-foreground tabular-nums">
+                              Rp {itemsSubtotal.toLocaleString('id-ID')}
+                            </span>
                           </div>
-                        )}
-
-                        {order.provider === 'vip-reseller' && effectiveStatus === 'processing' && (
-                          <div className="p-2.5 bg-status-info/10 border border-status-info/30 rounded-lg flex items-center justify-between text-xs mt-2">
-                            <div className="flex items-center gap-2 text-status-info">
-                              <FontAwesomeIcon icon={faRotateLeft} className="w-3.5 h-3.5 animate-spin" />
-                              <span>Pesanan sedang diproses instan oleh server VIP Reseller...</span>
+                          {promoDiscount > 0 && (
+                            <div className="flex justify-between text-emerald-700">
+                              <span>Potongan Promo:</span>
+                              <span className="tabular-nums">- Rp {promoDiscount.toLocaleString('id-ID')}</span>
                             </div>
-                            <button
-                              type="button"
-                              onClick={async () => {
-                                try {
-                                  await fetch(`/api/v1/orders/${order.id}/sync-vip`, { method: 'POST' });
-                                  refetch();
-                                  showNotification('Status live berhasil disinkronkan dengan gateway.');
-                                } catch (_) {}
-                              }}
-                              className="text-[11px] font-semibold text-primary hover:underline cursor-pointer"
-                            >
-                              Cek Status Live
-                            </button>
+                          )}
+                          {uniqueCode > 0 && (
+                            <div className="flex justify-between">
+                              <span>Kode Unik Verifikasi:</span>
+                              <span className="text-foreground tabular-nums">+ Rp {uniqueCode.toLocaleString('id-ID')}</span>
+                            </div>
+                          )}
+                          <div className="flex justify-between font-semibold text-foreground text-xs pt-1.5 border-t border-border">
+                            <span>Total Pembayaran:</span>
+                            <span className="tabular-nums text-sm">
+                              Rp {orderTotal.toLocaleString('id-ID')}
+                            </span>
+                          </div>
+                        </div>
+
+                        {cleanNotes && (
+                          <div className="border-t border-border pt-2 flex items-start justify-between gap-3 text-foreground-muted">
+                            <span className="shrink-0">Catatan:</span>
+                            <span className="text-foreground text-right">{cleanNotes}</span>
                           </div>
                         )}
                       </div>
 
-                      <div className="flex items-center gap-2 p-3 bg-surface-raised rounded-lg text-status-success">
-                        <FontAwesomeIcon icon={faShieldHalved} className="w-4 h-4 shrink-0" />
-                        <span className="text-[11px]">
-                          Lisensi ini dilindungi oleh Garansi Asterra Store 100% penggantian jika mengalami kendala akses.
+                      {/* In-Progress Notification for Processing Orders */}
+                      {effectiveStatus === 'processing' && (
+                        <div className="p-3 bg-muted/30 border border-border rounded-md flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
+                          <div className="flex items-center gap-2 text-foreground-muted">
+                            <FontAwesomeIcon icon={faRotateLeft} className="w-3.5 h-3.5 animate-spin shrink-0 text-foreground" />
+                            <span className="text-foreground">
+                              Lisensi digital sedang diproses oleh sistem. Kredensial akan otomatis muncul di sini.
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              try {
+                                await fetch(`/api/v1/orders/${order.id}/sync-vip`, { method: 'POST' });
+                                refetch();
+                                showNotification('Status pesanan berhasil diperbarui.');
+                              } catch (_) {}
+                            }}
+                            className="text-xs font-medium text-foreground hover:underline cursor-pointer shrink-0 self-end sm:self-auto"
+                          >
+                            Perbarui Status
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Guarantee quiet line */}
+                      <div className="flex items-center gap-2 p-3 border border-border rounded-md text-foreground-muted text-[11px]">
+                        <FontAwesomeIcon icon={faShieldHalved} className="w-3.5 h-3.5 text-foreground-muted shrink-0" />
+                        <span>
+                          Dilindungi oleh <span className="text-foreground font-medium">Garansi Asterra Store</span> — bantuan aktivasi dan penggantian 100% jika terjadi kendala akses.
                         </span>
                       </div>
                     </div>
                   )}
 
                   {/* Actions Footer */}
-                  <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-border">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3.5 border-t border-border">
                     <button
                       type="button"
                       onClick={() => setExpandedOrderId(isExpanded ? null : order.id)}
-                      className="text-xs text-foreground-muted hover:text-foreground inline-flex items-center gap-1 cursor-pointer"
+                      className="text-xs text-foreground-muted hover:text-foreground inline-flex items-center gap-1.5 cursor-pointer font-medium self-start sm:self-auto py-1"
                     >
-                      <span>{isExpanded ? 'Tutup Rincian' : 'Lihat Rincian Lisensi'}</span>
-                      {isExpanded ? <FontAwesomeIcon icon={faChevronUp} className="w-3.5 h-3.5" /> : <FontAwesomeIcon icon={faChevronDown} className="w-3.5 h-3.5" />}
+                      <span>{isExpanded ? 'Sembunyikan Rincian' : 'Lihat Rincian Pesanan'}</span>
+                      <FontAwesomeIcon
+                        icon={isExpanded ? faChevronUp : faChevronDown}
+                        className="w-3 h-3 transition-transform duration-200"
+                      />
                     </button>
 
                     <div className="flex flex-wrap items-center gap-2">
@@ -861,9 +954,9 @@ function PrivateOrderContent() {
                         size="sm"
                         variant="outline"
                         onClick={() => handleCopyOrderInfo(order)}
-                        className="text-xs gap-1.5 border-border h-8 cursor-pointer"
+                        className="text-xs gap-1.5 border-border h-8 font-medium cursor-pointer"
                       >
-                        <FontAwesomeIcon icon={faCopy} className="w-3 h-3" />
+                        <FontAwesomeIcon icon={faCopy} className="w-3 h-3 text-foreground-muted" />
                         <span>Salin Bukti</span>
                       </Button>
 
@@ -871,10 +964,10 @@ function PrivateOrderContent() {
                         <Button
                           size="sm"
                           onClick={() => handlePayOrder(order)}
-                          className="text-xs gap-1.5 h-8 font-semibold bg-primary hover:bg-primary/90 text-white shadow-sm cursor-pointer"
+                          className="text-xs gap-1.5 h-8 font-semibold bg-primary hover:bg-primary/90 text-white shadow-xs cursor-pointer"
                         >
                           <FontAwesomeIcon icon={faCreditCard} className="w-3.5 h-3.5" />
-                          <span>Bayar</span>
+                          <span>Bayar Sekarang</span>
                         </Button>
                       )}
 
@@ -883,10 +976,10 @@ function PrivateOrderContent() {
                           size="sm"
                           variant="outline"
                           onClick={() => handleReorder(order)}
-                          className="text-xs gap-1.5 border-border h-8 font-medium cursor-pointer"
+                          className="text-xs gap-1.5 border-border h-8 font-medium cursor-pointer hover:border-primary hover:text-primary"
                         >
                           <FontAwesomeIcon icon={faRotateLeft} className="w-3 h-3 text-primary" />
-                          <span>Beli Lagi</span>
+                          <span>Pesan Ulang</span>
                         </Button>
                       )}
 
@@ -897,7 +990,11 @@ function PrivateOrderContent() {
                         target="_blank"
                         rel="noreferrer"
                       >
-                        <Button size="sm" className="text-xs gap-1.5 h-8 cursor-pointer">
+                        <Button
+                          size="sm"
+                          variant={effectiveStatus === 'cancelled' ? 'secondary' : 'default'}
+                          className="text-xs gap-1.5 h-8 cursor-pointer font-medium"
+                        >
                           <FontAwesomeIcon icon={faPhone} className="w-3 h-3" />
                           <span>Hubungi CS</span>
                         </Button>
