@@ -516,6 +516,37 @@ class OrderService:
 
                 for item in items:
                     item_id = f"item-{random.randint(10000, 99999)}"
+                    raw_target_id = str(
+                        item.get("target_id")
+                        or item.get("targetId")
+                        or item.get("target_no")
+                        or item.get("targetNo")
+                        or payload.get("target_id")
+                        or payload.get("targetId")
+                        or payload.get("target_no")
+                        or payload.get("targetNo")
+                        or ""
+                    ).strip()
+                    raw_target_zone = str(
+                        item.get("target_zone")
+                        or item.get("targetZone")
+                        or payload.get("target_zone")
+                        or payload.get("targetZone")
+                        or ""
+                    ).strip()
+                    raw_target_email = str(
+                        item.get("target_email")
+                        or item.get("targetEmail")
+                        or (raw_target_id if "@" in raw_target_id else "")
+                        or customer_email
+                    ).strip()
+                    raw_target_phone = str(
+                        item.get("target_phone")
+                        or item.get("targetPhone")
+                        or (raw_target_id if ("@" not in raw_target_id and raw_target_id) else "")
+                        or customer_phone
+                    ).strip()
+
                     order_item_rec = OrderItem(
                         id=item_id,
                         order_id=order_id,
@@ -523,8 +554,10 @@ class OrderService:
                         product_name=item.get("product_name") or item.get("productName") or "Layanan Digital",
                         price=int(item.get("unit_price") or item.get("price") or 0),
                         quantity=int(item.get("quantity", 1)),
-                        target_email=customer_email,
-                        target_phone=customer_phone,
+                        target_email=raw_target_email,
+                        target_phone=raw_target_phone,
+                        target_id=raw_target_id or None,
+                        target_zone=raw_target_zone or None,
                     )
                     db.add(order_item_rec)
 

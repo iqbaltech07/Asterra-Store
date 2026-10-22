@@ -277,6 +277,137 @@ class VipService:
         return False
 
     @classmethod
+    def get_product_target_requirement(
+        cls,
+        product_name: str = "",
+        brand: str = "",
+        category: str = "",
+        provider_code: str = "",
+        target_type_override: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Determines the required input target field and parameters for a VIP Reseller or digital product.
+        Returns target type, UI labels, placeholders, helper notes, and zone necessity.
+        """
+        if target_type_override:
+            t = target_type_override.strip().lower()
+            if t in ["phone", "tel", "whatsapp", "nomor"]:
+                return {
+                    "type": "phone",
+                    "label": "Nomor WhatsApp / HP Anda",
+                    "placeholder": "Masukan Nomor (contoh: 081234567890)",
+                    "helper": "Masukan nomor Anda. Akun akan dikirim melalui Riwayat Pesanan dan jangan lupa untuk membaca ketentuan.",
+                    "requires_zone": False,
+                    "zone_label": "",
+                    "zone_placeholder": "",
+                    "zone_helper": "",
+                }
+            elif t in ["game", "games", "game_id"]:
+                return {
+                    "type": "game",
+                    "label": "User ID Game",
+                    "placeholder": "contoh: 136216325",
+                    "helper": "Masukan User ID game tujuan.",
+                    "requires_zone": True,
+                    "zone_label": "Server / Zone ID",
+                    "zone_placeholder": "contoh: 2685",
+                    "zone_helper": "Server atau Zone ID akun game Anda.",
+                }
+            elif t in ["customer_id", "pelanggan", "id_pelanggan"]:
+                return {
+                    "type": "customer_id",
+                    "label": "Nomor Pelanggan / No. Meter / SMC ID",
+                    "placeholder": "contoh: 14205819230",
+                    "helper": "Masukan nomor meter atau ID pelanggan tujuan.",
+                    "requires_zone": False,
+                    "zone_label": "",
+                    "zone_placeholder": "",
+                    "zone_helper": "",
+                }
+
+        combined = f"{product_name} {brand} {category} {provider_code}".lower().strip()
+
+        # 1. Phone number targets (CapCut, Pulsa, Data/Kuota, E-Wallets, Telegram)
+        phone_keywords = [
+            "capcut", "pulsa", "telkomsel", "tsel", "indosat", "isat", "tri", "three",
+            "xl", "axis", "smartfren", "dana", "gopay", "ovo", "shopeepay", "linkaja",
+            "kuota", "paket data", "whatsapp", "telegram"
+        ]
+        if any(k in combined for k in phone_keywords):
+            return {
+                "type": "phone",
+                "label": "Nomor WhatsApp / HP Anda",
+                "placeholder": "Masukan Nomor (contoh: 081234567890)",
+                "helper": "Masukan nomor Anda. Akun akan dikirim melalui Riwayat Pesanan dan jangan lupa untuk membaca ketentuan.",
+                "requires_zone": False,
+                "zone_label": "",
+                "zone_placeholder": "",
+                "zone_helper": "",
+            }
+
+        # 2. Customer ID / Meter targets (PLN, PDAM, TV Kabel)
+        customer_id_keywords = [
+            "pln", "token pln", "pdam", "bpjs", "k-vision", "kvision",
+            "nex parabola", "orange tv", "smc id"
+        ]
+        if any(k in combined for k in customer_id_keywords):
+            return {
+                "type": "customer_id",
+                "label": "Nomor Pelanggan / No. Meter / SMC ID",
+                "placeholder": "contoh: 14205819230",
+                "helper": "Masukan nomor meter atau ID pelanggan tujuan.",
+                "requires_zone": False,
+                "zone_label": "",
+                "zone_placeholder": "",
+                "zone_helper": "",
+            }
+
+        # 3. Games with Server / Zone ID
+        zone_game_keywords = [
+            "mobile legends", "mlbb", "lifeafter", "ragnarok", "genshin", "honkai", "zenless"
+        ]
+        if any(k in combined for k in zone_game_keywords):
+            return {
+                "type": "game",
+                "label": "User ID Game",
+                "placeholder": "contoh: 136216325",
+                "helper": "Masukan User ID game tujuan.",
+                "requires_zone": True,
+                "zone_label": "Server / Zone ID",
+                "zone_placeholder": "contoh: 2685",
+                "zone_helper": "Server atau Zone ID akun game Anda.",
+            }
+
+        # 4. Games without Server / Zone ID
+        no_zone_game_keywords = [
+            "free fire", "ff", "valorant", "pubg", "point blank", "codm",
+            "call of duty", "honor of kings", "hok", "arena of valor", "aov"
+        ]
+        if any(k in combined for k in no_zone_game_keywords):
+            return {
+                "type": "game",
+                "label": "User ID Game",
+                "placeholder": "contoh: 849201948",
+                "helper": "Masukan User ID akun game Anda.",
+                "requires_zone": False,
+                "zone_label": "",
+                "zone_placeholder": "",
+                "zone_helper": "",
+            }
+
+        # 5. Default: Email-based activation (YouTube, Spotify, Canva, Netflix, etc.)
+        return {
+            "type": "email",
+            "label": "Email Akun Tujuan Aktivasi",
+            "placeholder": "contoh: akun_anda@gmail.com",
+            "helper": "Undangan atau akses lisensi premium akan dikaitkan ke email ini.",
+            "requires_zone": False,
+            "zone_label": "",
+            "zone_placeholder": "",
+            "zone_helper": "",
+        }
+
+    @classmethod
     def place_order(
         cls,
         service_code: str,
@@ -526,11 +657,47 @@ class VipService:
 
             # Fulfill the primary VIP service item
             item, prod = vip_items[0]
-            target_id = (item.target_email or order.customer_email or item.target_phone or order.customer_whatsapp or "").strip()
 
-            # Optional zone resolution from customer notes if specified
-            target_zone = ""
-            if order.customer_notes and "zone:" in order.customer_notes.lower():
+            # Detect the specific target field requirement for this VIP product
+            target_req = cls.get_product_target_requirement(
+                product_name=prod.name or getattr(item, "product_name", ""),
+                brand=prod.brand or "",
+                category=prod.category_name or "",
+                provider_code=prod.provider_code or "",
+            )
+            req_type = target_req.get("type", "email")
+
+            # Resolve target_id and target_zone based on requirement type
+            item_target_id = getattr(item, "target_id", None) or ""
+            item_target_zone = getattr(item, "target_zone", None) or ""
+            item_target_phone = getattr(item, "target_phone", None) or ""
+            item_target_email = getattr(item, "target_email", None) or ""
+
+            target_id = ""
+            target_zone = str(item_target_zone or "").strip()
+
+            if req_type == "phone":
+                # For CapCut, Pulsa, E-wallet: prioritize phone number as data_no
+                target_id = (item_target_phone or item_target_id or order.customer_whatsapp or "").strip()
+            elif req_type == "game":
+                # For Games (Mobile Legends, etc.): User ID as data_no
+                target_id = (item_target_id or item_target_phone or item_target_email or "").strip()
+            elif req_type == "customer_id":
+                # For PLN, TV Kabel: customer ID as data_no
+                target_id = (item_target_id or item_target_phone or "").strip()
+            else:
+                # For YouTube, Spotify, Canva: email as data_no
+                target_id = (item_target_email or item_target_id or order.customer_email or "").strip()
+
+            # Robust fallback if still empty
+            if not target_id:
+                target_id = (
+                    item_target_id or item_target_email or item_target_phone or
+                    order.customer_email or order.customer_whatsapp or ""
+                ).strip()
+
+            # Optional zone resolution from customer notes if specified as "zone:..."
+            if not target_zone and order.customer_notes and "zone:" in order.customer_notes.lower():
                 import re
                 zm = re.search(r"zone[:\s]+([0-9a-zA-Z_-]+)", order.customer_notes, re.IGNORECASE)
                 if zm:

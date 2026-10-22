@@ -15,6 +15,8 @@ class OrderItem(Base):
     duration = Column(String, nullable=True)
     target_email = Column(String, nullable=True)
     target_phone = Column(String, nullable=True)
+    target_id = Column(String, nullable=True)
+    target_zone = Column(String, nullable=True)
 
     order = relationship("Order", back_populates="items")
 
@@ -29,6 +31,10 @@ class OrderItem(Base):
             "duration": self.duration,
             "targetEmail": self.target_email,
             "targetPhone": self.target_phone,
+            "targetId": self.target_id,
+            "target_id": self.target_id,
+            "targetZone": self.target_zone,
+            "target_zone": self.target_zone,
         }
 
 class Order(Base):

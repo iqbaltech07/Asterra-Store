@@ -133,6 +133,24 @@ def mask_order_for_public(order: dict, is_owner_or_admin: bool) -> dict:
     return o
 
 # ------------------------------------------
+# 0. Dynamic Target Requirement Endpoint
+# ------------------------------------------
+@router.get("/target-requirement", tags=["Checkout"])
+def get_target_requirement(
+    product_name: str = "",
+    brand: str = "",
+    category: str = "",
+    provider_code: str = "",
+):
+    from app.services.vip_service import VipService
+    return VipService.get_product_target_requirement(
+        product_name=product_name,
+        brand=brand,
+        category=category,
+        provider_code=provider_code,
+    )
+
+# ------------------------------------------
 # 1. Payment Configuration Endpoints
 # ------------------------------------------
 @router.get("/payment-config", tags=["Payment"])

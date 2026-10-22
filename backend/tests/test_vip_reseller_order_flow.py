@@ -127,6 +127,104 @@ def test_vip_webhook_handler_updates_status_and_note():
             pass
         db.close()
 
+def test_dynamic_target_requirements_resolution():
+    # 1. CapCut Pro
+    capcut_req = VipService.get_product_target_requirement(
+        product_name="CapCut Pro Private 1 Bulan",
+        brand="CapCut Pro",
+        provider_code="CAPCUTPRIVATE1BLN-S2"
+    )
+    assert capcut_req["type"] == "phone"
+    assert capcut_req["requires_zone"] is False
+    assert "081234567890" in capcut_req["placeholder"]
+
+    # 2. Mobile Legends (Game with zone)
+    ml_req = VipService.get_product_target_requirement(
+        product_name="Mobile Legends 86 Diamonds",
+        brand="Mobile Legends",
+        provider_code="ML86"
+    )
+    assert ml_req["type"] == "game"
+    assert ml_req["requires_zone"] is True
+    assert "Server / Zone ID" in ml_req["zone_label"]
+
+    # 3. Free Fire (Game without zone)
+    ff_req = VipService.get_product_target_requirement(
+        product_name="Free Fire 100 Diamonds",
+        brand="Free Fire",
+        provider_code="FF100"
+    )
+    assert ff_req["type"] == "game"
+    assert ff_req["requires_zone"] is False
+
+    # 4. PLN Token (Customer / Meter ID)
+    pln_req = VipService.get_product_target_requirement(
+        product_name="Token PLN 20.000",
+        brand="PLN",
+        provider_code="PLN20"
+    )
+    assert pln_req["type"] == "customer_id"
+
+    # 5. YouTube Premium (Email based)
+    yt_req = VipService.get_product_target_requirement(
+        product_name="YouTube Premium Family Invite 1 Bulan",
+        brand="YouTube Premium",
+        provider_code="YTPREMINVT1BLN-S3"
+    )
+    assert yt_req["type"] == "email"
+
+def test_capcut_order_fulfills_with_phone_target():
+    db = SessionLocal()
+    test_order_id = f"TEST-CAPCUT-{int(datetime.utcnow().timestamp())}"
+    try:
+        # Create test Capcut order with phone target
+        order = Order(
+            id=test_order_id,
+            customer_email="capcutbuyer@gmail.com",
+            customer_whatsapp="081299998888",
+            total_amount=15000,
+            status="processing",
+            payment_mode="manual",
+            payment_method="manual_bca",
+            payment_status="paid",
+            provider="vip-reseller"
+        )
+        db.add(order)
+        item = OrderItem(
+            id=f"item-{test_order_id}",
+            order_id=test_order_id,
+            product_id="vip-capcutshared1blngar28d-s2",
+            product_name="CapCut Pro Shared 1 Bulan",
+            price=15000,
+            quantity=1,
+            target_id="081234567890",
+            target_phone="081234567890",
+            target_email="capcutbuyer@gmail.com"
+        )
+        db.add(item)
+        db.commit()
+
+        # Fulfill order (In sandbox mode, strictly protects real balance)
+        res = VipService.fulfill_order_if_vip(test_order_id)
+        assert res.get("is_vip") is True
+        assert res.get("success") is True
+        assert "VP-TEST-" in res.get("order", {}).get("providerTrxId", "")
+
+        # Verify DB record
+        refreshed = db.query(Order).filter(Order.id == test_order_id).first()
+        assert refreshed.provider_trxid is not None
+        assert "VP-TEST-" in refreshed.provider_trxid
+
+    finally:
+        try:
+            db.rollback()
+            db.query(OrderItem).filter(OrderItem.order_id == test_order_id).delete()
+            db.query(Order).filter(Order.id == test_order_id).delete()
+            db.commit()
+        except Exception:
+            pass
+        db.close()
+
 if __name__ == "__main__":
     test_vip_signature_verification()
     print("✓ test_vip_signature_verification passed")
@@ -138,4 +236,8 @@ if __name__ == "__main__":
     print("✓ test_native_product_is_not_fulfilled_by_vip passed")
     test_vip_webhook_handler_updates_status_and_note()
     print("✓ test_vip_webhook_handler_updates_status_and_note passed")
+    test_dynamic_target_requirements_resolution()
+    print("✓ test_dynamic_target_requirements_resolution passed")
+    test_capcut_order_fulfills_with_phone_target()
+    print("✓ test_capcut_order_fulfills_with_phone_target passed")
     print("ALL TESTS PASSED SUCCESSFULLY!")

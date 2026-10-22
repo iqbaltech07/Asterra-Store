@@ -25,6 +25,7 @@ import {
   ManualPaymentModalData,
 } from '@/components/checkout/checkout-manual-modal';
 import { AuthRequiredModal } from '@/components/auth/auth-required-modal';
+import { getProductTargetRequirement } from '@/lib/target-field-utils';
 
 const GATEWAY_PAYMENT_METHODS: PaymentMethodOption[] = [
   {
@@ -64,9 +65,30 @@ function CheckoutPageContent() {
 
   // Form states
   const [customerName, setCustomerName] = useState('');
+  const [customerEmail, setCustomerEmail] = useState('');
+  const [targetValue, setTargetValue] = useState('');
+  const [targetZone, setTargetZone] = useState('');
   const [targetEmail, setTargetEmail] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [customerNotes, setCustomerNotes] = useState('');
+
+  // Auto-sync customer name and email from session
+  useEffect(() => {
+    if (session?.user?.name && !customerName) {
+      setCustomerName(session.user.name);
+    }
+    if (session?.user?.email && !customerEmail) {
+      setCustomerEmail(session.user.email);
+    }
+  }, [session, customerName, customerEmail]);
+
+  // Compute dynamic target requirement based on first/primary item in cart
+  const targetRequirement = useMemo(() => {
+    if (!items.length) {
+      return getProductTargetRequirement();
+    }
+    return getProductTargetRequirement(items[0]);
+  }, [items]);
 
   // Sales Partner Referral & Discount Tracking
   const [referralCode, setReferralCode] = useState<string>('');
@@ -630,15 +652,40 @@ function CheckoutPageContent() {
       return false;
     }
 
-    if (!targetEmail.trim()) {
-      showNotification('Mohon lengkapi email tujuan aktivasi akun.');
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (customerEmail.trim() && !emailRegex.test(customerEmail.trim())) {
+      showNotification('Format email pemesan tidak valid.');
       return false;
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(targetEmail.trim())) {
-      showNotification('Format email aktivasi tidak valid.');
+    if (!phoneNumber.trim()) {
+      showNotification('Mohon lengkapi nomor WhatsApp kontak pemesan.');
       return false;
+    }
+
+    // Dynamic Target Field Validation
+    const effectiveTarget = (targetValue || targetEmail).trim();
+    if (!effectiveTarget) {
+      showNotification(`Mohon lengkapi ${targetRequirement.label.replace(' *', '')}.`);
+      return false;
+    }
+
+    if (targetRequirement.type === 'email') {
+      if (!emailRegex.test(effectiveTarget)) {
+        showNotification('Format email aktivasi akun tidak valid.');
+        return false;
+      }
+    } else if (targetRequirement.type === 'phone') {
+      const cleanPhone = effectiveTarget.replace(/\D/g, '');
+      if (cleanPhone.length < 8) {
+        showNotification('Format nomor telepon / WhatsApp tujuan tidak valid (minimal 8 angka).');
+        return false;
+      }
+    } else if (targetRequirement.type === 'game') {
+      if (targetRequirement.requiresZone && !targetZone.trim()) {
+        showNotification('Mohon lengkapi Server / Zone ID game Anda.');
+        return false;
+      }
     }
 
     if (items.length === 0) {
@@ -785,15 +832,30 @@ function CheckoutPageContent() {
       return;
     }
 
+    const effectiveTarget = (targetValue || targetEmail).trim();
+    const effectiveEmail = (targetRequirement.type === 'email' ? effectiveTarget : (customerEmail.trim() || session?.user?.email || 'buyer@asterra.store'));
+    const effectivePhone = (targetRequirement.type === 'phone' ? effectiveTarget : phoneNumber.trim());
+
     const orderPayload = {
+      target_id: effectiveTarget,
+      target_zone: targetZone.trim() || undefined,
+      target_no: effectiveTarget,
+      target_email: effectiveEmail,
+      target_phone: effectivePhone,
       items: items.map((item) => ({
         product_id: item.id,
         product_name: item.name,
         unit_price: item.priceNumeric,
         quantity: item.quantity,
+        target_id: effectiveTarget,
+        target_zone: targetZone.trim() || undefined,
+        target_email: effectiveEmail,
+        target_phone: effectivePhone,
         purchased_details: {
-          target_email: targetEmail.trim(),
-          phone: phoneNumber.trim(),
+          target_id: effectiveTarget,
+          target_zone: targetZone.trim() || undefined,
+          target_email: effectiveEmail,
+          phone: effectivePhone,
         },
       })),
       customer_notes: customerNotes.trim(),
@@ -811,8 +873,8 @@ function CheckoutPageContent() {
       utm_campaign: matchingCampaign?.slug || (activeCampaignSlug ? activeCampaignSlug : undefined),
       customer_contact: {
         name: customerName.trim(),
-        email: targetEmail.trim(),
-        phone: phoneNumber.trim(),
+        email: effectiveEmail,
+        phone: phoneNumber.trim() || effectivePhone,
       },
     };
 
@@ -893,12 +955,19 @@ function CheckoutPageContent() {
                   <CheckoutCustomerForm
                     customerName={customerName}
                     onCustomerNameChange={setCustomerName}
+                    customerEmail={customerEmail}
+                    onCustomerEmailChange={setCustomerEmail}
+                    targetValue={targetValue}
+                    onTargetValueChange={setTargetValue}
+                    targetZone={targetZone}
+                    onTargetZoneChange={setTargetZone}
                     targetEmail={targetEmail}
                     onTargetEmailChange={setTargetEmail}
                     phoneNumber={phoneNumber}
                     onPhoneNumberChange={setPhoneNumber}
                     customerNotes={customerNotes}
                     onCustomerNotesChange={setCustomerNotes}
+                    targetRequirement={targetRequirement}
                   />
 
                   {/* Payment Method Card */}

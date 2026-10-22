@@ -180,6 +180,20 @@ class OrderNormalizer:
             it_dict["unit_price"] = price_val
             it_dict["quantity"] = qty
 
+            t_id = it_dict.get("targetId") or it_dict.get("target_id") or it_dict.get("target_no") or it_dict.get("targetNo")
+            t_zone = it_dict.get("targetZone") or it_dict.get("target_zone")
+            t_phone = it_dict.get("targetPhone") or it_dict.get("target_phone")
+            t_email = it_dict.get("targetEmail") or it_dict.get("target_email")
+
+            it_dict["targetId"] = t_id
+            it_dict["target_id"] = t_id
+            it_dict["targetZone"] = t_zone
+            it_dict["target_zone"] = t_zone
+            it_dict["targetPhone"] = t_phone
+            it_dict["target_phone"] = t_phone
+            it_dict["targetEmail"] = t_email
+            it_dict["target_email"] = t_email
+
             norm_items.append(it_dict)
 
         o["items"] = norm_items
