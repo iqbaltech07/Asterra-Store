@@ -9,7 +9,6 @@ from app.models.product import Product
 from app.models.partner import SalesPartner
 from app.models.commission import Commission
 from app.models.profit_ledger import ProfitLedger
-from app.models.campaign import PromoCampaign
 
 class ReferralProfitService:
     """
@@ -144,14 +143,17 @@ class ReferralProfitService:
                 camp_id_val = order.campaign_id or ""
                 if camp_id_val:
                     try:
-                        camp_obj = db.query(PromoCampaign).filter(
-                            (PromoCampaign.id == camp_id_val) | (PromoCampaign.slug == camp_id_val.lower())
-                        ).first()
-                        if camp_obj:
-                            is_campaign_sale = True
-                            override = float(camp_obj.affiliate_commission_override or 0)
-                            if override > 0:
-                                commission_rate = override
+                        from app.services.campaign_service import CampaignService
+                        for c in CampaignService.get_all_campaigns():
+                            c_id = str(c.get("id") or "").strip()
+                            c_slug = str(c.get("slug") or "").strip().lower()
+                            if c_id == camp_id_val or c_slug == camp_id_val.lower():
+                                camp_obj = c
+                                override = float(c.get("affiliateBonusPercent") or c.get("affiliateCommissionOverride") or 0)
+                                if override > 0:
+                                    commission_rate = override
+                                is_campaign_sale = True
+                                break
                     except Exception:
                         pass
                 elif (order.campaign_discount or 0) > 0:
@@ -171,12 +173,22 @@ class ReferralProfitService:
                     if it.product_id:
                         first_product_id = it.product_id
 
-                    prod_obj = db.query(Product).filter(
-                        (Product.id == it.product_id) | (Product.provider_code == it.product_id)
-                    ).first()
+                    prod_obj = db.query(Product).filter(Product.id == it.product_id).first()
                     provider_price = None
                     if prod_obj and prod_obj.provider_price and prod_obj.provider_price > 0:
                         provider_price = int(prod_obj.provider_price)
+                    else:
+                        try:
+                            from app.services.catalog_service import CatalogService
+                            for cat_p in CatalogService.load_products():
+                                if str(cat_p.get("id")) == str(it.product_id):
+                                    if cat_p.get("providerPrice"):
+                                        provider_price = int(cat_p["providerPrice"])
+                                    elif cat_p.get("provider_price"):
+                                        provider_price = int(cat_p["provider_price"])
+                                    break
+                        except Exception:
+                            pass
 
                     if provider_price is not None and provider_price > 0:
                         total_cog += provider_price * it_qty

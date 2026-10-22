@@ -63,10 +63,23 @@ class CampaignService:
 
     @classmethod
     def ensure_table(cls, force: bool = False):
-        """Ensures promo_campaigns table exists in database without running intrusive runtime DDL locks."""
+        """Ensures promo_campaigns table exists in database and has all required columns (runs once per process)."""
         if cls._table_ensured and not force:
             return
         cls._table_ensured = True
+        try:
+            if engine is not None:
+                Base.metadata.create_all(bind=engine, tables=[PromoCampaign.__table__])
+                try:
+                    with engine.connect() as conn:
+                        conn.execute(text("ALTER TABLE orders ADD COLUMN IF NOT EXISTS campaign_id VARCHAR;"))
+                        conn.execute(text("ALTER TABLE orders ADD COLUMN IF NOT EXISTS campaign_discount INTEGER DEFAULT 0;"))
+                        conn.execute(text("ALTER TABLE promo_campaigns ADD COLUMN IF NOT EXISTS priority INTEGER DEFAULT 0;"))
+                        conn.commit()
+                except Exception:
+                    pass
+        except Exception as e:
+            print(f"[CampaignService] DB table verification note: {e}")
 
     @classmethod
     def load_campaigns(cls, force_reload: bool = False) -> List[Dict[str, Any]]:

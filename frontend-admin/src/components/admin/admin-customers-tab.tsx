@@ -30,7 +30,6 @@ interface CustomerItem {
   whatsapp: string;
   tier: 'VIP Platinum' | 'Gold Member' | 'Silver' | 'Reguler';
   totalOrders: number;
-  completedOrders?: number;
   totalSpent: number;
   lastOrderDate: string;
   joinedAt: string;
@@ -283,7 +282,7 @@ export function AdminCustomersTab({ onNotify }: AdminCustomersTabProps) {
               </div>
               <div>
                 <span className="text-[10px] text-foreground-muted block">Frekuensi Order</span>
-                <span className="font-bold text-foreground">{(selectedCustomer.completedOrders ?? selectedCustomer.totalOrders)} Transaksi Lunas</span>
+                <span className="font-bold text-foreground">{selectedCustomer.totalOrders} Transaksi Lunas</span>
               </div>
               <div>
                 <span className="text-[10px] text-foreground-muted block">Asal Referral</span>

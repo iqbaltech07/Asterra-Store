@@ -46,7 +46,7 @@ class OrderService:
             db = SessionLocal()
             try:
                 db_orders = db.query(Order).options(joinedload(Order.items)).order_by(Order.created_at.desc()).all()
-                if db_orders is not None:
+                if db_orders:
                     normalized = [cls._normalize_order(o.to_dict()) for o in db_orders]
                     cls._orders = normalized
                     cls._last_loaded = datetime.utcnow()
@@ -54,9 +54,28 @@ class OrderService:
             finally:
                 db.close()
         except Exception as e:
-            print(f"[OrderService] Warning: Supabase orders query failed: {e}")
+            print(f"[OrderService] Warning: Supabase orders query failed, using local fallback: {e}")
 
-        # When connected to database or if database is empty, return empty list (never silently replace with stale json orders)
+        # 2. Priority 1 Fallback: Supabase orders JSON
+        if ORDERS_FILE.exists():
+            try:
+                data = json.loads(ORDERS_FILE.read_text(encoding="utf-8"))
+                if isinstance(data, list) and len(data) > 0:
+                    cls._orders = [cls._normalize_order(o) for o in data]
+                    return cls._orders
+            except Exception as e:
+                print(f"[OrderService] Error loading supabase-orders.json: {e}")
+
+        # Priority 2 Fallback: Legacy orders file
+        if LEGACY_ORDERS_FILE.exists():
+            try:
+                data = json.loads(LEGACY_ORDERS_FILE.read_text(encoding="utf-8"))
+                if isinstance(data, list) and len(data) > 0:
+                    cls._orders = [cls._normalize_order(o) for o in data]
+                    return cls._orders
+            except Exception as e:
+                print(f"[OrderService] Error loading orders.json: {e}")
+
         cls._orders = []
         return []
 

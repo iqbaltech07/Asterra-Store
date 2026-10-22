@@ -41,7 +41,7 @@
     "role": "sales",
     "createdAt": "2026-10-06T22:41:11.491000",
     "updatedAt": "2026-10-15T18:09:47.738000",
-    "passwordHash": "$2b$12$qFDxKviz48E2stLF7XUByekmYoAAmoOKx2FSGi4QmEkmmOOGn1vIO"
+    "passwordHash": "$2b$10$p8cMsuRJoR/n.Wk/k189N.dtF8ks2wZ339mgAy7.OFpjoHo7eIdfy"
   },
   {
     "id": "cmuxcxsa60002kx04gb6ziit5",
@@ -52,7 +52,7 @@
     "role": "sales",
     "createdAt": "2026-10-07T00:16:35.694000",
     "updatedAt": "2026-10-07T00:16:35.694000",
-    "passwordHash": "$2b$12$HVvy0xVu41ug3TNd55aVWOBb9X94Kla2l55T9ouxGjYdb9QnujL/S"
+    "passwordHash": "$2b$10$ktRIsyHeVx/yYgDMLZHlPuGtg2lgvodrFFS/iVGJFjIIf4sqAi7f6"
   },
   {
     "id": "cmuxiq05s0002jt04tad1axu7",
@@ -63,7 +63,7 @@
     "role": "sales",
     "createdAt": "2026-10-07T02:58:30.352000",
     "updatedAt": "2026-10-07T02:58:30.352000",
-    "passwordHash": "$2b$12$3iWy5b/UdQ5FoVMrTvEvNOlk7xoqxUCJCZamvEwKzjCcjFxfjdfHS"
+    "passwordHash": "$2b$10$5SeVZKiu98O.FbJ.ZMhV3ejLNgnDPA6m6g5vRiDOLQpbn7UiyC4dm"
   },
   {
     "id": "cmuxsg3ig0001l6065qwiau91",
@@ -74,7 +74,7 @@
     "role": "sales",
     "createdAt": "2026-10-07T07:30:44.296000",
     "updatedAt": "2026-10-07T07:30:44.296000",
-    "passwordHash": "$2b$12$k/bRbRYvZX1L76F7eV6Kv.9sgg2.Fu21VPh1WVzRr6xenj3SAr0na"
+    "passwordHash": "$2b$10$alYgWDfWQk6EPJNkD.8xEOXrRTfkdVXOetoF4aPwuvqFp.WLpMZgW"
   },
   {
     "id": "adm-sales-1792065370-AST-",
@@ -85,6 +85,6 @@
     "role": "sales",
     "createdAt": "2026-10-15T18:56:10.313000",
     "updatedAt": "2026-10-15T18:57:30.527000",
-    "passwordHash": "$2b$12$Saa0oH4OULt9/G2XN6mrzuB7VmzwmdeXGMlac94UFR5HxVlMv7OVO"
+    "passwordHash": "34f9f0eb3d8702048f133a12b4a3ea09ca82b50d53f65be9ccf3f6cf90237358"
   }
 ]

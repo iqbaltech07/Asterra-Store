@@ -25,114 +25,63 @@ class AuditLogService:
         if cls._logs is not None:
             return cls._logs
 
-        from app.services.order_service import OrderService
-        canonical_orders = OrderService.load_orders()
-        valid_oids = {str(o.get("id")).strip().upper() for o in canonical_orders if o.get("id")}
-
         if LOGS_FILE.exists():
             try:
                 data = json.loads(LOGS_FILE.read_text(encoding="utf-8"))
                 if isinstance(data, list):
-                    filtered = [
-                        l for l in data
-                        if str(l.get("order_id", "")).strip().upper() in valid_oids
-                        or str(l.get("order_id", "")).strip() in ["-", "SYSTEM", ""]
-                    ]
-                    existing_logged_oids = {str(l.get("order_id", "")).strip().upper() for l in filtered}
-                    for idx, o in enumerate(canonical_orders):
-                        oid = str(o.get("id") or o.get("orderId") or "").strip().upper()
-                        if oid and oid not in existing_logged_oids:
-                            created = cls._normalize_iso_date(o.get("createdAt") or o.get("created_at"))
-                            c_name = o.get("customerName") or o.get("customer_name") or "Pelanggan"
-                            c_email = o.get("customerEmail") or o.get("customer_email") or "buyer@asterra.store"
-                            st = o.get("status", "pending")
-                            tot = float(o.get("totalAmount") or o.get("total_amount") or 0)
-                            filtered.insert(0, {
-                                "id": f"log-order-created-{oid}",
-                                "order_id": oid,
-                                "orderId": oid,
-                                "customer_name": c_name,
-                                "customer_email": c_email,
-                                "actor": "customer",
-                                "action": "order_created",
-                                "previous_status": None,
-                                "new_status": "pending",
-                                "notes": f"Pesanan {oid} dibuat oleh pelanggan dengan total Rp {tot:,.0f}".replace(",", "."),
-                                "created_at": created,
-                                "createdAt": created,
-                            })
-                            if st in ["completed", "paid", "settlement"]:
-                                paid_at = cls._normalize_iso_date(o.get("paidAt") or o.get("paid_at") or created)
-                                pay_method = o.get("paymentMethod") or o.get("payment_method") or "manual"
-                                is_gateway = not str(pay_method).startswith("manual_")
-                                filtered.insert(0, {
-                                    "id": f"log-order-paid-{oid}",
-                                    "order_id": oid,
-                                    "orderId": oid,
-                                    "customer_name": c_name,
-                                    "customer_email": c_email,
-                                    "actor": "tripay_webhook" if is_gateway else "admin",
-                                    "action": "payment_received",
-                                    "previous_status": "pending",
-                                    "new_status": "completed",
-                                    "notes": f"Pembayaran pesanan {oid} terkonfirmasi lunas via {pay_method}.",
-                                    "created_at": paid_at,
-                                    "createdAt": paid_at,
-                                })
-                    cls._logs = filtered
-                    cls._save_logs()
+                    cls._logs = data
                     return cls._logs
             except Exception as e:
                 print(f"[AuditLogService] Error reading supabase-logs.json: {e}")
 
-        # Bootstrap initial logs from real canonical orders if logs file doesn't exist yet
+        # Bootstrap initial logs from orders if logs file doesn't exist yet
         bootstrapped: List[Dict[str, Any]] = []
-        try:
-            from app.services.order_service import OrderService
-            orders = OrderService.load_orders()
-            for idx, o in enumerate(orders):
-                oid = o.get("id") or o.get("orderId") or f"ORD-{idx}"
-                created = cls._normalize_iso_date(o.get("createdAt") or o.get("created_at"))
-                c_name = o.get("customerName") or o.get("customer_name") or "Pelanggan"
-                c_email = o.get("customerEmail") or o.get("customer_email") or "buyer@asterra.store"
-                st = o.get("status", "pending")
-                tot = float(o.get("totalAmount") or o.get("total_amount") or 0)
+        if ORDERS_FILE.exists():
+            try:
+                orders = json.loads(ORDERS_FILE.read_text(encoding="utf-8"))
+                for idx, o in enumerate(orders):
+                    oid = o.get("id") or o.get("orderId") or f"ORD-{idx}"
+                    created = cls._normalize_iso_date(o.get("createdAt") or o.get("created_at"))
+                    c_name = o.get("customerName") or o.get("customer_name") or "Pelanggan"
+                    c_email = o.get("customerEmail") or o.get("customer_email") or "buyer@asterra.store"
+                    st = o.get("status", "pending")
+                    tot = float(o.get("totalAmount") or o.get("total_amount") or 0)
 
-                bootstrapped.append({
-                    "id": f"log-order-created-{idx}",
-                    "order_id": oid,
-                    "orderId": oid,
-                    "customer_name": c_name,
-                    "customer_email": c_email,
-                    "actor": "customer",
-                    "action": "order_created",
-                    "previous_status": None,
-                    "new_status": "pending",
-                    "notes": f"Pesanan {oid} dibuat oleh pelanggan dengan total Rp {tot:,.0f}".replace(",", "."),
-                    "created_at": created,
-                    "createdAt": created,
-                })
-
-                if st in ["completed", "paid", "settlement"]:
-                    paid_at = cls._normalize_iso_date(o.get("paidAt") or o.get("paid_at") or created)
-                    pay_method = o.get("paymentMethod") or o.get("payment_method") or "manual"
-                    is_gateway = not str(pay_method).startswith("manual_")
                     bootstrapped.append({
-                        "id": f"log-order-paid-{idx}",
+                        "id": f"log-order-created-{idx}",
                         "order_id": oid,
                         "orderId": oid,
                         "customer_name": c_name,
                         "customer_email": c_email,
-                        "actor": "tripay_webhook" if is_gateway else "admin",
-                        "action": "payment_received",
-                        "previous_status": "pending",
-                        "new_status": "completed",
-                        "notes": f"Pembayaran pesanan {oid} terkonfirmasi lunas via {pay_method}.",
-                        "created_at": paid_at,
-                        "createdAt": paid_at,
+                        "actor": "customer",
+                        "action": "order_created",
+                        "previous_status": None,
+                        "new_status": "pending",
+                        "notes": f"Pesanan {oid} dibuat oleh pelanggan dengan total Rp {tot:,.0f}".replace(",", "."),
+                        "created_at": created,
+                        "createdAt": created,
                     })
-        except Exception as e:
-            print(f"[AuditLogService] Error bootstrapping initial logs: {e}")
+
+                    if st in ["completed", "paid", "settlement"]:
+                        paid_at = cls._normalize_iso_date(o.get("paidAt") or o.get("paid_at") or created)
+                        pay_method = o.get("paymentMethod") or o.get("payment_method") or "manual"
+                        is_gateway = not str(pay_method).startswith("manual_")
+                        bootstrapped.append({
+                            "id": f"log-order-paid-{idx}",
+                            "order_id": oid,
+                            "orderId": oid,
+                            "customer_name": c_name,
+                            "customer_email": c_email,
+                            "actor": "tripay_webhook" if is_gateway else "admin",
+                            "action": "payment_received",
+                            "previous_status": "pending",
+                            "new_status": "completed",
+                            "notes": f"Pembayaran pesanan {oid} terkonfirmasi lunas via {pay_method}.",
+                            "created_at": paid_at,
+                            "createdAt": paid_at,
+                        })
+            except Exception as e:
+                print(f"[AuditLogService] Error bootstrapping initial logs: {e}")
 
         # System boot log
         bootstrapped.append({

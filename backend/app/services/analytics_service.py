@@ -69,26 +69,12 @@ class AnalyticsService:
                 cust = customer_map[email]
                 cust["orders"] += 1
                 cust["lastOrder"] = max(cust["lastOrder"], created_dt)
-
-            pay_status = str(o.get("paymentStatus") or o.get("payment_status") or "").lower()
-            is_cancelled = status in ["cancelled", "expired", "failed", "refunded"]
-            is_settled_order = (status in ["completed", "paid", "settlement"]) or (
-                pay_status in ["settlement", "paid"] and not is_cancelled
-            )
+                if status in ["completed", "paid", "settlement"]:
+                    cust["spent"] += amt
 
             if status in ["completed", "paid", "settlement"]:
                 completed_orders += 1
-            elif status == "processing":
-                processing_orders += 1
-            elif is_cancelled:
-                cancelled_orders += 1
-            else:
-                pending_orders += 1
-
-            if is_settled_order:
                 total_revenue += amt
-                if email and email in customer_map:
-                    customer_map[email]["spent"] += amt
 
                 # Time-series grouping for charts
                 # 1) Daily bucket (strictly for today's orders by closest 3-hour mark)
@@ -129,6 +115,9 @@ class AnalyticsService:
 
             elif status == "pending":
                 pending_orders += 1
+            elif status == "processing":
+                processing_orders += 1
+                total_revenue += amt
             elif status in ["cancelled", "expired", "failed"]:
                 cancelled_orders += 1
 
@@ -230,9 +219,7 @@ class AnalyticsService:
         daily_records = {}
         for o in orders:
             status = str(o.get("status", "")).lower()
-            pay_st = str(o.get("paymentStatus") or o.get("payment_status") or "").lower()
-            is_settled = (status in ["completed", "paid", "settlement"]) or (pay_st in ["settlement", "paid"] and status not in ["cancelled", "expired", "failed", "refunded"])
-            if is_settled:
+            if status in ["completed", "paid", "settlement"]:
                 created_str = o.get("createdAt") or o.get("created_at") or ""
                 amt = float(o.get("totalAmount") or o.get("rawAmount") or 0.0)
                 try:
@@ -254,10 +241,7 @@ class AnalyticsService:
         # Group sales by product
         sold_by_prod = {}
         for o in orders:
-            status = str(o.get("status", "")).lower()
-            pay_st = str(o.get("paymentStatus") or o.get("payment_status") or "").lower()
-            is_settled = (status in ["completed", "paid", "settlement"]) or (pay_st in ["settlement", "paid"] and status not in ["cancelled", "expired", "failed", "refunded"])
-            if is_settled:
+            if str(o.get("status", "")).lower() in ["completed", "paid", "settlement"]:
                 for it in o.get("items", []):
                     p_name = it.get("productName") or it.get("product_name") or "Layanan Digital"
                     qty = int(it.get("quantity", 1))
@@ -302,115 +286,6 @@ class AnalyticsService:
                 "status": "active",
             })
 
-        # Breakdown: Category Distribution from actual settled orders
-        category_revenue = {}
-        total_category_revenue = 0.0
-        for o in orders:
-            status = str(o.get("status", "")).lower()
-            pay_st = str(o.get("paymentStatus") or o.get("payment_status") or "").lower()
-            is_settled = (status in ["completed", "paid", "settlement"]) or (pay_st in ["settlement", "paid"] and status not in ["cancelled", "expired", "failed", "refunded"])
-            if is_settled:
-                for it in o.get("items", []):
-                    p_name = it.get("productName") or it.get("product_name") or "Layanan Digital"
-                    qty = int(it.get("quantity", 1))
-                    price = float(it.get("price") or it.get("unit_price") or 0.0)
-                    item_rev = (price * qty) if price > 0 else float(o.get("totalAmount") or 0.0)
-
-                    matched_p = next((p for p in managed_products if p.get("name") == p_name), None)
-                    if matched_p and isinstance(matched_p.get("category"), dict) and matched_p["category"].get("name"):
-                        cat_label = matched_p["category"]["name"]
-                    elif matched_p and matched_p.get("categoryName"):
-                        cat_label = str(matched_p["categoryName"])
-                    elif "gemini" in p_name.lower() or "gpt" in p_name.lower() or "ai" in p_name.lower():
-                        cat_label = "AI Tools & Productivity"
-                    elif "netflix" in p_name.lower() or "spotify" in p_name.lower() or "youtube" in p_name.lower():
-                        cat_label = "Streaming & Hiburan"
-                    elif "canva" in p_name.lower() or "capcut" in p_name.lower():
-                        cat_label = "Desain & Grafis"
-                    else:
-                        cat_label = "Produk Digital"
-
-                    category_revenue[cat_label] = category_revenue.get(cat_label, 0.0) + item_rev
-                    total_category_revenue += item_rev
-
-        category_dist = []
-        for cat_name, c_rev in sorted(category_revenue.items(), key=lambda x: x[1], reverse=True):
-            pct = round((c_rev / total_category_revenue * 100), 1) if total_category_revenue > 0 else 0.0
-            category_dist.append({
-                "name": cat_name,
-                "revenue": c_rev,
-                "percentage": pct,
-                "formatted": f"{pct}% (Rp {c_rev:,.0f})".replace(",", "."),
-            })
-
-        # Breakdown: Payment Method Distribution from actual settled orders
-        payment_method_counts = {}
-        total_pay_orders = 0
-        for o in orders:
-            status = str(o.get("status", "")).lower()
-            pay_st = str(o.get("paymentStatus") or o.get("payment_status") or "").lower()
-            is_settled = (status in ["completed", "paid", "settlement"]) or (pay_st in ["settlement", "paid"] and status not in ["cancelled", "expired", "failed", "refunded"])
-            if is_settled:
-                pm = str(o.get("paymentMethod") or o.get("payment_method") or "QRIS").upper()
-                if "QRIS" in pm:
-                    pm_label = "QRIS Real-Time"
-                elif "BCA" in pm:
-                    pm_label = "BCA Virtual Account"
-                elif "DANA" in pm:
-                    pm_label = "DANA E-Wallet"
-                elif "TRIPAY" in pm:
-                    pm_label = "Payment Gateway"
-                else:
-                    pm_label = pm.replace("_", " ").title()
-                payment_method_counts[pm_label] = payment_method_counts.get(pm_label, 0) + 1
-                total_pay_orders += 1
-
-        payment_dist = []
-        for pm_label, count in sorted(payment_method_counts.items(), key=lambda x: x[1], reverse=True):
-            pct = round((count / total_pay_orders * 100), 1) if total_pay_orders > 0 else 0.0
-            payment_dist.append({
-                "name": pm_label,
-                "orders": count,
-                "percentage": pct,
-                "formatted": f"{pct}% ({count} Orders)",
-            })
-
-        # Breakdown: Channel Acquisition from actual settled orders
-        direct_orders = 0
-        affiliate_orders = 0
-        campaign_orders = 0
-        total_acq_orders = 0
-        for o in orders:
-            status = str(o.get("status", "")).lower()
-            pay_st = str(o.get("paymentStatus") or o.get("payment_status") or "").lower()
-            is_settled = (status in ["completed", "paid", "settlement"]) or (pay_st in ["settlement", "paid"] and status not in ["cancelled", "expired", "failed", "refunded"])
-            if is_settled:
-                total_acq_orders += 1
-                if o.get("salesPartnerId") or o.get("sales_partner_id") or o.get("referralCode") or o.get("referral_code"):
-                    affiliate_orders += 1
-                elif o.get("campaignId") or o.get("campaign_id") or (o.get("campaignDiscount") or 0) > 0 or (o.get("promoDiscount") or 0) > 0:
-                    campaign_orders += 1
-                else:
-                    direct_orders += 1
-
-        channel_dist = [
-            {
-                "name": "Direct Toko / Search",
-                "orders": direct_orders,
-                "percentage": round((direct_orders / total_acq_orders * 100), 1) if total_acq_orders > 0 else 0.0,
-            },
-            {
-                "name": "Mitra Afiliasi & Sales",
-                "orders": affiliate_orders,
-                "percentage": round((affiliate_orders / total_acq_orders * 100), 1) if total_acq_orders > 0 else 0.0,
-            },
-            {
-                "name": "Campaign Promo / Kupon",
-                "orders": campaign_orders,
-                "percentage": round((campaign_orders / total_acq_orders * 100), 1) if total_acq_orders > 0 else 0.0,
-            },
-        ]
-
         # 3. Affiliate Telemetry Matrix
         aff_matrix = []
         for a in partners:
@@ -449,11 +324,6 @@ class AnalyticsService:
             "salesTimeSeries": sales_time_series,
             "productPerformanceData": prod_matrix,
             "affiliatePerformanceData": aff_matrix,
-            "breakdown": {
-                "categoryDistribution": category_dist,
-                "paymentMethodDistribution": payment_dist,
-                "channelAcquisition": channel_dist,
-            },
             "financialReport": {
                 "period": f"01 {datetime.utcnow().strftime('%B %Y')} - {datetime.utcnow().strftime('%d %B %Y')}",
                 "grossRevenue": gross_rev,
@@ -648,7 +518,6 @@ class AnalyticsService:
                     "email": email,
                     "whatsapp": phone,
                     "totalOrders": 0,
-                    "completedOrders": 0,
                     "totalSpent": 0.0,
                     "lastOrderDate": date_str,
                     "joinedAt": date_str,
@@ -659,13 +528,7 @@ class AnalyticsService:
 
             c = customer_map[email]
             c["totalOrders"] += 1
-            is_order_settled = (st in ["completed", "paid", "settlement"]) or (
-                str(o.get("paymentStatus") or o.get("payment_status") or "").lower() in ["settlement", "paid"]
-                and st not in ["cancelled", "expired", "failed", "refunded"]
-            )
             if st in ["completed", "paid", "settlement"]:
-                c["completedOrders"] = c.get("completedOrders", 0) + 1
-            if is_order_settled:
                 c["totalSpent"] += amt
             c["purchasedProducts"].add(prod_name)
             c["recentOrders"].append({
