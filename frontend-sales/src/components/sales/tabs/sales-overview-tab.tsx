@@ -237,9 +237,9 @@ export function SalesOverviewTab({
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Card 1: Saldo Komisi Siap Tarik */}
-          <div className="bg-surface border border-border rounded-2xl p-5 shadow-xs space-y-3 hover:border-[#171717]/30 hover:shadow-card-hover transition-all flex flex-col justify-between">
+          <div className="bg-white/70 backdrop-blur-xl border border-white/80 rounded-2xl p-5 shadow-xs space-y-3 hover:border-slate-300 hover:shadow-card-hover transition-all flex flex-col justify-between">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-foreground-muted tracking-wide">Saldo Siap Tarik</span>
+              <span className="text-xs font-semibold text-slate-500 tracking-wide">Saldo Siap Tarik</span>
               <div className="w-8 h-8 rounded-xl bg-emerald-50 text-[#16A36A] flex items-center justify-center border border-emerald-200/60">
                 <Wallet className="w-4 h-4" />
               </div>
@@ -280,9 +280,9 @@ export function SalesOverviewTab({
           </div>
 
           {/* Card 2: Pesanan Referral */}
-          <div className="bg-surface border border-border rounded-2xl p-5 shadow-xs space-y-3 hover:border-[#171717]/30 hover:shadow-card-hover transition-all flex flex-col justify-between">
+          <div className="bg-white/70 backdrop-blur-xl border border-white/80 rounded-2xl p-5 shadow-xs space-y-3 hover:border-slate-300 hover:shadow-card-hover transition-all flex flex-col justify-between">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-foreground-muted tracking-wide">Pesanan Referral</span>
+              <span className="text-xs font-semibold text-slate-500 tracking-wide">Pesanan Referral</span>
               <div className="w-8 h-8 rounded-xl bg-blue-50 text-[#2563EB] flex items-center justify-center border border-blue-200/60">
                 <ShoppingBag className="w-4 h-4" />
               </div>
@@ -308,9 +308,9 @@ export function SalesOverviewTab({
           </div>
 
           {/* Card 3: Traffic & Klik Referral */}
-          <div className="bg-surface border border-border rounded-2xl p-5 shadow-xs space-y-3 hover:border-[#171717]/30 hover:shadow-card-hover transition-all flex flex-col justify-between">
+          <div className="bg-white/70 backdrop-blur-xl border border-white/80 rounded-2xl p-5 shadow-xs space-y-3 hover:border-slate-300 hover:shadow-card-hover transition-all flex flex-col justify-between">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-foreground-muted tracking-wide">Traffic & Klik Link</span>
+              <span className="text-xs font-semibold text-slate-500 tracking-wide">Traffic & Klik Link</span>
               <div className="w-8 h-8 rounded-xl bg-purple-50 text-[#8B5CF6] flex items-center justify-center border border-purple-200/60">
                 <TrendingUp className="w-4 h-4" />
               </div>
@@ -332,9 +332,9 @@ export function SalesOverviewTab({
           </div>
 
           {/* Card 4: Tingkat Kemitraan */}
-          <div className="bg-surface border border-border rounded-2xl p-5 shadow-xs space-y-3 hover:border-[#171717]/30 hover:shadow-card-hover transition-all flex flex-col justify-between">
+          <div className="bg-white/70 backdrop-blur-xl border border-white/80 rounded-2xl p-5 shadow-xs space-y-3 hover:border-slate-300 hover:shadow-card-hover transition-all flex flex-col justify-between">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-foreground-muted tracking-wide">Tingkat Kemitraan</span>
+              <span className="text-xs font-semibold text-slate-500 tracking-wide">Tingkat Kemitraan</span>
               <div className="w-8 h-8 rounded-xl bg-amber-50 text-[#D97706] flex items-center justify-center border border-amber-200/60">
                 <Award className="w-4 h-4" />
               </div>

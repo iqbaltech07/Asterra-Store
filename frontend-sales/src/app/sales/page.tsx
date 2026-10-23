@@ -10,6 +10,7 @@ import {
   faShareNodes,
   faStore,
   faArrowUpRightFromSquare,
+  faChevronDown,
 } from '@fortawesome/free-solid-svg-icons';
 import Link from 'next/link';
 import { AdminSidebar, AdminTab } from '@/components/admin/admin-sidebar';
@@ -144,25 +145,25 @@ export default function SalesPortalPage() {
               <FontAwesomeIcon icon={faBars} className="text-base" />
             </button>
             <div className="flex flex-col animate-text-smooth" key={activeTab}>
-              <div className="flex items-center gap-1.5 text-[11px] text-[#6680A8] font-medium">
-                <span className="font-semibold text-[#10213D]">Asterra Sales</span>
+              <div className="flex items-center gap-1.5 text-xs text-[#64748B] font-medium">
+                <span>Sales Portal</span>
                 <span>/</span>
-                <span className="capitalize text-[#2563EB] font-semibold">
+                <span className="capitalize text-[#64748B] font-medium">
                   {currentTabMeta.category}
                 </span>
               </div>
-              <h1 className="text-base sm:text-xl font-extrabold text-[#10213D] tracking-tight leading-tight">
+              <h1 className="text-xl sm:text-2xl font-bold text-[#0F172A] tracking-tight leading-tight mt-0.5">
                 {currentTabMeta.title}
               </h1>
             </div>
           </div>
 
           {/* Quick Header Actions */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <Button
               size="sm"
               onClick={() => setActiveTab('sales-wallet')}
-              className="text-xs gap-1.5 shadow-xs font-semibold bg-[#16A36A] hover:bg-[#15803D] text-white rounded-xl h-9"
+              className="text-xs gap-1.5 shadow-xs font-semibold bg-[#16A36A] hover:bg-[#15803D] text-white rounded-xl h-9 px-3.5"
             >
               <FontAwesomeIcon icon={faWallet} className="text-xs" />
               <span>Dompet Komisi</span>
@@ -172,12 +173,26 @@ export default function SalesPortalPage() {
               href="/"
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-border bg-white hover:bg-surface-secondary text-xs text-foreground font-medium shadow-xs transition-colors"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200/80 bg-white/70 hover:bg-white text-xs text-foreground font-medium shadow-2xs transition-colors"
             >
               <FontAwesomeIcon icon={faStore} className="text-xs text-[#2563EB]" />
               <span>Lihat Toko</span>
-              <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="text-[10px] text-foreground-muted" />
+              <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="text-[10px] text-slate-400" />
             </Link>
+
+            {/* Sales Partner Avatar Chip */}
+            <div className="hidden md:flex items-center gap-2.5 pl-1.5 pr-3 py-1 rounded-full bg-white/70 border border-slate-200/80 shadow-2xs">
+              <div className="w-7 h-7 rounded-full bg-[#111318] text-white font-bold text-[11px] flex items-center justify-center shrink-0">
+                SP
+              </div>
+              <div className="flex flex-col text-left leading-none">
+                <span className="text-xs font-bold text-slate-900 truncate max-w-[120px]">
+                  {adminUser?.name || 'Mitra Sales'}
+                </span>
+                <span className="text-[10px] text-slate-400 font-normal mt-0.5">Sales Affiliate</span>
+              </div>
+              <FontAwesomeIcon icon={faChevronDown} className="text-[10px] text-slate-400 ml-0.5" />
+            </div>
           </div>
         </header>
 

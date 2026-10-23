@@ -28,6 +28,8 @@ import {
   ShieldCheck,
   Menu,
   Copy,
+  Bell,
+  ChevronDown,
 } from 'lucide-react';
 import { AdminOrdersTab } from '@/components/admin/admin-orders-tab';
 import { AdminLogsTab } from '@/components/admin/admin-logs-tab';
@@ -856,22 +858,58 @@ export default function AdminPage() {
               <Menu className="w-5 h-5" />
             </button>
             <div className="flex flex-col animate-text-smooth" key={activeTab}>
-              <div className="flex items-center gap-1.5 text-[11px] text-[#6680A8] font-medium">
-                <span className="font-semibold text-[#10213D]">Asterra Admin</span>
+              <div className="flex items-center gap-1.5 text-xs text-[#64748B] font-medium">
+                <span>Admin Console</span>
                 <span>/</span>
-                <span className="capitalize text-[#2563EB] font-semibold">
-                  {TAB_TITLES[activeTab]?.category || 'Admin'}
+                <span className="capitalize text-[#64748B] font-medium">
+                  {TAB_TITLES[activeTab]?.category || 'Overview'}
                 </span>
               </div>
-              <h1 className="text-base sm:text-xl font-extrabold text-[#10213D] tracking-tight leading-tight">
-                {TAB_TITLES[activeTab]?.title || 'Panel Admin'}
+              <h1 className="text-xl sm:text-2xl font-bold text-[#0F172A] tracking-tight leading-tight mt-0.5">
+                {TAB_TITLES[activeTab]?.title || 'Dashboard Eksekutif'}
               </h1>
+              {activeTab === 'dashboard' && (
+                <p className="text-xs text-[#64748B] font-normal mt-0.5 hidden sm:block">
+                  Ringkasan performa dan aktivitas utama Asterra Store
+                </p>
+              )}
             </div>
           </div>
 
-          {/* Quick Action Buttons for Product / VIP Management */}
-          <div className="flex items-center gap-2">
-            {(activeTab === 'products' || activeTab === 'vip-explorer' || activeTab === 'dashboard') &&
+          {/* Right Header: Search, Notifications, User Chip, Quick Actions */}
+          <div className="flex items-center gap-3">
+            {/* Search Pill Input matching Reference Screenshot */}
+            <div className="hidden lg:flex items-center gap-2 bg-white/60 border border-slate-200/80 rounded-xl px-3.5 py-1.5 text-xs text-slate-400 shadow-2xs hover:border-slate-300 transition-colors w-68">
+              <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <span className="flex-1 text-slate-400 select-none truncate">Cari produk, pesanan, pelanggan...</span>
+              <kbd className="px-1.5 py-0.5 text-[10px] bg-slate-100 text-slate-500 rounded border border-slate-200/80 font-mono">Ctrl + K</kbd>
+            </div>
+
+            {/* Notification Bell matching Reference Screenshot */}
+            <button
+              type="button"
+              onClick={() => setActiveTab('notifications')}
+              className="relative w-9 h-9 rounded-full bg-white/80 border border-slate-200/80 shadow-2xs flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-white transition-all cursor-pointer"
+              title="Notifikasi"
+            >
+              <Bell className="w-4 h-4" />
+              <span className="w-2 h-2 rounded-full bg-rose-500 absolute top-2 right-2 ring-2 ring-white" />
+            </button>
+
+            {/* User Profile Chip matching Reference Screenshot */}
+            <div className="hidden sm:flex items-center gap-2.5 pl-1.5 pr-3 py-1 rounded-full bg-white/70 border border-slate-200/80 shadow-2xs">
+              <div className="w-7 h-7 rounded-full bg-[#111318] text-white font-bold text-[11px] flex items-center justify-center shrink-0">
+                AS
+              </div>
+              <div className="flex flex-col text-left leading-none">
+                <span className="text-xs font-bold text-slate-900">{adminUser?.name || 'Super Admin'}</span>
+                <span className="text-[10px] text-slate-400 font-normal mt-0.5">Administrator</span>
+              </div>
+              <ChevronDown className="w-3.5 h-3.5 text-slate-400 ml-0.5" />
+            </div>
+
+            {/* Quick Action Buttons for Product / VIP Management when needed */}
+            {(activeTab === 'products' || activeTab === 'vip-explorer') &&
               adminUser?.role !== 'sales' && (
               <>
                 <Button
@@ -879,7 +917,7 @@ export default function AdminPage() {
                   size="sm"
                   onClick={() => syncVipMutation.mutate()}
                   disabled={syncVipMutation.isPending}
-                  className="hidden sm:inline-flex text-xs gap-1.5 border-border hover:bg-surface-secondary font-medium"
+                  className="hidden xl:inline-flex text-xs gap-1.5 border-border hover:bg-surface-secondary font-medium"
                   title="Ambil dan sinkronkan semua layanan dari gateway VIP Reseller"
                 >
                   <DownloadCloud className={`w-3.5 h-3.5 text-[#2563EB] ${syncVipMutation.isPending ? 'animate-bounce' : ''}`} />
@@ -890,7 +928,7 @@ export default function AdminPage() {
                   size="sm"
                   onClick={() => refreshStockMutation.mutate()}
                   disabled={refreshStockMutation.isPending}
-                  className="hidden md:inline-flex text-xs gap-1.5 border-border hover:bg-surface-secondary font-medium"
+                  className="hidden xl:inline-flex text-xs gap-1.5 border-border hover:bg-surface-secondary font-medium"
                   title="Periksa ketersediaan stok live dari VIP Reseller"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 text-[#2563EB] ${refreshStockMutation.isPending ? 'animate-spin' : ''}`} />
