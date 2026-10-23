@@ -30,6 +30,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { getPerformanceColor, PERFORMANCE_COLORS } from '@/lib/utils/chart-performance-colors';
 
 interface SalesTimeSeriesItem {
   date: string;
@@ -235,26 +236,66 @@ export function AdminAnalyticsSuite({ activeTab, onNotify }: AdminAnalyticsSuite
                       <div className="w-full h-full flex items-center justify-center text-xs text-foreground-muted">
                         Belum ada data penjualan tercatat
                       </div>
-                    ) : (
-                      salesTimeSeries.map((s, idx) => {
+                    ) : (() => {
+                      const timeSeriesRevenues = salesTimeSeries.map((x) => x.revenue);
+                      return salesTimeSeries.map((s, idx) => {
                         const heightPercent = Math.min(100, Math.max(15, Math.round((s.revenue / maxRev) * 100)));
+                        const palette = getPerformanceColor(s.revenue, timeSeriesRevenues);
                         return (
                           <div key={idx} className="flex-1 flex flex-col items-center gap-2 group relative">
                             {/* Tooltip on hover */}
-                            <div className="absolute -top-10 opacity-0 group-hover:opacity-100 transition-opacity bg-ink text-white text-[10px] py-1 px-2 rounded pointer-events-none whitespace-nowrap shadow-md z-20 font-mono">
-                              Rp {s.revenue.toLocaleString('id-ID')} ({s.orders} orders)
+                            <div className="absolute -top-12 opacity-0 group-hover:opacity-100 transition-opacity bg-surface border border-border text-foreground text-[10px] py-1.5 px-2.5 rounded-lg pointer-events-none whitespace-nowrap shadow-lg z-20 font-mono flex flex-col gap-0.5">
+                              <div className="flex items-center gap-2">
+                                <span className="font-bold">Rp {s.revenue.toLocaleString('id-ID')}</span>
+                                <span
+                                  className="text-[9px] font-semibold px-1 py-0.2 rounded"
+                                  style={{ backgroundColor: `${palette.bg}22`, color: palette.bg === '#9CA3AF' ? '#4B5563' : palette.bg }}
+                                >
+                                  {palette.label}
+                                </span>
+                              </div>
+                              <span className="text-[9px] text-foreground-muted font-sans">{s.orders} orders terverifikasi</span>
                             </div>
                             <div
-                              className="w-full bg-primary/20 hover:bg-primary transition-all rounded-t-sm group-hover:shadow-lg group-hover:shadow-primary/20 cursor-pointer"
-                              style={{ height: `${heightPercent}%` }}
+                              className="w-full transition-all rounded-t-sm group-hover:scale-y-[1.03] group-hover:brightness-110 cursor-pointer origin-bottom"
+                              style={{
+                                height: `${heightPercent}%`,
+                                backgroundColor: palette.bg,
+                                boxShadow: `0 4px 12px ${palette.glow}`,
+                              }}
                             />
                             <span className="text-[10px] font-mono text-foreground-muted whitespace-nowrap">
                               {s.date}
                             </span>
                           </div>
                         );
-                      })
-                    )}
+                      });
+                    })()}
+                  </div>
+
+                  {/* Performance Color Scale Legend */}
+                  <div className="pt-3 flex items-center flex-wrap gap-2.5 text-[10px] text-foreground-muted">
+                    <span className="font-semibold text-foreground/80">Skala Nilai:</span>
+                    <div className="flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: PERFORMANCE_COLORS.zero.bg }} />
+                      <span>Nol</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: PERFORMANCE_COLORS.lowest.bg }} />
+                      <span>Terendah</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: PERFORMANCE_COLORS.low.bg }} />
+                      <span>Rendah</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: PERFORMANCE_COLORS.medium.bg }} />
+                      <span>Menengah</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: PERFORMANCE_COLORS.high.bg }} />
+                      <span>Tinggi</span>
+                    </div>
                   </div>
                 </div>
               </div>
