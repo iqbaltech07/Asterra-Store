@@ -39,6 +39,17 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   // 1. Admin Page Routes Protection (/admin/*)
   if (pathname.startsWith('/admin')) {
     if (pathname === '/admin/login') {
+      const isLoggedOut = request.nextUrl.searchParams.get('logged_out') === '1';
+      if (isLoggedOut) {
+        const response = applySecurityHeaders(NextResponse.next());
+        ['better-auth.session_token', '__Secure-better-auth.session_token', 'asterra_admin_session', 'asterra_session'].forEach(
+          (cookieName) => {
+            response.cookies.set(cookieName, '', { path: '/', maxAge: 0, expires: new Date(0) });
+          }
+        );
+        return response;
+      }
+
       if (isAuthenticated) {
         return NextResponse.redirect(new URL('/admin', request.url));
       }
@@ -55,6 +66,17 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   // 2. Sales Portal Page Routes Protection (/sales/*)
   if (pathname.startsWith('/sales')) {
     if (pathname === '/sales/login') {
+      const isLoggedOut = request.nextUrl.searchParams.get('logged_out') === '1';
+      if (isLoggedOut) {
+        const response = applySecurityHeaders(NextResponse.next());
+        ['better-auth.session_token', '__Secure-better-auth.session_token', 'asterra_admin_session', 'asterra_session'].forEach(
+          (cookieName) => {
+            response.cookies.set(cookieName, '', { path: '/', maxAge: 0, expires: new Date(0) });
+          }
+        );
+        return response;
+      }
+
       if (isAuthenticated) {
         return NextResponse.redirect(new URL('/sales', request.url));
       }

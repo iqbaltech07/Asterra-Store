@@ -39,9 +39,14 @@ export default function AdminLoginPage() {
 
   // Check if admin is already logged in
   useEffect(() => {
-    // If just logged out, bypass automatic session checking
+    // If just logged out, bypass automatic session checking and display confirmation
     if (typeof window !== 'undefined' && window.location.search.includes('logged_out=1')) {
+      try {
+        localStorage.removeItem('asterra_admin_token');
+        localStorage.removeItem('asterra_admin_user');
+      } catch {}
       setIsVerifyingSession(false);
+      setSuccessMessage('Sesi telah berhasil diakhiri.');
       return;
     }
 

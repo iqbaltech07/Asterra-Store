@@ -34,6 +34,7 @@ import {
   Store,
   ChevronDown,
   LogOut,
+  RefreshCw,
   ExternalLink,
   X,
 } from 'lucide-react';
@@ -109,6 +110,7 @@ interface AdminSidebarProps {
   };
   adminUser: { id?: string; email: string; name?: string; role?: string } | null;
   onLogout: () => void;
+  isLoggingOut?: boolean;
   isOpenMobile: boolean;
   onCloseMobile: () => void;
 }
@@ -119,6 +121,7 @@ export function AdminSidebar({
   metrics,
   adminUser,
   onLogout,
+  isLoggingOut = false,
   isOpenMobile,
   onCloseMobile,
 }: AdminSidebarProps) {
@@ -823,10 +826,20 @@ export function AdminSidebar({
         <button
           type="button"
           onClick={onLogout}
-          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-[#CBD5E1] hover:text-white hover:bg-white/10 border border-white/10 transition-all active:scale-98"
+          disabled={isLoggingOut}
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-[#CBD5E1] hover:text-white hover:bg-white/10 border border-white/10 transition-all active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <LogOut className="w-3.5 h-3.5" />
-          <span>{userRole === 'sales' ? 'Keluar Sesi Sales' : 'Keluar Sesi Admin'}</span>
+          {isLoggingOut ? (
+            <>
+              <RefreshCw className="w-3.5 h-3.5 animate-spin text-primary" />
+              <span>Mengakhiri Sesi...</span>
+            </>
+          ) : (
+            <>
+              <LogOut className="w-3.5 h-3.5" />
+              <span>{userRole === 'sales' ? 'Keluar Sesi Sales' : 'Keluar Sesi Admin'}</span>
+            </>
+          )}
         </button>
       </div>
     </div>

@@ -242,22 +242,66 @@ function AdminPageContent() {
     verifyAuth();
   }, [router, getTabFromUrl, handleTabChange]);
 
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
   const handleLogout = async () => {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+
     try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('asterra_admin_token') : null;
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      // 1. Panggil Next.js Route Handler resmi (/api/auth/logout)
+      // Menghapus cookie session httpOnly pada origin Next.js & membatalkan sesi backend
+      try {
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          headers,
+          credentials: 'include',
+        });
+      } catch (err) {
+        console.warn('[AdminLogout] Route handler logout warning:', err);
+      }
+
+      // 2. Direct fallback call ke backend endpoint jika rewrites aktif
+      try {
+        await fetch('/api/v1/admin/auth/logout', {
+          method: 'POST',
+          headers,
+          credentials: 'include',
+        });
+      } catch (err) {
+        console.warn('[AdminLogout] Backend direct logout warning:', err);
+      }
+
+      // 3. Bersihkan token dan profil admin dari localStorage
       if (typeof window !== 'undefined') {
         localStorage.removeItem('asterra_admin_token');
         localStorage.removeItem('asterra_admin_user');
       }
-      await fetch('/api/v1/admin/auth/logout', {
-        method: 'POST',
-        credentials: 'include',
-      });
-    } catch {
-      // ignore
-    } finally {
+
+      // 4. Bersihkan TanStack Query cache privat di browser memory
+      try {
+        queryClient.clear();
+        queryClient.removeQueries();
+      } catch {}
+
+      // 5. Reset adminUser state lokal
+      setAdminUser(null);
+
+      // 6. Redirect aman menggunakan location.replace agar halaman admin
+      // tidak tersisa dalam browser back-history
       if (typeof window !== 'undefined') {
-        window.location.href = '/admin/login?logged_out=1';
+        window.location.replace('/admin/login?logged_out=1');
       }
+    } catch (err) {
+      console.error('[AdminLogout] Error during logout:', err);
+      showNotification('Gagal mengakhiri sesi. Silakan coba kembali.');
+      setIsLoggingOut(false);
     }
   };
 
@@ -894,6 +938,7 @@ function AdminPageContent() {
         metrics={metrics}
         adminUser={adminUser}
         onLogout={handleLogout}
+        isLoggingOut={isLoggingOut}
         isOpenMobile={isSidebarMobileOpen}
         onCloseMobile={() => setIsSidebarMobileOpen(false)}
       />
