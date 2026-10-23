@@ -685,6 +685,7 @@ function CheckoutPageContent() {
         customerEmail.trim() ||
         (targetRequirement.type === 'email' ? targetValue.trim() : '') ||
         session?.user?.email ||
+        legacyUser?.email ||
         '';
 
       if (typeof window !== 'undefined') {
@@ -772,7 +773,7 @@ function CheckoutPageContent() {
     }
 
     const effectiveTarget = targetValue.trim();
-    const effectiveEmail = (targetRequirement.type === 'email' ? effectiveTarget : (customerEmail.trim() || session?.user?.email || 'buyer@asterra.store'));
+    const effectiveEmail = (targetRequirement.type === 'email' ? effectiveTarget : (customerEmail.trim() || session?.user?.email || legacyUser?.email || 'buyer@asterra.store'));
     const effectivePhone = (targetRequirement.type === 'phone' ? effectiveTarget : phoneNumber.trim());
 
     const orderPayload = {
@@ -958,12 +959,12 @@ function CheckoutPageContent() {
         data={activeManualModal}
         paymentConfig={paymentConfig}
         customerName={customerName}
-        targetEmail={customerEmail.trim() || (targetRequirement.type === 'email' ? targetValue.trim() : '') || session?.user?.email || ''}
+        targetEmail={customerEmail.trim() || (targetRequirement.type === 'email' ? targetValue.trim() : '') || session?.user?.email || legacyUser?.email || ''}
         onClose={() => {
           const orderId = activeManualModal?.orderId;
           setActiveManualModal(null);
           if (orderId) {
-            const invoiceEmail = customerEmail.trim() || (targetRequirement.type === 'email' ? targetValue.trim() : '') || session?.user?.email || '';
+            const invoiceEmail = customerEmail.trim() || (targetRequirement.type === 'email' ? targetValue.trim() : '') || session?.user?.email || legacyUser?.email || '';
             const emailQuery = invoiceEmail ? `&email=${encodeURIComponent(invoiceEmail)}` : '';
             router.push(`/order?id=${orderId}${emailQuery}`);
           }

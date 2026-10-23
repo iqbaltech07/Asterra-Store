@@ -1,6 +1,7 @@
 import json
 import pathlib
 import random
+import re
 from datetime import datetime, timedelta, timezone
 from typing import List, Dict, Any, Optional
 from sqlalchemy.orm import joinedload
@@ -135,21 +136,40 @@ class OrderService:
             clean_status = status.lower().strip()
             filtered = [f for f in filtered if str(f.get("status", "")).lower() == clean_status]
 
-        # Email filter
+        def _norm_phone(val: Any) -> str:
+            d = re.sub(r"\D", "", str(val or ""))
+            if d.startswith("62"):
+                return "0" + d[2:]
+            return d
+
+        # Email / Identity filter
         if email and email.strip():
             clean_email = email.lower().strip()
-            filtered = [
-                f for f in filtered 
-                if clean_email in str(f.get("customerEmail") or f.get("customer_email") or "").lower()
-                or any(clean_email in str(it.get("targetEmail") or it.get("target_email") or "").lower() for it in f.get("items", []))
-            ]
+            if "@" in clean_email:
+                filtered = [
+                    f for f in filtered 
+                    if clean_email in str(f.get("customerEmail") or f.get("customer_email") or "").lower()
+                    or any(clean_email in str(it.get("targetEmail") or it.get("target_email") or "").lower() for it in f.get("items", []))
+                ]
+            else:
+                norm_email_phone = _norm_phone(clean_email)
+                filtered = [
+                    f for f in filtered
+                    if clean_email in str(f.get("id", "")).lower()
+                    or (norm_email_phone and norm_email_phone in _norm_phone(f.get("customerWhatsapp", "")))
+                    or clean_email in str(f.get("customerWhatsapp", "")).lower()
+                    or clean_email in str(f.get("customerEmail", "")).lower()
+                ]
 
         # Search query filter
         if search and search.strip():
             q = search.lower().strip()
+            clean_digits = re.sub(r"\D", "", q)
+            norm_q = _norm_phone(q) if clean_digits and len(clean_digits) >= 6 else None
             filtered = [
                 f for f in filtered
                 if q in str(f.get("id", "")).lower()
+                or (norm_q and norm_q in _norm_phone(f.get("customerWhatsapp", "")))
                 or q in str(f.get("customerEmail", "")).lower()
                 or q in str(f.get("customerName", "")).lower()
                 or q in str(f.get("customerWhatsapp", "")).lower()
@@ -263,7 +283,7 @@ class OrderService:
             try:
                 order_obj = db.query(Order).options(joinedload(Order.items)).filter(Order.id == clean_id).first()
                 if order_obj:
-                    return order_obj.to_dict()
+                    return cls._normalize_order(order_obj.to_dict())
             finally:
                 db.close()
         except Exception:
@@ -575,16 +595,64 @@ class OrderService:
                 db.commit()
                 db.refresh(order_record)
                 normalized = cls._normalize_order(order_record.to_dict())
+                saved_to_db = True
             finally:
                 db.close()
         except Exception as e:
-            print(f"[OrderService] Error saving order to Supabase: {e}")
-            raise e
+            print(f"[OrderService] Warning saving order to Supabase (using persistent backup): {e}")
+
+        if not saved_to_db or normalized is None:
+            norm_items = []
+            for item in items:
+                norm_items.append({
+                    "id": f"item-{random.randint(10000, 99999)}",
+                    "order_id": order_id,
+                    "product_id": item.get("product_id") or item.get("productId") or "vip-service",
+                    "product_name": item.get("product_name") or item.get("productName") or "Layanan Digital",
+                    "price": int(item.get("unit_price") or item.get("price") or 0),
+                    "quantity": int(item.get("quantity", 1)),
+                    "target_email": str(item.get("target_email") or customer_email),
+                    "target_phone": str(item.get("target_phone") or customer_phone),
+                    "target_id": item.get("target_id") or None,
+                    "target_zone": item.get("target_zone") or None,
+                })
+            fallback_dict = {
+                "id": order_id,
+                "customer_email": customer_email,
+                "customer_whatsapp": customer_phone,
+                "customer_name": customer_name,
+                "customer_notes": payload.get("customer_notes") or payload.get("customerNotes") or "",
+                "total_amount": total_amount,
+                "raw_amount": raw_total,
+                "promo_discount": promo_discount,
+                "referral_discount": referral_discount,
+                "campaign_id": canonical_campaign_id or None,
+                "campaign_discount": campaign_discount,
+                "unique_code": unique_code,
+                "payment_mode": payload.get("payment_mode") or payload.get("paymentMode") or "manual",
+                "payment_method": payload.get("payment_method") or payload.get("paymentMethod") or "manual_bca",
+                "payment_status": "pending",
+                "status": "pending",
+                "created_at": now.isoformat() + "Z",
+                "updated_at": now.isoformat() + "Z",
+                "expires_at": (now + timedelta(hours=expiry_hours)).isoformat() + "Z",
+                "referral_code": ref_code or None,
+                "referral_session_id": ref_sess_id,
+                "sales_partner_id": sales_partner_id,
+                "recruiter_partner_id": recruiter_partner_id,
+                "items": norm_items,
+            }
+            normalized = cls._normalize_order(fallback_dict)
+            if cls._orders is not None:
+                cls._orders.insert(0, normalized)
+            else:
+                cls._orders = [normalized]
+            cls.save_orders()
 
         # 5. Instantly update in-memory cache (Append-only, 0ms, zero DB query)
-        if cls._orders is not None:
+        if cls._orders is not None and normalized not in cls._orders:
             cls._orders.insert(0, normalized)
-        else:
+        elif cls._orders is None:
             cls._orders = [normalized]
 
         def _execute_post_order_tasks():

@@ -24,6 +24,7 @@ import {
   faHeadset,
 } from '@fortawesome/free-solid-svg-icons';
 import { useSession } from '@/lib/auth-client';
+import { useAuthStore } from '@/store/use-auth-store';
 import {
   CheckoutManualModal,
   ManualPaymentModalData,
@@ -85,48 +86,89 @@ function isSafeLicenseCredential(note?: string): boolean {
 
 function PrivateOrderContent() {
   const { data: session } = useSession();
+  const { user: legacyUser } = useAuthStore();
   const searchParams = useSearchParams();
   const paramOrderId = searchParams.get('id') || searchParams.get('orderId');
   const paramEmail = searchParams.get('email');
 
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [expandedOrderId, setExpandedOrderId] = useState<string | null>(paramOrderId || null);
   const [notification, setNotification] = useState<string | null>(null);
   const [copiedOrderId, setCopiedOrderId] = useState<string | null>(null);
 
-  // Individual Order Scoping: Session Email, URL param, or Guest Email from localStorage
-  const [guestEmail, setGuestEmail] = useState<string>(() => {
+  // Active tracked order ID (synced with URL & storage)
+  const [trackedOrderId, setTrackedOrderId] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      const urlId = new URLSearchParams(window.location.search).get('id') || new URLSearchParams(window.location.search).get('orderId');
+      if (urlId) return urlId.trim().toUpperCase();
+      return localStorage.getItem('asterra_last_order_id') || null;
+    }
+    return null;
+  });
+
+  const [expandedOrderId, setExpandedOrderId] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      const urlId = new URLSearchParams(window.location.search).get('id') || new URLSearchParams(window.location.search).get('orderId');
+      return urlId ? urlId.trim().toUpperCase() : null;
+    }
+    return null;
+  });
+
+  // Individual Order Scoping: Session Email, Legacy User Email, URL param, or localStorage
+  const [guestIdentity, setGuestIdentity] = useState<string>(() => {
     if (typeof window !== 'undefined') {
       const urlEmail = new URLSearchParams(window.location.search).get('email');
       if (urlEmail) {
-        localStorage.setItem('asterra_customer_email', urlEmail);
-        return urlEmail;
+        localStorage.setItem('asterra_customer_email', urlEmail.trim());
+        return urlEmail.trim();
       }
-      return localStorage.getItem('asterra_customer_email') || '';
+      const stored = localStorage.getItem('asterra_customer_email');
+      if (stored) return stored.trim();
+      try {
+        const rawCust = localStorage.getItem('asterra_checkout_customer');
+        if (rawCust) {
+          const parsed = JSON.parse(rawCust);
+          if (parsed.email) return String(parsed.email).trim();
+          if (parsed.phone) return String(parsed.phone).trim();
+        }
+      } catch {}
     }
     return '';
   });
+
   const [emailInput, setEmailInput] = useState('');
   const [isSubmittingLookup, setIsSubmittingLookup] = useState(false);
+  const [isManualSwitchOpen, setIsManualSwitchOpen] = useState(false);
 
   // Sync query parameters when navigating from checkout or direct tracking links
   useEffect(() => {
-    if (paramEmail && paramEmail !== guestEmail) {
-      setGuestEmail(paramEmail);
+    if (paramEmail && paramEmail.trim() !== guestIdentity) {
+      const cleanEmail = paramEmail.trim();
+      setGuestIdentity(cleanEmail);
       if (typeof window !== 'undefined') {
         try {
-          localStorage.setItem('asterra_customer_email', paramEmail);
+          localStorage.setItem('asterra_customer_email', cleanEmail);
         } catch {}
       }
     }
     if (paramOrderId) {
-      setExpandedOrderId(paramOrderId);
+      const cleanId = paramOrderId.trim().toUpperCase();
+      if (cleanId !== trackedOrderId) {
+        setTrackedOrderId(cleanId);
+      }
+      setExpandedOrderId(cleanId);
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('asterra_last_order_id', cleanId);
+        } catch {}
+      }
     }
-  }, [paramEmail, paramOrderId, guestEmail]);
+  }, [paramEmail, paramOrderId, guestIdentity, trackedOrderId]);
 
-  // Effective email to filter orders
-  const activeEmail = session?.user?.email || guestEmail;
+  // Effective user email or contact to filter orders
+  const activeEmail = session?.user?.email || legacyUser?.email || (guestIdentity.includes('@') ? guestIdentity : '');
+  const activeContact = activeEmail || guestIdentity;
+  const effectiveOrderId = trackedOrderId || paramOrderId || (typeof window !== 'undefined' ? localStorage.getItem('asterra_last_order_id') : null);
 
   // Manual payment modal states
   const [activeManualModal, setActiveManualModal] = useState<ManualPaymentModalData | null>(null);
@@ -139,20 +181,72 @@ function PrivateOrderContent() {
 
   // PERSONAL / PRIVATE ORDERS QUERY
   const { data, isLoading, isFetching, error, refetch, isRefetching } = useQuery<{ success: boolean; data: Order[] }>({
-    queryKey: ['private-orders', selectedStatus, activeEmail, paramOrderId],
+    queryKey: ['private-orders', selectedStatus, activeContact, effectiveOrderId],
     queryFn: async () => {
-      const params = new URLSearchParams();
-      if (selectedStatus !== 'all') params.append('status', selectedStatus);
-      if (activeEmail) {
-        params.append('email', activeEmail);
-      } else if (paramOrderId) {
-        params.append('search', paramOrderId);
+      const ordersMap = new Map<string, Order>();
+
+      // 1. If effectiveOrderId is specified, fetch that exact order directly for 100% precision
+      if (effectiveOrderId) {
+        try {
+          const res = await fetch(`/api/v1/orders/${encodeURIComponent(effectiveOrderId)}`);
+          if (res.ok) {
+            const json = await res.json();
+            if (json.success && json.data) {
+              ordersMap.set(json.data.id, json.data);
+            }
+          }
+        } catch (e) {
+          console.warn('[Orders] Direct order lookup note:', e);
+        }
       }
-      const res = await fetch(`/api/v1/orders?${params.toString()}`);
-      if (!res.ok) throw new Error('Gagal mengambil riwayat pesanan');
-      return res.json();
+
+      // 2. If activeContact (email or phone) is provided, fetch list of orders
+      if (activeContact) {
+        const params = new URLSearchParams();
+        if (selectedStatus !== 'all') params.append('status', selectedStatus);
+        if (activeContact.includes('@')) {
+          params.append('email', activeContact);
+        } else {
+          params.append('search', activeContact);
+        }
+
+        try {
+          const res = await fetch(`/api/v1/orders?${params.toString()}`);
+          if (res.ok) {
+            const json = await res.json();
+            if (json.success && Array.isArray(json.data)) {
+              for (const order of json.data) {
+                if (!ordersMap.has(order.id)) {
+                  ordersMap.set(order.id, order);
+                }
+              }
+            }
+          } else if (ordersMap.size === 0) {
+            throw new Error('Gagal mengambil riwayat pesanan');
+          }
+        } catch (e) {
+          if (ordersMap.size === 0) {
+            throw e;
+          }
+        }
+      }
+
+      // 3. Fallback: If neither email was provided nor direct lookup succeeded, search order by ID query
+      if (ordersMap.size === 0 && effectiveOrderId) {
+        const params = new URLSearchParams();
+        if (selectedStatus !== 'all') params.append('status', selectedStatus);
+        params.append('search', effectiveOrderId);
+        const res = await fetch(`/api/v1/orders?${params.toString()}`);
+        if (!res.ok) throw new Error('Gagal mengambil riwayat pesanan');
+        return res.json();
+      }
+
+      return {
+        success: true,
+        data: Array.from(ordersMap.values()),
+      };
     },
-    enabled: Boolean(activeEmail || paramOrderId),
+    enabled: Boolean(activeContact || effectiveOrderId),
     staleTime: 5000,
     refetchInterval: 12000, // Background polling fallback ensures orders stay synchronized even if SSE is buffered or proxy returns 502
     placeholderData: (previousData) => previousData,
@@ -160,9 +254,10 @@ function PrivateOrderContent() {
 
   // Auto-expand and notify if viewing a specific order from checkout redirect
   useEffect(() => {
-    if (paramOrderId && data?.data && data.data.length > 0) {
+    const targetId = paramOrderId || effectiveOrderId;
+    if (targetId && data?.data && data.data.length > 0) {
       const target = data.data.find(
-        (o) => (o.id || '').toUpperCase() === paramOrderId.toUpperCase()
+        (o) => (o.id || '').toUpperCase() === targetId.toUpperCase()
       );
       if (target) {
         setExpandedOrderId(target.id);
@@ -172,14 +267,14 @@ function PrivateOrderContent() {
         }
       }
     }
-  }, [paramOrderId, data]);
+  }, [paramOrderId, effectiveOrderId, data]);
 
-  // Reset lookup submitting flag once data or error arrives
+  // Reset lookup submitting flag once loading completes
   useEffect(() => {
-    if (data || error) {
+    if (!isLoading && !isFetching) {
       setIsSubmittingLookup(false);
     }
-  }, [data, error]);
+  }, [isLoading, isFetching]);
 
   // SSE Real-Time Listener for User Orders with proxy-resilient connection
   useEffect(() => {
@@ -406,8 +501,67 @@ function PrivateOrderContent() {
     }
   };
 
-  // Immediate loading state: actively fetching private orders for active email
-  const isInitialLoading = Boolean(activeEmail) && (isSubmittingLookup || (isLoading && !data));
+  // Immediate loading state: actively fetching private orders for active contact or order ID
+  const isInitialLoading = Boolean(activeContact || effectiveOrderId) && (isSubmittingLookup || (isLoading && !data));
+
+  const handleLookupSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = emailInput.trim();
+    if (!trimmed) return;
+
+    setIsSubmittingLookup(true);
+
+    if (trimmed.toUpperCase().startsWith('AST-') || trimmed.toUpperCase().startsWith('ORD-')) {
+      const cleanId = trimmed.toUpperCase();
+      setTrackedOrderId(cleanId);
+      setExpandedOrderId(cleanId);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('asterra_last_order_id', cleanId);
+        const url = new URL(window.location.href);
+        url.searchParams.set('id', cleanId);
+        window.history.replaceState(window.history.state, '', url.pathname + url.search);
+      }
+      showNotification(`Memuat pesanan #${cleanId}...`);
+      setIsManualSwitchOpen(false);
+      refetch();
+    } else if (trimmed.includes('@')) {
+      const cleanEmail = trimmed.toLowerCase();
+      setGuestIdentity(cleanEmail);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('asterra_customer_email', cleanEmail);
+      }
+      showNotification(`Memuat riwayat pesanan untuk ${cleanEmail}`);
+      setIsManualSwitchOpen(false);
+      refetch();
+    } else {
+      // Phone number or custom contact identifier
+      setGuestIdentity(trimmed);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('asterra_customer_email', trimmed);
+      }
+      showNotification(`Memuat riwayat pesanan untuk ${trimmed}`);
+      setIsManualSwitchOpen(false);
+      refetch();
+    }
+  };
+
+  const handleResetTracking = () => {
+    setGuestIdentity('');
+    setTrackedOrderId(null);
+    setExpandedOrderId(null);
+    setEmailInput('');
+    setIsManualSwitchOpen(false);
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('asterra_customer_email');
+      localStorage.removeItem('asterra_last_order_id');
+      const url = new URL(window.location.href);
+      url.searchParams.delete('id');
+      url.searchParams.delete('orderId');
+      url.searchParams.delete('email');
+      window.history.replaceState(window.history.state, '', url.pathname + (url.search ? url.search : ''));
+    }
+    showNotification('Pelacakan pesanan direset.');
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col font-sans selection:bg-primary/20 selection:text-primary">
@@ -456,28 +610,31 @@ function PrivateOrderContent() {
           </div>
         </div>
 
-        {/* Email Entry & Lookup Form when unauthenticated and no active email */}
-        {!activeEmail && (
+        {/* Email / Phone / Order ID Entry & Lookup Form when unauthenticated and no active order, or user explicitly opened switch */}
+        {((!activeContact && !effectiveOrderId) || isManualSwitchOpen) && (
           <div data-gsap="hero-card" className="bg-surface border border-border rounded-lg p-4 max-w-xl mx-auto mb-6">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold text-foreground">
+                Lacak Pesanan Asterra
+              </span>
+              {isManualSwitchOpen && (activeContact || effectiveOrderId) && (
+                <button
+                  type="button"
+                  onClick={() => setIsManualSwitchOpen(false)}
+                  className="text-[11px] text-foreground-muted hover:text-foreground cursor-pointer"
+                >
+                  Tutup
+                </button>
+              )}
+            </div>
             <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                const trimmed = emailInput.trim();
-                if (trimmed) {
-                  setIsSubmittingLookup(true);
-                  setGuestEmail(trimmed);
-                  if (typeof window !== 'undefined') {
-                    localStorage.setItem('asterra_customer_email', trimmed);
-                  }
-                  showNotification(`Memuat riwayat pesanan untuk ${trimmed}`);
-                }
-              }}
+              onSubmit={handleLookupSubmit}
               className="flex flex-col sm:flex-row gap-2 max-w-md mx-auto"
             >
               <input
-                type="email"
+                type="text"
                 required
-                placeholder="nama@email.com"
+                placeholder="Masukkan Email, No. WhatsApp, atau No. Pesanan"
                 value={emailInput}
                 onChange={(e) => setEmailInput(e.target.value)}
                 className="flex-1 px-3 py-2 text-xs rounded-md bg-surface border border-border text-foreground placeholder:text-foreground-muted focus:outline-none focus:border-foreground"
@@ -490,19 +647,38 @@ function PrivateOrderContent() {
         )}
 
         {/* Active Account / Tracking Banner */}
-        {activeEmail && (
+        {(activeContact || effectiveOrderId) && (
           <div className="bg-surface border border-border rounded-lg px-4 py-3 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
             <div className="flex items-center gap-2.5">
               <FontAwesomeIcon icon={faReceipt} className="w-3.5 h-3.5 text-foreground-muted shrink-0" />
               <div className="text-foreground">
                 <span className="text-foreground-muted">Menampilkan riwayat pesanan untuk:{' '}</span>
-                <strong className="font-medium text-foreground">{activeEmail}</strong>
+                <strong className="font-medium text-foreground">{activeContact || `#${effectiveOrderId}`}</strong>
                 {session?.user?.email && (
                   <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded bg-muted text-foreground border border-border font-medium">
                     Akun Terverifikasi
                   </span>
                 )}
               </div>
+            </div>
+
+            <div className="flex items-center gap-2.5">
+              <button
+                type="button"
+                onClick={() => setIsManualSwitchOpen((prev) => !prev)}
+                className="text-[11px] font-medium text-primary hover:underline cursor-pointer"
+              >
+                {isManualSwitchOpen ? 'Tutup Pencarian' : 'Lacak ID / Akun Lain'}
+              </button>
+              {!session?.user?.email && !legacyUser?.email && (
+                <button
+                  type="button"
+                  onClick={handleResetTracking}
+                  className="text-[11px] text-foreground-muted hover:text-foreground cursor-pointer"
+                >
+                  Reset
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -568,9 +744,11 @@ function PrivateOrderContent() {
               <p className="text-xs text-foreground-muted leading-relaxed">
                 {selectedStatus !== 'all' || searchQuery
                   ? 'Tidak ada transaksi yang cocok dengan filter atau kata kunci saat ini.'
-                  : activeEmail
-                  ? `Tidak ada transaksi pesanan yang ditemukan untuk email ${activeEmail}.`
-                  : 'Silakan masukkan email pesanan Anda di atas untuk melihat riwayat transaksi.'}
+                  : activeContact
+                  ? `Tidak ada transaksi pesanan yang ditemukan untuk "${activeContact}".`
+                  : effectiveOrderId
+                  ? `Pesanan #${effectiveOrderId} tidak ditemukan atau belum tercatat.`
+                  : 'Silakan masukkan email, nomor WhatsApp, atau nomor pesanan Anda di atas untuk melihat riwayat transaksi.'}
               </p>
             </div>
             {selectedStatus !== 'all' || searchQuery ? (
@@ -581,17 +759,34 @@ function PrivateOrderContent() {
                   setSelectedStatus('all');
                   setSearchQuery('');
                 }}
-                className="text-xs font-medium"
+                className="text-xs font-medium cursor-pointer"
               >
                 Reset Filter
               </Button>
-            ) : (
+            ) : (!activeContact && !effectiveOrderId) || isManualSwitchOpen ? (
               <Link href="/products">
-                <Button size="sm" className="gap-1.5 text-xs font-medium">
+                <Button size="sm" className="gap-1.5 text-xs font-medium cursor-pointer">
                   <span>Mulai Belanja</span>
                   <FontAwesomeIcon icon={faArrowRight} className="w-3 h-3" />
                 </Button>
               </Link>
+            ) : (
+              <div className="flex items-center justify-center gap-2 pt-1">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setIsManualSwitchOpen(true)}
+                  className="text-xs font-medium cursor-pointer"
+                >
+                  Lacak Pesanan Lain
+                </Button>
+                <Link href="/products">
+                  <Button size="sm" className="gap-1.5 text-xs font-medium cursor-pointer">
+                    <span>Mulai Belanja</span>
+                    <FontAwesomeIcon icon={faArrowRight} className="w-3 h-3" />
+                  </Button>
+                </Link>
+              </div>
             )}
           </div>
         )}
