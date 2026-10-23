@@ -33,6 +33,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useGsapReveal } from '@/lib/animations/use-gsap-reveal';
 import { useCountUp } from '@/lib/hooks/use-count-up';
+import { AnimatedNumber } from '@/components/ui/animated-number';
+import { StatusBadge } from '@/components/ui/status-badge';
+import { SalesTrendChart } from './sales-trend-chart';
 import { AdminTab } from './admin-sidebar';
 
 interface AdminDashboardTabProps {
@@ -59,7 +62,7 @@ export function AdminDashboardTab({
   const containerRef = useGsapReveal<HTMLDivElement>();
   const [salesPeriod, setSalesPeriod] = useState<'daily' | 'weekly' | 'monthly'>('weekly');
 
-  const { data: dashboardOverview = null } = useQuery({
+  const { data: dashboardOverview = null, isLoading: isOverviewLoading } = useQuery({
     queryKey: ['admin-dashboard-overview'],
     queryFn: async () => {
       const res = await fetch('/api/v1/admin/analytics/overview');
@@ -202,14 +205,18 @@ export function AdminDashboardTab({
         {/* Revenue */}
         <div
           onClick={() => onNavigateTab('revenue')}
-          className="gsap-fade-up motion-card-interactive bg-surface border border-border rounded-xl p-4 shadow-xs hover:border-primary/50 transition-all cursor-pointer group"
+          className="animate-fade-up stagger-1 motion-card-interactive bg-surface border border-border rounded-xl p-4 shadow-xs hover:border-primary/50 transition-all cursor-pointer group"
         >
           <div className="flex items-center justify-between text-xs text-foreground-muted mb-1.5">
             <span>Total Revenue</span>
             <TrendingUp className="w-4 h-4 text-status-success group-hover:scale-110 transition-transform" />
           </div>
-          <div className="text-xl font-bold text-foreground">
-            {displayRevenue}
+          <div className="text-xl font-bold text-foreground font-variant-numeric tabular-nums">
+            <AnimatedNumber
+              value={targetRevenue}
+              formatter={(v) => `Rp ${Math.round(v).toLocaleString('id-ID')}`}
+              showDelta
+            />
           </div>
           <span className="text-[10px] text-status-success font-semibold flex items-center gap-1 mt-1">
             ↑ Terverifikasi Sistem
@@ -219,14 +226,14 @@ export function AdminDashboardTab({
         {/* Total Orders */}
         <div
           onClick={() => onNavigateTab('orders')}
-          className="gsap-fade-up motion-card-interactive bg-surface border border-border rounded-xl p-4 shadow-xs hover:border-primary/50 transition-all cursor-pointer group"
+          className="animate-fade-up stagger-2 motion-card-interactive bg-surface border border-border rounded-xl p-4 shadow-xs hover:border-primary/50 transition-all cursor-pointer group"
         >
           <div className="flex items-center justify-between text-xs text-foreground-muted mb-1.5">
             <span>Total Orders</span>
             <ShoppingBag className="w-4 h-4 text-primary group-hover:scale-110 transition-transform" />
           </div>
-          <div className="text-xl font-bold text-foreground">
-            {displayOrders}
+          <div className="text-xl font-bold text-foreground font-variant-numeric tabular-nums">
+            <AnimatedNumber value={targetOrders} showDelta />
           </div>
           <span className="text-[10px] text-foreground-muted block mt-1">
             {(dashboardOverview?.kpi?.completedOrders ?? liveOrderMetrics?.completed ?? 0)} Selesai diproses
@@ -236,14 +243,14 @@ export function AdminDashboardTab({
         {/* Total Customers */}
         <div
           onClick={() => onNavigateTab('customers')}
-          className="gsap-fade-up motion-card-interactive bg-surface border border-border rounded-xl p-4 shadow-xs hover:border-primary/50 transition-all cursor-pointer group"
+          className="animate-fade-up stagger-3 motion-card-interactive bg-surface border border-border rounded-xl p-4 shadow-xs hover:border-primary/50 transition-all cursor-pointer group"
         >
           <div className="flex items-center justify-between text-xs text-foreground-muted mb-1.5">
             <span>Customers</span>
             <Users className="w-4 h-4 text-primary group-hover:scale-110 transition-transform" />
           </div>
-          <div className="text-xl font-bold text-foreground">
-            {displayCustomers}
+          <div className="text-xl font-bold text-foreground font-variant-numeric tabular-nums">
+            <AnimatedNumber value={targetCustomers} showDelta />
           </div>
           <span className="text-[10px] text-status-success font-semibold block mt-1">
             +{dashboardOverview?.kpi?.newCustomers ?? 0} pelanggan terdata
@@ -253,14 +260,18 @@ export function AdminDashboardTab({
         {/* Gross Profit */}
         <div
           onClick={() => onNavigateTab('profit')}
-          className="gsap-fade-up motion-card-interactive bg-surface border border-border rounded-xl p-4 shadow-xs hover:border-primary/50 transition-all cursor-pointer group"
+          className="animate-fade-up stagger-4 motion-card-interactive bg-surface border border-border rounded-xl p-4 shadow-xs hover:border-primary/50 transition-all cursor-pointer group"
         >
           <div className="flex items-center justify-between text-xs text-foreground-muted mb-1.5">
             <span>Gross Profit</span>
             <Coins className="w-4 h-4 text-status-success group-hover:scale-110 transition-transform" />
           </div>
-          <div className="text-xl font-bold text-status-success">
-            {displayProfit}
+          <div className="text-xl font-bold text-status-success font-variant-numeric tabular-nums">
+            <AnimatedNumber
+              value={targetProfit}
+              formatter={(v) => `Rp ${Math.round(v).toLocaleString('id-ID')}`}
+              showDelta
+            />
           </div>
           <span className="text-[10px] text-foreground-muted block mt-1">
             Estimasi Margin {dashboardOverview?.kpi?.profitMarginPercent ?? 35}%
@@ -270,14 +281,14 @@ export function AdminDashboardTab({
         {/* Pending Orders */}
         <div
           onClick={() => onNavigateTab('orders')}
-          className="gsap-fade-up motion-card-interactive bg-surface border border-border rounded-xl p-4 shadow-xs hover:border-status-warning/50 transition-all cursor-pointer group col-span-2 md:col-span-1"
+          className="animate-fade-up stagger-5 motion-card-interactive bg-surface border border-border rounded-xl p-4 shadow-xs hover:border-status-warning/50 transition-all cursor-pointer group col-span-2 md:col-span-1"
         >
           <div className="flex items-center justify-between text-xs text-foreground-muted mb-1.5">
             <span>Pending Orders</span>
             <Clock className="w-4 h-4 text-status-warning group-hover:scale-110 transition-transform" />
           </div>
-          <div className="text-xl font-bold text-status-warning">
-            {displayPending}
+          <div className="text-xl font-bold text-status-warning font-variant-numeric tabular-nums">
+            <AnimatedNumber value={targetPending} showDelta />
           </div>
           <span className="text-[10px] text-status-warning block mt-1">
             Menunggu pembayaran
@@ -288,120 +299,17 @@ export function AdminDashboardTab({
       {/* 3. Sales Trend Visualizer & Top Products Quadrant */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Sales Chart (2 cols) */}
-        <div className="lg:col-span-2 bg-surface border border-border rounded-xl p-5 shadow-xs space-y-4 motion-card-interactive">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border">
-            <div>
-              <h3 className="font-bold text-sm text-foreground flex items-center gap-2">
-                <BarChart3 className="w-4 h-4 text-primary" />
-                <span>Grafik Penjualan & Tren Transaksi</span>
-              </h3>
-              <p className="text-xs text-foreground-muted">
-                Pergerakan omzet bruto toko berdasarkan periode waktu
-              </p>
-            </div>
-
-            {/* Period Switcher with Smooth Sliding Indicator */}
-            <div className="relative flex items-center bg-surface-raised p-1 rounded-lg border border-border text-xs min-w-[210px]">
-              {/* Sliding Active Pill */}
-              <div
-                className="absolute top-1 bottom-1 rounded-md bg-primary shadow-xs transition-all duration-200 ease-out z-0 pointer-events-none"
-                style={{
-                  left:
-                    salesPeriod === 'daily'
-                      ? '4px'
-                      : salesPeriod === 'weekly'
-                      ? 'calc(33.333% + 2px)'
-                      : 'calc(66.666% - 1px)',
-                  width: 'calc(33.333% - 3px)',
-                }}
-              />
-              <button
-                type="button"
-                onClick={() => setSalesPeriod('daily')}
-                className={`relative z-10 flex-1 px-2.5 py-1 rounded-md text-center font-medium transition-colors duration-150 ${
-                  salesPeriod === 'daily'
-                    ? 'text-white font-semibold'
-                    : 'text-foreground-muted hover:text-foreground'
-                }`}
-              >
-                Hari Ini
-              </button>
-              <button
-                type="button"
-                onClick={() => setSalesPeriod('weekly')}
-                className={`relative z-10 flex-1 px-2.5 py-1 rounded-md text-center font-medium transition-colors duration-150 ${
-                  salesPeriod === 'weekly'
-                    ? 'text-white font-semibold'
-                    : 'text-foreground-muted hover:text-foreground'
-                }`}
-              >
-                7 Hari
-              </button>
-              <button
-                type="button"
-                onClick={() => setSalesPeriod('monthly')}
-                className={`relative z-10 flex-1 px-2.5 py-1 rounded-md text-center font-medium transition-colors duration-150 ${
-                  salesPeriod === 'monthly'
-                    ? 'text-white font-semibold'
-                    : 'text-foreground-muted hover:text-foreground'
-                }`}
-              >
-                30 Hari
-              </button>
-            </div>
-          </div>
-
-          {/* Bar Chart Visualization with Smooth Transitions */}
-          <div className="pt-2">
-            <div
-              key={salesPeriod}
-              className="h-44 flex items-end gap-3 sm:gap-6 justify-between px-2 animate-tab-glide"
-            >
-              {salesData.map((d, idx) => {
-                const heightPercent = Math.max(14, Math.round((d.revenue / maxRevenue) * 100));
-
-                return (
-                  <div key={idx} className="flex-1 flex flex-col items-center gap-2 group h-full justify-end">
-                    {/* Hover Tooltip Amount */}
-                    <div className="text-[10px] font-mono text-foreground font-semibold opacity-0 group-hover:opacity-100 transition-all duration-150 transform -translate-y-1 group-hover:translate-y-0 whitespace-nowrap bg-surface-raised border border-border px-1.5 py-0.5 rounded shadow-xs pointer-events-none">
-                      Rp {d.revenue.toLocaleString('id-ID')}
-                    </div>
-
-                    {/* Animated Bar with smooth height & hover */}
-                    <div
-                      className="w-full bg-primary/20 hover:bg-primary rounded-t-md group-hover:shadow-md cursor-pointer relative transition-[height,background-color] duration-500 ease-out"
-                      style={{ height: `${heightPercent}%` }}
-                    >
-                      <div className="absolute top-1 left-0 right-0 h-1 bg-primary/40 rounded-t-md" />
-                    </div>
-
-                    {/* Label */}
-                    <span className="text-[11px] text-foreground-muted font-medium truncate max-w-full">
-                      {d.label}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="pt-3 border-t border-border flex items-center justify-between text-xs text-foreground-muted">
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded bg-primary" />
-              <span>Omzet Transaksi Terverifikasi</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => onNavigateTab('sales-summary')}
-              className="text-primary hover:underline font-semibold flex items-center gap-1"
-            >
-              Lihat Detail Analytics →
-            </button>
-          </div>
+        <div className="lg:col-span-2 animate-fade-up stagger-3">
+          <SalesTrendChart
+            salesData={salesData}
+            salesPeriod={salesPeriod}
+            onPeriodChange={setSalesPeriod}
+            isLoading={isOverviewLoading}
+          />
         </div>
 
         {/* Top Selling Products (1 col) */}
-        <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-3.5">
+        <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-3.5 animate-fade-up stagger-4">
           <div className="flex items-center justify-between pb-3 border-b border-border">
             <h3 className="font-bold text-sm text-foreground flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-primary" />
@@ -439,7 +347,7 @@ export function AdminDashboardTab({
       {/* 4. Live Transactions Feed & Affiliate Snapshot */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left: Recent Activity Feed (2 cols) */}
-        <div className="lg:col-span-2 bg-surface border border-border rounded-xl p-5 shadow-xs space-y-3.5">
+        <div className="lg:col-span-2 bg-surface border border-border rounded-xl p-5 shadow-xs space-y-3.5 animate-fade-up stagger-5">
           <div className="flex items-center justify-between pb-3 border-b border-border">
             <div>
               <h3 className="font-bold text-sm text-foreground flex items-center gap-2">
@@ -471,7 +379,7 @@ export function AdminDashboardTab({
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {(liveOrders.length > 0 ? liveOrders.slice(0, 5) : recentTransactions).map((tx: any) => {
+                {(liveOrders.length > 0 ? liveOrders.slice(0, 5) : recentTransactions).map((tx: any, idx: number) => {
                   const id = tx.id || tx.orderId;
                   const customer = tx.customer || tx.customerName || 'Pelanggan';
                   const product = tx.product || (tx.items?.[0]?.productName) || 'Produk Digital';
@@ -480,7 +388,11 @@ export function AdminDashboardTab({
                   const status = tx.status;
                   const time = tx.time || (tx.createdAt ? new Date(tx.createdAt).toLocaleDateString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '-');
                   return (
-                    <tr key={id} className="hover:bg-surface-raised/70 transition-colors duration-150">
+                    <tr
+                      key={id}
+                      className="hover:bg-surface-raised/70 transition-colors duration-150 animate-fade-up"
+                      style={{ animationDelay: `${Math.min(idx, 10) * 40}ms` }}
+                    >
                       <td className="py-2.5 pr-2">
                         <span className="font-mono font-bold text-foreground block">{id}</span>
                         <span className="text-[10px] text-foreground-muted">{customer} • {time}</span>
@@ -491,22 +403,11 @@ export function AdminDashboardTab({
                       <td className="py-2.5 pr-2 text-foreground-muted text-[11px]">
                         {paymentMethod}
                       </td>
-                      <td className="py-2.5 pr-2 text-right font-bold text-foreground">
+                      <td className="py-2.5 pr-2 text-right font-bold text-foreground font-variant-numeric tabular-nums">
                         Rp {amount.toLocaleString('id-ID')}
                       </td>
                       <td className="py-2.5 text-right">
-                        <Badge
-                          variant="outline"
-                          className={`text-[10px] font-semibold ${
-                            status === 'completed'
-                              ? 'bg-status-success/15 text-status-success border-status-success/30'
-                              : status === 'processing'
-                              ? 'bg-primary/15 text-primary border-primary/30'
-                              : 'bg-status-warning/15 text-status-warning border-status-warning/30'
-                          }`}
-                        >
-                          {status === 'completed' ? 'Lunas' : status === 'processing' ? 'Diproses' : status === 'pending' ? 'Pending' : status}
-                        </Badge>
+                        <StatusBadge status={status} />
                       </td>
                     </tr>
                   );
@@ -517,7 +418,7 @@ export function AdminDashboardTab({
         </div>
 
         {/* Right: Affiliate & Provider Operations Card (1 col) */}
-        <div className="space-y-4">
+        <div className="space-y-4 animate-fade-up stagger-6">
           {/* Affiliate Snapshot */}
           <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-3">
             <div className="flex items-center justify-between pb-2 border-b border-border">

@@ -55,6 +55,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { AsterraLogo } from '@/components/ui/asterra-logo';
+import { AnimatedNumber } from '@/components/ui/animated-number';
 
 interface AdminProductsResponse {
   success: boolean;
@@ -854,7 +855,7 @@ export default function AdminPage() {
             >
               <Menu className="w-5 h-5" />
             </button>
-            <div className="flex flex-col">
+            <div className="flex flex-col animate-text-smooth" key={activeTab}>
               <div className="flex items-center gap-1.5 text-[11px] text-foreground-muted">
                 <span className="font-medium text-foreground">Admin Console</span>
                 <span>/</span>
@@ -918,7 +919,7 @@ export default function AdminPage() {
 
         {/* Floating Notification */}
         {notification && (
-          <div className="fixed bottom-6 right-6 z-50 bg-surface-raised border border-primary/40 text-foreground px-4 py-3 rounded-lg shadow-xl flex items-center gap-3 animate-in slide-in-from-bottom-5">
+          <div className="fixed bottom-6 right-6 z-50 bg-surface-raised border border-primary/40 text-foreground px-4 py-3 rounded-lg shadow-xl flex items-center gap-3 animate-scale-pop shadow-2xl">
             <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-primary">
               <Check className="w-3.5 h-3.5" />
             </div>
@@ -930,48 +931,54 @@ export default function AdminPage() {
           {/* Top Summary Metrics Cards - show on products & vip-explorer */}
           {(activeTab === 'products' || activeTab === 'vip-explorer') && (
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-              <div className="motion-card-interactive bg-surface border border-border rounded-xl p-4 sm:p-5 shadow-xs">
+              <div className="animate-fade-up stagger-1 motion-card-interactive bg-surface border border-border rounded-xl p-4 sm:p-5 shadow-xs">
                 <div className="flex items-center justify-between text-xs text-foreground-muted mb-2">
                   <span>Aktif di Katalog Toko</span>
                   <Eye className="w-4 h-4 text-status-success" />
                 </div>
-                <div className="text-2xl font-bold text-foreground">
-                  {metrics?.totalActive ?? 0}
+                <div className="text-2xl font-bold text-foreground font-variant-numeric tabular-nums">
+                  <AnimatedNumber value={metrics?.totalActive ?? 0} showDelta />
                 </div>
                 <span className="text-[11px] text-foreground-muted">Muncul di halaman pelanggan</span>
               </div>
 
-              <div className="motion-card-interactive bg-surface border border-border rounded-xl p-4 sm:p-5 shadow-xs">
+              <div className="animate-fade-up stagger-2 motion-card-interactive bg-surface border border-border rounded-xl p-4 sm:p-5 shadow-xs">
                 <div className="flex items-center justify-between text-xs text-foreground-muted mb-2">
                   <span>Diarsipkan (Draft / Hidden)</span>
                   <EyeOff className="w-4 h-4 text-foreground-muted" />
                 </div>
-                <div className="text-2xl font-bold text-foreground">
-                  {metrics?.totalArchived ?? 0}
+                <div className="text-2xl font-bold text-foreground font-variant-numeric tabular-nums">
+                  <AnimatedNumber value={metrics?.totalArchived ?? 0} showDelta />
                 </div>
                 <span className="text-[11px] text-foreground-muted">Disembunyikan dari katalog</span>
               </div>
 
-              <div className="motion-card-interactive bg-surface border border-border rounded-xl p-4 sm:p-5 shadow-xs">
+              <div className="animate-fade-up stagger-3 motion-card-interactive bg-surface border border-border rounded-xl p-4 sm:p-5 shadow-xs">
                 <div className="flex items-center justify-between text-xs text-foreground-muted mb-2">
                   <span>Perlu Perhatian (Stok VIP Kosong)</span>
                   <AlertTriangle className="w-4 h-4 text-status-warning" />
                 </div>
-                <div className="text-2xl font-bold text-status-warning">
-                  {metrics?.totalWarnings ?? 0}
+                <div className="text-2xl font-bold text-status-warning font-variant-numeric tabular-nums">
+                  <AnimatedNumber value={metrics?.totalWarnings ?? 0} showDelta />
                 </div>
                 <span className="text-[11px] text-foreground-muted">Produk aktif tapi supplier kosong</span>
               </div>
 
-              <div className="motion-card-interactive bg-surface border border-border rounded-xl p-4 sm:p-5 shadow-xs">
+              <div className="animate-fade-up stagger-4 motion-card-interactive bg-surface border border-border rounded-xl p-4 sm:p-5 shadow-xs">
                 <div className="flex items-center justify-between text-xs text-foreground-muted mb-2">
                   <span>Saldo Akun VIP Reseller</span>
                   <Wallet className={`w-4 h-4 ${metrics?.isVipConnected ? 'text-primary' : 'text-status-warning'}`} />
                 </div>
-                <div className="text-2xl font-bold text-foreground">
-                  {metrics?.isVipConnected && metrics?.vipBalance !== null && metrics?.vipBalance !== undefined
-                    ? `Rp ${metrics.vipBalance.toLocaleString('id-ID')}`
-                    : 'Belum Terhubung'}
+                <div className="text-2xl font-bold text-foreground font-variant-numeric tabular-nums">
+                  {metrics?.isVipConnected && metrics?.vipBalance !== null && metrics?.vipBalance !== undefined ? (
+                    <AnimatedNumber
+                      value={metrics.vipBalance}
+                      formatter={(v) => `Rp ${Math.round(v).toLocaleString('id-ID')}`}
+                      showDelta
+                    />
+                  ) : (
+                    'Belum Terhubung'
+                  )}
                 </div>
                 <div className="flex items-center gap-1.5 mt-1">
                   <span className={`w-1.5 h-1.5 rounded-full ${metrics?.isVipConnected ? 'bg-status-success animate-pulse' : 'bg-status-warning'}`} />
@@ -1196,7 +1203,7 @@ export default function AdminPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
-                      {products.map((p) => {
+                      {products.map((p, idx) => {
                         const isLiveWarning =
                           p.status === 'active' &&
                           p.provider === 'vip-reseller' &&
@@ -1206,7 +1213,8 @@ export default function AdminPage() {
                         return (
                           <tr
                             key={p.id}
-                            className={`hover:bg-surface-hover/50 transition-colors ${
+                            style={{ animationDelay: `${Math.min(idx, 12) * 35}ms` }}
+                            className={`hover:bg-surface-hover/50 transition-colors animate-fade-up ${
                               isSelected ? 'bg-primary/10' : ''
                             } ${isLiveWarning ? 'bg-status-warning/5' : ''}`}
                           >
@@ -1832,7 +1840,7 @@ export default function AdminPage() {
       {/* MODAL 1: EDIT / CREATE MANAGED PRODUCT */}
       {(editingProduct || isCreateModalOpen) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-surface border border-border rounded-xl w-full max-w-lg shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200">
+          <div className="bg-surface border border-border rounded-xl w-full max-w-lg shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto animate-scale-pop">
             <div className="flex items-center justify-between border-b border-border pb-3">
               <div>
                 <h3 className="font-bold text-base text-foreground">
@@ -2267,7 +2275,7 @@ export default function AdminPage() {
       {/* MODAL 2: IMPORT FROM VIP RESELLER */}
       {importingService && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-surface border border-border rounded-xl w-full max-w-lg shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200">
+          <div className="bg-surface border border-border rounded-xl w-full max-w-lg shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto animate-scale-pop">
             <div className="flex items-center justify-between border-b border-border pb-3">
               <div>
                 <h3 className="font-bold text-base text-foreground">

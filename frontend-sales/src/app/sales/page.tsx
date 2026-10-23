@@ -143,7 +143,7 @@ export default function SalesPortalPage() {
             >
               <FontAwesomeIcon icon={faBars} className="text-base" />
             </button>
-            <div className="flex flex-col">
+            <div className="flex flex-col animate-text-smooth" key={activeTab}>
               <div className="flex items-center gap-1.5 text-[11px] text-foreground-muted">
                 <span className="font-medium text-foreground">Asterra Store</span>
                 <span>/</span>

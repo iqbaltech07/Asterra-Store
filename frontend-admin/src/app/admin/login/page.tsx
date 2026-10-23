@@ -154,7 +154,7 @@ export default function AdminLoginPage() {
         </Link>
       </div>
 
-      <Card data-gsap="hero-card" className="w-full max-w-md border-border bg-surface shadow-editorial">
+      <Card data-gsap="hero-card" className="w-full max-w-md border-border bg-surface shadow-editorial animate-fade-up">
         <CardHeader className="space-y-2 text-center pb-6 pt-6">
           <div className="flex justify-center mb-2">
             <AsterraLogo variant="light-bg" size="md" />
@@ -190,7 +190,7 @@ export default function AdminLoginPage() {
               </div>
             )}
 
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 animate-fade-up stagger-1">
               <label
                 htmlFor="admin-email"
                 className="text-xs font-medium text-foreground-muted flex items-center gap-1.5"
@@ -209,7 +209,7 @@ export default function AdminLoginPage() {
               />
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 animate-fade-up stagger-2">
               <label
                 htmlFor="admin-password"
                 className="text-xs font-medium text-foreground-muted flex items-center gap-1.5"
@@ -232,7 +232,7 @@ export default function AdminLoginPage() {
           <CardFooter className="flex flex-col space-y-4 pt-2 pb-6">
             <Button
               type="submit"
-              className="w-full gap-2"
+              className="w-full gap-2 motion-btn-interactive animate-fade-up stagger-3"
               disabled={loginMutation.isPending}
             >
               {loginMutation.isPending ? (

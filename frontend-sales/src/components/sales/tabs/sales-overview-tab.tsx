@@ -25,6 +25,8 @@ import {
 } from 'lucide-react';
 import { useGsapReveal } from '@/lib/animations/use-gsap-reveal';
 import { useCountUp } from '@/lib/hooks/use-count-up';
+import { AnimatedNumber } from '@/components/ui/animated-number';
+import { AnimatedProgressBar } from '@/components/ui/animated-progress-bar';
 import { AdminTab } from '@/components/admin/admin-sidebar';
 import { getStoreBaseUrl } from '@/lib/utils/url';
 import type { SalesProfileData, NetworkDataResponse } from '../types';
@@ -91,7 +93,7 @@ export function SalesOverviewTab({
   return (
     <div ref={containerRef} className="space-y-6">
       {/* Welcome & Referral Banner */}
-      <div className="rounded-xl border border-border bg-surface p-6 shadow-xs relative overflow-hidden">
+      <div className="animate-fade-up rounded-xl border border-border bg-surface p-6 shadow-xs relative overflow-hidden">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
           <div className="space-y-2 max-w-xl">
             <div
@@ -175,7 +177,7 @@ export function SalesOverviewTab({
 
       {/* Active Campaign Booster Teaser Banner */}
       {campaigns && campaigns.length > 0 && (
-        <div className="rounded-xl border border-primary/30 bg-primary/10 p-4 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="animate-fade-up stagger-1 rounded-xl border border-primary/30 bg-primary/10 p-4 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-start gap-3">
             <div className="w-10 h-10 rounded-xl bg-primary/20 border border-primary/30 flex items-center justify-center shrink-0 text-primary">
               <Flame className="w-5 h-5 text-primary" />
@@ -232,15 +234,19 @@ export function SalesOverviewTab({
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Card 1: Saldo Komisi Siap Tarik */}
-          <div className="gsap-fade-up motion-card-interactive bg-surface border border-border rounded-xl p-5 shadow-xs space-y-3">
+          <div className="animate-fade-up stagger-1 motion-card-interactive bg-surface border border-border rounded-xl p-5 shadow-xs space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-foreground-muted">Saldo Siap Tarik</span>
               <div className="w-8 h-8 rounded-lg bg-status-success/10 text-status-success flex items-center justify-center">
                 <Wallet className="w-4 h-4" />
               </div>
             </div>
-            <div className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
-              {displayUnpaidCommission}
+            <div className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight font-variant-numeric tabular-nums">
+              <AnimatedNumber
+                value={unpaidCommissionVal}
+                formatter={(v) => `Rp ${Math.round(v).toLocaleString('id-ID')}`}
+                showDelta
+              />
             </div>
             <div className="pt-2 border-t border-border space-y-1 text-xs">
               <div className="flex items-center justify-between text-foreground-muted">
@@ -248,8 +254,11 @@ export function SalesOverviewTab({
                   <Clock className="w-3 h-3 text-status-warning" />
                   <span>Tertahan Garansi 3 Hari:</span>
                 </span>
-                <span className="font-semibold text-foreground">
-                  Rp {(partner?.pendingCommission || 0).toLocaleString('id-ID')}
+                <span className="font-semibold text-foreground font-variant-numeric tabular-nums">
+                  <AnimatedNumber
+                    value={partner?.pendingCommission || 0}
+                    formatter={(v) => `Rp ${Math.round(v).toLocaleString('id-ID')}`}
+                  />
                 </span>
               </div>
               <div className="flex items-center justify-between text-foreground-muted">
@@ -257,35 +266,38 @@ export function SalesOverviewTab({
                   <CheckCircle2 className="w-3 h-3 text-status-success" />
                   <span>Total Telah Ditarik:</span>
                 </span>
-                <span className="font-semibold text-foreground">
-                  Rp {(partner?.paidCommission || 0).toLocaleString('id-ID')}
+                <span className="font-semibold text-foreground font-variant-numeric tabular-nums">
+                  <AnimatedNumber
+                    value={partner?.paidCommission || 0}
+                    formatter={(v) => `Rp ${Math.round(v).toLocaleString('id-ID')}`}
+                  />
                 </span>
               </div>
             </div>
           </div>
 
           {/* Card 2: Pesanan Referral */}
-          <div className="gsap-fade-up motion-card-interactive bg-surface border border-border rounded-xl p-5 shadow-xs space-y-3">
+          <div className="animate-fade-up stagger-2 motion-card-interactive bg-surface border border-border rounded-xl p-5 shadow-xs space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-foreground-muted">Pesanan Referral</span>
               <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
                 <ShoppingBag className="w-4 h-4" />
               </div>
             </div>
-            <div className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
-              {displayTotalOrders}
+            <div className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight font-variant-numeric tabular-nums">
+              <AnimatedNumber value={totalOrdersVal} showDelta />
               <span className="text-sm font-normal text-foreground-muted ml-1">transaksi</span>
             </div>
             <div className="pt-2 border-t border-border space-y-1 text-xs">
               <div className="flex items-center justify-between text-foreground-muted">
                 <span>Omset Penjualan Bersih:</span>
-                <span className="font-semibold text-foreground">
+                <span className="font-semibold text-foreground font-variant-numeric tabular-nums">
                   Rp {(partner?.totalSalesAmount || 0).toLocaleString('id-ID')}
                 </span>
               </div>
               <div className="flex items-center justify-between text-foreground-muted">
                 <span>Total Komisi Didapat:</span>
-                <span className="font-semibold text-status-success">
+                <span className="font-semibold text-status-success font-variant-numeric tabular-nums">
                   Rp {(partner?.totalCommission || 0).toLocaleString('id-ID')}
                 </span>
               </div>
@@ -293,15 +305,15 @@ export function SalesOverviewTab({
           </div>
 
           {/* Card 3: Traffic & Klik Referral */}
-          <div className="gsap-fade-up motion-card-interactive bg-surface border border-border rounded-xl p-5 shadow-xs space-y-3">
+          <div className="animate-fade-up stagger-3 motion-card-interactive bg-surface border border-border rounded-xl p-5 shadow-xs space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-foreground-muted">Traffic & Klik Link</span>
               <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center">
                 <TrendingUp className="w-4 h-4" />
               </div>
             </div>
-            <div className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
-              {displayTotalClicks}
+            <div className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight font-variant-numeric tabular-nums">
+              <AnimatedNumber value={totalClicksVal} showDelta />
               <span className="text-sm font-normal text-foreground-muted ml-1">klik</span>
             </div>
             <div className="pt-2 border-t border-border space-y-1 text-xs">
@@ -317,27 +329,38 @@ export function SalesOverviewTab({
           </div>
 
           {/* Card 4: Tingkat Kemitraan */}
-          <div className="gsap-fade-up motion-card-interactive bg-surface border border-border rounded-xl p-5 shadow-xs space-y-3">
+          <div className="animate-fade-up stagger-4 motion-card-interactive bg-surface border border-border rounded-xl p-5 shadow-xs space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-foreground-muted">Tingkat Kemitraan</span>
               <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center">
                 <Award className="w-4 h-4" />
               </div>
             </div>
-            <div className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
-              {displayRate}
+            <div className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight font-variant-numeric tabular-nums">
+              <AnimatedNumber value={partnerRate} formatter={(v) => `${Math.round(v)}%`} showDelta />
               <span className="text-sm font-normal text-foreground-muted ml-1">Profit Bersih</span>
             </div>
-            <div className="pt-2 border-t border-border space-y-1 text-xs">
-              <div className="flex items-center justify-between text-foreground-muted">
-                <span>Target Tier Berikutnya:</span>
-                <span className="font-semibold text-foreground">
-                  {partner?.tierProgress
-                    ? `${partner.tierProgress.currentOrders}/${partner.tierProgress.targetOrders} Order`
-                    : '50 Transaksi'}
-                </span>
+            <div className="pt-2 border-t border-border space-y-2 text-xs">
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-foreground-muted">
+                  <span>Target Tier Berikutnya:</span>
+                  <span className="font-semibold text-foreground font-variant-numeric tabular-nums">
+                    {partner?.tierProgress
+                      ? `${partner.tierProgress.currentOrders}/${partner.tierProgress.targetOrders} Order`
+                      : '50 Transaksi'}
+                  </span>
+                </div>
+                <AnimatedProgressBar
+                  value={
+                    partner?.tierProgress
+                      ? Math.min(100, Math.round((partner.tierProgress.currentOrders / partner.tierProgress.targetOrders) * 100))
+                      : 25
+                  }
+                  barClassName="bg-amber-500"
+                  showShimmer
+                />
               </div>
-              <div className="flex items-center justify-between text-foreground-muted">
+              <div className="flex items-center justify-between text-foreground-muted pt-0.5">
                 <span>Bonus Tier Berikutnya:</span>
                 <span className="font-semibold text-amber-500">Naik ke 15%</span>
               </div>
@@ -347,7 +370,7 @@ export function SalesOverviewTab({
       )}
 
       {/* Downline Bonus Quick Banner */}
-      <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-primary/20 rounded-xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="animate-fade-up stagger-5 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-primary/20 rounded-xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-start sm:items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-primary/20 text-primary flex items-center justify-center shrink-0">
             <Percent className="w-5 h-5" />
@@ -401,7 +424,7 @@ export function SalesOverviewTab({
 
       {/* Fast Navigation Grid (4 Modules) */}
       {onTabChange && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="animate-fade-up stagger-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div
             onClick={() => onTabChange('sales-catalog')}
             className="bg-surface border border-border rounded-xl p-5 shadow-xs hover:border-primary/50 transition-all cursor-pointer group space-y-2"

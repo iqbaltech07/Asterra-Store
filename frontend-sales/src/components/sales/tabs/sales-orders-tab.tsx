@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { AdminTab } from '@/components/admin/admin-sidebar';
 import { SalesOrder } from '../types';
+import { StatusBadge } from '@/components/ui/status-badge';
 
 interface SalesOrdersTabProps {
   partnerCode: string;
@@ -118,8 +119,12 @@ export function SalesOrdersTab({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {campaignOrders.map((o) => (
-                    <tr key={o.id} className="hover:bg-surface-raised/50 transition-colors">
+                  {campaignOrders.map((o, idx) => (
+                    <tr
+                      key={o.id}
+                      className="hover:bg-surface-raised/50 transition-colors animate-fade-up"
+                      style={{ animationDelay: `${Math.min(idx, 10) * 40}ms` }}
+                    >
                       <td className="py-3 px-4 font-mono text-[11px] text-foreground-muted">
                         {new Date(o.createdAt).toLocaleDateString('id-ID', {
                           day: 'numeric',
@@ -141,7 +146,7 @@ export function SalesOrdersTab({
                       <td className="py-3 px-4 font-mono text-foreground-muted">
                         {o.customerEmail}
                       </td>
-                      <td className="py-3 px-4 font-bold text-foreground">
+                      <td className="py-3 px-4 font-bold text-foreground font-mono">
                         Rp {o.totalAmount.toLocaleString('id-ID')}
                       </td>
                       <td className="py-3 px-4">
@@ -150,7 +155,7 @@ export function SalesOrdersTab({
                         </span>
                       </td>
                       <td className="py-3 px-4">
-                        <div className="font-bold text-status-success">
+                        <div className="font-bold text-status-success font-mono">
                           + Rp {o.commission.toLocaleString('id-ID')}
                         </div>
                         <div className="text-[10px] mt-0.5">
@@ -170,20 +175,7 @@ export function SalesOrdersTab({
                         </div>
                       </td>
                       <td className="py-3 px-4">
-                        <Badge
-                          variant="outline"
-                          className={`text-[10px] font-semibold uppercase ${
-                            o.status === 'completed'
-                              ? 'text-status-success border-status-success/30 bg-status-success/10'
-                              : o.status === 'processing'
-                              ? 'text-blue-500 border-blue-500/30 bg-blue-500/10'
-                              : o.status === 'refunded'
-                              ? 'text-status-error border-status-error/30 bg-status-error/10'
-                              : 'text-amber-500 border-amber-500/30 bg-amber-500/10'
-                          }`}
-                        >
-                          {o.status}
-                        </Badge>
+                        <StatusBadge status={o.status} />
                       </td>
                     </tr>
                   ))}
@@ -250,8 +242,12 @@ export function SalesOrdersTab({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {directOrders.map((o) => (
-                    <tr key={o.id} className="hover:bg-surface-raised/50 transition-colors">
+                  {directOrders.map((o, idx) => (
+                    <tr
+                      key={o.id}
+                      className="hover:bg-surface-raised/50 transition-colors animate-fade-up"
+                      style={{ animationDelay: `${Math.min(idx, 10) * 40}ms` }}
+                    >
                       <td className="py-3 px-4 font-mono text-[11px] text-foreground-muted">
                         {new Date(o.createdAt).toLocaleDateString('id-ID', {
                           day: 'numeric',
@@ -268,7 +264,7 @@ export function SalesOrdersTab({
                       <td className="py-3 px-4 font-mono text-foreground-muted">
                         {o.customerEmail}
                       </td>
-                      <td className="py-3 px-4 font-bold text-foreground">
+                      <td className="py-3 px-4 font-bold text-foreground font-mono">
                         Rp {o.totalAmount.toLocaleString('id-ID')}
                       </td>
                       <td className="py-3 px-4 font-mono font-semibold text-primary">
@@ -280,7 +276,7 @@ export function SalesOrdersTab({
                         )}
                       </td>
                       <td className="py-3 px-4">
-                        <div className="font-bold text-status-success">
+                        <div className="font-bold text-status-success font-mono">
                           + Rp {o.commission.toLocaleString('id-ID')}
                         </div>
                         <div className="text-[10px] mt-0.5">
@@ -300,20 +296,7 @@ export function SalesOrdersTab({
                         </div>
                       </td>
                       <td className="py-3 px-4">
-                        <Badge
-                          variant="outline"
-                          className={`text-[10px] font-semibold uppercase ${
-                            o.status === 'completed'
-                              ? 'text-status-success border-status-success/30 bg-status-success/10'
-                              : o.status === 'processing'
-                              ? 'text-blue-500 border-blue-500/30 bg-blue-500/10'
-                              : o.status === 'refunded'
-                              ? 'text-status-error border-status-error/30 bg-status-error/10'
-                              : 'text-amber-500 border-amber-500/30 bg-amber-500/10'
-                          }`}
-                        >
-                          {o.status}
-                        </Badge>
+                        <StatusBadge status={o.status} />
                       </td>
                     </tr>
                   ))}

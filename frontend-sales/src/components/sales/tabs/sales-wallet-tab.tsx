@@ -13,6 +13,9 @@ import {
   CreditCard,
 } from 'lucide-react';
 import { SalesProfileData } from '../types';
+import { AnimatedNumber } from '@/components/ui/animated-number';
+import { AnimatedProgressBar } from '@/components/ui/animated-progress-bar';
+import { StatusBadge } from '@/components/ui/status-badge';
 
 interface SalesWalletTabProps {
   partner: SalesProfileData | null | undefined;
@@ -58,6 +61,11 @@ export function SalesWalletTab({ partner, onRefetchProfile }: SalesWalletTabProp
     },
   });
 
+  const unpaid = partner?.unpaidCommission || 0;
+  const pending = partner?.pendingCommission || 0;
+  const totalAvailableHolding = unpaid + pending;
+  const readyPercentage = totalAvailableHolding > 0 ? Math.round((unpaid / totalAvailableHolding) * 100) : 0;
+
   return (
     <div className="space-y-6">
       <div>
@@ -70,7 +78,7 @@ export function SalesWalletTab({ partner, onRefetchProfile }: SalesWalletTabProp
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Wallet Balance Cards */}
         <div className="space-y-4">
-          <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-2">
+          <div className="motion-card-interactive bg-surface border border-border rounded-xl p-5 shadow-xs space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-foreground-muted">Saldo Siap Ditarik (Final)</span>
               <div className="w-7 h-7 rounded-lg bg-status-success/10 text-status-success flex items-center justify-center">
@@ -78,14 +86,18 @@ export function SalesWalletTab({ partner, onRefetchProfile }: SalesWalletTabProp
               </div>
             </div>
             <div className="text-3xl font-extrabold text-status-success tracking-tight">
-              Rp {(partner?.unpaidCommission || 0).toLocaleString('id-ID')}
+              <AnimatedNumber
+                value={unpaid}
+                prefix="Rp "
+                className="text-3xl font-extrabold text-status-success tracking-tight"
+              />
             </div>
             <p className="text-[11px] text-foreground-muted pt-1">
               Minimal penarikan: <strong className="text-foreground">Rp 50.000</strong> (Tersedia ditarik sekarang)
             </p>
           </div>
 
-          <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-2">
+          <div className="motion-card-interactive bg-surface border border-border rounded-xl p-5 shadow-xs space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-foreground-muted">Saldo Masa Garansi (Holding 3 Hari)</span>
               <div className="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center">
@@ -93,14 +105,18 @@ export function SalesWalletTab({ partner, onRefetchProfile }: SalesWalletTabProp
               </div>
             </div>
             <div className="text-2xl font-bold text-amber-500 tracking-tight">
-              Rp {(partner?.pendingCommission || 0).toLocaleString('id-ID')}
+              <AnimatedNumber
+                value={pending}
+                prefix="Rp "
+                className="text-2xl font-bold text-amber-500 tracking-tight"
+              />
             </div>
             <p className="text-[11px] text-foreground-muted pt-1">
               Dana komisi pesanan baru selama masa garansi pembeli 3 hari. Otomatis cair ke saldo siap tarik.
             </p>
           </div>
 
-          <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-2">
+          <div className="motion-card-interactive bg-surface border border-border rounded-xl p-5 shadow-xs space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium text-foreground-muted">Total Komisi Telah Dicairkan</span>
               <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
@@ -108,11 +124,28 @@ export function SalesWalletTab({ partner, onRefetchProfile }: SalesWalletTabProp
               </div>
             </div>
             <div className="text-2xl font-bold text-foreground tracking-tight">
-              Rp {(partner?.paidCommission || 0).toLocaleString('id-ID')}
+              <AnimatedNumber
+                value={partner?.paidCommission || 0}
+                prefix="Rp "
+                className="text-2xl font-bold text-foreground tracking-tight"
+              />
             </div>
             <p className="text-[11px] text-foreground-muted pt-1">
               Semua transaksi transfer diproses oleh tim keuangan Asterra Store.
             </p>
+          </div>
+
+          {/* Saldo Siap Tarik vs Tertahan Garansi Proportion Bar */}
+          <div className="bg-surface border border-border rounded-xl p-4 shadow-xs space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-semibold text-foreground">Rasio Likuiditas Saldo Komisi</span>
+              <span className="font-mono text-status-success font-bold">{readyPercentage}% Siap Tarik</span>
+            </div>
+            <AnimatedProgressBar value={readyPercentage} barClassName="bg-status-success" />
+            <div className="flex items-center justify-between text-[11px] text-foreground-muted font-mono">
+              <span>Siap: Rp {unpaid.toLocaleString('id-ID')}</span>
+              <span>Tertahan: Rp {pending.toLocaleString('id-ID')}</span>
+            </div>
           </div>
         </div>
 
@@ -277,8 +310,12 @@ export function SalesWalletTab({ partner, onRefetchProfile }: SalesWalletTabProp
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {(partner?.payoutRequests || []).map((req) => (
-                  <tr key={req.id}>
+                {(partner?.payoutRequests || []).map((req, idx) => (
+                  <tr
+                    key={req.id}
+                    className="hover:bg-surface-raised/50 transition-colors animate-fade-up"
+                    style={{ animationDelay: `${Math.min(idx, 10) * 40}ms` }}
+                  >
                     <td className="py-3 px-4 font-mono text-[11px] text-foreground-muted">
                       {new Date(req.requestedAt).toLocaleDateString('id-ID', {
                         day: 'numeric',
@@ -291,26 +328,11 @@ export function SalesWalletTab({ partner, onRefetchProfile }: SalesWalletTabProp
                     <td className="py-3 px-4 text-foreground">
                       <span className="font-bold">{req.bankName}</span> ({req.bankAccount} a.n {req.bankAccountName})
                     </td>
-                    <td className="py-3 px-4 font-bold text-foreground">
+                    <td className="py-3 px-4 font-bold text-foreground font-mono">
                       Rp {req.amount.toLocaleString('id-ID')}
                     </td>
                     <td className="py-3 px-4">
-                      <Badge
-                        variant="outline"
-                        className={`text-[10px] font-semibold uppercase ${
-                          req.status === 'completed'
-                            ? 'text-status-success border-status-success/30 bg-status-success/10'
-                            : req.status === 'rejected'
-                            ? 'text-status-error border-status-error/30 bg-status-error/10'
-                            : 'text-amber-500 border-amber-500/30 bg-amber-500/10'
-                        }`}
-                      >
-                        {req.status === 'completed'
-                          ? 'Selesai Ditransfer'
-                          : req.status === 'rejected'
-                          ? 'Ditolak'
-                          : 'Diproses Tim Finance'}
-                      </Badge>
+                      <StatusBadge status={req.status} />
                     </td>
                   </tr>
                 ))}

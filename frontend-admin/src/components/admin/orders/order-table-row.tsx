@@ -30,7 +30,7 @@ export function OrderTableRow({ order, onOpenDetail, onCopyEmail }: OrderTableRo
   const waUrl = formatWhatsAppUrl(order.customer_whatsapp);
 
   return (
-    <tr className="hover:bg-surface-raised/40 transition-colors border-b border-border/60">
+    <tr className="hover:bg-surface-raised/40 transition-colors border-b border-border/60 animate-fade-up">
       {/* Order ID & Date */}
       <td className="py-3.5 px-4 align-top">
         <div className="font-mono font-bold text-foreground text-xs flex items-center gap-1.5">
