@@ -84,12 +84,12 @@ class Settings(BaseSettings):
     VIP_RESELLER_AUTO_FULFILLMENT: bool = os.getenv("VIP_RESELLER_AUTO_FULFILLMENT", "true").lower() == "true"
     VIP_RESELLER_SANDBOX_MODE: bool = os.getenv("VIP_RESELLER_SANDBOX_MODE", "false").lower() == "true"
     
-    # Transactional Email (SMTP)
-    SMTP_HOST: str = os.getenv("SMTP_HOST", "localhost")
-    SMTP_PORT: int = int(os.getenv("SMTP_PORT", "587"))
-    SMTP_USER: str = os.getenv("SMTP_USER", "")
-    SMTP_PASS: str = os.getenv("SMTP_PASS", "")
-    SMTP_FROM: str = os.getenv("SMTP_FROM", "Asterra Store <noreply@asterra.store>")
+    # Transactional Email (Resend HTTPS REST API)
+    RESEND_API_KEY: str = os.getenv("RESEND_API_KEY", "")
+    RESEND_FROM: str = os.getenv(
+        "RESEND_FROM",
+        os.getenv("SMTP_FROM", "Asterra Store <onboarding@resend.dev>"),
+    )
     
     # CORS
     BACKEND_CORS_ORIGINS: List[str] = [
