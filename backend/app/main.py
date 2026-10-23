@@ -46,6 +46,13 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"[Lifespan] Orders init note: {e}")
 
+    try:
+        import asyncio
+        from app.services.realtime_broadcaster import RealtimeBroadcaster
+        RealtimeBroadcaster.set_loop(asyncio.get_running_loop())
+    except Exception as e:
+        print(f"[Lifespan] RealtimeBroadcaster loop init note: {e}")
+
     yield
 
 app = FastAPI(

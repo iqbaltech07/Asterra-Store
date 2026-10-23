@@ -681,6 +681,26 @@ class OrderService:
         else:
             _execute_post_order_tasks()
 
+        # Broadcast real-time order creation event to connected Admin SSE subscribers
+        try:
+            from app.services.realtime_broadcaster import RealtimeBroadcaster
+            RealtimeBroadcaster.broadcast(
+                event="order:created",
+                data={
+                    "order_id": order_id,
+                    "id": order_id,
+                    "customer_name": customer_name,
+                    "customer_email": customer_email,
+                    "total_amount": total_amount,
+                    "status": "pending",
+                    "payment_method": payload.get("payment_method") or payload.get("paymentMethod") or "manual_bca",
+                    "created_at": now.isoformat() + "Z",
+                },
+                target_role="admin",
+            )
+        except Exception as b_err:
+            print(f"[OrderService] Realtime broadcast error on create_order: {b_err}")
+
         return normalized
 
     @classmethod
@@ -797,6 +817,38 @@ class OrderService:
                     EmailService.send_order_cancelled_email(normalized, reason=notes)
             except Exception as email_err:
                 print(f"[OrderService] Customer email notification dispatch note: {email_err}")
+
+        # Broadcast real-time status update to connected Admin SSE subscribers
+        try:
+            from app.services.realtime_broadcaster import RealtimeBroadcaster
+            if new_status in ["completed", "paid", "settlement"]:
+                RealtimeBroadcaster.broadcast(
+                    event="order:payment_verified",
+                    data={
+                        "order_id": clean_id,
+                        "id": clean_id,
+                        "status": new_status,
+                        "previous_status": prev_st,
+                        "customer_name": order_cust_name,
+                        "updated_at": now_dt.isoformat() + "Z",
+                    },
+                    target_role="admin",
+                )
+            RealtimeBroadcaster.broadcast(
+                event="order:status_changed",
+                data={
+                    "order_id": clean_id,
+                    "id": clean_id,
+                    "status": new_status,
+                    "previous_status": prev_st,
+                    "customer_name": order_cust_name,
+                    "notes": notes,
+                    "updated_at": now_dt.isoformat() + "Z",
+                },
+                target_role="admin",
+            )
+        except Exception as b_err:
+            print(f"[OrderService] Realtime broadcast error on update_status: {b_err}")
 
         return normalized
 

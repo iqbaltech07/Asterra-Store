@@ -24,6 +24,7 @@ export function AdminOrdersTab() {
 
   // SSE & Audio Notifications State
   const [isMuted, setIsMuted] = useState(false);
+  const [audioUnlocked, setAudioUnlocked] = useState(false);
   const [sseConnected, setSseConnected] = useState(false);
 
   const showNotification = (msg: string) => {
@@ -33,71 +34,141 @@ export function AdminOrdersTab() {
     }, 4000);
   };
 
-  // Sync initial mute state
+  // Sync initial mute and audio unlock states
   useEffect(() => {
     setIsMuted(notificationSound.isSoundMuted());
+    return notificationSound.onUnlockChange((unlocked) => {
+      setAudioUnlocked(unlocked);
+    });
   }, []);
 
   const handleToggleMute = () => {
+    notificationSound.unlockAudio();
     const nextMuted = notificationSound.toggleMute();
     setIsMuted(nextMuted);
     showNotification(nextMuted ? 'Suara notifikasi dibisukan (Muted)' : 'Suara notifikasi diaktifkan');
   };
 
   const handleTestSound = () => {
-    notificationSound.play('new_order');
-    showNotification('🔔 Menguji suara notifikasi pesanan masuk');
+    notificationSound.unlockAudio().then(() => {
+      notificationSound.play('new_order', { force: true });
+      showNotification('🔔 Menguji suara notifikasi pesanan masuk');
+    });
   };
 
-  // SSE Real-Time Listener
+  // SSE Real-Time Listener with Exponential Backoff Auto-Reconnect
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    const eventSource = new EventSource('/api/v1/events?role=admin');
+    let eventSource: EventSource | null = null;
+    let reconnectTimeout: NodeJS.Timeout | null = null;
+    let retryAttempt = 0;
+    let isSubscribed = true;
 
-    eventSource.onopen = () => {
-      setSseConnected(true);
+    const setupConnection = () => {
+      if (!isSubscribed) return;
+
+      if (eventSource) {
+        try {
+          eventSource.close();
+        } catch {}
+        eventSource = null;
+      }
+
+      try {
+        eventSource = new EventSource('/api/v1/events?role=admin');
+
+        eventSource.onopen = () => {
+          if (!isSubscribed) return;
+          setSseConnected(true);
+          retryAttempt = 0;
+        };
+
+        eventSource.addEventListener('order:created', (e: MessageEvent) => {
+          if (!isSubscribed) return;
+          try {
+            const payload = e.data ? JSON.parse(e.data) : {};
+            const orderId = payload.order_id || payload.id;
+            notificationSound.play('new_order', { orderId });
+            queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
+            queryClient.invalidateQueries({ queryKey: ['admin-logs'] });
+            queryClient.invalidateQueries({ queryKey: ['admin-metrics'] });
+            if (orderId) {
+              showNotification(`🔔 Pesanan baru masuk: ${orderId}`);
+            }
+          } catch {
+            notificationSound.play('new_order');
+            queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
+          }
+        });
+
+        eventSource.addEventListener('order:payment_verified', (e: MessageEvent) => {
+          if (!isSubscribed) return;
+          try {
+            const payload = e.data ? JSON.parse(e.data) : {};
+            const orderId = payload.order_id || payload.id;
+            notificationSound.play('payment_verified', { orderId });
+            queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
+            queryClient.invalidateQueries({ queryKey: ['admin-logs'] });
+            queryClient.invalidateQueries({ queryKey: ['admin-metrics'] });
+            if (orderId) {
+              showNotification(`💰 Pembayaran terverifikasi: ${orderId}`);
+            }
+          } catch {
+            notificationSound.play('payment_verified');
+            queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
+          }
+        });
+
+        eventSource.addEventListener('order:status_changed', (_e: MessageEvent) => {
+          if (!isSubscribed) return;
+          try {
+            queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
+            queryClient.invalidateQueries({ queryKey: ['admin-logs'] });
+            queryClient.invalidateQueries({ queryKey: ['admin-metrics'] });
+          } catch (err) {
+            console.error('SSE order:status_changed error', err);
+          }
+        });
+
+        eventSource.onerror = () => {
+          if (!isSubscribed) return;
+          setSseConnected(false);
+          try {
+            if (eventSource) eventSource.close();
+          } catch {}
+          eventSource = null;
+
+          retryAttempt++;
+          const delay = Math.min(1500 * Math.pow(1.5, retryAttempt - 1), 12000);
+          reconnectTimeout = setTimeout(() => {
+            setupConnection();
+          }, delay);
+        };
+      } catch (err) {
+        console.warn('[SSE] EventSource init error:', err);
+        setSseConnected(false);
+        reconnectTimeout = setTimeout(() => {
+          setupConnection();
+        }, 3000);
+      }
     };
 
-    eventSource.addEventListener('order:created', () => {
-      try {
-        notificationSound.play('new_order');
-        queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
-        queryClient.invalidateQueries({ queryKey: ['admin-logs'] });
-      } catch (err) {
-        console.error('SSE order:created parse error', err);
-      }
-    });
-
-    eventSource.addEventListener('order:payment_verified', () => {
-      try {
-        notificationSound.play('payment_verified');
-        queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
-        queryClient.invalidateQueries({ queryKey: ['admin-logs'] });
-      } catch (err) {
-        console.error('SSE order:payment_verified parse error', err);
-      }
-    });
-
-    eventSource.addEventListener('order:status_changed', () => {
-      try {
-        queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
-        queryClient.invalidateQueries({ queryKey: ['admin-logs'] });
-      } catch (err) {
-        console.error('SSE order:status_changed parse error', err);
-      }
-    });
-
-    eventSource.onerror = () => {
-      setSseConnected(false);
-    };
+    setupConnection();
 
     return () => {
-      eventSource.close();
+      isSubscribed = false;
+      if (reconnectTimeout) clearTimeout(reconnectTimeout);
+      if (eventSource) {
+        try {
+          eventSource.close();
+        } catch {}
+        eventSource = null;
+      }
     };
   }, [queryClient]);
 
-  // Fetch orders with React Query via centralized OrdersApi
+  // Fetch orders with React Query via centralized OrdersApi with industry-standard Dual-Channel Auto-Sync
   const {
     data: ordersData,
     isLoading,
@@ -110,7 +181,11 @@ export function AdminOrdersTab() {
         status: statusFilter,
         search: searchQuery,
       }),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 2000, // 2s freshness: window focus immediately checks for latest data
+    refetchOnWindowFocus: true, // Immediate background refetch on tab focus
+    refetchOnReconnect: true, // Immediate refetch upon network reconnection
+    refetchInterval: sseConnected ? 15000 : 5000, // 15s safety poll when SSE alive, 5s active poll fallback when SSE reconnecting
+    refetchIntervalInBackground: false,
   });
 
   const orders = ordersData?.data || [];
@@ -189,6 +264,7 @@ export function AdminOrdersTab() {
         setSearchQuery={setSearchQuery}
         metrics={metrics}
         isMuted={isMuted}
+        audioUnlocked={audioUnlocked}
         onToggleMute={handleToggleMute}
         onTestSound={handleTestSound}
         sseConnected={sseConnected}
