@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useMemo, useEffect, useCallback, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -126,13 +126,72 @@ const TAB_TITLES: Record<AdminTab, { category: string; title: string }> = {
   'sales-academy': { category: 'Portal Penjualan', title: 'Panduan & Edukasi Mitra Sales' },
 };
 
-export default function AdminPage() {
+const RESTRICTED_FOR_OPERATIONAL_ADMIN: AdminTab[] = [
+  'providers',
+  'wallets',
+  'revenue',
+  'expenses',
+  'profit',
+  'financial-transactions',
+  'financial-reports',
+  'payment-settings',
+  'logs',
+  'notifications',
+  'admins',
+  'store-settings',
+];
+
+function AdminPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
+
+  const getTabFromUrl = useCallback((): AdminTab | null => {
+    if (typeof window !== 'undefined') {
+      const sp = new URLSearchParams(window.location.search);
+      const t = sp.get('tab');
+      if (t && t in TAB_TITLES) return t as AdminTab;
+    }
+    const t = searchParams?.get('tab');
+    if (t && t in TAB_TITLES) return t as AdminTab;
+    return null;
+  }, [searchParams]);
 
   // Admin authentication state
   const [adminUser, setAdminUser] = useState<{ id?: string; email: string; name?: string; role?: string } | null>(null);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
+
+  // Navigation tab & visited tabs cache (initialized from URL or default)
+  const initialUrlTab = getTabFromUrl();
+  const [activeTab, setActiveTab] = useState<AdminTab>(initialUrlTab || 'dashboard');
+  const [visitedTabs, setVisitedTabs] = useState<Set<AdminTab>>(() => new Set(['dashboard', initialUrlTab || 'dashboard']));
+  const [isSidebarMobileOpen, setIsSidebarMobileOpen] = useState(false);
+
+  const handleTabChange = useCallback((newTab: AdminTab) => {
+    setActiveTab(newTab);
+    if (typeof window !== 'undefined') {
+      const currentUrl = new URL(window.location.href);
+      if (currentUrl.searchParams.get('tab') !== newTab) {
+        currentUrl.searchParams.set('tab', newTab);
+        window.history.pushState({ tab: newTab }, '', currentUrl.pathname + currentUrl.search);
+      }
+    }
+  }, []);
+
+  // Synchronize with browser Back and Forward navigation buttons
+  useEffect(() => {
+    const handlePopState = () => {
+      const currentUrlTab = getTabFromUrl();
+      if (currentUrlTab) {
+        setActiveTab(currentUrlTab);
+      } else {
+        const defaultTab = adminUser?.role === 'sales' ? 'sales-overview' : 'dashboard';
+        setActiveTab(defaultTab);
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [getTabFromUrl, adminUser]);
 
   // Check admin session on mount
   useEffect(() => {
@@ -145,28 +204,43 @@ export default function AdminPage() {
         }
         const res = await fetch('/api/v1/admin/auth/me', { headers });
         if (!res.ok) {
-          router.replace('/admin/login');
+          const currentUrl = typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/admin';
+          router.replace(`/admin/login?callbackUrl=${encodeURIComponent(currentUrl)}`);
           return;
         }
         const data = await res.json();
         if (!data.authenticated) {
-          router.replace('/admin/login');
+          const currentUrl = typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/admin';
+          router.replace(`/admin/login?callbackUrl=${encodeURIComponent(currentUrl)}`);
           return;
         }
         setAdminUser(data.admin);
-        if (data.admin?.role === 'sales') {
-          setActiveTab('sales-overview');
-        } else if (data.admin?.role === 'admin') {
-          setActiveTab('dashboard');
+        const currentUrlTab = getTabFromUrl();
+        const role = (data.admin?.role || 'admin').toLowerCase();
+
+        if (role === 'sales') {
+          if (currentUrlTab && currentUrlTab.startsWith('sales-')) {
+            setActiveTab(currentUrlTab);
+          } else {
+            handleTabChange('sales-overview');
+          }
+        } else {
+          // Admin role: maintain currentUrlTab if valid and not restricted
+          if (currentUrlTab && !RESTRICTED_FOR_OPERATIONAL_ADMIN.includes(currentUrlTab)) {
+            setActiveTab(currentUrlTab);
+          } else if (!currentUrlTab) {
+            setActiveTab('dashboard');
+          }
         }
       } catch {
-        router.replace('/admin/login');
+        const currentUrl = typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/admin';
+        router.replace(`/admin/login?callbackUrl=${encodeURIComponent(currentUrl)}`);
       } finally {
         setIsAuthChecking(false);
       }
     }
     verifyAuth();
-  }, [router]);
+  }, [router, getTabFromUrl, handleTabChange]);
 
   const handleLogout = async () => {
     try {
@@ -187,11 +261,6 @@ export default function AdminPage() {
     }
   };
 
-  // Navigation tab & visited tabs cache (Single Page Application memory retention)
-  const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
-  const [visitedTabs, setVisitedTabs] = useState<Set<AdminTab>>(() => new Set(['dashboard']));
-  const [isSidebarMobileOpen, setIsSidebarMobileOpen] = useState(false);
-
   // Lazily register visited tabs so each menu only mounts and requests API 1x
   useEffect(() => {
     setVisitedTabs((prev) => {
@@ -210,31 +279,16 @@ export default function AdminPage() {
     // 1. Sales partner can ONLY access sales-* tabs
     if (role === 'sales') {
       if (!activeTab.startsWith('sales-')) {
-        setActiveTab('sales-overview');
+        handleTabChange('sales-overview');
       }
       return;
     }
 
     // 2. Operational Admin cannot access financial/sensitive system tabs
-    const restrictedForAdmin: AdminTab[] = [
-      'providers',
-      'wallets',
-      'revenue',
-      'expenses',
-      'profit',
-      'financial-transactions',
-      'financial-reports',
-      'payment-settings',
-      'logs',
-      'notifications',
-      'admins',
-      'store-settings',
-    ];
-
-    if (role === 'admin' && restrictedForAdmin.includes(activeTab)) {
-      setActiveTab('dashboard');
+    if (role === 'admin' && RESTRICTED_FOR_OPERATIONAL_ADMIN.includes(activeTab)) {
+      handleTabChange('dashboard');
     }
-  }, [adminUser, activeTab]);
+  }, [adminUser, activeTab, handleTabChange]);
 
   // Filter states for Managed Products
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'archived' | 'warning'>('all');
@@ -836,7 +890,7 @@ export default function AdminPage() {
       {/* Sidebar with Accordion / Dropdown Menus */}
       <AdminSidebar
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={handleTabChange}
         metrics={metrics}
         adminUser={adminUser}
         onLogout={handleLogout}
@@ -888,7 +942,7 @@ export default function AdminPage() {
             {/* Notification Bell matching Reference Screenshot */}
             <button
               type="button"
-              onClick={() => setActiveTab('notifications')}
+              onClick={() => handleTabChange('notifications')}
               className="relative w-9 h-9 rounded-full bg-white/80 border border-slate-200/80 shadow-2xs flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-white transition-all cursor-pointer"
               title="Notifikasi"
             >
@@ -945,7 +999,7 @@ export default function AdminPage() {
             {adminUser?.role === 'sales' && (
               <Button
                 size="sm"
-                onClick={() => setActiveTab('sales-wallet')}
+                onClick={() => handleTabChange('sales-wallet')}
                 className="text-xs gap-1.5 shadow-xs font-semibold bg-[#16A36A] hover:bg-[#15803D] text-white"
               >
                 <Wallet className="w-3.5 h-3.5" />
@@ -1051,7 +1105,7 @@ export default function AdminPage() {
             <div className={activeTab === 'dashboard' ? 'block animate-tab-glide' : 'hidden'}>
               <AdminDashboardTab
                 metrics={metrics}
-                onNavigateTab={setActiveTab}
+                onNavigateTab={handleTabChange}
                 onOpenCreateProduct={handleOpenCreate}
                 onSyncVip={() => syncVipMutation.mutate()}
                 isSyncingVip={syncVipMutation.isPending}
@@ -1779,7 +1833,7 @@ export default function AdminPage() {
               onNotify={showNotification}
               onFilterCategoryInProducts={(cat) => {
                 setCategoryFilter(cat);
-                setActiveTab('products');
+                handleTabChange('products');
               }}
             />
           </div>
@@ -1884,7 +1938,7 @@ export default function AdminPage() {
           <div className={activeTab.startsWith('sales-') ? 'block animate-tab-glide' : 'hidden'}>
             <SalesConsoleSuite
               activeTab={activeTab}
-              onTabChange={(tab) => setActiveTab(tab)}
+              onTabChange={handleTabChange}
               adminUser={adminUser}
             />
           </div>
@@ -2680,5 +2734,26 @@ export default function AdminPage() {
       </footer>
     </div>
   </div>
+  );
+}
+
+export default function AdminPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center selection:bg-primary/20 selection:text-primary">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-surface border border-border flex items-center justify-center shadow-subtle animate-pulse">
+              <RefreshCw className="w-5 h-5 text-primary animate-spin" />
+            </div>
+            <span className="text-xs text-foreground-muted tracking-widest uppercase font-mono">
+              Memverifikasi Otoritas Sesi Admin...
+            </span>
+          </div>
+        </div>
+      }
+    >
+      <AdminPageContent />
+    </Suspense>
   );
 }

@@ -95,7 +95,16 @@ export default function AdminLoginPage() {
         localStorage.setItem('asterra_admin_token', data.token);
       }
 
-      const targetUrl = '/admin';
+      let targetUrl = '/admin';
+      if (typeof window !== 'undefined') {
+        const sp = new URLSearchParams(window.location.search);
+        const cb = sp.get('callbackUrl');
+        if (cb && cb.startsWith('/')) {
+          targetUrl = cb;
+        } else if (data.admin?.role === 'sales') {
+          targetUrl = '/sales';
+        }
+      }
 
       if (data.admin?.role === 'sales') {
         setSuccessMessage('Login mitra sales berhasil. Mengalihkan ke panel kontrol...');

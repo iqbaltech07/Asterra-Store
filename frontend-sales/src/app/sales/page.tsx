@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -26,13 +26,51 @@ const TAB_TITLES: Record<string, { category: string; title: string }> = {
   'sales-academy': { category: 'Portal Penjualan', title: 'Panduan & Edukasi Mitra Sales' },
 };
 
-export default function SalesPortalPage() {
+function SalesPortalContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const getTabFromUrl = useCallback((): AdminTab | null => {
+    if (typeof window !== 'undefined') {
+      const sp = new URLSearchParams(window.location.search);
+      const t = sp.get('tab');
+      if (t && t in TAB_TITLES) return t as AdminTab;
+    }
+    const t = searchParams?.get('tab');
+    if (t && t in TAB_TITLES) return t as AdminTab;
+    return null;
+  }, [searchParams]);
 
   const [adminUser, setAdminUser] = useState<{ id?: string; email: string; name?: string; role?: string } | null>(null);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
-  const [activeTab, setActiveTab] = useState<AdminTab>('sales-overview');
+  const initialUrlTab = getTabFromUrl();
+  const [activeTab, setActiveTab] = useState<AdminTab>(initialUrlTab || 'sales-overview');
   const [isSidebarMobileOpen, setIsSidebarMobileOpen] = useState(false);
+
+  const handleTabChange = useCallback((newTab: AdminTab) => {
+    setActiveTab(newTab);
+    if (typeof window !== 'undefined') {
+      const currentUrl = new URL(window.location.href);
+      if (currentUrl.searchParams.get('tab') !== newTab) {
+        currentUrl.searchParams.set('tab', newTab);
+        window.history.pushState({ tab: newTab }, '', currentUrl.pathname + currentUrl.search);
+      }
+    }
+  }, []);
+
+  // Synchronize with browser Back and Forward navigation
+  useEffect(() => {
+    const handlePopState = () => {
+      const currentUrlTab = getTabFromUrl();
+      if (currentUrlTab) {
+        setActiveTab(currentUrlTab);
+      } else {
+        setActiveTab('sales-overview');
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [getTabFromUrl]);
 
   useEffect(() => {
     async function verifyAuth() {
@@ -44,23 +82,30 @@ export default function SalesPortalPage() {
         }
         const res = await fetch('/api/v1/admin/auth/me', { headers });
         if (!res.ok) {
-          router.replace('/sales/login');
+          const currentUrl = typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/sales';
+          router.replace(`/sales/login?callbackUrl=${encodeURIComponent(currentUrl)}`);
           return;
         }
         const data = await res.json();
         if (!data.authenticated) {
-          router.replace('/sales/login');
+          const currentUrl = typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/sales';
+          router.replace(`/sales/login?callbackUrl=${encodeURIComponent(currentUrl)}`);
           return;
         }
         setAdminUser(data.admin);
+        const currentUrlTab = getTabFromUrl();
+        if (currentUrlTab) {
+          setActiveTab(currentUrlTab);
+        }
       } catch {
-        router.replace('/sales/login');
+        const currentUrl = typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/sales';
+        router.replace(`/sales/login?callbackUrl=${encodeURIComponent(currentUrl)}`);
       } finally {
         setIsAuthChecking(false);
       }
     }
     verifyAuth();
-  }, [router]);
+  }, [router, getTabFromUrl]);
 
   const handleLogout = async () => {
     try {
@@ -122,9 +167,7 @@ export default function SalesPortalPage() {
       {/* Sidebar with Sales Accordion Menus */}
       <AdminSidebar
         activeTab={activeTab}
-        onTabChange={(tab) => {
-          setActiveTab(tab);
-        }}
+        onTabChange={handleTabChange}
         adminUser={adminUser}
         onLogout={handleLogout}
         isOpenMobile={isSidebarMobileOpen}
@@ -162,7 +205,7 @@ export default function SalesPortalPage() {
           <div className="flex items-center gap-3">
             <Button
               size="sm"
-              onClick={() => setActiveTab('sales-wallet')}
+              onClick={() => handleTabChange('sales-wallet')}
               className="text-xs gap-1.5 shadow-xs font-semibold bg-[#16A36A] hover:bg-[#15803D] text-white rounded-xl h-9 px-3.5"
             >
               <FontAwesomeIcon icon={faWallet} className="text-xs" />
@@ -200,11 +243,32 @@ export default function SalesPortalPage() {
         <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-8 py-6 w-full">
           <SalesConsoleSuite
             activeTab={activeTab}
-            onTabChange={(tab) => setActiveTab(tab)}
+            onTabChange={handleTabChange}
             adminUser={adminUser}
           />
         </main>
       </div>
     </div>
+  );
+}
+
+export default function SalesPortalPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-surface border border-border flex items-center justify-center shadow-subtle animate-pulse">
+              <FontAwesomeIcon icon={faShareNodes} className="text-base text-primary" />
+            </div>
+            <span className="text-xs text-foreground-muted tracking-widest uppercase font-mono">
+              Memuat Portal Sales Asterra...
+            </span>
+          </div>
+        </div>
+      }
+    >
+      <SalesPortalContent />
+    </Suspense>
   );
 }

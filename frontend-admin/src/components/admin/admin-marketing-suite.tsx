@@ -364,7 +364,13 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
   const loadBannersFromApi = useCallback(async () => {
     setIsLoadingBanners(true);
     try {
-      const res = await fetch('/api/v1/banners?activeOnly=false');
+      const res = await fetch(`/api/v1/banners?activeOnly=false&_t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+          Pragma: 'no-cache',
+        },
+      });
       if (res.ok) {
         const json = await res.json();
         if (json.success && Array.isArray(json.data)) {
@@ -372,11 +378,11 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
           return;
         }
       }
-      // Fallback to initial banners if API is empty
-      setBanners(INITIAL_BANNERS);
+      // Fallback to initial banners ONLY if current banners state is empty
+      setBanners((prev) => (prev.length > 0 ? prev : INITIAL_BANNERS));
     } catch (err) {
       console.error('Failed to load banners from API:', err);
-      setBanners(INITIAL_BANNERS);
+      setBanners((prev) => (prev.length > 0 ? prev : INITIAL_BANNERS));
     } finally {
       setIsLoadingBanners(false);
     }
@@ -416,6 +422,11 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
     e.preventDefault();
     if (!banTitle.trim()) return;
 
+    if (!editingBanner && !stagedBannerFile) {
+      onNotify?.('Silakan pilih dan unggah file gambar banner terlebih dahulu.');
+      return;
+    }
+
     setIsSavingBanner(true);
     try {
       const formData = new FormData();
@@ -438,28 +449,10 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
 
       if (stagedBannerFile) {
         formData.append('file', stagedBannerFile);
-      } else {
-        // Use existing image URL by converting to Blob or passing file
-        let blob: Blob | null = null;
-        try {
-          const fetchImg = await fetch(banImageUrl);
-          blob = await fetchImg.blob();
-        } catch {
-          blob = null;
-        }
-
-        if (blob) {
-          formData.append('file', blob, 'banner.webp');
-        } else {
-          // Fallback minimal 1x1 transparent png blob
-          const byteCharacters = atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==');
-          const byteNumbers = new Array(byteCharacters.length);
-          for (let i = 0; i < byteCharacters.length; i++) {
-            byteNumbers[i] = byteCharacters.charCodeAt(i);
-          }
-          const byteArray = new Uint8Array(byteNumbers);
-          const fallbackBlob = new Blob([byteArray], { type: 'image/png' });
-          formData.append('file', fallbackBlob, 'banner.webp');
+      } else if (editingBanner?.id) {
+        // Preserving existing image reference
+        if (banImageUrl) {
+          formData.append('imageUrl', banImageUrl);
         }
       }
 
@@ -469,12 +462,12 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
       });
 
       const resJson = await res.json();
-      if (resJson.success) {
-        onNotify?.(resJson.message || `Banner "${banTitle}" berhasil dipublikasikan!`);
+      if (res.ok && resJson.success) {
+        onNotify?.(resJson.message || `Banner "${banTitle}" berhasil disimpan!`);
         await loadBannersFromApi();
         setIsBannerModalOpen(false);
       } else {
-        onNotify?.(resJson.detail || 'Gagal menyimpan banner.');
+        onNotify?.(resJson.detail || resJson.message || 'Gagal menyimpan banner.');
       }
     } catch (err) {
       console.error('Error saving banner:', err);
@@ -508,17 +501,20 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
       const res = await fetch(`/api/v1/banners/${id}/toggle-status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isActive: nextActive }),
+        body: JSON.stringify({ isActive: nextActive, status: nextActive ? 'active' : 'inactive' }),
       });
       const json = await res.json();
-      if (json.success) {
+      if (res.ok && json.success && json.data) {
         onNotify?.(`Banner "${target.title}" ${nextActive ? 'diaktifkan' : 'dinonaktifkan'}.`);
+        setBanners((prev) =>
+          prev.map((b) => (b.id === id ? { ...b, ...json.data } : b))
+        );
       } else {
-        loadBannersFromApi();
+        await loadBannersFromApi();
       }
     } catch (err) {
       console.error('Error toggling banner status:', err);
-      loadBannersFromApi();
+      await loadBannersFromApi();
     }
   };
 

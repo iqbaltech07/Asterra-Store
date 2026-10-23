@@ -56,7 +56,7 @@ class BannerService:
                             if "T" in exp_str:
                                 exp_dt = datetime.fromisoformat(exp_str.replace("Z", "+00:00")).replace(tzinfo=None)
                             else:
-                                exp_dt = datetime.strptime(exp_str[:10], "%Y-%m-%d")
+                                exp_dt = datetime.strptime(exp_str[:10] + " 23:59:59", "%Y-%m-%d %H:%M:%S")
                             if exp_dt < now:
                                 b["isActive"] = False
                                 b["status"] = "inactive"
@@ -107,7 +107,7 @@ class BannerService:
                         .order_by(PromoBanner.display_order.asc(), PromoBanner.created_at.desc())
                         .all()
                     )
-                    if db_banners is not None and len(db_banners) > 0:
+                    if db_banners is not None:
                         data = [b.to_dict() for b in db_banners]
                         cls._banners = data
                         cls.check_and_deactivate_expired()
@@ -240,6 +240,120 @@ class BannerService:
         return target
 
     @classmethod
+    def update_banner(
+        cls,
+        banner_id: str,
+        title: Optional[str] = None,
+        description: Optional[str] = None,
+        cta_text: Optional[str] = None,
+        banner_type: Optional[str] = None,
+        link_url: Optional[str] = None,
+        target_page: Optional[str] = None,
+        display_order: Optional[int] = None,
+        is_active: Optional[bool] = None,
+        expires_at: Optional[str] = None,
+        image_url: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        Updates metadata of an existing promo banner without requiring re-uploading file.
+        Preserves original image references unless explicitly updated.
+        """
+        banners = cls.load_banners()
+        target = next((b for b in banners if b.get("id") == banner_id), None)
+        if not target:
+            raise ValueError(f"Banner dengan ID '{banner_id}' tidak ditemukan.")
+
+        if title is not None:
+            clean_title = title.strip()
+            if not clean_title:
+                raise ValueError("Judul banner promo wajib diisi.")
+            target["title"] = clean_title
+
+        if description is not None:
+            target["description"] = description
+        if cta_text is not None:
+            target["ctaText"] = cta_text
+        if banner_type is not None:
+            target["bannerType"] = banner_type
+            target["type"] = banner_type
+        if link_url is not None:
+            clean_link = link_url.strip() if link_url else "/#katalog"
+            target["linkUrl"] = clean_link
+            target["destinationUrl"] = clean_link
+        if target_page is not None:
+            target["targetPage"] = target_page
+        if display_order is not None:
+            target["displayOrder"] = int(display_order)
+        if image_url is not None and image_url.strip():
+            target["imageUrl"] = image_url.strip()
+
+        # Parse expires_at if provided
+        parsed_exp: Optional[datetime] = None
+        if expires_at is not None:
+            if expires_at.strip():
+                clean_exp = expires_at.strip()
+                try:
+                    if "T" in clean_exp:
+                        parsed_exp = datetime.fromisoformat(clean_exp.replace("Z", "+00:00")).replace(tzinfo=None)
+                    else:
+                        parsed_exp = datetime.strptime(clean_exp[:10] + " 23:59:59", "%Y-%m-%d %H:%M:%S")
+                except Exception:
+                    parsed_exp = None
+            target["expiresAt"] = parsed_exp.isoformat() if parsed_exp else None
+            target["scheduledUntil"] = parsed_exp.strftime("%Y-%m-%d") if parsed_exp else None
+
+        if is_active is not None:
+            effective_active = bool(is_active)
+            if parsed_exp and parsed_exp < datetime.utcnow():
+                effective_active = False
+            target["isActive"] = effective_active
+            target["status"] = "active" if effective_active else "inactive"
+
+        now_iso = datetime.utcnow().isoformat()
+        target["updatedAt"] = now_iso
+
+        # Update in Database
+        try:
+            db = SessionLocal() if SessionLocal else None
+            if db:
+                try:
+                    existing_db = db.query(PromoBanner).filter(PromoBanner.id == banner_id).first()
+                    if existing_db:
+                        if title is not None:
+                            existing_db.title = target["title"]
+                        if description is not None:
+                            existing_db.description = target["description"]
+                        if cta_text is not None:
+                            existing_db.cta_text = target["ctaText"]
+                        if banner_type is not None:
+                            existing_db.banner_type = target["bannerType"]
+                        if link_url is not None:
+                            existing_db.link_url = target["linkUrl"]
+                        if target_page is not None:
+                            existing_db.target_page = target["targetPage"]
+                        if display_order is not None:
+                            existing_db.display_order = target["displayOrder"]
+                        if expires_at is not None:
+                            existing_db.expires_at = parsed_exp
+                        if is_active is not None:
+                            existing_db.is_active = target["isActive"]
+                        if image_url is not None and image_url.strip():
+                            existing_db.image_url = target["imageUrl"]
+                        existing_db.updated_at = datetime.utcnow()
+                        db.commit()
+                finally:
+                    db.close()
+        except Exception as e:
+            print(f"[BannerService] Warning: Failed to update banner in DB: {e}")
+
+        cls.save_banners()
+        return {
+            "success": True,
+            "data": target,
+            "message": f"Banner '{target.get('title')}' berhasil diperbarui.",
+        }
+
+    @classmethod
     async def upload_banner(
         cls,
         content: bytes,
@@ -363,7 +477,7 @@ class BannerService:
                 if "T" in clean_exp:
                     parsed_exp = datetime.fromisoformat(clean_exp.replace("Z", "+00:00")).replace(tzinfo=None)
                 else:
-                    parsed_exp = datetime.strptime(clean_exp[:10], "%Y-%m-%d")
+                    parsed_exp = datetime.strptime(clean_exp[:10] + " 23:59:59", "%Y-%m-%d %H:%M:%S")
             except Exception:
                 parsed_exp = None
 

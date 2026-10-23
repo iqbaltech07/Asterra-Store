@@ -1,27 +1,5 @@
 [
   {
-    "id": "banner_9d8396c2b5d7",
-    "title": "Promo Grand Opening !!",
-    "description": "Dapatkan diskon 5 hingga 20%.",
-    "ctaText": "Beli Sekarang",
-    "bannerType": "hero",
-    "type": "hero",
-    "imageUrl": "/api/v1/media/banners/promo-promo-grand-opening-674cbcac084d.webp",
-    "blobUrl": "https://jyoavpfhhqnaysh3.private.blob.vercel-storage.com/banners/promo-promo-grand-opening-674cbcac084d.webp",
-    "pathname": "banners/promo-promo-grand-opening-674cbcac084d.webp",
-    "contentHash": "674cbcac084d",
-    "linkUrl": "/products",
-    "destinationUrl": "/products",
-    "targetPage": "home",
-    "displayOrder": 1,
-    "isActive": true,
-    "status": "active",
-    "expiresAt": null,
-    "scheduledUntil": null,
-    "createdAt": "2026-10-14T13:16:36.953550",
-    "updatedAt": "2026-10-14T13:16:36.953562"
-  },
-  {
     "id": "banner_f5673e22c8e1",
     "title": "Selamat Datang di Asterra Store",
     "description": "Pusat Akun & Lisensi Premium Resmi Bergaransi. Canva Pro, Gemini AI, Netflix kilat 1 menit.",
@@ -41,7 +19,29 @@
     "expiresAt": null,
     "scheduledUntil": null,
     "createdAt": "2026-10-11T09:05:21.209357",
-    "updatedAt": "2026-10-15T18:23:22.442503"
+    "updatedAt": "2026-10-23T10:09:31.808520"
+  },
+  {
+    "id": "banner_31551dab90a5",
+    "title": "Promo Grand Opening !",
+    "description": "",
+    "ctaText": "Beli Sekarang",
+    "bannerType": "hero",
+    "type": "hero",
+    "imageUrl": "/api/v1/media/banners/promo-promo-grand-opening-96ae8bf01499.webp",
+    "blobUrl": "https://jyoavpfhhqnaysh3.private.blob.vercel-storage.com/banners/promo-promo-grand-opening-96ae8bf01499.webp",
+    "pathname": "banners/promo-promo-grand-opening-96ae8bf01499.webp",
+    "contentHash": "96ae8bf01499",
+    "linkUrl": "/#katalog",
+    "destinationUrl": "/#katalog",
+    "targetPage": "home",
+    "displayOrder": 3,
+    "isActive": true,
+    "status": "active",
+    "expiresAt": "2026-10-30T00:00:00",
+    "scheduledUntil": "2026-10-30",
+    "createdAt": "2026-10-23T08:06:41.596092",
+    "updatedAt": "2026-10-23T09:52:14.375128"
   },
   {
     "id": "banner_a1fe5c7dcd15",

@@ -420,7 +420,7 @@ async def upload_admin_media(
 @router.post("/banners", tags=["Promo Banners"])
 @router.post("/admin/banners", tags=["Promo Banners"])
 async def upload_promo_banner(
-    file: UploadFile = File(...),
+    file: Optional[UploadFile] = File(None),
     title: str = Form(...),
     description: Optional[str] = Form(""),
     ctaText: Optional[str] = Form("Beli Sekarang"),
@@ -449,31 +449,57 @@ async def upload_promo_banner(
     final_type = banner_type if banner_type is not None else (bannerType or "hero")
     final_expires = expires_at or scheduledUntil if (expires_at or scheduledUntil) is not None else expiresAt
 
-    content_type = file.content_type or "image/webp"
-    content = await file.read()
+    # 1. If file is provided and has filename: perform full upload and replace/store image
+    if file is not None and getattr(file, "filename", None):
+        content_type = file.content_type or "image/webp"
+        content = await file.read()
+        if len(content) > 0:
+            try:
+                res = await BannerService.upload_banner(
+                    content=content,
+                    filename=file.filename or "banner.webp",
+                    content_type=content_type,
+                    title=title,
+                    description=description or "",
+                    cta_text=final_cta,
+                    banner_type=final_type,
+                    link_url=final_link,
+                    target_page=final_target,
+                    display_order=int(final_order),
+                    is_active=bool(final_active),
+                    expires_at=final_expires,
+                    banner_id=id,
+                )
+                cache.invalidate("banners")
+                return res
+            except ValueError as ve:
+                raise HTTPException(status_code=400, detail=str(ve))
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=f"Gagal mengunggah banner: {str(e)}")
 
-    try:
-        res = await BannerService.upload_banner(
-            content=content,
-            filename=file.filename or "banner.webp",
-            content_type=content_type,
-            title=title,
-            description=description or "",
-            cta_text=final_cta,
-            banner_type=final_type,
-            link_url=final_link,
-            target_page=final_target,
-            display_order=int(final_order),
-            is_active=bool(final_active),
-            expires_at=final_expires,
-            banner_id=id,
-        )
-        cache.invalidate("banners")
-        return res
-    except ValueError as ve:
-        raise HTTPException(status_code=400, detail=str(ve))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Gagal mengunggah banner: {str(e)}")
+    # 2. If no new file uploaded, but updating an existing banner by ID:
+    if id:
+        try:
+            res = BannerService.update_banner(
+                banner_id=id,
+                title=title,
+                description=description or "",
+                cta_text=final_cta,
+                banner_type=final_type,
+                link_url=final_link,
+                target_page=final_target,
+                display_order=int(final_order),
+                is_active=bool(final_active),
+                expires_at=final_expires,
+            )
+            cache.invalidate("banners")
+            return res
+        except ValueError as ve:
+            raise HTTPException(status_code=400, detail=str(ve))
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Gagal memperbarui banner: {str(e)}")
+
+    raise HTTPException(status_code=400, detail="File gambar banner wajib diunggah untuk banner baru.")
 
 @router.patch("/banners/{banner_id}/toggle-status", tags=["Promo Banners"])
 @router.patch("/admin/banners/{banner_id}/toggle-status", tags=["Promo Banners"])
@@ -507,10 +533,28 @@ def get_promo_banners(
     target_page: Optional[str] = Query(None, alias="targetPage"),
     banner_type: Optional[str] = Query(None, alias="bannerType"),
 ):
+    # Admin requests (activeOnly=False or /admin/ path) should never be served from stale browser cache
+    is_admin = (not active_only) or "/admin/" in request.url.path or request.url.path.endswith("/admin")
+    if is_admin:
+        banners = BannerService.get_banners(
+            active_only=False,
+            target_page=target_page,
+            banner_type=banner_type,
+        )
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+        return {
+            "success": True,
+            "data": banners,
+            "total": len(banners),
+        }
+
+    # Public storefront requests use smart caching & ETags
     cache_key = f"b_{active_only}_{target_page or 'all'}_{banner_type or 'all'}"
     etag = cache.generate_etag("banners", cache_key)
     if cache.is_not_modified(request, etag):
-        return cache.not_modified_response(etag, max_age=120)
+        return cache.not_modified_response(etag, max_age=60)
 
     banners = cache.get("banners", cache_key)
     if banners is None:
@@ -519,9 +563,9 @@ def get_promo_banners(
             target_page=target_page,
             banner_type=banner_type,
         )
-        cache.set("banners", cache_key, banners, ttl=120)
+        cache.set("banners", cache_key, banners, ttl=60)
 
-    cache.apply_headers(response, etag=etag, max_age=120)
+    cache.apply_headers(response, etag=etag, max_age=60)
     return {
         "success": True,
         "data": banners,
