@@ -39,11 +39,12 @@ def get_products(
     cache_key = f"cat_{category or 'all'}_s_{search or 'none'}"
     etag = cache.generate_etag("catalog", cache_key)
     if cache.is_not_modified(request, etag):
-        return cache.not_modified_response(etag, max_age=60)
+        return cache.not_modified_response(etag, max_age=0)
 
     cached_data = cache.get("catalog", cache_key)
     if cached_data is None:
-        products = CatalogService.get_products(category=category, search=search)
+        # On cache miss (e.g. after admin mutation bumped version), query PostgreSQL freshly
+        products = CatalogService.get_products(category=category, search=search, force_reload=True)
         cached_data = {
             "success": True,
             "message": "Products retrieved successfully",
@@ -51,9 +52,9 @@ def get_products(
             "total": len(products),
             "timestamp": datetime.utcnow().isoformat(),
         }
-        cache.set("catalog", cache_key, cached_data, ttl=60)
+        cache.set("catalog", cache_key, cached_data, ttl=120)
 
-    cache.apply_headers(response, etag=etag, max_age=60)
+    cache.apply_headers(response, etag=etag, mode="revalidate")
     return cached_data
 
 @router.get("/products/{product_id}", tags=["Catalog"])
@@ -61,7 +62,7 @@ def get_product_by_id(product_id: str, request: Request, response: Response):
     cache_key = f"prod_{product_id}"
     etag = cache.generate_etag("catalog", cache_key)
     if cache.is_not_modified(request, etag):
-        return cache.not_modified_response(etag, max_age=60)
+        return cache.not_modified_response(etag, max_age=0)
 
     cached_prod = cache.get("catalog", cache_key)
     if cached_prod is None:
@@ -69,9 +70,9 @@ def get_product_by_id(product_id: str, request: Request, response: Response):
         if not product:
             raise HTTPException(status_code=404, detail="Produk tidak ditemukan")
         cached_prod = product
-        cache.set("catalog", cache_key, cached_prod, ttl=60)
+        cache.set("catalog", cache_key, cached_prod, ttl=120)
 
-    cache.apply_headers(response, etag=etag, max_age=60)
+    cache.apply_headers(response, etag=etag, mode="revalidate")
     return {
         "success": True,
         "data": cached_prod,
@@ -182,6 +183,7 @@ def get_admin_vip_services(
 async def import_admin_vip_service(request: Request):
     payload = await request.json()
     imported = CatalogService.import_vip_service(payload)
+    cache.invalidate("catalog")
     return {
         "success": True,
         "message": f"Layanan '{imported.get('name')}' berhasil diimpor ke katalog Asterra Store.",
@@ -194,6 +196,7 @@ def sync_vip_services():
     result = VipService.sync_vip_services()
     if not result.get("success"):
         raise HTTPException(status_code=400, detail=result.get("message", "Gagal sinkronisasi VIP Reseller"))
+    cache.invalidate("catalog")
     return result
 
 @router.post("/admin/refresh-stock", tags=["Admin VIP"])
@@ -202,6 +205,7 @@ def refresh_stock():
     result = VipService.check_stock()
     if not result.get("success"):
         raise HTTPException(status_code=400, detail=result.get("message", "Gagal pengecekan stok live"))
+    cache.invalidate("catalog")
     return result
 
 # ------------------------------------------

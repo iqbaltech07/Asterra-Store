@@ -411,14 +411,8 @@ class OrderService:
             clean_email = customer_email.lower().strip()
             clean_phone = re.sub(r"\D", "", customer_phone)
             already_claimed = False
-            if cls._orders is not None:
-                already_claimed = any(
-                    (str(o.get("customerEmail", "")).lower().strip() == clean_email or
-                     (clean_phone and re.sub(r"\D", "", str(o.get("customerWhatsapp", ""))) == clean_phone))
-                    and (float(o.get("referralDiscount") or o.get("referral_discount") or 0) > 0)
-                    for o in cls._orders
-                )
-            else:
+
+            if SessionLocal is not None:
                 try:
                     db_check = SessionLocal()
                     try:
@@ -431,13 +425,30 @@ class OrderService:
                         if clauses:
                             match_rec = db_check.query(Order.id).filter(
                                 or_(*clauses),
-                                Order.referral_discount > 0
+                                Order.referral_discount > 0,
+                                Order.status != "cancelled",
                             ).first()
                             already_claimed = match_rec is not None
                     finally:
                         db_check.close()
-                except Exception:
-                    already_claimed = False
+                except Exception as e:
+                    print(f"[OrderService] Direct DB referral check note: {e}")
+                    if cls._orders is not None:
+                        already_claimed = any(
+                            (str(o.get("customerEmail", "")).lower().strip() == clean_email or
+                             (clean_phone and re.sub(r"\D", "", str(o.get("customerWhatsapp", ""))) == clean_phone))
+                            and (float(o.get("referralDiscount") or o.get("referral_discount") or 0) > 0)
+                            and str(o.get("status", "")).lower() != "cancelled"
+                            for o in cls._orders
+                        )
+            elif cls._orders is not None:
+                already_claimed = any(
+                    (str(o.get("customerEmail", "")).lower().strip() == clean_email or
+                     (clean_phone and re.sub(r"\D", "", str(o.get("customerWhatsapp", ""))) == clean_phone))
+                    and (float(o.get("referralDiscount") or o.get("referral_discount") or 0) > 0)
+                    and str(o.get("status", "")).lower() != "cancelled"
+                    for o in cls._orders
+                )
 
             if already_claimed:
                 referral_discount = 0

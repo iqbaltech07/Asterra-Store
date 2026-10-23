@@ -16,6 +16,7 @@ import {
   faChevronRight,
   faRightFromBracket,
   faRightToBracket,
+  faSpinner,
 } from '@fortawesome/free-solid-svg-icons';
 import { useNavigationStore } from '@/store/use-navigation-store';
 import { useSession } from '@/lib/auth-client';
@@ -55,7 +56,10 @@ export function LainnyaSidebar() {
     }
   }, [isSidebarOpen]);
 
+  const [isLoggingOut, setIsLoggingOut] = React.useState(false);
+
   const handleLogout = async () => {
+    setIsLoggingOut(true);
     closeSidebar();
     await performCustomerLogout({
       queryClient,
@@ -281,11 +285,15 @@ export function LainnyaSidebar() {
           {currentUser && (
             <button
               type="button"
+              disabled={isLoggingOut}
               onClick={handleLogout}
-              className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-red-500/20 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-semibold transition-colors cursor-pointer"
+              className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-red-500/20 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-semibold transition-colors cursor-pointer disabled:opacity-60"
             >
-              <FontAwesomeIcon icon={faRightFromBracket} className="w-3.5 h-3.5" />
-              <span>Keluar dari Akun</span>
+              <FontAwesomeIcon
+                icon={isLoggingOut ? faSpinner : faRightFromBracket}
+                className={`w-3.5 h-3.5 ${isLoggingOut ? 'animate-spin' : ''}`}
+              />
+              <span>{isLoggingOut ? 'Keluar...' : 'Keluar dari Akun'}</span>
             </button>
           )}
 

@@ -104,6 +104,7 @@ export default function ProfilePage() {
 
   const [notification, setNotification] = useState<string | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   // Profile Edit State
   const [isEditing, setIsEditing] = useState(false);
@@ -215,6 +216,7 @@ export default function ProfilePage() {
   };
 
   const handleLogout = async () => {
+    setIsLoggingOut(true);
     await performCustomerLogout({
       queryClient,
       redirectTo: '/',
@@ -365,11 +367,15 @@ export default function ProfilePage() {
                 <Button
                   variant="outline"
                   size="sm"
+                  disabled={isLoggingOut}
                   onClick={handleLogout}
-                  className="gap-2 text-status-error hover:bg-red-50 hover:border-red-200 border-border text-xs rounded-xl"
+                  className="gap-2 text-status-error hover:bg-red-50 hover:border-red-200 border-border text-xs rounded-xl cursor-pointer disabled:opacity-70 transition-all"
                 >
-                  <FontAwesomeIcon icon={faRightFromBracket} className="w-3.5 h-3.5" />
-                  <span>Keluar Akun</span>
+                  <FontAwesomeIcon
+                    icon={isLoggingOut ? faSpinner : faRightFromBracket}
+                    className={`w-3.5 h-3.5 ${isLoggingOut ? 'animate-spin' : ''}`}
+                  />
+                  <span>{isLoggingOut ? 'Keluar...' : 'Keluar Akun'}</span>
                 </Button>
               </div>
             </div>

@@ -9,9 +9,9 @@ import { ProductItem } from '@/lib/products-data';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || process.env.BACKEND_URL || 'http://localhost:8000';
 
-// Server-side in-memory micro-cache (60 seconds) for catalog products
+// Server-side in-memory micro-cache (5 seconds) for catalog products
 let catalogMemoryCache: { data: ProductItem[]; timestamp: number } | null = null;
-const CATALOG_CACHE_TTL = 60 * 1000;
+const CATALOG_CACHE_TTL = 5 * 1000;
 
 async function fetchActiveProductsImpl(): Promise<ProductItem[]> {
   const now = Date.now();
@@ -20,7 +20,7 @@ async function fetchActiveProductsImpl(): Promise<ProductItem[]> {
   }
   try {
     const res = await fetch(`${BACKEND_URL}/api/v1/products`, {
-      next: { revalidate: 60 },
+      next: { revalidate: 10 },
       signal: AbortSignal.timeout(5000),
     });
     if (!res.ok) return catalogMemoryCache?.data || [];
@@ -50,7 +50,7 @@ async function fetchProductByIdImpl(id: string, activeProducts?: ProductItem[]):
 
   try {
     const res = await fetch(`${BACKEND_URL}/api/v1/products/${id}`, {
-      next: { revalidate: 60 },
+      next: { revalidate: 10 },
       signal: AbortSignal.timeout(5000),
     });
     if (!res.ok) return null;

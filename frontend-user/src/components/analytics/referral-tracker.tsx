@@ -30,39 +30,16 @@ function ReferralTrackerInner() {
 
     const hasCampaign = Boolean(urlCampaign || storedCamp);
 
-    // Rule: Jika parameter ref / session ref sudah terpakai (claimed), maka hapus.
-    // Pengecualian: jika ada parameter campaign, maka TIDAK di-hapus.
-    if (isRefClaimed && !hasCampaign) {
-      if (typeof window !== 'undefined') {
-        try {
-          localStorage.removeItem('asterra_ref');
-          localStorage.removeItem('asterra_referral_session_id');
-          document.cookie = 'asterra_ref=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-          document.cookie = 'asterra_referral_session_id=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-
-          const currentUrl = new URL(window.location.href);
-          if (currentUrl.searchParams.has('ref')) {
-            currentUrl.searchParams.delete('ref');
-            window.history.replaceState(
-              window.history.state,
-              '',
-              currentUrl.pathname + currentUrl.search + currentUrl.hash
-            );
-          }
-        } catch {}
-      }
-    } else {
-      // 1. If URL has ref parameter, store in localStorage & cookies
-      const normalizedCode = urlRef && urlRef.trim() ? urlRef.trim().toUpperCase() : '';
-      if (normalizedCode) {
-        try {
-          localStorage.setItem('asterra_ref', normalizedCode);
-          document.cookie = `asterra_ref=${encodeURIComponent(
-            normalizedCode
-          )}; path=/; max-age=2592000; SameSite=Lax`;
-        } catch {
-          // ignore storage errors
-        }
+    // 1. If URL has ref parameter, store in localStorage & cookies for Sales Partner Attribution
+    const normalizedCode = urlRef && urlRef.trim() ? urlRef.trim().toUpperCase() : '';
+    if (normalizedCode) {
+      try {
+        localStorage.setItem('asterra_ref', normalizedCode);
+        document.cookie = `asterra_ref=${encodeURIComponent(
+          normalizedCode
+        )}; path=/; max-age=2592000; SameSite=Lax`;
+      } catch {
+        // ignore storage errors
       }
     }
 
@@ -100,13 +77,9 @@ function ReferralTrackerInner() {
     }
 
     // 3. Dispatch click telemetry to server (Hybrid Cookie + DB Session)
-    // Only track referral code click if not claimed or if campaign is present
-    const normalizedCode =
-      (!isRefClaimed || hasCampaign) && urlRef && urlRef.trim()
-        ? urlRef.trim().toUpperCase()
-        : '';
-    if (normalizedCode || normalizedCamp) {
-      const sessionTrackedKey = `asterra_tracked_${normalizedCode || 'none'}_${normalizedCamp || 'none'}`;
+    const trackingCode = normalizedCode || storedRef;
+    if (trackingCode || normalizedCamp) {
+      const sessionTrackedKey = `asterra_tracked_${trackingCode || 'none'}_${normalizedCamp || 'none'}`;
       if (typeof window !== 'undefined' && !sessionStorage.getItem(sessionTrackedKey)) {
         sessionStorage.setItem(sessionTrackedKey, 'true');
 
@@ -119,7 +92,7 @@ function ReferralTrackerInner() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            code: normalizedCode || undefined,
+            code: trackingCode || undefined,
             campaign: normalizedCamp || undefined,
             utm_source: urlSource ? urlSource.trim() : undefined,
             utm_medium: urlMedium ? urlMedium.trim() : undefined,
@@ -185,22 +158,6 @@ function ReferralTrackerInner() {
                   changed = true;
                 }
 
-                // If referral discount was already claimed previously, also purge ref now that campaign has ended
-                const isClaimed = localStorage.getItem('asterra_ref_claimed') === 'true';
-                if (isClaimed) {
-                  try {
-                    localStorage.removeItem('asterra_ref');
-                    localStorage.removeItem('asterra_referral_session_id');
-                    document.cookie = 'asterra_ref=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-                    document.cookie = 'asterra_referral_session_id=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-                  } catch {}
-
-                  if (currentUrl.searchParams.has('ref')) {
-                    currentUrl.searchParams.delete('ref');
-                    changed = true;
-                  }
-                }
-
                 if (changed) {
                   window.history.replaceState(
                     window.history.state,
@@ -231,13 +188,7 @@ function ReferralTrackerInner() {
         const currentUrl = new URL(window.location.href);
         let urlModified = false;
 
-        // Jika referral sudah claimed dan tidak ada campaign, pastikan ref dihapus jika masih ada di URL
-        if (isRefClaimed && !hasCampaign) {
-          if (currentUrl.searchParams.has('ref')) {
-            currentUrl.searchParams.delete('ref');
-            urlModified = true;
-          }
-        } else if (storedRef && !currentUrl.searchParams.has('ref')) {
+        if (storedRef && !currentUrl.searchParams.has('ref')) {
           currentUrl.searchParams.set('ref', storedRef);
           urlModified = true;
         }

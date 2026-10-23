@@ -139,18 +139,59 @@ def validate_referral(
     discount_reason = "Potongan referral resmi kemitraan sales"
 
     if email or phone:
-        orders = OrderService.load_orders()
         clean_email = (email or "").strip().lower()
         clean_phone = re.sub(r"\D", "", phone or "")
+        has_claimed = False
 
-        has_claimed = any(
-            (
-                (clean_email and str(o.get("customerEmail", "")).lower().strip() == clean_email)
-                or (clean_phone and re.sub(r"\D", "", str(o.get("customerWhatsapp", ""))) == clean_phone)
+        from app.core.database import SessionLocal
+        from app.models.order import Order
+        if SessionLocal is not None:
+            try:
+                db = SessionLocal()
+                try:
+                    from sqlalchemy import or_
+                    clauses = []
+                    if clean_email:
+                        clauses.append(Order.customer_email.ilike(clean_email))
+                    if clean_phone and len(clean_phone) >= 8:
+                        clauses.append(Order.customer_whatsapp.like(f"%{clean_phone[-8:]}%"))
+                    if clauses:
+                        match_rec = (
+                            db.query(Order.id)
+                            .filter(
+                                or_(*clauses),
+                                Order.referral_discount > 0,
+                                Order.status != "cancelled",
+                            )
+                            .first()
+                        )
+                        has_claimed = match_rec is not None
+                finally:
+                    db.close()
+            except Exception as e:
+                print(f"[SalesValidate] Direct DB verification error: {e}")
+                orders = OrderService.load_orders()
+                has_claimed = any(
+                    (
+                        (clean_email and str(o.get("customerEmail", "")).lower().strip() == clean_email)
+                        or (clean_phone and re.sub(r"\D", "", str(o.get("customerWhatsapp", ""))) == clean_phone)
+                    )
+                    and float(o.get("referralDiscount") or o.get("referral_discount") or 0) > 0
+                    and str(o.get("status", "")).lower() != "cancelled"
+                    for o in orders
+                )
+        else:
+            orders = OrderService.load_orders()
+            has_claimed = any(
+                (
+                    (clean_email and str(o.get("customerEmail", "")).lower().strip() == clean_email)
+                    or (clean_phone and re.sub(r"\D", "", str(o.get("customerWhatsapp", ""))) == clean_phone)
+                )
+                and float(o.get("referralDiscount") or o.get("referral_discount") or 0) > 0
+                and str(o.get("status", "")).lower() != "cancelled"
+                for o in orders
             )
-            and float(o.get("referralDiscount") or o.get("referral_discount") or 0) > 0
-            for o in orders
-        )
+
         if has_claimed:
             discount_eligible = False
             discount_amount = 0

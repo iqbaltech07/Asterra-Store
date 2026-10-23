@@ -31,9 +31,10 @@ export function useCatalogProducts() {
   return useQuery<CatalogProductsResponse>({
     queryKey: ['products'],
     queryFn: fetchCatalogProducts,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 1000, // 30 seconds fresh window, backed by instant HTTP 304 ETag revalidation
     gcTime: 30 * 60 * 1000,
     placeholderData: (previousData) => previousData,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
   });
 }

@@ -85,9 +85,9 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
       return res.json();
     },
     initialData: initialData ? { success: true, data: initialData } : undefined,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 1000,
     gcTime: 30 * 60 * 1000,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
   });
 
   const product = data?.data;

@@ -50,21 +50,11 @@ export function getActiveReferralParams(): Record<string, string> {
       '';
     const hasCampaign = Boolean(urlCamp || storedCamp);
 
-    // Rule: jika parameter ref / session ref sudah terpakai (claimed), maka hapus
-    // Pengecualian: jika ada parameter campaign, maka tidak dihapus
-    if (isRefClaimed && !hasCampaign) {
-      try {
-        localStorage.removeItem('asterra_ref');
-        localStorage.removeItem('asterra_referral_session_id');
-        document.cookie = 'asterra_ref=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-        document.cookie = 'asterra_referral_session_id=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-      } catch {}
-    } else {
-      if (urlRef && urlRef.trim()) {
-        const code = urlRef.trim().toUpperCase();
-        localStorage.setItem('asterra_ref', code);
-        document.cookie = `asterra_ref=${encodeURIComponent(code)}; path=/; max-age=2592000; SameSite=Lax`;
-      }
+    // 1. Store ref parameter in localStorage & cookies for sales attribution
+    if (urlRef && urlRef.trim()) {
+      const code = urlRef.trim().toUpperCase();
+      localStorage.setItem('asterra_ref', code);
+      document.cookie = `asterra_ref=${encodeURIComponent(code)}; path=/; max-age=2592000; SameSite=Lax`;
     }
 
     if (urlCamp && urlCamp.trim()) {
@@ -83,11 +73,11 @@ export function getActiveReferralParams(): Record<string, string> {
       document.cookie = `asterra_utm_medium=${encodeURIComponent(urlMedium.trim())}; path=/; max-age=2592000; SameSite=Lax`;
     }
 
-    const ref = (!isRefClaimed || hasCampaign) ? (urlRef || localStorage.getItem('asterra_ref')) : null;
+    const ref = urlRef || localStorage.getItem('asterra_ref');
     const campaign = urlCamp || localStorage.getItem('asterra_utm_campaign') || localStorage.getItem('asterra_campaign');
     const source = urlSource || localStorage.getItem('asterra_utm_source');
     const medium = urlMedium || localStorage.getItem('asterra_utm_medium');
-    const sessionId = (!isRefClaimed || hasCampaign) ? getReferralSessionId() : null;
+    const sessionId = getReferralSessionId();
 
     if (ref && ref.trim()) params.ref = ref.trim().toUpperCase();
     if (campaign && campaign.trim()) {

@@ -18,34 +18,32 @@ export interface CustomerLogoutOptions {
 }
 
 export async function performCustomerLogout(options?: CustomerLogoutOptions): Promise<void> {
-  // 1. Better Auth session termination
-  try {
-    await signOut();
-  } catch (err) {
-    console.warn('[AuthLogout] Better Auth signOut error (proceeding with local cleanup):', err);
-  }
-
-  // 2. Clear legacy auth Zustand store
+  // 1. Instant synchronous client-side purge (Zero-Delay)
   try {
     useAuthStore.getState().logout();
   } catch {}
 
-  // 3. Clear cart store so previous user's cart is not left for the next session
   try {
     useCartStore.getState().clearCart();
   } catch {}
 
-  // 4. Remove all user-identifying customer keys from localStorage
   if (typeof window !== 'undefined') {
     try {
       localStorage.removeItem('asterra_customer_email');
       localStorage.removeItem('asterra_last_order_id');
       localStorage.removeItem('asterra_checkout_customer');
       sessionStorage.removeItem('asterra_customer_session');
+
+      // Instantly expire auth cookies on client
+      const expiredSuffix = '=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax;';
+      document.cookie = `better-auth.session_token${expiredSuffix}`;
+      document.cookie = `__Secure-better-auth.session_token${expiredSuffix}`;
+      document.cookie = `better-auth.session_data${expiredSuffix}`;
+      document.cookie = `asterra_customer_session${expiredSuffix}`;
     } catch {}
   }
 
-  // 5. Invalidate and clear all TanStack Query cache entries
+  // 2. Invalidate and clear all TanStack Query cache entries
   if (options?.queryClient) {
     try {
       options.queryClient.clear();
@@ -53,12 +51,22 @@ export async function performCustomerLogout(options?: CustomerLogoutOptions): Pr
     } catch {}
   }
 
-  // 6. Provide feedback notice
+  // 3. Fast non-blocking server session termination (capped at 350ms to prevent database lag delay)
+  try {
+    await Promise.race([
+      signOut(),
+      new Promise((resolve) => setTimeout(resolve, 350)),
+    ]);
+  } catch (err) {
+    console.warn('[AuthLogout] Better Auth signOut note (local cleanup succeeded):', err);
+  }
+
+  // 4. Provide feedback notice
   if (options?.onNotice) {
     options.onNotice('Anda telah berhasil keluar dari akun.');
   }
 
-  // 7. Deterministic safe navigation
+  // 5. Deterministic instantaneous navigation
   if (typeof window !== 'undefined') {
     const path = options?.currentPath || window.location.pathname;
     const isRestrictedPath =
@@ -66,13 +74,7 @@ export async function performCustomerLogout(options?: CustomerLogoutOptions): Pr
       path.startsWith('/orders') ||
       path.startsWith('/checkout');
 
-    if (options?.redirectTo) {
-      window.location.href = options.redirectTo;
-    } else if (isRestrictedPath) {
-      window.location.href = '/login?logged_out=1';
-    } else {
-      // Reload current page to flush all React and server-cached state
-      window.location.reload();
-    }
+    const destination = options?.redirectTo || (isRestrictedPath ? '/login?logged_out=1' : '/');
+    window.location.replace(destination);
   }
 }

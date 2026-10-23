@@ -153,8 +153,13 @@ class CatalogService:
         return []
 
     @classmethod
-    def get_products(cls, category: Optional[str] = None, search: Optional[str] = None) -> List[Dict[str, Any]]:
-        products = cls.load_products()
+    def get_products(
+        cls,
+        category: Optional[str] = None,
+        search: Optional[str] = None,
+        force_reload: bool = False,
+    ) -> List[Dict[str, Any]]:
+        products = cls.load_products(force_reload=force_reload)
         # Public storefront only shows active products
         filtered = [p for p in products if p.get("status", "active") == "active"]
 
