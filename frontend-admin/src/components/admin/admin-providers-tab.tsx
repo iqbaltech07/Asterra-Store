@@ -6,6 +6,7 @@ import {
   RefreshCw,
   Key,
   Activity,
+  CheckCircle2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -119,20 +120,21 @@ export function AdminProvidersTab({ metrics, onNotify, onSyncVip }: AdminProvide
   return (
     <div className="space-y-6">
       {/* 1. Header */}
-      <div className="bg-surface border border-border rounded-xl p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-surface border border-border rounded-2xl p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider bg-primary/15 text-primary border border-primary/25">
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-primary/10 text-primary border border-primary/20">
               API Operations Hub
             </span>
-            <span className="text-[11px] text-status-success font-semibold">
-              Semua Endpoint Upstream Sehat (Healthy)
+            <span className="text-xs text-emerald-600 font-semibold flex items-center gap-1 font-mono">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              Semua Endpoint Upstream Sehat
             </span>
           </div>
-          <h2 className="text-lg font-bold text-foreground tracking-tight">
+          <h2 className="text-xl font-bold text-foreground tracking-tight">
             Manajemen Provider & Supplier Gateway
           </h2>
-          <p className="text-xs text-foreground-muted mt-0.5">
+          <p className="text-xs text-foreground-muted mt-1">
             Monitoring konektivitas API pihak ketiga, deposit saldo pemesanan otomatis, success rate transaksi, dan konfigurasi API keys.
           </p>
         </div>
@@ -141,7 +143,7 @@ export function AdminProvidersTab({ metrics, onNotify, onSyncVip }: AdminProvide
           <Button
             size="sm"
             onClick={onSyncVip}
-            className="text-xs gap-1.5 shadow-xs"
+            className="text-xs gap-1.5 shadow-xs rounded-xl h-9 font-semibold"
           >
             <RefreshCw className="w-3.5 h-3.5" />
             <span>Sinkronkan Katalog VIP</span>
@@ -159,21 +161,21 @@ export function AdminProvidersTab({ metrics, onNotify, onSyncVip }: AdminProvide
           return (
             <div
               key={p.id}
-              className={`bg-surface border rounded-xl p-5 shadow-xs space-y-4 transition-all ${
+              className={`bg-surface border rounded-2xl p-6 shadow-xs space-y-4 transition-all ${
                 isConnected ? 'border-border' : 'border-border/60 opacity-80'
               }`}
             >
               {/* Header */}
               <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0">
-                    <Server className="w-4 h-4" />
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-foreground/5 border border-border flex items-center justify-center text-foreground shrink-0">
+                    <Server className="w-5 h-5" />
                   </div>
                   <div>
                     <h3 className="font-bold text-sm text-foreground flex items-center gap-1.5">
                       <span>{p.name}</span>
                     </h3>
-                    <span className="text-[11px] text-foreground-muted font-mono">{p.type}</span>
+                    <span className="text-xs text-foreground-muted font-mono">{p.type}</span>
                   </div>
                 </div>
 
@@ -181,8 +183,8 @@ export function AdminProvidersTab({ metrics, onNotify, onSyncVip }: AdminProvide
                   variant="outline"
                   className={`text-[10px] font-semibold ${
                     isConnected
-                      ? 'bg-status-success/15 text-status-success border-status-success/30'
-                      : 'bg-status-warning/15 text-status-warning border-status-warning/30'
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200/60'
+                      : 'bg-amber-50 text-amber-700 border-amber-200/60'
                   }`}
                 >
                   ● {isConnected ? (isVip ? `Terhubung (${metrics?.vipUsername || 'Live'})` : 'Sehat (100%)') : 'Belum Terhubung'}
@@ -190,47 +192,47 @@ export function AdminProvidersTab({ metrics, onNotify, onSyncVip }: AdminProvide
               </div>
 
               {/* Endpoint & Metrics Grid */}
-              <div className="p-3 bg-surface-raised rounded-lg border border-border space-y-2 text-xs">
+              <div className="p-4 bg-surface-raised rounded-xl border border-border space-y-2.5 text-xs">
                 <div className="flex items-center justify-between">
-                  <span className="text-foreground-muted">API Endpoint:</span>
-                  <span className="font-mono text-[11px] text-foreground font-medium truncate max-w-[200px]">
+                  <span className="text-foreground-muted font-medium">API Endpoint:</span>
+                  <span className="font-mono text-xs text-foreground font-semibold truncate max-w-[240px]">
                     {p.endpoint}
                   </span>
                 </div>
 
-                <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border/80 text-center">
+                <div className="grid grid-cols-3 gap-2 pt-2.5 border-t border-border text-center">
                   <div>
-                    <span className="text-[10px] text-foreground-muted block">Latensi Respons</span>
-                    <span className="font-mono font-bold text-xs text-status-success">{p.latencyMs} ms</span>
+                    <span className="text-[10px] text-foreground-muted block font-medium">Latensi Respons</span>
+                    <span className="font-mono font-bold text-xs text-emerald-600">{p.latencyMs} ms</span>
                   </div>
                   <div>
-                    <span className="text-[10px] text-foreground-muted block">Success Rate</span>
+                    <span className="text-[10px] text-foreground-muted block font-medium">Success Rate</span>
                     <span className="font-mono font-bold text-xs text-foreground">{p.successRate}%</span>
                   </div>
                   <div>
-                    <span className="text-[10px] text-foreground-muted block">Produk Terkait</span>
+                    <span className="text-[10px] text-foreground-muted block font-medium">Produk Terkait</span>
                     <span className="font-mono font-bold text-xs text-primary">{p.totalProducts}</span>
                   </div>
                 </div>
               </div>
 
               {/* Balance Box */}
-              <div className="flex items-center justify-between p-3 rounded-lg border border-primary/25 bg-primary/5">
+              <div className="flex items-center justify-between p-4 rounded-xl border border-border bg-surface-raised">
                 <div>
                   <span className="text-[10px] text-foreground-muted block uppercase tracking-wider font-semibold">
                     Deposit Saldo Supplier
                   </span>
-                  <div className="text-lg font-bold text-primary font-mono">
+                  <div className="text-xl font-extrabold text-foreground font-mono">
                     Rp {balance.toLocaleString('id-ID')}
                   </div>
                 </div>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-2">
                   <Button
                     size="sm"
                     variant="outline"
                     onClick={() => handleTestConnection(p.id)}
                     disabled={testingId === p.id}
-                    className="text-xs h-8 border-border"
+                    className="text-xs h-9 border-border rounded-xl font-semibold"
                   >
                     <Activity className={`w-3.5 h-3.5 mr-1 text-primary ${testingId === p.id ? 'animate-spin' : ''}`} />
                     <span>{testingId === p.id ? 'Memeriksa...' : 'Tes Ping'}</span>
@@ -242,7 +244,7 @@ export function AdminProvidersTab({ metrics, onNotify, onSyncVip }: AdminProvide
                       setSelectedProvider(p);
                       setIsCredentialModalOpen(true);
                     }}
-                    className="text-xs h-8 border-border"
+                    className="text-xs h-9 border-border rounded-xl font-semibold"
                   >
                     <Key className="w-3.5 h-3.5 mr-1" />
                     <span>Kredensial</span>
@@ -252,14 +254,14 @@ export function AdminProvidersTab({ metrics, onNotify, onSyncVip }: AdminProvide
 
               {/* Status Switcher & Last Sync */}
               <div className="pt-2 border-t border-border flex items-center justify-between text-xs">
-                <span className="text-foreground-muted text-[11px]">
+                <span className="text-foreground-muted text-xs font-mono">
                   Terakhir sinkron: {p.lastSync}
                 </span>
                 <button
                   type="button"
                   onClick={() => toggleProvider(p.id)}
                   className={`text-xs font-semibold hover:underline ${
-                    p.status === 'active' ? 'text-status-error' : 'text-status-success'
+                    p.status === 'active' ? 'text-rose-600' : 'text-emerald-600'
                   }`}
                 >
                   {p.status === 'active' ? 'Nonaktifkan Provider' : 'Aktifkan Provider'}
@@ -272,19 +274,19 @@ export function AdminProvidersTab({ metrics, onNotify, onSyncVip }: AdminProvide
 
       {/* 3. Modal Konfigurasi Kredensial API */}
       {isCredentialModalOpen && selectedProvider && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-surface border border-border rounded-xl w-full max-w-md shadow-2xl p-5 space-y-4 text-xs">
-            <div className="flex items-center justify-between border-b border-border pb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-surface border border-border rounded-2xl w-full max-w-md shadow-2xl p-6 space-y-4 text-xs">
+            <div className="flex items-center justify-between border-b border-border pb-3.5">
               <div>
                 <h3 className="font-bold text-sm text-foreground">Konfigurasi API {selectedProvider.name}</h3>
-                <p className="text-[11px] text-foreground-muted">
+                <p className="text-[11px] text-foreground-muted mt-0.5">
                   Kredensial API disimpan secara aman di environment server internal.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsCredentialModalOpen(false)}
-                className="text-foreground-muted hover:text-foreground p-1"
+                className="text-foreground-muted hover:text-foreground p-1 rounded-lg"
               >
                 ✕
               </button>
@@ -296,14 +298,14 @@ export function AdminProvidersTab({ metrics, onNotify, onSyncVip }: AdminProvide
                 setIsCredentialModalOpen(false);
                 onNotify?.(`Kredensial API untuk ${selectedProvider.name} berhasil diperbarui.`);
               }}
-              className="space-y-3"
+              className="space-y-3.5"
             >
               <div>
                 <label className="font-semibold text-foreground block mb-1">API ID / Account ID</label>
                 <Input
                   value={apiId}
                   onChange={(e) => setApiId(e.target.value)}
-                  className="bg-surface-raised border-border text-xs font-mono"
+                  className="bg-surface-raised border-border text-xs font-mono rounded-xl h-10"
                 />
               </div>
 
@@ -313,11 +315,11 @@ export function AdminProvidersTab({ metrics, onNotify, onSyncVip }: AdminProvide
                   type="password"
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
-                  className="bg-surface-raised border-border text-xs font-mono"
+                  className="bg-surface-raised border-border text-xs font-mono rounded-xl h-10"
                 />
               </div>
 
-              <div className="p-3 bg-surface-raised rounded-lg border border-border space-y-1">
+              <div className="p-3.5 bg-surface-raised rounded-xl border border-border space-y-1">
                 <span className="font-semibold text-foreground block text-[11px]">IP Whitelist Gateway Server</span>
                 <span className="font-mono text-primary text-[11px] block font-bold">192.168.1.17 / Server Production Asterra</span>
                 <span className="text-[10px] text-foreground-muted">Pastikan IP ini terdaftar di dashboard supplier agar request tidak diblokir.</span>
@@ -329,10 +331,11 @@ export function AdminProvidersTab({ metrics, onNotify, onSyncVip }: AdminProvide
                   variant="outline"
                   size="sm"
                   onClick={() => setIsCredentialModalOpen(false)}
+                  className="rounded-xl h-9 text-xs"
                 >
                   Batal
                 </Button>
-                <Button type="submit" size="sm">
+                <Button type="submit" size="sm" className="rounded-xl h-9 text-xs font-semibold">
                   Simpan Kredensial
                 </Button>
               </div>

@@ -22,6 +22,8 @@ import {
   Send,
   Users,
   Flame,
+  Sparkles,
+  Link as LinkIcon,
 } from 'lucide-react';
 import { useGsapReveal } from '@/lib/animations/use-gsap-reveal';
 import { useCountUp } from '@/lib/hooks/use-count-up';
@@ -93,20 +95,21 @@ export function SalesOverviewTab({
   return (
     <div ref={containerRef} className="space-y-6">
       {/* Welcome & Referral Banner */}
-      <div className="animate-fade-up rounded-xl border border-border bg-surface p-6 shadow-xs relative overflow-hidden">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
-          <div className="space-y-2 max-w-xl">
+      <div className="animate-fade-up rounded-2xl border border-border bg-surface p-6 shadow-xs relative overflow-hidden">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+          <div className="space-y-2.5 max-w-xl">
             <div
               className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold border ${
                 partner?.status === 'active'
-                  ? 'bg-status-success/15 border-status-success/30 text-status-success'
+                  ? 'bg-emerald-50 border-emerald-200/80 text-[#16A36A]'
                   : partner?.status === 'suspended'
-                  ? 'bg-status-error/15 border-status-error/30 text-status-error'
+                  ? 'bg-rose-50 border-rose-200/80 text-[#EF4444]'
                   : partner?.status === 'pending'
-                  ? 'bg-amber-500/15 border-amber-500/30 text-amber-500'
-                  : 'bg-muted border-border text-foreground-muted'
+                  ? 'bg-amber-50 border-amber-200/80 text-[#D97706]'
+                  : 'bg-gray-100 border-border text-foreground-muted'
               }`}
             >
+              <span className="w-2 h-2 rounded-full bg-current" />
               <span>
                 Status Akun:{' '}
                 {partner?.status === 'active'
@@ -118,20 +121,23 @@ export function SalesOverviewTab({
                   : 'Non-Aktif'}
               </span>
             </div>
-            <h2 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">
+            <h2 className="text-xl sm:text-2xl font-extrabold text-foreground tracking-tight">
               Halo, {partner?.name || userName}!
             </h2>
             <p className="text-xs sm:text-sm text-foreground-muted leading-relaxed">
               Bagikan link referral Anda untuk mendapatkan bagi hasil komisi{' '}
-              <strong className="text-foreground">{partnerRate}% dari Profit Transaksi</strong> bersih (naik ke 15% setelah 50 transaksi).
+              <strong className="text-foreground font-semibold">{partnerRate}% dari Profit Transaksi</strong> bersih (otomatis naik ke 15% setelah 50 transaksi tercapai).
             </p>
           </div>
 
           {/* Referral Link Box */}
-          <div className="bg-surface-raised border border-border p-4 rounded-xl space-y-3 min-w-[320px]">
+          <div className="bg-[#F8F9FB] border border-border p-4 sm:p-5 rounded-2xl space-y-3 min-w-[320px] lg:max-w-md w-full">
             <div className="flex items-center justify-between text-xs">
-              <span className="text-foreground-muted font-medium">Link Referral Anda:</span>
-              <Badge variant="outline" className="font-mono text-[10px] uppercase font-bold text-primary border-primary/30">
+              <span className="text-foreground-muted font-medium flex items-center gap-1.5">
+                <LinkIcon className="w-3.5 h-3.5 text-[#2563EB]" />
+                <span>Link Referral Anda</span>
+              </span>
+              <Badge variant="primary" className="font-mono text-[10px] uppercase font-bold">
                 {partnerCode}
               </Badge>
             </div>
@@ -139,16 +145,16 @@ export function SalesOverviewTab({
               <Input
                 readOnly
                 value={referralUrl}
-                className="bg-surface border-border text-xs font-mono h-9 select-all"
+                className="bg-white border-border text-xs font-mono h-9 select-all"
               />
               <Button
                 size="sm"
                 onClick={() => handleCopy(referralUrl, 'ref-banner')}
-                className="h-9 px-3 gap-1.5 shrink-0 text-xs font-semibold"
+                className="h-9 px-3.5 gap-1.5 shrink-0 text-xs font-semibold"
               >
                 {copiedLink === 'ref-banner' ? (
                   <>
-                    <Check className="w-3.5 h-3.5 text-status-success" />
+                    <Check className="w-3.5 h-3.5 text-[#16A36A]" />
                     <span>Tersalin</span>
                   </>
                 ) : (
@@ -166,7 +172,7 @@ export function SalesOverviewTab({
               )}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full inline-flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-status-success hover:bg-status-success/90 text-white font-semibold text-xs transition-colors"
+              className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-[#16A36A] hover:bg-[#15803D] text-white font-semibold text-xs shadow-xs transition-colors"
             >
               <Send className="w-3.5 h-3.5" />
               <span>Bagikan ke Status WhatsApp</span>
@@ -177,14 +183,14 @@ export function SalesOverviewTab({
 
       {/* Active Campaign Booster Teaser Banner */}
       {campaigns && campaigns.length > 0 && (
-        <div className="animate-fade-up stagger-1 rounded-xl border border-primary/30 bg-primary/10 p-4 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary/20 border border-primary/30 flex items-center justify-center shrink-0 text-primary">
-              <Flame className="w-5 h-5 text-primary" />
+        <div className="animate-fade-up stagger-1 rounded-2xl border border-blue-200/80 bg-blue-50/60 p-4 sm:p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-start gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-blue-100 text-[#2563EB] flex items-center justify-center shrink-0">
+              <Flame className="w-5 h-5" />
             </div>
             <div>
-              <div className="flex items-center gap-2 mb-0.5">
-                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-primary text-primary-foreground">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[10px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-full bg-[#2563EB] text-white">
                   🔥 Flash Sale & Event Aktif
                 </span>
                 <span className="text-xs text-foreground-muted font-medium">
@@ -195,7 +201,7 @@ export function SalesOverviewTab({
                 {campaigns[0].name} — Diskon Pembeli & Bonus Komisi Mitra
               </h4>
               <p className="text-xs text-foreground-muted mt-0.5">
-                Promosikan event resmi ini untuk mendapatkan komisi lebih tinggi ({campaigns[0].boosterCommissionRate}% vs {partnerRate}% normal). Link siap pakai tersedia!
+                Promosikan event resmi ini untuk mendapatkan komisi lebih tinggi ({campaigns[0].boosterCommissionRate}% vs {partnerRate}% normal).
               </p>
             </div>
           </div>
@@ -203,7 +209,7 @@ export function SalesOverviewTab({
             <Button
               size="sm"
               onClick={() => onTabChange('sales-links')}
-              className="shrink-0 text-xs font-semibold gap-1.5 shadow-xs"
+              className="shrink-0 text-xs font-semibold gap-1.5 shadow-xs rounded-xl"
             >
               <span>Lihat Campaign & Salin Link</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -216,17 +222,14 @@ export function SalesOverviewTab({
       {isProfileLoading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-3 animate-pulse">
+            <div key={i} className="bg-surface border border-border rounded-2xl p-5 shadow-xs space-y-3 animate-pulse">
               <div className="flex items-center justify-between">
-                <div className="h-3.5 w-32 bg-foreground/10 rounded" />
-                <div className="w-8 h-8 rounded-lg bg-foreground/10" />
+                <div className="h-3.5 w-32 bg-gray-200 rounded" />
+                <div className="w-8 h-8 rounded-lg bg-gray-200" />
               </div>
-              <div className="h-8 w-36 bg-foreground/15 rounded" />
+              <div className="h-8 w-36 bg-gray-200 rounded" />
               <div className="pt-2 border-t border-border/60 space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="h-3 w-28 bg-foreground/10 rounded" />
-                  <div className="h-3 w-16 bg-foreground/10 rounded" />
-                </div>
+                <div className="h-3 w-28 bg-gray-200 rounded" />
               </div>
             </div>
           ))}
@@ -234,27 +237,27 @@ export function SalesOverviewTab({
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Card 1: Saldo Komisi Siap Tarik */}
-          <div className="animate-fade-up stagger-1 motion-card-interactive bg-surface border border-border rounded-xl p-5 shadow-xs space-y-3">
+          <div className="bg-surface border border-border rounded-2xl p-5 shadow-xs space-y-3 hover:border-[#171717]/30 hover:shadow-card-hover transition-all flex flex-col justify-between">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-foreground-muted">Saldo Siap Tarik</span>
-              <div className="w-8 h-8 rounded-lg bg-status-success/10 text-status-success flex items-center justify-center">
+              <span className="text-xs font-semibold text-foreground-muted tracking-wide">Saldo Siap Tarik</span>
+              <div className="w-8 h-8 rounded-xl bg-emerald-50 text-[#16A36A] flex items-center justify-center border border-emerald-200/60">
                 <Wallet className="w-4 h-4" />
               </div>
             </div>
-            <div className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight font-variant-numeric tabular-nums">
+            <div className="text-2xl sm:text-3xl font-extrabold text-[#16A36A] tracking-tight tabular-nums font-mono">
               <AnimatedNumber
                 value={unpaidCommissionVal}
                 formatter={(v) => `Rp ${Math.round(v).toLocaleString('id-ID')}`}
                 showDelta
               />
             </div>
-            <div className="pt-2 border-t border-border space-y-1 text-xs">
+            <div className="pt-3 border-t border-border space-y-1.5 text-xs">
               <div className="flex items-center justify-between text-foreground-muted">
                 <span className="flex items-center gap-1">
-                  <Clock className="w-3 h-3 text-status-warning" />
+                  <Clock className="w-3 h-3 text-[#D97706]" />
                   <span>Tertahan Garansi 3 Hari:</span>
                 </span>
-                <span className="font-semibold text-foreground font-variant-numeric tabular-nums">
+                <span className="font-semibold text-foreground font-mono">
                   <AnimatedNumber
                     value={partner?.pendingCommission || 0}
                     formatter={(v) => `Rp ${Math.round(v).toLocaleString('id-ID')}`}
@@ -263,10 +266,10 @@ export function SalesOverviewTab({
               </div>
               <div className="flex items-center justify-between text-foreground-muted">
                 <span className="flex items-center gap-1">
-                  <CheckCircle2 className="w-3 h-3 text-status-success" />
+                  <CheckCircle2 className="w-3 h-3 text-[#16A36A]" />
                   <span>Total Telah Ditarik:</span>
                 </span>
-                <span className="font-semibold text-foreground font-variant-numeric tabular-nums">
+                <span className="font-semibold text-foreground font-mono">
                   <AnimatedNumber
                     value={partner?.paidCommission || 0}
                     formatter={(v) => `Rp ${Math.round(v).toLocaleString('id-ID')}`}
@@ -277,27 +280,27 @@ export function SalesOverviewTab({
           </div>
 
           {/* Card 2: Pesanan Referral */}
-          <div className="animate-fade-up stagger-2 motion-card-interactive bg-surface border border-border rounded-xl p-5 shadow-xs space-y-3">
+          <div className="bg-surface border border-border rounded-2xl p-5 shadow-xs space-y-3 hover:border-[#171717]/30 hover:shadow-card-hover transition-all flex flex-col justify-between">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-foreground-muted">Pesanan Referral</span>
-              <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+              <span className="text-xs font-semibold text-foreground-muted tracking-wide">Pesanan Referral</span>
+              <div className="w-8 h-8 rounded-xl bg-blue-50 text-[#2563EB] flex items-center justify-center border border-blue-200/60">
                 <ShoppingBag className="w-4 h-4" />
               </div>
             </div>
-            <div className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight font-variant-numeric tabular-nums">
+            <div className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight tabular-nums font-mono">
               <AnimatedNumber value={totalOrdersVal} showDelta />
               <span className="text-sm font-normal text-foreground-muted ml-1">transaksi</span>
             </div>
-            <div className="pt-2 border-t border-border space-y-1 text-xs">
+            <div className="pt-3 border-t border-border space-y-1.5 text-xs">
               <div className="flex items-center justify-between text-foreground-muted">
-                <span>Omset Penjualan Bersih:</span>
-                <span className="font-semibold text-foreground font-variant-numeric tabular-nums">
+                <span>Omzet Penjualan:</span>
+                <span className="font-semibold text-foreground font-mono">
                   Rp {(partner?.totalSalesAmount || 0).toLocaleString('id-ID')}
                 </span>
               </div>
               <div className="flex items-center justify-between text-foreground-muted">
                 <span>Total Komisi Didapat:</span>
-                <span className="font-semibold text-status-success font-variant-numeric tabular-nums">
+                <span className="font-semibold text-[#16A36A] font-mono">
                   Rp {(partner?.totalCommission || 0).toLocaleString('id-ID')}
                 </span>
               </div>
@@ -305,38 +308,38 @@ export function SalesOverviewTab({
           </div>
 
           {/* Card 3: Traffic & Klik Referral */}
-          <div className="animate-fade-up stagger-3 motion-card-interactive bg-surface border border-border rounded-xl p-5 shadow-xs space-y-3">
+          <div className="bg-surface border border-border rounded-2xl p-5 shadow-xs space-y-3 hover:border-[#171717]/30 hover:shadow-card-hover transition-all flex flex-col justify-between">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-foreground-muted">Traffic & Klik Link</span>
-              <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center">
+              <span className="text-xs font-semibold text-foreground-muted tracking-wide">Traffic & Klik Link</span>
+              <div className="w-8 h-8 rounded-xl bg-purple-50 text-[#8B5CF6] flex items-center justify-center border border-purple-200/60">
                 <TrendingUp className="w-4 h-4" />
               </div>
             </div>
-            <div className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight font-variant-numeric tabular-nums">
+            <div className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight tabular-nums font-mono">
               <AnimatedNumber value={totalClicksVal} showDelta />
               <span className="text-sm font-normal text-foreground-muted ml-1">klik</span>
             </div>
-            <div className="pt-2 border-t border-border space-y-1 text-xs">
+            <div className="pt-3 border-t border-border space-y-1.5 text-xs">
               <div className="flex items-center justify-between text-foreground-muted">
                 <span>Conversion Rate:</span>
                 <span className="font-semibold text-foreground font-mono">{conversionRate}</span>
               </div>
               <div className="flex items-center justify-between text-foreground-muted">
                 <span>Masa Aktif Cookie:</span>
-                <span className="font-semibold text-primary">30 Hari Penuh</span>
+                <span className="font-semibold text-[#2563EB]">30 Hari Penuh</span>
               </div>
             </div>
           </div>
 
           {/* Card 4: Tingkat Kemitraan */}
-          <div className="animate-fade-up stagger-4 motion-card-interactive bg-surface border border-border rounded-xl p-5 shadow-xs space-y-3">
+          <div className="bg-surface border border-border rounded-2xl p-5 shadow-xs space-y-3 hover:border-[#171717]/30 hover:shadow-card-hover transition-all flex flex-col justify-between">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-foreground-muted">Tingkat Kemitraan</span>
-              <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center">
+              <span className="text-xs font-semibold text-foreground-muted tracking-wide">Tingkat Kemitraan</span>
+              <div className="w-8 h-8 rounded-xl bg-amber-50 text-[#D97706] flex items-center justify-center border border-amber-200/60">
                 <Award className="w-4 h-4" />
               </div>
             </div>
-            <div className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight font-variant-numeric tabular-nums">
+            <div className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight tabular-nums font-mono">
               <AnimatedNumber value={partnerRate} formatter={(v) => `${Math.round(v)}%`} showDelta />
               <span className="text-sm font-normal text-foreground-muted ml-1">Profit Bersih</span>
             </div>
@@ -344,7 +347,7 @@ export function SalesOverviewTab({
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-foreground-muted">
                   <span>Target Tier Berikutnya:</span>
-                  <span className="font-semibold text-foreground font-variant-numeric tabular-nums">
+                  <span className="font-semibold text-foreground font-mono">
                     {partner?.tierProgress
                       ? `${partner.tierProgress.currentOrders}/${partner.tierProgress.targetOrders} Order`
                       : '50 Transaksi'}
@@ -362,7 +365,7 @@ export function SalesOverviewTab({
               </div>
               <div className="flex items-center justify-between text-foreground-muted pt-0.5">
                 <span>Bonus Tier Berikutnya:</span>
-                <span className="font-semibold text-amber-500">Naik ke 15%</span>
+                <span className="font-semibold text-[#D97706]">Naik ke 15%</span>
               </div>
             </div>
           </div>
@@ -370,23 +373,23 @@ export function SalesOverviewTab({
       )}
 
       {/* Downline Bonus Quick Banner */}
-      <div className="animate-fade-up stagger-5 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-primary/20 rounded-xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-start sm:items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-primary/20 text-primary flex items-center justify-center shrink-0">
+      <div className="bg-surface border border-border rounded-2xl p-5 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xs">
+        <div className="flex items-start sm:items-center gap-3.5">
+          <div className="w-10 h-10 rounded-xl bg-purple-50 text-[#8B5CF6] border border-purple-200/60 flex items-center justify-center shrink-0">
             <Percent className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <Badge variant="outline" className="text-[10px] uppercase font-bold text-primary border-primary/30">
-                Fitur Baru: 1-Level Referral
+              <Badge variant="purple" className="text-[10px] uppercase font-bold">
+                Fitur Resmi: 1-Level Referral
               </Badge>
               <span className="text-xs text-foreground-muted font-medium">Bukan Multi-Level</span>
             </div>
             <h4 className="text-sm font-bold text-foreground">
               Ajak Teman Jadi Mitra Sales & Dapatkan Bonus 2% Profit!
             </h4>
-            <p className="text-xs text-foreground-muted">
-              Dapatkan bonus 2% dari Profit Transaksi teman langsung Anda tanpa memotong komisi penjualan mereka (teman tetap menerima 10% utuh). Dilengkapi masa garansi 3 hari (bukan MLM).
+            <p className="text-xs text-foreground-muted mt-0.5 max-w-2xl">
+              Dapatkan bonus 2% dari Profit Transaksi teman langsung Anda tanpa memotong komisi penjualan mereka (teman tetap menerima 10% utuh).
             </p>
           </div>
         </div>
@@ -395,11 +398,11 @@ export function SalesOverviewTab({
             size="sm"
             variant="outline"
             onClick={() => handleCopy(inviteSalesUrl, 'ref-banner-quick')}
-            className="text-xs gap-1.5 h-8"
+            className="text-xs gap-1.5 h-8 font-medium"
           >
             {copiedLink === 'ref-banner-quick' ? (
               <>
-                <Check className="w-3.5 h-3.5 text-status-success" />
+                <Check className="w-3.5 h-3.5 text-[#16A36A]" />
                 <span>Link Tersalin</span>
               </>
             ) : (
@@ -413,7 +416,7 @@ export function SalesOverviewTab({
             <Button
               size="sm"
               onClick={() => onTabChange('sales-network')}
-              className="text-xs gap-1.5 h-8 bg-primary hover:bg-primary/90 text-white font-semibold"
+              className="text-xs gap-1.5 h-8 font-semibold"
             >
               <span>Lihat Bonus Tim</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -427,71 +430,79 @@ export function SalesOverviewTab({
         <div className="animate-fade-up stagger-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div
             onClick={() => onTabChange('sales-catalog')}
-            className="bg-surface border border-border rounded-xl p-5 shadow-xs hover:border-primary/50 transition-all cursor-pointer group space-y-2"
+            className="bg-surface border border-border rounded-2xl p-5 shadow-xs hover:border-[#171717]/30 hover:shadow-card-hover transition-all cursor-pointer group space-y-2.5 flex flex-col justify-between"
           >
             <div className="flex items-center justify-between">
-              <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center group-hover:scale-105 transition-transform">
+              <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#2563EB] flex items-center justify-center group-hover:scale-105 transition-transform border border-blue-200/60">
                 <Package className="w-4 h-4" />
               </div>
               <ChevronRight className="w-4 h-4 text-foreground-muted group-hover:translate-x-1 transition-transform" />
             </div>
-            <h3 className="font-bold text-sm text-foreground">Katalog Produk & Komisi</h3>
-            <p className="text-xs text-foreground-muted">
-              Jelajahi produk digital Asterra, hitung komisi Anda, dan salin link promosi per produk.
-            </p>
+            <div>
+              <h3 className="font-bold text-sm text-foreground">Katalog Produk & Komisi</h3>
+              <p className="text-xs text-foreground-muted mt-1 leading-relaxed">
+                Jelajahi produk digital Asterra, hitung komisi Anda, dan salin link promosi per produk.
+              </p>
+            </div>
           </div>
 
           <div
             onClick={() => onTabChange('sales-links')}
-            className="bg-surface border border-border rounded-xl p-5 shadow-xs hover:border-primary/50 transition-all cursor-pointer group space-y-2"
+            className="bg-surface border border-border rounded-2xl p-5 shadow-xs hover:border-[#171717]/30 hover:shadow-card-hover transition-all cursor-pointer group space-y-2.5 flex flex-col justify-between"
           >
             <div className="flex items-center justify-between">
-              <div className="w-9 h-9 rounded-lg bg-status-success/10 text-status-success flex items-center justify-center group-hover:scale-105 transition-transform">
+              <div className="w-9 h-9 rounded-xl bg-emerald-50 text-[#16A36A] flex items-center justify-center group-hover:scale-105 transition-transform border border-emerald-200/60">
                 <Share2 className="w-4 h-4" />
               </div>
               <ChevronRight className="w-4 h-4 text-foreground-muted group-hover:translate-x-1 transition-transform" />
             </div>
-            <h3 className="font-bold text-sm text-foreground">Generator Link & Teks Promo</h3>
-            <p className="text-xs text-foreground-muted">
-              Buat custom link kampanye dan gunakan template copywriting yang siap dibagikan ke medsos.
-            </p>
+            <div>
+              <h3 className="font-bold text-sm text-foreground">Generator Link & Materi</h3>
+              <p className="text-xs text-foreground-muted mt-1 leading-relaxed">
+                Buat custom link kampanye dan gunakan template copywriting yang siap dibagikan ke medsos.
+              </p>
+            </div>
           </div>
 
           <div
             onClick={() => onTabChange('sales-network')}
-            className="bg-surface border border-border rounded-xl p-5 shadow-xs hover:border-primary/50 transition-all cursor-pointer group space-y-2"
+            className="bg-surface border border-border rounded-2xl p-5 shadow-xs hover:border-[#171717]/30 hover:shadow-card-hover transition-all cursor-pointer group space-y-2.5 flex flex-col justify-between"
           >
             <div className="flex items-center justify-between">
-              <div className="w-9 h-9 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center group-hover:scale-105 transition-transform">
+              <div className="w-9 h-9 rounded-xl bg-amber-50 text-[#D97706] flex items-center justify-center group-hover:scale-105 transition-transform border border-amber-200/60">
                 <Users className="w-4 h-4" />
               </div>
               <ChevronRight className="w-4 h-4 text-foreground-muted group-hover:translate-x-1 transition-transform" />
             </div>
-            <div className="flex items-center justify-between">
-              <h3 className="font-bold text-sm text-foreground">Bonus Tim & Teman</h3>
-              <Badge variant="outline" className="text-[10px] font-semibold text-status-success border-status-success/30">
-                {networkData?.summary?.totalDownlines || 0} Teman
-              </Badge>
+            <div>
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-sm text-foreground">Bonus Tim & Teman</h3>
+                <Badge variant="success" className="text-[10px]">
+                  {networkData?.summary?.totalDownlines || 0} Teman
+                </Badge>
+              </div>
+              <p className="text-xs text-foreground-muted mt-1 leading-relaxed">
+                Pantau teman yang diajak & bonus pasif 2% dari setiap transaksi yang mereka hasilkan.
+              </p>
             </div>
-            <p className="text-xs text-foreground-muted">
-              Pantau teman yang diajak & bonus pasif 2% dari setiap transaksi yang mereka hasilkan.
-            </p>
           </div>
 
           <div
             onClick={() => onTabChange('sales-wallet')}
-            className="bg-surface border border-border rounded-xl p-5 shadow-xs hover:border-primary/50 transition-all cursor-pointer group space-y-2"
+            className="bg-surface border border-border rounded-2xl p-5 shadow-xs hover:border-[#171717]/30 hover:shadow-card-hover transition-all cursor-pointer group space-y-2.5 flex flex-col justify-between"
           >
             <div className="flex items-center justify-between">
-              <div className="w-9 h-9 rounded-lg bg-purple-500/10 text-purple-500 flex items-center justify-center group-hover:scale-105 transition-transform">
+              <div className="w-9 h-9 rounded-xl bg-purple-50 text-[#8B5CF6] flex items-center justify-center group-hover:scale-105 transition-transform border border-purple-200/60">
                 <Wallet className="w-4 h-4" />
               </div>
               <ChevronRight className="w-4 h-4 text-foreground-muted group-hover:translate-x-1 transition-transform" />
             </div>
-            <h3 className="font-bold text-sm text-foreground">Dompet & Penarikan Dana</h3>
-            <p className="text-xs text-foreground-muted">
-              Cairkan komisi Anda langsung ke rekening bank atau e-wallet tanpa biaya admin tersembunyi.
-            </p>
+            <div>
+              <h3 className="font-bold text-sm text-foreground">Dompet & Pencairan Dana</h3>
+              <p className="text-xs text-foreground-muted mt-1 leading-relaxed">
+                Cairkan komisi Anda langsung ke rekening bank atau e-wallet tanpa biaya admin tersembunyi.
+              </p>
+            </div>
           </div>
         </div>
       )}

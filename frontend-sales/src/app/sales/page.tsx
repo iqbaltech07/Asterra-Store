@@ -133,25 +133,25 @@ export default function SalesPortalPage() {
       {/* Main Content Pane */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Sticky Top Header Bar */}
-        <header className="sticky top-0 z-40 bg-surface/90 backdrop-blur-md border-b border-border px-4 sm:px-8 py-3 flex items-center justify-between shadow-xs">
+        <header className="sticky top-0 z-40 bg-white/85 backdrop-blur-md border-b border-border px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-2xs">
           <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={() => setIsSidebarMobileOpen(true)}
-              className="lg:hidden p-2 rounded-lg text-foreground-muted hover:text-foreground hover:bg-surface-raised border border-border transition-colors"
+              className="lg:hidden p-2 rounded-xl text-foreground-muted hover:text-foreground hover:bg-surface-secondary border border-border transition-colors"
               aria-label="Buka Menu Sidebar"
             >
               <FontAwesomeIcon icon={faBars} className="text-base" />
             </button>
             <div className="flex flex-col animate-text-smooth" key={activeTab}>
               <div className="flex items-center gap-1.5 text-[11px] text-foreground-muted">
-                <span className="font-medium text-foreground">Asterra Store</span>
+                <span className="font-semibold text-foreground">Asterra Sales</span>
                 <span>/</span>
-                <span className="capitalize text-primary font-semibold">
+                <span className="capitalize text-[#2563EB] font-semibold">
                   {currentTabMeta.category}
                 </span>
               </div>
-              <h1 className="text-base sm:text-lg font-bold text-foreground tracking-tight leading-tight">
+              <h1 className="text-base sm:text-xl font-extrabold text-foreground tracking-tight leading-tight">
                 {currentTabMeta.title}
               </h1>
             </div>
@@ -162,7 +162,7 @@ export default function SalesPortalPage() {
             <Button
               size="sm"
               onClick={() => setActiveTab('sales-wallet')}
-              className="text-xs gap-1.5 shadow-xs font-semibold bg-status-success hover:bg-status-success/90 text-white"
+              className="text-xs gap-1.5 shadow-xs font-semibold bg-[#16A36A] hover:bg-[#15803D] text-white rounded-xl h-9"
             >
               <FontAwesomeIcon icon={faWallet} className="text-xs" />
               <span>Dompet Komisi</span>
@@ -172,9 +172,9 @@ export default function SalesPortalPage() {
               href="/"
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-surface hover:bg-surface-raised text-xs text-foreground font-medium transition-colors"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-border bg-white hover:bg-surface-secondary text-xs text-foreground font-medium shadow-xs transition-colors"
             >
-              <FontAwesomeIcon icon={faStore} className="text-xs text-primary" />
+              <FontAwesomeIcon icon={faStore} className="text-xs text-[#2563EB]" />
               <span>Lihat Toko</span>
               <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="text-[10px] text-foreground-muted" />
             </Link>

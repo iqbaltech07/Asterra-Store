@@ -845,25 +845,25 @@ export default function AdminPage() {
       {/* Main Content Pane */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Sticky Top Header Bar */}
-        <header className="sticky top-0 z-40 bg-surface/90 backdrop-blur-md border-b border-border px-4 sm:px-8 py-3 flex items-center justify-between shadow-xs">
+        <header className="sticky top-0 z-40 bg-white/85 backdrop-blur-md border-b border-border px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-2xs">
           <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={() => setIsSidebarMobileOpen(true)}
-              className="lg:hidden p-2 rounded-lg text-foreground-muted hover:text-foreground hover:bg-surface-raised border border-border transition-colors"
+              className="lg:hidden p-2 rounded-xl text-foreground-muted hover:text-foreground hover:bg-surface-secondary border border-border transition-colors"
               aria-label="Buka Menu Sidebar"
             >
               <Menu className="w-5 h-5" />
             </button>
             <div className="flex flex-col animate-text-smooth" key={activeTab}>
               <div className="flex items-center gap-1.5 text-[11px] text-foreground-muted">
-                <span className="font-medium text-foreground">Admin Console</span>
+                <span className="font-semibold text-foreground">Asterra Admin</span>
                 <span>/</span>
-                <span className="capitalize text-primary font-semibold">
+                <span className="capitalize text-[#2563EB] font-semibold">
                   {TAB_TITLES[activeTab]?.category || 'Admin'}
                 </span>
               </div>
-              <h1 className="text-base sm:text-lg font-bold text-foreground tracking-tight leading-tight">
+              <h1 className="text-base sm:text-xl font-extrabold text-foreground tracking-tight leading-tight">
                 {TAB_TITLES[activeTab]?.title || 'Panel Admin'}
               </h1>
             </div>
@@ -879,10 +879,10 @@ export default function AdminPage() {
                   size="sm"
                   onClick={() => syncVipMutation.mutate()}
                   disabled={syncVipMutation.isPending}
-                  className="hidden sm:inline-flex text-xs gap-1.5 border-primary/40 text-primary hover:bg-primary/10"
+                  className="hidden sm:inline-flex text-xs gap-1.5 border-border hover:bg-surface-secondary font-medium"
                   title="Ambil dan sinkronkan semua layanan dari gateway VIP Reseller"
                 >
-                  <DownloadCloud className={`w-3.5 h-3.5 ${syncVipMutation.isPending ? 'animate-bounce' : ''}`} />
+                  <DownloadCloud className={`w-3.5 h-3.5 text-[#2563EB] ${syncVipMutation.isPending ? 'animate-bounce' : ''}`} />
                   <span>{syncVipMutation.isPending ? 'Menyinkronkan...' : 'Sinkronkan VIP'}</span>
                 </Button>
                 <Button
@@ -890,13 +890,13 @@ export default function AdminPage() {
                   size="sm"
                   onClick={() => refreshStockMutation.mutate()}
                   disabled={refreshStockMutation.isPending}
-                  className="hidden md:inline-flex text-xs gap-1.5 border-border"
+                  className="hidden md:inline-flex text-xs gap-1.5 border-border hover:bg-surface-secondary font-medium"
                   title="Periksa ketersediaan stok live dari VIP Reseller"
                 >
-                  <RefreshCw className={`w-3.5 h-3.5 text-primary ${refreshStockMutation.isPending ? 'animate-spin' : ''}`} />
+                  <RefreshCw className={`w-3.5 h-3.5 text-[#2563EB] ${refreshStockMutation.isPending ? 'animate-spin' : ''}`} />
                   <span>{refreshStockMutation.isPending ? 'Memeriksa...' : 'Cek Stok'}</span>
                 </Button>
-                <Button size="sm" onClick={handleOpenCreate} className="text-xs gap-1.5 shadow-xs">
+                <Button size="sm" onClick={handleOpenCreate} className="text-xs gap-1.5 shadow-xs font-semibold">
                   <Plus className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">Tambah Produk</span>
                   <span className="sm:hidden">Tambah</span>
@@ -908,7 +908,7 @@ export default function AdminPage() {
               <Button
                 size="sm"
                 onClick={() => setActiveTab('sales-wallet')}
-                className="text-xs gap-1.5 shadow-xs font-semibold bg-status-success hover:bg-status-success/90 text-white"
+                className="text-xs gap-1.5 shadow-xs font-semibold bg-[#16A36A] hover:bg-[#15803D] text-white"
               >
                 <Wallet className="w-3.5 h-3.5" />
                 <span>Dompet Komisi</span>
@@ -919,11 +919,11 @@ export default function AdminPage() {
 
         {/* Floating Notification */}
         {notification && (
-          <div className="fixed bottom-6 right-6 z-50 bg-surface-raised border border-primary/40 text-foreground px-4 py-3 rounded-lg shadow-xl flex items-center gap-3 animate-scale-pop shadow-2xl">
-            <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-primary">
+          <div className="fixed bottom-6 right-6 z-50 bg-[#111111]/95 backdrop-blur-md border border-white/10 text-white px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-3 animate-in slide-in-from-bottom-5">
+            <div className="w-6 h-6 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
               <Check className="w-3.5 h-3.5" />
             </div>
-            <p className="text-xs font-medium">{notification}</p>
+            <p className="text-xs font-medium text-white">{notification}</p>
           </div>
         )}
 
@@ -931,62 +931,78 @@ export default function AdminPage() {
           {/* Top Summary Metrics Cards - show on products & vip-explorer */}
           {(activeTab === 'products' || activeTab === 'vip-explorer') && (
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-              <div className="animate-fade-up stagger-1 motion-card-interactive bg-surface border border-border rounded-xl p-4 sm:p-5 shadow-xs">
+              <div className="animate-fade-up stagger-1 motion-card-interactive bg-surface border border-border rounded-2xl p-5 shadow-xs flex flex-col justify-between">
                 <div className="flex items-center justify-between text-xs text-foreground-muted mb-2">
-                  <span>Aktif di Katalog Toko</span>
-                  <Eye className="w-4 h-4 text-status-success" />
+                  <span className="font-medium">Aktif di Katalog Toko</span>
+                  <div className="w-7 h-7 rounded-lg bg-emerald-50 text-[#16A36A] flex items-center justify-center">
+                    <Eye className="w-4 h-4" />
+                  </div>
                 </div>
-                <div className="text-2xl font-bold text-foreground font-variant-numeric tabular-nums">
-                  <AnimatedNumber value={metrics?.totalActive ?? 0} showDelta />
+                <div>
+                  <div className="text-2xl font-extrabold text-foreground tabular-nums font-mono">
+                    <AnimatedNumber value={metrics?.totalActive ?? 0} showDelta />
+                  </div>
+                  <span className="text-[11px] text-foreground-muted">Muncul di halaman pelanggan</span>
                 </div>
-                <span className="text-[11px] text-foreground-muted">Muncul di halaman pelanggan</span>
               </div>
 
-              <div className="animate-fade-up stagger-2 motion-card-interactive bg-surface border border-border rounded-xl p-4 sm:p-5 shadow-xs">
+              <div className="animate-fade-up stagger-2 motion-card-interactive bg-surface border border-border rounded-2xl p-5 shadow-xs flex flex-col justify-between">
                 <div className="flex items-center justify-between text-xs text-foreground-muted mb-2">
-                  <span>Diarsipkan (Draft / Hidden)</span>
-                  <EyeOff className="w-4 h-4 text-foreground-muted" />
+                  <span className="font-medium">Diarsipkan (Draft)</span>
+                  <div className="w-7 h-7 rounded-lg bg-gray-100 text-gray-500 flex items-center justify-center">
+                    <EyeOff className="w-4 h-4" />
+                  </div>
                 </div>
-                <div className="text-2xl font-bold text-foreground font-variant-numeric tabular-nums">
-                  <AnimatedNumber value={metrics?.totalArchived ?? 0} showDelta />
+                <div>
+                  <div className="text-2xl font-extrabold text-foreground tabular-nums font-mono">
+                    <AnimatedNumber value={metrics?.totalArchived ?? 0} showDelta />
+                  </div>
+                  <span className="text-[11px] text-foreground-muted">Disembunyikan dari katalog</span>
                 </div>
-                <span className="text-[11px] text-foreground-muted">Disembunyikan dari katalog</span>
               </div>
 
-              <div className="animate-fade-up stagger-3 motion-card-interactive bg-surface border border-border rounded-xl p-4 sm:p-5 shadow-xs">
+              <div className="animate-fade-up stagger-3 motion-card-interactive bg-surface border border-border rounded-2xl p-5 shadow-xs flex flex-col justify-between">
                 <div className="flex items-center justify-between text-xs text-foreground-muted mb-2">
-                  <span>Perlu Perhatian (Stok VIP Kosong)</span>
-                  <AlertTriangle className="w-4 h-4 text-status-warning" />
+                  <span className="font-medium">Perlu Perhatian (Stok VIP)</span>
+                  <div className="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+                    <AlertTriangle className="w-4 h-4" />
+                  </div>
                 </div>
-                <div className="text-2xl font-bold text-status-warning font-variant-numeric tabular-nums">
-                  <AnimatedNumber value={metrics?.totalWarnings ?? 0} showDelta />
+                <div>
+                  <div className="text-2xl font-extrabold text-[#D97706] tabular-nums font-mono">
+                    <AnimatedNumber value={metrics?.totalWarnings ?? 0} showDelta />
+                  </div>
+                  <span className="text-[11px] text-foreground-muted">Produk aktif tapi supplier kosong</span>
                 </div>
-                <span className="text-[11px] text-foreground-muted">Produk aktif tapi supplier kosong</span>
               </div>
 
-              <div className="animate-fade-up stagger-4 motion-card-interactive bg-surface border border-border rounded-xl p-4 sm:p-5 shadow-xs">
+              <div className="animate-fade-up stagger-4 motion-card-interactive bg-surface border border-border rounded-2xl p-5 shadow-xs flex flex-col justify-between">
                 <div className="flex items-center justify-between text-xs text-foreground-muted mb-2">
-                  <span>Saldo Akun VIP Reseller</span>
-                  <Wallet className={`w-4 h-4 ${metrics?.isVipConnected ? 'text-primary' : 'text-status-warning'}`} />
+                  <span className="font-medium">Saldo VIP Reseller</span>
+                  <div className="w-7 h-7 rounded-lg bg-blue-50 text-[#2563EB] flex items-center justify-center">
+                    <Wallet className="w-4 h-4" />
+                  </div>
                 </div>
-                <div className="text-2xl font-bold text-foreground font-variant-numeric tabular-nums">
-                  {metrics?.isVipConnected && metrics?.vipBalance !== null && metrics?.vipBalance !== undefined ? (
-                    <AnimatedNumber
-                      value={metrics.vipBalance}
-                      formatter={(v) => `Rp ${Math.round(v).toLocaleString('id-ID')}`}
-                      showDelta
-                    />
-                  ) : (
-                    'Belum Terhubung'
-                  )}
-                </div>
-                <div className="flex items-center gap-1.5 mt-1">
-                  <span className={`w-1.5 h-1.5 rounded-full ${metrics?.isVipConnected ? 'bg-status-success animate-pulse' : 'bg-status-warning'}`} />
-                  <span className={`text-[11px] font-medium ${metrics?.isVipConnected ? 'text-status-success' : 'text-status-warning'}`}>
-                    {metrics?.isVipConnected
-                      ? `Status API: Live Whitelisted (${metrics.vipUsername || 'Aktif'})`
-                      : metrics?.vipStatusMessage || 'Status API: Belum Terhubung'}
-                  </span>
+                <div>
+                  <div className="text-2xl font-extrabold text-foreground tabular-nums font-mono">
+                    {metrics?.isVipConnected && metrics?.vipBalance !== null && metrics?.vipBalance !== undefined ? (
+                      <AnimatedNumber
+                        value={metrics.vipBalance}
+                        formatter={(v) => `Rp ${Math.round(v).toLocaleString('id-ID')}`}
+                        showDelta
+                      />
+                    ) : (
+                      'Belum Terhubung'
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <span className={`w-1.5 h-1.5 rounded-full ${metrics?.isVipConnected ? 'bg-[#16A36A] animate-pulse' : 'bg-[#D97706]'}`} />
+                    <span className={`text-[11px] font-medium ${metrics?.isVipConnected ? 'text-[#16A36A]' : 'text-[#D97706]'}`}>
+                      {metrics?.isVipConnected
+                        ? `Live Whitelisted (${metrics.vipUsername || 'Aktif'})`
+                        : metrics?.vipStatusMessage || 'Belum Terhubung'}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>

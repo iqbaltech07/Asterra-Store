@@ -134,67 +134,67 @@ export function AdminCategoriesTab({ onNotify, onFilterCategoryInProducts }: Adm
   return (
     <div className="space-y-6">
       {/* 1. Header */}
-      <div className="bg-surface border border-border rounded-xl p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-surface border border-border rounded-2xl p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider bg-primary/15 text-primary border border-primary/25">
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-primary/10 text-primary border border-primary/20">
               Taksonomi Produk
             </span>
-            <span className="text-[11px] text-foreground-muted">
+            <span className="text-xs text-foreground-muted font-mono">
               {categories.length} Kategori Terdaftar
             </span>
           </div>
-          <h2 className="text-lg font-bold text-foreground tracking-tight">
+          <h2 className="text-xl font-bold text-foreground tracking-tight">
             Manajemen Kategori Layanan Asterra Store
           </h2>
-          <p className="text-xs text-foreground-muted mt-0.5">
+          <p className="text-xs text-foreground-muted mt-1">
             Atur urutan hierarki tampil kategori pada etalase toko publik, status publikasi, dan distribusi produk digital.
           </p>
         </div>
 
-        <Button size="sm" onClick={handleOpenAdd} className="text-xs gap-1.5 shadow-xs">
-          <Plus className="w-3.5 h-3.5" />
+        <Button size="sm" onClick={handleOpenAdd} className="text-xs gap-1.5 shadow-xs rounded-xl h-9 font-semibold">
+          <Plus className="w-4 h-4" />
           <span>Tambah Kategori Baru</span>
         </Button>
       </div>
 
       {/* 2. Search & Filter Bar */}
-      <div className="bg-surface border border-border rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="relative flex-1 max-w-sm">
+      <div className="bg-surface border border-border rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="relative flex-1 max-w-md">
           <Search className="w-4 h-4 text-foreground-muted absolute left-3 top-1/2 -translate-y-1/2" />
           <Input
             type="text"
             placeholder="Cari nama kategori..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 text-xs bg-surface-raised border-border"
+            className="pl-9 text-xs bg-surface-raised border-border rounded-xl h-10"
           />
         </div>
-        <div className="text-xs text-foreground-muted">
+        <div className="text-xs text-foreground-muted font-mono">
           Urutan tampil berdasarkan nomor prioritas display order
         </div>
       </div>
 
       {/* 3. Categories Table */}
-      <div className="bg-surface border border-border rounded-xl overflow-hidden shadow-xs">
+      <div className="bg-surface border border-border rounded-2xl overflow-hidden shadow-xs">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-surface-raised/80 border-b border-border text-foreground-muted text-[11px] uppercase tracking-wider font-semibold">
+            <thead className="bg-surface-raised border-b border-border text-foreground-muted text-[11px] uppercase tracking-wider font-semibold">
               <tr>
-                <th className="py-3 px-4 w-16 text-center">Urutan</th>
-                <th className="py-3 px-4">Nama Kategori</th>
-                <th className="py-3 px-4">Slug URL</th>
-                <th className="py-3 px-4 text-center">Total Produk</th>
-                <th className="py-3 px-4 text-center">Status</th>
-                <th className="py-3 px-4">Tanggal Dibuat</th>
-                <th className="py-3 px-4 text-right">Aksi</th>
+                <th className="py-3 px-4 w-16 text-center font-semibold">Urutan</th>
+                <th className="py-3 px-4 font-semibold">Nama Kategori</th>
+                <th className="py-3 px-4 font-semibold">Slug URL</th>
+                <th className="py-3 px-4 text-center font-semibold">Total Produk</th>
+                <th className="py-3 px-4 text-center font-semibold">Status</th>
+                <th className="py-3 px-4 font-semibold">Tanggal Dibuat</th>
+                <th className="py-3 px-4 text-right font-semibold">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {filteredCategories.map((cat) => (
-                <tr key={cat.id} className="hover:bg-surface-raised/40 transition-colors">
+                <tr key={cat.id} className="hover:bg-surface-raised/60 transition-colors">
                   <td className="py-3.5 px-4 text-center">
-                    <span className="w-7 h-7 rounded-lg bg-surface-raised border border-border font-mono font-bold text-xs inline-flex items-center justify-center text-foreground">
+                    <span className="w-7 h-7 rounded-xl bg-surface-raised border border-border font-mono font-bold text-xs inline-flex items-center justify-center text-foreground">
                       #{cat.displayOrder}
                     </span>
                   </td>
@@ -204,9 +204,9 @@ export function AdminCategoriesTab({ onNotify, onFilterCategoryInProducts }: Adm
                   <td className="py-3.5 px-4 font-mono text-[11px] text-foreground-muted">
                     /{cat.slug}
                   </td>
-                  <td className="py-3.5 px-4 text-center">
+                  <td className="py-3.5 px-4 text-center font-mono">
                     <span className="font-bold text-foreground">{cat.productCount} item</span>
-                    <span className="text-[10px] text-foreground-muted block">
+                    <span className="text-[10px] text-foreground-muted block font-sans">
                       ({cat.activeCount} aktif di etalase)
                     </span>
                   </td>
@@ -214,16 +214,16 @@ export function AdminCategoriesTab({ onNotify, onFilterCategoryInProducts }: Adm
                     <button
                       type="button"
                       onClick={() => toggleStatus(cat.id)}
-                      className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border transition-colors ${
+                      className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold border transition-colors ${
                         cat.status === 'active'
-                          ? 'bg-status-success/15 text-status-success border-status-success/30'
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200/60'
                           : 'bg-surface-raised text-foreground-muted border-border'
                       }`}
                     >
                       {cat.status === 'active' ? '✓ Aktif' : 'Nonaktif'}
                     </button>
                   </td>
-                  <td className="py-3.5 px-4 text-foreground-muted text-[11px]">
+                  <td className="py-3.5 px-4 text-foreground-muted text-[11px] font-mono">
                     {cat.createdAt}
                   </td>
                   <td className="py-3.5 px-4 text-right">
@@ -232,7 +232,7 @@ export function AdminCategoriesTab({ onNotify, onFilterCategoryInProducts }: Adm
                         size="sm"
                         variant="outline"
                         onClick={() => handleOpenEdit(cat)}
-                        className="h-7 px-2 text-xs border-border"
+                        className="h-8 px-2.5 text-xs border-border rounded-xl font-semibold"
                       >
                         <Edit className="w-3 h-3 text-primary mr-1" />
                         Edit
@@ -241,7 +241,7 @@ export function AdminCategoriesTab({ onNotify, onFilterCategoryInProducts }: Adm
                         size="sm"
                         variant="outline"
                         onClick={() => setDeletingCategory(cat)}
-                        className="h-7 px-2 text-xs border-border text-status-error hover:bg-status-error/10 hover:border-status-error/30"
+                        className="h-8 px-2.5 text-xs border-border rounded-xl text-rose-600 hover:bg-rose-50 hover:border-rose-200/60"
                       >
                         <Trash2 className="w-3 h-3" />
                       </Button>
@@ -256,8 +256,8 @@ export function AdminCategoriesTab({ onNotify, onFilterCategoryInProducts }: Adm
 
       {/* 4. Modal Add / Edit Category */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-surface border border-border rounded-xl w-full max-w-sm shadow-2xl p-5 space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-surface border border-border rounded-2xl w-full max-w-sm shadow-2xl p-6 space-y-4">
             <div className="flex items-center justify-between border-b border-border pb-3">
               <h3 className="font-bold text-sm text-foreground">
                 {editingCategory ? 'Edit Kategori Layanan' : 'Tambah Kategori Baru'}
@@ -265,13 +265,13 @@ export function AdminCategoriesTab({ onNotify, onFilterCategoryInProducts }: Adm
               <button
                 type="button"
                 onClick={() => setIsAddModalOpen(false)}
-                className="text-foreground-muted hover:text-foreground p-1"
+                className="text-foreground-muted hover:text-foreground p-1 rounded-lg"
               >
                 ✕
               </button>
             </div>
 
-            <form onSubmit={handleSave} className="space-y-3 text-xs">
+            <form onSubmit={handleSave} className="space-y-3.5 text-xs">
               <div>
                 <label className="font-semibold text-foreground block mb-1">Nama Kategori</label>
                 <Input
@@ -279,7 +279,7 @@ export function AdminCategoriesTab({ onNotify, onFilterCategoryInProducts }: Adm
                   placeholder="Contoh: AI Tools & Productivity"
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
-                  className="bg-surface-raised border-border text-xs"
+                  className="bg-surface-raised border-border text-xs rounded-xl h-10"
                 />
               </div>
 
@@ -289,7 +289,7 @@ export function AdminCategoriesTab({ onNotify, onFilterCategoryInProducts }: Adm
                   placeholder="Contoh: ai-tools"
                   value={formSlug}
                   onChange={(e) => setFormSlug(e.target.value)}
-                  className="bg-surface-raised border-border text-xs font-mono"
+                  className="bg-surface-raised border-border text-xs font-mono rounded-xl h-10"
                 />
               </div>
 
@@ -301,7 +301,7 @@ export function AdminCategoriesTab({ onNotify, onFilterCategoryInProducts }: Adm
                   required
                   value={formOrder}
                   onChange={(e) => setFormOrder(Number(e.target.value))}
-                  className="bg-surface-raised border-border text-xs font-bold"
+                  className="bg-surface-raised border-border text-xs font-bold rounded-xl h-10"
                 />
               </div>
 
@@ -311,10 +311,11 @@ export function AdminCategoriesTab({ onNotify, onFilterCategoryInProducts }: Adm
                   variant="outline"
                   size="sm"
                   onClick={() => setIsAddModalOpen(false)}
+                  className="rounded-xl h-9 text-xs"
                 >
                   Batal
                 </Button>
-                <Button type="submit" size="sm">
+                <Button type="submit" size="sm" className="rounded-xl h-9 text-xs font-semibold">
                   {editingCategory ? 'Simpan Perubahan' : 'Buat Kategori'}
                 </Button>
               </div>
@@ -323,11 +324,11 @@ export function AdminCategoriesTab({ onNotify, onFilterCategoryInProducts }: Adm
         </div>
       )}
 
-      {/* 5. Modal Konfirmasi Hapus Kategori dengan Proteksi */}
+      {/* 5. Modal Konfirmasi Hapus */}
       {deletingCategory && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-surface border border-border rounded-xl w-full max-w-sm shadow-2xl p-5 space-y-4 text-xs">
-            <div className="flex items-center gap-2 text-status-error">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-surface border border-border rounded-2xl w-full max-w-sm shadow-2xl p-6 space-y-4 text-xs">
+            <div className="flex items-center gap-2 text-rose-600">
               <AlertTriangle className="w-5 h-5 shrink-0" />
               <h3 className="font-bold text-sm text-foreground">Hapus Kategori</h3>
             </div>
@@ -336,9 +337,9 @@ export function AdminCategoriesTab({ onNotify, onFilterCategoryInProducts }: Adm
               <div className="space-y-2">
                 <p className="text-foreground">
                   Kategori <strong>{deletingCategory.name}</strong> masih memiliki{' '}
-                  <strong className="text-status-error">{deletingCategory.productCount} produk terkait</strong>.
+                  <strong className="text-rose-600 font-mono">{deletingCategory.productCount} produk terkait</strong>.
                 </p>
-                <p className="text-foreground-muted text-[11px]">
+                <p className="text-foreground-muted text-[11px] leading-relaxed">
                   Menghapus kategori ini akan memindahkan produk-produk tersebut ke kategori &quot;Layanan Digital Lainnya&quot;. Apakah Anda yakin ingin melanjutkan?
                 </p>
               </div>
@@ -354,6 +355,7 @@ export function AdminCategoriesTab({ onNotify, onFilterCategoryInProducts }: Adm
                 variant="outline"
                 size="sm"
                 onClick={() => setDeletingCategory(null)}
+                className="rounded-xl h-9 text-xs"
               >
                 Batal
               </Button>
@@ -362,6 +364,7 @@ export function AdminCategoriesTab({ onNotify, onFilterCategoryInProducts }: Adm
                 size="sm"
                 variant="destructive"
                 onClick={handleDeleteConfirm}
+                className="rounded-xl h-9 text-xs font-semibold"
               >
                 Ya, Hapus Kategori
               </Button>

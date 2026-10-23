@@ -117,10 +117,10 @@ export function AsterraLogo({
       {showBadge && (
         <span
           className={cn(
-            'hidden sm:inline-flex items-center text-[10px] font-semibold px-2 py-0.5 rounded border transition-colors',
+            'hidden sm:inline-flex items-center text-[10px] font-semibold px-2 py-0.5 rounded-full border transition-colors',
             isDarkBg
-              ? 'bg-[rgba(201,111,85,0.15)] text-[#F7F5EF] border-[rgba(201,111,85,0.35)]'
-              : 'bg-[rgba(201,111,85,0.08)] text-[#C96F55] border-[rgba(201,111,85,0.25)]'
+              ? 'bg-white/10 text-white border-white/20'
+              : 'bg-primary/10 text-primary border-primary/20'
           )}
         >
           {badgeText}
@@ -133,7 +133,7 @@ export function AsterraLogo({
     return (
       <Link
         href="/"
-        className="inline-flex items-center focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 rounded-lg py-0.5"
+        className="inline-flex items-center focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-lg py-0.5"
       >
         {content}
       </Link>

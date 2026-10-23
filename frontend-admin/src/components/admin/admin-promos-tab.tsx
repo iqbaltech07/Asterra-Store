@@ -182,7 +182,6 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
 
       onNotify(json.message || `Kode promo "${json.data?.code}" berhasil dibuat.`);
       setIsCreateModalOpen(false);
-      // Reset form
       setFormCode('');
       setFormDescription('');
       setFormDiscountValue(10);
@@ -198,7 +197,6 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
     }
   };
 
-  // Filter promos
   const filteredPromos = promos.filter((p) => {
     const matchesSearch =
       p.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -223,15 +221,15 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
   return (
     <div className="space-y-6">
       {/* Top Header Card */}
-      <div className="bg-surface border border-border rounded-xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-surface border border-border rounded-2xl p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-xl font-bold text-foreground">Manajemen Kode Promo & Voucher</h2>
-            <Badge variant="outline" className="text-xs font-mono border-border">
+            <h2 className="text-xl font-bold text-foreground tracking-tight">Manajemen Kode Promo & Voucher</h2>
+            <Badge variant="outline" className="text-xs font-mono border-border bg-surface-raised">
               {metrics.total} Terdaftar
             </Badge>
           </div>
-          <p className="text-xs sm:text-sm text-foreground-muted mt-1">
+          <p className="text-xs text-foreground-muted mt-1">
             Buat voucher diskon, atur kuota pemakaian per pengguna, dan amankan validasi harga secara otomatis.
           </p>
         </div>
@@ -242,7 +240,7 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
             size="sm"
             onClick={fetchPromos}
             disabled={isLoading}
-            className="text-xs border-border gap-1.5 h-10 px-3.5"
+            className="text-xs border-border gap-1.5 h-9 px-3.5 rounded-xl font-semibold"
           >
             <FontAwesomeIcon icon={faArrowsRotate} className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
             <span>Segarkan</span>
@@ -254,9 +252,9 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
               handleGenerateRandomCode();
               setIsCreateModalOpen(true);
             }}
-            className="text-xs font-semibold gap-1.5 h-10 px-4 shadow-sm"
+            className="text-xs font-semibold gap-1.5 h-9 px-4 shadow-xs rounded-xl"
           >
-            <FontAwesomeIcon icon={faPlus} className="w-4 h-4" />
+            <FontAwesomeIcon icon={faPlus} className="w-3.5 h-3.5" />
             <span>Generate Promo Baru</span>
           </Button>
         </div>
@@ -264,52 +262,60 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
 
       {/* 4 Metric Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-4 rounded-xl bg-surface border border-border shadow-xs space-y-1">
+        <div className="p-5 rounded-2xl bg-surface border border-border shadow-xs space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-foreground-muted font-medium">Total Kode Promo</span>
-            <FontAwesomeIcon icon={faTag} className="w-4 h-4 text-primary" />
+            <span className="text-xs text-foreground-muted font-semibold">Total Kode Promo</span>
+            <div className="w-7 h-7 rounded-lg bg-foreground/5 flex items-center justify-center text-foreground-muted">
+              <FontAwesomeIcon icon={faTag} className="w-3.5 h-3.5" />
+            </div>
           </div>
-          <p className="text-2xl font-bold text-foreground">{metrics.total}</p>
-          <span className="text-[11px] text-foreground-muted">Voucher dalam database</span>
+          <p className="text-2xl sm:text-3xl font-extrabold text-foreground font-mono tracking-tight">{metrics.total}</p>
+          <span className="text-xs text-foreground-muted block pt-1 border-t border-border/60">Voucher dalam database</span>
         </div>
 
-        <div className="p-4 rounded-xl bg-surface border border-border shadow-xs space-y-1">
+        <div className="p-5 rounded-2xl bg-surface border border-border shadow-xs space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-foreground-muted font-medium">Promo Aktif</span>
-            <FontAwesomeIcon icon={faWandMagicSparkles} className="w-4 h-4 text-status-success" />
+            <span className="text-xs text-foreground-muted font-semibold">Promo Aktif</span>
+            <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200/60 flex items-center justify-center">
+              <FontAwesomeIcon icon={faWandMagicSparkles} className="w-3.5 h-3.5" />
+            </div>
           </div>
-          <p className="text-2xl font-bold text-status-success">{metrics.active}</p>
-          <span className="text-[11px] text-foreground-muted">Dapat digunakan pengguna</span>
+          <p className="text-2xl sm:text-3xl font-extrabold text-emerald-600 font-mono tracking-tight">{metrics.active}</p>
+          <span className="text-xs text-emerald-600 font-medium block pt-1 border-t border-border/60">Dapat digunakan pengguna</span>
         </div>
 
-        <div className="p-4 rounded-xl bg-surface border border-border shadow-xs space-y-1">
+        <div className="p-5 rounded-2xl bg-surface border border-border shadow-xs space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-foreground-muted font-medium">Total Penggunaan</span>
-            <FontAwesomeIcon icon={faBagShopping} className="w-4 h-4 text-primary" />
+            <span className="text-xs text-foreground-muted font-semibold">Total Penggunaan</span>
+            <div className="w-7 h-7 rounded-lg bg-blue-50 text-primary border border-blue-200/60 flex items-center justify-center">
+              <FontAwesomeIcon icon={faBagShopping} className="w-3.5 h-3.5" />
+            </div>
           </div>
-          <p className="text-2xl font-bold text-foreground">{metrics.totalUsed}x</p>
-          <span className="text-[11px] text-foreground-muted">Transaksi memakai voucher</span>
+          <p className="text-2xl sm:text-3xl font-extrabold text-foreground font-mono tracking-tight">{metrics.totalUsed}x</p>
+          <span className="text-xs text-foreground-muted block pt-1 border-t border-border/60">Transaksi memakai voucher</span>
         </div>
 
-        <div className="p-4 rounded-xl bg-surface border border-border shadow-xs space-y-1">
+        <div className="p-5 rounded-2xl bg-surface border border-border shadow-xs space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-foreground-muted font-medium">Kedaluwarsa / Nonaktif</span>
-            <FontAwesomeIcon icon={faClock} className="w-4 h-4 text-status-warning" />
+            <span className="text-xs text-foreground-muted font-semibold">Kedaluwarsa / Nonaktif</span>
+            <div className="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 border border-amber-200/60 flex items-center justify-center">
+              <FontAwesomeIcon icon={faClock} className="w-3.5 h-3.5" />
+            </div>
           </div>
-          <p className="text-2xl font-bold text-foreground-muted">{metrics.expired}</p>
-          <span className="text-[11px] text-foreground-muted">Tidak dapat digunakan</span>
+          <p className="text-2xl sm:text-3xl font-extrabold text-foreground-muted font-mono tracking-tight">{metrics.expired}</p>
+          <span className="text-xs text-foreground-muted block pt-1 border-t border-border/60">Tidak dapat digunakan</span>
         </div>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="bg-surface border border-border rounded-xl p-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+      <div className="bg-surface border border-border rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-1.5">
           <button
             type="button"
             onClick={() => setStatusFilter('all')}
-            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
               statusFilter === 'all'
-                ? 'bg-primary text-white'
+                ? 'bg-foreground text-background shadow-xs'
                 : 'bg-surface-raised text-foreground-muted hover:text-foreground border border-border'
             }`}
           >
@@ -318,9 +324,9 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
           <button
             type="button"
             onClick={() => setStatusFilter('active')}
-            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
               statusFilter === 'active'
-                ? 'bg-primary text-white'
+                ? 'bg-emerald-600 text-white shadow-xs'
                 : 'bg-surface-raised text-foreground-muted hover:text-foreground border border-border'
             }`}
           >
@@ -329,9 +335,9 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
           <button
             type="button"
             onClick={() => setStatusFilter('inactive')}
-            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
               statusFilter === 'inactive'
-                ? 'bg-primary text-white'
+                ? 'bg-foreground text-background shadow-xs'
                 : 'bg-surface-raised text-foreground-muted hover:text-foreground border border-border'
             }`}
           >
@@ -340,28 +346,28 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
         </div>
 
         <div className="relative w-full md:w-72">
-          <FontAwesomeIcon icon={faMagnifyingGlass} className="w-3.5 h-3.5 text-foreground-muted absolute left-3 top-1/2 -translate-y-1/2" />
+          <FontAwesomeIcon icon={faMagnifyingGlass} className="w-3 h-3 text-foreground-muted absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           <Input
             type="text"
             placeholder="Cari kode promo..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-8 text-xs bg-surface-raised border-border h-9"
+            className="pl-8 text-xs bg-surface-raised border-border h-9 rounded-xl"
           />
         </div>
       </div>
 
       {/* Promo Code Cards List */}
       {isLoading ? (
-        <div className="bg-surface border border-border rounded-xl p-12 text-center space-y-3">
+        <div className="bg-surface border border-border rounded-2xl p-12 text-center space-y-3">
           <FontAwesomeIcon icon={faArrowsRotate} className="w-6 h-6 text-primary animate-spin mx-auto" />
-          <p className="text-xs text-foreground-muted">Memuat daftar kode promo...</p>
+          <p className="text-xs text-foreground-muted animate-pulse">Memuat daftar kode promo...</p>
         </div>
       ) : filteredPromos.length === 0 ? (
-        <div className="bg-surface border border-dashed border-border rounded-xl p-12 text-center space-y-3">
-          <FontAwesomeIcon icon={faTag} className="w-10 h-10 text-foreground-muted mx-auto opacity-50" />
+        <div className="bg-surface border border-border rounded-2xl p-12 text-center space-y-3">
+          <FontAwesomeIcon icon={faTag} className="w-10 h-10 text-foreground-muted mx-auto opacity-40" />
           <h4 className="text-sm font-semibold text-foreground">Tidak Ada Kode Promo Ditemukan</h4>
-          <p className="text-xs text-foreground-muted max-w-sm mx-auto">
+          <p className="text-xs text-foreground-muted max-w-sm mx-auto leading-relaxed">
             {searchQuery
               ? `Tidak ditemukan promo yang cocok dengan pencarian "${searchQuery}".`
               : 'Belum ada kode promo terdaftar. Klik "Generate Promo Baru" untuk menambahkan.'}
@@ -372,7 +378,7 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
               handleGenerateRandomCode();
               setIsCreateModalOpen(true);
             }}
-            className="text-xs gap-1.5 mt-2"
+            className="text-xs gap-1.5 mt-2 rounded-xl"
           >
             <FontAwesomeIcon icon={faPlus} className="w-3.5 h-3.5" />
             <span>Buat Promo Pertama</span>
@@ -390,25 +396,25 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
             return (
               <div
                 key={p.id}
-                className={`p-5 rounded-xl border bg-surface transition-all flex flex-col justify-between space-y-4 hover:border-primary/40 ${
-                  !p.isActive || isExpired ? 'opacity-70 bg-surface/60' : 'shadow-xs'
+                className={`p-6 rounded-2xl border bg-surface transition-all flex flex-col justify-between space-y-4 hover:border-foreground/20 hover:shadow-sm ${
+                  !p.isActive || isExpired ? 'opacity-70 bg-surface-raised' : 'shadow-xs border-border'
                 }`}
               >
                 {/* Header */}
-                <div className="space-y-2">
+                <div className="space-y-2.5">
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1.5">
-                      <span className="font-mono text-base font-extrabold text-foreground tracking-wider bg-surface-raised border border-border px-2.5 py-1 rounded-lg">
+                      <span className="font-mono text-sm font-extrabold text-foreground tracking-wider bg-surface-raised border border-border px-3 py-1 rounded-xl">
                         {p.code}
                       </span>
                       <button
                         type="button"
                         onClick={() => handleCopy(p.code)}
-                        className="p-1 rounded-md text-foreground-muted hover:text-foreground hover:bg-surface-hover transition-colors"
+                        className="p-1.5 rounded-lg text-foreground-muted hover:text-foreground hover:bg-surface-raised transition-colors"
                         title="Salin kode"
                       >
                         {copiedKey === p.code ? (
-                          <FontAwesomeIcon icon={faCheck} className="w-3.5 h-3.5 text-status-success" />
+                          <FontAwesomeIcon icon={faCheck} className="w-3.5 h-3.5 text-emerald-600" />
                         ) : (
                           <FontAwesomeIcon icon={faCopy} className="w-3.5 h-3.5" />
                         )}
@@ -417,7 +423,7 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
 
                     <div>
                       {isExpired ? (
-                        <Badge className="bg-status-warning/15 text-status-warning border-status-warning/30 text-[10px]">
+                        <Badge className="bg-amber-50 text-amber-700 border-amber-200/60 text-[10px]">
                           Kedaluwarsa
                         </Badge>
                       ) : p.isActive ? (
@@ -438,9 +444,9 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
                 </div>
 
                 {/* Key Details */}
-                <div className="p-3 rounded-lg bg-surface-raised border border-border/80 space-y-2 text-xs">
+                <div className="p-3.5 rounded-xl bg-surface-raised border border-border space-y-2 text-xs">
                   <div className="flex justify-between items-center text-foreground-muted">
-                    <span>Besaran Diskon</span>
+                    <span className="font-medium">Besaran Diskon</span>
                     <span className="font-bold text-primary font-mono text-sm">
                       {p.discountType === 'percentage'
                         ? `${p.discountValue}%`
@@ -449,7 +455,7 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
                   </div>
 
                   {p.discountType === 'percentage' && p.maxDiscount && (
-                    <div className="flex justify-between items-center text-[11px] text-foreground-muted">
+                    <div className="flex justify-between items-center text-xs text-foreground-muted">
                       <span>Maks. Potongan</span>
                       <span className="font-mono font-medium text-foreground">
                         {formatIDR(p.maxDiscount)}
@@ -457,14 +463,14 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
                     </div>
                   )}
 
-                  <div className="flex justify-between items-center text-[11px] text-foreground-muted">
+                  <div className="flex justify-between items-center text-xs text-foreground-muted">
                     <span>Min. Belanja</span>
                     <span className="font-mono font-medium text-foreground">
                       {p.minOrderAmount > 0 ? formatIDR(p.minOrderAmount) : 'Tanpa Minimum'}
                     </span>
                   </div>
 
-                  <div className="flex justify-between items-center text-[11px] text-foreground-muted">
+                  <div className="flex justify-between items-center text-xs text-foreground-muted">
                     <span>Batas per Akun</span>
                     <span className="font-mono font-medium text-foreground">
                       {p.perUserLimit}x per pemesan
@@ -473,8 +479,8 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
                 </div>
 
                 {/* Usage Progress Bar */}
-                <div className="space-y-1 text-xs">
-                  <div className="flex justify-between text-[11px] text-foreground-muted">
+                <div className="space-y-1.5 text-xs">
+                  <div className="flex justify-between text-xs text-foreground-muted">
                     <span>Kuota Digunakan</span>
                     <span className="font-mono font-medium">
                       {p.usedCount} {p.usageLimit !== null ? `/ ${p.usageLimit}` : 'Terpakai'}
@@ -491,7 +497,7 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
                 </div>
 
                 {/* Expiration date */}
-                <div className="flex items-center gap-1.5 text-[11px] text-foreground-muted pt-1 border-t border-border/50">
+                <div className="flex items-center gap-1.5 text-[11px] text-foreground-muted pt-2 border-t border-border font-mono">
                   <FontAwesomeIcon icon={faCalendar} className="w-3.5 h-3.5 shrink-0" />
                   <span>
                     {p.expiresAt
@@ -511,9 +517,9 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
                     variant="outline"
                     size="sm"
                     onClick={() => handleToggleStatus(p.id, p.code)}
-                    className="text-xs h-8 gap-1.5 flex-1 border-border hover:bg-surface-raised"
+                    className="text-xs h-8 gap-1.5 flex-1 border-border rounded-xl font-semibold"
                   >
-                    <FontAwesomeIcon icon={faPowerOff} className={`w-3 h-3 ${p.isActive ? 'text-status-warning' : 'text-status-success'}`} />
+                    <FontAwesomeIcon icon={faPowerOff} className={`w-3 h-3 ${p.isActive ? 'text-amber-500' : 'text-emerald-600'}`} />
                     <span>{p.isActive ? 'Nonaktifkan' : 'Aktifkan'}</span>
                   </Button>
 
@@ -522,7 +528,7 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
                     variant="outline"
                     size="sm"
                     onClick={() => handleDeletePromo(p.id, p.code)}
-                    className="text-xs h-8 w-8 p-0 border-border text-status-error hover:bg-status-error/10 hover:border-status-error/30"
+                    className="text-xs h-8 w-8 p-0 border-border rounded-xl text-rose-600 hover:bg-rose-50 hover:border-rose-200/60"
                     title="Hapus promo"
                   >
                     <FontAwesomeIcon icon={faTrash} className="w-3.5 h-3.5" />
@@ -538,14 +544,14 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
       {isCreateModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div
-            className="fixed inset-0 bg-background/80 backdrop-blur-sm animate-in fade-in"
+            className="fixed inset-0 bg-black/60 backdrop-blur-xs animate-in fade-in"
             onClick={() => setIsCreateModalOpen(false)}
           />
 
-          <div className="relative w-full max-w-lg bg-surface border border-border rounded-xl shadow-2xl p-6 sm:p-7 z-10 space-y-5 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-start justify-between pb-3 border-b border-border">
+          <div className="relative w-full max-w-lg bg-surface border border-border rounded-2xl shadow-2xl p-6 sm:p-7 z-10 space-y-5 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-start justify-between pb-3.5 border-b border-border">
               <div>
-                <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                <h3 className="text-base font-bold text-foreground flex items-center gap-2">
                   <FontAwesomeIcon icon={faTag} className="w-4 h-4 text-primary" />
                   <span>Generate Kode Promo Baru</span>
                 </h3>
@@ -556,39 +562,35 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
               <button
                 type="button"
                 onClick={() => setIsCreateModalOpen(false)}
-                className="text-foreground-muted hover:text-foreground p-1"
+                className="text-foreground-muted hover:text-foreground p-1 rounded-lg"
               >
-                <FontAwesomeIcon icon={faXmark} className="w-5 h-5" />
+                <FontAwesomeIcon icon={faXmark} className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleCreatePromoSubmit} className="space-y-4">
-              {/* Promo Code Input & Auto-generate button */}
+            <form onSubmit={handleCreatePromoSubmit} className="space-y-4 text-xs">
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-foreground flex items-center justify-between">
                   <span>Kode Promo *</span>
                   <button
                     type="button"
                     onClick={handleGenerateRandomCode}
-                    className="text-[11px] text-primary hover:underline flex items-center gap-1 font-normal"
+                    className="text-[11px] text-primary hover:underline flex items-center gap-1 font-semibold"
                   >
                     <FontAwesomeIcon icon={faWandMagicSparkles} className="w-3 h-3" />
                     <span>Acak Kode Otomatis</span>
                   </button>
                 </label>
-                <div className="relative">
-                  <Input
-                    type="text"
-                    required
-                    placeholder="contoh: DISKON50 / GAJIAN"
-                    value={formCode}
-                    onChange={(e) => setFormCode(e.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g, ''))}
-                    className="font-mono uppercase font-bold text-sm bg-surface-raised border-border tracking-wider"
-                  />
-                </div>
+                <Input
+                  type="text"
+                  required
+                  placeholder="contoh: DISKON50 / GAJIAN"
+                  value={formCode}
+                  onChange={(e) => setFormCode(e.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g, ''))}
+                  className="font-mono uppercase font-bold text-sm bg-surface-raised border-border tracking-wider rounded-xl h-10"
+                />
               </div>
 
-              {/* Description */}
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-foreground">Deskripsi Voucher (Opsional)</label>
                 <Input
@@ -596,20 +598,19 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
                   placeholder="contoh: Diskon launching 10% untuk produk AI"
                   value={formDescription}
                   onChange={(e) => setFormDescription(e.target.value)}
-                  className="text-xs bg-surface-raised border-border"
+                  className="text-xs bg-surface-raised border-border rounded-xl h-10"
                 />
               </div>
 
-              {/* Discount Type Radio / Tabs */}
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-foreground">Tipe Diskon *</label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => setFormDiscountType('percentage')}
-                    className={`p-3 rounded-lg border text-xs font-medium flex items-center justify-center gap-2 transition-all ${
+                    className={`p-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
                       formDiscountType === 'percentage'
-                        ? 'bg-primary/10 border-primary text-primary font-bold shadow-xs'
+                        ? 'bg-primary/10 border-primary text-primary shadow-xs'
                         : 'bg-surface-raised border-border text-foreground-muted hover:text-foreground'
                     }`}
                   >
@@ -620,9 +621,9 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
                   <button
                     type="button"
                     onClick={() => setFormDiscountType('fixed')}
-                    className={`p-3 rounded-lg border text-xs font-medium flex items-center justify-center gap-2 transition-all ${
+                    className={`p-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
                       formDiscountType === 'fixed'
-                        ? 'bg-primary/10 border-primary text-primary font-bold shadow-xs'
+                        ? 'bg-primary/10 border-primary text-primary shadow-xs'
                         : 'bg-surface-raised border-border text-foreground-muted hover:text-foreground'
                     }`}
                   >
@@ -632,7 +633,6 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
                 </div>
               </div>
 
-              {/* Discount Value & Max Discount */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-foreground">
@@ -645,19 +645,19 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
                     required
                     value={formDiscountValue}
                     onChange={(e) => setFormDiscountValue(Number(e.target.value))}
-                    className="text-sm font-mono bg-surface-raised border-border"
+                    className="text-xs font-mono bg-surface-raised border-border rounded-xl h-10"
                   />
                 </div>
 
                 {formDiscountType === 'percentage' ? (
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-foreground">Maks. Potongan Diskon (Rp)</label>
+                    <label className="text-xs font-semibold text-foreground">Maks. Potongan (Rp)</label>
                     <Input
                       type="number"
-                      placeholder="contoh: 50000 (kosong = tanpa batas)"
+                      placeholder="contoh: 50000"
                       value={formMaxDiscount}
                       onChange={(e) => setFormMaxDiscount(e.target.value)}
-                      className="text-sm font-mono bg-surface-raised border-border"
+                      className="text-xs font-mono bg-surface-raised border-border rounded-xl h-10"
                     />
                   </div>
                 ) : (
@@ -665,16 +665,15 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
                     <label className="text-xs font-semibold text-foreground">Batas Kuota Total</label>
                     <Input
                       type="number"
-                      placeholder="contoh: 500 (kosong = tanpa batas)"
+                      placeholder="contoh: 500"
                       value={formUsageLimit}
                       onChange={(e) => setFormUsageLimit(e.target.value)}
-                      className="text-sm font-mono bg-surface-raised border-border"
+                      className="text-xs font-mono bg-surface-raised border-border rounded-xl h-10"
                     />
                   </div>
                 )}
               </div>
 
-              {/* Min Order & Per-User Limit */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-foreground">Minimal Belanja (Rp)</label>
@@ -684,7 +683,7 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
                     placeholder="0 = tanpa syarat"
                     value={formMinOrderAmount}
                     onChange={(e) => setFormMinOrderAmount(Number(e.target.value))}
-                    className="text-sm font-mono bg-surface-raised border-border"
+                    className="text-xs font-mono bg-surface-raised border-border rounded-xl h-10"
                   />
                 </div>
 
@@ -696,27 +695,24 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
                     max="100"
                     value={formPerUserLimit}
                     onChange={(e) => setFormPerUserLimit(Number(e.target.value))}
-                    className="text-sm font-mono bg-surface-raised border-border"
+                    className="text-xs font-mono bg-surface-raised border-border rounded-xl h-10"
                   />
                 </div>
               </div>
 
-              {/* Expiry Date */}
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-foreground flex items-center justify-between">
                   <span>Tanggal Kedaluwarsa (Opsional)</span>
-                  <span className="text-[11px] text-foreground-muted">Kosongkan jika berlaku selamanya</span>
                 </label>
                 <Input
                   type="date"
                   value={formExpiresAt}
                   onChange={(e) => setFormExpiresAt(e.target.value)}
-                  className="text-xs bg-surface-raised border-border"
+                  className="text-xs bg-surface-raised border-border rounded-xl h-10"
                 />
               </div>
 
-              {/* Active Switch */}
-              <div className="pt-2">
+              <div className="pt-1">
                 <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-foreground">
                   <input
                     type="checkbox"
@@ -728,14 +724,13 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
                 </label>
               </div>
 
-              {/* Modal Actions */}
               <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-border">
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   onClick={() => setIsCreateModalOpen(false)}
-                  className="text-xs border-border"
+                  className="text-xs border-border rounded-xl h-9"
                 >
                   Batal
                 </Button>
@@ -744,7 +739,7 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
                   type="submit"
                   size="sm"
                   disabled={isSubmitting}
-                  className="text-xs font-semibold gap-1.5 px-4"
+                  className="text-xs font-semibold gap-1.5 px-4 rounded-xl h-9"
                 >
                   {isSubmitting ? (
                     <>

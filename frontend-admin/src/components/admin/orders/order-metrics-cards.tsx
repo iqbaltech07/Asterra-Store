@@ -23,64 +23,84 @@ export function OrderMetricsCards({ metrics, totalRevenue }: OrderMetricsCardsPr
   const effectiveRevenue = totalRevenue ?? metrics?.totalRevenue ?? 0;
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-5 gap-3.5">
-      <div className="animate-fade-up stagger-1 motion-card-interactive bg-surface border border-border rounded-xl p-4 shadow-xs">
-        <div className="flex items-center justify-between text-xs text-foreground-muted mb-1.5">
-          <span>Total Pesanan</span>
-          <FontAwesomeIcon icon={faBagShopping} className="w-4 h-4 text-foreground-muted" />
+    <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="animate-fade-up stagger-1 motion-card-interactive bg-surface border border-border rounded-2xl p-5 shadow-xs space-y-2">
+        <div className="flex items-center justify-between text-xs text-foreground-muted">
+          <span className="font-medium">Total Pesanan</span>
+          <div className="w-7 h-7 rounded-lg bg-foreground/5 flex items-center justify-center text-foreground-muted">
+            <FontAwesomeIcon icon={faBagShopping} className="w-3.5 h-3.5" />
+          </div>
         </div>
-        <div className="text-2xl font-bold text-foreground font-variant-numeric tabular-nums">
+        <div className="text-2xl sm:text-3xl font-extrabold text-foreground font-mono tracking-tight">
           <AnimatedNumber value={metrics?.total ?? 0} showDelta />
         </div>
-        <span className="text-[11px] text-foreground-muted">Semua riwayat transaksi</span>
+        <span className="text-[11px] text-foreground-muted block pt-1 border-t border-border/60">
+          Semua riwayat transaksi
+        </span>
       </div>
 
-      <div className="animate-fade-up stagger-2 motion-card-interactive bg-surface border border-border rounded-xl p-4 shadow-xs">
-        <div className="flex items-center justify-between text-xs text-foreground-muted mb-1.5">
-          <span>Menunggu Bayar</span>
-          <FontAwesomeIcon icon={faClock} className="w-4 h-4 text-status-warning" />
+      <div className="animate-fade-up stagger-2 motion-card-interactive bg-surface border border-border rounded-2xl p-5 shadow-xs space-y-2">
+        <div className="flex items-center justify-between text-xs text-foreground-muted">
+          <span className="font-medium">Menunggu Bayar</span>
+          <div className="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 border border-amber-200/60 flex items-center justify-center">
+            <FontAwesomeIcon icon={faClock} className="w-3.5 h-3.5" />
+          </div>
         </div>
-        <div className="text-2xl font-bold text-status-warning font-variant-numeric tabular-nums">
+        <div className="text-2xl sm:text-3xl font-extrabold text-amber-600 font-mono tracking-tight">
           <AnimatedNumber value={metrics?.pending ?? 0} showDelta />
         </div>
-        <span className="text-[11px] text-foreground-muted">Belum diselesaikan</span>
+        <span className="text-[11px] text-foreground-muted block pt-1 border-t border-border/60">
+          Belum diselesaikan
+        </span>
       </div>
 
-      <div className="animate-fade-up stagger-3 motion-card-interactive bg-surface border border-border rounded-xl p-4 shadow-xs">
-        <div className="flex items-center justify-between text-xs text-foreground-muted mb-1.5">
-          <span>Sedang Diproses</span>
-          <FontAwesomeIcon icon={faClock} className="w-4 h-4 text-primary" />
+      <div className="animate-fade-up stagger-3 motion-card-interactive bg-surface border border-border rounded-2xl p-5 shadow-xs space-y-2">
+        <div className="flex items-center justify-between text-xs text-foreground-muted">
+          <span className="font-medium">Sedang Diproses</span>
+          <div className="w-7 h-7 rounded-lg bg-blue-50 text-primary border border-blue-200/60 flex items-center justify-center">
+            <FontAwesomeIcon icon={faClock} className="w-3.5 h-3.5" />
+          </div>
         </div>
-        <div className="text-2xl font-bold text-primary font-variant-numeric tabular-nums">
+        <div className="text-2xl sm:text-3xl font-extrabold text-primary font-mono tracking-tight">
           <AnimatedNumber value={metrics?.processing ?? 0} showDelta />
         </div>
-        <span className="text-[11px] text-foreground-muted">Perlu pengiriman</span>
+        <span className="text-[11px] text-foreground-muted block pt-1 border-t border-border/60">
+          Perlu pengiriman
+        </span>
       </div>
 
-      <div className="animate-fade-up stagger-4 motion-card-interactive bg-surface border border-border rounded-xl p-4 shadow-xs">
-        <div className="flex items-center justify-between text-xs text-foreground-muted mb-1.5">
-          <span>Pesanan Selesai</span>
-          <FontAwesomeIcon icon={faCircleCheck} className="w-4 h-4 text-status-success" />
+      <div className="animate-fade-up stagger-4 motion-card-interactive bg-surface border border-border rounded-2xl p-5 shadow-xs space-y-2">
+        <div className="flex items-center justify-between text-xs text-foreground-muted">
+          <span className="font-medium">Pesanan Selesai</span>
+          <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200/60 flex items-center justify-center">
+            <FontAwesomeIcon icon={faCircleCheck} className="w-3.5 h-3.5" />
+          </div>
         </div>
-        <div className="text-2xl font-bold text-status-success font-variant-numeric tabular-nums">
+        <div className="text-2xl sm:text-3xl font-extrabold text-emerald-600 font-mono tracking-tight">
           <AnimatedNumber value={metrics?.completed ?? 0} showDelta />
         </div>
-        <span className="text-[11px] text-foreground-muted">Berhasil terkirim</span>
+        <span className="text-[11px] text-foreground-muted block pt-1 border-t border-border/60">
+          Berhasil terkirim
+        </span>
       </div>
 
-      <div className="animate-fade-up stagger-5 motion-card-interactive bg-surface border border-border rounded-xl p-4 col-span-2 lg:col-span-1 shadow-xs">
-        <div className="flex items-center justify-between text-xs text-foreground-muted mb-1.5">
-          <span>Total Omset</span>
-          <FontAwesomeIcon icon={faDollarSign} className="w-4 h-4 text-status-success" />
+      <div className="animate-fade-up stagger-5 motion-card-interactive bg-surface border border-border rounded-2xl p-5 shadow-xs col-span-2 lg:col-span-1 space-y-2">
+        <div className="flex items-center justify-between text-xs text-foreground-muted">
+          <span className="font-medium">Total Omset</span>
+          <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200/60 flex items-center justify-center">
+            <FontAwesomeIcon icon={faDollarSign} className="w-3.5 h-3.5" />
+          </div>
         </div>
-        <div className="text-xl sm:text-2xl font-bold text-foreground truncate font-variant-numeric tabular-nums">
+        <div className="text-xl sm:text-2xl font-extrabold text-foreground truncate font-mono tracking-tight">
           <AnimatedNumber
             value={effectiveRevenue}
             formatter={(v) => `Rp ${Math.round(v).toLocaleString('id-ID')}`}
             showDelta
           />
         </div>
-        <span className="text-[11px] text-status-success font-medium">Transaksi tervalidasi</span>
+        <span className="text-[11px] text-emerald-600 font-medium block pt-1 border-t border-border/60">
+          Transaksi tervalidasi
+        </span>
       </div>
     </div>
   );

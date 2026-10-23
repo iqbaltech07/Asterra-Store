@@ -156,7 +156,7 @@ function SalesLoginContent() {
         </Link>
       </div>
 
-      <Card data-gsap="login-card" className="w-full max-w-md border-border bg-surface shadow-editorial animate-fade-up">
+      <Card data-gsap="login-card" className="w-full max-w-md border-border bg-surface shadow-editorial">
         <CardHeader className="space-y-2 text-center pb-6 pt-6">
           <div data-gsap="login-logo" className="flex justify-center mb-2">
             <AsterraLogo variant="light-bg" size="md" />
@@ -192,7 +192,7 @@ function SalesLoginContent() {
               </div>
             )}
 
-            <div data-gsap="login-input" className="space-y-1.5 animate-fade-up stagger-1">
+            <div data-gsap="login-input" className="space-y-1.5">
               <label
                 htmlFor="sales-email"
                 className="text-xs font-medium text-foreground flex items-center gap-1.5"
@@ -212,7 +212,7 @@ function SalesLoginContent() {
               />
             </div>
 
-            <div data-gsap="login-input" className="space-y-1.5 animate-fade-up stagger-2">
+            <div data-gsap="login-input" className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <label
                   htmlFor="sales-password"
@@ -239,7 +239,7 @@ function SalesLoginContent() {
             <Button
               type="submit"
               data-gsap="login-button"
-              className="w-full gap-2 font-bold h-10 text-xs motion-btn-interactive animate-fade-up stagger-3"
+              className="w-full gap-2 font-bold h-10 text-xs"
               disabled={loginMutation.isPending}
             >
               {loginMutation.isPending ? (
@@ -250,7 +250,7 @@ function SalesLoginContent() {
               ) : (
                 <>
                   <FontAwesomeIcon icon={faLock} className="text-xs" />
-                  <span>Masuk Portal Mitra Sales</span>
+                  <span>Buka Portal Sales</span>
                 </>
               )}
             </Button>

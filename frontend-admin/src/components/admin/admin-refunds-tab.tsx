@@ -4,6 +4,12 @@ import React, { useState } from 'react';
 import {
   MessageSquare,
   Check,
+  CheckCircle2,
+  Clock,
+  AlertTriangle,
+  X,
+  Send,
+  ShieldCheck,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -94,33 +100,33 @@ export function AdminRefundsTab({ onNotify }: AdminRefundsTabProps) {
   return (
     <div className="space-y-6">
       {/* 1. Header */}
-      <div className="bg-surface border border-border rounded-xl p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-surface border border-border rounded-2xl p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider bg-primary/15 text-primary border border-primary/25">
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-primary/10 text-primary border border-primary/20">
               Issue Resolution Center
             </span>
-            <span className="text-[11px] text-foreground-muted">
+            <span className="text-xs text-foreground-muted font-mono">
               Garansi Kepuasan Lisensi Digital 100%
             </span>
           </div>
-          <h2 className="text-lg font-bold text-foreground tracking-tight">
+          <h2 className="text-xl font-bold text-foreground tracking-tight">
             Penanganan Komplain, Garansi & Refund Dana
           </h2>
-          <p className="text-xs text-foreground-muted mt-0.5">
+          <p className="text-xs text-foreground-muted mt-1">
             Tinjau klaim garansi pembeli, verifikasi kendala akun, kirim akun pengganti baru, atau setujui pengembalian dana konsumen.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className="text-xs text-status-success border-status-success/30 font-semibold">
+          <Badge variant="outline" className="text-xs text-emerald-700 bg-emerald-50 border-emerald-200/60 font-semibold px-3 py-1 rounded-full font-mono">
             {tickets.filter((t) => t.status === 'Resolved').length} Tiket Selesai
           </Badge>
         </div>
       </div>
 
       {/* 2. Filter Pills */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
         {(['All', 'Pending', 'Reviewing', 'Approved', 'Rejected', 'Resolved'] as const).map((st) => {
           const count = st === 'All' ? tickets.length : tickets.filter((t) => t.status === st).length;
 
@@ -129,9 +135,9 @@ export function AdminRefundsTab({ onNotify }: AdminRefundsTabProps) {
               key={st}
               type="button"
               onClick={() => setStatusFilter(st)}
-              className={`px-3 py-1.5 rounded-lg font-medium transition-colors whitespace-nowrap flex items-center gap-1.5 ${
+              className={`px-3.5 py-1.5 rounded-xl font-semibold transition-all whitespace-nowrap flex items-center gap-2 ${
                 statusFilter === st
-                  ? 'bg-primary text-white shadow-xs'
+                  ? 'bg-foreground text-background shadow-xs'
                   : 'bg-surface border border-border text-foreground-muted hover:text-foreground'
               }`}
             >
@@ -147,69 +153,79 @@ export function AdminRefundsTab({ onNotify }: AdminRefundsTabProps) {
       </div>
 
       {/* 3. Tickets Table */}
-      <div className="bg-surface border border-border rounded-xl overflow-hidden shadow-xs">
+      <div className="bg-surface border border-border rounded-2xl overflow-hidden shadow-xs">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-surface-raised/80 border-b border-border text-foreground-muted text-[11px] uppercase tracking-wider font-semibold">
+            <thead className="bg-surface-raised border-b border-border text-foreground-muted text-[11px] uppercase tracking-wider font-semibold">
               <tr>
-                <th className="py-3 px-4">Ticket ID</th>
-                <th className="py-3 px-4">Pelanggan</th>
-                <th className="py-3 px-4">Order ID & Produk</th>
-                <th className="py-3 px-4">Alasan Komplain</th>
-                <th className="py-3 px-4 text-right">Nominal</th>
-                <th className="py-3 px-4 text-center">Status</th>
-                <th className="py-3 px-4 text-right">Aksi</th>
+                <th className="py-3 px-4 font-semibold">ID Tiket & Waktu</th>
+                <th className="py-3 px-4 font-semibold">Pelanggan</th>
+                <th className="py-3 px-4 font-semibold">Produk & Nilai</th>
+                <th className="py-3 px-4 font-semibold">Alasan Komplain</th>
+                <th className="py-3 px-4 font-semibold text-center">Status</th>
+                <th className="py-3 px-4 font-semibold text-right">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {filteredTickets.map((t) => (
-                <tr key={t.id} className="hover:bg-surface-raised/40 transition-colors">
-                  <td className="py-3.5 px-4 font-mono font-bold text-foreground">
-                    {t.id}
-                    <span className="text-[10px] text-foreground-muted block font-normal">{t.submittedAt}</span>
+                <tr key={t.id} className="hover:bg-surface-raised/60 transition-colors">
+                  <td className="py-3.5 px-4 font-mono">
+                    <span className="font-bold text-foreground text-xs block">{t.id}</span>
+                    <span className="text-[10px] text-foreground-muted block">{t.submittedAt}</span>
+                    <span className="text-[10px] text-primary block mt-0.5">{t.orderId}</span>
                   </td>
                   <td className="py-3.5 px-4">
-                    <span className="font-semibold text-foreground block">{t.customerName}</span>
+                    <span className="font-semibold text-foreground text-xs block">{t.customerName}</span>
                     <span className="text-[10px] text-foreground-muted font-mono">{t.customerWhatsapp}</span>
                   </td>
                   <td className="py-3.5 px-4">
-                    <span className="font-semibold text-foreground block truncate max-w-[180px]">{t.product}</span>
-                    <span className="font-mono text-[10px] text-primary">{t.orderId}</span>
+                    <span className="font-medium text-foreground block">{t.product}</span>
+                    <span className="font-bold text-foreground font-mono text-[11px]">Rp {t.amount.toLocaleString('id-ID')}</span>
                   </td>
-                  <td className="py-3.5 px-4 text-foreground-muted truncate max-w-[220px]">
+                  <td className="py-3.5 px-4 text-foreground-muted max-w-[260px] truncate leading-relaxed">
                     {t.reason}
-                  </td>
-                  <td className="py-3.5 px-4 text-right font-bold text-primary font-mono">
-                    Rp {t.amount.toLocaleString('id-ID')}
                   </td>
                   <td className="py-3.5 px-4 text-center">
                     <Badge
                       variant="outline"
-                      className={`text-[10px] font-semibold ${
+                      className={`text-[10px] font-semibold uppercase ${
                         t.status === 'Resolved'
-                          ? 'bg-status-success/15 text-status-success border-status-success/30'
-                          : t.status === 'Reviewing'
-                          ? 'bg-status-warning/15 text-status-warning border-status-warning/30'
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200/60'
                           : t.status === 'Pending'
-                          ? 'bg-primary/15 text-primary border-primary/30'
-                          : 'bg-status-error/15 text-status-error border-status-error/30'
+                          ? 'bg-amber-50 text-amber-700 border-amber-200/60'
+                          : t.status === 'Approved'
+                          ? 'bg-primary/10 text-primary border-primary/20'
+                          : t.status === 'Reviewing'
+                          ? 'bg-blue-50 text-blue-700 border-blue-200/60'
+                          : 'bg-rose-50 text-rose-700 border-rose-200/60'
                       }`}
                     >
                       {t.status}
                     </Badge>
                   </td>
                   <td className="py-3.5 px-4 text-right">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        setSelectedTicket(t);
-                        setInternalNoteInput(t.internalNote || '');
-                      }}
-                      className="h-7 px-2.5 text-xs border-border"
-                    >
-                      Proses Tiket
-                    </Button>
+                    <div className="flex items-center justify-end gap-1.5">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setSelectedTicket(t);
+                          setInternalNoteInput(t.internalNote || '');
+                        }}
+                        className="h-8 px-2.5 text-xs border-border rounded-xl font-semibold"
+                      >
+                        Kelola Tiket
+                      </Button>
+                      <a
+                        href={`https://wa.me/${t.customerWhatsapp.replace(/\D/g, '')}?text=Halo%20Kak%20${encodeURIComponent(t.customerName)},%20Customer%20Support%20Asterra%20Store%20terkait%20tiket%20${t.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-1.5 rounded-xl border border-border text-foreground-muted hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+                        title="Chat via WhatsApp"
+                      >
+                        <MessageSquare className="w-3.5 h-3.5" />
+                      </a>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -218,85 +234,80 @@ export function AdminRefundsTab({ onNotify }: AdminRefundsTabProps) {
         </div>
       </div>
 
-      {/* 4. Ticket Resolution Drawer / Modal */}
+      {/* 4. Modal Penanganan Tiket */}
       {selectedTicket && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-surface border border-border rounded-xl w-full max-w-lg shadow-2xl p-6 space-y-4 text-xs">
-            <div className="flex items-center justify-between border-b border-border pb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-surface border border-border rounded-2xl w-full max-w-lg shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto text-xs">
+            <div className="flex items-center justify-between border-b border-border pb-3.5">
               <div>
-                <span className="font-mono text-[10px] text-primary font-bold">{selectedTicket.id}</span>
-                <h3 className="font-bold text-sm text-foreground">Detail Klaim Garansi & Komplain</h3>
+                <h3 className="font-bold text-sm text-foreground">Kelola Tiket Garansi: {selectedTicket.id}</h3>
+                <span className="text-[11px] text-foreground-muted font-mono">Pesanan: {selectedTicket.orderId}</span>
               </div>
               <button
-                type="button"
                 onClick={() => setSelectedTicket(null)}
-                className="text-foreground-muted hover:text-foreground p-1"
+                className="text-foreground-muted hover:text-foreground p-1 rounded-lg"
               >
                 ✕
               </button>
             </div>
 
-            {/* Ticket Info */}
-            <div className="p-3 rounded-lg bg-surface-raised border border-border space-y-2">
+            <div className="space-y-3 bg-surface-raised p-4 rounded-xl border border-border">
               <div className="flex items-center justify-between">
-                <span className="text-foreground-muted">Pelanggan:</span>
-                <span className="font-semibold text-foreground">{selectedTicket.customerName} ({selectedTicket.customerWhatsapp})</span>
+                <span className="text-foreground-muted font-medium">Pelanggan:</span>
+                <span className="font-bold text-foreground">{selectedTicket.customerName} ({selectedTicket.customerWhatsapp})</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-foreground-muted">Produk Terkait:</span>
-                <span className="font-semibold text-foreground">{selectedTicket.product}</span>
+                <span className="text-foreground-muted font-medium">Produk:</span>
+                <span className="font-bold text-foreground">{selectedTicket.product}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-foreground-muted">Nilai Pembelian:</span>
-                <span className="font-bold text-primary font-mono">Rp {selectedTicket.amount.toLocaleString('id-ID')}</span>
+                <span className="text-foreground-muted font-medium">Nilai Transaksi:</span>
+                <span className="font-bold text-foreground font-mono">Rp {selectedTicket.amount.toLocaleString('id-ID')}</span>
               </div>
               <div className="pt-2 border-t border-border">
-                <span className="text-foreground-muted block mb-0.5">Kendala yang Dilaporkan:</span>
-                <p className="text-foreground font-medium bg-surface p-2 rounded border border-border">
-                  &quot;{selectedTicket.reason}&quot;
+                <span className="text-foreground-muted block mb-1 font-medium">Keluhan Konsumen:</span>
+                <p className="text-foreground bg-surface p-3 rounded-lg border border-border leading-relaxed">
+                  {selectedTicket.reason}
                 </p>
               </div>
             </div>
 
-            {/* Staff Internal Note */}
             <div>
-              <label className="font-semibold text-foreground block mb-1">Catatan Internal Tim Admin</label>
+              <label className="font-semibold text-foreground block mb-1">Catatan Internal / Solusi Tiket:</label>
               <Input
-                placeholder="Tuliskan tindakan yang diambil (misal: 'Sudah dikirim akun baru via WA')..."
+                type="text"
+                placeholder="Catatan penanganan (contoh: Akun baru telah dikirim via WA)"
                 value={internalNoteInput}
                 onChange={(e) => setInternalNoteInput(e.target.value)}
-                className="bg-surface-raised border-border text-xs"
+                className="bg-surface-raised border-border text-xs rounded-xl h-10"
               />
             </div>
 
-            {/* Action Buttons */}
-            <div className="pt-3 border-t border-border flex flex-wrap items-center justify-between gap-2">
-              <a
-                href={`https://wa.me/${selectedTicket.customerWhatsapp.replace(/\D/g, '')}?text=Halo%20Kak%20${encodeURIComponent(selectedTicket.customerName)},%20Customer%20Support%20Asterra%20Store%20telah%20meninjau%20tiket%20garansi%20${selectedTicket.id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-surface-raised text-foreground font-medium hover:bg-surface transition-colors"
-              >
-                <MessageSquare className="w-3.5 h-3.5 text-status-success" />
-                <span>Chat WA Pembeli</span>
-              </a>
-
-              <div className="flex items-center gap-2">
+            <div className="space-y-2 pt-2 border-t border-border">
+              <span className="font-semibold text-foreground block">Ubah Status Tiket:</span>
+              <div className="grid grid-cols-3 gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleUpdateStatus(selectedTicket.id, 'Reviewing')}
+                  className="rounded-xl h-9 text-xs"
+                >
+                  Sedang Ditinjau
+                </Button>
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={() => handleUpdateStatus(selectedTicket.id, 'Approved')}
-                  className="text-status-warning border-status-warning/40 hover:bg-status-warning/10"
+                  className="rounded-xl h-9 text-xs text-primary"
                 >
-                  Setujui Refund
+                  Setujui Garansi
                 </Button>
                 <Button
                   size="sm"
                   onClick={() => handleUpdateStatus(selectedTicket.id, 'Resolved')}
-                  className="bg-status-success text-white hover:bg-status-success/90"
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl h-9 text-xs font-semibold"
                 >
-                  <Check className="w-3.5 h-3.5 mr-1" />
-                  Selesai (Garansi Diberikan)
+                  Selesai (Resolved)
                 </Button>
               </div>
             </div>

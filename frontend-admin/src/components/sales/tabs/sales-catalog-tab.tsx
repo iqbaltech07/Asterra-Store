@@ -71,39 +71,38 @@ export function SalesCatalogTab({
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-lg font-bold text-foreground">Katalog Produk & Estimasi Komisi</h2>
-          <p className="text-xs text-foreground-muted">
-            Pilih produk, dapatkan link referral otomatis ({partnerCode}), dan nikmati komisi langsung dari setiap transaksi yang berhasil.
+          <h2 className="text-xl font-extrabold text-foreground tracking-tight">Katalog Produk & Komisi</h2>
+          <p className="text-xs text-foreground-muted mt-0.5">
+            Pilih produk, dapatkan link referral otomatis (<span className="font-mono text-primary font-bold">{partnerCode}</span>), dan nikmati komisi langsung dari setiap transaksi yang berhasil.
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className="text-xs font-semibold px-3 py-1.5 text-status-success border-status-success/30 bg-status-success/5 gap-1.5">
+          <Badge variant="success" className="text-xs font-semibold px-3 py-1 gap-1.5">
             <Percent className="w-3.5 h-3.5" />
-            <span>Skema Anda: {partnerRate}% dari Profit Transaksi</span>
+            <span>Skema: {partnerRate}% dari Profit Transaksi</span>
           </Badge>
         </div>
       </div>
 
       {/* Transparansi Info Banner */}
-      <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-        <div className="flex items-start gap-3">
-          <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5">
+      <div className="rounded-2xl border border-blue-200/70 bg-blue-50/50 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-xs">
+        <div className="flex items-start gap-3.5">
+          <div className="w-9 h-9 rounded-xl bg-blue-100 text-[#2563EB] flex items-center justify-center shrink-0 mt-0.5">
             <Sparkles className="w-4 h-4" />
           </div>
           <div className="space-y-0.5">
-            <h4 className="font-semibold text-foreground">Prinsip Komisi Transparan Asterra Store</h4>
-            <p className="text-foreground-muted text-[11px] leading-relaxed">
-              Komisi dihitung berdasarkan <strong>Profit Bersih Transaksi</strong> (margin harga jual dikurangi biaya modal produk), bukan omzet kotor. Dengan skema {partnerRate}%, Anda mendapatkan bagian profit nyata tanpa potongan tersembunyi.
+            <h4 className="font-bold text-foreground">Prinsip Komisi Transparan Asterra Store</h4>
+            <p className="text-foreground-muted text-xs leading-relaxed">
+              Komisi dihitung berdasarkan <strong>Profit Bersih Transaksi</strong> (margin harga jual dikurangi biaya modal produk upstream), bukan omzet kotor. Dengan skema {partnerRate}%, Anda mendapatkan bagian profit nyata tanpa potongan tersembunyi.
             </p>
           </div>
         </div>
         <div className="shrink-0 flex items-center gap-2">
-          <span className="text-[11px] text-foreground-muted">Butuh copywriting?</span>
           <Button
             variant="outline"
             size="sm"
             onClick={() => onTabChange('sales-links')}
-            className="text-xs h-8 border-primary/30 text-primary hover:bg-primary/10 gap-1 font-semibold"
+            className="text-xs h-8 bg-white border-blue-200 text-[#2563EB] hover:bg-blue-50 gap-1 font-semibold rounded-xl"
           >
             <span>Materi Promosi</span>
             <ArrowRight className="w-3 h-3" />
@@ -114,22 +113,22 @@ export function SalesCatalogTab({
       {/* Search & Category Filter Bar */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <Search className="w-4 h-4 text-foreground-muted absolute left-3 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-foreground-muted absolute left-3.5 top-1/2 -translate-y-1/2" />
           <Input
             placeholder="Cari produk digital (misal: Canva, Netflix, Spotify, ChatGPT)..."
             value={productSearch}
             onChange={(e) => setProductSearch(e.target.value)}
-            className="pl-9 bg-surface border-border text-xs h-10"
+            className="pl-10 bg-white border-border text-xs h-10"
           />
         </div>
-        <div className="flex items-center gap-2 overflow-x-auto pb-1">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
           <Button
             variant={selectedCategory === 'all' ? 'default' : 'outline'}
             size="sm"
             onClick={() => setSelectedCategory('all')}
-            className="text-xs h-10 shrink-0 font-medium"
+            className="text-xs h-10 shrink-0 font-medium rounded-xl"
           >
-            Semua Kategori ({products.length})
+            Semua ({products.length})
           </Button>
           {categories.map((cat) => (
             <Button
@@ -137,7 +136,7 @@ export function SalesCatalogTab({
               variant={selectedCategory === cat ? 'default' : 'outline'}
               size="sm"
               onClick={() => setSelectedCategory(cat)}
-              className="text-xs h-10 shrink-0 font-medium"
+              className="text-xs h-10 shrink-0 font-medium rounded-xl"
             >
               {cat}
             </Button>
@@ -149,16 +148,16 @@ export function SalesCatalogTab({
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="h-56 bg-surface rounded-xl border border-border animate-pulse p-4 space-y-3">
-              <div className="h-4 w-24 bg-foreground/10 rounded" />
-              <div className="h-6 w-3/4 bg-foreground/15 rounded" />
-              <div className="h-14 w-full bg-foreground/10 rounded" />
-              <div className="h-9 w-full bg-foreground/10 rounded mt-4" />
+            <div key={i} className="h-56 bg-surface rounded-2xl border border-border animate-pulse p-5 space-y-3">
+              <div className="h-4 w-24 bg-gray-200 rounded" />
+              <div className="h-6 w-3/4 bg-gray-200 rounded" />
+              <div className="h-14 w-full bg-gray-200 rounded" />
+              <div className="h-9 w-full bg-gray-200 rounded mt-4" />
             </div>
           ))}
         </div>
       ) : filteredProducts.length === 0 ? (
-        <div className="bg-surface border border-border rounded-xl p-12 text-center space-y-3">
+        <div className="bg-surface border border-border rounded-2xl p-12 text-center space-y-3">
           <Package className="w-10 h-10 text-foreground-muted mx-auto" />
           <h3 className="font-bold text-sm text-foreground">Tidak Ada Produk Ditemukan</h3>
           <p className="text-xs text-foreground-muted max-w-sm mx-auto">
@@ -180,44 +179,44 @@ export function SalesCatalogTab({
             return (
               <div
                 key={p.id}
-                className="bg-surface border border-border rounded-xl p-4 shadow-xs flex flex-col justify-between space-y-4 hover:border-primary/40 hover:shadow-sm transition-all group"
+                className="bg-surface border border-border rounded-2xl p-5 shadow-xs flex flex-col justify-between space-y-4 hover:border-[#171717]/30 hover:shadow-card-hover transition-all group"
               >
                 <div className="space-y-3">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-[10px] font-bold text-primary tracking-wider uppercase bg-primary/10 px-2 py-0.5 rounded-md">
+                    <span className="text-[10px] font-bold text-[#2563EB] tracking-wider uppercase bg-blue-50 border border-blue-200/80 px-2.5 py-0.5 rounded-full">
                       {catName}
                     </span>
                     <Badge
-                      variant="outline"
-                      className="text-[10px] text-status-success border-status-success/30 bg-status-success/10 font-bold px-2 py-0.5"
+                      variant="success"
+                      className="text-[10px] font-bold px-2.5 py-0.5"
                     >
                       Komisi: Rp {commissionRp.toLocaleString('id-ID')}
                     </Badge>
                   </div>
 
-                  <h4 className="font-bold text-sm text-foreground group-hover:text-primary transition-colors line-clamp-2">
+                  <h4 className="font-bold text-sm text-foreground group-hover:text-[#2563EB] transition-colors line-clamp-2">
                     {p.name}
                   </h4>
 
-                  <div className="bg-surface-raised border border-border/80 rounded-lg p-2.5 space-y-1.5 text-xs">
+                  <div className="bg-[#F8F9FB] border border-border/80 rounded-xl p-3 space-y-2 text-xs">
                     <div className="flex items-center justify-between">
                       <span className="text-foreground-muted text-[11px]">Harga Pelanggan:</span>
-                      <span className="font-bold text-foreground">
+                      <span className="font-bold text-foreground font-mono">
                         {p.priceFormatted || `Rp ${p.price.toLocaleString('id-ID')}`}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-foreground-muted text-[11px]">Estimasi Profit Bersih:</span>
+                      <span className="text-foreground-muted text-[11px]">Estimasi Profit:</span>
                       <span className="font-medium text-foreground-muted font-mono">
                         Rp {estimatedProfit.toLocaleString('id-ID')}
                       </span>
                     </div>
-                    <div className="pt-1.5 border-t border-border flex items-center justify-between">
-                      <span className="font-semibold text-status-success text-[11px] flex items-center gap-1">
-                        <TrendingUp className="w-3 h-3" />
+                    <div className="pt-2 border-t border-border flex items-center justify-between">
+                      <span className="font-semibold text-[#16A36A] text-[11px] flex items-center gap-1">
+                        <TrendingUp className="w-3.5 h-3.5" />
                         <span>Potensi Jual 10 Unit:</span>
                       </span>
-                      <span className="font-bold text-status-success font-mono">
+                      <span className="font-bold text-[#16A36A] font-mono">
                         Rp {(commissionRp * 10).toLocaleString('id-ID')}
                       </span>
                     </div>
@@ -228,11 +227,11 @@ export function SalesCatalogTab({
                   <Button
                     size="sm"
                     onClick={() => handleCopy(productUrl, `prod-${p.id}`)}
-                    className="flex-1 text-xs h-9 gap-1.5 font-semibold"
+                    className="flex-1 text-xs h-9 gap-1.5 font-semibold rounded-xl"
                   >
                     {copiedLink === `prod-${p.id}` ? (
                       <>
-                        <Check className="w-3.5 h-3.5 text-status-success" />
+                        <Check className="w-3.5 h-3.5 text-[#16A36A]" />
                         <span>Tersalin!</span>
                       </>
                     ) : (
@@ -251,17 +250,17 @@ export function SalesCatalogTab({
                     )}%20di%20Asterra%20Store:%20${encodeURIComponent(productUrl)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="h-9 px-3 rounded-lg border border-border bg-surface-raised hover:bg-status-success/10 hover:border-status-success/30 text-foreground hover:text-status-success flex items-center justify-center transition-colors shrink-0"
+                    className="h-9 px-3 rounded-xl border border-border bg-white hover:bg-emerald-50 hover:border-emerald-300 text-foreground-muted hover:text-[#16A36A] flex items-center justify-center transition-colors shrink-0 shadow-xs"
                     title="Bagikan ke WhatsApp"
                   >
-                    <Send className="w-3.5 h-3.5 text-status-success" />
+                    <Send className="w-3.5 h-3.5" />
                   </a>
 
                   <a
                     href={productUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="h-9 px-3 rounded-lg border border-border bg-surface-raised hover:bg-surface-raised/80 text-foreground-muted hover:text-foreground flex items-center justify-center transition-colors shrink-0"
+                    className="h-9 px-3 rounded-xl border border-border bg-white hover:bg-surface-secondary text-foreground-muted hover:text-foreground flex items-center justify-center transition-colors shrink-0 shadow-xs"
                     title="Buka Halaman Produk"
                   >
                     <ExternalLink className="w-3.5 h-3.5" />
