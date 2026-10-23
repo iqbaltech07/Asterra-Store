@@ -97,10 +97,11 @@ def delete_admin_user(admin_id: str):
 def get_admin_logs(
     actor: Optional[str] = None,
     order_id: Optional[str] = None,
+    since: Optional[str] = None,
     page: int = 1,
     limit: int = 50,
 ):
-    result = AuditLogService.get_logs(actor=actor, order_id=order_id, page=page, limit=limit)
+    result = AuditLogService.get_logs(actor=actor, order_id=order_id, since=since, page=page, limit=limit)
     return {
         "success": True,
         "data": result["logs"],

@@ -164,7 +164,7 @@ function AdminPageContent() {
   // Navigation tab & visited tabs cache (initialized from URL or default)
   const initialUrlTab = getTabFromUrl();
   const [activeTab, setActiveTab] = useState<AdminTab>(initialUrlTab || 'dashboard');
-  const [visitedTabs, setVisitedTabs] = useState<Set<AdminTab>>(() => new Set(['dashboard', initialUrlTab || 'dashboard']));
+  const [visitedTabs, setVisitedTabs] = useState<Set<AdminTab>>(() => new Set(['dashboard', 'orders', initialUrlTab || 'dashboard']));
   const [isSidebarMobileOpen, setIsSidebarMobileOpen] = useState(false);
 
   const handleTabChange = useCallback((newTab: AdminTab) => {

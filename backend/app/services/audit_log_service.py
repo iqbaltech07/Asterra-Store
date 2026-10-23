@@ -166,13 +166,21 @@ class AuditLogService:
         cls,
         actor: Optional[str] = None,
         order_id: Optional[str] = None,
+        since: Optional[str] = None,
         page: int = 1,
         limit: int = 50,
     ) -> Dict[str, Any]:
         logs = cls._load_raw_logs()
 
-        # Sort newest first
-        sorted_logs = sorted(logs, key=lambda x: str(x.get("created_at") or x.get("createdAt") or ""), reverse=True)
+        if since and since.strip():
+            clean_since = since.strip()
+            # Filter logs strictly after clean_since
+            logs = [l for l in logs if str(l.get("created_at") or l.get("createdAt") or "") > clean_since]
+            # Chronological ascending sort (oldest first) so offline events replay in natural historical order
+            sorted_logs = sorted(logs, key=lambda x: str(x.get("created_at") or x.get("createdAt") or ""))
+        else:
+            # Sort newest first for default UI view
+            sorted_logs = sorted(logs, key=lambda x: str(x.get("created_at") or x.get("createdAt") or ""), reverse=True)
 
         if actor and actor.strip() and actor != "all":
             act = actor.lower().strip()

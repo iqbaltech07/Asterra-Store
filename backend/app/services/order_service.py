@@ -681,6 +681,23 @@ class OrderService:
         else:
             _execute_post_order_tasks()
 
+        # Record persistent audit log for order creation
+        try:
+            from app.services.audit_log_service import AuditLogService
+            AuditLogService.record_log(
+                order_id=order_id,
+                actor="customer",
+                action="order_created",
+                previous_status=None,
+                new_status="pending",
+                notes=f"Pesanan {order_id} dibuat dengan total Rp {total_amount:,.0f}".replace(",", "."),
+                customer_name=customer_name,
+                customer_email=customer_email,
+                created_at=now.isoformat() + "Z",
+            )
+        except Exception as log_err:
+            print(f"[OrderService] Audit log error on create_order: {log_err}")
+
         # Broadcast real-time order creation event to connected Admin SSE subscribers
         try:
             from app.services.realtime_broadcaster import RealtimeBroadcaster
@@ -818,7 +835,7 @@ class OrderService:
             except Exception as email_err:
                 print(f"[OrderService] Customer email notification dispatch note: {email_err}")
 
-        # Broadcast real-time status update to connected Admin SSE subscribers
+        # Broadcast real-time status update to connected SSE subscribers
         try:
             from app.services.realtime_broadcaster import RealtimeBroadcaster
             if new_status in ["completed", "paid", "settlement"]:
@@ -834,6 +851,30 @@ class OrderService:
                     },
                     target_role="admin",
                 )
+            if new_status in ["cancelled", "expired", "batal"]:
+                RealtimeBroadcaster.broadcast(
+                    event="order:cancelled",
+                    data={
+                        "order_id": clean_id,
+                        "id": clean_id,
+                        "status": "cancelled",
+                        "previous_status": prev_st,
+                        "updated_at": now_dt.isoformat() + "Z",
+                    },
+                    target_role="all",
+                )
+            elif new_status in ["completed", "selesai"]:
+                RealtimeBroadcaster.broadcast(
+                    event="order:completed",
+                    data={
+                        "order_id": clean_id,
+                        "id": clean_id,
+                        "status": "completed",
+                        "previous_status": prev_st,
+                        "updated_at": now_dt.isoformat() + "Z",
+                    },
+                    target_role="all",
+                )
             RealtimeBroadcaster.broadcast(
                 event="order:status_changed",
                 data={
@@ -841,11 +882,10 @@ class OrderService:
                     "id": clean_id,
                     "status": new_status,
                     "previous_status": prev_st,
-                    "customer_name": order_cust_name,
                     "notes": notes,
                     "updated_at": now_dt.isoformat() + "Z",
                 },
-                target_role="admin",
+                target_role="all",
             )
         except Exception as b_err:
             print(f"[OrderService] Realtime broadcast error on update_status: {b_err}")

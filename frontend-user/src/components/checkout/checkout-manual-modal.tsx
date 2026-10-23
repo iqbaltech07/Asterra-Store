@@ -168,7 +168,12 @@ export function CheckoutManualModal({
         if (isOrderPaid) {
           setIsPaidSuccess(true);
           setPaidStatusLabel(status === 'completed' ? 'Selesai' : 'Sedang Diproses');
-          notificationSound.play('payment_verified');
+          if (status === 'completed' || status === 'selesai') {
+            notificationSound.play('selesai', {
+              orderId: data.orderId,
+              eventId: `${data.orderId}:completed`,
+            });
+          }
         }
       } catch {
         // Silently catch polling errors to prevent UI interruptions

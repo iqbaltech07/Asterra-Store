@@ -34,12 +34,15 @@ export function AdminOrdersTab() {
     }, 4000);
   };
 
-  // Sync initial mute and audio unlock states
+  // Sync initial mute and audio unlock states & reconcile any offline events
   useEffect(() => {
     setIsMuted(notificationSound.isSoundMuted());
-    return notificationSound.onUnlockChange((unlocked) => {
+    const unsub = notificationSound.onUnlockChange((unlocked) => {
       setAudioUnlocked(unlocked);
     });
+    // Reconcile missed events while dashboard was closed
+    notificationSound.reconcileOfflineEvents();
+    return unsub;
   }, []);
 
   const handleToggleMute = () => {
@@ -51,8 +54,8 @@ export function AdminOrdersTab() {
 
   const handleTestSound = () => {
     notificationSound.unlockAudio().then(() => {
-      notificationSound.play('new_order', { force: true });
-      showNotification('🔔 Menguji suara notifikasi pesanan masuk');
+      notificationSound.play('order', { force: true });
+      showNotification('🔔 Menguji pemutaran suara pesanan masuk (order.mp3)');
     });
   };
 
@@ -84,12 +87,13 @@ export function AdminOrdersTab() {
           retryAttempt = 0;
         };
 
+        // Event: Pesanan Baru Dibuat -> Putar 'order'
         eventSource.addEventListener('order:created', (e: MessageEvent) => {
           if (!isSubscribed) return;
           try {
             const payload = e.data ? JSON.parse(e.data) : {};
             const orderId = payload.order_id || payload.id;
-            notificationSound.play('new_order', { orderId });
+            notificationSound.play('order', { orderId, eventId: `${orderId}:created` });
             queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
             queryClient.invalidateQueries({ queryKey: ['admin-logs'] });
             queryClient.invalidateQueries({ queryKey: ['admin-metrics'] });
@@ -97,17 +101,36 @@ export function AdminOrdersTab() {
               showNotification(`🔔 Pesanan baru masuk: ${orderId}`);
             }
           } catch {
-            notificationSound.play('new_order');
+            notificationSound.play('order');
             queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
           }
         });
 
+        // Event: Pesanan Dibatalkan -> Putar 'cancel'
+        eventSource.addEventListener('order:cancelled', (e: MessageEvent) => {
+          if (!isSubscribed) return;
+          try {
+            const payload = e.data ? JSON.parse(e.data) : {};
+            const orderId = payload.order_id || payload.id;
+            notificationSound.play('cancel', { orderId, eventId: `${orderId}:cancelled` });
+            queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
+            queryClient.invalidateQueries({ queryKey: ['admin-logs'] });
+            queryClient.invalidateQueries({ queryKey: ['admin-metrics'] });
+            if (orderId) {
+              showNotification(`❌ Pesanan dibatalkan: ${orderId}`);
+            }
+          } catch {
+            notificationSound.play('cancel');
+            queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
+          }
+        });
+
+        // Event: Pembayaran Terverifikasi (Hanya perbarui data & toast, suara selesai khusus client)
         eventSource.addEventListener('order:payment_verified', (e: MessageEvent) => {
           if (!isSubscribed) return;
           try {
             const payload = e.data ? JSON.parse(e.data) : {};
             const orderId = payload.order_id || payload.id;
-            notificationSound.play('payment_verified', { orderId });
             queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
             queryClient.invalidateQueries({ queryKey: ['admin-logs'] });
             queryClient.invalidateQueries({ queryKey: ['admin-metrics'] });
@@ -115,14 +138,24 @@ export function AdminOrdersTab() {
               showNotification(`💰 Pembayaran terverifikasi: ${orderId}`);
             }
           } catch {
-            notificationSound.play('payment_verified');
             queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
           }
         });
 
-        eventSource.addEventListener('order:status_changed', (_e: MessageEvent) => {
+        // Event: Perubahan Status Umum
+        eventSource.addEventListener('order:status_changed', (e: MessageEvent) => {
           if (!isSubscribed) return;
           try {
+            const payload = e.data ? JSON.parse(e.data) : {};
+            const orderId = payload.order_id || payload.id;
+            const status = String(payload.status || payload.new_status || '').toLowerCase();
+
+            // Jika dibatalkan, putar 'cancel'
+            if (status === 'cancelled' || status === 'expired' || status === 'batal') {
+              notificationSound.play('cancel', { orderId, eventId: `${orderId}:cancelled` });
+              if (orderId) showNotification(`❌ Pesanan ${orderId} dibatalkan.`);
+            }
+
             queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
             queryClient.invalidateQueries({ queryKey: ['admin-logs'] });
             queryClient.invalidateQueries({ queryKey: ['admin-metrics'] });

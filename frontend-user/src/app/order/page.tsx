@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useRef } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
@@ -269,6 +269,24 @@ function PrivateOrderContent() {
     }
   }, [paramOrderId, effectiveOrderId, data]);
 
+  // Track active user order IDs for strict client-side event filtering & reconcile offline status changes
+  const userOrderIdsRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    const ids = new Set<string>();
+    if (effectiveOrderId) ids.add(effectiveOrderId.trim().toUpperCase());
+    if (data?.data && Array.isArray(data.data)) {
+      data.data.forEach((o) => ids.add(String(o.id).trim().toUpperCase()));
+      // Reconcile status transitions across browser reloads
+      notificationSound.reconcileUserOrders(
+        data.data.map((o) => ({
+          id: o.id,
+          status: o.order_status || (o as unknown as { status?: string }).status || 'pending',
+        }))
+      );
+    }
+    userOrderIdsRef.current = ids;
+  }, [data?.data, effectiveOrderId]);
+
   // Reset lookup submitting flag once loading completes
   useEffect(() => {
     if (!isLoading && !isFetching) {
@@ -289,28 +307,56 @@ function PrivateOrderContent() {
       eventSource = new EventSource(eventUrl);
 
       eventSource.onerror = () => {
-        // Reverse proxies (such as Vercel Edge rewrites) return 502 for long-lived streams.
-        // Immediately close the connection on error so browser does not spam reconnects and 502 errors.
         eventSource?.close();
       };
 
-      eventSource.addEventListener('order:payment_verified', (e: MessageEvent) => {
+      // Event: Pesanan Dibatalkan -> Putar 'cancel' hanya jika milik user ini
+      eventSource.addEventListener('order:cancelled', (e: MessageEvent) => {
         try {
           const payload = JSON.parse(e.data);
-          notificationSound.play('payment_verified');
-          refetch();
-          showNotification(`Pembayaran #${payload.order_id} terverifikasi! Pesanan sedang diproses.`);
+          const orderId = String(payload.order_id || payload.id || '').trim().toUpperCase();
+          if (userOrderIdsRef.current.has(orderId)) {
+            notificationSound.play('cancel', { orderId, eventId: `${orderId}:cancelled` });
+            refetch();
+            showNotification(`Pesanan #${orderId} dibatalkan.`);
+          }
         } catch (err) {
-          console.error('SSE user order:payment_verified error', err);
+          console.error('SSE user order:cancelled error', err);
         }
       });
 
+      // Event: Pesanan Selesai -> Putar 'selesai' hanya jika milik user ini
+      eventSource.addEventListener('order:completed', (e: MessageEvent) => {
+        try {
+          const payload = JSON.parse(e.data);
+          const orderId = String(payload.order_id || payload.id || '').trim().toUpperCase();
+          if (userOrderIdsRef.current.has(orderId)) {
+            notificationSound.play('selesai', { orderId, eventId: `${orderId}:completed` });
+            refetch();
+            showNotification(`Pesanan #${orderId} telah selesai diproses!`);
+          }
+        } catch (err) {
+          console.error('SSE user order:completed error', err);
+        }
+      });
+
+      // Event: Status Changed Umum
       eventSource.addEventListener('order:status_changed', (e: MessageEvent) => {
         try {
           const payload = JSON.parse(e.data);
-          notificationSound.play('status_updated');
-          refetch();
-          showNotification(`Status pesanan #${payload.order_id} diperbarui: ${payload.new_status}`);
+          const orderId = String(payload.order_id || payload.id || '').trim().toUpperCase();
+          const newStatus = String(payload.status || payload.new_status || '').toLowerCase();
+
+          if (userOrderIdsRef.current.has(orderId)) {
+            if (newStatus === 'cancelled' || newStatus === 'expired' || newStatus === 'batal') {
+              notificationSound.play('cancel', { orderId, eventId: `${orderId}:cancelled` });
+              showNotification(`Pesanan #${orderId} dibatalkan.`);
+            } else if (newStatus === 'completed' || newStatus === 'selesai' || newStatus === 'paid') {
+              notificationSound.play('selesai', { orderId, eventId: `${orderId}:completed` });
+              showNotification(`Pesanan #${orderId} telah selesai diproses!`);
+            }
+            refetch();
+          }
         } catch (err) {
           console.error('SSE user order:status_changed error', err);
         }
