@@ -76,7 +76,7 @@ export function SalesTrendChart({
   const reduced = isReducedMotion();
 
   return (
-    <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-4 motion-card-interactive">
+    <div className="bg-surface border border-border rounded-2xl p-5 sm:p-6 shadow-xs space-y-4 motion-card-interactive">
       {/* Header & Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border">
         <div>
@@ -93,11 +93,11 @@ export function SalesTrendChart({
         <div
           role="tablist"
           aria-label="Filter Periode Grafik"
-          className="relative flex items-center bg-surface-raised p-1 rounded-lg border border-border text-xs min-w-[210px]"
+          className="relative flex items-center bg-white/70 p-1 rounded-xl border border-white/80 text-xs min-w-[210px] shadow-xs"
         >
           {/* Sliding Active Pill */}
           <div
-            className="absolute top-1 bottom-1 rounded-md bg-primary shadow-xs pointer-events-none"
+            className="absolute top-1 bottom-1 rounded-lg bg-[#34404F] shadow-xs pointer-events-none"
             style={{
               transition: reduced
                 ? 'none'
@@ -204,6 +204,16 @@ export function SalesTrendChart({
             const isHovered = hoveredIndex === idx;
             const hasHover = hoveredIndex !== null;
 
+            const barColors = [
+              { bg: '#4A5568', top: '#2D3748', glow: 'rgba(74, 85, 104, 0.4)' },
+              { bg: '#60A5FA', top: '#3B82F6', glow: 'rgba(96, 165, 250, 0.4)' },
+              { bg: '#34D399', top: '#10B981', glow: 'rgba(52, 211, 153, 0.4)' },
+              { bg: '#FBBF24', top: '#F59E0B', glow: 'rgba(251, 191, 36, 0.4)' },
+              { bg: '#A78BFA', top: '#8B5CF6', glow: 'rgba(167, 139, 250, 0.4)' },
+              { bg: '#F472B6', top: '#EC4899', glow: 'rgba(244, 114, 182, 0.4)' },
+            ];
+            const palette = barColors[idx % barColors.length];
+
             return (
               <div
                 key={idx}
@@ -211,6 +221,13 @@ export function SalesTrendChart({
                 onMouseLeave={() => setHoveredIndex(null)}
                 className="flex-1 flex flex-col items-center justify-end h-full group cursor-pointer"
               >
+                {/* Revenue Label Above Bar (as seen in reference screenshot) */}
+                {item.revenue > 0 && (
+                  <span className="text-[10px] font-mono font-bold text-foreground mb-1 tabular-nums hidden sm:block">
+                    Rp {item.revenue.toLocaleString('id-ID')}
+                  </span>
+                )}
+
                 {/* Bar Track & Scaled Fill */}
                 <div className="w-full h-full flex items-end justify-center">
                   <div
@@ -220,16 +237,16 @@ export function SalesTrendChart({
                       transitionDuration: '650ms',
                       transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
                       transitionDelay: `${idx * 30}ms`,
-                      opacity: !mounted ? 0 : hasHover && !isHovered ? 0.4 : 1,
-                      backgroundColor: isHovered ? 'var(--primary)' : 'rgba(201, 111, 85, 0.32)',
-                      boxShadow: isHovered ? '0 4px 14px rgba(201, 111, 85, 0.35)' : undefined,
+                      opacity: !mounted ? 0 : hasHover && !isHovered ? 0.45 : 1,
+                      backgroundColor: palette.bg,
+                      boxShadow: isHovered ? `0 6px 16px ${palette.glow}` : undefined,
                     }}
                   >
                     {/* Top Accent Edge */}
                     <div
                       className="absolute top-0 left-0 right-0 h-1 rounded-t-md transition-colors"
                       style={{
-                        backgroundColor: isHovered ? '#ffffff' : 'rgba(201, 111, 85, 0.85)',
+                        backgroundColor: palette.top,
                       }}
                     />
                   </div>

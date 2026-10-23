@@ -146,16 +146,16 @@ export function AdminDashboardTab({
       <div className="space-y-3">
         {/* Alert 1: Saldo Supplier */}
         {((metrics?.vipBalance ?? 0) < 50000) && (
-          <div className="bg-amber-500/10 border border-amber-500/25 text-foreground rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+          <div className="bg-[#2B3441]/90 backdrop-blur-md border border-white/10 text-white rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md">
             <div className="flex items-start sm:items-center gap-3 text-xs">
-              <div className="p-2 rounded-xl bg-amber-500/20 text-amber-600 shrink-0 mt-0.5 sm:mt-0">
+              <div className="p-2.5 rounded-xl bg-amber-500/20 text-amber-400 shrink-0 mt-0.5 sm:mt-0 border border-amber-500/30">
                 <AlertTriangle className="w-4 h-4" />
               </div>
               <div>
-                <span className="font-bold text-foreground">Perhatian Saldo Supplier VIP Reseller:</span>{' '}
-                <span className="text-foreground-muted">
+                <span className="font-bold text-white">Perhatian Saldo Supplier VIP Reseller:</span>{' '}
+                <span className="text-slate-300">
                   Saldo deposit saat ini adalah{' '}
-                  <strong className="font-mono text-amber-600 font-bold">
+                  <strong className="font-mono text-amber-400 font-bold">
                     Rp {(metrics?.vipBalance ?? 0).toLocaleString('id-ID')}
                   </strong>
                   . Jika saldo habis, pemesanan otomatis upstream akan tertunda.
@@ -165,9 +165,8 @@ export function AdminDashboardTab({
             <div className="flex items-center gap-2 shrink-0">
               <Button
                 size="sm"
-                variant="outline"
                 onClick={() => onNavigateTab('providers')}
-                className="text-xs h-8 border-amber-500/40 text-amber-700 bg-white hover:bg-amber-50"
+                className="text-xs h-8 bg-[#3E4959] hover:bg-[#4A576A] text-white border border-white/15 font-semibold rounded-xl shadow-xs"
               >
                 Cek Provider VIP →
               </Button>
@@ -177,9 +176,9 @@ export function AdminDashboardTab({
 
         {/* Alert 2: Stok Supplier Kosong */}
         {(metrics?.totalWarnings ?? 0) > 0 && (
-          <div className="bg-rose-500/10 border border-rose-500/25 text-foreground rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+          <div className="bg-rose-50/70 backdrop-blur-md border border-rose-200/60 text-foreground rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
             <div className="flex items-start sm:items-center gap-3 text-xs">
-              <div className="p-2 rounded-xl bg-rose-500/20 text-rose-600 shrink-0 mt-0.5 sm:mt-0">
+              <div className="p-2.5 rounded-xl bg-rose-100 text-rose-600 shrink-0 mt-0.5 sm:mt-0 border border-rose-200">
                 <AlertCircle className="w-4 h-4" />
               </div>
               <div>
@@ -193,7 +192,7 @@ export function AdminDashboardTab({
               size="sm"
               variant="outline"
               onClick={() => onNavigateTab('products')}
-              className="text-xs h-8 border-rose-500/40 text-rose-700 bg-white hover:bg-rose-50 shrink-0"
+              className="text-xs h-8 border-rose-300 text-rose-700 bg-white/80 hover:bg-rose-100/60 rounded-xl font-semibold shrink-0"
             >
               Tinjau Katalog ({metrics?.totalWarnings}) →
             </Button>
@@ -359,17 +358,17 @@ export function AdminDashboardTab({
 
           <div className="space-y-3 text-xs">
             {topProducts.length === 0 ? (
-              <div className="p-6 text-center text-foreground-muted bg-[#F8F9FB] rounded-xl border border-dashed border-border">
+              <div className="p-6 text-center text-foreground-muted bg-white/40 rounded-xl border border-dashed border-white/60">
                 Belum ada transaksi produk terlaris
               </div>
             ) : (
               topProducts.map((p: any, idx: number) => (
                 <div
                   key={idx}
-                  className="p-3 rounded-xl bg-[#F8F9FB] border border-border/70 hover:border-border flex items-center justify-between gap-3 transition-colors"
+                  className="p-3 rounded-xl bg-white/50 backdrop-blur-md border border-white/70 hover:bg-white/80 hover:border-white flex items-center justify-between gap-3 transition-colors shadow-2xs"
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <span className="w-6 h-6 rounded-lg bg-white border border-border font-mono font-bold text-xs text-[#171717] flex items-center justify-center shrink-0">
+                    <span className="w-6 h-6 rounded-lg bg-white/90 border border-white/80 font-mono font-bold text-xs text-[#10213D] flex items-center justify-center shrink-0 shadow-2xs">
                       #{idx + 1}
                     </span>
                     <div className="min-w-0">
@@ -478,19 +477,19 @@ export function AdminDashboardTab({
               </Badge>
             </div>
             <div className="space-y-2.5 text-xs">
-              <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#F8F9FB] border border-border/70">
+              <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/50 backdrop-blur-md border border-white/70">
                 <span className="text-foreground-muted">Omzet via Referral</span>
                 <span className="font-bold text-foreground font-mono">
                   Rp {totalReferralRevenue.toLocaleString('id-ID')}
                 </span>
               </div>
-              <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#F8F9FB] border border-border/70">
+              <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/50 backdrop-blur-md border border-white/70">
                 <span className="text-foreground-muted">Komisi Terbayar</span>
                 <span className="font-bold text-[#16A36A] font-mono">
                   Rp {totalPaidReferralCommission.toLocaleString('id-ID')}
                 </span>
               </div>
-              <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#F8F9FB] border border-border/70">
+              <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/50 backdrop-blur-md border border-white/70">
                 <span className="text-foreground-muted">Top Mitra Sales</span>
                 <span className="font-bold text-[#2563EB] truncate max-w-[140px] text-right">
                   {topPartner ? `${topPartner.name} (${topPartner.code})` : 'Belum Ada'}
@@ -517,21 +516,21 @@ export function AdminDashboardTab({
             </div>
 
             <div className="space-y-2 text-xs">
-              <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#F8F9FB] border border-border/70">
+              <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/50 backdrop-blur-md border border-white/70">
                 <span className="text-foreground-muted font-medium">VIP Reseller Gateway</span>
                 <span className="font-semibold text-[#16A36A] flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-[#16A36A]" />
                   Online (114ms)
                 </span>
               </div>
-              <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#F8F9FB] border border-border/70">
+              <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/50 backdrop-blur-md border border-white/70">
                 <span className="text-foreground-muted font-medium">Tripay PG Webhook</span>
                 <span className="font-semibold text-[#16A36A] flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-[#16A36A]" />
                   Active
                 </span>
               </div>
-              <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#F8F9FB] border border-border/70">
+              <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/50 backdrop-blur-md border border-white/70">
                 <span className="text-foreground-muted font-medium">WhatsApp Notification</span>
                 <span className="font-semibold text-[#16A36A] flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-[#16A36A]" />

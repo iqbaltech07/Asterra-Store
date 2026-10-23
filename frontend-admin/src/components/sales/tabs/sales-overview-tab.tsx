@@ -95,18 +95,18 @@ export function SalesOverviewTab({
   return (
     <div ref={containerRef} className="space-y-6">
       {/* Welcome & Referral Banner */}
-      <div className="animate-fade-up rounded-2xl border border-border bg-surface p-6 shadow-xs relative overflow-hidden">
+      <div className="animate-fade-up rounded-2xl border border-white/80 bg-surface p-6 shadow-xs relative overflow-hidden backdrop-blur-xl">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
           <div className="space-y-2.5 max-w-xl">
             <div
               className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold border ${
                 partner?.status === 'active'
-                  ? 'bg-emerald-50 border-emerald-200/80 text-[#16A36A]'
+                  ? 'bg-emerald-50/80 border-emerald-200/80 text-[#16A36A]'
                   : partner?.status === 'suspended'
-                  ? 'bg-rose-50 border-rose-200/80 text-[#EF4444]'
+                  ? 'bg-rose-50/80 border-rose-200/80 text-[#EF4444]'
                   : partner?.status === 'pending'
-                  ? 'bg-amber-50 border-amber-200/80 text-[#D97706]'
-                  : 'bg-gray-100 border-border text-foreground-muted'
+                  ? 'bg-amber-50/80 border-amber-200/80 text-[#D97706]'
+                  : 'bg-gray-100/80 border-border text-foreground-muted'
               }`}
             >
               <span className="w-2 h-2 rounded-full bg-current" />
@@ -121,7 +121,7 @@ export function SalesOverviewTab({
                   : 'Non-Aktif'}
               </span>
             </div>
-            <h2 className="text-xl sm:text-2xl font-extrabold text-foreground tracking-tight">
+            <h2 className="text-xl sm:text-2xl font-extrabold text-[#10213D] tracking-tight">
               Halo, {partner?.name || userName}!
             </h2>
             <p className="text-xs sm:text-sm text-foreground-muted leading-relaxed">
@@ -131,7 +131,7 @@ export function SalesOverviewTab({
           </div>
 
           {/* Referral Link Box */}
-          <div className="bg-[#F8F9FB] border border-border p-4 sm:p-5 rounded-2xl space-y-3 min-w-[320px] lg:max-w-md w-full">
+          <div className="bg-white/50 backdrop-blur-md border border-white/70 p-4 sm:p-5 rounded-2xl space-y-3 min-w-[320px] lg:max-w-md w-full shadow-2xs">
             <div className="flex items-center justify-between text-xs">
               <span className="text-foreground-muted font-medium flex items-center gap-1.5">
                 <LinkIcon className="w-3.5 h-3.5 text-[#2563EB]" />
@@ -145,12 +145,12 @@ export function SalesOverviewTab({
               <Input
                 readOnly
                 value={referralUrl}
-                className="bg-white border-border text-xs font-mono h-9 select-all"
+                className="bg-white/80 border-white/80 text-xs font-mono h-9 select-all rounded-xl"
               />
               <Button
                 size="sm"
                 onClick={() => handleCopy(referralUrl, 'ref-banner')}
-                className="h-9 px-3.5 gap-1.5 shrink-0 text-xs font-semibold"
+                className="h-9 px-3.5 gap-1.5 shrink-0 text-xs font-semibold rounded-xl"
               >
                 {copiedLink === 'ref-banner' ? (
                   <>

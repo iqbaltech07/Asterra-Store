@@ -133,25 +133,25 @@ export default function SalesPortalPage() {
       {/* Main Content Pane */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Sticky Top Header Bar */}
-        <header className="sticky top-0 z-40 bg-white/85 backdrop-blur-md border-b border-border px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-2xs">
+        <header className="sticky top-0 z-40 bg-white/60 backdrop-blur-xl border-b border-white/70 px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-xs">
           <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={() => setIsSidebarMobileOpen(true)}
-              className="lg:hidden p-2 rounded-xl text-foreground-muted hover:text-foreground hover:bg-surface-secondary border border-border transition-colors"
+              className="lg:hidden p-2 rounded-xl text-foreground-muted hover:text-foreground hover:bg-surface-secondary border border-white/70 transition-colors"
               aria-label="Buka Menu Sidebar"
             >
               <FontAwesomeIcon icon={faBars} className="text-base" />
             </button>
             <div className="flex flex-col animate-text-smooth" key={activeTab}>
-              <div className="flex items-center gap-1.5 text-[11px] text-foreground-muted">
-                <span className="font-semibold text-foreground">Asterra Sales</span>
+              <div className="flex items-center gap-1.5 text-[11px] text-[#6680A8] font-medium">
+                <span className="font-semibold text-[#10213D]">Asterra Sales</span>
                 <span>/</span>
                 <span className="capitalize text-[#2563EB] font-semibold">
                   {currentTabMeta.category}
                 </span>
               </div>
-              <h1 className="text-base sm:text-xl font-extrabold text-foreground tracking-tight leading-tight">
+              <h1 className="text-base sm:text-xl font-extrabold text-[#10213D] tracking-tight leading-tight">
                 {currentTabMeta.title}
               </h1>
             </div>

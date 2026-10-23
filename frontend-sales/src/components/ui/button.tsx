@@ -10,17 +10,17 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = 'default', size = 'default', ...props }, ref) => {
     const variantStyles = {
       default:
-        'bg-[#111111] text-white hover:bg-[#262626] active:bg-[#000000] shadow-xs border border-white/10 font-medium transition-all',
+        'bg-[#34404F] text-white hover:bg-[#25303D] active:bg-[#1E2732] shadow-xs border border-white/10 font-medium transition-all',
       primary:
         'bg-[#2563EB] text-white hover:bg-[#1D4ED8] active:bg-[#1E40AF] shadow-xs border border-blue-600/30 font-semibold transition-all',
       secondary:
-        'bg-[#F8F9FB] text-[#171717] hover:bg-[#F3F4F6] active:bg-[#E5E7EB] shadow-xs border border-[#E5E7EB] font-medium transition-all',
+        'bg-white/60 backdrop-blur-md text-[#10213D] hover:bg-white/80 active:bg-white/90 shadow-xs border border-white/70 font-medium transition-all',
       navy:
-        'bg-[#111111] text-white hover:bg-[#262626] active:bg-[#000000] shadow-xs border border-white/10 font-medium transition-all',
+        'bg-[#1E2530] text-white hover:bg-[#2A3443] active:bg-[#111318] shadow-xs border border-white/10 font-medium transition-all',
       outline:
-        'border border-[#E5E7EB] bg-white text-[#171717] hover:bg-[#F8F9FB] hover:border-[#D1D5DB] active:bg-[#F3F4F6] font-medium shadow-xs transition-all',
+        'border border-white/80 bg-white/70 backdrop-blur-md text-[#10213D] hover:bg-white/90 hover:border-white active:bg-white font-medium shadow-xs transition-all',
       ghost:
-        'bg-transparent hover:bg-black/5 text-[#171717] hover:text-[#111111] font-medium transition-colors',
+        'bg-transparent hover:bg-slate-500/10 text-[#10213D] hover:text-[#10213D] font-medium transition-colors',
       link:
         'text-[#2563EB] underline-offset-4 hover:underline p-0 h-auto font-medium',
       destructive:
