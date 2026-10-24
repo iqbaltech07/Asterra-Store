@@ -274,7 +274,7 @@ function CheckoutPageContent() {
     let isCancelled = false;
     const checkRef = async () => {
       try {
-        const effectiveRefEmail = customerEmail.trim() || (targetRequirement.type === 'email' ? targetValue.trim() : '') || session?.user?.email || '';
+        const effectiveRefEmail = customerEmail.trim() || session?.user?.email || legacyUser?.email || '';
         const query = new URLSearchParams({
           code: referralCode.trim(),
           ...(effectiveRefEmail ? { email: effectiveRefEmail } : {}),
@@ -683,7 +683,6 @@ function CheckoutPageContent() {
 
       const invoiceEmail =
         customerEmail.trim() ||
-        (targetRequirement.type === 'email' ? targetValue.trim() : '') ||
         session?.user?.email ||
         legacyUser?.email ||
         '';
@@ -773,15 +772,17 @@ function CheckoutPageContent() {
     }
 
     const effectiveTarget = targetValue.trim();
-    const effectiveEmail = (targetRequirement.type === 'email' ? effectiveTarget : (customerEmail.trim() || session?.user?.email || legacyUser?.email || 'buyer@asterra.store'));
-    const effectivePhone = (targetRequirement.type === 'phone' ? effectiveTarget : phoneNumber.trim());
+    const effectiveTargetEmail = targetRequirement.type === 'email' ? effectiveTarget : (targetEmail.trim() || undefined);
+    const effectiveTargetPhone = targetRequirement.type === 'phone' ? effectiveTarget : undefined;
+    const buyerEmail = customerEmail.trim() || session?.user?.email || legacyUser?.email || 'buyer@asterra.store';
+    const buyerPhone = phoneNumber.trim();
 
     const orderPayload = {
       target_id: effectiveTarget,
       target_zone: targetZone.trim() || undefined,
       target_no: effectiveTarget,
-      target_email: effectiveEmail,
-      target_phone: effectivePhone,
+      target_email: effectiveTargetEmail,
+      target_phone: effectiveTargetPhone,
       items: items.map((item) => ({
         product_id: item.id,
         product_name: item.name,
@@ -789,13 +790,13 @@ function CheckoutPageContent() {
         quantity: item.quantity,
         target_id: effectiveTarget,
         target_zone: targetZone.trim() || undefined,
-        target_email: effectiveEmail,
-        target_phone: effectivePhone,
+        target_email: effectiveTargetEmail,
+        target_phone: effectiveTargetPhone,
         purchased_details: {
           target_id: effectiveTarget,
           target_zone: targetZone.trim() || undefined,
-          target_email: effectiveEmail,
-          phone: effectivePhone,
+          target_email: effectiveTargetEmail,
+          phone: effectiveTargetPhone || buyerPhone,
         },
       })),
       customer_notes: customerNotes.trim(),
@@ -813,8 +814,8 @@ function CheckoutPageContent() {
       utm_campaign: matchingCampaign?.slug || (activeCampaignSlug ? activeCampaignSlug : undefined),
       customer_contact: {
         name: customerName.trim(),
-        email: effectiveEmail,
-        phone: phoneNumber.trim() || effectivePhone,
+        email: buyerEmail,
+        phone: buyerPhone,
       },
     };
 
@@ -959,12 +960,12 @@ function CheckoutPageContent() {
         data={activeManualModal}
         paymentConfig={paymentConfig}
         customerName={customerName}
-        targetEmail={customerEmail.trim() || (targetRequirement.type === 'email' ? targetValue.trim() : '') || session?.user?.email || legacyUser?.email || ''}
+        targetEmail={customerEmail.trim() || session?.user?.email || legacyUser?.email || ''}
         onClose={() => {
           const orderId = activeManualModal?.orderId;
           setActiveManualModal(null);
           if (orderId) {
-            const invoiceEmail = customerEmail.trim() || (targetRequirement.type === 'email' ? targetValue.trim() : '') || session?.user?.email || legacyUser?.email || '';
+            const invoiceEmail = customerEmail.trim() || session?.user?.email || legacyUser?.email || '';
             const emailQuery = invoiceEmail ? `&email=${encodeURIComponent(invoiceEmail)}` : '';
             router.push(`/order?id=${orderId}${emailQuery}`);
           }
