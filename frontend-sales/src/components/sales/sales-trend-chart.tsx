@@ -12,6 +12,9 @@ export interface SalesDataPoint {
 }
 
 export interface SalesTrendChartProps {
+  title?: string;
+  subtitle?: string;
+  legendLabel?: string;
   salesData?: SalesDataPoint[];
   salesPeriod?: SalesPeriod;
   onPeriodChange?: (period: SalesPeriod) => void;
@@ -37,6 +40,9 @@ const DEFAULT_SALES_DATA: SalesDataPoint[] = [
 ];
 
 export function SalesTrendChart({
+  title = 'Grafik Performa Penjualan & Komisi Sales',
+  subtitle = 'Pergerakan omzet referral dan estimasi komisi Anda berdasarkan periode waktu',
+  legendLabel = 'Komisi Referral Terverifikasi',
   salesData,
   salesPeriod = 'daily',
   onPeriodChange,
@@ -81,10 +87,10 @@ export function SalesTrendChart({
           </div>
           <div>
             <h3 className="font-bold text-sm text-slate-900 leading-tight">
-              Grafik Penjualan &amp; Tren Transaksi
+              {title}
             </h3>
             <p className="text-xs text-slate-500 mt-0.5 leading-tight">
-              Pergerakan omzet bruto toko berdasarkan periode waktu
+              {subtitle}
             </p>
           </div>
         </div>
@@ -203,7 +209,7 @@ export function SalesTrendChart({
         <div className="flex items-center gap-2">
           <span className="w-2.5 h-2.5 rounded-full bg-[#475569]" />
           <span className="text-xs text-slate-600 font-medium">
-            Omzet Transaksi Terverifikasi
+            {legendLabel}
           </span>
         </div>
 

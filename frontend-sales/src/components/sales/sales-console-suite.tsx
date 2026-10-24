@@ -157,6 +157,8 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
           isProfileLoading={isProfileLoading}
           inviteSalesUrl={inviteSalesUrl}
           campaigns={campaignsRes?.data}
+          orders={ordersRes?.data || []}
+          products={productsRes?.data || []}
         />
       )}
 

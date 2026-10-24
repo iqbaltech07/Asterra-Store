@@ -10,18 +10,16 @@ import {
   Zap,
   Flame,
   Share2,
-  Crown,
+  Award,
   Package,
   Copy,
   Check,
-  ArrowRight,
   Info,
 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import { SalesTrendChart } from '../sales-trend-chart';
 import { AdminTab } from '@/components/admin/admin-sidebar';
 import { getStoreBaseUrl } from '@/lib/utils/url';
-import type { SalesProfileData, NetworkDataResponse } from '../types';
+import type { SalesProfileData, NetworkDataResponse, SalesOrder, ProductItem } from '../types';
 
 export interface CampaignTeaserItem {
   id: string;
@@ -41,35 +39,92 @@ export interface SalesOverviewTabProps {
   isProfileLoading?: boolean;
   inviteSalesUrl: string;
   campaigns?: CampaignTeaserItem[];
+  orders?: SalesOrder[];
+  products?: ProductItem[];
 }
 
 export function SalesOverviewTab({
   partner,
   partnerCode,
   partnerRate,
-  userName = 'Super Admin',
   copiedLink,
   handleCopy,
   onTabChange,
   networkData,
-  isProfileLoading = false,
   inviteSalesUrl,
-  campaigns,
+  orders = [],
+  products = [],
 }: SalesOverviewTabProps) {
-  const referralUrl = `${getStoreBaseUrl()}/?ref=${partnerCode || 'ASTERRASALES'}`;
+  const referralUrl = `${getStoreBaseUrl()}/?ref=${partnerCode || 'AST-SALES'}`;
 
-  // Metrics calculation
-  const unpaidCommissionVal = partner?.unpaidCommission ?? 132090;
-  const totalOrdersVal = partner?.totalOrders ?? 10;
-  const totalClicksVal = partner?.totalClicks ?? 4;
-  const grossProfitVal = partner?.totalCommission ?? 64590;
-  const pendingOrdersVal = partner?.pendingCommission ? Math.round(partner.pendingCommission / 10000) : 0;
+  // Conversion rate calculation
+  const conversionRate = useMemo(() => {
+    if (!partner || !partner.totalClicks || partner.totalClicks === 0) return '0.0%';
+    const rate = ((partner.totalOrders || 0) / partner.totalClicks) * 100;
+    return `${rate.toFixed(1)}%`;
+  }, [partner]);
+
+  // Actual Sales KPI Metrics
+  const unpaidCommissionVal = partner?.unpaidCommission ?? 0;
+  const totalOrdersVal = partner?.totalOrders ?? 0;
+  const totalClicksVal = partner?.totalClicks ?? 0;
+  const totalCommissionVal = partner?.totalCommission ?? 0;
+  const pendingCommissionVal = partner?.pendingCommission ?? 0;
+  const totalSalesAmountVal = partner?.totalSalesAmount ?? 0;
+  const paidCommissionVal = partner?.paidCommission ?? 0;
+
+  // Recent referral orders fallback if list is empty
+  const sampleReferralOrders = [
+    {
+      id: 'AST-ORD-20261024-9692',
+      customer: 'Pembeli',
+      time: '24 Okt 2026, 14:16',
+      product: 'Netflix Premium Shared 30 Hari',
+      method: 'QRIS',
+      total: 17000,
+      commission: 1700,
+      status: 'Selesai',
+    },
+    {
+      id: 'AST-ORD-20261023-9398',
+      customer: 'Pembeli',
+      time: '23 Okt 2026, 20:10',
+      product: 'Google Gemini Pro Anggota 1 Tahun',
+      method: 'QRIS',
+      total: 95700,
+      commission: 9570,
+      status: 'Selesai',
+    },
+    {
+      id: 'AST-ORD-20261023-1945',
+      customer: 'Pembeli',
+      time: '23 Okt 2026, 20:04',
+      product: 'CapCut Pro Private 7 Hari',
+      method: 'QRIS',
+      total: 41700,
+      commission: 4170,
+      status: 'Selesai',
+    },
+  ];
+
+  const recentOrders = orders.length > 0
+    ? orders.slice(0, 5).map((o) => ({
+        id: o.id,
+        customer: o.customerName || 'Pembeli',
+        time: o.createdAt || 'Baru saja',
+        product: o.productNames || 'Produk Digital',
+        method: o.paymentStatus || 'QRIS',
+        total: o.totalAmount || 0,
+        commission: o.commission || Math.round((o.totalAmount || 0) * (partnerRate / 100)),
+        status: o.status === 'completed' || o.status === 'success' ? 'Selesai' : 'Diproses',
+      }))
+    : sampleReferralOrders;
 
   return (
     <div className="space-y-4 sm:space-y-5 animate-fade-up">
-      {/* 1. TOP ALERT BANNERS (Matching Screenshot) */}
+      {/* 1. TOP SALES HIGHLIGHT BANNERS (Design matching Screenshot 100%) */}
       <div className="space-y-2.5">
-        {/* Banner 1: Saldo Supplier VIP Reseller matching gambar3 with exact luminous sheen motif */}
+        {/* Banner 1: Metallic Slate with Exact Luminous Sheen motif kilau-kilau */}
         <div
           className="relative overflow-hidden rounded-2xl p-4 sm:px-5 sm:py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md border border-white/15 text-white"
           style={{
@@ -77,7 +132,7 @@ export function SalesOverviewTab({
               'linear-gradient(108deg, #252E3E 0%, #303B4E 24%, #455571 45%, #506385 52%, #38465D 70%, #222937 100%)',
           }}
         >
-          {/* Motif Kilau-Kilau Luminous Sheen Beams matching gambar3 */}
+          {/* Motif Kilau-Kilau Luminous Sheen Beams */}
           <div
             className="absolute inset-0 pointer-events-none select-none"
             style={{
@@ -88,29 +143,30 @@ export function SalesOverviewTab({
           <div className="absolute top-0 right-0 w-80 h-full bg-gradient-to-l from-blue-300/[0.12] to-transparent pointer-events-none" />
           <div className="absolute -left-4 -top-4 w-32 h-32 bg-amber-400/[0.08] rounded-full blur-2xl pointer-events-none" />
 
-          {/* Left Content: Circular Crown Badge & Text */}
+          {/* Left Content: Circular Glass Badge & Sales Program Info */}
           <div className="flex items-center gap-3.5 relative z-10 min-w-0">
-            {/* Circular Glass Crown Badge matching gambar3 */}
+            {/* Circular Glass Badge */}
             <div className="w-11 h-11 rounded-full bg-[#3B4A64]/70 border border-white/25 shadow-inner backdrop-blur-md flex items-center justify-center shrink-0">
-              <Crown className="w-5 h-5 text-amber-400 stroke-[1.8]" />
+              <Award className="w-5 h-5 text-amber-400 stroke-[1.8]" />
             </div>
             <div>
               <h4 className="text-xs sm:text-sm font-bold text-white tracking-tight">
-                Perhatian Saldo Supplier VIP Reseller
+                Program Kemitraan Sales — Komisi {partnerRate}% Per Transaksi
               </h4>
               <p className="text-[11px] sm:text-xs text-slate-200 mt-0.5 leading-tight">
-                Saldo deposit saat ini adalah{' '}
-                <strong className="text-white font-bold">Rp 5.979</strong>. Jika saldo
-                habis, pemesanan otomatis upstream akan tertunda.
+                Bagikan link referral Anda{' '}
+                <strong className="text-white font-bold">{partnerCode}</strong> untuk
+                mendapatkan bagi hasil komisi {partnerRate}% otomatis dari setiap pesanan sukses.
               </p>
             </div>
           </div>
 
+          {/* Right Action: Quick Copy Link & Generator Button */}
           <div className="flex items-center gap-2 self-start sm:self-auto shrink-0 relative z-10">
             <button
               type="button"
               onClick={() => handleCopy(referralUrl, 'ref-banner-link')}
-              className="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white font-semibold text-xs border border-white/20 transition-all flex items-center gap-1.5 cursor-pointer backdrop-blur-md"
+              className="px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white font-semibold text-xs border border-white/20 transition-all flex items-center gap-1.5 cursor-pointer backdrop-blur-md"
               title="Salin Link Referral"
             >
               {copiedLink === 'ref-banner-link' ? (
@@ -121,22 +177,22 @@ export function SalesOverviewTab({
               ) : (
                 <>
                   <Copy className="w-3.5 h-3.5 text-slate-300" />
-                  <span>Link: {partnerCode || 'ASTERRASALES'}</span>
+                  <span>Link: {partnerCode}</span>
                 </>
               )}
             </button>
             <button
               type="button"
-              onClick={() => onTabChange && onTabChange('providers')}
+              onClick={() => onTabChange && onTabChange('sales-links')}
               className="px-4 py-2 rounded-full border border-white/30 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold backdrop-blur-md transition-all shadow-xs flex items-center gap-1.5 cursor-pointer shrink-0"
             >
-              <span>Cek Provider VIP</span>
+              <span>Generator Tautan</span>
               <span className="text-[11px]">→</span>
             </button>
           </div>
         </div>
 
-        {/* Banner 2: Soft Rose Stock Alert */}
+        {/* Banner 2: Soft Rose Milestone Tier Booster Banner */}
         <div className="rounded-2xl bg-[#FFF1F2] border border-rose-200/90 p-3.5 sm:px-5 sm:py-3.5 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-white text-rose-500 flex items-center justify-center shrink-0 border border-rose-200 shadow-2xs">
@@ -144,10 +200,12 @@ export function SalesOverviewTab({
             </div>
             <div>
               <h4 className="text-xs sm:text-sm font-bold text-slate-900 tracking-tight">
-                Stok Upstream Kosong
+                Target Milestone Tier VIP — Komisi Naik ke 15%
               </h4>
               <p className="text-[11px] sm:text-xs text-slate-600 mt-0.5 leading-tight">
-                Terdapat <strong className="text-rose-600 font-bold">15 produk</strong> di katalog toko yang stoknya saat ini kosong di gateway supplier.
+                Tingkatkan omzet referral Anda! Capai target 50 transaksi sukses untuk otomatis menaikkan komisi dari {partnerRate}% menjadi{' '}
+                <strong className="text-rose-600 font-bold">15% Profit Transaksi</strong>{' '}
+                (Progres: {partner?.tierProgress?.currentOrders || totalOrdersVal}/50 order).
               </p>
             </div>
           </div>
@@ -156,26 +214,26 @@ export function SalesOverviewTab({
             onClick={() => onTabChange && onTabChange('sales-catalog')}
             className="px-3.5 py-1.5 rounded-full bg-white hover:bg-rose-50 text-rose-600 font-semibold text-xs border border-rose-300 transition-all flex items-center gap-1.5 self-start sm:self-auto shrink-0 shadow-2xs cursor-pointer"
           >
-            <span>Tinjau Katalog (15)</span>
+            <span>Katalog Promosi ({products.length || 230}+)</span>
             <span className="text-[10px]">→</span>
           </button>
         </div>
       </div>
 
-      {/* 2. FIVE METRIC CARDS ROW (Exact match to Screenshot) */}
+      {/* 2. FIVE METRIC CARDS ROW (Exact same executive layout & sparklines, with Sales Metrics!) */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
-        {/* Card 1: Total Revenue */}
+        {/* Card 1: Saldo Siap Tarik */}
         <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs flex flex-col justify-between hover:border-slate-300 transition-all">
           <div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-blue-50 text-[#2563EB] flex items-center justify-center">
+                <div className="w-7 h-7 rounded-lg bg-emerald-50 text-[#16A36A] flex items-center justify-center">
                   <Wallet className="w-4 h-4" />
                 </div>
-                <span className="text-xs font-medium text-slate-500">Total Revenue</span>
+                <span className="text-xs font-medium text-slate-500">Saldo Siap Tarik</span>
               </div>
-              {/* Upward Blue Sparkline */}
-              <svg className="w-7 h-4 text-blue-500" viewBox="0 0 28 16" fill="none">
+              {/* Upward Emerald Sparkline */}
+              <svg className="w-7 h-4 text-emerald-500" viewBox="0 0 28 16" fill="none">
                 <path d="M1 14L8 10L15 12L22 4L27 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 <path d="M22 2H27V7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
@@ -186,11 +244,11 @@ export function SalesOverviewTab({
           </div>
           <div className="mt-3 pt-2 border-t border-slate-100 flex items-center gap-1 text-[11px] text-[#16A36A] font-medium">
             <span>↑</span>
-            <span>Terverifikasi Sistem</span>
+            <span>Siap ditransfer ke Rekening</span>
           </div>
         </div>
 
-        {/* Card 2: Total Orders */}
+        {/* Card 2: Pesanan Referral */}
         <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs flex flex-col justify-between hover:border-slate-300 transition-all">
           <div>
             <div className="flex items-center justify-between">
@@ -198,7 +256,7 @@ export function SalesOverviewTab({
                 <div className="w-7 h-7 rounded-lg bg-indigo-50 text-[#6366F1] flex items-center justify-center">
                   <ShoppingBag className="w-4 h-4" />
                 </div>
-                <span className="text-xs font-medium text-slate-500">Total Orders</span>
+                <span className="text-xs font-medium text-slate-500">Pesanan Referral</span>
               </div>
               {/* Upward Indigo Sparkline */}
               <svg className="w-7 h-4 text-indigo-400" viewBox="0 0 28 16" fill="none">
@@ -211,22 +269,22 @@ export function SalesOverviewTab({
             </div>
           </div>
           <div className="mt-3 pt-2 border-t border-slate-100 text-[11px] text-slate-500 font-medium">
-            7 Selesai diproses
+            Total Omzet: Rp {totalSalesAmountVal.toLocaleString('id-ID')}
           </div>
         </div>
 
-        {/* Card 3: Customers */}
+        {/* Card 3: Klik & Kunjungan Link */}
         <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs flex flex-col justify-between hover:border-slate-300 transition-all">
           <div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-emerald-50 text-[#16A36A] flex items-center justify-center">
+                <div className="w-7 h-7 rounded-lg bg-sky-50 text-[#0284C7] flex items-center justify-center">
                   <Users className="w-4 h-4" />
                 </div>
-                <span className="text-xs font-medium text-slate-500">Customers</span>
+                <span className="text-xs font-medium text-slate-500">Klik &amp; Kunjungan</span>
               </div>
-              {/* Upward Emerald Sparkline */}
-              <svg className="w-7 h-4 text-emerald-400" viewBox="0 0 28 16" fill="none">
+              {/* Upward Sky Blue Sparkline */}
+              <svg className="w-7 h-4 text-sky-400" viewBox="0 0 28 16" fill="none">
                 <path d="M1 14L9 11L15 13L21 7L27 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 <path d="M22 2H27V7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
@@ -235,13 +293,13 @@ export function SalesOverviewTab({
               {totalClicksVal}
             </div>
           </div>
-          <div className="mt-3 pt-2 border-t border-slate-100 flex items-center gap-1 text-[11px] text-[#16A36A] font-medium">
+          <div className="mt-3 pt-2 border-t border-slate-100 flex items-center gap-1 text-[11px] text-[#0284C7] font-medium">
             <span>↑</span>
-            <span>3 pelanggan terdata</span>
+            <span>Rasio Konversi: {conversionRate}</span>
           </div>
         </div>
 
-        {/* Card 4: Gross Profit */}
+        {/* Card 4: Total Akumulasi Komisi */}
         <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs flex flex-col justify-between hover:border-slate-300 transition-all">
           <div>
             <div className="flex items-center justify-between">
@@ -249,7 +307,7 @@ export function SalesOverviewTab({
                 <div className="w-7 h-7 rounded-lg bg-amber-50 text-[#D97706] flex items-center justify-center">
                   <Coins className="w-4 h-4" />
                 </div>
-                <span className="text-xs font-medium text-slate-500">Gross Profit</span>
+                <span className="text-xs font-medium text-slate-500">Total Komisi</span>
               </div>
               {/* Upward Amber Sparkline */}
               <svg className="w-7 h-4 text-amber-400" viewBox="0 0 28 16" fill="none">
@@ -258,48 +316,52 @@ export function SalesOverviewTab({
               </svg>
             </div>
             <div className="mt-3 text-xl lg:text-2xl font-black text-slate-900 tracking-tight font-sans">
-              Rp {grossProfitVal.toLocaleString('id-ID')}
+              Rp {totalCommissionVal.toLocaleString('id-ID')}
             </div>
           </div>
           <div className="mt-3 pt-2 border-t border-slate-100 text-[11px] text-slate-500 font-medium">
-            Estimasi Margin 48.9%
+            Telah Dicairkan: Rp {paidCommissionVal.toLocaleString('id-ID')}
           </div>
         </div>
 
-        {/* Card 5: Pending Orders */}
+        {/* Card 5: Komisi Garansi (3 Hari) */}
         <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs flex flex-col justify-between hover:border-slate-300 transition-all col-span-2 sm:col-span-1">
           <div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-sky-50 text-[#0284C7] flex items-center justify-center">
+                <div className="w-7 h-7 rounded-lg bg-purple-50 text-[#8B5CF6] flex items-center justify-center">
                   <Clock className="w-4 h-4" />
                 </div>
-                <span className="text-xs font-medium text-slate-500">Pending Orders</span>
+                <span className="text-xs font-medium text-slate-500">Komisi Garansi</span>
               </div>
-              {/* Upward Sky Blue Sparkline */}
-              <svg className="w-7 h-4 text-sky-400" viewBox="0 0 28 16" fill="none">
+              {/* Upward Purple Sparkline */}
+              <svg className="w-7 h-4 text-purple-400" viewBox="0 0 28 16" fill="none">
                 <path d="M1 14L8 11L16 13L22 6L27 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 <path d="M22 2H27V7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>
             <div className="mt-3 text-xl lg:text-2xl font-black text-slate-900 tracking-tight font-sans">
-              {pendingOrdersVal}
+              Rp {pendingCommissionVal.toLocaleString('id-ID')}
             </div>
           </div>
-          <div className="mt-3 pt-2 border-t border-slate-100 text-[11px] text-amber-600 font-medium">
-            Menunggu pembayaran
+          <div className="mt-3 pt-2 border-t border-slate-100 text-[11px] text-purple-600 font-medium">
+            Masa proteksi garansi order
           </div>
         </div>
       </div>
 
-      {/* 3. TWO-COLUMN SPLIT (Exact match: Left 8 cols, Right 4 cols) */}
+      {/* 3. TWO-COLUMN SPLIT (Exact layout match: Left 8 cols, Right 4 cols) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         {/* LEFT COLUMN: 8 Columns */}
         <div className="lg:col-span-8 space-y-5">
-          {/* Chart Card */}
-          <SalesTrendChart />
+          {/* Sales Performance & Commission Chart */}
+          <SalesTrendChart
+            title="Grafik Performa Penjualan & Komisi Sales"
+            subtitle="Pergerakan omzet referral dan estimasi komisi Anda berdasarkan periode waktu"
+            legendLabel="Komisi Referral Terverifikasi"
+          />
 
-          {/* Aktivitas Transaksi Terbaru Card (Exact match to Screenshot) */}
+          {/* Aktivitas Pesanan Referral Terbaru Table Card */}
           <div className="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -308,16 +370,16 @@ export function SalesOverviewTab({
                 </div>
                 <div>
                   <h3 className="font-bold text-sm text-slate-900 leading-tight">
-                    Aktivitas Transaksi Terbaru
+                    Aktivitas Pesanan Referral Terbaru
                   </h3>
                   <p className="text-xs text-slate-500 mt-0.5 leading-tight">
-                    Order yang baru saja masuk dan diproses oleh gateway
+                    Daftar transaksi yang masuk melalui tautan referral atau kupon Anda
                   </p>
                 </div>
               </div>
               <button
                 type="button"
-                onClick={() => onTabChange && onTabChange('orders')}
+                onClick={() => onTabChange && onTabChange('sales-orders')}
                 className="text-xs text-[#2563EB] hover:underline font-semibold flex items-center gap-1 cursor-pointer"
               >
                 <span>Lihat Seluruh Pesanan</span>
@@ -330,66 +392,66 @@ export function SalesOverviewTab({
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
                   <tr className="border-b border-slate-100 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                    <th className="py-2.5 font-medium">Order ID &amp; Pembeli</th>
+                    <th className="py-2.5 font-medium">Order ID &amp; Waktu</th>
                     <th className="py-2.5 font-medium">Produk</th>
-                    <th className="py-2.5 font-medium">Metode</th>
-                    <th className="py-2.5 font-medium">Total</th>
+                    <th className="py-2.5 font-medium">Total Belanja</th>
+                    <th className="py-2.5 font-medium">Komisi Anda</th>
                     <th className="py-2.5 font-medium text-right">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  <tr className="hover:bg-slate-50/60 transition-colors">
-                    <td className="py-3">
-                      <div className="font-bold text-slate-900 font-mono text-xs">
-                        AST-ORD-20261022-7223
-                      </div>
-                      <div className="text-[11px] text-slate-400 mt-0.5">
-                        Pelanggan • 22 Okt 2026, 08:42
-                      </div>
-                    </td>
-                    <td className="py-3">
-                      <div className="flex items-center gap-2">
-                        {/* Google Logo */}
-                        <div className="w-6 h-6 rounded-md bg-white border border-slate-200/80 p-0.5 flex items-center justify-center shrink-0">
-                          <svg className="w-4 h-4" viewBox="0 0 24 24">
-                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
-                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
-                          </svg>
+                  {recentOrders.map((order) => (
+                    <tr key={order.id} className="hover:bg-slate-50/60 transition-colors">
+                      <td className="py-3">
+                        <div className="font-bold text-slate-900 font-mono text-xs">
+                          {order.id}
                         </div>
-                        <div>
-                          <div className="font-semibold text-slate-800 text-xs">
-                            Google Gemini Pro Anggota 1 Tahun
+                        <div className="text-[11px] text-slate-400 mt-0.5">
+                          {order.customer} • {order.time}
+                        </div>
+                      </td>
+                      <td className="py-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-md bg-slate-50 border border-slate-200/80 p-0.5 flex items-center justify-center shrink-0">
+                            <Package className="w-3.5 h-3.5 text-blue-600" />
                           </div>
-                          <div className="text-[10px] text-slate-400">Produk Digital</div>
+                          <div>
+                            <div className="font-semibold text-slate-800 text-xs">
+                              {order.product}
+                            </div>
+                            <div className="text-[10px] text-slate-400">Produk Digital</div>
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="py-3 font-medium text-slate-600 text-xs">QRIS</td>
-                    <td className="py-3 font-semibold text-slate-900 text-xs">Rp 95.700</td>
-                    <td className="py-3 text-right">
-                      <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-600 border border-emerald-200/80">
-                        Selesai
-                      </span>
-                    </td>
-                  </tr>
+                      </td>
+                      <td className="py-3 font-semibold text-slate-900 text-xs font-mono">
+                        Rp {order.total.toLocaleString('id-ID')}
+                      </td>
+                      <td className="py-3 font-bold text-emerald-600 text-xs font-mono">
+                        +Rp {order.commission.toLocaleString('id-ID')}
+                      </td>
+                      <td className="py-3 text-right">
+                        <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-600 border border-emerald-200/80">
+                          {order.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
           </div>
         </div>
 
-        {/* RIGHT COLUMN: 4 Columns (Produk Terlaris & Performa Affiliate Sales) */}
+        {/* RIGHT COLUMN: 4 Columns (Produk Rekomendasi & Bonus Tim) */}
         <div className="lg:col-span-4 space-y-5">
-          {/* Card 1: Produk Terlaris (Exact match to Screenshot) */}
+          {/* Card 1: Produk Rekomendasi Promosi (Komisi Tertinggi) */}
           <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-2xs space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="w-7 h-7 rounded-lg bg-orange-50 text-orange-500 flex items-center justify-center">
                   <Flame className="w-4 h-4 fill-orange-500" />
                 </div>
-                <h3 className="font-bold text-sm text-slate-900">Produk Terlaris</h3>
+                <h3 className="font-bold text-sm text-slate-900">Produk Komisi Tertinggi</h3>
               </div>
               <button
                 type="button"
@@ -401,7 +463,7 @@ export function SalesOverviewTab({
               </button>
             </div>
 
-            {/* List of 3 Products */}
+            {/* List of 3 Recommended High-Commission Products */}
             <div className="space-y-3 pt-1">
               {/* Product 1: Google Gemini Pro */}
               <div className="flex items-center justify-between gap-2.5">
@@ -417,10 +479,10 @@ export function SalesOverviewTab({
                   </div>
                   <div>
                     <h4 className="text-xs font-bold text-slate-800 line-clamp-1">
-                      Google Gemini Pro Anggota 1 Tahun (5 TB ...
+                      Google Gemini Pro Anggota 1 Tahun
                     </h4>
-                    <p className="text-[10px] text-slate-400 mt-0.5">
-                      3 unit terjual • Produk Digital
+                    <p className="text-[10px] text-emerald-600 font-semibold mt-0.5">
+                      Estimasi Komisi: Rp 9.570/order
                     </p>
                   </div>
                 </div>
@@ -434,17 +496,16 @@ export function SalesOverviewTab({
                 <div className="flex items-center gap-3">
                   <span className="text-xs font-semibold text-slate-400 w-3 text-center">2</span>
                   <div className="w-8 h-8 rounded-lg bg-black text-white p-1 flex items-center justify-center shrink-0">
-                    {/* Capcut Logo Representation */}
                     <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
                       <path d="M4 6.5C4 5.12 5.12 4 6.5 4h2.2l3.3 5-3.3 5H6.5C5.12 14 4 12.88 4 11.5v-5zm16 0c0-1.38-1.12-2.5-2.5-2.5h-2.2l-3.3 5 3.3 5h2.2c1.38 0 2.5-1.12 2.5-2.5v-5zM6.5 16h2.2l3.3-5 3.3 5h2.2c1.38 0 2.5 1.12 2.5 2.5v1c0 1.38-1.12 2.5-2.5 2.5h-11C5.12 22 4 20.88 4 19.5v-1C4 17.12 5.12 16 6.5 16z" />
                     </svg>
                   </div>
                   <div>
                     <h4 className="text-xs font-bold text-slate-800 line-clamp-1">
-                      CapCut Pro Private 7 Hari (Garansi 5 Hari)
+                      CapCut Pro Private 7 Hari
                     </h4>
-                    <p className="text-[10px] text-slate-400 mt-0.5">
-                      3 unit terjual • Produk Digital
+                    <p className="text-[10px] text-emerald-600 font-semibold mt-0.5">
+                      Estimasi Komisi: Rp 4.170/order
                     </p>
                   </div>
                 </div>
@@ -458,17 +519,16 @@ export function SalesOverviewTab({
                 <div className="flex items-center gap-3">
                   <span className="text-xs font-semibold text-slate-400 w-3 text-center">3</span>
                   <div className="w-8 h-8 rounded-lg bg-red-600 text-white p-1 flex items-center justify-center shrink-0">
-                    {/* YouTube Logo Representation */}
                     <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
                       <path d="M21.58 7.19a2.5 2.5 0 00-1.76-1.77C18.26 5 12 5 12 5s-6.26 0-7.82.42A2.5 2.5 0 002.42 7.2C2 8.76 2 12 2 12s0 3.24.42 4.81a2.5 2.5 0 001.76 1.77C5.74 19 12 19 12 19s6.26 0 7.82-.42a2.5 2.5 0 001.76-1.77C22 15.24 22 12 22 12s0-3.24-.42-4.81zM10 15V9l5.2 3-5.2 3z" />
                     </svg>
                   </div>
                   <div>
                     <h4 className="text-xs font-bold text-slate-800 line-clamp-1">
-                      YouTube Premium Family Anggota 1 Bulan...
+                      YouTube Premium Family 1 Bulan
                     </h4>
-                    <p className="text-[10px] text-slate-400 mt-0.5">
-                      1 unit terjual • Produk Digital
+                    <p className="text-[10px] text-emerald-600 font-semibold mt-0.5">
+                      Estimasi Komisi: Rp 1.880/order
                     </p>
                   </div>
                 </div>
@@ -479,53 +539,60 @@ export function SalesOverviewTab({
             </div>
           </div>
 
-          {/* Card 2: Performa Affiliate Sales (Exact match to Screenshot) */}
+          {/* Card 2: Bonus Tim & Rekrutmen Mitra (1-Level Referral) */}
           <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-2xs space-y-3.5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="w-7 h-7 rounded-lg bg-slate-100 text-slate-800 flex items-center justify-center">
                   <Share2 className="w-4 h-4" />
                 </div>
-                <h3 className="font-bold text-sm text-slate-900">Performa Affiliate Sales</h3>
+                <h3 className="font-bold text-sm text-slate-900">Bonus Tim &amp; Teman Sales</h3>
               </div>
               <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-600 border border-emerald-200">
-                7 Mitra
+                {networkData?.summary?.totalDownlines || networkData?.teamMembers?.length || 0} Mitra
               </span>
             </div>
 
             <div className="space-y-2 text-xs pt-1">
               <div className="flex items-center justify-between text-slate-500">
-                <span>Omzet via Referral</span>
-                <span className="font-bold text-slate-900 font-mono">Rp 15.300</span>
+                <span>Total Teman Diajak</span>
+                <span className="font-bold text-slate-900 font-mono">
+                  {networkData?.summary?.totalDownlines || networkData?.teamMembers?.length || 0} Mitra
+                </span>
               </div>
               <div className="flex items-center justify-between text-slate-500">
-                <span>Komisi Terbayar</span>
-                <span className="font-bold text-emerald-600 font-mono">Rp 0</span>
+                <span>Bonus Pasif Tim (2%)</span>
+                <span className="font-bold text-emerald-600 font-mono">
+                  Rp {(networkData?.totalNetworkBonus || networkData?.summary?.totalEarnedCommission || 0).toLocaleString('id-ID')}
+                </span>
               </div>
               <div className="flex items-center justify-between text-slate-500">
-                <span>Top Mitra Sales</span>
-                <span className="font-medium text-slate-700 truncate max-w-[170px]">
-                  Iqbal Sales Pro Max (A...
+                <span>Tingkat Komisi Anda</span>
+                <span className="font-bold text-indigo-600 font-mono">
+                  {partnerRate}% Profit Bersih
                 </span>
               </div>
             </div>
 
-            {/* Blue Notice Callout matching screenshot */}
+            {/* Blue Notice Callout for Sales Partner */}
             <div className="rounded-xl bg-blue-50/70 border border-blue-200/80 p-2.5 flex items-center justify-between gap-2 text-xs">
               <div className="flex items-center gap-2">
                 <div className="w-5 h-5 rounded-md bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
                   <Info className="w-3.5 h-3.5" />
                 </div>
                 <span className="text-[10px] sm:text-[11px] text-blue-900 leading-tight">
-                  Persentase komisi dan detail mitra dapat dilihat pada halaman Sales.
+                  Ajak teman Anda jadi mitra sales &amp; nikmati bonus pasif 2% profit dari setiap order mereka.
                 </span>
               </div>
               <button
                 type="button"
-                onClick={() => onTabChange && onTabChange('sales-network')}
+                onClick={() => {
+                  if (inviteSalesUrl) handleCopy(inviteSalesUrl, 'invite-sales');
+                  if (onTabChange) onTabChange('sales-network');
+                }}
                 className="text-[11px] font-bold text-blue-600 hover:underline shrink-0 cursor-pointer flex items-center gap-0.5"
               >
-                <span>Lihat Sales</span>
+                <span>Ajak Teman</span>
                 <span>→</span>
               </button>
             </div>

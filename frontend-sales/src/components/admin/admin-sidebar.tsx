@@ -106,6 +106,7 @@ interface AdminSidebarProps {
     totalArchived?: number;
     totalWarnings?: number;
     vipBalance?: number | null;
+    unpaidCommission?: number | null;
   };
   adminUser: { id?: string; email: string; name?: string; role?: string } | null;
   onLogout: () => void;
@@ -689,7 +690,7 @@ export function AdminSidebar({
         </div>
         <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#1C2028] border border-white/10 text-slate-300 font-mono text-[11px]">
           <Wallet className="w-3.5 h-3.5 text-slate-400" />
-          <span>Rp {(metrics?.vipBalance ?? 5979).toLocaleString('id-ID')}</span>
+          <span>Rp {(metrics?.unpaidCommission ?? 0).toLocaleString('id-ID')}</span>
         </div>
       </div>
 
