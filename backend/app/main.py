@@ -46,6 +46,7 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"[Lifespan] Orders init note: {e}")
 
+    # Register running asyncio event loop for RealtimeBroadcaster
     try:
         import asyncio
         from app.services.realtime_broadcaster import RealtimeBroadcaster
@@ -53,7 +54,56 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"[Lifespan] RealtimeBroadcaster loop init note: {e}")
 
+    # Launch autonomous background worker for periodic VIP stock & balance auto-sync
+    async def periodic_vip_stock_sync_worker():
+        """
+        Background autonomous worker that periodically checks live VIP supplier stock and balance.
+        Runs every 5 minutes (300 seconds) in background thread without blocking FastAPI request handling.
+        Emits real-time SSE broadcasts to connected admin consoles upon completion.
+        """
+        import asyncio
+        from datetime import datetime
+        from app.services.vip_service import VipService
+        from app.services.realtime_broadcaster import RealtimeBroadcaster
+        from app.core.cache import cache
+
+        # Initial delay on boot to allow server to settle
+        await asyncio.sleep(25)
+
+        while True:
+            try:
+                result = await asyncio.to_thread(VipService.check_stock)
+                if result and result.get("success"):
+                    cache.invalidate("catalog")
+                    RealtimeBroadcaster.broadcast(
+                        "catalog:updated",
+                        {"timestamp": datetime.utcnow().isoformat(), "source": "periodic_background_sync"},
+                        target_role="admin",
+                    )
+                    RealtimeBroadcaster.broadcast(
+                        "vip:status_updated",
+                        {"timestamp": datetime.utcnow().isoformat(), "checked": result.get("checked", 0)},
+                        target_role="admin",
+                    )
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                print(f"[PeriodicVipWorker] Stock check note: {e}")
+
+            try:
+                await asyncio.sleep(300)  # Every 5 minutes
+            except asyncio.CancelledError:
+                break
+
+    worker_task = asyncio.create_task(periodic_vip_stock_sync_worker())
+
     yield
+
+    worker_task.cancel()
+    try:
+        await worker_task
+    except asyncio.CancelledError:
+        pass
 
 app = FastAPI(
     title=settings.PROJECT_NAME,

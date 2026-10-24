@@ -115,12 +115,28 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
     }
   }, [getAdminHeaders, onNotify]);
 
-  const hasInitialFetchedRef = useRef(false);
   useEffect(() => {
-    if (hasInitialFetchedRef.current) return;
-    hasInitialFetchedRef.current = true;
     fetchAdmins();
-  }, [fetchAdmins]);
+
+    const handleAutoSync = () => {
+      if (!isSubmitting && !isSavingEdit && !isResettingPassword && !isDeleting) {
+        fetchAdmins();
+      }
+    };
+
+    window.addEventListener('focus', handleAutoSync);
+
+    const timer = setInterval(() => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        handleAutoSync();
+      }
+    }, 60000);
+
+    return () => {
+      window.removeEventListener('focus', handleAutoSync);
+      clearInterval(timer);
+    };
+  }, [fetchAdmins, isSubmitting, isSavingEdit, isResettingPassword, isDeleting]);
 
   // Open Create Modal for specific type
   const openCreateModal = (type: 'admin' | 'sales') => {

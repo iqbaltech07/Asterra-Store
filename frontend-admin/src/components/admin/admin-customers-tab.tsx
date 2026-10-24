@@ -59,7 +59,11 @@ export function AdminCustomersTab({ onNotify }: AdminCustomersTabProps) {
       const json = await res.json();
       return json.success && Array.isArray(json.data) ? json.data : [];
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: 10000,
+    refetchInterval: 30000,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    refetchIntervalInBackground: false,
   });
 
   const filteredCustomers = customers.filter((c) => {

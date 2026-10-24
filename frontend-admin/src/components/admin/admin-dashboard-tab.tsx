@@ -112,7 +112,11 @@ export function AdminDashboardTab({
       const json = await res.json();
       return json.success && json.data ? json.data : null;
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: 5000,
+    refetchInterval: 30000,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    refetchIntervalInBackground: false,
   });
 
   const { data: liveAffiliates = [] } = useQuery({
@@ -122,7 +126,11 @@ export function AdminDashboardTab({
       const json = await res.json();
       return json.success && Array.isArray(json.data) ? json.data : [];
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: 5000,
+    refetchInterval: 30000,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    refetchIntervalInBackground: false,
   });
 
   const { data: ordersResponse = null } = useQuery({
@@ -132,7 +140,11 @@ export function AdminDashboardTab({
       const json = await res.json();
       return json.success ? json : null;
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: 5000,
+    refetchInterval: 15000,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    refetchIntervalInBackground: false,
   });
 
   const liveOrders = ordersResponse?.data || [];

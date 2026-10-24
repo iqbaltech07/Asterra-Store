@@ -106,9 +106,12 @@ export function AdminAnalyticsSuite({ activeTab, onNotify }: AdminAnalyticsSuite
       if (!res.ok) throw new Error('Failed to fetch analytics suite data');
       return res.json();
     },
-    staleTime: 3 * 60 * 1000,
+    staleTime: 10000,
     gcTime: 15 * 60 * 1000,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    refetchInterval: 45000,
+    refetchIntervalInBackground: false,
   });
 
   const suiteData = suiteResponse?.data || null;

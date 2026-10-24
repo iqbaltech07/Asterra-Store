@@ -76,11 +76,27 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
     }
   }, [onNotify]);
 
-  const hasFetchedRef = useRef(false);
   useEffect(() => {
-    if (hasFetchedRef.current) return;
-    hasFetchedRef.current = true;
     fetchPromos();
+
+    const handleAutoSync = () => {
+      fetchPromos();
+    };
+
+    window.addEventListener('focus', handleAutoSync);
+    window.addEventListener('admin:refresh-promos', handleAutoSync);
+
+    const timer = setInterval(() => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        handleAutoSync();
+      }
+    }, 30000);
+
+    return () => {
+      window.removeEventListener('focus', handleAutoSync);
+      window.removeEventListener('admin:refresh-promos', handleAutoSync);
+      clearInterval(timer);
+    };
   }, [fetchPromos]);
 
   const handleCopy = (code: string) => {

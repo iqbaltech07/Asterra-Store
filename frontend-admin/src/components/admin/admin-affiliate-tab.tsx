@@ -100,11 +100,27 @@ export function AdminAffiliateTab({ onNotify }: AdminAffiliateTabProps) {
     }
   };
 
-  const hasFetchedRef = useRef(false);
   useEffect(() => {
-    if (hasFetchedRef.current) return;
-    hasFetchedRef.current = true;
     fetchAffiliates();
+
+    const handleAutoSync = () => {
+      fetchAffiliates();
+    };
+
+    window.addEventListener('focus', handleAutoSync);
+    window.addEventListener('admin:refresh-affiliates', handleAutoSync);
+
+    const timer = setInterval(() => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        handleAutoSync();
+      }
+    }, 30000);
+
+    return () => {
+      window.removeEventListener('focus', handleAutoSync);
+      window.removeEventListener('admin:refresh-affiliates', handleAutoSync);
+      clearInterval(timer);
+    };
   }, []);
 
   // New partner form states

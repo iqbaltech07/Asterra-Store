@@ -192,6 +192,31 @@ export function AdminFinanceSuite({ activeTab, metrics, onNotify }: AdminFinance
     if (activeTab === 'profit') {
       fetchProfitData();
     }
+
+    const handleAutoSync = () => {
+      fetchFinanceSummary();
+      if (activeTab === 'profit') {
+        fetchProfitData();
+      }
+    };
+
+    // Auto-sync on window focus
+    window.addEventListener('focus', handleAutoSync);
+    // Auto-sync on global SSE notification
+    window.addEventListener('admin:data-updated', handleAutoSync);
+
+    // Periodic 30s safety poll when tab is visible
+    const timer = setInterval(() => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        handleAutoSync();
+      }
+    }, 30000);
+
+    return () => {
+      window.removeEventListener('focus', handleAutoSync);
+      window.removeEventListener('admin:data-updated', handleAutoSync);
+      clearInterval(timer);
+    };
   }, [activeTab, fetchFinanceSummary, fetchProfitData]);
 
   const filteredProfitEntries = useMemo(() => {

@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, useIsFetching } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -401,7 +401,146 @@ function AdminPageContent() {
     }, 4000);
   };
 
-  // Fetch Managed Products once - searching and filtering are 100% in-memory
+  // Global Auto-Sync & Real-time State
+  const isGlobalFetching = useIsFetching();
+  const [sseConnected, setSseConnected] = useState<boolean>(false);
+  const [lastSyncTime, setLastSyncTime] = useState<Date>(() => new Date());
+
+  // Global SSE listener with Auto-Reconnect for real-time invalidations across all tabs
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    let eventSource: EventSource | null = null;
+    let reconnectTimeout: NodeJS.Timeout | null = null;
+    let retryAttempt = 0;
+    let isSubscribed = true;
+
+    const setupConnection = () => {
+      if (!isSubscribed) return;
+
+      if (eventSource) {
+        try {
+          eventSource.close();
+        } catch {}
+        eventSource = null;
+      }
+
+      try {
+        eventSource = new EventSource('/api/v1/events?role=admin');
+
+        eventSource.onopen = () => {
+          if (!isSubscribed) return;
+          setSseConnected(true);
+          setLastSyncTime(new Date());
+          retryAttempt = 0;
+        };
+
+        const handleOrderEvent = () => {
+          if (!isSubscribed) return;
+          queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
+          queryClient.invalidateQueries({ queryKey: ['admin-logs'] });
+          queryClient.invalidateQueries({ queryKey: ['admin-metrics'] });
+          queryClient.invalidateQueries({ queryKey: ['admin-dashboard-overview'] });
+          queryClient.invalidateQueries({ queryKey: ['admin-dashboard-orders'] });
+          queryClient.invalidateQueries({ queryKey: ['admin-customers'] });
+          queryClient.invalidateQueries({ queryKey: ['admin-analytics-suite'] });
+          setLastSyncTime(new Date());
+          window.dispatchEvent(new CustomEvent('admin:data-updated'));
+        };
+
+        eventSource.addEventListener('order:created', handleOrderEvent);
+        eventSource.addEventListener('order:cancelled', handleOrderEvent);
+        eventSource.addEventListener('order:payment_verified', handleOrderEvent);
+        eventSource.addEventListener('order:status_changed', handleOrderEvent);
+
+        eventSource.addEventListener('catalog:updated', () => {
+          if (!isSubscribed) return;
+          queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+          queryClient.invalidateQueries({ queryKey: ['admin-dashboard-overview'] });
+          queryClient.invalidateQueries({ queryKey: ['admin-analytics-suite'] });
+          setLastSyncTime(new Date());
+          window.dispatchEvent(new CustomEvent('admin:data-updated'));
+        });
+
+        eventSource.addEventListener('vip:status_updated', () => {
+          if (!isSubscribed) return;
+          queryClient.invalidateQueries({ queryKey: ['admin-vip-services'] });
+          queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+          setLastSyncTime(new Date());
+        });
+
+        eventSource.addEventListener('promo:updated', () => {
+          if (!isSubscribed) return;
+          queryClient.invalidateQueries({ queryKey: ['admin-promos'] });
+          queryClient.invalidateQueries({ queryKey: ['promos'] });
+          window.dispatchEvent(new CustomEvent('admin:refresh-promos'));
+          setLastSyncTime(new Date());
+        });
+
+        eventSource.addEventListener('affiliate:updated', () => {
+          if (!isSubscribed) return;
+          queryClient.invalidateQueries({ queryKey: ['admin-dashboard-affiliates'] });
+          window.dispatchEvent(new CustomEvent('admin:refresh-affiliates'));
+          setLastSyncTime(new Date());
+        });
+
+        eventSource.addEventListener('campaign:updated', () => {
+          if (!isSubscribed) return;
+          window.dispatchEvent(new CustomEvent('admin:refresh-campaigns'));
+          setLastSyncTime(new Date());
+        });
+
+        eventSource.addEventListener('payment_config:updated', () => {
+          if (!isSubscribed) return;
+          queryClient.invalidateQueries({ queryKey: ['admin-payment-config'] });
+          window.dispatchEvent(new CustomEvent('admin:refresh-payment-config'));
+          setLastSyncTime(new Date());
+        });
+
+        eventSource.onerror = () => {
+          if (!isSubscribed) return;
+          setSseConnected(false);
+          try {
+            if (eventSource) eventSource.close();
+          } catch {}
+          eventSource = null;
+
+          retryAttempt++;
+          const delay = Math.min(2000 * Math.pow(1.5, retryAttempt - 1), 15000);
+          reconnectTimeout = setTimeout(() => {
+            setupConnection();
+          }, delay);
+        };
+      } catch (err) {
+        console.warn('[Global SSE] Connection error:', err);
+        setSseConnected(false);
+        reconnectTimeout = setTimeout(() => {
+          setupConnection();
+        }, 3000);
+      }
+    };
+
+    setupConnection();
+
+    return () => {
+      isSubscribed = false;
+      if (reconnectTimeout) clearTimeout(reconnectTimeout);
+      if (eventSource) {
+        try {
+          eventSource.close();
+        } catch {}
+        eventSource = null;
+      }
+    };
+  }, [queryClient]);
+
+  useEffect(() => {
+    if (isGlobalFetching === 0) {
+      setLastSyncTime(new Date());
+    }
+  }, [isGlobalFetching]);
+
+  // Fetch Managed Products once - searching and filtering are 100% in-memory with Dual-Channel Auto-Sync
   const {
     data: productsData,
     isLoading: isLoadingProducts,
@@ -416,7 +555,11 @@ function AdminPageContent() {
       if (!res.ok) throw new Error('Gagal memuat produk admin');
       return res.json();
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: 10000,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    refetchInterval: sseConnected ? 30000 : 10000,
+    refetchIntervalInBackground: false,
   });
 
   // Fetch VIP Reseller Services Explorer - server searches all 12,500+ cached services in memory
@@ -445,8 +588,12 @@ function AdminPageContent() {
       return data;
     },
     enabled: activeTab === 'vip-explorer',
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30000,
     gcTime: 15 * 60 * 1000,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    refetchInterval: activeTab === 'vip-explorer' ? 60000 : false,
+    refetchIntervalInBackground: false,
   });
 
   // Toggle Product Status (Active vs Archived)
@@ -981,8 +1128,40 @@ function AdminPageContent() {
             </div>
           </div>
 
-          {/* Right Header: Search, Notifications, User Chip, Quick Actions */}
+          {/* Right Header: Auto-Sync Engine, Search, Notifications, User Chip, Quick Actions */}
           <div className="flex items-center gap-3">
+            {/* Observability Auto-Sync Engine Badge */}
+            <div
+              className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/70 border border-slate-200/80 text-xs shadow-2xs backdrop-blur-xs select-none"
+              title={sseConnected ? 'Dual-Channel Auto-Sync Aktif (SSE Gateway + Smart Polling)' : 'Auto-Sync Mode Terjadwal (Smart Polling)'}
+            >
+              <span className="relative flex h-2 w-2">
+                {sseConnected ? (
+                  <>
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                  </>
+                ) : (
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                )}
+              </span>
+              <span className="font-semibold text-slate-700 text-[11px]">
+                {isGlobalFetching > 0 ? (
+                  <span className="flex items-center gap-1 text-[#2563EB]">
+                    <RefreshCw className="w-3 h-3 animate-spin" />
+                    <span>Menyinkronkan...</span>
+                  </span>
+                ) : sseConnected ? (
+                  <span>Auto-Sync Aktif</span>
+                ) : (
+                  <span className="text-amber-700">Auto-Sync (Polling)</span>
+                )}
+              </span>
+              <span className="text-[10px] text-slate-400 font-mono hidden xl:inline border-l border-slate-200 pl-2">
+                {lastSyncTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+              </span>
+            </div>
+
             {/* Search Pill Input matching Reference Screenshot */}
             <div className="hidden lg:flex items-center gap-2 bg-white/60 border border-slate-200/80 rounded-xl px-3.5 py-1.5 text-xs text-slate-400 shadow-2xs hover:border-slate-300 transition-colors w-68">
               <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />

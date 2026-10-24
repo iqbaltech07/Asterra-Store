@@ -11,6 +11,7 @@ from app.services.tripay_service import TripayService
 router = APIRouter()
 
 from app.core.cache import cache
+from app.services.realtime_broadcaster import RealtimeBroadcaster
 from app.core.redis_client import get_redis_client
 import hashlib
 import time
@@ -226,6 +227,11 @@ async def update_admin_payment_config(request: Request):
     payload = await request.json()
     updated = PaymentConfigService.update_config(payload)
     cache.invalidate("payment_config")
+    RealtimeBroadcaster.broadcast(
+        "payment_config:updated",
+        {"timestamp": time.time()},
+        target_role="admin",
+    )
     return {
         "success": True,
         "message": "Konfigurasi pembayaran berhasil diperbarui.",
@@ -260,6 +266,11 @@ async def create_admin_promo(request: Request):
     payload = await request.json()
     new_promo = PromoService.create_promo(payload)
     cache.invalidate("promos")
+    RealtimeBroadcaster.broadcast(
+        "promo:updated",
+        {"action": "created", "code": new_promo.get("code")},
+        target_role="admin",
+    )
     return {
         "success": True,
         "message": f"Kode promo '{new_promo.get('code')}' berhasil dibuat.",
@@ -277,6 +288,11 @@ async def update_admin_promo(promo_id: str, request: Request):
     if not updated:
         raise HTTPException(status_code=404, detail="Kode promo tidak ditemukan.")
     cache.invalidate("promos")
+    RealtimeBroadcaster.broadcast(
+        "promo:updated",
+        {"action": "updated", "id": promo_id},
+        target_role="admin",
+    )
     return {
         "success": True,
         "message": "Kode promo berhasil diperbarui.",
@@ -289,6 +305,11 @@ def delete_admin_promo(promo_id: str):
     if not deleted:
         raise HTTPException(status_code=404, detail="Kode promo tidak ditemukan.")
     cache.invalidate("promos")
+    RealtimeBroadcaster.broadcast(
+        "promo:updated",
+        {"action": "deleted", "id": promo_id},
+        target_role="admin",
+    )
     return {
         "success": True,
         "message": "Kode promo berhasil dihapus.",

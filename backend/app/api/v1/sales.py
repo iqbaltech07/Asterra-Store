@@ -8,7 +8,10 @@ from app.services.partner_service import PartnerService
 from app.services.order_service import OrderService
 from app.services.referral_service import ReferralService
 from app.services.campaign_service import CampaignService
+from app.services.realtime_broadcaster import RealtimeBroadcaster
 from app.core.auth import verify_admin_session_token
+from app.core.cache import cache
+from datetime import datetime
 
 router = APIRouter()
 
@@ -30,6 +33,11 @@ async def create_admin_affiliate(request: Request):
     res = PartnerService.register_partner(payload)
     if not res.get("success"):
         return JSONResponse(status_code=400, content=res)
+    RealtimeBroadcaster.broadcast(
+        "affiliate:updated",
+        {"action": "created", "timestamp": datetime.utcnow().isoformat()},
+        target_role="admin",
+    )
     return {
         "success": True,
         "message": "Mitra sales berhasil didaftarkan.",
@@ -39,6 +47,11 @@ async def create_admin_affiliate(request: Request):
 @router.post("/admin/affiliates/payout", tags=["Admin Affiliates"])
 async def process_admin_affiliate_payout(request: Request):
     payload = await request.json()
+    RealtimeBroadcaster.broadcast(
+        "affiliate:updated",
+        {"action": "payout", "timestamp": datetime.utcnow().isoformat()},
+        target_role="admin",
+    )
     return {
         "success": True,
         "message": "Pencairan komisi mitra sales berhasil disetujui dan dicatat.",
@@ -369,6 +382,11 @@ async def create_admin_campaign(request: Request):
     try:
         created = CampaignService.create_campaign(payload)
         cache.invalidate("campaigns", "catalog")
+        RealtimeBroadcaster.broadcast(
+            "campaign:updated",
+            {"action": "created", "id": created.get("id"), "timestamp": datetime.utcnow().isoformat()},
+            target_role="admin",
+        )
         return {
             "success": True,
             "message": f"Campaign '{created.get('name')}' berhasil diluncurkan.",
@@ -387,6 +405,11 @@ async def update_admin_campaign(campaign_id: str, request: Request):
     if not updated:
         raise HTTPException(status_code=404, detail="Campaign tidak ditemukan.")
     cache.invalidate("campaigns", "catalog")
+    RealtimeBroadcaster.broadcast(
+        "campaign:updated",
+        {"action": "updated", "id": campaign_id, "timestamp": datetime.utcnow().isoformat()},
+        target_role="admin",
+    )
     return {
         "success": True,
         "message": f"Campaign '{updated.get('name')}' berhasil diperbarui.",
@@ -401,6 +424,11 @@ def toggle_admin_campaign(campaign_id: str):
         raise HTTPException(status_code=404, detail="Campaign tidak ditemukan.")
     label = "diaktifkan" if updated.get("isActive") else "dinonaktifkan"
     cache.invalidate("campaigns", "catalog")
+    RealtimeBroadcaster.broadcast(
+        "campaign:updated",
+        {"action": "toggled", "id": campaign_id, "timestamp": datetime.utcnow().isoformat()},
+        target_role="admin",
+    )
     return {
         "success": True,
         "message": f"Campaign '{updated.get('name')}' berhasil {label}.",
@@ -413,6 +441,11 @@ def delete_admin_campaign(campaign_id: str):
     if not success:
         raise HTTPException(status_code=404, detail="Campaign tidak ditemukan.")
     cache.invalidate("campaigns", "catalog")
+    RealtimeBroadcaster.broadcast(
+        "campaign:updated",
+        {"action": "deleted", "id": campaign_id, "timestamp": datetime.utcnow().isoformat()},
+        target_role="admin",
+    )
     return {
         "success": True,
         "message": "Campaign berhasil dihapus dari sistem.",

@@ -100,13 +100,31 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
     }
   }, [onNotify]);
 
-  const hasFetchedRef = useRef(false);
   useEffect(() => {
     setCurrentBaseUrl(getAppBaseUrl());
-    if (hasFetchedRef.current) return;
-    hasFetchedRef.current = true;
     fetchSettings();
-  }, [fetchSettings]);
+
+    const handleAutoSync = () => {
+      if (!isSaving) {
+        fetchSettings();
+      }
+    };
+
+    window.addEventListener('focus', handleAutoSync);
+    window.addEventListener('admin:refresh-payment-config', handleAutoSync);
+
+    const timer = setInterval(() => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        handleAutoSync();
+      }
+    }, 60000);
+
+    return () => {
+      window.removeEventListener('focus', handleAutoSync);
+      window.removeEventListener('admin:refresh-payment-config', handleAutoSync);
+      clearInterval(timer);
+    };
+  }, [fetchSettings, isSaving]);
 
   const handleCopy = (text: string, key: string) => {
     navigator.clipboard.writeText(text);

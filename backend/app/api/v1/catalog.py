@@ -25,6 +25,7 @@ ALLOWED_MIME_TYPES = [
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
 
 from app.core.cache import cache
+from app.services.realtime_broadcaster import RealtimeBroadcaster
 
 # ------------------------------------------
 # 1. Product Catalog Endpoints (Storefront & Admin)
@@ -97,6 +98,11 @@ async def create_admin_product(request: Request):
     payload = await request.json()
     new_product = CatalogService.create_product(payload)
     cache.invalidate("catalog")
+    RealtimeBroadcaster.broadcast(
+        "catalog:updated",
+        {"action": "created", "id": new_product.get("id"), "name": new_product.get("name")},
+        target_role="admin",
+    )
     return {
         "success": True,
         "message": f"Produk '{new_product.get('name')}' berhasil ditambahkan ke katalog.",
@@ -110,6 +116,11 @@ async def update_admin_product(product_id: str, request: Request):
     if not updated:
         raise HTTPException(status_code=404, detail="Produk tidak ditemukan untuk diperbarui.")
     cache.invalidate("catalog")
+    RealtimeBroadcaster.broadcast(
+        "catalog:updated",
+        {"action": "updated", "id": product_id, "name": updated.get("name")},
+        target_role="admin",
+    )
     return {
         "success": True,
         "message": f"Produk '{updated.get('name')}' berhasil diperbarui.",
@@ -122,6 +133,11 @@ def delete_admin_product(product_id: str):
     if not deleted:
         raise HTTPException(status_code=404, detail="Produk tidak ditemukan untuk dihapus.")
     cache.invalidate("catalog")
+    RealtimeBroadcaster.broadcast(
+        "catalog:updated",
+        {"action": "deleted", "id": product_id},
+        target_role="admin",
+    )
     return {
         "success": True,
         "message": "Produk berhasil dihapus dari katalog.",
@@ -134,6 +150,11 @@ def toggle_admin_product_status(product_id: str):
         raise HTTPException(status_code=404, detail="Produk tidak ditemukan.")
     label = "diaktifkan" if new_status == "active" else "diarsipkan"
     cache.invalidate("catalog")
+    RealtimeBroadcaster.broadcast(
+        "catalog:updated",
+        {"action": "toggled", "id": product_id, "status": new_status},
+        target_role="admin",
+    )
     return {
         "success": True,
         "message": f"Status produk berhasil {label}.",
@@ -148,6 +169,11 @@ async def bulk_status_products(request: Request):
     count = CatalogService.bulk_status(ids, status)
     label = "diaktifkan" if status == "active" else "diarsipkan"
     cache.invalidate("catalog")
+    RealtimeBroadcaster.broadcast(
+        "catalog:updated",
+        {"action": "bulk_status", "status": status, "count": count},
+        target_role="admin",
+    )
     return {
         "success": True,
         "message": f"{count} produk massal berhasil {label}.",
@@ -160,6 +186,11 @@ async def bulk_delete_products(request: Request):
     ids = payload.get("ids", [])
     count = CatalogService.bulk_delete(ids)
     cache.invalidate("catalog")
+    RealtimeBroadcaster.broadcast(
+        "catalog:updated",
+        {"action": "bulk_delete", "count": count},
+        target_role="admin",
+    )
     return {
         "success": True,
         "message": f"{count} produk massal berhasil dihapus.",
@@ -197,6 +228,16 @@ def sync_vip_services():
     if not result.get("success"):
         raise HTTPException(status_code=400, detail=result.get("message", "Gagal sinkronisasi VIP Reseller"))
     cache.invalidate("catalog")
+    RealtimeBroadcaster.broadcast(
+        "catalog:updated",
+        {"action": "sync_vip"},
+        target_role="admin",
+    )
+    RealtimeBroadcaster.broadcast(
+        "vip:status_updated",
+        {"action": "sync_vip"},
+        target_role="admin",
+    )
     return result
 
 @router.post("/admin/refresh-stock", tags=["Admin VIP"])
@@ -206,6 +247,16 @@ def refresh_stock():
     if not result.get("success"):
         raise HTTPException(status_code=400, detail=result.get("message", "Gagal pengecekan stok live"))
     cache.invalidate("catalog")
+    RealtimeBroadcaster.broadcast(
+        "catalog:updated",
+        {"action": "refresh_stock"},
+        target_role="admin",
+    )
+    RealtimeBroadcaster.broadcast(
+        "vip:status_updated",
+        {"action": "refresh_stock", "checked": result.get("checked", 0)},
+        target_role="admin",
+    )
     return result
 
 # ------------------------------------------

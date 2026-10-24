@@ -210,6 +210,25 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
 
   useEffect(() => {
     loadCampaignsFromApi();
+
+    const handleAutoSync = () => {
+      loadCampaignsFromApi();
+    };
+
+    window.addEventListener('focus', handleAutoSync);
+    window.addEventListener('admin:refresh-campaigns', handleAutoSync);
+
+    const timer = setInterval(() => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        handleAutoSync();
+      }
+    }, 30000);
+
+    return () => {
+      window.removeEventListener('focus', handleAutoSync);
+      window.removeEventListener('admin:refresh-campaigns', handleAutoSync);
+      clearInterval(timer);
+    };
   }, [loadCampaignsFromApi]);
 
   // Campaign Handlers
