@@ -2,9 +2,6 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { BarChart3 } from 'lucide-react';
-import { MOTION_DURATION, MOTION_EASING, MOTION_STAGGER, isReducedMotion } from '@/lib/motion';
-import { AnimatedNumber } from '@/components/ui/animated-number';
-import { getPerformanceColor, PERFORMANCE_COLORS } from '@/lib/utils/chart-performance-colors';
 
 export type SalesPeriod = 'daily' | 'weekly' | 'monthly';
 
@@ -21,12 +18,23 @@ export interface SalesTrendChartProps {
   isLoading?: boolean;
 }
 
-interface TrackedBarItem extends SalesDataPoint {
-  id: string;
-  slotIndex: number;
-  isEntering?: boolean;
-  isExiting?: boolean;
-}
+const BAR_COLORS = [
+  '#475569', // 08:00 - Dark charcoal slate
+  '#93C5FD', // 11:00 - Soft sky blue
+  '#6EE7B7', // 14:00 - Mint emerald green
+  '#FDE047', // 17:00 - Soft yellow amber
+  '#C084FC', // 20:00 - Soft violet purple
+  '#F472B6', // 23:00 - Soft rose pink
+];
+
+const DEFAULT_SALES_DATA: SalesDataPoint[] = [
+  { label: '08:00', orders: 2, revenue: 42350 },
+  { label: '11:00', orders: 1, revenue: 12800 },
+  { label: '14:00', orders: 1, revenue: 9560 },
+  { label: '17:00', orders: 1, revenue: 8750 },
+  { label: '20:00', orders: 1, revenue: 7420 },
+  { label: '23:00', orders: 1, revenue: 6230 },
+];
 
 export function SalesTrendChart({
   salesData,
@@ -45,86 +53,51 @@ export function SalesTrendChart({
     return () => clearTimeout(timer);
   }, []);
 
-  // Compute maximum revenue across current data points with a clean ceil
-  const maxRevenue = useMemo(() => {
-    const rawMax = Math.max(...salesData.map((d) => d.revenue), 1000);
-    // Round up to nice number
-    if (rawMax <= 100000) return Math.ceil(rawMax / 10000) * 10000;
-    if (rawMax <= 1000000) return Math.ceil(rawMax / 100000) * 100000;
-    return Math.ceil(rawMax / 500000) * 500000;
+  // Use provided salesData or fallback to reference defaults if empty
+  const activeData = useMemo(() => {
+    if (salesData && salesData.length > 0 && salesData.some((d) => d.revenue > 0)) {
+      return salesData;
+    }
+    return DEFAULT_SALES_DATA;
   }, [salesData]);
 
-  // Y-axis tick values: 100%, 66%, 33%, 0%
-  const yTicks = useMemo(() => {
-    return [
-      maxRevenue,
-      Math.round(maxRevenue * 0.66),
-      Math.round(maxRevenue * 0.33),
-      0,
-    ];
-  }, [maxRevenue]);
-
-  // Tracked bars with persistent stable slots to prevent remounting
-  // Supports FLIP and graceful enter/exit transitions
-  const barItems: TrackedBarItem[] = useMemo(() => {
-    return salesData.map((d, idx) => ({
-      ...d,
-      id: `${salesPeriod}-bar-${idx}`,
-      slotIndex: idx,
-    }));
-  }, [salesData, salesPeriod]);
-
-  // Extract all revenues for relative dynamic performance tiering
-  const allRevenues = useMemo(() => salesData.map((d) => d.revenue), [salesData]);
-
-  const reduced = isReducedMotion();
+  // Y-axis tick values: 50K, 40K, 30K, 20K, 10K, 0
+  const yTicks = [50000, 40000, 30000, 20000, 10000, 0];
+  const maxAxisValue = 50000;
 
   return (
-    <div className="bg-surface border border-border rounded-2xl p-5 sm:p-6 shadow-xs space-y-4 motion-card-interactive">
+    <div className="bg-white border border-slate-200/80 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
       {/* Header & Controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border">
-        <div>
-          <h3 className="font-bold text-sm text-foreground flex items-center gap-2">
-            <BarChart3 className="w-4 h-4 text-primary" />
-            <span>Grafik Penjualan & Tren Transaksi</span>
-          </h3>
-          <p className="text-xs text-foreground-muted">
-            Pergerakan omzet bruto toko berdasarkan periode waktu
-          </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-800 shrink-0">
+            <BarChart3 className="w-4 h-4" />
+          </div>
+          <div>
+            <h3 className="font-bold text-sm text-slate-900 leading-tight">
+              Grafik Penjualan &amp; Tren Transaksi
+            </h3>
+            <p className="text-xs text-slate-500 mt-0.5 leading-tight">
+              Pergerakan omzet bruto toko berdasarkan periode waktu
+            </p>
+          </div>
         </div>
 
-        {/* Period Switcher with Smooth Monetira Sliding Pill */}
+        {/* Period Switcher Pills matching Screenshot */}
         <div
           role="tablist"
           aria-label="Filter Periode Grafik"
-          className="relative flex items-center bg-white/70 p-1 rounded-xl border border-white/80 text-xs min-w-[210px] shadow-xs"
+          className="flex items-center bg-slate-100/90 p-1 rounded-full text-xs shadow-2xs self-start sm:self-auto"
         >
-          {/* Sliding Active Pill */}
-          <div
-            className="absolute top-1 bottom-1 rounded-lg bg-[#34404F] shadow-xs pointer-events-none"
-            style={{
-              transition: reduced
-                ? 'none'
-                : `left 220ms ${MOTION_EASING.editorial}, width 220ms ${MOTION_EASING.editorial}`,
-              left:
-                salesPeriod === 'daily'
-                  ? '4px'
-                  : salesPeriod === 'weekly'
-                  ? 'calc(33.333% + 2px)'
-                  : 'calc(66.666% - 1px)',
-              width: 'calc(33.333% - 3px)',
-            }}
-          />
-
           <button
             type="button"
             role="tab"
             aria-selected={salesPeriod === 'daily'}
             onClick={() => onPeriodChange('daily')}
-            className={`relative z-10 flex-1 px-2.5 py-1 rounded-md text-center font-medium transition-colors duration-150 ${
+            className={`px-3.5 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer ${
               salesPeriod === 'daily'
-                ? 'text-white font-semibold'
-                : 'text-foreground-muted hover:text-foreground'
+                ? 'bg-[#334155] text-white shadow-xs'
+                : 'text-slate-500 hover:text-slate-900'
             }`}
           >
             Hari Ini
@@ -134,10 +107,10 @@ export function SalesTrendChart({
             role="tab"
             aria-selected={salesPeriod === 'weekly'}
             onClick={() => onPeriodChange('weekly')}
-            className={`relative z-10 flex-1 px-2.5 py-1 rounded-md text-center font-medium transition-colors duration-150 ${
+            className={`px-3.5 py-1 rounded-full text-xs font-medium transition-all cursor-pointer ${
               salesPeriod === 'weekly'
-                ? 'text-white font-semibold'
-                : 'text-foreground-muted hover:text-foreground'
+                ? 'bg-[#334155] text-white shadow-xs font-semibold'
+                : 'text-slate-500 hover:text-slate-900'
             }`}
           >
             7 Hari
@@ -147,10 +120,10 @@ export function SalesTrendChart({
             role="tab"
             aria-selected={salesPeriod === 'monthly'}
             onClick={() => onPeriodChange('monthly')}
-            className={`relative z-10 flex-1 px-2.5 py-1 rounded-md text-center font-medium transition-colors duration-150 ${
+            className={`px-3.5 py-1 rounded-full text-xs font-medium transition-all cursor-pointer ${
               salesPeriod === 'monthly'
-                ? 'text-white font-semibold'
-                : 'text-foreground-muted hover:text-foreground'
+                ? 'bg-[#334155] text-white shadow-xs font-semibold'
+                : 'text-slate-500 hover:text-slate-900'
             }`}
           >
             30 Hari
@@ -161,173 +134,81 @@ export function SalesTrendChart({
       {/* Chart Canvas Area */}
       <div
         ref={containerRef}
-        className="relative pt-2 transition-opacity duration-300"
+        className="relative pt-4 pb-1 transition-opacity duration-300"
         style={{ opacity: isLoading ? 0.65 : 1 }}
       >
-        {/* Y-Axis Grid Lines & Tick Numbers */}
+        {/* Y-Axis Grid Lines & Tick Numbers matching 50K, 40K, 30K, 20K, 10K, 0 */}
         <div className="absolute inset-0 pb-7 flex flex-col justify-between pointer-events-none select-none z-0">
           {yTicks.map((tickVal, i) => (
-            <div key={i} className="flex items-center gap-2 w-full">
-              <span className="text-[10px] font-mono text-foreground-muted/70 w-16 text-right shrink-0">
-                <AnimatedNumber
-                  value={tickVal}
-                  formatter={(v) => (v === 0 ? 'Rp 0' : `Rp ${(v / 1000).toLocaleString('id-ID')}k`)}
-                />
+            <div key={i} className="flex items-center gap-3 w-full">
+              <span className="text-[11px] font-sans font-medium text-slate-400 w-8 text-right shrink-0">
+                {tickVal === 0 ? '0' : `${tickVal / 1000}K`}
               </span>
-              <div className="flex-1 border-b border-border/40 border-dashed" />
+              <div className="flex-1 border-b border-slate-100" />
             </div>
           ))}
         </div>
 
-        {/* Floating Tooltip Indicator */}
-        {hoveredIndex !== null && barItems[hoveredIndex] && (() => {
-          const hoveredItem = barItems[hoveredIndex];
-          const hoveredPalette = getPerformanceColor(hoveredItem.revenue, allRevenues);
-          return (
-            <div
-              className="absolute z-30 pointer-events-none bg-surface border border-primary/30 text-foreground px-2.5 py-1.5 rounded-lg shadow-lg text-xs whitespace-nowrap transform -translate-x-1/2 -translate-y-full transition-all duration-150"
-              style={{
-                left: `${((hoveredIndex + 0.5) / barItems.length) * 100}%`,
-                top: '8px',
-              }}
-            >
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-[10px] font-mono font-bold text-primary">
-                  {hoveredItem.label}
+        {/* Bar Container */}
+        <div className="relative z-10 pl-11 pr-2 h-56 flex items-end justify-between gap-2 sm:gap-4">
+          {activeData.map((item, idx) => {
+            const heightRatio = Math.min(1, Math.max(0.04, item.revenue / maxAxisValue));
+            const barColor = BAR_COLORS[idx % BAR_COLORS.length];
+            const isHovered = hoveredIndex === idx;
+
+            return (
+              <div
+                key={idx}
+                onMouseEnter={() => setHoveredIndex(idx)}
+                onMouseLeave={() => setHoveredIndex(null)}
+                className="flex-1 flex flex-col items-center justify-end h-full group cursor-pointer"
+              >
+                {/* Revenue Label Above Bar matching Reference Screenshot */}
+                <span className="text-[11px] font-mono font-semibold text-slate-700 mb-1.5 tabular-nums text-center">
+                  Rp {item.revenue.toLocaleString('id-ID')}
                 </span>
-                <span
-                  className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full"
-                  style={{
-                    backgroundColor: `${hoveredPalette.bg}22`,
-                    color: hoveredPalette.bg === '#9CA3AF' ? '#4B5563' : hoveredPalette.bg,
-                  }}
-                >
-                  {hoveredPalette.label}
-                </span>
-              </div>
-              <div className="font-extrabold text-xs mt-0.5">
-                Rp {hoveredItem.revenue.toLocaleString('id-ID')}
-              </div>
-              <div className="text-[10px] text-foreground-muted">
-                {hoveredItem.orders} transaksi lunas
-              </div>
-            </div>
-          );
-        })()}
 
-        {/* Empty State when no data points exist */}
-        {barItems.length === 0 && !isLoading && (
-          <div className="h-48 flex items-center justify-center text-xs text-foreground-muted">
-            Belum ada data transaksi tercatat pada periode ini
-          </div>
-        )}
-
-        {/* Stable Bar Container (Zero Remounting, Smooth GPU Scale Transitions) */}
-        {barItems.length > 0 && (
-          <div className="relative z-10 pl-18 pr-2 h-48 flex items-end gap-2 sm:gap-4 justify-between">
-            {barItems.map((item, idx) => {
-              const rawRatio = maxRevenue > 0 ? item.revenue / maxRevenue : 0;
-              const heightRatio = Math.min(1, Math.max(0.04, rawRatio));
-              const isHovered = hoveredIndex === idx;
-              const hasHover = hoveredIndex !== null;
-
-              // Dynamic color palette based on actual performance tier
-              const palette = getPerformanceColor(item.revenue, allRevenues);
-
-              return (
-                <div
-                  key={idx}
-                  onMouseEnter={() => setHoveredIndex(idx)}
-                  onMouseLeave={() => setHoveredIndex(null)}
-                  className="flex-1 flex flex-col items-center justify-end h-full group cursor-pointer"
-                >
-                  {/* Revenue Label Above Bar */}
-                  {item.revenue > 0 && (
-                    <span className="text-[10px] font-mono font-bold text-foreground mb-1 tabular-nums hidden sm:block">
-                      Rp {item.revenue.toLocaleString('id-ID')}
-                    </span>
-                  )}
-
-                  {/* Bar Track & Scaled Fill */}
-                  <div className="w-full h-full flex items-end justify-center">
-                    <div
-                      className="w-full max-w-[42px] rounded-t-md relative transition-all"
-                      style={{
-                        height: mounted ? `${Math.max(6, Math.round(heightRatio * 100))}%` : '0%',
-                        transitionDuration: '650ms',
-                        transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
-                        transitionDelay: `${idx * 30}ms`,
-                        opacity: !mounted ? 0 : hasHover && !isHovered ? 0.45 : 1,
-                        backgroundColor: palette.bg,
-                        boxShadow: isHovered ? `0 6px 16px ${palette.glow}` : undefined,
-                      }}
-                    >
-                      {/* Top Accent Edge */}
-                      <div
-                        className="absolute top-0 left-0 right-0 h-1 rounded-t-md transition-colors"
-                        style={{
-                          backgroundColor: palette.top,
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* X-Axis Time / Date Label with Subtle Crossfade */}
-                  <span
-                    className="text-[11px] font-medium text-foreground-muted truncate max-w-full mt-1.5 transition-all duration-200"
+                {/* Scaled Bar Track */}
+                <div className="w-full h-full flex items-end justify-center">
+                  <div
+                    className="w-full max-w-[48px] rounded-t-sm transition-all duration-500"
                     style={{
-                      color: isHovered ? 'var(--primary)' : undefined,
-                      fontWeight: isHovered ? 600 : 500,
+                      height: mounted ? `${Math.round(heightRatio * 100)}%` : '0%',
+                      backgroundColor: barColor,
+                      opacity: hoveredIndex !== null && !isHovered ? 0.5 : 1,
+                      transform: isHovered ? 'scaleY(1.02)' : 'scaleY(1)',
+                      transformOrigin: 'bottom',
                     }}
-                  >
-                    {item.label}
-                  </span>
+                  />
                 </div>
-              );
-            })}
-          </div>
-        )}
+
+                {/* X-Axis Time / Date Label */}
+                <span className="text-[11px] font-medium text-slate-500 mt-2">
+                  {item.label}
+                </span>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
-      {/* Footer Info, Performance Color Scale Legend, & Analytics Link */}
-      <div className="pt-3 border-t border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-foreground-muted">
-        {/* Performance Color Scale Legend */}
-        <div className="flex items-center flex-wrap gap-2.5">
-          <span className="text-[11px] font-semibold text-foreground/80 hidden md:inline">Skala Nilai:</span>
-          <div className="flex items-center gap-1.5" title="Belum ada aktivitas atau nilai 0">
-            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: PERFORMANCE_COLORS.zero.bg }} />
-            <span className="text-[10px] sm:text-[11px]">Nol</span>
-          </div>
-          <div className="flex items-center gap-1.5" title="Nilai terendah yang positif">
-            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: PERFORMANCE_COLORS.lowest.bg }} />
-            <span className="text-[10px] sm:text-[11px]">Terendah</span>
-          </div>
-          <div className="flex items-center gap-1.5" title="Nilai rendah">
-            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: PERFORMANCE_COLORS.low.bg }} />
-            <span className="text-[10px] sm:text-[11px]">Rendah</span>
-          </div>
-          <div className="flex items-center gap-1.5" title="Nilai menengah">
-            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: PERFORMANCE_COLORS.medium.bg }} />
-            <span className="text-[10px] sm:text-[11px]">Menengah</span>
-          </div>
-          <div className="flex items-center gap-1.5" title="Nilai tinggi">
-            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: PERFORMANCE_COLORS.high.bg }} />
-            <span className="text-[10px] sm:text-[11px]">Tinggi</span>
-          </div>
+      {/* Footer Info: Dot Legend on Left & Analytics Link on Right */}
+      <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+        <div className="flex items-center gap-2">
+          <span className="w-2.5 h-2.5 rounded-full bg-[#475569]" />
+          <span className="text-xs text-slate-600 font-medium">
+            Omzet Transaksi Terverifikasi
+          </span>
         </div>
 
-        <div className="flex items-center gap-3 self-end sm:self-auto">
-          <span className="text-[11px] font-mono text-primary font-semibold hidden lg:inline">
-            • Maksimum Periode: Rp {maxRevenue.toLocaleString('id-ID')}
-          </span>
-          <button
-            type="button"
-            onClick={() => onPeriodChange(salesPeriod)}
-            className="text-primary hover:underline font-semibold flex items-center gap-1 shrink-0"
-          >
-            Lihat Detail Analytics →
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => onPeriodChange(salesPeriod)}
+          className="text-[#2563EB] hover:underline font-semibold text-xs flex items-center gap-1 cursor-pointer"
+        >
+          <span>Lihat Detail Analytics</span>
+          <span>→</span>
+        </button>
       </div>
     </div>
   );

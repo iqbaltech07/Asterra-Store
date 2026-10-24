@@ -15,6 +15,7 @@ import {
 import Link from 'next/link';
 import { AdminSidebar, AdminTab } from '@/components/admin/admin-sidebar';
 import { SalesConsoleSuite } from '@/components/sales/sales-console-suite';
+import { Search } from 'lucide-react';
 
 const TAB_TITLES: Record<string, { category: string; title: string }> = {
   'sales-overview': { category: 'Portal Penjualan', title: 'Ringkasan Performa & Komisi Sales' },
@@ -164,7 +165,10 @@ function SalesPortalContent() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex font-sans selection:bg-primary/20 selection:text-primary">
+    <div className="min-h-screen bg-[#F0F4F8] text-foreground flex font-sans selection:bg-primary/20 selection:text-primary relative overflow-x-hidden">
+      {/* Subtle Luminous Top-Right Glow matching Screenshot */}
+      <div className="absolute top-0 right-0 w-[600px] h-[350px] bg-gradient-to-bl from-blue-100/60 via-slate-100/40 to-transparent pointer-events-none rounded-bl-full blur-3xl -z-10" />
+
       {/* Desktop Sidebar (hidden on mobile, uses bottom nav & mobile sheet instead) */}
       <AdminSidebar
         activeTab={activeTab}
@@ -177,85 +181,83 @@ function SalesPortalContent() {
 
       {/* Main Content Pane */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Responsive Sticky Header Bar */}
-        <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-slate-200/80 px-3.5 sm:px-8 py-2.5 sm:py-3.5 flex items-center justify-between shadow-2xs">
-          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-            {/* Desktop Hamburger (for lg toggle if needed) */}
-            <button
-              type="button"
-              onClick={() => setIsSidebarMobileOpen(true)}
-              className="hidden p-2 rounded-xl text-foreground-muted hover:text-foreground hover:bg-surface-secondary border border-border transition-colors cursor-pointer"
-              aria-label="Buka Menu Sidebar"
-            >
-              <FontAwesomeIcon icon={faBars} className="text-base" />
-            </button>
+        {/* Responsive Sticky Header Bar matching Reference Screenshot */}
+        <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-slate-200/80 px-4 sm:px-8 py-3 sm:py-3.5 shadow-2xs">
+          <div className="flex items-center justify-between gap-4 min-w-0">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              {/* Desktop Hamburger (for lg toggle if needed) */}
+              <button
+                type="button"
+                onClick={() => setIsSidebarMobileOpen(true)}
+                className="lg:hidden p-2 rounded-xl text-foreground-muted hover:text-foreground hover:bg-slate-100 border border-slate-200/80 transition-colors cursor-pointer"
+                aria-label="Buka Menu Sidebar"
+              >
+                <FontAwesomeIcon icon={faBars} className="text-base" />
+              </button>
 
-            {/* Mobile Brand Badge */}
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#2563EB] to-[#1D4ED8] text-white flex items-center justify-center shrink-0 shadow-xs lg:hidden">
-              <FontAwesomeIcon icon={faShareNodes} className="text-xs" />
+              <div className="flex flex-col min-w-0 animate-text-smooth" key={activeTab}>
+                <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium truncate">
+                  <span>Sales Portal</span>
+                  <span>/</span>
+                  <span className="capitalize text-slate-500 font-medium truncate">
+                    {currentTabMeta.category}
+                  </span>
+                </div>
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-[#0F172A] tracking-tight leading-tight truncate mt-0.5">
+                  {currentTabMeta.title}
+                </h1>
+                {activeTab === 'sales-overview' && (
+                  <p className="text-xs text-slate-500 mt-1 font-normal">
+                    Ringkasan performa penjualan dan komisi referral Asterra Store
+                  </p>
+                )}
+              </div>
             </div>
 
-            <div className="flex flex-col min-w-0 animate-text-smooth" key={activeTab}>
-              <div className="hidden sm:flex items-center gap-1.5 text-xs text-[#64748B] font-medium">
-                <span>Sales Portal</span>
-                <span>/</span>
-                <span className="capitalize text-[#64748B] font-medium">
-                  {currentTabMeta.category}
-                </span>
+            {/* Quick Header Actions matching Screenshot */}
+            <div className="flex items-center gap-3 shrink-0">
+              {/* Search Pill Input with responsive width */}
+              <div className="hidden md:flex items-center gap-2 bg-white/90 border border-slate-200/90 rounded-full px-4 py-2 text-xs text-slate-400 shadow-2xs hover:border-slate-300 transition-colors w-56 lg:w-72">
+                <Search className="w-4 h-4 text-slate-400 shrink-0" />
+                <span className="flex-1 text-slate-400 select-none truncate text-xs">Cari produk, link, materi...</span>
+                <kbd className="hidden lg:inline-block px-2 py-0.5 text-[10px] bg-slate-100 text-slate-500 rounded border border-slate-200 font-mono">Ctrl + K</kbd>
               </div>
-              <h1 className="text-base sm:text-2xl font-bold text-[#0F172A] tracking-tight leading-tight truncate">
-                {currentTabMeta.title}
-              </h1>
-            </div>
-          </div>
 
-          {/* Quick Header Actions */}
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-            {/* Dompet Shortcut (desktop & tablet) */}
-            <Button
-              size="sm"
-              onClick={() => handleTabChange('sales-wallet')}
-              className="text-xs gap-1.5 shadow-xs font-semibold bg-[#16A36A] hover:bg-[#15803D] text-white rounded-xl h-8 sm:h-9 px-2.5 sm:px-3.5 cursor-pointer"
-            >
-              <FontAwesomeIcon icon={faWallet} className="text-xs" />
-              <span className="hidden xs:inline">Dompet Komisi</span>
-              <span className="xs:hidden">Dompet</span>
-            </Button>
+              {/* Dompet Shortcut (desktop & tablet) */}
+              <Button
+                size="sm"
+                onClick={() => handleTabChange('sales-wallet')}
+                className="text-xs gap-1.5 shadow-xs font-semibold bg-[#16A36A] hover:bg-[#15803D] text-white rounded-full h-9 px-3.5 cursor-pointer"
+              >
+                <FontAwesomeIcon icon={faWallet} className="text-xs" />
+                <span className="hidden xs:inline">Dompet Komisi</span>
+                <span className="xs:hidden">Dompet</span>
+              </Button>
 
-            <Link
-              href="/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl border border-slate-200/80 bg-white/70 hover:bg-white text-xs text-foreground font-medium shadow-2xs transition-colors"
-            >
-              <FontAwesomeIcon icon={faStore} className="text-xs text-[#2563EB]" />
-              <span className="hidden md:inline">Lihat Toko</span>
-              <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="text-[10px] text-slate-400" />
-            </Link>
+              <Link
+                href="/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-slate-200/90 bg-white hover:bg-slate-50 text-xs text-slate-700 font-medium shadow-2xs transition-colors"
+              >
+                <FontAwesomeIcon icon={faStore} className="text-xs text-[#2563EB]" />
+                <span className="hidden md:inline">Lihat Toko</span>
+                <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="text-[10px] text-slate-400" />
+              </Link>
 
-            {/* Mobile More / Profile Button */}
-            <button
-              type="button"
-              onClick={() => setIsMobileMenuOpen(true)}
-              className="lg:hidden flex items-center gap-1.5 p-1 sm:p-1.5 rounded-xl border border-slate-200 bg-white/80 hover:bg-white text-xs text-foreground shadow-2xs cursor-pointer active:scale-95 transition-all"
-              aria-label="Buka Menu Lainnya"
-            >
-              <div className="w-7 h-7 rounded-lg bg-[#111318] text-white font-bold text-[11px] flex items-center justify-center shrink-0">
-                {adminUser?.name ? adminUser.name.charAt(0).toUpperCase() : 'SP'}
-              </div>
-              <FontAwesomeIcon icon={faBars} className="text-xs text-slate-400 px-1" />
-            </button>
-
-            {/* Desktop Sales Partner Avatar Chip */}
-            <div className="hidden lg:flex items-center gap-2.5 pl-1.5 pr-3 py-1 rounded-full bg-white/70 border border-slate-200/80 shadow-2xs">
-              <div className="w-7 h-7 rounded-full bg-[#111318] text-white font-bold text-[11px] flex items-center justify-center shrink-0">
-                {adminUser?.name ? adminUser.name.charAt(0).toUpperCase() : 'SP'}
-              </div>
-              <div className="flex flex-col text-left leading-none">
-                <span className="text-xs font-bold text-slate-900 truncate max-w-[120px]">
-                  {adminUser?.name || 'Mitra Sales'}
-                </span>
-                <span className="text-[10px] text-slate-400 font-normal mt-0.5">Sales Affiliate</span>
+              {/* Desktop Sales Partner Avatar Chip matching Screenshot */}
+              <div className="hidden sm:flex items-center gap-2.5 pl-1.5 pr-3 py-1.5 rounded-full bg-white border border-slate-200/90 shadow-2xs">
+                <div className="w-7 h-7 rounded-full bg-[#111318] text-white font-bold text-[11px] flex items-center justify-center shrink-0">
+                  {adminUser?.name ? adminUser.name.charAt(0).toUpperCase() : 'SP'}
+                </div>
+                <div className="flex flex-col text-left leading-none">
+                  <span className="text-xs font-bold text-slate-900 truncate max-w-[120px]">
+                    {adminUser?.name || 'Mitra Sales'}
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-normal mt-0.5">
+                    Sales Partner
+                  </span>
+                </div>
               </div>
             </div>
           </div>
