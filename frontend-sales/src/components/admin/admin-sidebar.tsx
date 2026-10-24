@@ -632,25 +632,37 @@ export function AdminSidebar({
   };
 
   const sidebarContent = (
-    <div className="flex flex-col h-full bg-[#111318] text-[#F4F7FB] select-none border-r border-white/10">
-      {/* 1. Header / Logo Area matching Screenshot 100% */}
-      <div className="px-5 py-4 flex items-center justify-between">
+    <div className="flex flex-col h-full bg-gradient-to-b from-[#181C28] via-[#12151F] to-[#0A0C13] text-[#F4F7FB] select-none border-r border-slate-800/80 relative overflow-hidden">
+      {/* Top subtle ambient glow detail */}
+      <div className="absolute top-0 left-0 right-0 h-44 bg-gradient-to-b from-blue-600/[0.08] via-indigo-600/[0.03] to-transparent pointer-events-none" />
+      <div className="absolute -top-12 -left-12 w-36 h-36 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+
+      {/* 1. Header / Logo Area with Looping Animated Planet Logo matching User Navbar */}
+      <div className="px-5 py-4 flex items-center justify-between relative z-10">
         <Link
           href="/sales"
-          className="flex items-center gap-3 group transition-transform active:scale-98"
+          className="flex items-center gap-2.5 group transition-transform active:scale-98"
         >
-          {/* 4-pointed Star Emblem matching Screenshot */}
-          <div className="w-8 h-8 flex items-center justify-center shrink-0">
-            <svg className="w-8 h-8 text-white" viewBox="0 0 32 32" fill="none">
-              <path d="M16 2L19.5 12.5L30 16L19.5 19.5L16 30L12.5 19.5L2 16L12.5 12.5L16 2Z" fill="white" />
-              <path d="M16 6L18 14L26 16L18 18L16 26L14 18L6 16L14 14L16 6Z" fill="#111318" />
-            </svg>
+          {/* Looping Animated Asterra Planet (as in user navbar) */}
+          <div className="w-10 h-10 flex items-center justify-center shrink-0 relative">
+            <picture className="flex items-center justify-center pointer-events-none select-none">
+              <source srcSet="/assets/asterra-planet-navbar.webp" type="image/webp" />
+              <img
+                src="/assets/asterra-planet-navbar.webp"
+                alt="Asterra Store"
+                width={80}
+                height={43}
+                decoding="async"
+                draggable={false}
+                className="w-auto h-9 sm:h-10 object-contain pointer-events-none select-none transition-transform duration-300 group-hover:scale-105"
+              />
+            </picture>
           </div>
           <div className="flex flex-col">
-            <span className="font-bold text-base text-white tracking-tight leading-tight">
+            <span className="font-extrabold text-[15px] text-white tracking-tight leading-tight">
               Asterra Store
             </span>
-            <span className="text-[11px] text-slate-400 font-normal leading-tight mt-0.5">
+            <span className="text-[10px] text-slate-400 font-medium leading-tight mt-0.5 tracking-wide">
               Portal Mitra Sales
             </span>
           </div>
@@ -816,8 +828,8 @@ export function AdminSidebar({
 
   return (
     <>
-      {/* Desktop Sticky Sidebar */}
-      <aside className="hidden lg:block w-64 xl:w-72 h-screen sticky top-0 border-r border-white/10 bg-[#111318] shrink-0 z-30 shadow-subtle">
+      {/* Desktop Fixed Stationary Sidebar (Always pinned on left, never scrolls away) */}
+      <aside className="hidden lg:flex flex-col fixed top-0 bottom-0 left-0 w-64 xl:w-72 h-screen border-r border-slate-800/90 bg-[#12151F] z-30 shadow-2xl">
         {sidebarContent}
       </aside>
 

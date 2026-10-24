@@ -1087,7 +1087,7 @@ function AdminPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F0F4F8] text-foreground flex font-sans selection:bg-primary/20 selection:text-primary relative overflow-x-hidden">
+    <div className="min-h-screen bg-[#F0F4F8] text-foreground flex font-sans selection:bg-primary/20 selection:text-primary relative">
       {/* Subtle Luminous Top-Right Glow matching Screenshot */}
       <div className="absolute top-0 right-0 w-[600px] h-[350px] bg-gradient-to-bl from-blue-100/60 via-slate-100/40 to-transparent pointer-events-none rounded-bl-full blur-3xl -z-10" />
 
@@ -1103,8 +1103,8 @@ function AdminPageContent() {
         onCloseMobile={() => setIsSidebarMobileOpen(false)}
       />
 
-      {/* Main Content Pane */}
-      <div className="flex-1 flex flex-col min-w-0">
+      {/* Main Content Pane with left padding for fixed desktop sidebar */}
+      <div className="flex-1 flex flex-col min-w-0 lg:pl-64 xl:pl-72">
         {/* Sticky Top Header Bar - Structured Two-Row Density */}
         <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-slate-200/80 px-4 sm:px-8 py-3 sm:py-3.5 shadow-2xs transition-all">
           {/* Row 1: Breadcrumb + Heading Area (Left) and Global Controls (Right) */}

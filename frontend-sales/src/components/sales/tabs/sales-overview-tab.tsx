@@ -69,28 +69,48 @@ export function SalesOverviewTab({
     <div className="space-y-4 sm:space-y-5 animate-fade-up">
       {/* 1. TOP ALERT BANNERS (Matching Screenshot) */}
       <div className="space-y-2.5">
-        {/* Banner 1: Dark metallic VIP Saldo Alert */}
-        <div className="rounded-2xl bg-gradient-to-r from-[#202738] via-[#2D3748] to-[#1E2433] text-white p-3.5 sm:px-5 sm:py-3.5 shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-slate-700/60">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-amber-400/20 text-amber-400 flex items-center justify-center shrink-0 border border-amber-400/30">
-              <Crown className="w-5 h-5" />
+        {/* Banner 1: Saldo Supplier VIP Reseller matching gambar3 with exact luminous sheen motif */}
+        <div
+          className="relative overflow-hidden rounded-2xl p-4 sm:px-5 sm:py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md border border-white/15 text-white"
+          style={{
+            background:
+              'linear-gradient(108deg, #252E3E 0%, #303B4E 24%, #455571 45%, #506385 52%, #38465D 70%, #222937 100%)',
+          }}
+        >
+          {/* Motif Kilau-Kilau Luminous Sheen Beams matching gambar3 */}
+          <div
+            className="absolute inset-0 pointer-events-none select-none"
+            style={{
+              background:
+                'linear-gradient(116deg, transparent 18%, rgba(255,255,255,0.02) 28%, rgba(255,255,255,0.14) 44%, rgba(255,255,255,0.26) 50%, rgba(255,255,255,0.06) 56%, transparent 74%)',
+            }}
+          />
+          <div className="absolute top-0 right-0 w-80 h-full bg-gradient-to-l from-blue-300/[0.12] to-transparent pointer-events-none" />
+          <div className="absolute -left-4 -top-4 w-32 h-32 bg-amber-400/[0.08] rounded-full blur-2xl pointer-events-none" />
+
+          {/* Left Content: Circular Crown Badge & Text */}
+          <div className="flex items-center gap-3.5 relative z-10 min-w-0">
+            {/* Circular Glass Crown Badge matching gambar3 */}
+            <div className="w-11 h-11 rounded-full bg-[#3B4A64]/70 border border-white/25 shadow-inner backdrop-blur-md flex items-center justify-center shrink-0">
+              <Crown className="w-5 h-5 text-amber-400 stroke-[1.8]" />
             </div>
             <div>
               <h4 className="text-xs sm:text-sm font-bold text-white tracking-tight">
                 Perhatian Saldo Supplier VIP Reseller
               </h4>
-              <p className="text-[11px] sm:text-xs text-slate-300 mt-0.5 leading-tight">
+              <p className="text-[11px] sm:text-xs text-slate-200 mt-0.5 leading-tight">
                 Saldo deposit saat ini adalah{' '}
-                <strong className="text-white font-semibold">Rp 5.979</strong>. Jika saldo
+                <strong className="text-white font-bold">Rp 5.979</strong>. Jika saldo
                 habis, pemesanan otomatis upstream akan tertunda.
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+
+          <div className="flex items-center gap-2 self-start sm:self-auto shrink-0 relative z-10">
             <button
               type="button"
               onClick={() => handleCopy(referralUrl, 'ref-banner-link')}
-              className="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white font-semibold text-xs border border-white/20 transition-all flex items-center gap-1.5 cursor-pointer"
+              className="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white font-semibold text-xs border border-white/20 transition-all flex items-center gap-1.5 cursor-pointer backdrop-blur-md"
               title="Salin Link Referral"
             >
               {copiedLink === 'ref-banner-link' ? (
@@ -108,10 +128,10 @@ export function SalesOverviewTab({
             <button
               type="button"
               onClick={() => onTabChange && onTabChange('providers')}
-              className="px-3.5 py-1.5 rounded-full bg-slate-900/80 hover:bg-slate-900 text-white font-semibold text-xs border border-slate-600/80 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+              className="px-4 py-2 rounded-full border border-white/30 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold backdrop-blur-md transition-all shadow-xs flex items-center gap-1.5 cursor-pointer shrink-0"
             >
               <span>Cek Provider VIP</span>
-              <span className="text-[10px]">→</span>
+              <span className="text-[11px]">→</span>
             </button>
           </div>
         </div>

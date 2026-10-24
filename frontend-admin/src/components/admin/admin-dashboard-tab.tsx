@@ -192,17 +192,36 @@ export function AdminDashboardTab({
     <div className="space-y-5">
       {/* 1. Top Operational Alert Banners matching Reference Screenshot 100% */}
       <div className="space-y-3">
-        {/* Banner 1: Saldo Supplier VIP Reseller */}
-        <div className="bg-gradient-to-r from-[#29323E] via-[#354050] to-[#3E4A5C] text-white rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md border border-white/10">
-          <div className="flex items-center gap-3.5">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center shrink-0">
-              <Crown className="w-5 h-5 text-amber-400" />
+        {/* Banner 1: Saldo Supplier VIP Reseller matching gambar3 with exact luminous sheen motif */}
+        <div
+          className="relative overflow-hidden rounded-2xl p-4 sm:px-5 sm:py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md border border-white/15 text-white"
+          style={{
+            background:
+              'linear-gradient(108deg, #252E3E 0%, #303B4E 24%, #455571 45%, #506385 52%, #38465D 70%, #222937 100%)',
+          }}
+        >
+          {/* Motif Kilau-Kilau Luminous Sheen Beams matching gambar3 */}
+          <div
+            className="absolute inset-0 pointer-events-none select-none"
+            style={{
+              background:
+                'linear-gradient(116deg, transparent 18%, rgba(255,255,255,0.02) 28%, rgba(255,255,255,0.14) 44%, rgba(255,255,255,0.26) 50%, rgba(255,255,255,0.06) 56%, transparent 74%)',
+            }}
+          />
+          <div className="absolute top-0 right-0 w-80 h-full bg-gradient-to-l from-blue-300/[0.12] to-transparent pointer-events-none" />
+          <div className="absolute -left-4 -top-4 w-32 h-32 bg-amber-400/[0.08] rounded-full blur-2xl pointer-events-none" />
+
+          {/* Left Content: Crown Circle & Text */}
+          <div className="flex items-center gap-3.5 relative z-10 min-w-0">
+            {/* Circular Glass Crown Badge matching gambar3 */}
+            <div className="w-11 h-11 rounded-full bg-[#3B4A64]/70 border border-white/25 shadow-inner backdrop-blur-md flex items-center justify-center shrink-0">
+              <Crown className="w-5 h-5 text-amber-400 stroke-[1.8]" />
             </div>
             <div>
-              <h3 className="font-bold text-sm text-white">
+              <h3 className="font-bold text-sm text-white tracking-tight">
                 Perhatian Saldo Supplier VIP Reseller
               </h3>
-              <p className="text-slate-300 text-xs mt-0.5">
+              <p className="text-slate-200 text-xs mt-0.5 leading-tight">
                 Saldo deposit saat ini adalah{' '}
                 <strong className="text-white font-bold">
                   Rp {(metrics?.vipBalance ?? 5979).toLocaleString('id-ID')}
@@ -211,13 +230,16 @@ export function AdminDashboardTab({
               </p>
             </div>
           </div>
-          <Button
-            size="sm"
+
+          {/* Right Action: Translucent Glass Pill matching gambar3 */}
+          <button
+            type="button"
             onClick={() => onNavigateTab('providers')}
-            className="text-xs h-8 bg-transparent hover:bg-white/10 text-white border border-white/25 rounded-full font-semibold shrink-0 px-4 shadow-xs"
+            className="relative z-10 px-4 py-2 rounded-full border border-white/30 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold backdrop-blur-md transition-all shadow-xs flex items-center gap-1.5 cursor-pointer shrink-0 self-start sm:self-auto"
           >
-            Cek Provider VIP →
-          </Button>
+            <span>Cek Provider VIP</span>
+            <span className="text-[11px]">→</span>
+          </button>
         </div>
 
         {/* Banner 2: Stok Upstream Kosong */}
