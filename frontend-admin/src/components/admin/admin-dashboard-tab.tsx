@@ -27,7 +27,6 @@ import {
   Eye,
   ExternalLink,
   MessageSquare,
-  Sparkles,
   ArrowRight,
   Crown,
   Flame,

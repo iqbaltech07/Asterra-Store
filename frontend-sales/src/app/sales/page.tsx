@@ -46,6 +46,7 @@ function SalesPortalContent() {
   const initialUrlTab = getTabFromUrl();
   const [activeTab, setActiveTab] = useState<AdminTab>(initialUrlTab || 'sales-overview');
   const [isSidebarMobileOpen, setIsSidebarMobileOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleTabChange = useCallback((newTab: AdminTab) => {
     setActiveTab(newTab);
@@ -156,9 +157,7 @@ function SalesPortalContent() {
       </div>
     );
   }
-
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
+ 
   const currentTabMeta = TAB_TITLES[activeTab] || {
     category: 'Portal Penjualan',
     title: 'Portal Mitra Sales',

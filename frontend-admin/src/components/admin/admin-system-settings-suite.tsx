@@ -18,7 +18,6 @@ import {
   HelpCircle,
   FileText,
   Search,
-  Sparkles,
   Save,
   RefreshCw,
   ExternalLink,

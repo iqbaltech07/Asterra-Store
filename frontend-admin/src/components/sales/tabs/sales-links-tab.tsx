@@ -16,7 +16,6 @@ import {
   FileText,
   MessageSquare,
   Users,
-  Sparkles,
 } from 'lucide-react';
 import { getStoreBaseUrl } from '@/lib/utils/url';
 import type { ProductItem, CampaignItem } from '../types';
@@ -443,12 +442,12 @@ export function SalesLinksTab({
 
             {/* Template 3: Caption Instagram / Bio */}
             {(() => {
-              const text3 = `Layanan Akun Digital Premium Resmi & Bergaransi 100% ✨\n\n✅ Canva Pro, ChatGPT Plus, Netflix, Spotify ready kilat\n✅ Bergaransi penuh & amanah\n✅ Proses 1 - 15 menit selesai\n\nKatalog lengkap & order resmi:\n👉 ${customGeneratedUrl}`;
+              const text3 = `Layanan Akun Digital Premium Resmi & Bergaransi 100%\n\n✅ Canva Pro, ChatGPT Plus, Netflix, Spotify ready kilat\n✅ Bergaransi penuh & amanah\n✅ Proses 1 - 15 menit selesai\n\nKatalog lengkap & order resmi:\n👉 ${customGeneratedUrl}`;
               return (
                 <div className="rounded-xl border border-border bg-surface-raised p-3.5 sm:p-4 space-y-2.5 text-xs">
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-foreground flex items-center gap-1.5">
-                      <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                      <Share2 className="w-3.5 h-3.5 text-primary" />
                       <span>Caption Instagram / Bio Link</span>
                     </span>
                     <Button

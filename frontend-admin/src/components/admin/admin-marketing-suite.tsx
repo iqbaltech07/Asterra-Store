@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   Plus,
   Calendar,
-  Sparkles,
+  Megaphone,
   Eye,
   EyeOff,
   Clock,
@@ -649,7 +649,7 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
           {filteredCampaigns.length === 0 ? (
             <div className="col-span-full py-12 px-6 rounded-xl border border-dashed border-border bg-surface text-center flex flex-col items-center justify-center space-y-3">
               <div className="w-12 h-12 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
-                <Sparkles className="w-6 h-6" />
+                <Megaphone className="w-6 h-6" />
               </div>
               <div className="space-y-1 max-w-sm">
                 <h4 className="text-sm font-bold text-foreground">Belum Ada Campaign Promosi</h4>
@@ -1010,7 +1010,7 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
         <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
           <div className="flex items-center gap-2">
             <span className="font-semibold text-foreground flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-primary" />
+              <Eye className="w-3.5 h-3.5 text-primary" />
               <span>Live Interactive Preview (Mode {previewDevice === 'desktop' ? 'Desktop 1920px' : 'Mobile 390px'})</span>
             </span>
             <Badge variant="outline" className="text-[10px] font-mono border-border bg-surface-raised">

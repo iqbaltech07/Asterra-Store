@@ -16,7 +16,7 @@ import {
   HelpCircle,
   Eye,
   Layers,
-  Sparkles,
+  Zap,
   Search,
   X,
   RefreshCw,
@@ -36,6 +36,7 @@ interface HomepageProductItem {
   id: string;
   name: string;
   productName?: string;
+  slug?: string;
   brandGroup?: string;
   minPrice?: number;
   price: number;
@@ -819,7 +820,7 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
                 />
                 <div className="text-xs space-y-1">
                   <div className="font-bold text-foreground flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-primary" />
+                    <Zap className="w-3.5 h-3.5 text-primary" />
                     <span>Mode Otomatis (Auto)</span>
                   </div>
                   <p className="text-[11px] text-foreground-muted leading-relaxed">

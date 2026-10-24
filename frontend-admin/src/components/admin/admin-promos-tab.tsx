@@ -13,7 +13,8 @@ import {
   faTrash,
   faPowerOff,
   faCalendar,
-  faWandMagicSparkles,
+  faCircleCheck,
+  faShuffle,
   faBagShopping,
   faXmark,
   faClock,
@@ -293,7 +294,7 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
           <div className="flex items-center justify-between">
             <span className="text-xs text-foreground-muted font-semibold">Promo Aktif</span>
             <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200/60 flex items-center justify-center">
-              <FontAwesomeIcon icon={faWandMagicSparkles} className="w-3.5 h-3.5" />
+              <FontAwesomeIcon icon={faCircleCheck} className="w-3.5 h-3.5" />
             </div>
           </div>
           <p className="text-2xl sm:text-3xl font-extrabold text-emerald-600 font-mono tracking-tight">{metrics.active}</p>
@@ -593,7 +594,7 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
                     onClick={handleGenerateRandomCode}
                     className="text-[11px] text-primary hover:underline flex items-center gap-1 font-semibold"
                   >
-                    <FontAwesomeIcon icon={faWandMagicSparkles} className="w-3 h-3" />
+                    <FontAwesomeIcon icon={faShuffle} className="w-3 h-3" />
                     <span>Acak Kode Otomatis</span>
                   </button>
                 </label>

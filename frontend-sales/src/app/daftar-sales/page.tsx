@@ -12,7 +12,8 @@ import {
   faCopy,
   faCheck,
   faShieldHalved,
-  faWandMagicSparkles,
+  faCoins,
+  faCalculator,
   faArrowRight,
   faCircleQuestion,
   faComments,
@@ -562,7 +563,7 @@ function DaftarSalesContent() {
 
               <div className="p-3 bg-primary/10 border border-primary/20 rounded-lg text-xs text-foreground space-y-1">
                 <p className="font-semibold text-primary flex items-center gap-1.5">
-                  <FontAwesomeIcon icon={faWandMagicSparkles} className="text-xs" />
+                  <FontAwesomeIcon icon={faCoins} className="text-xs" />
                   <span>Cara Kerja Penghasilan Anda:</span>
                 </p>
                 <p className="text-[11px] text-foreground-muted leading-relaxed">
@@ -960,7 +961,7 @@ function DaftarSalesContent() {
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="font-bold text-sm text-foreground flex items-center gap-1.5">
-                    <FontAwesomeIcon icon={faWandMagicSparkles} className="text-xs text-primary" />
+                    <FontAwesomeIcon icon={faCalculator} className="text-xs text-primary" />
                     <span>Kalkulator Estimasi Penghasilan Sales</span>
                   </h3>
                   <p className="text-xs text-foreground-muted">

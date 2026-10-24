@@ -13,7 +13,6 @@ import {
   Users,
   AlertCircle,
   Layers,
-  Sparkles,
   Share2,
   Tag,
   Flame,
@@ -274,7 +273,7 @@ export function AdminSidebar({
         {
           id: 'marketing',
           label: 'MARKETING & GROWTH',
-          icon: Sparkles,
+          icon: TrendingUp,
           items: [
             {
               id: 'affiliate',
@@ -418,7 +417,7 @@ export function AdminSidebar({
       {
         id: 'marketing',
         label: 'MARKETING & GROWTH',
-        icon: Sparkles,
+        icon: TrendingUp,
         items: [
           {
             id: 'affiliate',

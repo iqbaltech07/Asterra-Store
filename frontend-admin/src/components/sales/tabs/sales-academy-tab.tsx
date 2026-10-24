@@ -6,7 +6,6 @@ import {
   HelpCircle,
   MessageSquare,
   Send,
-  Sparkles,
 } from 'lucide-react';
 
 export function SalesAcademyTab() {

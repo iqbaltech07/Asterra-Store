@@ -19,7 +19,6 @@ import {
   MessageSquare,
   ShieldCheck,
   Award,
-  Sparkles,
   AlertCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';

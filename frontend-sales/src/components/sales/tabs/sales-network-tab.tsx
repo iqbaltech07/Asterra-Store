@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import {
   ShieldCheck,
   RefreshCw,
-  Sparkles,
+  UserPlus,
   CheckCircle2,
   Copy,
   Check,
@@ -91,7 +91,7 @@ export function SalesNetworkTab({
           <div className="space-y-3 max-w-xl">
             <div className="flex items-center gap-2.5">
               <span className="p-2 rounded-xl bg-primary/10 text-primary border border-primary/20">
-                <Sparkles className="w-4 h-4" />
+                <UserPlus className="w-4 h-4" />
               </span>
               <h3 className="text-base sm:text-lg font-bold text-foreground">
                 Link Khusus Pendaftaran Mitra Sales (1-Level)

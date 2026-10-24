@@ -22,7 +22,6 @@ import {
   Send,
   Users,
   Flame,
-  Sparkles,
   Link as LinkIcon,
 } from 'lucide-react';
 import { useGsapReveal } from '@/lib/animations/use-gsap-reveal';

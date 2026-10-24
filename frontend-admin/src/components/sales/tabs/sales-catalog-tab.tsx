@@ -9,7 +9,7 @@ import {
   Package,
   TrendingUp,
   Percent,
-  Sparkles,
+  ShieldCheck,
   ArrowRight,
   Copy,
   Check,
@@ -101,7 +101,7 @@ export function SalesCatalogTab({
       <div className="rounded-2xl border border-blue-200/70 bg-blue-50/50 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-xs">
         <div className="flex items-start gap-3.5">
           <div className="w-9 h-9 rounded-xl bg-blue-100 text-[#2563EB] flex items-center justify-center shrink-0 mt-0.5">
-            <Sparkles className="w-4 h-4" />
+            <ShieldCheck className="w-4 h-4" />
           </div>
           <div className="space-y-0.5">
             <h4 className="font-bold text-foreground">Prinsip Komisi Transparan Asterra Store</h4>

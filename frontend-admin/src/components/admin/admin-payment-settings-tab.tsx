@@ -14,7 +14,7 @@ import {
   faArrowUpRightFromSquare,
   faArrowsRotate,
   faClock,
-  faWandMagicSparkles,
+  faEye,
   faCircleInfo,
   faPlus,
   faTrash,
@@ -697,7 +697,7 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
           <div className="bg-surface border border-border rounded-xl p-5 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-border">
               <div className="flex items-center gap-2">
-                <FontAwesomeIcon icon={faWandMagicSparkles} className="w-4 h-4 text-primary" />
+                <FontAwesomeIcon icon={faEye} className="w-4 h-4 text-primary" />
                 <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">
                   Simulasi Tampilan Checkout Pelanggan
                 </h3>
