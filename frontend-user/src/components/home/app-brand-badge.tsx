@@ -13,20 +13,7 @@ import {
   faSpotify,
 } from '@fortawesome/free-brands-svg-icons';
 
-export function AppBrandBadge({ name, imageUrl }: { name: string; imageUrl?: string }) {
-  if (imageUrl && !imageUrl.includes('default-product-banner.png') && imageUrl.length > 5) {
-    return (
-      <div className="w-full h-full bg-white rounded-lg sm:rounded-xl flex items-center justify-center p-0.5 shadow-2xs overflow-hidden">
-        <img
-          src={imageUrl}
-          alt={name}
-          className="w-full h-full object-contain"
-          draggable={false}
-        />
-      </div>
-    );
-  }
-
+export function AppBrandBadge({ name }: { name: string }) {
   const n = name.toLowerCase();
 
   if (n.includes('claude')) {

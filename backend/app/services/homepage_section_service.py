@@ -364,14 +364,64 @@ class HomepageSectionService:
                         if len(final_products) >= limit:
                             break
 
+        def get_brand_group(p: Dict[str, Any]) -> str:
+            name_u = str(p.get("name") or "").upper()
+            brand_u = str(p.get("brand") or "").upper()
+            combined = f"{brand_u} {name_u}"
+            if "CAPCUT" in combined:
+                return "capcut"
+            if "NETFLIX" in combined:
+                return "netflix"
+            if "GEMINI" in combined or "GOOGLE AI" in combined or "GOOGLE PRO" in combined:
+                return "google-gemini"
+            if "CHATGPT" in combined or "OPENAI" in combined:
+                return "chatgpt"
+            if "CANVA" in combined:
+                return "canva"
+            if "ALIGHT" in combined:
+                return "alight-motion"
+            if "YOUTUBE" in combined:
+                return "youtube"
+            if "SPOTIFY" in combined:
+                return "spotify"
+            if "VIDIO" in combined:
+                return "vidio"
+            if "WETV" in combined:
+                return "wetv"
+            if "VIU" in combined:
+                return "viu"
+            if "BSTATION" in combined:
+                return "bstation"
+            if "IQIYI" in combined:
+                return "iqiyi"
+            if "MOBILE LEGEND" in combined or "MLBB" in combined or "DIAMOND" in combined:
+                return "mobile-legends"
+            if "PUBG" in combined or "UC" in combined:
+                return "pubg"
+            return str(p.get("id") or "").lower()
+
         # Fill remaining slots up to limit (8) from auto_ranked
+        # Pass 1: Prioritize distinct product brands so no duplicate products appear
+        selected_brands = {get_brand_group(p) for p in final_products}
         for p in auto_ranked:
             real_id = str(p.get("id"))
-            if real_id not in selected_ids:
+            b_group = get_brand_group(p)
+            if real_id not in selected_ids and b_group not in selected_brands:
                 selected_ids.add(real_id)
+                selected_brands.add(b_group)
                 final_products.append(p)
                 if len(final_products) >= limit:
                     break
+
+        # Pass 2: If still under limit, fill from remaining auto_ranked
+        if len(final_products) < limit:
+            for p in auto_ranked:
+                real_id = str(p.get("id"))
+                if real_id not in selected_ids:
+                    selected_ids.add(real_id)
+                    final_products.append(p)
+                    if len(final_products) >= limit:
+                        break
 
         # Enrich products with computed fields for seamless frontend showcase integration
         enriched_products = []

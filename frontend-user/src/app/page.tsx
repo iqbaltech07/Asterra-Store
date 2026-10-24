@@ -230,13 +230,7 @@ export default function HomePage() {
 
   // Map to Featured Products (authoritative backend data with 8-product guarantee & resilient fallback)
   const featuredApps = useMemo(() => {
-    // 1. Authoritative Backend Section Data (Auto-Ranked or Admin Manual Priority)
-    const backendSection = sectionsResponse?.sections?.[activeCategory];
-    if (backendSection && Array.isArray(backendSection.data) && backendSection.data.length > 0) {
-      return backendSection.data.slice(0, 8);
-    }
-
-    // 2. Resilient Fallback: dynamically map products up to 8 items
+    // 1. Map all Product application groups to their catalog items
     const allMapped = appConfigurations.map((target) => {
       const items = allProducts.filter((p) => {
         const text = `${p.name} ${(p as unknown as { id?: string }).id || ''} ${(p as unknown as { providerCode?: string }).providerCode || ''}`.toLowerCase();
@@ -266,6 +260,77 @@ export default function HomePage() {
       };
     }).filter((app) => app.items.length > 0 && app.minPrice > 0);
 
+    // 2. Authoritative Backend Section Ordering:
+    // If backend provides prioritized items (from Admin manual ordering or auto ranking),
+    // map them to distinct Product applications to avoid duplicate variants and display clean Brand entities
+    const backendSection = sectionsResponse?.sections?.[activeCategory];
+    if (backendSection && Array.isArray(backendSection.data) && backendSection.data.length > 0) {
+      const orderedApps: typeof allMapped = [];
+      const seenNames = new Set<string>();
+
+      for (const item of backendSection.data) {
+        const itemText = `${item.name || ''} ${(item as unknown as { brand?: string }).brand || ''} ${item.id || ''}`.toLowerCase();
+        const matched = allMapped.find((app) => {
+          const appName = app.name.toLowerCase();
+          const appSlug = app.slug.toLowerCase();
+          return itemText.includes(appName) || itemText.includes(appSlug) || (appName.includes('gemini') && (itemText.includes('google') || itemText.includes('gemini')));
+        });
+
+        if (matched && !seenNames.has(matched.name)) {
+          if (activeCategory === 'promo' && activeCampaigns && activeCampaigns.length > 0) {
+            const hasPromo = activeCampaigns.some((camp) =>
+              isProductInCampaign(matched, camp) ||
+              matched.items.some((it) =>
+                isProductInCampaign({ id: it.id, name: it.name, category: it.category?.name }, camp)
+              )
+            );
+            if (!hasPromo) continue;
+          }
+          seenNames.add(matched.name);
+          orderedApps.push(matched);
+          if (orderedApps.length >= 8) break;
+        }
+      }
+
+      // If fewer than 8, fill from category-specific candidates in allMapped
+      if (orderedApps.length < 8) {
+        let fallbackCandidates = allMapped;
+        if (activeCategory === 'promo') {
+          if (activeCampaigns && activeCampaigns.length > 0) {
+            fallbackCandidates = allMapped.filter((app) =>
+              activeCampaigns.some((camp) =>
+                isProductInCampaign(app, camp) ||
+                app.items.some((it) =>
+                  isProductInCampaign({ id: it.id, name: it.name, category: it.category?.name }, camp)
+                )
+              )
+            );
+          } else {
+            fallbackCandidates = [];
+          }
+        } else if (activeCategory === 'terlaris') {
+          const terlarisNames = new Set(appConfigurations.filter((a) => a.isTerlaris).map((a) => a.name));
+          fallbackCandidates = allMapped.filter((app) => terlarisNames.has(app.name));
+        } else if (activeCategory === 'terbaru') {
+          const terbaruNames = new Set(appConfigurations.filter((a) => a.isTerbaru).map((a) => a.name));
+          fallbackCandidates = allMapped.filter((app) => terbaruNames.has(app.name));
+        }
+
+        for (const candidate of fallbackCandidates) {
+          if (!seenNames.has(candidate.name)) {
+            seenNames.add(candidate.name);
+            orderedApps.push(candidate);
+            if (orderedApps.length >= 8) break;
+          }
+        }
+      }
+
+      if (orderedApps.length > 0) {
+        return orderedApps.slice(0, 8);
+      }
+    }
+
+    // 3. Resilient Fallback if backend section is empty
     if (activeCategory === 'promo') {
       // Rule 4: Dynamic based on active campaigns!
       if (!activeCampaigns || activeCampaigns.length === 0) {
