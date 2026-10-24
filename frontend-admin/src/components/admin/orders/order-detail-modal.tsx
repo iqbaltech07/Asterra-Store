@@ -167,7 +167,7 @@ export function OrderDetailModal({
 
   const modalContent = (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200"
       onClick={(e) => {
         if (e.target === e.currentTarget) {
           onClose();
@@ -178,19 +178,19 @@ export function OrderDetailModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="order-detail-modal-title"
-        className="bg-white dark:bg-[#161922] border border-border/80 dark:border-white/10 rounded-2xl w-full max-w-[780px] max-h-[calc(100dvh-40px)] flex flex-col shadow-2xl overflow-hidden box-border animate-in zoom-in-95 duration-200"
+        className="bg-white border border-[#E2E8F0] rounded-2xl w-full max-w-[780px] max-h-[calc(100dvh-40px)] flex flex-col shadow-2xl overflow-hidden box-border animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* 1. STICKY MODAL HEADER */}
-        <div className="shrink-0 px-5 py-3.5 border-b border-border/70 dark:border-white/10 bg-white/95 dark:bg-[#161922]/95 backdrop-blur-sm flex items-center justify-between gap-3">
+        {/* 1. STICKY MODAL HEADER - LIGHT MODE */}
+        <div className="shrink-0 px-5 py-3.5 border-b border-[#E2E8F0] bg-white flex items-center justify-between gap-3">
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <h3 id="order-detail-modal-title" className="text-base font-bold text-foreground">
+              <h3 id="order-detail-modal-title" className="text-base font-bold text-[#0F172A]">
                 Detail Pesanan #{order.id}
               </h3>
               <OrderStatusBadge status={order.order_status} />
             </div>
-            <p className="text-[11px] text-foreground-muted mt-0.5">
+            <p className="text-[11px] text-[#64748B] mt-0.5">
               Dibuat pada{' '}
               {new Date(order.order_date).toLocaleString('id-ID', {
                 dateStyle: 'medium',
@@ -202,7 +202,7 @@ export function OrderDetailModal({
             variant="ghost"
             size="sm"
             onClick={onClose}
-            className="h-8 w-8 p-0 rounded-full text-foreground-muted hover:text-foreground hover:bg-black/5 dark:hover:bg-white/10 shrink-0"
+            className="h-8 w-8 p-0 rounded-full text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] shrink-0 cursor-pointer"
             title="Tutup (Esc)"
             aria-label="Tutup popup"
           >
@@ -210,20 +210,20 @@ export function OrderDetailModal({
           </Button>
         </div>
 
-        {/* 2. SCROLLABLE MODAL CONTENT BODY */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3.5 text-xs">
+        {/* 2. SCROLLABLE MODAL CONTENT BODY - LIGHT MODE CONTAINER */}
+        <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3.5 text-xs bg-[#F8FAFC]">
           {/* Section A: Data Validasi Customer & Akun */}
-          <div className="bg-surface-raised dark:bg-[#1a1e28] border border-border/70 dark:border-white/10 rounded-xl p-3.5 sm:p-4">
-            <div className="flex items-center justify-between pb-2 mb-2.5 border-b border-border/60 dark:border-white/10">
-              <h4 className="text-[11px] font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
-                <FontAwesomeIcon icon={faUser} className="w-3.5 h-3.5 text-primary" />
+          <div className="bg-white border border-[#E2E8F0] rounded-xl p-3.5 sm:p-4 shadow-2xs">
+            <div className="flex items-center justify-between pb-2 mb-2.5 border-b border-[#E2E8F0]">
+              <h4 className="text-[11px] font-bold text-[#0F172A] uppercase tracking-wider flex items-center gap-1.5">
+                <FontAwesomeIcon icon={faUser} className="w-3.5 h-3.5 text-[#2563EB]" />
                 <span>Data Validasi Customer & Akun</span>
               </h4>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleCopyValidation}
-                className="h-7 text-[11px] gap-1 px-2.5 border-border text-foreground-muted hover:text-foreground hover:bg-surface"
+                className="h-7 text-[11px] gap-1 px-2.5 border-[#E2E8F0] bg-white text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] cursor-pointer"
                 title="Salin ringkasan data validasi"
               >
                 <FontAwesomeIcon icon={faCopy} className="w-3 h-3" />
@@ -233,22 +233,22 @@ export function OrderDetailModal({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
               {/* Nama Pelanggan */}
-              <div className="p-2 sm:p-2.5 bg-surface dark:bg-[#13161f] rounded-lg border border-border/60 dark:border-white/10">
-                <span className="text-foreground-muted block text-[10px] uppercase font-semibold">
+              <div className="p-2 sm:p-2.5 bg-[#F8FAFC] rounded-lg border border-[#E2E8F0]">
+                <span className="text-[#64748B] block text-[10px] uppercase font-semibold">
                   Nama Lengkap Customer:
                 </span>
-                <span className="font-bold text-foreground text-xs sm:text-sm truncate block mt-0.5">
+                <span className="font-bold text-[#0F172A] text-xs sm:text-sm truncate block mt-0.5">
                   {order.customer_name || 'Pelanggan Toko'}
                 </span>
               </div>
 
               {/* Email Pemesan */}
-              <div className="p-2 sm:p-2.5 bg-surface dark:bg-[#13161f] rounded-lg border border-border/60 dark:border-white/10">
-                <span className="text-foreground-muted block text-[10px] uppercase font-semibold">
+              <div className="p-2 sm:p-2.5 bg-[#F8FAFC] rounded-lg border border-[#E2E8F0]">
+                <span className="text-[#64748B] block text-[10px] uppercase font-semibold">
                   Email Pemesan / Notifikasi:
                 </span>
                 <div className="flex items-center justify-between gap-1 mt-0.5">
-                  <span className="font-semibold text-foreground text-xs truncate">
+                  <span className="font-semibold text-[#0F172A] text-xs truncate">
                     {order.customer_email || 'customer@asterra.store'}
                   </span>
                   <button
@@ -257,7 +257,7 @@ export function OrderDetailModal({
                       navigator.clipboard?.writeText(order.customer_email || '');
                       onShowNotification('Email disalin!');
                     }}
-                    className="text-foreground-muted hover:text-primary p-0.5 shrink-0"
+                    className="text-[#64748B] hover:text-[#2563EB] p-0.5 shrink-0 cursor-pointer"
                     title="Salin Email"
                   >
                     <FontAwesomeIcon icon={faCopy} className="w-3 h-3" />
@@ -266,8 +266,8 @@ export function OrderDetailModal({
               </div>
 
               {/* WhatsApp Pemesan */}
-              <div className="p-2 sm:p-2.5 bg-surface dark:bg-[#13161f] rounded-lg border border-border/60 dark:border-white/10">
-                <span className="text-foreground-muted block text-[10px] uppercase font-semibold">
+              <div className="p-2 sm:p-2.5 bg-[#F8FAFC] rounded-lg border border-[#E2E8F0]">
+                <span className="text-[#64748B] block text-[10px] uppercase font-semibold">
                   WhatsApp Pemesan:
                 </span>
                 <div className="mt-0.5">
@@ -276,29 +276,29 @@ export function OrderDetailModal({
                       href={formatWhatsAppUrl(order.customer_whatsapp) || '#'}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 font-semibold text-status-success hover:underline font-mono text-xs"
+                      className="inline-flex items-center gap-1.5 font-semibold text-[#16A34A] hover:underline font-mono text-xs"
                     >
                       <FontAwesomeIcon icon={faPhone} className="w-3 h-3" />
                       <span>{order.customer_whatsapp}</span>
                       <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="w-2.5 h-2.5 opacity-70" />
                     </a>
                   ) : (
-                    <span className="text-foreground-muted italic text-xs">Tidak dicantumkan</span>
+                    <span className="text-[#64748B] italic text-xs">Tidak dicantumkan</span>
                   )}
                 </div>
               </div>
 
               {/* Metode Pembayaran */}
-              <div className="p-2 sm:p-2.5 bg-surface dark:bg-[#13161f] rounded-lg border border-border/60 dark:border-white/10">
-                <span className="text-foreground-muted block text-[10px] uppercase font-semibold">
+              <div className="p-2 sm:p-2.5 bg-[#F8FAFC] rounded-lg border border-[#E2E8F0]">
+                <span className="text-[#64748B] block text-[10px] uppercase font-semibold">
                   Metode Pembayaran:
                 </span>
                 <div className="mt-0.5 flex items-center gap-1.5">
-                  <span className="font-mono font-bold text-foreground text-xs uppercase">
+                  <span className="font-mono font-bold text-[#0F172A] text-xs uppercase">
                     {order.payment?.payment_method || 'QRIS'}
                   </span>
                   {order.payment?.payment_status && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/10 text-foreground-muted uppercase font-mono">
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-200/60 text-[#64748B] uppercase font-mono font-semibold">
                       {order.payment.payment_status}
                     </span>
                   )}
@@ -307,11 +307,11 @@ export function OrderDetailModal({
             </div>
 
             {order.customer_notes && (
-              <div className="mt-2.5 pt-2 border-t border-border/60 dark:border-white/10">
-                <span className="text-foreground-muted block text-[10px] uppercase font-semibold">
+              <div className="mt-2.5 pt-2 border-t border-[#E2E8F0]">
+                <span className="text-[#64748B] block text-[10px] uppercase font-semibold">
                   Catatan Pelanggan:
                 </span>
-                <p className="text-xs text-foreground italic mt-0.5 bg-surface/50 dark:bg-[#13161f]/50 p-2 rounded border border-border/40">
+                <p className="text-xs text-[#0F172A] italic mt-0.5 bg-[#F8FAFC] p-2.5 rounded-lg border border-[#E2E8F0]">
                   &ldquo;{order.customer_notes}&rdquo;
                 </p>
               </div>
@@ -319,9 +319,9 @@ export function OrderDetailModal({
           </div>
 
           {/* Section B: Rincian Item yang Dipesan */}
-          <div className="bg-surface-raised dark:bg-[#1a1e28] border border-border/70 dark:border-white/10 rounded-xl p-3.5 sm:p-4">
-            <h4 className="text-[11px] font-bold text-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
-              <FontAwesomeIcon icon={faBagShopping} className="w-3.5 h-3.5 text-primary" />
+          <div className="bg-white border border-[#E2E8F0] rounded-xl p-3.5 sm:p-4 shadow-2xs">
+            <h4 className="text-[11px] font-bold text-[#0F172A] uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+              <FontAwesomeIcon icon={faBagShopping} className="w-3.5 h-3.5 text-[#2563EB]" />
               <span>Rincian Item yang Dipesan</span>
             </h4>
 
@@ -329,15 +329,15 @@ export function OrderDetailModal({
               {order.items.map((item, idx) => (
                 <div
                   key={item.id || idx}
-                  className="p-2.5 bg-surface dark:bg-[#13161f] rounded-lg border border-border/60 dark:border-white/10 flex items-start justify-between gap-3 text-xs"
+                  className="p-2.5 bg-[#F8FAFC] rounded-lg border border-[#E2E8F0] flex items-start justify-between gap-3 text-xs"
                 >
                   <div className="min-w-0">
-                    <div className="font-semibold text-foreground truncate">{item.product_name}</div>
-                    <div className="text-[11px] text-foreground-muted mt-0.5 space-y-0.5">
+                    <div className="font-semibold text-[#0F172A] truncate">{item.product_name}</div>
+                    <div className="text-[11px] text-[#64748B] mt-0.5 space-y-0.5">
                       {item.purchased_details?.target_email && (
                         <div>
                           <span>Target Email: </span>
-                          <span className="font-medium text-foreground font-mono">
+                          <span className="font-medium text-[#0F172A] font-mono">
                             {item.purchased_details.target_email}
                           </span>
                         </div>
@@ -345,7 +345,7 @@ export function OrderDetailModal({
                       {item.purchased_details?.duration && (
                         <div>
                           <span>Durasi Paket: </span>
-                          <span className="font-medium text-foreground">
+                          <span className="font-medium text-[#0F172A]">
                             {item.purchased_details.duration}
                           </span>
                         </div>
@@ -353,10 +353,10 @@ export function OrderDetailModal({
                     </div>
                   </div>
                   <div className="text-right shrink-0">
-                    <div className="font-bold font-mono text-foreground">
+                    <div className="font-bold font-mono text-[#0F172A]">
                       Rp {(item.unit_price * item.quantity).toLocaleString('id-ID')}
                     </div>
-                    <div className="text-[11px] text-foreground-muted">
+                    <div className="text-[11px] text-[#64748B]">
                       {item.quantity}x @ Rp {item.unit_price.toLocaleString('id-ID')}
                     </div>
                   </div>
@@ -364,10 +364,10 @@ export function OrderDetailModal({
               ))}
 
               {/* Financial Breakdown & Vouchers */}
-              <div className="mt-2.5 pt-2.5 border-t border-border/60 dark:border-white/10 space-y-1.5 text-xs">
-                <div className="flex justify-between items-center text-foreground-muted">
+              <div className="mt-2.5 pt-2.5 border-t border-[#E2E8F0] space-y-1.5 text-xs">
+                <div className="flex justify-between items-center text-[#64748B]">
                   <span>Subtotal Produk</span>
-                  <span className="font-mono font-medium text-foreground">
+                  <span className="font-mono font-medium text-[#0F172A]">
                     Rp {(
                       order.raw_amount ||
                       order.items.reduce((acc, curr) => acc + curr.unit_price * curr.quantity, 0)
@@ -378,11 +378,11 @@ export function OrderDetailModal({
                 {/* Promo Voucher */}
                 {((order.promo_discount || 0) > 0 || !!order.promo_code) && (
                   <div className="flex justify-between items-center">
-                    <span className="flex items-center gap-1 text-foreground-muted">
-                      <FontAwesomeIcon icon={faTicket} className="w-3 h-3 text-emerald-500" />
+                    <span className="flex items-center gap-1 text-[#64748B]">
+                      <FontAwesomeIcon icon={faTicket} className="w-3 h-3 text-[#16A34A]" />
                       <span>Voucher Promo:</span>
                     </span>
-                    <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-mono font-bold text-[11px]">
+                    <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-[#F0FDF4] border border-[#BBF7D0] text-[#16A34A] font-mono font-bold text-[11px]">
                       <span>{order.promo_code || 'VOUCHER'}</span>
                       <span>(-Rp {(order.promo_discount || order.discount_amount || 0).toLocaleString('id-ID')})</span>
                     </div>
@@ -392,11 +392,11 @@ export function OrderDetailModal({
                 {/* Referral Discount */}
                 {((order.referral_discount || 0) > 0 || !!order.referral_code) && (
                   <div className="flex justify-between items-center">
-                    <span className="flex items-center gap-1 text-foreground-muted">
-                      <FontAwesomeIcon icon={faTicket} className="w-3 h-3 text-primary" />
+                    <span className="flex items-center gap-1 text-[#64748B]">
+                      <FontAwesomeIcon icon={faTicket} className="w-3 h-3 text-[#2563EB]" />
                       <span>Diskon Referral Sales:</span>
                     </span>
-                    <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-primary/15 border border-primary/30 text-primary font-mono font-bold text-[11px]">
+                    <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-[#EFF6FF] border border-[#BFDBFE] text-[#2563EB] font-mono font-bold text-[11px]">
                       <span>{order.referral_code || 'REFERRAL'}</span>
                       <span>(-Rp {(order.referral_discount || 0).toLocaleString('id-ID')})</span>
                     </div>
@@ -406,11 +406,11 @@ export function OrderDetailModal({
                 {/* Campaign Discount */}
                 {((order.campaign_discount || 0) > 0 || !!order.campaign_id) && (
                   <div className="flex justify-between items-center">
-                    <span className="flex items-center gap-1 text-foreground-muted">
-                      <FontAwesomeIcon icon={faTicket} className="w-3 h-3 text-amber-500" />
+                    <span className="flex items-center gap-1 text-[#64748B]">
+                      <FontAwesomeIcon icon={faTicket} className="w-3 h-3 text-[#D97706]" />
                       <span>Diskon Campaign Promo:</span>
                     </span>
-                    <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/15 border border-amber-500/30 text-amber-600 dark:text-amber-400 font-mono font-bold text-[11px]">
+                    <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-[#FFFBEB] border border-[#FDE68A] text-[#D97706] font-mono font-bold text-[11px]">
                       <span>{order.campaign_id || 'CAMPAIGN'}</span>
                       <span>(-Rp {(order.campaign_discount || 0).toLocaleString('id-ID')})</span>
                     </div>
@@ -424,7 +424,7 @@ export function OrderDetailModal({
                   !(order.campaign_discount || 0) &&
                   !order.campaign_id &&
                   !(order.discount_amount || 0) && (
-                    <div className="flex justify-between items-center text-foreground-muted">
+                    <div className="flex justify-between items-center text-[#64748B]">
                       <span className="flex items-center gap-1">
                         <FontAwesomeIcon icon={faTicket} className="w-3 h-3 opacity-40" />
                         <span>Potongan Harga</span>
@@ -434,17 +434,17 @@ export function OrderDetailModal({
                   )}
 
                 {!!order.unique_code && (
-                  <div className="flex justify-between items-center text-foreground-muted">
+                  <div className="flex justify-between items-center text-[#64748B]">
                     <span>Kode Unik Verifikasi</span>
-                    <span className="font-mono font-medium text-primary">
+                    <span className="font-mono font-medium text-[#2563EB]">
                       +Rp {order.unique_code.toLocaleString('id-ID')}
                     </span>
                   </div>
                 )}
 
-                <div className="pt-2 flex justify-between items-center text-xs font-bold text-foreground border-t border-border/60 dark:border-white/10 mt-1.5">
+                <div className="pt-2.5 flex justify-between items-center text-xs font-bold text-[#0F172A] border-t border-[#E2E8F0] mt-1.5">
                   <span>Total Tagihan Akhir</span>
-                  <span className="text-primary font-mono text-base font-bold">
+                  <span className="text-[#2563EB] font-mono text-base sm:text-lg font-bold">
                     Rp {order.total_amount.toLocaleString('id-ID')}
                   </span>
                 </div>
@@ -452,66 +452,70 @@ export function OrderDetailModal({
             </div>
           </div>
 
-          {/* Section C: Ubah Status Pesanan Manual */}
-          <div className="bg-surface-raised dark:bg-[#1a1e28] border-2 border-primary/30 rounded-xl p-3.5 sm:p-4 space-y-3">
+          {/* Section C: Ubah Status Pesanan Manual - CLEAN LIGHT MODE */}
+          <div className="bg-white border border-[#E2E8F0] rounded-xl p-3.5 sm:p-4 shadow-2xs space-y-3">
             <div className="flex items-center justify-between">
-              <h4 className="text-[11px] font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
-                <FontAwesomeIcon icon={faPen} className="w-3.5 h-3.5 text-primary" />
+              <h4 className="text-[11px] font-bold text-[#0F172A] uppercase tracking-wider flex items-center gap-1.5">
+                <FontAwesomeIcon icon={faPen} className="w-3.5 h-3.5 text-[#2563EB]" />
                 <span>Ubah Status Pesanan Manual</span>
               </h4>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#2563EB] font-medium">
                 Hak Akses Admin
               </span>
             </div>
 
-            {/* 4 Status Choice Buttons */}
+            {/* 4 Status Choice Buttons - Light Mode Consistent */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {/* 1. Pending (Abu-abu netral) */}
               <button
                 type="button"
                 onClick={() => setNewStatus('pending')}
-                className={`p-2 sm:p-2.5 rounded-lg border text-center transition-all text-xs font-medium flex flex-col items-center gap-1 cursor-pointer ${
+                className={`p-2 sm:p-2.5 rounded-lg border text-center transition-all text-xs flex flex-col items-center gap-1 cursor-pointer ${
                   newStatus === 'pending'
-                    ? 'border-status-warning bg-status-warning/15 text-status-warning font-bold shadow-xs ring-1 ring-status-warning'
-                    : 'border-border/70 dark:border-white/10 bg-surface dark:bg-[#13161f] text-foreground-muted hover:text-foreground hover:bg-surface-hover'
+                    ? 'border-[#64748B] bg-[#F8FAFC] text-[#0F172A] font-bold ring-2 ring-[#64748B]/30 shadow-xs'
+                    : 'border-[#E2E8F0] bg-white text-[#64748B] hover:bg-[#F8FAFC] hover:border-[#CBD5E1] hover:text-[#0F172A]'
                 }`}
               >
                 <FontAwesomeIcon icon={faClock} className="w-3.5 h-3.5" />
                 <span>Pending</span>
               </button>
 
+              {/* 2. Di Proses (Biru) */}
               <button
                 type="button"
                 onClick={() => setNewStatus('processing')}
-                className={`p-2 sm:p-2.5 rounded-lg border text-center transition-all text-xs font-medium flex flex-col items-center gap-1 cursor-pointer ${
+                className={`p-2 sm:p-2.5 rounded-lg border text-center transition-all text-xs flex flex-col items-center gap-1 cursor-pointer ${
                   newStatus === 'processing'
-                    ? 'border-primary bg-primary/15 text-primary font-bold shadow-xs ring-1 ring-primary'
-                    : 'border-border/70 dark:border-white/10 bg-surface dark:bg-[#13161f] text-foreground-muted hover:text-foreground hover:bg-surface-hover'
+                    ? 'border-[#2563EB] bg-[#EFF6FF] text-[#2563EB] font-bold ring-2 ring-[#2563EB]/30 shadow-xs'
+                    : 'border-[#E2E8F0] bg-white text-[#64748B] hover:bg-[#EFF6FF] hover:border-[#BFDBFE] hover:text-[#2563EB]'
                 }`}
               >
                 <FontAwesomeIcon icon={faClock} className="w-3.5 h-3.5" />
                 <span>Di Proses</span>
               </button>
 
+              {/* 3. Selesai (Hijau) */}
               <button
                 type="button"
                 onClick={() => setNewStatus('completed')}
-                className={`p-2 sm:p-2.5 rounded-lg border text-center transition-all text-xs font-medium flex flex-col items-center gap-1 cursor-pointer ${
+                className={`p-2 sm:p-2.5 rounded-lg border text-center transition-all text-xs flex flex-col items-center gap-1 cursor-pointer ${
                   newStatus === 'completed'
-                    ? 'border-status-success bg-status-success/15 text-status-success font-bold shadow-xs ring-1 ring-status-success'
-                    : 'border-border/70 dark:border-white/10 bg-surface dark:bg-[#13161f] text-foreground-muted hover:text-foreground hover:bg-surface-hover'
+                    ? 'border-[#16A34A] bg-[#F0FDF4] text-[#16A34A] font-bold ring-2 ring-[#16A34A]/30 shadow-xs'
+                    : 'border-[#E2E8F0] bg-white text-[#64748B] hover:bg-[#F0FDF4] hover:border-[#BBF7D0] hover:text-[#16A34A]'
                 }`}
               >
                 <FontAwesomeIcon icon={faCircleCheck} className="w-3.5 h-3.5" />
                 <span>Selesai</span>
               </button>
 
+              {/* 4. Dibatalkan (Merah) */}
               <button
                 type="button"
                 onClick={() => setNewStatus('cancelled')}
-                className={`p-2 sm:p-2.5 rounded-lg border text-center transition-all text-xs font-medium flex flex-col items-center gap-1 cursor-pointer ${
+                className={`p-2 sm:p-2.5 rounded-lg border text-center transition-all text-xs flex flex-col items-center gap-1 cursor-pointer ${
                   newStatus === 'cancelled'
-                    ? 'border-status-error bg-status-error/15 text-status-error font-bold shadow-xs ring-1 ring-status-error'
-                    : 'border-border/70 dark:border-white/10 bg-surface dark:bg-[#13161f] text-foreground-muted hover:text-foreground hover:bg-surface-hover'
+                    ? 'border-[#DC2626] bg-[#FEF2F2] text-[#DC2626] font-bold ring-2 ring-[#DC2626]/30 shadow-xs'
+                    : 'border-[#E2E8F0] bg-white text-[#64748B] hover:bg-[#FEF2F2] hover:border-[#FECACA] hover:text-[#DC2626]'
                 }`}
               >
                 <FontAwesomeIcon icon={faBan} className="w-3.5 h-3.5" />
@@ -521,7 +525,7 @@ export function OrderDetailModal({
 
             {/* Status Change Notes */}
             <div>
-              <label className="text-[10px] uppercase font-semibold text-foreground-muted block mb-1">
+              <label className="text-[10px] uppercase font-semibold text-[#64748B] block mb-1">
                 Catatan Perubahan (Tercatat di Audit Log):
               </label>
               <Input
@@ -529,75 +533,66 @@ export function OrderDetailModal({
                 placeholder="Contoh: Kredensial akun dikirim via WhatsApp admin"
                 value={statusNotes}
                 onChange={(e) => setStatusNotes(e.target.value)}
-                className="text-xs bg-surface dark:bg-[#13161f] border-border/70 dark:border-white/10 h-8"
+                className="text-xs bg-white border border-[#E2E8F0] text-[#0F172A] placeholder:text-[#94A3B8] focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] h-8.5 rounded-lg"
               />
             </div>
 
             {/* Anti-Fraud Verification Checklist Box for Manual Orders */}
             {isAntiFraudRequired && (
-              <div className="p-3 bg-status-warning/10 border border-status-warning/40 rounded-lg space-y-2 text-xs">
-                <div className="flex items-center gap-2 text-status-warning font-semibold">
+              <div className="p-3 bg-[#FFFBEB] border border-[#FDE68A] rounded-lg space-y-2 text-xs">
+                <div className="flex items-center gap-2 text-[#D97706] font-semibold">
                   <FontAwesomeIcon icon={faShieldHalved} className="w-4 h-4 shrink-0" />
                   <span>Verifikasi Mutasi Rekening Anti-Fraud</span>
                 </div>
-                <p className="text-[11px] text-foreground-muted leading-relaxed">
+                <p className="text-[11px] text-[#92400E] leading-relaxed">
                   Nominal wajib dicek di mutasi m-Banking/DANA:{' '}
-                  <strong className="text-foreground font-mono text-xs">
+                  <strong className="text-[#0F172A] font-mono text-xs">
                     Rp {order.total_amount.toLocaleString('id-ID')}
                   </strong>
                   {order.unique_code ? (
-                    <span className="text-primary font-mono ml-1 font-bold">
+                    <span className="text-[#2563EB] font-mono ml-1 font-bold">
                       (Kode Unik: +Rp {order.unique_code})
                     </span>
                   ) : null}
                   .
                 </p>
-                <label className="flex items-start gap-2 cursor-pointer pt-1 bg-surface dark:bg-[#13161f] p-2.5 rounded border border-border/60">
+                <label className="flex items-start gap-2 cursor-pointer pt-1 bg-white p-2.5 rounded-lg border border-[#FDE68A]">
                   <input
                     type="checkbox"
                     checked={isMutationVerified}
                     onChange={(e) => setIsMutationVerified(e.target.checked)}
-                    className="w-4 h-4 accent-primary mt-0.5 cursor-pointer"
+                    className="w-4 h-4 accent-[#2563EB] mt-0.5 cursor-pointer"
                   />
-                  <span className="text-[11px] font-medium text-foreground">
+                  <span className="text-[11px] font-medium text-[#0F172A]">
                     Saya menyatakan telah memeriksa mutasi riil di aplikasi m-Banking/DANA, bukan hanya screenshot WhatsApp.
                   </span>
                 </label>
               </div>
             )}
 
-            {/* Inline Quick Action Bar inside the status card */}
-            <div className="flex items-center justify-between pt-1 border-t border-border/50 dark:border-white/5">
-              <div className="text-[11px] text-foreground-muted">
-                {newStatus !== order.order_status ? (
-                  <span className="text-primary font-medium">
-                    Status akan diubah: <span className="font-bold">{order.order_status}</span> ➔{' '}
-                    <span className="font-bold">{newStatus}</span>
-                  </span>
-                ) : (
-                  <span>Status aktif: <span className="font-semibold">{order.order_status}</span></span>
+            {/* Informasi Status Aktif & Perubahan (Tanpa tombol Simpan duplikat) */}
+            <div className="pt-2 border-t border-[#E2E8F0] flex items-center justify-between text-xs">
+              <span className="text-[#64748B]">Status Saat Ini:</span>
+              <div className="flex items-center gap-1.5">
+                <span className="font-semibold text-[#0F172A] uppercase font-mono">{order.order_status}</span>
+                {newStatus !== order.order_status && (
+                  <>
+                    <span className="text-[#64748B]">➔</span>
+                    <span className="font-bold text-[#2563EB] uppercase font-mono">{newStatus}</span>
+                    <span className="text-[10px] text-[#64748B] italic">(Belum disimpan)</span>
+                  </>
                 )}
               </div>
-              <Button
-                type="button"
-                size="sm"
-                onClick={handleSave}
-                disabled={isSaveDisabled}
-                className="text-xs gap-1.5 h-8 font-semibold bg-primary hover:bg-primary-hover text-white cursor-pointer"
-              >
-                <FontAwesomeIcon icon={faCheck} className="w-3.5 h-3.5" />
-                <span>{isUpdating ? 'Menyimpan...' : 'Simpan Status'}</span>
-              </Button>
             </div>
           </div>
 
           {/* Section D: VIP Reseller Live Gateway Integration Card (Conditional) */}
           {order.provider === 'vip-reseller' && (
-            <div className="bg-surface-raised dark:bg-[#1a1e28] border border-primary/30 rounded-xl p-3.5 sm:p-4 space-y-3 text-xs">
-              <div className="flex items-center justify-between pb-2 border-b border-border/70 dark:border-white/10">
+            <div className="bg-white border border-[#E2E8F0] rounded-xl p-3.5 sm:p-4 space-y-3 text-xs shadow-2xs">
+              <div className="flex items-center justify-between pb-2 border-b border-[#E2E8F0]">
                 <div className="flex items-center gap-2">
-                  <span className="font-bold text-foreground">Integrasi VIP Reseller (Live Gateway)</span>
-                  <span className="px-2 py-0.5 rounded text-[10px] font-mono uppercase bg-primary/15 text-primary font-bold">
+                  <span className="font-bold text-[#0F172A]">Integrasi VIP Reseller (Live Gateway)</span>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-mono uppercase bg-[#EFF6FF] border border-[#BFDBFE] text-[#2563EB] font-bold">
                     {order.provider_status || 'Waiting'}
                   </span>
                 </div>
@@ -608,7 +603,7 @@ export function OrderDetailModal({
                     size="sm"
                     disabled={isSyncingVip}
                     onClick={handleSyncVip}
-                    className="h-7 text-[11px] border-border text-foreground hover:bg-surface-hover gap-1"
+                    className="h-7 text-[11px] border-[#E2E8F0] bg-white text-[#0F172A] hover:bg-[#F8FAFC] gap-1 cursor-pointer"
                   >
                     <FontAwesomeIcon icon={faRotateLeft} className={`w-3 h-3 ${isSyncingVip ? 'animate-spin' : ''}`} />
                     <span>{isSyncingVip ? 'Memeriksa...' : 'Cek Status Live'}</span>
@@ -619,7 +614,7 @@ export function OrderDetailModal({
                       size="sm"
                       disabled={isFulfillingVip}
                       onClick={handleFulfillVip}
-                      className="h-7 text-[11px] bg-primary text-white hover:bg-primary/90 gap-1 font-semibold"
+                      className="h-7 text-[11px] bg-[#2563EB] text-white hover:bg-[#1D4ED8] gap-1 font-semibold cursor-pointer"
                     >
                       <span>{isFulfillingVip ? 'Memproses...' : 'Kirim ke VIP'}</span>
                     </Button>
@@ -628,24 +623,24 @@ export function OrderDetailModal({
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
-                <div className="p-2 bg-surface dark:bg-[#13161f] rounded border border-border/60 dark:border-white/10">
-                  <span className="text-foreground-muted block text-[10px]">TRX ID VIP Reseller:</span>
-                  <span className="font-mono font-semibold text-foreground select-all">
+                <div className="p-2 bg-[#F8FAFC] rounded border border-[#E2E8F0]">
+                  <span className="text-[#64748B] block text-[10px]">TRX ID VIP Reseller:</span>
+                  <span className="font-mono font-semibold text-[#0F172A] select-all">
                     {order.provider_trxid || 'Belum dibuat (Menunggu diproses)'}
                   </span>
                 </div>
-                <div className="p-2 bg-surface dark:bg-[#13161f] rounded border border-border/60 dark:border-white/10">
-                  <span className="text-foreground-muted block text-[10px]">Status Server Provider:</span>
-                  <span className="font-mono font-semibold text-foreground uppercase">
+                <div className="p-2 bg-[#F8FAFC] rounded border border-[#E2E8F0]">
+                  <span className="text-[#64748B] block text-[10px]">Status Server Provider:</span>
+                  <span className="font-mono font-semibold text-[#0F172A] uppercase">
                     {order.provider_status || 'waiting'}
                   </span>
                 </div>
               </div>
 
               {order.provider_note && (
-                <div className="p-2.5 bg-surface dark:bg-[#13161f] rounded border border-border/60 dark:border-white/10 space-y-1">
-                  <span className="text-foreground-muted block text-[10px]">Catatan / Serial Key Provider:</span>
-                  <p className="font-mono text-xs text-foreground bg-surface-raised dark:bg-[#1a1e28] p-2 rounded border border-border/80 dark:border-white/10 break-all select-all">
+                <div className="p-2.5 bg-[#F8FAFC] rounded border border-[#E2E8F0] space-y-1">
+                  <span className="text-[#64748B] block text-[10px]">Catatan / Serial Key Provider:</span>
+                  <p className="font-mono text-xs text-[#0F172A] bg-white p-2 rounded border border-[#E2E8F0] break-all select-all">
                     {order.provider_note}
                   </p>
                 </div>
@@ -653,10 +648,10 @@ export function OrderDetailModal({
             </div>
           )}
 
-          {/* Section E: TIMELINE AUDIT LOGS */}
-          <div className="bg-surface-raised dark:bg-[#1a1e28] border border-border/70 dark:border-white/10 rounded-xl p-3.5 sm:p-4">
-            <h4 className="text-[11px] font-bold text-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
-              <FontAwesomeIcon icon={faClockRotateLeft} className="w-3.5 h-3.5 text-primary" />
+          {/* Section E: TIMELINE AUDIT LOGS (Riwayat Perubahan Status) */}
+          <div className="bg-white border border-[#E2E8F0] rounded-xl p-3.5 sm:p-4 shadow-2xs">
+            <h4 className="text-[11px] font-bold text-[#0F172A] uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+              <FontAwesomeIcon icon={faClockRotateLeft} className="w-3.5 h-3.5 text-[#2563EB]" />
               <span>Jejak Riwayat Transaksi (Timeline Logs)</span>
             </h4>
 
@@ -665,11 +660,11 @@ export function OrderDetailModal({
                 {order.logs.map((log) => (
                   <div
                     key={log.id}
-                    className="text-xs p-2.5 rounded-lg bg-surface dark:bg-[#13161f] border border-border/60 dark:border-white/10"
+                    className="text-xs p-2.5 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]"
                   >
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <OrderActorBadge actor={log.actor} />
-                      <span className="text-[11px] text-foreground-muted">
+                      <span className="text-[11px] text-[#64748B]">
                         {new Date(log.created_at).toLocaleTimeString('id-ID', {
                           hour: '2-digit',
                           minute: '2-digit',
@@ -678,38 +673,39 @@ export function OrderDetailModal({
                         · {new Date(log.created_at).toLocaleDateString('id-ID')}
                       </span>
                     </div>
-                    <p className="text-xs text-foreground font-medium">{log.notes}</p>
+                    <p className="text-xs text-[#0F172A] font-medium">{log.notes}</p>
                     {log.previous_status && log.new_status && (
-                      <div className="text-[10px] text-foreground-muted mt-0.5 flex items-center gap-1 font-mono">
+                      <div className="text-[10px] text-[#64748B] mt-0.5 flex items-center gap-1 font-mono">
                         <span>{log.previous_status}</span>
                         <span>➔</span>
-                        <span className="font-bold text-foreground">{log.new_status}</span>
+                        <span className="font-bold text-[#0F172A]">{log.new_status}</span>
                       </div>
                     )}
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-xs text-foreground-muted italic">
+              <p className="text-xs text-[#64748B] italic">
                 Belum ada riwayat audit log untuk pesanan ini.
               </p>
             )}
           </div>
         </div>
 
-        {/* 3. STICKY MODAL FOOTER */}
-        <div className="shrink-0 px-4 sm:px-5 py-3 border-t border-border/70 dark:border-white/10 bg-white/95 dark:bg-[#161922]/95 backdrop-blur-sm flex items-center justify-between gap-3">
-          <div className="text-xs text-foreground-muted hidden sm:block truncate">
+        {/* 3. STICKY MODAL FOOTER - LIGHT MODE WITH SINGLE SAVE BUTTON */}
+        <div className="shrink-0 px-4 sm:px-5 py-3 border-t border-[#E2E8F0] bg-white flex items-center justify-between gap-3">
+          <div className="text-xs text-[#64748B] hidden sm:block truncate">
             {newStatus !== order.order_status ? (
-              <span className="text-primary font-medium flex items-center gap-1">
+              <span className="text-[#2563EB] font-medium flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-[#2563EB] animate-pulse"></span>
                 <span>Perubahan:</span>
-                <span className="font-bold uppercase font-mono">{order.order_status}</span>
+                <span className="font-bold uppercase font-mono text-[#0F172A]">{order.order_status}</span>
                 <span>➔</span>
-                <span className="font-bold uppercase font-mono">{newStatus}</span>
+                <span className="font-bold uppercase font-mono text-[#2563EB]">{newStatus}</span>
               </span>
             ) : (
               <span>
-                Status saat ini: <strong className="uppercase font-mono text-foreground">{order.order_status}</strong>
+                Status saat ini: <strong className="uppercase font-mono text-[#0F172A]">{order.order_status}</strong>
               </span>
             )}
           </div>
@@ -720,7 +716,7 @@ export function OrderDetailModal({
               variant="outline"
               size="sm"
               onClick={onClose}
-              className="text-xs h-8 px-3 border-border hover:bg-surface cursor-pointer"
+              className="text-xs h-8 px-3.5 border-[#E2E8F0] bg-white text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#0F172A] cursor-pointer"
             >
               Tutup
             </Button>
@@ -729,7 +725,7 @@ export function OrderDetailModal({
               size="sm"
               onClick={handleSave}
               disabled={isSaveDisabled}
-              className="text-xs gap-1.5 h-8 px-4 font-semibold bg-primary hover:bg-primary-hover text-white shadow-xs cursor-pointer"
+              className="text-xs gap-1.5 h-8 px-4 font-semibold bg-[#2563EB] hover:bg-[#1D4ED8] text-white shadow-xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <FontAwesomeIcon icon={faCheck} className="w-3.5 h-3.5" />
               <span>{isUpdating ? 'Menyimpan...' : 'Simpan Status'}</span>
