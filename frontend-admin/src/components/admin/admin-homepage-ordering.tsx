@@ -13,7 +13,6 @@ import {
   Save,
   RotateCcw,
   CheckCircle2,
-  AlertCircle,
   HelpCircle,
   Eye,
   Layers,
@@ -21,6 +20,9 @@ import {
   Search,
   X,
   RefreshCw,
+  Gamepad2,
+  Tv,
+  ArrowRight,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -28,17 +30,14 @@ import { Input } from '@/components/ui/input';
 
 type SectionKey = 'promo' | 'terlaris' | 'terbaru';
 
-interface SectionConfig {
-  sectionKey: SectionKey;
-  mode: 'auto' | 'manual';
-  manualProductIds: string[];
-  updatedBy?: string;
-  updatedAt?: string;
-}
+
 
 interface HomepageProductItem {
   id: string;
   name: string;
+  productName?: string;
+  brandGroup?: string;
+  minPrice?: number;
   price: number;
   priceFormatted?: string;
   category?: { id: string; name: string };
@@ -100,13 +99,360 @@ interface AdminProductItem {
   status: string;
   stock: number;
   imageUrl?: string;
+  isPromo?: boolean;
 }
+
+export interface AdminProductGroup {
+  id: string;
+  name: string;
+  slug: string;
+  categoryName: string;
+  categoryTag: 'ai' | 'design' | 'video' | 'streaming' | 'gaming' | 'other';
+  rating: string;
+  soldCount: number;
+  minPrice: number;
+  originalPrice: number;
+  isPromo: boolean;
+  savingsText?: string;
+  variantCount: number;
+  items: AdminProductItem[];
+  match: (text: string) => boolean;
+}
+
+export function ProductBrandLogo({ name, className = 'w-10 h-10' }: { name: string; className?: string }) {
+  const n = (name || '').toLowerCase();
+
+  if (n.includes('capcut')) {
+    return (
+      <div className={`${className} bg-white rounded-xl border border-border/80 flex items-center justify-center p-1 shadow-2xs shrink-0 overflow-hidden`}>
+        <img src="/images/apps/capcut.png" alt="CapCut" className="w-full h-full object-contain" draggable={false} />
+      </div>
+    );
+  }
+
+  if (n.includes('gemini') || n.includes('google ai') || n.includes('google pro')) {
+    return (
+      <div className={`${className} bg-white rounded-xl border border-border/80 flex items-center justify-center p-1 shadow-2xs shrink-0 overflow-hidden`}>
+        <img src="/images/apps/gemini.png" alt="Google Gemini" className="w-full h-full object-contain" draggable={false} />
+      </div>
+    );
+  }
+
+  if (n.includes('chatgpt') || n.includes('openai')) {
+    return (
+      <div className={`${className} bg-white rounded-xl border border-border/80 flex items-center justify-center p-1 shadow-2xs shrink-0 overflow-hidden`}>
+        <img src="/images/apps/chatgpt.png" alt="ChatGPT" className="w-full h-full object-contain" draggable={false} />
+      </div>
+    );
+  }
+
+  if (n.includes('canva')) {
+    return (
+      <div className={`${className} bg-white rounded-xl border border-border/80 flex items-center justify-center p-0.5 shadow-2xs shrink-0 overflow-hidden`}>
+        <img src="/images/apps/canva.png" alt="Canva" className="w-full h-full object-contain" draggable={false} />
+      </div>
+    );
+  }
+
+  if (n.includes('alight')) {
+    return (
+      <div className={`${className} bg-[#181d2a] rounded-xl border border-border/80 flex items-center justify-center p-0.5 shadow-2xs shrink-0 overflow-hidden`}>
+        <img src="/images/apps/alightmotion.png" alt="Alight Motion" className="w-full h-full object-cover rounded-lg" draggable={false} />
+      </div>
+    );
+  }
+
+  if (n.includes('netflix')) {
+    return (
+      <div className={`${className} bg-black rounded-xl border border-border/80 flex items-center justify-center p-1 shadow-2xs shrink-0 overflow-hidden`}>
+        <img src="/images/apps/netflix.png" alt="Netflix" className="w-full h-full object-contain" draggable={false} />
+      </div>
+    );
+  }
+
+  if (n.includes('youtube')) {
+    return (
+      <div className={`${className} bg-[#FF0000] rounded-xl border border-border/80 flex items-center justify-center p-1.5 shadow-2xs shrink-0 text-white font-black text-xs`}>
+        <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+      </div>
+    );
+  }
+
+  if (n.includes('spotify')) {
+    return (
+      <div className={`${className} bg-[#1DB954] rounded-xl border border-border/80 flex items-center justify-center p-1.5 shadow-2xs shrink-0 text-[#121A2A]`}>
+        <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.485 17.31c-.216.353-.674.468-1.026.252-2.812-1.718-6.351-2.107-10.52-1.155-.403.092-.808-.16-.9-.562-.092-.403.16-.808.562-.9 4.568-1.042 8.487-.597 11.632 1.325.352.216.467.674.252 1.04zm1.464-3.26c-.272.441-.849.582-1.29.31-3.218-1.978-8.125-2.55-11.93-1.394-.498.151-1.03-.133-1.181-.63-.151-.498.133-1.03.63-1.181 4.356-1.322 9.775-.681 13.46 1.585.442.272.583.849.311 1.29zm.126-3.41c-3.858-2.29-10.223-2.502-13.886-1.39-.59.18-1.22-.162-1.4-.753-.18-.59.162-1.22.753-1.4 4.218-1.28 11.252-1.032 15.702 1.61.53.314.704 1.004.39 1.534-.314.53-1.004.704-1.534.39l-.025.01z"/></svg>
+      </div>
+    );
+  }
+
+  if (n.includes('vidio')) {
+    return (
+      <div className={`${className} bg-white rounded-xl border border-border/80 flex items-center justify-center p-1 shadow-2xs shrink-0 overflow-hidden`}>
+        <img src="/images/apps/vidio.png" alt="Vidio" className="w-full h-full object-contain" draggable={false} />
+      </div>
+    );
+  }
+
+  if (n.includes('wetv')) {
+    return (
+      <div className={`${className} bg-white rounded-xl border border-border/80 flex items-center justify-center p-1 shadow-2xs shrink-0 overflow-hidden`}>
+        <img src="/images/apps/wetv.png" alt="WeTV" className="w-full h-full object-contain" draggable={false} />
+      </div>
+    );
+  }
+
+  if (n.includes('viu')) {
+    return (
+      <div className={`${className} bg-[#121A2A] rounded-xl border border-border/80 flex items-center justify-center p-1 shadow-2xs shrink-0 overflow-hidden`}>
+        <img src="/images/apps/viu.png" alt="Viu" className="w-full h-full object-contain" draggable={false} />
+      </div>
+    );
+  }
+
+  if (n.includes('bstation')) {
+    return (
+      <div className={`${className} bg-[#23ADE5] rounded-xl border border-border/80 flex items-center justify-center p-1 shadow-2xs shrink-0 text-white font-black text-[11px]`}>
+        Bstation
+      </div>
+    );
+  }
+
+  if (n.includes('iqiyi')) {
+    return (
+      <div className={`${className} bg-[#00CC4C] rounded-xl border border-border/80 flex items-center justify-center p-1 shadow-2xs shrink-0 text-white font-black text-xs`}>
+        iQIYI
+      </div>
+    );
+  }
+
+  if (n.includes('claude')) {
+    return (
+      <div className={`${className} bg-[#D97706]/15 rounded-xl border border-[#D97706]/30 flex items-center justify-center p-1 shadow-2xs shrink-0 text-[#D97706] font-black text-xs`}>
+        Claude
+      </div>
+    );
+  }
+
+  if (n.includes('mobile legend') || n.includes('mlbb') || n.includes('diamond')) {
+    return (
+      <div className={`${className} bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl border border-blue-400/30 flex items-center justify-center p-1.5 shadow-2xs shrink-0 text-white`}>
+        <Gamepad2 className="w-5 h-5" />
+      </div>
+    );
+  }
+
+  if (n.includes('pubg') || n.includes('uc')) {
+    return (
+      <div className={`${className} bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl border border-amber-400/30 flex items-center justify-center p-1.5 shadow-2xs shrink-0 text-white`}>
+        <Gamepad2 className="w-5 h-5" />
+      </div>
+    );
+  }
+
+  if (n.includes('k-vision') || n.includes('nex') || n.includes('vision') || n.includes('orange tv')) {
+    return (
+      <div className={`${className} bg-[#121A2A] rounded-xl border border-border/80 flex items-center justify-center p-1.5 shadow-2xs shrink-0 text-[#C96F55]`}>
+        <Tv className="w-5 h-5" />
+      </div>
+    );
+  }
+
+  return (
+    <div className={`${className} bg-[#C96F55]/10 rounded-xl border border-[#C96F55]/20 flex items-center justify-center p-1.5 shadow-2xs shrink-0 text-[#C96F55]`}>
+      <Layers className="w-5 h-5" />
+    </div>
+  );
+}
+
+const ADMIN_PRODUCT_DEFINITIONS: Array<{
+  id: string;
+  name: string;
+  slug: string;
+  categoryName: string;
+  categoryTag: AdminProductGroup['categoryTag'];
+  rating: string;
+  soldCount: number;
+  match: (t: string) => boolean;
+}> = [
+  {
+    id: 'capcut',
+    name: 'CapCut',
+    slug: 'capcut',
+    categoryName: 'Video Editing & Content',
+    categoryTag: 'video',
+    rating: '4.9',
+    soldCount: 980,
+    match: (t: string) => t.includes('capcut'),
+  },
+  {
+    id: 'netflix',
+    name: 'Netflix',
+    slug: 'netflix',
+    categoryName: 'Movie & Series HD',
+    categoryTag: 'streaming',
+    rating: '5.0',
+    soldCount: 1650,
+    match: (t: string) => t.includes('netflix'),
+  },
+  {
+    id: 'google-gemini',
+    name: 'Google Gemini',
+    slug: 'google-gemini',
+    categoryName: 'AI Assistant & Cloud',
+    categoryTag: 'ai',
+    rating: '5.0',
+    soldCount: 620,
+    match: (t: string) => t.includes('gemini') || t.includes('google ai') || t.includes('google pro'),
+  },
+  {
+    id: 'chatgpt',
+    name: 'ChatGPT',
+    slug: 'chatgpt',
+    categoryName: 'AI Assistant & Writing',
+    categoryTag: 'ai',
+    rating: '5.0',
+    soldCount: 850,
+    match: (t: string) => t.includes('chatgpt') || t.includes('chat gpt') || t.includes('openai') || t.includes('plus plan'),
+  },
+  {
+    id: 'canva',
+    name: 'Canva',
+    slug: 'canva',
+    categoryName: 'Design & Kreatif',
+    categoryTag: 'design',
+    rating: '5.0',
+    soldCount: 1420,
+    match: (t: string) => t.includes('canva'),
+  },
+  {
+    id: 'youtube',
+    name: 'YouTube',
+    slug: 'youtube',
+    categoryName: 'Streaming & Video',
+    categoryTag: 'streaming',
+    rating: '5.0',
+    soldCount: 2100,
+    match: (t: string) => t.includes('youtube'),
+  },
+  {
+    id: 'spotify',
+    name: 'Spotify',
+    slug: 'spotify',
+    categoryName: 'Music & Podcast',
+    categoryTag: 'streaming',
+    rating: '5.0',
+    soldCount: 780,
+    match: (t: string) => t.includes('spotify'),
+  },
+  {
+    id: 'alight-motion',
+    name: 'Alight Motion',
+    slug: 'alight-motion',
+    categoryName: 'Motion Graphic & VFX',
+    categoryTag: 'video',
+    rating: '4.8',
+    soldCount: 340,
+    match: (t: string) => t.includes('alightmotion') || t.includes('alight motion'),
+  },
+  {
+    id: 'vidio',
+    name: 'Vidio',
+    slug: 'vidio',
+    categoryName: 'Live Sports & Premier',
+    categoryTag: 'streaming',
+    rating: '4.9',
+    soldCount: 1100,
+    match: (t: string) => t.includes('vidio'),
+  },
+  {
+    id: 'wetv',
+    name: 'WeTV',
+    slug: 'wetv',
+    categoryName: 'Asian Drama VIP',
+    categoryTag: 'streaming',
+    rating: '4.8',
+    soldCount: 560,
+    match: (t: string) => t.includes('wetv'),
+  },
+  {
+    id: 'viu',
+    name: 'Viu',
+    slug: 'viu',
+    categoryName: 'Asian Drama & Variety',
+    categoryTag: 'streaming',
+    rating: '4.9',
+    soldCount: 910,
+    match: (t: string) => t.includes('viu'),
+  },
+  {
+    id: 'bstation',
+    name: 'Bstation',
+    slug: 'bstation',
+    categoryName: 'Anime & Pop Culture',
+    categoryTag: 'streaming',
+    rating: '4.8',
+    soldCount: 390,
+    match: (t: string) => t.includes('bstation'),
+  },
+  {
+    id: 'iqiyi',
+    name: 'iQIYI',
+    slug: 'iqiyi',
+    categoryName: 'Anime & Drama HD',
+    categoryTag: 'streaming',
+    rating: '4.8',
+    soldCount: 420,
+    match: (t: string) => t.includes('iqiyi'),
+  },
+  {
+    id: 'mobile-legends',
+    name: 'Mobile Legends',
+    slug: 'mobile-legends',
+    categoryName: 'Top Up Game & Diamond',
+    categoryTag: 'gaming',
+    rating: '5.0',
+    soldCount: 1250,
+    match: (t: string) => t.includes('mobile legend') || t.includes('mlbb') || t.includes('diamond'),
+  },
+  {
+    id: 'pubg',
+    name: 'PUBG Mobile',
+    slug: 'pubg',
+    categoryName: 'Top Up Game & UC',
+    categoryTag: 'gaming',
+    rating: '5.0',
+    soldCount: 950,
+    match: (t: string) => t.includes('pubg') || t.includes('uc'),
+  },
+  {
+    id: 'claude',
+    name: 'Claude',
+    slug: 'claude',
+    categoryName: 'AI Assistant',
+    categoryTag: 'ai',
+    rating: '4.9',
+    soldCount: 280,
+    match: (t: string) => t.includes('claude'),
+  },
+  {
+    id: 'k-vision',
+    name: 'K-Vision & TV',
+    slug: 'k-vision',
+    categoryName: 'TV Parabola & Sports',
+    categoryTag: 'streaming',
+    rating: '4.8',
+    soldCount: 450,
+    match: (t: string) => t.includes('k-vision') || t.includes('nex') || t.includes('vision') || t.includes('orange tv'),
+  },
+];
 
 export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) => void }) {
   const queryClient = useQueryClient();
   const [activeSection, setActiveSection] = useState<SectionKey>('promo');
   const [isAddPickerOpen, setIsAddPickerOpen] = useState(false);
   const [searchPickerQuery, setSearchPickerQuery] = useState('');
+  const [pickerCategoryFilter, setPickerCategoryFilter] = useState<'all' | 'video' | 'ai' | 'streaming' | 'gaming'>('all');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // 1. Fetch live sections and computed preview
@@ -131,9 +477,7 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
     staleTime: 60 * 1000,
   });
 
-  const activeCatalog = useMemo(() => {
-    return (catalogData?.data || []).filter((p) => p.status === 'active');
-  }, [catalogData]);
+
 
   // Current section data from server
   const currentSectionData = sectionsData?.sections?.[activeSection];
@@ -180,7 +524,7 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
       }
       return res.json();
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       setIsDirty(false);
       queryClient.invalidateQueries({ queryKey: ['homepage-sections'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
@@ -249,7 +593,7 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
     });
   };
 
-  // Lookup map for products in draft manual IDs
+  // Lookup map for raw products in legacy manual IDs
   const catalogMap = useMemo(() => {
     const map = new Map<string, AdminProductItem>();
     for (const p of catalogData?.data || []) {
@@ -259,15 +603,60 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
     return map;
   }, [catalogData]);
 
-  // Filtered products for add modal
-  const filteredCatalogForPicker = useMemo(() => {
-    const q = searchPickerQuery.toLowerCase().trim();
-    return activeCatalog.filter((p) => {
-      if (draftManualIds.includes(p.id)) return false;
-      if (!q) return true;
-      return p.name.toLowerCase().includes(q) || p.categoryName.toLowerCase().includes(q);
+  // Curated, authoritative Product entities for the homepage ordering (strictly Product level, not catalog SKUs)
+  const availableProductGroups = useMemo<AdminProductGroup[]>(() => {
+    const catalog = catalogData?.data || [];
+
+    return ADMIN_PRODUCT_DEFINITIONS.map((def) => {
+      const items = catalog.filter((p) => {
+        if (p.status !== 'active') return false;
+        const text = `${p.name} ${p.categoryName || ''}`.toLowerCase();
+        return def.match(text);
+      });
+
+      const prices = items.map((p) => p.price).filter((p) => p > 0);
+      const minPrice = prices.length > 0 ? Math.min(...prices) : 15000;
+      const isPromo = activeSection === 'promo' || items.some((it) => it.isPromo);
+      const originalPrice = isPromo ? Math.round(minPrice / 0.85) : minPrice;
+      const savings = originalPrice > minPrice ? originalPrice - minPrice : 0;
+
+      return {
+        ...def,
+        items,
+        variantCount: items.length || 1,
+        minPrice,
+        originalPrice,
+        isPromo,
+        savingsText: savings > 0 ? `Hemat Rp ${savings.toLocaleString('id-ID')}` : undefined,
+      };
     });
-  }, [activeCatalog, draftManualIds, searchPickerQuery]);
+  }, [catalogData, activeSection]);
+
+  const productGroupMap = useMemo(() => {
+    const map = new Map<string, AdminProductGroup>();
+    for (const g of availableProductGroups) {
+      map.set(g.id.toLowerCase(), g);
+      map.set(g.name.toLowerCase(), g);
+      map.set(g.slug.toLowerCase(), g);
+    }
+    return map;
+  }, [availableProductGroups]);
+
+  // Filtered products for modal picker (strictly distinct Product level)
+  const filteredProductGroupsForPicker = useMemo(() => {
+    const q = searchPickerQuery.toLowerCase().trim();
+    return availableProductGroups.filter((g) => {
+      // Category filter pill
+      if (pickerCategoryFilter === 'video' && g.categoryTag !== 'video' && g.categoryTag !== 'design') return false;
+      if (pickerCategoryFilter === 'ai' && g.categoryTag !== 'ai') return false;
+      if (pickerCategoryFilter === 'streaming' && g.categoryTag !== 'streaming') return false;
+      if (pickerCategoryFilter === 'gaming' && g.categoryTag !== 'gaming') return false;
+
+      if (!q) return true;
+      const text = `${g.name} ${g.categoryName} ${g.slug}`.toLowerCase();
+      return text.includes(q);
+    });
+  }, [availableProductGroups, pickerCategoryFilter, searchPickerQuery]);
 
   return (
     <div className="space-y-6">
@@ -522,7 +911,7 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
                   <div className="space-y-1">
                     <p className="text-xs font-semibold text-foreground">Belum Ada Produk Prioritas Manual</p>
                     <p className="text-[11px] text-foreground-muted max-w-sm mx-auto">
-                      Klik tombol "Tambah Produk" di atas untuk memprioritaskan produk tertentu (misal: ChatGPT, Gemini, Claude Pro, Mobile Legends).
+                      Klik tombol &quot;Tambah Produk&quot; di atas untuk memprioritaskan produk tertentu (misal: ChatGPT, Gemini, Claude Pro, Mobile Legends).
                     </p>
                   </div>
                   <Button
@@ -537,21 +926,26 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
               ) : (
                 <div className="space-y-2">
                   {draftManualIds.map((idOrName, idx) => {
-                    const prod = catalogMap.get(idOrName) || catalogMap.get(idOrName.toLowerCase());
-                    const displayName = prod?.name || idOrName;
-                    const displayCategory = prod?.categoryName || 'Katalog';
-                    const displayPrice = prod?.priceFormatted || (prod?.price ? `Rp ${prod.price.toLocaleString('id-ID')}` : '-');
+                    const prodGroup = productGroupMap.get(idOrName.toLowerCase()) ||
+                      availableProductGroups.find((g) => g.id === idOrName || g.slug === idOrName || g.name.toLowerCase() === idOrName.toLowerCase() || g.items.some((it) => it.id === idOrName));
+                    const legacyProd = catalogMap.get(idOrName) || catalogMap.get(idOrName.toLowerCase());
+
+                    const displayName = prodGroup?.name || legacyProd?.name || idOrName;
+                    const displayCategory = prodGroup?.categoryName || legacyProd?.categoryName || 'Katalog';
+                    const displayPrice = prodGroup ? `Mulai Rp ${prodGroup.minPrice.toLocaleString('id-ID')}` : (legacyProd?.priceFormatted || '-');
 
                     return (
                       <div
                         key={`manual-item-${idOrName}-${idx}`}
-                        className="bg-surface-raised border border-border/80 hover:border-primary/40 rounded-xl p-3 flex items-center justify-between gap-3 transition-colors"
+                        className="bg-surface-raised border border-border/80 hover:border-[#C96F55]/40 rounded-2xl p-3 flex items-center justify-between gap-3 transition-colors shadow-2xs"
                       >
-                        {/* Position Number Pill */}
+                        {/* Position Number Pill & Logo */}
                         <div className="flex items-center gap-3 min-w-0 flex-1">
-                          <span className="w-6 h-6 rounded-lg bg-primary/10 text-primary font-black text-xs flex items-center justify-center shrink-0">
+                          <span className="w-6 h-6 rounded-lg bg-[#C96F55]/10 text-[#C96F55] font-black text-xs flex items-center justify-center shrink-0">
                             {idx + 1}
                           </span>
+
+                          <ProductBrandLogo name={displayName} className="w-9 h-9" />
 
                           <div className="min-w-0 flex-1">
                             <p className="text-xs font-bold text-foreground truncate" title={displayName}>
@@ -560,8 +954,8 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
                             <div className="flex items-center gap-2 text-[10px] text-foreground-muted mt-0.5">
                               <span>{displayCategory}</span>
                               <span>·</span>
-                              <span className="font-semibold text-primary">{displayPrice}</span>
-                              {!prod && (
+                              <span className="font-semibold text-[#C96F55]">{displayPrice}</span>
+                              {!prodGroup && !legacyProd && (
                                 <span className="text-amber-500 font-medium">(ID Kustom)</span>
                               )}
                             </div>
@@ -575,7 +969,7 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
                             disabled={idx === 0}
                             onClick={() => handleMoveUp(idx)}
                             title="Pindah ke Atas"
-                            className="w-7 h-7 rounded-lg border border-border bg-surface hover:bg-border/60 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center text-foreground-muted hover:text-foreground transition-colors"
+                            className="w-7 h-7 rounded-lg border border-border bg-surface hover:bg-border/60 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center text-foreground-muted hover:text-foreground transition-colors cursor-pointer"
                           >
                             <ArrowUp className="w-3.5 h-3.5" />
                           </button>
@@ -584,7 +978,7 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
                             disabled={idx === draftManualIds.length - 1}
                             onClick={() => handleMoveDown(idx)}
                             title="Pindah ke Bawah"
-                            className="w-7 h-7 rounded-lg border border-border bg-surface hover:bg-border/60 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center text-foreground-muted hover:text-foreground transition-colors"
+                            className="w-7 h-7 rounded-lg border border-border bg-surface hover:bg-border/60 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center text-foreground-muted hover:text-foreground transition-colors cursor-pointer"
                           >
                             <ArrowDown className="w-3.5 h-3.5" />
                           </button>
@@ -592,7 +986,7 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
                             type="button"
                             onClick={() => handleRemove(idOrName)}
                             title="Hapus dari Prioritas"
-                            className="w-7 h-7 rounded-lg border border-red-200 bg-red-50 hover:bg-red-100 text-red-600 flex items-center justify-center transition-colors ml-1"
+                            className="w-7 h-7 rounded-lg border border-red-200 bg-red-50 hover:bg-red-100 text-red-600 flex items-center justify-center transition-colors ml-1 cursor-pointer"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -646,46 +1040,50 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
               </div>
             ) : currentSectionData?.data && currentSectionData.data.length > 0 ? (
               <div className="space-y-2 max-h-[520px] overflow-y-auto pr-1">
-                {currentSectionData.data.slice(0, 8).map((prod, rankIdx) => (
-                  <div
-                    key={`preview-${prod.id}-${rankIdx}`}
-                    className="p-2.5 rounded-xl border border-border/80 bg-surface-raised flex items-center justify-between gap-3 text-xs"
-                  >
-                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                      <span className="w-5 h-5 rounded-md bg-foreground text-background font-black text-[10px] flex items-center justify-center shrink-0">
-                        {rankIdx + 1}
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="font-semibold text-foreground truncate" title={prod.name}>
-                          {prod.name}
-                        </p>
-                        <div className="flex items-center gap-1.5 text-[10px] text-foreground-muted">
-                          <span className="text-primary font-bold">
-                            Rp {Number(prod.price || 0).toLocaleString('id-ID')}
-                          </span>
-                          <span>·</span>
-                          <span>{prod.soldCount ? `${prod.soldCount} terjual` : 'Ready'}</span>
+                {currentSectionData.data.slice(0, 8).map((prod, rankIdx) => {
+                  const displayName = prod.productName || prod.name;
+                  return (
+                    <div
+                      key={`preview-${prod.id}-${rankIdx}`}
+                      className="p-2.5 rounded-xl border border-border/80 bg-surface-raised flex items-center justify-between gap-3 text-xs hover:border-[#C96F55]/30 transition-colors"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        <span className="w-5 h-5 rounded-md bg-[#C96F55] text-white font-black text-[10px] flex items-center justify-center shrink-0">
+                          {rankIdx + 1}
+                        </span>
+                        <ProductBrandLogo name={displayName} className="w-8 h-8" />
+                        <div className="min-w-0 flex-1">
+                          <p className="font-semibold text-foreground truncate" title={displayName}>
+                            {displayName}
+                          </p>
+                          <div className="flex items-center gap-1.5 text-[10px] text-foreground-muted">
+                            <span className="text-[#C96F55] font-bold">
+                              Rp {Number(prod.minPrice || prod.price || 0).toLocaleString('id-ID')}
+                            </span>
+                            <span>·</span>
+                            <span>{prod.soldCount ? `${prod.soldCount} terjual` : 'Ready'}</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="shrink-0 text-right">
-                      {prod.isPromo ? (
-                        <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-red-100 text-red-700 border border-red-200">
-                          🔥 Promo
-                        </span>
-                      ) : activeSection === 'terlaris' ? (
-                        <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
-                          ⭐ Terlaris
-                        </span>
-                      ) : (
-                        <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-100 text-blue-800 border border-blue-200">
-                          ✨ Baru
-                        </span>
-                      )}
+                      <div className="shrink-0 text-right">
+                        {prod.isPromo ? (
+                          <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-red-100 text-red-700 border border-red-200">
+                            🔥 Promo
+                          </span>
+                        ) : activeSection === 'terlaris' ? (
+                          <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                            ⭐ Terlaris
+                          </span>
+                        ) : (
+                          <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-100 text-blue-800 border border-blue-200">
+                            ✨ Baru
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="p-6 text-center border border-dashed border-border rounded-xl text-xs text-foreground-muted">
@@ -696,87 +1094,228 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
         </div>
       </div>
 
-      {/* Modal / Sheet Picker: Add Product to Manual Ordering */}
+      {/* Modal Picker: Add Product to Manual Ordering (Strictly Product Level, Modeled after Gambar 2) */}
       {isAddPickerOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-surface border border-border rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-scale-up">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-surface border border-border rounded-2xl w-full max-w-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-scale-up">
             {/* Modal Header */}
-            <div className="p-4 border-b border-border flex items-center justify-between">
-              <div>
-                <h3 className="text-sm font-bold text-foreground">
-                  Pilih Produk untuk Diprioritaskan
-                </h3>
-                <p className="text-[11px] text-foreground-muted mt-0.5">
-                  Pilih dari {activeCatalog.length} produk aktif di katalog Asterra Store
+            <div className="p-4 sm:px-6 sm:py-4 border-b border-border flex items-center justify-between bg-surface">
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#C96F55] animate-pulse" />
+                  <h3 className="text-sm sm:text-base font-bold text-foreground">
+                    Pilih Produk untuk Diprioritaskan
+                  </h3>
+                </div>
+                <p className="text-xs text-foreground-muted">
+                  Pilih dari <strong className="text-foreground">{availableProductGroups.length} produk aplikasi</strong> di katalog Asterra Store (bukan SKU varian)
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsAddPickerOpen(false)}
-                className="w-7 h-7 rounded-lg text-foreground-muted hover:text-foreground hover:bg-border/40 flex items-center justify-center"
+                className="w-8 h-8 rounded-xl text-foreground-muted hover:text-foreground hover:bg-surface-raised flex items-center justify-center transition-colors cursor-pointer"
+                title="Tutup Modal"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Search Input */}
-            <div className="p-3 border-b border-border/80 bg-surface-raised">
+            {/* Search Input & Category Filter Tabs */}
+            <div className="p-3 sm:p-4 border-b border-border/80 bg-surface-raised space-y-3">
               <div className="relative">
-                <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-foreground-muted" />
+                <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-foreground-muted pointer-events-none" />
                 <Input
                   value={searchPickerQuery}
                   onChange={(e) => setSearchPickerQuery(e.target.value)}
-                  placeholder="Cari nama produk (misal: ChatGPT, Canva, Netflix, Claude, Mobile Legends)..."
-                  className="pl-8 text-xs h-9 bg-surface border-border"
+                  placeholder="Cari nama produk (misal: CapCut, Netflix, Gemini, ChatGPT, Canva, MLBB)..."
+                  className="pl-9 pr-9 text-xs sm:text-sm h-10 bg-surface border-border focus:border-[#C96F55] focus:ring-1 focus:ring-[#C96F55] rounded-xl"
                   autoFocus
                 />
+                {searchPickerQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchPickerQuery('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground-muted hover:text-foreground p-0.5 rounded cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {/* Category Filter Pills */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs">
+                {[
+                  { key: 'all', label: `Semua (${availableProductGroups.length})` },
+                  { key: 'video', label: 'Video & Desain' },
+                  { key: 'ai', label: 'AI Tools' },
+                  { key: 'streaming', label: 'Streaming & Musik' },
+                  { key: 'gaming', label: 'Top Up Game' },
+                ].map((tab) => {
+                  const isActive = pickerCategoryFilter === tab.key;
+                  return (
+                    <button
+                      key={tab.key}
+                      type="button"
+                      onClick={() => setPickerCategoryFilter(tab.key as any)}
+                      className={`px-3 py-1.5 rounded-lg font-semibold text-[11px] whitespace-nowrap transition-all cursor-pointer ${
+                        isActive
+                          ? 'bg-[#C96F55] text-white shadow-2xs font-bold'
+                          : 'bg-surface border border-border/80 text-foreground-muted hover:text-foreground hover:bg-surface-raised'
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
-            {/* Product list */}
-            <div className="p-3 overflow-y-auto space-y-1.5 flex-1 divide-y divide-border/40">
-              {filteredCatalogForPicker.length === 0 ? (
-                <div className="p-8 text-center text-xs text-foreground-muted">
-                  Tidak ada produk yang cocok dengan pencarian.
-                </div>
-              ) : (
-                filteredCatalogForPicker.map((prod) => (
-                  <div
-                    key={prod.id}
-                    className="pt-2 first:pt-0 flex items-center justify-between gap-3 p-2 rounded-xl hover:bg-surface-raised transition-colors"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-bold text-foreground truncate" title={prod.name}>
-                        {prod.name}
-                      </p>
-                      <div className="flex items-center gap-2 text-[10px] text-foreground-muted mt-0.5">
-                        <span className="font-semibold text-primary">{prod.priceFormatted}</span>
-                        <span>·</span>
-                        <span>{prod.categoryName}</span>
-                      </div>
-                    </div>
-
+            {/* Product Cards Grid (Modeled after Gambar 2) */}
+            <div className="p-3 sm:p-5 overflow-y-auto space-y-3 flex-1 bg-surface-raised/40">
+              {filteredProductGroupsForPicker.length === 0 ? (
+                <div className="py-12 px-4 text-center border-2 border-dashed border-border rounded-2xl bg-surface space-y-2">
+                  <div className="w-10 h-10 rounded-full bg-surface-raised flex items-center justify-center mx-auto text-foreground-muted">
+                    <Search className="w-5 h-5" />
+                  </div>
+                  <p className="text-xs font-semibold text-foreground">
+                    Tidak ada produk yang cocok dengan pencarian
+                  </p>
+                  <p className="text-[11px] text-foreground-muted">
+                    Coba kata kunci lain atau pilih tab kategori yang berbeda.
+                  </p>
+                  {searchPickerQuery && (
                     <Button
                       type="button"
+                      variant="outline"
                       size="sm"
-                      onClick={() => handleAddProduct(prod.id)}
-                      className="text-[11px] h-7 px-3 bg-primary text-white hover:bg-primary/90 shrink-0"
+                      onClick={() => {
+                        setSearchPickerQuery('');
+                        setPickerCategoryFilter('all');
+                      }}
+                      className="text-xs h-7 mt-2"
                     >
-                      Pilih
+                      Reset Pencarian
                     </Button>
-                  </div>
-                ))
+                  )}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {filteredProductGroupsForPicker.map((prod) => {
+                    const isSelected =
+                      draftManualIds.includes(prod.id) ||
+                      draftManualIds.some(
+                        (id) =>
+                          id.toLowerCase() === prod.id.toLowerCase() ||
+                          id.toLowerCase() === prod.name.toLowerCase() ||
+                          id.toLowerCase() === prod.slug.toLowerCase()
+                      );
+
+                    return (
+                      <div
+                        key={prod.id}
+                        className={`rounded-2xl border p-3.5 bg-surface transition-all flex flex-col justify-between shadow-2xs ${
+                          isSelected
+                            ? 'border-emerald-300 ring-1 ring-emerald-200/50 bg-emerald-50/10'
+                            : 'border-border/80 hover:border-[#C96F55]/60 hover:shadow-xs'
+                        }`}
+                      >
+                        <div>
+                          {/* Top: Brand Logo + Name + Star Rating & Sales (Gambar 2 Layout) */}
+                          <div className="flex items-start gap-3">
+                            <ProductBrandLogo name={prod.name} className="w-12 h-12" />
+
+                            <div className="min-w-0 flex-1">
+                              <h4 className="text-sm font-bold text-foreground truncate" title={prod.name}>
+                                {prod.name}
+                              </h4>
+                              <div className="flex items-center gap-1.5 text-xs text-foreground-muted mt-0.5">
+                                <span className="flex items-center gap-0.5 font-bold text-amber-500">
+                                  <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                                  {prod.rating}
+                                </span>
+                                <span>({prod.soldCount} terjual)</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Status Badges Row (Gambar 2 Style: Ready, Garansi, DISKON 15%) */}
+                          <div className="flex flex-wrap items-center gap-1.5 mt-2.5">
+                            <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold border border-blue-200 bg-blue-50/80 text-blue-700">
+                              Ready
+                            </span>
+                            <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold border border-emerald-200 bg-emerald-50/80 text-emerald-700">
+                              Garansi
+                            </span>
+                            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#C96F55] text-white flex items-center gap-1">
+                              🔥 DISKON 15%
+                            </span>
+                            <span className="px-2 py-0.5 rounded-md text-[10px] font-medium border border-border bg-surface-raised text-foreground-muted">
+                              {prod.variantCount} Varian
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Divider */}
+                        <div className="border-t border-border/60 my-2.5" />
+
+                        {/* Bottom: Pricing & Action Button (Gambar 2 Style) */}
+                        <div className="flex items-center justify-between gap-2 pt-0.5">
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="line-through text-[11px] text-foreground-muted">
+                                Rp {prod.originalPrice.toLocaleString('id-ID')}
+                              </span>
+                              <span className="px-1.5 py-0.2 rounded border border-rose-200 bg-rose-50 text-[10px] font-bold text-rose-600">
+                                Hemat Rp {(prod.originalPrice - prod.minPrice).toLocaleString('id-ID')}
+                              </span>
+                            </div>
+                            <span className="block text-sm sm:text-base font-black text-[#C96F55]">
+                              Rp {prod.minPrice.toLocaleString('id-ID')}
+                            </span>
+                          </div>
+
+                          <div>
+                            {isSelected ? (
+                              <button
+                                type="button"
+                                disabled
+                                className="px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold flex items-center gap-1 shrink-0 opacity-90 cursor-default"
+                              >
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                <span>Terpilih</span>
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => handleAddProduct(prod.id)}
+                                className="px-3.5 py-1.5 rounded-xl bg-[#C96F55] text-white hover:bg-[#b55e45] text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all active:scale-95 shrink-0 cursor-pointer"
+                              >
+                                <span>Pilih</span>
+                                <ArrowRight className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               )}
             </div>
 
             {/* Modal Footer */}
-            <div className="p-3 border-t border-border bg-surface-raised flex justify-end">
+            <div className="p-3 sm:px-6 sm:py-3 border-t border-border bg-surface flex items-center justify-between text-xs text-foreground-muted">
+              <span>
+                Dipilih:{' '}
+                <strong className="text-foreground">{draftManualIds.length}</strong> produk
+              </span>
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={() => setIsAddPickerOpen(false)}
-                className="text-xs h-8"
+                className="text-xs h-8 px-4 rounded-xl hover:bg-surface-raised cursor-pointer"
               >
                 Tutup
               </Button>

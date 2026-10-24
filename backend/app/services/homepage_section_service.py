@@ -340,30 +340,6 @@ class HomepageSectionService:
             )
 
         # --- ASSEMBLE FINAL 8 PRODUCTS (AUTO vs MANUAL) ---
-        final_products: List[Dict[str, Any]] = []
-        selected_ids: set = set()
-
-        if mode == "manual" and manual_ids:
-            # Create a lookup map for active products
-            active_lookup: Dict[str, Dict[str, Any]] = {}
-            for p in active_products:
-                pid = str(p.get("id") or "").lower()
-                active_lookup[pid] = p
-                pname = str(p.get("name") or "").lower()
-                active_lookup[pname] = p
-
-            for mid in manual_ids:
-                clean_mid = str(mid).lower().strip()
-                matched = active_lookup.get(clean_mid)
-                # If section is promo, verify the product matches active campaign
-                if matched and (section_key != "promo" or is_in_active_campaign(matched)):
-                    real_id = str(matched.get("id"))
-                    if real_id not in selected_ids:
-                        selected_ids.add(real_id)
-                        final_products.append(matched)
-                        if len(final_products) >= limit:
-                            break
-
         def get_brand_group(p: Dict[str, Any]) -> str:
             name_u = str(p.get("name") or "").upper()
             brand_u = str(p.get("brand") or "").upper()
@@ -398,7 +374,45 @@ class HomepageSectionService:
                 return "mobile-legends"
             if "PUBG" in combined or "UC" in combined:
                 return "pubg"
+            if "CLAUDE" in combined:
+                return "claude"
             return str(p.get("id") or "").lower()
+
+        final_products: List[Dict[str, Any]] = []
+        selected_ids: set = set()
+        selected_brands: set = set()
+
+        if mode == "manual" and manual_ids:
+            # Create a lookup map for active products
+            active_lookup: Dict[str, Dict[str, Any]] = {}
+            brand_lookup: Dict[str, Dict[str, Any]] = {}
+            for p in auto_ranked:
+                pid = str(p.get("id") or "").lower()
+                active_lookup[pid] = p
+                pname = str(p.get("name") or "").lower()
+                active_lookup[pname] = p
+                b_grp = get_brand_group(p)
+                if b_grp not in brand_lookup:
+                    brand_lookup[b_grp] = p
+
+            for mid in manual_ids:
+                clean_mid = str(mid).lower().strip()
+                matched = active_lookup.get(clean_mid) or brand_lookup.get(clean_mid)
+                if not matched:
+                    for b_grp, p in brand_lookup.items():
+                        if clean_mid in b_grp or b_grp in clean_mid:
+                            matched = p
+                            break
+                # If section is promo, verify the product matches active campaign
+                if matched and (section_key != "promo" or is_in_active_campaign(matched)):
+                    real_id = str(matched.get("id"))
+                    b_grp = get_brand_group(matched)
+                    if real_id not in selected_ids and b_grp not in selected_brands:
+                        selected_ids.add(real_id)
+                        selected_brands.add(b_grp)
+                        final_products.append(matched)
+                        if len(final_products) >= limit:
+                            break
 
         # Fill remaining slots up to limit (8) from auto_ranked
         # Pass 1: Prioritize distinct product brands so no duplicate products appear
@@ -440,6 +454,27 @@ class HomepageSectionService:
             else:
                 tag = "other"
 
+            b_grp = get_brand_group(p)
+            brand_display_names = {
+                "capcut": "CapCut",
+                "netflix": "Netflix",
+                "google-gemini": "Google Gemini",
+                "chatgpt": "ChatGPT",
+                "canva": "Canva",
+                "alight-motion": "Alight Motion",
+                "youtube": "YouTube",
+                "spotify": "Spotify",
+                "vidio": "Vidio",
+                "wetv": "WeTV",
+                "viu": "Viu",
+                "bstation": "Bstation",
+                "iqiyi": "iQIYI",
+                "mobile-legends": "Mobile Legends",
+                "pubg": "PUBG Mobile",
+                "claude": "Claude",
+            }
+            p_copy["brandGroup"] = b_grp
+            p_copy["productName"] = brand_display_names.get(b_grp, p.get("brand") or p.get("name"))
             p_copy["categoryTag"] = tag
             p_copy["minPrice"] = p.get("price") or 0
             p_copy["soldCount"] = get_sold(p)
