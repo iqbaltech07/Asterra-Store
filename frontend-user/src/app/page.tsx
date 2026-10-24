@@ -503,13 +503,13 @@ export default function HomePage() {
 
           {/* STATIC PRODUCT GRID (4 columns desktop, 2 columns mobile) */}
           {isCatalogLoading ? (
-            <div data-gsap="product-grid" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-3.5 lg:gap-4">
+            <div data-gsap="product-grid" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-4.5">
               {Array.from({ length: 8 }).map((_, i) => (
                 <FeaturedGridCardSkeleton key={`skeleton-featured-${i}`} />
               ))}
             </div>
           ) : featuredApps.length > 0 ? (
-            <div key={activeCategory} data-gsap="product-grid" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-3.5 lg:gap-4 animate-tab-glide">
+            <div key={activeCategory} data-gsap="product-grid" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-4.5 animate-tab-glide">
               {featuredApps.map((app) => (
                 <FeaturedGridCard
                   key={`featured-${activeCategory}-${app.name}`}
@@ -616,7 +616,7 @@ export default function HomePage() {
               </span>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3.5">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
               {recentlyViewed.map((item) => (
                 <div
                   key={item.id}
@@ -683,7 +683,7 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-4.5">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4.5">
             {/* 1. Produk Terverifikasi */}
             <div data-gsap="keunggulan-card" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-3 sm:p-5 space-y-1.5 sm:space-y-2 hover:border-[rgba(18,26,42,0.2)] transition-[border-color,box-shadow,background-color] duration-200">
               <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.2)] flex items-center justify-center text-[#C96F55]">

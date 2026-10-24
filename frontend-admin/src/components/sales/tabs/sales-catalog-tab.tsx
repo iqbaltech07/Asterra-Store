@@ -146,7 +146,7 @@ export function SalesCatalogTab({
 
       {/* Product Grid */}
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <div key={i} className="h-56 bg-surface rounded-2xl border border-border animate-pulse p-5 space-y-3">
               <div className="h-4 w-24 bg-gray-200 rounded" />
@@ -165,7 +165,7 @@ export function SalesCatalogTab({
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
           {filteredProducts.map((p) => {
             const productUrl = `${getStoreBaseUrl()}/products/${p.id}?ref=${partnerCode}`;
             const catName = p.categoryName || p.category?.name || 'Digital';

@@ -332,7 +332,7 @@ function ProductsContent() {
 
         {/* Loading Skeletons */}
         {isLoading && (
-          <div className="grid grid-cols-2 gap-3 md:gap-5 lg:grid-cols-3">
+          <div className="grid grid-cols-2 gap-3.5 sm:gap-4 md:gap-5 lg:grid-cols-3">
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <div
                 key={i}
@@ -381,7 +381,7 @@ function ProductsContent() {
 
         {/* Products Listing Grid */}
         {!isLoading && !error && products.length > 0 && viewMode === 'grid' && (
-          <div data-gsap="product-grid" key={`grid-${selectedCategory}-${sortBy}`} className="grid grid-cols-2 gap-3 md:gap-5 lg:grid-cols-3">
+          <div data-gsap="product-grid" key={`grid-${selectedCategory}-${sortBy}`} className="grid grid-cols-2 gap-3.5 sm:gap-4 md:gap-5 lg:grid-cols-3">
             {products.map((product, idx) => (
               <ProductCard
                 key={product.id}

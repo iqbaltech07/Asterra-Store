@@ -40,7 +40,7 @@ export function ProductDetailRelated({
         </Link>
       </div>
 
-      <div data-gsap="product-detail-related" className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-6">
+      <div data-gsap="product-detail-related" className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-6">
         {relatedProducts.map((rel) => {
           const relProductItem: ProductItem = {
             id: rel.id,

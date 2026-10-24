@@ -364,9 +364,10 @@ export function AdminAffiliateTab({ onNotify }: AdminAffiliateTabProps) {
       </div>
 
       {/* 5. Affiliates Table & Mobile Card View */}
-      <div className="bg-surface border border-border rounded-2xl overflow-hidden shadow-xs">
+      <div className="space-y-4">
         {/* Desktop Table View */}
-        <div className="hidden md:block overflow-x-auto">
+        <div className="hidden md:block bg-surface border border-border rounded-2xl overflow-hidden shadow-xs">
+          <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="bg-surface-raised border-b border-border text-foreground-muted text-[11px] uppercase tracking-wider font-semibold">
               <tr>
@@ -518,24 +519,28 @@ export function AdminAffiliateTab({ onNotify }: AdminAffiliateTabProps) {
             </tbody>
           </table>
         </div>
+      </div>
 
-        {/* Mobile Card List View */}
-        <div className="md:hidden divide-y divide-border">
-          {isLoading ? (
-            <div className="p-8 text-center text-foreground-muted text-xs animate-pulse">
-              Memuat data mitra sales...
-            </div>
-          ) : filteredAffiliates.length === 0 ? (
-            <div className="p-8 text-center text-foreground-muted">
-              <Users className="w-8 h-8 mx-auto mb-2 opacity-30 text-foreground" />
-              <p className="font-semibold text-foreground text-xs">Belum Ada Mitra Sales</p>
-            </div>
-          ) : (
-            filteredAffiliates.map((partner) => {
-              const isCopied = copiedCode === partner.code;
+      {/* Mobile Card List View */}
+      <div className="md:hidden flex flex-col gap-3.5">
+        {isLoading ? (
+          <div className="bg-surface border border-border rounded-2xl p-8 text-center text-foreground-muted text-xs animate-pulse">
+            Memuat data mitra sales...
+          </div>
+        ) : filteredAffiliates.length === 0 ? (
+          <div className="bg-surface border border-border rounded-2xl p-8 text-center text-foreground-muted">
+            <Users className="w-8 h-8 mx-auto mb-2 opacity-30 text-foreground" />
+            <p className="font-semibold text-foreground text-xs">Belum Ada Mitra Sales</p>
+          </div>
+        ) : (
+          filteredAffiliates.map((partner) => {
+            const isCopied = copiedCode === partner.code;
 
-              return (
-                <div key={partner.id} className="p-4 space-y-3 bg-surface hover:bg-surface-raised/40 transition-colors">
+            return (
+              <div
+                key={partner.id}
+                className="bg-surface border border-border/80 rounded-2xl p-4 space-y-3 shadow-2xs hover:border-border-strong transition-all"
+              >
                   {/* Header: Name + Code */}
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
