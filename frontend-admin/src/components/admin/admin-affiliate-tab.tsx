@@ -262,62 +262,62 @@ export function AdminAffiliateTab({ onNotify }: AdminAffiliateTabProps) {
         </div>
       </div>
 
-      {/* 2. Top Summary KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-surface border border-border rounded-2xl p-5 shadow-xs space-y-2">
-          <div className="flex items-center justify-between text-xs text-foreground-muted">
-            <span className="font-semibold">Mitra Sales & Afiliasi</span>
-            <div className="w-7 h-7 rounded-lg bg-foreground/5 flex items-center justify-center text-foreground-muted">
-              <Users className="w-3.5 h-3.5" />
+      {/* 2. Top Summary KPI Cards - Responsive Density */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
+        <div className="bg-surface border border-border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs space-y-1.5 sm:space-y-2">
+          <div className="flex items-center justify-between text-[11px] sm:text-xs text-foreground-muted">
+            <span className="font-semibold truncate">Mitra Sales</span>
+            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-foreground/5 flex items-center justify-center text-foreground-muted shrink-0">
+              <Users className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
             </div>
           </div>
-          <div className="text-2xl sm:text-3xl font-extrabold text-foreground font-mono tracking-tight">
+          <div className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-foreground font-mono tracking-tight">
             {totalPartners}
           </div>
-          <span className="text-xs text-foreground-muted block pt-1 border-t border-border/60">Mitra aktif terdaftar</span>
+          <span className="text-[10px] sm:text-xs text-foreground-muted block pt-1 border-t border-border/60 truncate">Mitra aktif terdaftar</span>
         </div>
 
-        <div className="bg-surface border border-border rounded-2xl p-5 shadow-xs space-y-2">
-          <div className="flex items-center justify-between text-xs text-foreground-muted">
-            <span className="font-semibold">Total Omzet dari Sales</span>
-            <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200/60 flex items-center justify-center">
-              <TrendingUp className="w-3.5 h-3.5" />
+        <div className="bg-surface border border-border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs space-y-1.5 sm:space-y-2">
+          <div className="flex items-center justify-between text-[11px] sm:text-xs text-foreground-muted">
+            <span className="font-semibold truncate">Total Omzet Sales</span>
+            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200/60 flex items-center justify-center shrink-0">
+              <TrendingUp className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
             </div>
           </div>
-          <div className="text-xl sm:text-2xl font-extrabold text-foreground font-mono tracking-tight truncate">
+          <div className="text-lg sm:text-2xl font-extrabold text-foreground font-mono tracking-tight truncate">
             Rp {totalSalesRevenue.toLocaleString('id-ID')}
           </div>
-          <span className="text-xs text-emerald-600 font-medium block pt-1 border-t border-border/60">Dari tracking link referral</span>
+          <span className="text-[10px] sm:text-xs text-emerald-600 font-medium block pt-1 border-t border-border/60 truncate">Tracking link referral</span>
         </div>
 
-        <div className="bg-surface border border-border rounded-2xl p-5 shadow-xs space-y-2">
-          <div className="flex items-center justify-between text-xs text-foreground-muted">
-            <span className="font-semibold">Komisi Menunggu Pencairan</span>
-            <div className="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 border border-amber-200/60 flex items-center justify-center">
-              <Clock className="w-3.5 h-3.5" />
+        <div className="bg-surface border border-border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs space-y-1.5 sm:space-y-2">
+          <div className="flex items-center justify-between text-[11px] sm:text-xs text-foreground-muted">
+            <span className="font-semibold truncate">Komisi Tertunda</span>
+            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-amber-50 text-amber-600 border border-amber-200/60 flex items-center justify-center shrink-0">
+              <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
             </div>
           </div>
-          <div className="text-xl sm:text-2xl font-extrabold text-amber-600 font-mono tracking-tight truncate">
+          <div className="text-lg sm:text-2xl font-extrabold text-amber-600 font-mono tracking-tight truncate">
             Rp {(totalUnpaidCommission + totalPendingCommission).toLocaleString('id-ID')}
           </div>
-          <span className="text-xs text-foreground-muted block pt-1 border-t border-border/60">
+          <span className="text-[10px] sm:text-xs text-foreground-muted block pt-1 border-t border-border/60 truncate">
             {totalPendingCommission > 0
               ? `Siap: Rp ${totalUnpaidCommission.toLocaleString('id-ID')}`
-              : 'Perlu diproses transfer'}
+              : 'Perlu transfer'}
           </span>
         </div>
 
-        <div className="bg-surface border border-border rounded-2xl p-5 shadow-xs space-y-2">
-          <div className="flex items-center justify-between text-xs text-foreground-muted">
-            <span className="font-semibold">Komisi Selesai Dicairkan</span>
-            <div className="w-7 h-7 rounded-lg bg-blue-50 text-primary border border-blue-200/60 flex items-center justify-center">
-              <CheckCircle2 className="w-3.5 h-3.5" />
+        <div className="bg-surface border border-border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs space-y-1.5 sm:space-y-2">
+          <div className="flex items-center justify-between text-[11px] sm:text-xs text-foreground-muted">
+            <span className="font-semibold truncate">Komisi Dicairkan</span>
+            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-blue-50 text-primary border border-blue-200/60 flex items-center justify-center shrink-0">
+              <CheckCircle2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
             </div>
           </div>
-          <div className="text-xl sm:text-2xl font-extrabold text-foreground font-mono tracking-tight truncate">
+          <div className="text-lg sm:text-2xl font-extrabold text-foreground font-mono tracking-tight truncate">
             Rp {totalPaidCommission.toLocaleString('id-ID')}
           </div>
-          <span className="text-xs text-foreground-muted block pt-1 border-t border-border/60">Telah ditransfer ke rekening</span>
+          <span className="text-[10px] sm:text-xs text-foreground-muted block pt-1 border-t border-border/60 truncate">Telah ditransfer</span>
         </div>
       </div>
 

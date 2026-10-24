@@ -107,42 +107,42 @@ export function AdminCustomersTab({ onNotify }: AdminCustomersTabProps) {
         </Button>
       </div>
 
-      {/* 2. Top Summary KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-surface border border-border rounded-2xl p-5 shadow-xs space-y-2">
-          <span className="text-xs font-semibold text-foreground-muted block">Total Pelanggan</span>
-          <div className="text-2xl sm:text-3xl font-extrabold text-foreground font-mono tracking-tight">{customers.length}</div>
-          <span className="text-xs text-emerald-600 font-medium block pt-1 border-t border-border/60">Aktif bertransaksi</span>
+      {/* 2. Top Summary KPI Cards - Responsive Density */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4">
+        <div className="bg-surface border border-border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs space-y-1.5 sm:space-y-2">
+          <span className="text-[11px] sm:text-xs font-semibold text-foreground-muted block truncate">Total Pelanggan</span>
+          <div className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-foreground font-mono tracking-tight">{customers.length}</div>
+          <span className="text-[10px] sm:text-xs text-emerald-600 font-medium block pt-1 border-t border-border/60 truncate">Aktif bertransaksi</span>
         </div>
 
-        <div className="bg-surface border border-border rounded-2xl p-5 shadow-xs space-y-2">
-          <span className="text-xs font-semibold text-foreground-muted block">Repeat Customer Rate</span>
-          <div className="text-2xl sm:text-3xl font-extrabold text-primary font-mono tracking-tight">
+        <div className="bg-surface border border-border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs space-y-1.5 sm:space-y-2">
+          <span className="text-[11px] sm:text-xs font-semibold text-foreground-muted block truncate">Repeat Rate</span>
+          <div className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-primary font-mono tracking-tight">
             {customers.length > 0
               ? ((customers.filter((c) => c.totalOrders > 1).length / customers.length) * 100).toFixed(1)
               : '0.0'}%
           </div>
-          <span className="text-xs text-foreground-muted block pt-1 border-t border-border/60">Pernah order &gt; 1 kali</span>
+          <span className="text-[10px] sm:text-xs text-foreground-muted block pt-1 border-t border-border/60 truncate">Order &gt; 1 kali</span>
         </div>
 
-        <div className="bg-surface border border-border rounded-2xl p-5 shadow-xs space-y-2">
-          <span className="text-xs font-semibold text-foreground-muted block">Average Lifetime Value</span>
-          <div className="text-xl sm:text-2xl font-extrabold text-foreground font-mono tracking-tight truncate">
+        <div className="bg-surface border border-border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs space-y-1.5 sm:space-y-2">
+          <span className="text-[11px] sm:text-xs font-semibold text-foreground-muted block truncate">Avg Lifetime Value</span>
+          <div className="text-lg sm:text-2xl font-extrabold text-foreground font-mono tracking-tight truncate">
             Rp {customers.length > 0
               ? Math.round(customers.reduce((a, b) => a + (b.totalSpent || 0), 0) / customers.length).toLocaleString('id-ID')
               : '0'}
           </div>
-          <span className="text-xs text-emerald-600 font-medium block pt-1 border-t border-border/60">Rata-rata belanja</span>
+          <span className="text-[10px] sm:text-xs text-emerald-600 font-medium block pt-1 border-t border-border/60 truncate">Rata-rata belanja</span>
         </div>
 
-        <div className="bg-surface border border-border rounded-2xl p-5 shadow-xs space-y-2">
-          <span className="text-xs font-semibold text-foreground-muted block">Dari Jalur Referral Sales</span>
-          <div className="text-2xl sm:text-3xl font-extrabold text-emerald-600 font-mono tracking-tight">
+        <div className="bg-surface border border-border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs space-y-1.5 sm:space-y-2">
+          <span className="text-[11px] sm:text-xs font-semibold text-foreground-muted block truncate">Jalur Referral</span>
+          <div className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-emerald-600 font-mono tracking-tight">
             {customers.length > 0
               ? Math.round((customers.filter((c) => !!c.referralCode).length / customers.length) * 100)
               : 0}%
           </div>
-          <span className="text-xs text-foreground-muted block pt-1 border-t border-border/60">Attributed to Affiliate</span>
+          <span className="text-[10px] sm:text-xs text-foreground-muted block pt-1 border-t border-border/60 truncate">Via Mitra Sales</span>
         </div>
       </div>
 

@@ -1098,41 +1098,72 @@ function AdminPageContent() {
 
       {/* Main Content Pane */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Sticky Top Header Bar */}
-        <header className="sticky top-0 z-40 bg-white/60 backdrop-blur-xl border-b border-white/70 px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-xs">
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => setIsSidebarMobileOpen(true)}
-              className="lg:hidden p-2 rounded-xl text-foreground-muted hover:text-foreground hover:bg-surface-secondary border border-white/70 transition-colors"
-              aria-label="Buka Menu Sidebar"
-            >
-              <Menu className="w-5 h-5" />
-            </button>
-            <div className="flex flex-col animate-text-smooth" key={activeTab}>
-              <div className="flex items-center gap-1.5 text-xs text-[#64748B] font-medium">
-                <span>Admin Console</span>
-                <span>/</span>
-                <span className="capitalize text-[#64748B] font-medium">
-                  {TAB_TITLES[activeTab]?.category || 'Overview'}
-                </span>
+        {/* Sticky Top Header Bar - Structured Two-Row Density */}
+        <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-slate-200/80 px-4 sm:px-8 py-2.5 sm:py-3 shadow-2xs space-y-2.5 transition-all">
+          {/* Row 1: Breadcrumb + Heading Area (Left) and Global Controls (Right) */}
+          <div className="flex items-center justify-between gap-3 min-w-0">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <button
+                type="button"
+                onClick={() => setIsSidebarMobileOpen(true)}
+                className="lg:hidden p-2 rounded-xl text-foreground-muted hover:text-foreground hover:bg-slate-100 border border-slate-200/80 transition-colors shrink-0"
+                aria-label="Buka Menu Sidebar"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+              <div className="flex flex-col min-w-0" key={activeTab}>
+                <div className="flex items-center gap-1.5 text-[11px] sm:text-xs text-[#64748B] font-medium truncate">
+                  <span>Admin Console</span>
+                  <span>/</span>
+                  <span className="capitalize text-[#64748B] font-medium truncate">
+                    {TAB_TITLES[activeTab]?.category || 'Overview'}
+                  </span>
+                </div>
+                <h1 className="text-lg sm:text-2xl font-bold text-[#0F172A] tracking-tight leading-tight truncate">
+                  {TAB_TITLES[activeTab]?.title || 'Dashboard Eksekutif'}
+                </h1>
               </div>
-              <h1 className="text-xl sm:text-2xl font-bold text-[#0F172A] tracking-tight leading-tight mt-0.5">
-                {TAB_TITLES[activeTab]?.title || 'Dashboard Eksekutif'}
-              </h1>
-              {activeTab === 'dashboard' && (
-                <p className="text-xs text-[#64748B] font-normal mt-0.5 hidden sm:block">
-                  Ringkasan performa dan aktivitas utama Asterra Store
-                </p>
-              )}
+            </div>
+
+            {/* Right Controls: Search, Notifications, Profile Chip */}
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+              {/* Search Pill Input with responsive width */}
+              <div className="hidden md:flex items-center gap-2 bg-white/70 border border-slate-200/80 rounded-xl px-3 py-1.5 text-xs text-slate-400 shadow-2xs hover:border-slate-300 transition-colors w-44 lg:w-60">
+                <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                <span className="flex-1 text-slate-400 select-none truncate text-xs">Cari apa saja...</span>
+                <kbd className="hidden lg:inline-block px-1.5 py-0.5 text-[10px] bg-slate-100 text-slate-500 rounded border border-slate-200/80 font-mono">⌘K</kbd>
+              </div>
+
+              {/* Notification Bell */}
+              <button
+                type="button"
+                onClick={() => handleTabChange('notifications')}
+                className="relative w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white border border-slate-200/80 shadow-2xs flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all cursor-pointer shrink-0"
+                title="Notifikasi"
+              >
+                <Bell className="w-4 h-4" />
+                <span className="w-2 h-2 rounded-full bg-rose-500 absolute top-1.5 right-1.5 ring-2 ring-white" />
+              </button>
+
+              {/* User Profile Chip */}
+              <div className="flex items-center gap-2 pl-1.5 pr-2.5 py-1 rounded-full bg-white border border-slate-200/80 shadow-2xs shrink-0">
+                <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-[#111318] text-white font-bold text-[10px] sm:text-[11px] flex items-center justify-center shrink-0">
+                  AS
+                </div>
+                <div className="hidden sm:flex flex-col text-left leading-none">
+                  <span className="text-xs font-bold text-slate-900 truncate max-w-[100px]">{adminUser?.name || 'Super Admin'}</span>
+                  <span className="text-[9px] text-slate-400 font-normal mt-0.5">Administrator</span>
+                </div>
+                <ChevronDown className="w-3 h-3 text-slate-400 hidden sm:block" />
+              </div>
             </div>
           </div>
 
-          {/* Right Header: Auto-Sync Engine, Search, Notifications, User Chip, Quick Actions */}
-          <div className="flex items-center gap-3">
-            {/* Observability Auto-Sync Engine Badge */}
+          {/* Row 2: Status Auto-Sync on Left & Page Action Buttons on Right */}
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-100">
+            {/* Status Auto-Sync Engine */}
             <div
-              className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full bg-white/70 border border-slate-200/80 text-xs shadow-2xs backdrop-blur-xs select-none shrink-0"
+              className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 rounded-full bg-slate-50/80 border border-slate-200/70 text-xs shadow-2xs select-none"
               title={sseConnected ? 'Dual-Channel Auto-Sync Aktif (SSE Gateway + Smart Polling)' : 'Auto-Sync Mode Terjadwal (Smart Polling)'}
             >
               <span className="relative flex h-2 w-2 shrink-0">
@@ -1145,103 +1176,70 @@ function AdminPageContent() {
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
                 )}
               </span>
-              <span className="font-semibold text-slate-700 text-[10px] sm:text-[11px] whitespace-nowrap">
+              <span className="font-medium text-slate-700 text-[11px] whitespace-nowrap">
                 {isGlobalFetching > 0 ? (
                   <span className="flex items-center gap-1 text-[#2563EB]">
                     <RefreshCw className="w-3 h-3 animate-spin shrink-0" />
-                    <span className="hidden sm:inline">Menyinkronkan...</span>
+                    <span>Menyinkronkan...</span>
                   </span>
                 ) : sseConnected ? (
-                  <>
-                    <span className="hidden sm:inline">Auto-Sync Aktif</span>
-                    <span className="sm:hidden text-emerald-700 font-bold">Live</span>
-                  </>
+                  <span className="text-emerald-700 font-semibold">Auto-Sync Live</span>
                 ) : (
-                  <>
-                    <span className="hidden sm:inline text-amber-700">Auto-Sync (Polling)</span>
-                    <span className="sm:hidden text-amber-700 font-bold">Poll</span>
-                  </>
+                  <span className="text-amber-700 font-semibold">Auto-Sync (Polling)</span>
                 )}
               </span>
-              <span className="text-[10px] text-slate-400 font-mono hidden xl:inline border-l border-slate-200 pl-2">
+              <span className="text-[10px] text-slate-400 font-mono hidden sm:inline border-l border-slate-200 pl-2">
                 {lastSyncTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
               </span>
             </div>
 
-            {/* Search Pill Input matching Reference Screenshot */}
-            <div className="hidden lg:flex items-center gap-2 bg-white/60 border border-slate-200/80 rounded-xl px-3.5 py-1.5 text-xs text-slate-400 shadow-2xs hover:border-slate-300 transition-colors w-68">
-              <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-              <span className="flex-1 text-slate-400 select-none truncate">Cari produk, pesanan, pelanggan...</span>
-              <kbd className="px-1.5 py-0.5 text-[10px] bg-slate-100 text-slate-500 rounded border border-slate-200/80 font-mono">Ctrl + K</kbd>
-            </div>
+            {/* Quick Action Buttons per Tab */}
+            <div className="flex items-center gap-2 ml-auto">
+              {(activeTab === 'products' || activeTab === 'vip-explorer') &&
+                adminUser?.role !== 'sales' && (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => syncVipMutation.mutate()}
+                    disabled={syncVipMutation.isPending}
+                    className="text-xs h-8 px-2.5 sm:px-3 gap-1.5 border-slate-200 hover:bg-slate-50 font-medium"
+                    title="Ambil dan sinkronkan semua layanan dari gateway VIP Reseller"
+                  >
+                    <DownloadCloud className={`w-3.5 h-3.5 text-[#2563EB] ${syncVipMutation.isPending ? 'animate-bounce' : ''}`} />
+                    <span className="hidden sm:inline">{syncVipMutation.isPending ? 'Menyinkronkan...' : 'Sinkronkan VIP'}</span>
+                    <span className="sm:hidden">Sync VIP</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => refreshStockMutation.mutate()}
+                    disabled={refreshStockMutation.isPending}
+                    className="text-xs h-8 px-2.5 sm:px-3 gap-1.5 border-slate-200 hover:bg-slate-50 font-medium"
+                    title="Periksa ketersediaan stok live dari VIP Reseller"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 text-[#2563EB] ${refreshStockMutation.isPending ? 'animate-spin' : ''}`} />
+                    <span className="hidden sm:inline">{refreshStockMutation.isPending ? 'Memeriksa...' : 'Cek Stok'}</span>
+                    <span className="sm:hidden">Stok</span>
+                  </Button>
+                  <Button size="sm" onClick={handleOpenCreate} className="text-xs h-8 px-3 gap-1.5 shadow-xs font-semibold">
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Tambah Produk</span>
+                  </Button>
+                </>
+              )}
 
-            {/* Notification Bell matching Reference Screenshot */}
-            <button
-              type="button"
-              onClick={() => handleTabChange('notifications')}
-              className="relative w-9 h-9 rounded-full bg-white/80 border border-slate-200/80 shadow-2xs flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-white transition-all cursor-pointer"
-              title="Notifikasi"
-            >
-              <Bell className="w-4 h-4" />
-              <span className="w-2 h-2 rounded-full bg-rose-500 absolute top-2 right-2 ring-2 ring-white" />
-            </button>
-
-            {/* User Profile Chip matching Reference Screenshot */}
-            <div className="hidden sm:flex items-center gap-2.5 pl-1.5 pr-3 py-1 rounded-full bg-white/70 border border-slate-200/80 shadow-2xs">
-              <div className="w-7 h-7 rounded-full bg-[#111318] text-white font-bold text-[11px] flex items-center justify-center shrink-0">
-                AS
-              </div>
-              <div className="flex flex-col text-left leading-none">
-                <span className="text-xs font-bold text-slate-900">{adminUser?.name || 'Super Admin'}</span>
-                <span className="text-[10px] text-slate-400 font-normal mt-0.5">Administrator</span>
-              </div>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400 ml-0.5" />
-            </div>
-
-            {/* Quick Action Buttons for Product / VIP Management when needed */}
-            {(activeTab === 'products' || activeTab === 'vip-explorer') &&
-              adminUser?.role !== 'sales' && (
-              <>
+              {adminUser?.role === 'sales' && (
                 <Button
-                  variant="outline"
                   size="sm"
-                  onClick={() => syncVipMutation.mutate()}
-                  disabled={syncVipMutation.isPending}
-                  className="hidden xl:inline-flex text-xs gap-1.5 border-border hover:bg-surface-secondary font-medium"
-                  title="Ambil dan sinkronkan semua layanan dari gateway VIP Reseller"
+                  onClick={() => handleTabChange('sales-wallet')}
+                  className="text-xs h-8 gap-1.5 shadow-xs font-semibold bg-[#16A36A] hover:bg-[#15803D] text-white"
                 >
-                  <DownloadCloud className={`w-3.5 h-3.5 text-[#2563EB] ${syncVipMutation.isPending ? 'animate-bounce' : ''}`} />
-                  <span>{syncVipMutation.isPending ? 'Menyinkronkan...' : 'Sinkronkan VIP'}</span>
+                  <Wallet className="w-3.5 h-3.5" />
+                  <span>Dompet Komisi</span>
                 </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => refreshStockMutation.mutate()}
-                  disabled={refreshStockMutation.isPending}
-                  className="hidden xl:inline-flex text-xs gap-1.5 border-border hover:bg-surface-secondary font-medium"
-                  title="Periksa ketersediaan stok live dari VIP Reseller"
-                >
-                  <RefreshCw className={`w-3.5 h-3.5 text-[#2563EB] ${refreshStockMutation.isPending ? 'animate-spin' : ''}`} />
-                  <span>{refreshStockMutation.isPending ? 'Memeriksa...' : 'Cek Stok'}</span>
-                </Button>
-                <Button size="sm" onClick={handleOpenCreate} className="text-xs gap-1.5 shadow-xs font-semibold">
-                  <Plus className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Tambah Produk</span>
-                  <span className="sm:hidden">Tambah</span>
-                </Button>
-              </>
-            )}
-
-            {adminUser?.role === 'sales' && (
-              <Button
-                size="sm"
-                onClick={() => handleTabChange('sales-wallet')}
-                className="text-xs gap-1.5 shadow-xs font-semibold bg-[#16A36A] hover:bg-[#15803D] text-white"
-              >
-                <Wallet className="w-3.5 h-3.5" />
-                <span>Dompet Komisi</span>
-              </Button>
-            )}
+              )}
+            </div>
           </div>
         </header>
 
@@ -1258,61 +1256,61 @@ function AdminPageContent() {
         <main className="flex-1 max-w-7xl 2xl:max-w-screen-2xl mx-auto px-4 sm:px-6 2xl:px-8 py-6 w-full min-w-0">
           {/* Top Summary Metrics Cards - show on products & vip-explorer */}
           {(activeTab === 'products' || activeTab === 'vip-explorer') && (
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-              <div className="animate-fade-up stagger-1 motion-card-interactive bg-surface border border-border rounded-2xl p-5 shadow-xs flex flex-col justify-between">
-                <div className="flex items-center justify-between text-xs text-foreground-muted mb-2">
-                  <span className="font-medium">Aktif di Katalog Toko</span>
-                  <div className="w-7 h-7 rounded-lg bg-emerald-50 text-[#16A36A] flex items-center justify-center">
-                    <Eye className="w-4 h-4" />
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 mb-4 sm:mb-6">
+              <div className="animate-fade-up stagger-1 motion-card-interactive bg-surface border border-border rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-5 shadow-xs flex flex-col justify-between">
+                <div className="flex items-center justify-between text-[11px] sm:text-xs text-foreground-muted mb-1.5 sm:mb-2">
+                  <span className="font-medium truncate">Aktif di Katalog</span>
+                  <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-emerald-50 text-[#16A36A] flex items-center justify-center shrink-0">
+                    <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   </div>
                 </div>
                 <div>
-                  <div className="text-2xl font-extrabold text-foreground tabular-nums font-mono">
+                  <div className="text-xl sm:text-2xl font-extrabold text-foreground tabular-nums font-mono">
                     <AnimatedNumber value={metrics?.totalActive ?? 0} showDelta />
                   </div>
-                  <span className="text-[11px] text-foreground-muted">Muncul di halaman pelanggan</span>
+                  <span className="text-[10px] sm:text-[11px] text-foreground-muted truncate block">Muncul di etalase</span>
                 </div>
               </div>
 
-              <div className="animate-fade-up stagger-2 motion-card-interactive bg-surface border border-border rounded-2xl p-5 shadow-xs flex flex-col justify-between">
-                <div className="flex items-center justify-between text-xs text-foreground-muted mb-2">
-                  <span className="font-medium">Diarsipkan (Draft)</span>
-                  <div className="w-7 h-7 rounded-lg bg-gray-100 text-gray-500 flex items-center justify-center">
-                    <EyeOff className="w-4 h-4" />
+              <div className="animate-fade-up stagger-2 motion-card-interactive bg-surface border border-border rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-5 shadow-xs flex flex-col justify-between">
+                <div className="flex items-center justify-between text-[11px] sm:text-xs text-foreground-muted mb-1.5 sm:mb-2">
+                  <span className="font-medium truncate">Diarsipkan (Draft)</span>
+                  <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-gray-100 text-gray-500 flex items-center justify-center shrink-0">
+                    <EyeOff className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   </div>
                 </div>
                 <div>
-                  <div className="text-2xl font-extrabold text-foreground tabular-nums font-mono">
+                  <div className="text-xl sm:text-2xl font-extrabold text-foreground tabular-nums font-mono">
                     <AnimatedNumber value={metrics?.totalArchived ?? 0} showDelta />
                   </div>
-                  <span className="text-[11px] text-foreground-muted">Disembunyikan dari katalog</span>
+                  <span className="text-[10px] sm:text-[11px] text-foreground-muted truncate block">Disembunyikan</span>
                 </div>
               </div>
 
-              <div className="animate-fade-up stagger-3 motion-card-interactive bg-surface border border-border rounded-2xl p-5 shadow-xs flex flex-col justify-between">
-                <div className="flex items-center justify-between text-xs text-foreground-muted mb-2">
-                  <span className="font-medium">Perlu Perhatian (Stok VIP)</span>
-                  <div className="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
-                    <AlertTriangle className="w-4 h-4" />
+              <div className="animate-fade-up stagger-3 motion-card-interactive bg-surface border border-border rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-5 shadow-xs flex flex-col justify-between">
+                <div className="flex items-center justify-between text-[11px] sm:text-xs text-foreground-muted mb-1.5 sm:mb-2">
+                  <span className="font-medium truncate">Perhatian Stok</span>
+                  <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                    <AlertTriangle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   </div>
                 </div>
                 <div>
-                  <div className="text-2xl font-extrabold text-[#D97706] tabular-nums font-mono">
+                  <div className="text-xl sm:text-2xl font-extrabold text-[#D97706] tabular-nums font-mono">
                     <AnimatedNumber value={metrics?.totalWarnings ?? 0} showDelta />
                   </div>
-                  <span className="text-[11px] text-foreground-muted">Produk aktif tapi supplier kosong</span>
+                  <span className="text-[10px] sm:text-[11px] text-foreground-muted truncate block">Supplier kosong</span>
                 </div>
               </div>
 
-              <div className="animate-fade-up stagger-4 motion-card-interactive bg-surface border border-border rounded-2xl p-5 shadow-xs flex flex-col justify-between">
-                <div className="flex items-center justify-between text-xs text-foreground-muted mb-2">
-                  <span className="font-medium">Saldo VIP Reseller</span>
-                  <div className="w-7 h-7 rounded-lg bg-blue-50 text-[#2563EB] flex items-center justify-center">
-                    <Wallet className="w-4 h-4" />
+              <div className="animate-fade-up stagger-4 motion-card-interactive bg-surface border border-border rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-5 shadow-xs flex flex-col justify-between">
+                <div className="flex items-center justify-between text-[11px] sm:text-xs text-foreground-muted mb-1.5 sm:mb-2">
+                  <span className="font-medium truncate">Saldo VIP</span>
+                  <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-blue-50 text-[#2563EB] flex items-center justify-center shrink-0">
+                    <Wallet className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   </div>
                 </div>
                 <div>
-                  <div className="text-2xl font-extrabold text-foreground tabular-nums font-mono">
+                  <div className="text-lg sm:text-2xl font-extrabold text-foreground tabular-nums font-mono truncate">
                     {metrics?.isVipConnected && metrics?.vipBalance !== null && metrics?.vipBalance !== undefined ? (
                       <AnimatedNumber
                         value={metrics.vipBalance}
@@ -1323,11 +1321,11 @@ function AdminPageContent() {
                       'Belum Terhubung'
                     )}
                   </div>
-                  <div className="flex items-center gap-1.5 mt-1">
-                    <span className={`w-1.5 h-1.5 rounded-full ${metrics?.isVipConnected ? 'bg-[#16A36A] animate-pulse' : 'bg-[#D97706]'}`} />
-                    <span className={`text-[11px] font-medium ${metrics?.isVipConnected ? 'text-[#16A36A]' : 'text-[#D97706]'}`}>
+                  <div className="flex items-center gap-1.5 mt-0.5 sm:mt-1 truncate">
+                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${metrics?.isVipConnected ? 'bg-[#16A36A] animate-pulse' : 'bg-[#D97706]'}`} />
+                    <span className={`text-[10px] sm:text-[11px] font-medium truncate ${metrics?.isVipConnected ? 'text-[#16A36A]' : 'text-[#D97706]'}`}>
                       {metrics?.isVipConnected
-                        ? `Live Whitelisted (${metrics.vipUsername || 'Aktif'})`
+                        ? `Live (${metrics.vipUsername || 'Aktif'})`
                         : metrics?.vipStatusMessage || 'Belum Terhubung'}
                     </span>
                   </div>

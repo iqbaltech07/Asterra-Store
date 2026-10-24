@@ -218,33 +218,33 @@ export function SalesOverviewTab({
         </div>
       )}
 
-      {/* 4 Metric Cards */}
+      {/* 4 Metric Cards - Responsive Density */}
       {isProfileLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="bg-surface border border-border rounded-2xl p-5 shadow-xs space-y-3 animate-pulse">
+            <div key={i} className="bg-surface border border-border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs space-y-2 sm:space-y-3 animate-pulse">
               <div className="flex items-center justify-between">
-                <div className="h-3.5 w-32 bg-gray-200 rounded" />
-                <div className="w-8 h-8 rounded-lg bg-gray-200" />
+                <div className="h-3.5 w-20 sm:w-32 bg-gray-200 rounded" />
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gray-200" />
               </div>
-              <div className="h-8 w-36 bg-gray-200 rounded" />
-              <div className="pt-2 border-t border-border/60 space-y-2">
-                <div className="h-3 w-28 bg-gray-200 rounded" />
+              <div className="h-6 sm:h-8 w-24 sm:w-36 bg-gray-200 rounded" />
+              <div className="pt-2 border-t border-border/60 space-y-1 sm:space-y-2">
+                <div className="h-3 w-16 sm:w-28 bg-gray-200 rounded" />
               </div>
             </div>
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
           {/* Card 1: Saldo Komisi Siap Tarik */}
-          <div className="bg-surface border border-border rounded-2xl p-5 shadow-xs space-y-3 hover:border-[#171717]/30 hover:shadow-card-hover transition-all flex flex-col justify-between">
+          <div className="bg-surface border border-border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs space-y-2 sm:space-y-3 hover:border-[#171717]/30 hover:shadow-card-hover transition-all flex flex-col justify-between">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-foreground-muted tracking-wide">Saldo Siap Tarik</span>
-              <div className="w-8 h-8 rounded-xl bg-emerald-50 text-[#16A36A] flex items-center justify-center border border-emerald-200/60">
-                <Wallet className="w-4 h-4" />
+              <span className="text-[11px] sm:text-xs font-semibold text-foreground-muted tracking-wide truncate">Saldo Siap Tarik</span>
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-emerald-50 text-[#16A36A] flex items-center justify-center border border-emerald-200/60 shrink-0">
+                <Wallet className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
             </div>
-            <div className="text-2xl sm:text-3xl font-extrabold text-[#16A36A] tracking-tight tabular-nums font-mono">
+            <div className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-[#16A36A] tracking-tight tabular-nums font-mono truncate">
               <AnimatedNumber
                 value={unpaidCommissionVal}
                 formatter={(v) => `Rp ${Math.round(v).toLocaleString('id-ID')}`}

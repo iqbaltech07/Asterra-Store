@@ -274,33 +274,33 @@ export function AdminDashboardTab({
         )}
       </div>
 
-      {/* 2. Top Executive Statistics Cards (5 Cards) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
+      {/* 2. Top Executive Statistics Cards (5 Cards) - Responsive Density */}
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-2.5 sm:gap-4">
         {/* Total Revenue */}
         <div
           onClick={() => onNavigateTab('revenue')}
-          className="animate-fade-up stagger-1 motion-card-interactive bg-white/70 backdrop-blur-xl border border-white/80 rounded-2xl p-5 shadow-xs hover:border-slate-300 hover:shadow-card-hover transition-all cursor-pointer group flex flex-col justify-between"
+          className="animate-fade-up stagger-1 motion-card-interactive bg-white/70 backdrop-blur-xl border border-white/80 rounded-xl sm:rounded-2xl p-3.5 sm:p-4 lg:p-5 shadow-xs hover:border-slate-300 hover:shadow-card-hover transition-all cursor-pointer group flex flex-col justify-between"
         >
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-blue-50/80 text-[#2563EB] flex items-center justify-center border border-blue-200/60">
-                <Wallet className="w-4 h-4" />
+          <div className="flex items-center justify-between mb-2 sm:mb-3">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-blue-50/80 text-[#2563EB] flex items-center justify-center border border-blue-200/60 shrink-0">
+                <Wallet className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
-              <span className="text-xs font-semibold text-slate-500 tracking-wide">Total Revenue</span>
+              <span className="text-[11px] sm:text-xs font-semibold text-slate-500 tracking-wide truncate">Total Revenue</span>
             </div>
-            <TrendingUp className="w-4 h-4 text-[#2563EB]" />
+            <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#2563EB] shrink-0" />
           </div>
           <div className="space-y-1">
-            <div className="text-2xl font-bold text-slate-900 tracking-tight tabular-nums font-mono">
+            <div className="text-lg sm:text-2xl font-bold text-slate-900 tracking-tight tabular-nums font-mono truncate">
               <AnimatedNumber
                 value={targetRevenue}
                 formatter={(v) => `Rp ${Math.round(v).toLocaleString('id-ID')}`}
                 showDelta
               />
             </div>
-            <div className="flex items-center gap-1 pt-1 text-emerald-600 text-xs font-medium">
+            <div className="flex items-center gap-1 pt-0.5 sm:pt-1 text-emerald-600 text-[10px] sm:text-xs font-medium truncate">
               <span>↑</span>
-              <span>Terverifikasi Sistem</span>
+              <span className="truncate">Terverifikasi Sistem</span>
             </div>
           </div>
         </div>
@@ -308,23 +308,23 @@ export function AdminDashboardTab({
         {/* Total Orders */}
         <div
           onClick={() => onNavigateTab('orders')}
-          className="animate-fade-up stagger-2 motion-card-interactive bg-white/70 backdrop-blur-xl border border-white/80 rounded-2xl p-5 shadow-xs hover:border-slate-300 hover:shadow-card-hover transition-all cursor-pointer group flex flex-col justify-between"
+          className="animate-fade-up stagger-2 motion-card-interactive bg-white/70 backdrop-blur-xl border border-white/80 rounded-xl sm:rounded-2xl p-3.5 sm:p-4 lg:p-5 shadow-xs hover:border-slate-300 hover:shadow-card-hover transition-all cursor-pointer group flex flex-col justify-between"
         >
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-indigo-50/80 text-[#4F46E5] flex items-center justify-center border border-indigo-200/60">
-                <ShoppingCart className="w-4 h-4" />
+          <div className="flex items-center justify-between mb-2 sm:mb-3">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-indigo-50/80 text-[#4F46E5] flex items-center justify-center border border-indigo-200/60 shrink-0">
+                <ShoppingCart className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
-              <span className="text-xs font-semibold text-slate-500 tracking-wide">Total Orders</span>
+              <span className="text-[11px] sm:text-xs font-semibold text-slate-500 tracking-wide truncate">Total Orders</span>
             </div>
-            <TrendingUp className="w-4 h-4 text-[#8B5CF6]" />
+            <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#8B5CF6] shrink-0" />
           </div>
           <div className="space-y-1">
-            <div className="text-2xl font-bold text-slate-900 tracking-tight tabular-nums font-mono">
+            <div className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight tabular-nums font-mono">
               <AnimatedNumber value={targetOrders} showDelta />
             </div>
-            <div className="flex items-center gap-1 pt-1 text-slate-500 text-xs">
-              <span>{(dashboardOverview?.kpi?.completedOrders ?? liveOrderMetrics?.completed ?? 7)} Selesai diproses</span>
+            <div className="flex items-center gap-1 pt-0.5 sm:pt-1 text-slate-500 text-[10px] sm:text-xs truncate">
+              <span className="truncate">{(dashboardOverview?.kpi?.completedOrders ?? liveOrderMetrics?.completed ?? 7)} Selesai</span>
             </div>
           </div>
         </div>
@@ -332,24 +332,24 @@ export function AdminDashboardTab({
         {/* Total Customers */}
         <div
           onClick={() => onNavigateTab('customers')}
-          className="animate-fade-up stagger-3 motion-card-interactive bg-white/70 backdrop-blur-xl border border-white/80 rounded-2xl p-5 shadow-xs hover:border-slate-300 hover:shadow-card-hover transition-all cursor-pointer group flex flex-col justify-between"
+          className="animate-fade-up stagger-3 motion-card-interactive bg-white/70 backdrop-blur-xl border border-white/80 rounded-xl sm:rounded-2xl p-3.5 sm:p-4 lg:p-5 shadow-xs hover:border-slate-300 hover:shadow-card-hover transition-all cursor-pointer group flex flex-col justify-between"
         >
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-emerald-50/80 text-[#10B981] flex items-center justify-center border border-emerald-200/60">
-                <Users className="w-4 h-4" />
+          <div className="flex items-center justify-between mb-2 sm:mb-3">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-emerald-50/80 text-[#10B981] flex items-center justify-center border border-emerald-200/60 shrink-0">
+                <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
-              <span className="text-xs font-semibold text-slate-500 tracking-wide">Customers</span>
+              <span className="text-[11px] sm:text-xs font-semibold text-slate-500 tracking-wide truncate">Customers</span>
             </div>
-            <TrendingUp className="w-4 h-4 text-[#10B981]" />
+            <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#10B981] shrink-0" />
           </div>
           <div className="space-y-1">
-            <div className="text-2xl font-bold text-slate-900 tracking-tight tabular-nums font-mono">
+            <div className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight tabular-nums font-mono">
               <AnimatedNumber value={targetCustomers} showDelta />
             </div>
-            <div className="flex items-center gap-1 pt-1 text-emerald-600 text-xs font-medium">
+            <div className="flex items-center gap-1 pt-0.5 sm:pt-1 text-emerald-600 text-[10px] sm:text-xs font-medium truncate">
               <span>↑</span>
-              <span>{targetCustomers || 3} pelanggan terdata</span>
+              <span className="truncate">{targetCustomers || 3} terdata</span>
             </div>
           </div>
         </div>
@@ -357,51 +357,51 @@ export function AdminDashboardTab({
         {/* Gross Profit */}
         <div
           onClick={() => onNavigateTab('profit')}
-          className="animate-fade-up stagger-4 motion-card-interactive bg-white/70 backdrop-blur-xl border border-white/80 rounded-2xl p-5 shadow-xs hover:border-slate-300 hover:shadow-card-hover transition-all cursor-pointer group flex flex-col justify-between"
+          className="animate-fade-up stagger-4 motion-card-interactive bg-white/70 backdrop-blur-xl border border-white/80 rounded-xl sm:rounded-2xl p-3.5 sm:p-4 lg:p-5 shadow-xs hover:border-slate-300 hover:shadow-card-hover transition-all cursor-pointer group flex flex-col justify-between"
         >
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-amber-50/80 text-[#F59E0B] flex items-center justify-center border border-amber-200/60">
-                <Coins className="w-4 h-4" />
+          <div className="flex items-center justify-between mb-2 sm:mb-3">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-amber-50/80 text-[#F59E0B] flex items-center justify-center border border-amber-200/60 shrink-0">
+                <Coins className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
-              <span className="text-xs font-semibold text-slate-500 tracking-wide">Gross Profit</span>
+              <span className="text-[11px] sm:text-xs font-semibold text-slate-500 tracking-wide truncate">Gross Profit</span>
             </div>
-            <TrendingUp className="w-4 h-4 text-[#F59E0B]" />
+            <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#F59E0B] shrink-0" />
           </div>
           <div className="space-y-1">
-            <div className="text-2xl font-bold text-slate-900 tracking-tight tabular-nums font-mono">
+            <div className="text-lg sm:text-2xl font-bold text-slate-900 tracking-tight tabular-nums font-mono truncate">
               <AnimatedNumber
                 value={targetProfit}
                 formatter={(v) => `Rp ${Math.round(v).toLocaleString('id-ID')}`}
                 showDelta
               />
             </div>
-            <div className="flex items-center gap-1 pt-1 text-slate-500 text-xs">
-              <span>Estimasi Margin {dashboardOverview?.kpi?.profitMarginPercent ?? '48.9'}%</span>
+            <div className="flex items-center gap-1 pt-0.5 sm:pt-1 text-slate-500 text-[10px] sm:text-xs truncate">
+              <span className="truncate">Margin ~{dashboardOverview?.kpi?.profitMarginPercent ?? '48.9'}%</span>
             </div>
           </div>
         </div>
 
-        {/* Pending Orders */}
+        {/* Pending Orders - spans full 2 columns on mobile */}
         <div
           onClick={() => onNavigateTab('orders')}
-          className="animate-fade-up stagger-5 motion-card-interactive bg-white/70 backdrop-blur-xl border border-white/80 rounded-2xl p-5 shadow-xs hover:border-slate-300 hover:shadow-card-hover transition-all cursor-pointer group flex flex-col justify-between sm:col-span-2 md:col-span-1 xl:col-span-1"
+          className="animate-fade-up stagger-5 motion-card-interactive bg-white/70 backdrop-blur-xl border border-white/80 rounded-xl sm:rounded-2xl p-3.5 sm:p-4 lg:p-5 shadow-xs hover:border-slate-300 hover:shadow-card-hover transition-all cursor-pointer group flex flex-col justify-between col-span-2 md:col-span-1 xl:col-span-1"
         >
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-blue-50/80 text-[#2563EB] flex items-center justify-center border border-blue-200/60">
-                <Clock className="w-4 h-4" />
+          <div className="flex items-center justify-between mb-2 sm:mb-3">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-blue-50/80 text-[#2563EB] flex items-center justify-center border border-blue-200/60 shrink-0">
+                <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
-              <span className="text-xs font-semibold text-slate-500 tracking-wide">Pending Orders</span>
+              <span className="text-[11px] sm:text-xs font-semibold text-slate-500 tracking-wide truncate">Pending Orders</span>
             </div>
-            <TrendingUp className="w-4 h-4 text-[#2563EB]" />
+            <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#2563EB] shrink-0" />
           </div>
           <div className="space-y-1">
-            <div className="text-2xl font-bold text-slate-900 tracking-tight tabular-nums font-mono">
+            <div className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight tabular-nums font-mono">
               <AnimatedNumber value={targetPending ?? 0} showDelta />
             </div>
-            <div className="flex items-center gap-1 pt-1 text-amber-500 text-xs font-medium">
-              <span>Menunggu pembayaran</span>
+            <div className="flex items-center gap-1 pt-0.5 sm:pt-1 text-amber-500 text-[10px] sm:text-xs font-medium truncate">
+              <span className="truncate">Menunggu pembayaran</span>
             </div>
           </div>
         </div>
