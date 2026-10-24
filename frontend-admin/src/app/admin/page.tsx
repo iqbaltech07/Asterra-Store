@@ -1064,7 +1064,7 @@ function AdminPageContent() {
           </div>
         )}
 
-        <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-8 py-6 w-full">
+        <main className="flex-1 max-w-7xl 2xl:max-w-screen-2xl mx-auto px-4 sm:px-6 xl:px-8 py-6 w-full">
           {/* Top Summary Metrics Cards - show on products & vip-explorer */}
           {(activeTab === 'products' || activeTab === 'vip-explorer') && (
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -1330,10 +1330,21 @@ function AdminPageContent() {
             ) : (
               <div className="bg-surface border border-border rounded-xl overflow-hidden shadow-subtle">
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs min-w-[1000px]">
-                    <thead className="bg-surface-raised border-b border-border text-foreground-muted uppercase tracking-wider text-[11px] whitespace-nowrap">
+                  <table className="w-full text-left text-xs table-fixed min-w-[880px] lg:min-w-0">
+                    <colgroup>
+                      <col className="w-10" />
+                      <col className="w-auto" />
+                      <col className="w-28" />
+                      <col className="w-24" />
+                      <col className="w-24" />
+                      <col className="w-28" />
+                      <col className="w-28" />
+                      <col className="w-24" />
+                      <col className="w-[215px]" />
+                    </colgroup>
+                    <thead className="bg-surface-raised border-b border-border text-foreground-muted uppercase tracking-wider text-[11px]">
                       <tr>
-                        <th className="py-3 px-3 w-10 text-center">
+                        <th className="py-3 px-2 sm:px-3 text-center">
                           <input
                             type="checkbox"
                             checked={isAllSelected}
@@ -1345,14 +1356,14 @@ function AdminPageContent() {
                             title={isAllSelected ? 'Batalkan pilihan semua' : 'Pilih semua produk terfilter'}
                           />
                         </th>
-                        <th className="py-3 px-4 min-w-[220px]">Produk</th>
-                        <th className="py-3 px-4 whitespace-nowrap">Kategori</th>
-                        <th className="py-3 px-4 whitespace-nowrap">Harga Modal</th>
-                        <th className="py-3 px-4 whitespace-nowrap">Harga Jual</th>
-                        <th className="py-3 px-4 whitespace-nowrap">Margin Laba</th>
-                        <th className="py-3 px-4 whitespace-nowrap">Stok Supplier</th>
-                        <th className="py-3 px-4 whitespace-nowrap">Visibilitas Toko</th>
-                        <th className="py-3 px-4 text-right whitespace-nowrap">Aksi</th>
+                        <th className="py-3 px-3">Produk</th>
+                        <th className="py-3 px-2.5 whitespace-nowrap">Kategori</th>
+                        <th className="py-3 px-2.5 whitespace-nowrap">Harga Modal</th>
+                        <th className="py-3 px-2.5 whitespace-nowrap">Harga Jual</th>
+                        <th className="py-3 px-2.5 whitespace-nowrap">Margin Laba</th>
+                        <th className="py-3 px-2.5 whitespace-nowrap">Stok Supplier</th>
+                        <th className="py-3 px-2.5 whitespace-nowrap">Visibilitas</th>
+                        <th className="py-3 px-3 text-right whitespace-nowrap">Aksi</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
@@ -1371,7 +1382,7 @@ function AdminPageContent() {
                               isSelected ? 'bg-primary/10' : ''
                             } ${isLiveWarning ? 'bg-status-warning/5' : ''}`}
                           >
-                            <td className="py-3.5 px-3 text-center">
+                            <td className="py-3 px-2 sm:px-3 text-center">
                               <input
                                 type="checkbox"
                                 checked={isSelected}
@@ -1379,29 +1390,34 @@ function AdminPageContent() {
                                 className="w-4 h-4 rounded border-border text-primary focus:ring-primary accent-primary cursor-pointer align-middle"
                               />
                             </td>
-                            <td className="py-3.5 px-4 min-w-[220px]">
-                              <div className="flex items-center gap-3">
+                            <td className="py-3 px-3 min-w-0">
+                              <div className="flex items-center gap-2.5 min-w-0">
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
                                   src={p.imageUrl}
                                   alt={p.name}
                                   loading="lazy"
                                   decoding="async"
-                                  className="w-10 h-10 rounded-lg object-cover bg-surface-raised border border-border shrink-0"
+                                  className="w-9 h-9 rounded-lg object-cover bg-surface-raised border border-border shrink-0"
                                 />
-                                <div>
-                                  <div className="font-semibold text-foreground text-sm flex items-center gap-1.5">
-                                    <span>{p.name}</span>
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                    <span
+                                      className="font-semibold text-foreground text-xs leading-snug line-clamp-2 break-words"
+                                      title={p.name}
+                                    >
+                                      {p.name}
+                                    </span>
                                     {p.popular && (
-                                      <Badge className="text-[10px] py-0 px-1.5 bg-primary text-white">
+                                      <Badge className="text-[9px] py-0 px-1 bg-primary text-white shrink-0 font-medium">
                                         Populer
                                       </Badge>
                                     )}
                                   </div>
-                                  <div className="text-[11px] text-foreground-muted flex items-center gap-2 mt-0.5">
+                                  <div className="text-[10px] text-foreground-muted flex items-center gap-1.5 mt-0.5 truncate">
                                     <span>ID: {p.id}</span>
                                     {p.provider === 'vip-reseller' && (
-                                      <span className="text-primary font-mono">
+                                      <span className="text-primary font-mono truncate">
                                         • VIP: {p.providerCode}
                                       </span>
                                     )}
@@ -1410,19 +1426,21 @@ function AdminPageContent() {
                               </div>
                             </td>
 
-                            <td className="py-3.5 px-4 font-medium text-foreground whitespace-nowrap">
-                              {p.category.name}
+                            <td className="py-3 px-2.5 font-medium text-foreground text-xs min-w-0">
+                              <span className="truncate block" title={p.category.name}>
+                                {p.category.name}
+                              </span>
                             </td>
 
-                            <td className="py-3.5 px-4 font-mono text-foreground-muted whitespace-nowrap">
+                            <td className="py-3 px-2.5 font-mono text-foreground-muted text-xs whitespace-nowrap">
                               {p.providerPrice ? `Rp ${p.providerPrice.toLocaleString('id-ID')}` : 'Internal'}
                             </td>
 
-                            <td className="py-3.5 px-4 font-mono font-bold text-foreground whitespace-nowrap">
+                            <td className="py-3 px-2.5 font-mono font-bold text-foreground text-xs whitespace-nowrap">
                               Rp {p.price.toLocaleString('id-ID')}
                             </td>
 
-                            <td className="py-3.5 px-4 whitespace-nowrap">
+                            <td className="py-3 px-2.5 whitespace-nowrap">
                               {(() => {
                                 const margin =
                                   p.providerPrice !== undefined && p.providerPrice !== null && p.providerPrice > 0
@@ -1435,10 +1453,12 @@ function AdminPageContent() {
 
                                 if (margin !== undefined && margin > 0) {
                                   return (
-                                    <div className="inline-flex items-center gap-1.5 text-status-success font-semibold whitespace-nowrap font-mono">
-                                      <TrendingUp className="w-3.5 h-3.5 shrink-0" />
-                                      <span>+Rp {margin.toLocaleString('id-ID')}</span>
-                                      <span className="text-[11px] text-status-success/80 font-normal">
+                                    <div className="flex flex-col font-mono leading-tight whitespace-nowrap">
+                                      <span className="inline-flex items-center gap-1 text-status-success font-semibold text-xs">
+                                        <TrendingUp className="w-3 h-3 shrink-0" />
+                                        <span>+Rp {margin.toLocaleString('id-ID')}</span>
+                                      </span>
+                                      <span className="text-[10px] text-status-success/80 font-normal pl-4">
                                         ({percentage}%)
                                       </span>
                                     </div>
@@ -1446,10 +1466,12 @@ function AdminPageContent() {
                                 }
                                 if (margin !== undefined && margin < 0) {
                                   return (
-                                    <div className="inline-flex items-center gap-1.5 text-status-error font-semibold whitespace-nowrap font-mono">
-                                      <TrendingDown className="w-3.5 h-3.5 shrink-0" />
-                                      <span>-Rp {Math.abs(margin).toLocaleString('id-ID')}</span>
-                                      <span className="text-[11px] text-status-error/80 font-normal">
+                                    <div className="flex flex-col font-mono leading-tight whitespace-nowrap">
+                                      <span className="inline-flex items-center gap-1 text-status-error font-semibold text-xs">
+                                        <TrendingDown className="w-3 h-3 shrink-0" />
+                                        <span>-Rp {Math.abs(margin).toLocaleString('id-ID')}</span>
+                                      </span>
+                                      <span className="text-[10px] text-status-error/80 font-normal pl-4">
                                         ({percentage}%)
                                       </span>
                                     </div>
@@ -1457,21 +1479,20 @@ function AdminPageContent() {
                                 }
                                 if (margin === 0) {
                                   return (
-                                    <div className="inline-flex items-center gap-1 text-foreground-muted font-medium whitespace-nowrap font-mono text-[11px]">
-                                      <span>Rp 0</span>
-                                      <span>(0%)</span>
+                                    <div className="font-mono text-xs text-foreground-muted whitespace-nowrap">
+                                      <span>Rp 0</span> <span className="text-[10px] opacity-75">(0%)</span>
                                     </div>
                                   );
                                 }
-                                return <span className="text-foreground-muted">-</span>;
+                                return <span className="text-foreground-muted text-xs">-</span>;
                               })()}
                             </td>
 
-                            <td className="py-3.5 px-4 whitespace-nowrap">
+                            <td className="py-3 px-2.5 whitespace-nowrap">
                               {p.provider === 'vip-reseller' ? (
                                 p.providerStatus === 'available' ? (
                                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-status-success/15 text-status-success">
-                                    <CheckCircle2 className="w-3 h-3" />
+                                    <CheckCircle2 className="w-3 h-3 shrink-0" />
                                     <span>Tersedia ({p.stock ?? 100})</span>
                                   </span>
                                 ) : (
@@ -1479,31 +1500,31 @@ function AdminPageContent() {
                                     className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-status-warning/15 text-status-warning"
                                     title="Stok supplier kosong!"
                                   >
-                                    <AlertTriangle className="w-3 h-3" />
+                                    <AlertTriangle className="w-3 h-3 shrink-0" />
                                     <span>Kosong</span>
                                   </span>
                                 )
                               ) : (
                                 (p.stock !== undefined && p.stock <= 0) ? (
                                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-status-warning/15 text-status-warning">
-                                    <AlertTriangle className="w-3 h-3" />
+                                    <AlertTriangle className="w-3 h-3 shrink-0" />
                                     <span>Kosong (0)</span>
                                   </span>
                                 ) : (
                                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-status-success/15 text-status-success">
-                                    <CheckCircle2 className="w-3 h-3" />
+                                    <CheckCircle2 className="w-3 h-3 shrink-0" />
                                     <span>Tersedia ({p.stock ?? 100})</span>
                                   </span>
                                 )
                               )}
                             </td>
 
-                            <td className="py-3.5 px-4 whitespace-nowrap">
+                            <td className="py-3 px-2.5 whitespace-nowrap">
                               <button
                                 type="button"
                                 onClick={() => toggleMutation.mutate(p.id)}
                                 disabled={toggleMutation.isPending}
-                                className={`px-2.5 py-1 rounded-full text-[11px] font-semibold transition-colors flex items-center gap-1.5 ${
+                                className={`px-2 py-0.5 rounded-full text-[11px] font-semibold transition-colors inline-flex items-center gap-1 cursor-pointer ${
                                   p.status === 'active'
                                     ? 'bg-status-success/15 text-status-success hover:bg-status-success/25'
                                     : 'bg-surface-raised border border-border text-foreground-muted hover:text-foreground'
@@ -1512,39 +1533,39 @@ function AdminPageContent() {
                               >
                                 {p.status === 'active' ? (
                                   <>
-                                    <Eye className="w-3 h-3" />
-                                    <span>Aktif (Tampil)</span>
+                                    <Eye className="w-3 h-3 shrink-0" />
+                                    <span>Aktif</span>
                                   </>
                                 ) : (
                                   <>
-                                    <EyeOff className="w-3 h-3" />
+                                    <EyeOff className="w-3 h-3 shrink-0" />
                                     <span>Diarsipkan</span>
                                   </>
                                 )}
                               </button>
                             </td>
 
-                            <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                              <div className="flex items-center justify-end gap-1.5">
+                            <td className="py-3 px-3 text-right whitespace-nowrap">
+                              <div className="inline-flex items-center justify-end gap-1">
                                 <Button
                                   variant="outline"
                                   size="sm"
                                   onClick={() => handleOpenEdit(p)}
-                                  className="h-8 px-2.5 text-xs border-border"
+                                  className="h-8 px-2 text-xs border-border text-foreground hover:bg-surface-hover gap-1 font-medium cursor-pointer"
                                   title="Edit detail & harga jual"
                                 >
-                                  <Edit className="w-3.5 h-3.5 text-primary" />
-                                  <span className="hidden sm:inline ml-1">Edit</span>
+                                  <Edit className="w-3.5 h-3.5 text-primary shrink-0" />
+                                  <span>Edit</span>
                                 </Button>
                                 <Button
                                   variant="outline"
                                   size="sm"
                                   onClick={() => handleDuplicateProduct(p)}
-                                  className="h-8 px-2.5 text-xs border-border hover:bg-surface-raised"
+                                  className="h-8 px-2 text-xs border-border hover:bg-surface-raised text-foreground-muted hover:text-foreground gap-1 font-medium cursor-pointer"
                                   title="Duplikat produk ini"
                                 >
-                                  <Copy className="w-3.5 h-3.5 text-foreground-muted" />
-                                  <span className="hidden sm:inline ml-1">Duplikat</span>
+                                  <Copy className="w-3.5 h-3.5 shrink-0" />
+                                  <span>Duplikat</span>
                                 </Button>
                                 <Button
                                   variant="outline"
@@ -1553,11 +1574,11 @@ function AdminPageContent() {
                                     setDeletingProductId(p.id);
                                     setDeletingProductName(p.name);
                                   }}
-                                  className="h-8 px-2.5 text-xs border-border hover:border-status-error/50 hover:bg-status-error/10 text-status-error"
+                                  className="h-8 px-2 text-xs border-border hover:border-status-error/50 hover:bg-status-error/10 text-status-error gap-1 font-medium cursor-pointer"
                                   title="Hapus produk permanen"
                                 >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                  <span className="hidden sm:inline ml-1">Hapus</span>
+                                  <Trash2 className="w-3.5 h-3.5 shrink-0" />
+                                  <span>Hapus</span>
                                 </Button>
                               </div>
                             </td>
