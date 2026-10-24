@@ -24,6 +24,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { useCatalogProducts } from '@/lib/hooks/use-catalog-products';
 import { useActiveCampaigns } from '@/lib/hooks/use-active-campaigns';
+import { useHomepageSections } from '@/lib/hooks/use-homepage-sections';
 import {
   calculateCampaignPrice,
   isProductInCampaign,
@@ -68,8 +69,10 @@ export default function HomePage() {
   }, []);
 
   // Dynamic products fetched from catalog API (cached via shared query)
-  const { data: catalogResponse, isLoading } = useCatalogProducts();
-  const isCatalogLoading = isLoading || !catalogResponse?.data;
+  const { data: catalogResponse, isLoading: isCatalogLoadingQuery } = useCatalogProducts();
+  const { data: sectionsResponse, isLoading: isSectionsLoading } = useHomepageSections();
+
+  const isCatalogLoading = (isCatalogLoadingQuery || isSectionsLoading) && !sectionsResponse?.sections && !catalogResponse?.data;
 
   const allProducts = useMemo(
     () => catalogResponse?.data || [],
@@ -225,9 +228,15 @@ export default function HomePage() {
     ];
   }, []);
 
-  // Map to Featured Products (filtered by active category: Promo / Terlaris / Terbaru)
+  // Map to Featured Products (authoritative backend data with 8-product guarantee & resilient fallback)
   const featuredApps = useMemo(() => {
-    // Map all configuration targets to their actual product items and prices
+    // 1. Authoritative Backend Section Data (Auto-Ranked or Admin Manual Priority)
+    const backendSection = sectionsResponse?.sections?.[activeCategory];
+    if (backendSection && Array.isArray(backendSection.data) && backendSection.data.length > 0) {
+      return backendSection.data.slice(0, 8);
+    }
+
+    // 2. Resilient Fallback: dynamically map products up to 8 items
     const allMapped = appConfigurations.map((target) => {
       const items = allProducts.filter((p) => {
         const text = `${p.name} ${(p as unknown as { id?: string }).id || ''} ${(p as unknown as { providerCode?: string }).providerCode || ''}`.toLowerCase();
@@ -273,10 +282,10 @@ export default function HomePage() {
         );
       });
 
-      // Strictly maximum 7 popular products, sorted by popularity (soldCount descending)
+      // Maximum 8 popular products, sorted by popularity (soldCount descending)
       return promoMatching
         .sort((a, b) => (b.soldCount || 0) - (a.soldCount || 0))
-        .slice(0, 7);
+        .slice(0, 8);
     }
 
     if (activeCategory === 'terlaris') {
@@ -295,7 +304,7 @@ export default function HomePage() {
     }
 
     return allMapped.slice(0, 8);
-  }, [allProducts, appConfigurations, activeCategory, activeCampaigns]);
+  }, [sectionsResponse, allProducts, appConfigurations, activeCategory, activeCampaigns]);
 
   // Client-mounted tracking
   const [isMounted, setIsMounted] = useState<boolean>(false);

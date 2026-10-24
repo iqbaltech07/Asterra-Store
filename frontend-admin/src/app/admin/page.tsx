@@ -30,6 +30,8 @@ import {
   Copy,
   Bell,
   ChevronDown,
+  ChevronRight,
+  Layers,
 } from 'lucide-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -43,6 +45,7 @@ import { AdminPaymentSettingsTab } from '@/components/admin/admin-payment-settin
 import { AdminPromosTab } from '@/components/admin/admin-promos-tab';
 import { AdminUsersTab } from '@/components/admin/admin-users-tab';
 import { AdminSidebar, AdminTab } from '@/components/admin/admin-sidebar';
+import { AdminHomepageOrdering } from '@/components/admin/admin-homepage-ordering';
 import { AdminDashboardTab } from '@/components/admin/admin-dashboard-tab';
 import { AdminAffiliateTab } from '@/components/admin/admin-affiliate-tab';
 import { AdminCategoriesTab } from '@/components/admin/admin-categories-tab';
@@ -98,6 +101,7 @@ interface VipServicesResponse {
 const TAB_TITLES: Record<AdminTab, { category: string; title: string }> = {
   dashboard: { category: 'Overview', title: 'Dashboard Eksekutif' },
   products: { category: 'Katalog & Layanan', title: 'Manajemen Katalog & Produk' },
+  'homepage-ordering': { category: 'Katalog & Layanan', title: 'Pengaturan Urutan Produk Homepage' },
   categories: { category: 'Katalog & Layanan', title: 'Kategori Layanan' },
   'vip-explorer': { category: 'Katalog & Layanan', title: 'Jelajahi & Impor Layanan VIP Reseller' },
   providers: { category: 'Katalog & Layanan', title: 'Koneksi Gateway & Supplier VIP' },
@@ -1351,6 +1355,33 @@ function AdminPageContent() {
           {visitedTabs.has('products') && (
           <div className={activeTab === 'products' ? 'block animate-tab-glide' : 'hidden'}>
           <div className="space-y-6">
+            {/* Quick Banner: Homepage Product Ordering */}
+            <div className="bg-gradient-to-r from-primary/10 via-amber-500/10 to-primary/5 border border-primary/20 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center shrink-0 shadow-xs">
+                  <Layers className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-xs sm:text-sm font-bold text-foreground flex items-center gap-2">
+                    <span>Atur Urutan 8 Produk Homepage</span>
+                    <Badge variant="primary" className="text-[10px]">Promo · Terlaris · Terbaru</Badge>
+                  </h3>
+                  <p className="text-[11px] text-foreground-muted mt-0.5">
+                    Kustomisasi urutan produk yang tampil di halaman depan Customer Website dengan Mode Otomatis atau Prioritas Manual.
+                  </p>
+                </div>
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => handleTabChange('homepage-ordering')}
+                className="bg-primary text-white hover:bg-primary/90 text-xs h-8.5 px-3.5 gap-1.5 font-semibold shrink-0"
+              >
+                <span>Buka Pengaturan Urutan</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </Button>
+            </div>
+
             {/* Filter & Search Bar */}
             <div className="bg-surface border border-border rounded-xl p-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
               <div className="flex flex-wrap items-center gap-1.5">
@@ -1992,6 +2023,13 @@ function AdminPageContent() {
             </div>
           )}
           </div>
+          </div>
+        )}
+
+        {/* TAB: HOMEPAGE PRODUCT ORDERING */}
+        {visitedTabs.has('homepage-ordering') && (
+          <div className={activeTab === 'homepage-ordering' ? 'block animate-tab-glide' : 'hidden'}>
+            <AdminHomepageOrdering onNotify={showNotification} />
           </div>
         )}
 

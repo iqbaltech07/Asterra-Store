@@ -5,14 +5,53 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faLayerGroup,
   faTv,
+  faGamepad,
+  faBrain,
 } from '@fortawesome/free-solid-svg-icons';
 import {
   faYoutube,
   faSpotify,
 } from '@fortawesome/free-brands-svg-icons';
 
-export function AppBrandBadge({ name }: { name: string }) {
+export function AppBrandBadge({ name, imageUrl }: { name: string; imageUrl?: string }) {
+  if (imageUrl && !imageUrl.includes('default-product-banner.png') && imageUrl.length > 5) {
+    return (
+      <div className="w-full h-full bg-white rounded-lg sm:rounded-xl flex items-center justify-center p-0.5 shadow-2xs overflow-hidden">
+        <img
+          src={imageUrl}
+          alt={name}
+          className="w-full h-full object-contain"
+          draggable={false}
+        />
+      </div>
+    );
+  }
+
   const n = name.toLowerCase();
+
+  if (n.includes('claude')) {
+    return (
+      <div className="w-full h-full bg-[#D97706]/15 rounded-lg sm:rounded-xl flex items-center justify-center p-1.5 shadow-2xs">
+        <span className="font-black text-[#D97706] text-xs sm:text-sm tracking-tight">Claude</span>
+      </div>
+    );
+  }
+
+  if (n.includes('mobile legend') || n.includes('mlbb') || n.includes('diamond')) {
+    return (
+      <div className="w-full h-full bg-gradient-to-br from-blue-600 to-indigo-700 rounded-lg sm:rounded-xl flex items-center justify-center p-1.5 shadow-2xs">
+        <FontAwesomeIcon icon={faGamepad} className="w-5 h-5 text-white" />
+      </div>
+    );
+  }
+
+  if (n.includes('pubg') || n.includes('uc')) {
+    return (
+      <div className="w-full h-full bg-gradient-to-br from-amber-500 to-orange-600 rounded-lg sm:rounded-xl flex items-center justify-center p-1.5 shadow-2xs">
+        <FontAwesomeIcon icon={faGamepad} className="w-5 h-5 text-white" />
+      </div>
+    );
+  }
 
   if (n.includes('gemini') || n.includes('google ai')) {
     return (

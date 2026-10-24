@@ -31,6 +31,7 @@ export interface ApplicationGroupItem {
   rating?: string;
   badgeLabel?: string;
   isPromo?: boolean;
+  imageUrl?: string;
   items: ProductItem[];
 }
 
@@ -111,7 +112,7 @@ export function FeaturedGridCard({
             data-gsap="product-image"
             className="w-9 h-9 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-[#121A2A]/5 border border-[rgba(18,26,42,0.08)] flex items-center justify-center overflow-hidden shrink-0 group-hover:scale-105 transition-transform"
           >
-            <AppBrandBadge name={app.name} />
+            <AppBrandBadge name={app.name} imageUrl={app.imageUrl || (app.items?.[0] as unknown as { imageUrl?: string })?.imageUrl} />
           </Link>
 
           <div className="min-w-0 flex-1">
@@ -236,7 +237,7 @@ export function ShowcaseLoopingCard({
             href={`/products/${app.slug}`}
             className="w-10 h-10 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-[#121A2A]/5 border border-[rgba(18,26,42,0.08)] flex items-center justify-center overflow-hidden shrink-0 group-hover:scale-105 transition-transform"
           >
-            <AppBrandBadge name={app.name} />
+            <AppBrandBadge name={app.name} imageUrl={app.imageUrl || (app.items?.[0] as unknown as { imageUrl?: string })?.imageUrl} />
           </Link>
 
           <div className="min-w-0 flex-1">

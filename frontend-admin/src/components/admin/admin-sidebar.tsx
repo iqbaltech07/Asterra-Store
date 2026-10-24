@@ -12,6 +12,7 @@ import {
   ShoppingBag,
   Users,
   AlertCircle,
+  Layers,
   Sparkles,
   Share2,
   Tag,
@@ -44,6 +45,7 @@ export type AdminTab =
   | 'dashboard'
   // KATALOG & LAYANAN
   | 'products'
+  | 'homepage-ordering'
   | 'categories'
   | 'vip-explorer'
   | 'providers'
@@ -221,6 +223,14 @@ export function AdminSidebar({
               description: 'Kelola harga retail, stok, dan arsip',
             },
             {
+              id: 'homepage-ordering',
+              label: 'Urutan Homepage',
+              icon: Layers,
+              badge: 'Baru',
+              badgeVariant: 'primary',
+              description: 'Atur 8 produk Promo, Terlaris, & Terbaru',
+            },
+            {
               id: 'categories',
               label: 'Kategori',
               icon: FolderTree,
@@ -349,6 +359,14 @@ export function AdminSidebar({
             badge: metrics?.total !== undefined ? metrics.total : 236,
             badgeVariant: 'primary',
             description: 'Kelola harga retail, stok, dan arsip',
+          },
+          {
+            id: 'homepage-ordering',
+            label: 'Urutan Homepage',
+            icon: Layers,
+            badge: 'Baru',
+            badgeVariant: 'primary',
+            description: 'Atur 8 produk Promo, Terlaris, & Terbaru',
           },
           {
             id: 'categories',

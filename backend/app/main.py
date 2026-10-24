@@ -35,6 +35,12 @@ async def lifespan(app: FastAPI):
         print(f"[Lifespan] Campaign init note: {e}")
 
     try:
+        from app.services.homepage_section_service import HomepageSectionService
+        HomepageSectionService.ensure_table()
+    except Exception as e:
+        print(f"[Lifespan] HomepageSection init note: {e}")
+
+    try:
         from app.services.catalog_service import CatalogService
         CatalogService.load_products()
     except Exception as e:

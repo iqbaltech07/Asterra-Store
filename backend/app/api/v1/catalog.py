@@ -655,3 +655,68 @@ async def delete_promo_banner(banner_id: str):
         "success": True,
         "message": f"Banner {banner_id} berhasil dihapus dari sistem dan storage.",
     }
+
+# ------------------------------------------
+# 1.5 Homepage Sections & Product Ordering Engine
+# ------------------------------------------
+from app.services.homepage_section_service import HomepageSectionService
+
+@router.get("/homepage/sections", tags=["Homepage Sections"])
+def get_homepage_sections(request: Request, response: Response, limit: int = 8):
+    cache_key = f"hp_sections_l_{limit}"
+    etag = cache.generate_etag("homepage_sections", cache_key)
+    if cache.is_not_modified(request, etag):
+        return cache.not_modified_response(etag, max_age=15)
+
+    data = cache.get("homepage_sections", cache_key)
+    if data is None:
+        data = HomepageSectionService.get_all_homepage_sections(limit=limit)
+        cache.set("homepage_sections", cache_key, data, ttl=30)
+
+    cache.apply_headers(response, etag=etag, max_age=15)
+    return data
+
+@router.get("/homepage/sections/{section_key}", tags=["Homepage Sections"])
+def get_homepage_section_by_key(section_key: str, request: Request, response: Response, limit: int = 8):
+    if section_key not in ["promo", "terlaris", "terbaru"]:
+        raise HTTPException(status_code=400, detail="Section key tidak valid. Gunakan 'promo', 'terlaris', atau 'terbaru'.")
+    return {
+        "success": True,
+        "data": HomepageSectionService.compute_section_products(section_key, limit=limit),
+    }
+
+@router.get("/admin/homepage/sections/config", tags=["Admin Homepage Ordering"])
+def get_admin_homepage_sections_config():
+    configs = HomepageSectionService.get_sections_config()
+    return {
+        "success": True,
+        "configs": configs,
+    }
+
+@router.post("/admin/homepage/sections/{section_key}", tags=["Admin Homepage Ordering"])
+@router.put("/admin/homepage/sections/{section_key}", tags=["Admin Homepage Ordering"])
+async def update_admin_homepage_section(section_key: str, request: Request):
+    if section_key not in ["promo", "terlaris", "terbaru"]:
+        raise HTTPException(status_code=400, detail="Section key tidak valid. Gunakan 'promo', 'terlaris', atau 'terbaru'.")
+    payload = await request.json()
+    mode = payload.get("mode", "auto")
+    manual_ids = payload.get("manualProductIds") or payload.get("productIds") or []
+    updated_by = payload.get("updatedBy", "admin")
+
+    try:
+        updated = HomepageSectionService.update_section_config(
+            section_key=section_key,
+            mode=mode,
+            manual_product_ids=manual_ids,
+            updated_by=updated_by,
+        )
+        return {
+            "success": True,
+            "message": f"Konfigurasi urutan homepage kategori '{section_key.upper()}' berhasil disimpan.",
+            "data": updated,
+        }
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Gagal memperbarui urutan section: {str(e)}")
+
