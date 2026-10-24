@@ -1132,10 +1132,10 @@ function AdminPageContent() {
           <div className="flex items-center gap-3">
             {/* Observability Auto-Sync Engine Badge */}
             <div
-              className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/70 border border-slate-200/80 text-xs shadow-2xs backdrop-blur-xs select-none"
+              className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full bg-white/70 border border-slate-200/80 text-xs shadow-2xs backdrop-blur-xs select-none shrink-0"
               title={sseConnected ? 'Dual-Channel Auto-Sync Aktif (SSE Gateway + Smart Polling)' : 'Auto-Sync Mode Terjadwal (Smart Polling)'}
             >
-              <span className="relative flex h-2 w-2">
+              <span className="relative flex h-2 w-2 shrink-0">
                 {sseConnected ? (
                   <>
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -1145,16 +1145,22 @@ function AdminPageContent() {
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
                 )}
               </span>
-              <span className="font-semibold text-slate-700 text-[11px]">
+              <span className="font-semibold text-slate-700 text-[10px] sm:text-[11px] whitespace-nowrap">
                 {isGlobalFetching > 0 ? (
                   <span className="flex items-center gap-1 text-[#2563EB]">
-                    <RefreshCw className="w-3 h-3 animate-spin" />
-                    <span>Menyinkronkan...</span>
+                    <RefreshCw className="w-3 h-3 animate-spin shrink-0" />
+                    <span className="hidden sm:inline">Menyinkronkan...</span>
                   </span>
                 ) : sseConnected ? (
-                  <span>Auto-Sync Aktif</span>
+                  <>
+                    <span className="hidden sm:inline">Auto-Sync Aktif</span>
+                    <span className="sm:hidden text-emerald-700 font-bold">Live</span>
+                  </>
                 ) : (
-                  <span className="text-amber-700">Auto-Sync (Polling)</span>
+                  <>
+                    <span className="hidden sm:inline text-amber-700">Auto-Sync (Polling)</span>
+                    <span className="sm:hidden text-amber-700 font-bold">Poll</span>
+                  </>
                 )}
               </span>
               <span className="text-[10px] text-slate-400 font-mono hidden xl:inline border-l border-slate-200 pl-2">
@@ -1401,10 +1407,10 @@ function AdminPageContent() {
                 ) : null}
               </div>
 
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                <div className="min-w-[190px]">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
+                <div className="w-full sm:w-auto sm:min-w-[190px]">
                   <Select value={categoryFilter} onValueChange={(val) => setCategoryFilter(val)}>
-                    <SelectTrigger className="text-xs bg-surface-raised border-border h-9">
+                    <SelectTrigger className="text-xs bg-surface-raised border-border h-9 w-full">
                       <SelectValue placeholder="Semua Kategori" />
                     </SelectTrigger>
                     <SelectContent align="start">
@@ -1418,14 +1424,14 @@ function AdminPageContent() {
                   </Select>
                 </div>
 
-                <div className="relative min-w-[240px]">
+                <div className="relative w-full sm:w-auto sm:min-w-[220px] sm:flex-1">
                   <Search className="w-4 h-4 text-foreground-muted absolute left-3 top-1/2 -translate-y-1/2" />
                   <Input
                     type="text"
                     placeholder="Cari produk terkelola..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-9 text-xs bg-surface-raised border-border"
+                    className="pl-9 text-xs bg-surface-raised border-border w-full"
                   />
                 </div>
               </div>
@@ -1514,18 +1520,19 @@ function AdminPageContent() {
               </div>
             ) : (
               <div className="bg-surface border border-border rounded-xl overflow-hidden shadow-subtle min-w-0">
-                <div className="overflow-x-auto min-w-0">
-                  <table className="w-full text-left text-xs table-fixed min-w-[860px] xl:min-w-0">
+                {/* 1. Desktop & Tablet View Table (hidden on mobile < md) */}
+                <div className="hidden md:block overflow-x-auto min-w-0">
+                  <table className="w-full text-left text-xs table-fixed">
                     <colgroup>
                       <col style={{ width: '38px' }} />
                       <col style={{ width: '28%' }} />
                       <col style={{ width: '12%' }} />
-                      <col style={{ width: '9%' }} />
-                      <col style={{ width: '9%' }} />
-                      <col style={{ width: '10.5%' }} />
+                      <col style={{ width: '10%' }} />
+                      <col style={{ width: '10%' }} />
                       <col style={{ width: '11%' }} />
-                      <col style={{ width: '9.5%' }} />
-                      <col style={{ width: '116px' }} />
+                      <col style={{ width: '11%' }} />
+                      <col style={{ width: '9%' }} />
+                      <col style={{ width: '106px' }} />
                     </colgroup>
                     <thead className="bg-surface-raised border-b border-border text-foreground-muted uppercase tracking-wider text-[11px]">
                       <tr>
@@ -1771,6 +1778,200 @@ function AdminPageContent() {
                       })}
                     </tbody>
                   </table>
+                </div>
+
+                {/* 2. Mobile & Tablet Card View (visible on screen < md) */}
+                <div className="md:hidden divide-y divide-border">
+                  {products.map((p, idx) => {
+                    const isLiveWarning =
+                      p.status === 'active' &&
+                      p.provider === 'vip-reseller' &&
+                      p.providerStatus === 'empty';
+                    const isSelected = selectedIdSet.has(p.id);
+
+                    const margin =
+                      p.providerPrice !== undefined && p.providerPrice !== null && p.providerPrice > 0
+                        ? p.price - p.providerPrice
+                        : p.profitMargin;
+                    const percentage =
+                      p.providerPrice !== undefined && p.providerPrice !== null && p.providerPrice > 0
+                        ? Math.round(((p.price - p.providerPrice) / p.providerPrice) * 100)
+                        : p.profitPercentage;
+
+                    return (
+                      <div
+                        key={p.id}
+                        style={{ animationDelay: `${Math.min(idx, 12) * 35}ms` }}
+                        className={`p-4 space-y-3 transition-colors animate-fade-up ${
+                          isSelected ? 'bg-primary/10' : ''
+                        } ${isLiveWarning ? 'bg-status-warning/5' : ''}`}
+                      >
+                        {/* Top Row: Checkbox, Image, Title & Badges */}
+                        <div className="flex items-start gap-3">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => handleToggleSelectOne(p.id)}
+                            className="w-4 h-4 rounded border-border text-primary focus:ring-primary accent-primary cursor-pointer align-middle mt-1 shrink-0"
+                            aria-label={`Pilih produk ${p.name}`}
+                          />
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={p.imageUrl}
+                            alt={p.name}
+                            loading="lazy"
+                            decoding="async"
+                            className="w-11 h-11 rounded-lg object-cover bg-surface-raised border border-border shrink-0"
+                          />
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-start justify-between gap-1.5">
+                              <span className="font-semibold text-foreground text-xs leading-snug line-clamp-2 break-words" title={p.name}>
+                                {p.name}
+                              </span>
+                              {p.popular && (
+                                <Badge className="text-[9px] py-0 px-1 bg-primary text-white shrink-0 font-medium">
+                                  Populer
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-foreground-muted mt-1">
+                              <span className="px-1.5 py-0.5 rounded bg-surface-raised border border-border/80 font-medium text-foreground">
+                                {p.category.name}
+                              </span>
+                              <span className="font-mono text-foreground-muted">ID: {p.id}</span>
+                              {p.provider === 'vip-reseller' && p.providerCode && (
+                                <span className="text-primary font-mono truncate" title={`VIP Code: ${p.providerCode}`}>
+                                  • VIP: {p.providerCode}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Middle Row: Financials 2x2 Grid */}
+                        <div className="grid grid-cols-2 gap-2 p-2.5 rounded-lg bg-surface-raised/70 border border-border/80 text-xs">
+                          <div>
+                            <span className="text-[10px] text-foreground-muted block">Harga Jual</span>
+                            <span className="font-mono font-bold text-foreground text-xs">
+                              Rp {p.price.toLocaleString('id-ID')}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-foreground-muted block">Harga Modal</span>
+                            <span className="font-mono text-foreground-muted text-xs">
+                              {p.providerPrice ? `Rp ${p.providerPrice.toLocaleString('id-ID')}` : 'Internal'}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-foreground-muted block">Margin Laba</span>
+                            {margin !== undefined && margin > 0 ? (
+                              <span className="font-mono font-semibold text-status-success text-xs inline-flex items-center gap-0.5">
+                                <TrendingUp className="w-3 h-3 shrink-0" />
+                                <span>+Rp {margin.toLocaleString('id-ID')}</span>
+                                <span className="text-[10px] opacity-80">({percentage}%)</span>
+                              </span>
+                            ) : margin !== undefined && margin < 0 ? (
+                              <span className="font-mono font-semibold text-status-error text-xs inline-flex items-center gap-0.5">
+                                <TrendingDown className="w-3 h-3 shrink-0" />
+                                <span>-Rp {Math.abs(margin).toLocaleString('id-ID')}</span>
+                                <span className="text-[10px] opacity-80">({percentage}%)</span>
+                              </span>
+                            ) : (
+                              <span className="font-mono text-foreground-muted text-xs">Rp 0 (0%)</span>
+                            )}
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-foreground-muted block">Stok Supplier</span>
+                            {p.provider === 'vip-reseller' ? (
+                              p.providerStatus === 'available' ? (
+                                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-status-success">
+                                  <CheckCircle2 className="w-3 h-3 shrink-0" />
+                                  <span>Tersedia ({p.stock ?? 100})</span>
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-status-warning">
+                                  <AlertTriangle className="w-3 h-3 shrink-0" />
+                                  <span>Kosong</span>
+                                </span>
+                              )
+                            ) : (
+                              (p.stock !== undefined && p.stock <= 0) ? (
+                                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-status-warning">
+                                  <AlertTriangle className="w-3 h-3 shrink-0" />
+                                  <span>Kosong (0)</span>
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-status-success">
+                                  <CheckCircle2 className="w-3 h-3 shrink-0" />
+                                  <span>Tersedia ({p.stock ?? 100})</span>
+                                </span>
+                              )
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Bottom Row: Visibility Toggle & Actions */}
+                        <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+                          <button
+                            type="button"
+                            onClick={() => toggleMutation.mutate(p.id)}
+                            disabled={toggleMutation.isPending}
+                            className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors inline-flex items-center gap-1.5 cursor-pointer ${
+                              p.status === 'active'
+                                ? 'bg-status-success/15 text-status-success hover:bg-status-success/25 border border-status-success/20'
+                                : 'bg-surface-raised border border-border text-foreground-muted hover:text-foreground'
+                            }`}
+                            title="Klik untuk beralih antara Muncul di Toko / Diarsipkan"
+                          >
+                            {p.status === 'active' ? (
+                              <>
+                                <Eye className="w-3.5 h-3.5 shrink-0" />
+                                <span>Aktif di Toko</span>
+                              </>
+                            ) : (
+                              <>
+                                <EyeOff className="w-3.5 h-3.5 shrink-0" />
+                                <span>Diarsipkan</span>
+                              </>
+                            )}
+                          </button>
+
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handleOpenEdit(p)}
+                              className="h-8 px-2.5 rounded-lg bg-surface border border-border text-[#2563EB] hover:text-[#1D4ED8] hover:border-[#2563EB]/40 hover:bg-blue-50/80 transition-all inline-flex items-center gap-1 text-xs font-medium shadow-2xs cursor-pointer active:scale-95"
+                              title="Edit detail & harga jual"
+                            >
+                              <FontAwesomeIcon icon={faPen} className="w-3 h-3 shrink-0" />
+                              <span>Edit</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDuplicateProduct(p)}
+                              className="h-8 px-2.5 rounded-lg bg-surface border border-border text-foreground-muted hover:text-foreground hover:bg-surface-raised transition-all inline-flex items-center gap-1 text-xs font-medium shadow-2xs cursor-pointer active:scale-95"
+                              title="Duplikat produk ini"
+                            >
+                              <FontAwesomeIcon icon={faCopySolid} className="w-3 h-3 shrink-0" />
+                              <span>Salin</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setDeletingProductId(p.id);
+                                setDeletingProductName(p.name);
+                              }}
+                              className="h-8 px-2.5 rounded-lg bg-surface border border-border text-status-error hover:text-red-700 hover:border-status-error/50 hover:bg-status-error/10 transition-all inline-flex items-center gap-1 text-xs font-medium shadow-2xs cursor-pointer active:scale-95"
+                              title="Hapus produk permanen"
+                            >
+                              <FontAwesomeIcon icon={faTrash} className="w-3 h-3 shrink-0" />
+                              <span>Hapus</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
 
                 <div className="p-3.5 border-t border-border bg-surface-raised flex items-center justify-between text-xs">

@@ -23,7 +23,7 @@ export function OrderMetricsCards({ metrics, totalRevenue }: OrderMetricsCardsPr
   const effectiveRevenue = totalRevenue ?? metrics?.totalRevenue ?? 0;
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
       <div className="animate-fade-up stagger-1 motion-card-interactive bg-surface border border-border rounded-2xl p-5 shadow-xs space-y-2">
         <div className="flex items-center justify-between text-xs text-foreground-muted">
           <span className="font-medium">Total Pesanan</span>
@@ -84,7 +84,7 @@ export function OrderMetricsCards({ metrics, totalRevenue }: OrderMetricsCardsPr
         </span>
       </div>
 
-      <div className="animate-fade-up stagger-5 motion-card-interactive bg-surface border border-border rounded-2xl p-5 shadow-xs col-span-2 lg:col-span-1 space-y-2">
+      <div className="animate-fade-up stagger-5 motion-card-interactive bg-surface border border-border rounded-2xl p-5 shadow-xs col-span-1 sm:col-span-2 md:col-span-1 xl:col-span-1 space-y-2">
         <div className="flex items-center justify-between text-xs text-foreground-muted">
           <span className="font-medium">Total Omset</span>
           <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200/60 flex items-center justify-center">

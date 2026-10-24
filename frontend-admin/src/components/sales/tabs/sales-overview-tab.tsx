@@ -131,7 +131,7 @@ export function SalesOverviewTab({
           </div>
 
           {/* Referral Link Box */}
-          <div className="bg-white/50 backdrop-blur-md border border-white/70 p-4 sm:p-5 rounded-2xl space-y-3 min-w-[320px] lg:max-w-md w-full shadow-2xs">
+          <div className="bg-white/50 backdrop-blur-md border border-white/70 p-4 sm:p-5 rounded-2xl space-y-3 w-full min-w-0 lg:max-w-md shadow-2xs">
             <div className="flex items-center justify-between text-xs">
               <span className="text-foreground-muted font-medium flex items-center gap-1.5">
                 <LinkIcon className="w-3.5 h-3.5 text-[#2563EB]" />

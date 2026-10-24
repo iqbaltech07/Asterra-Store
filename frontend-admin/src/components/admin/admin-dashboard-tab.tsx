@@ -275,7 +275,7 @@ export function AdminDashboardTab({
       </div>
 
       {/* 2. Top Executive Statistics Cards (5 Cards) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
         {/* Total Revenue */}
         <div
           onClick={() => onNavigateTab('revenue')}
@@ -385,7 +385,7 @@ export function AdminDashboardTab({
         {/* Pending Orders */}
         <div
           onClick={() => onNavigateTab('orders')}
-          className="animate-fade-up stagger-5 motion-card-interactive bg-white/70 backdrop-blur-xl border border-white/80 rounded-2xl p-5 shadow-xs hover:border-slate-300 hover:shadow-card-hover transition-all cursor-pointer group flex flex-col justify-between sm:col-span-2 lg:col-span-1"
+          className="animate-fade-up stagger-5 motion-card-interactive bg-white/70 backdrop-blur-xl border border-white/80 rounded-2xl p-5 shadow-xs hover:border-slate-300 hover:shadow-card-hover transition-all cursor-pointer group flex flex-col justify-between sm:col-span-2 md:col-span-1 xl:col-span-1"
         >
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2.5">

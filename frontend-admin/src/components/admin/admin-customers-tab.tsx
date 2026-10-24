@@ -163,9 +163,10 @@ export function AdminCustomersTab({ onNotify }: AdminCustomersTabProps) {
         </div>
       </div>
 
-      {/* 4. Customers Table */}
+      {/* 4. Customers Table & Mobile Card View */}
       <div className="bg-surface border border-border rounded-2xl overflow-hidden shadow-xs">
-        <div className="overflow-x-auto">
+        {/* Desktop Table View */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="bg-surface-raised border-b border-border text-foreground-muted text-[11px] uppercase tracking-wider font-semibold">
               <tr>
@@ -246,6 +247,86 @@ export function AdminCustomersTab({ onNotify }: AdminCustomersTabProps) {
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Card List View */}
+        <div className="md:hidden divide-y divide-border">
+          {filteredCustomers.map((cust) => (
+            <div key={cust.id} className="p-4 space-y-3 bg-surface hover:bg-surface-raised/40 transition-colors">
+              {/* Header: Name + Joined + Tier */}
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-9 h-9 rounded-xl bg-foreground/5 border border-border flex items-center justify-center text-foreground font-bold text-xs shrink-0">
+                    {cust.name.charAt(0)}
+                  </div>
+                  <div className="min-w-0">
+                    <h4 className="font-semibold text-foreground text-xs truncate">{cust.name}</h4>
+                    <span className="text-[10px] text-foreground-muted block font-mono">Gabung {cust.joinedAt}</span>
+                  </div>
+                </div>
+                <Badge
+                  variant="outline"
+                  className={`text-[9px] font-semibold shrink-0 ${
+                    cust.tier === 'VIP Platinum'
+                      ? 'bg-primary/10 text-primary border-primary/20'
+                      : cust.tier === 'Gold Member'
+                      ? 'bg-amber-50 text-amber-700 border-amber-200/60'
+                      : 'bg-surface-raised text-foreground-muted border-border'
+                  }`}
+                >
+                  {cust.tier}
+                </Badge>
+              </div>
+
+              {/* Contact Info */}
+              <div className="bg-surface-raised/60 border border-border/60 rounded-xl p-2.5 space-y-1 text-xs">
+                <div className="font-mono text-[11px] text-foreground truncate">{cust.email}</div>
+                <div className="flex items-center justify-between text-[10px] text-foreground-muted">
+                  <span className="font-mono">{cust.whatsapp}</span>
+                  {cust.referralCode ? (
+                    <span className="px-1.5 py-0.2 rounded bg-emerald-50 text-emerald-700 font-mono font-medium">
+                      Ref: {cust.referralCode}
+                    </span>
+                  ) : (
+                    <span className="italic">Organik</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Financials & Order Count */}
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="p-2 rounded-lg bg-surface-raised/40 border border-border/40">
+                  <span className="text-[10px] text-foreground-muted block">Total Pesanan</span>
+                  <span className="font-bold text-foreground font-mono text-xs">{cust.totalOrders} order</span>
+                </div>
+                <div className="p-2 rounded-lg bg-surface-raised/40 border border-border/40">
+                  <span className="text-[10px] text-foreground-muted block">Total Belanja</span>
+                  <span className="font-bold text-foreground font-mono text-xs">Rp {cust.totalSpent.toLocaleString('id-ID')}</span>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2 pt-1">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setSelectedCustomer(cust)}
+                  className="flex-1 h-8 text-xs font-semibold rounded-xl border-border hover:bg-surface-raised"
+                >
+                  Detail 360°
+                </Button>
+                <a
+                  href={`https://wa.me/${cust.whatsapp.replace(/\D/g, '')}?text=Halo%20Kak%20${encodeURIComponent(cust.name)},%20dari%20Customer%20Care%20Asterra%20Store`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="h-8 px-3 rounded-xl border border-border text-foreground-muted hover:text-emerald-600 hover:bg-emerald-50 transition-colors flex items-center justify-center shrink-0"
+                  title="Chat via WhatsApp"
+                >
+                  <MessageSquare className="w-3.5 h-3.5" />
+                </a>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 

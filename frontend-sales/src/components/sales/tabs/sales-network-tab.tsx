@@ -101,7 +101,7 @@ export function SalesNetworkTab({
           </div>
 
           {/* Link Input & Share Actions */}
-          <div className="bg-surface-raised border border-border p-5 rounded-2xl space-y-3.5 min-w-[320px] max-w-md w-full">
+          <div className="bg-surface-raised border border-border p-5 rounded-2xl space-y-3.5 w-full min-w-0 max-w-md">
             <div className="flex items-center justify-between text-xs">
               <span className="text-foreground-muted font-medium">Link Ajak Jadi Sales:</span>
               <Badge variant="outline" className="font-mono text-[10px] uppercase font-bold text-primary border-primary/20 bg-primary/5">

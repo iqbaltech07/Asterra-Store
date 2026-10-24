@@ -363,9 +363,10 @@ export function AdminAffiliateTab({ onNotify }: AdminAffiliateTabProps) {
         </div>
       </div>
 
-      {/* 5. Affiliates Table */}
+      {/* 5. Affiliates Table & Mobile Card View */}
       <div className="bg-surface border border-border rounded-2xl overflow-hidden shadow-xs">
-        <div className="overflow-x-auto">
+        {/* Desktop Table View */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="bg-surface-raised border-b border-border text-foreground-muted text-[11px] uppercase tracking-wider font-semibold">
               <tr>
@@ -516,6 +517,99 @@ export function AdminAffiliateTab({ onNotify }: AdminAffiliateTabProps) {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Card List View */}
+        <div className="md:hidden divide-y divide-border">
+          {isLoading ? (
+            <div className="p-8 text-center text-foreground-muted text-xs animate-pulse">
+              Memuat data mitra sales...
+            </div>
+          ) : filteredAffiliates.length === 0 ? (
+            <div className="p-8 text-center text-foreground-muted">
+              <Users className="w-8 h-8 mx-auto mb-2 opacity-30 text-foreground" />
+              <p className="font-semibold text-foreground text-xs">Belum Ada Mitra Sales</p>
+            </div>
+          ) : (
+            filteredAffiliates.map((partner) => {
+              const isCopied = copiedCode === partner.code;
+
+              return (
+                <div key={partner.id} className="p-4 space-y-3 bg-surface hover:bg-surface-raised/40 transition-colors">
+                  {/* Header: Name + Code */}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <h4 className="font-semibold text-foreground text-xs truncate">{partner.name}</h4>
+                      <span className="text-[10px] text-foreground-muted block font-mono truncate">{partner.email}</span>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <span className="font-mono font-bold text-xs text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-md">
+                        {partner.code}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => copyReferralLink(partner.code)}
+                        className="p-1 rounded-md hover:bg-surface-raised text-foreground-muted hover:text-foreground transition-colors"
+                        title="Salin Referral"
+                      >
+                        {isCopied ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Tier & Performance Stats */}
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="p-2 rounded-lg bg-surface-raised/40 border border-border/40">
+                      <span className="text-[10px] text-foreground-muted block">Tier & Rate</span>
+                      <span className="font-semibold text-foreground text-xs block">{partner.tier}</span>
+                      <span className="text-[10px] text-emerald-600 font-mono font-medium">{partner.rate}% dari profit</span>
+                    </div>
+                    <div className="p-2 rounded-lg bg-surface-raised/40 border border-border/40">
+                      <span className="text-[10px] text-foreground-muted block">Performa</span>
+                      <span className="font-bold text-foreground font-mono text-xs block">{partner.totalOrders} order</span>
+                      <span className="text-[10px] text-foreground-muted">{partner.totalClicks} klik</span>
+                    </div>
+                    <div className="p-2 rounded-lg bg-surface-raised/40 border border-border/40">
+                      <span className="text-[10px] text-foreground-muted block">Omzet Sales</span>
+                      <span className="font-bold text-foreground font-mono text-xs block">Rp {partner.totalRevenue.toLocaleString('id-ID')}</span>
+                    </div>
+                    <div className="p-2 rounded-lg bg-amber-500/5 border border-amber-500/20">
+                      <span className="text-[10px] text-amber-700 dark:text-amber-400 block font-medium">Komisi Tertunda</span>
+                      <span className="font-bold text-amber-600 font-mono text-xs block">
+                        Rp {(partner.unpaidCommission + (partner.pendingCommission || 0)).toLocaleString('id-ID')}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex items-center gap-2 pt-1">
+                    {(partner.unpaidCommission > 0 || (partner.pendingCommission || 0) > 0) && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setSelectedPartnerForPayout(partner)}
+                        className="flex-1 h-8 text-xs font-semibold rounded-xl text-amber-700 border-amber-200/60 hover:bg-amber-50"
+                      >
+                        <Wallet className="w-3.5 h-3.5 mr-1.5" />
+                        Bayar Komisi
+                      </Button>
+                    )}
+                    <a
+                      href={`https://wa.me/${partner.whatsapp.replace(/\D/g, '')}?text=Halo%20${encodeURIComponent(
+                        partner.name
+                      )},%20update%20performa%20afiliasi%20Asterra%20Store%20Anda`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="h-8 px-3 rounded-xl border border-border text-foreground-muted hover:text-emerald-600 hover:bg-emerald-50 transition-colors flex items-center justify-center shrink-0"
+                      title="Hubungi via WhatsApp"
+                    >
+                      <MessageSquare className="w-3.5 h-3.5" />
+                    </a>
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
 
