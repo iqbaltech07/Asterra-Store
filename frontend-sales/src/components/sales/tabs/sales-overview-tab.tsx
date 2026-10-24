@@ -92,12 +92,24 @@ export function SalesOverviewTab({
     return `${rate.toFixed(1)}%`;
   }, [partner]);
 
+  const handleShare = async (url: string, title: string, text: string) => {
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({ title, text, url });
+        return;
+      } catch (err) {
+        if ((err as Error)?.name === 'AbortError') return;
+      }
+    }
+    window.open(`https://wa.me/?text=${encodeURIComponent(text + ' ' + url)}`, '_blank');
+  };
+
   return (
-    <div ref={containerRef} className="space-y-6">
+    <div ref={containerRef} className="space-y-4 sm:space-y-6">
       {/* Welcome & Referral Banner */}
-      <div className="animate-fade-up rounded-2xl border border-white/80 bg-surface p-6 shadow-xs relative overflow-hidden backdrop-blur-xl">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
-          <div className="space-y-2.5 max-w-xl">
+      <div className="animate-fade-up rounded-2xl border border-white/80 bg-surface p-4 sm:p-6 shadow-xs relative overflow-hidden backdrop-blur-xl">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 sm:gap-6 relative z-10">
+          <div className="space-y-2 sm:space-y-2.5 max-w-xl">
             <div
               className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold border ${
                 partner?.status === 'active'
@@ -121,7 +133,7 @@ export function SalesOverviewTab({
                   : 'Non-Aktif'}
               </span>
             </div>
-            <h2 className="text-xl sm:text-2xl font-extrabold text-[#10213D] tracking-tight">
+            <h2 className="text-lg sm:text-2xl font-extrabold text-[#10213D] tracking-tight">
               Halo, {partner?.name || userName}!
             </h2>
             <p className="text-xs sm:text-sm text-foreground-muted leading-relaxed">
@@ -131,11 +143,11 @@ export function SalesOverviewTab({
           </div>
 
           {/* Referral Link Box */}
-          <div className="bg-white/50 backdrop-blur-md border border-white/70 p-4 sm:p-5 rounded-2xl space-y-3 w-full min-w-0 lg:max-w-md shadow-2xs">
+          <div className="bg-white/60 backdrop-blur-md border border-white/80 p-3.5 sm:p-5 rounded-2xl space-y-2.5 sm:space-y-3 w-full min-w-0 lg:max-w-md shadow-2xs">
             <div className="flex items-center justify-between text-xs">
               <span className="text-foreground-muted font-medium flex items-center gap-1.5">
                 <LinkIcon className="w-3.5 h-3.5 text-[#2563EB]" />
-                <span>Link Referral Anda</span>
+                <span className="font-semibold text-slate-700">Link Referral Anda</span>
               </span>
               <Badge variant="primary" className="font-mono text-[10px] uppercase font-bold">
                 {partnerCode}
@@ -145,12 +157,12 @@ export function SalesOverviewTab({
               <Input
                 readOnly
                 value={referralUrl}
-                className="bg-white/80 border-white/80 text-xs font-mono h-9 select-all rounded-xl"
+                className="bg-white/90 border-slate-200/80 text-xs font-mono h-10 select-all rounded-xl shadow-2xs"
               />
               <Button
                 size="sm"
                 onClick={() => handleCopy(referralUrl, 'ref-banner')}
-                className="h-9 px-3.5 gap-1.5 shrink-0 text-xs font-semibold rounded-xl"
+                className="h-10 px-3.5 gap-1.5 shrink-0 text-xs font-semibold rounded-xl cursor-pointer"
               >
                 {copiedLink === 'ref-banner' ? (
                   <>
@@ -166,17 +178,33 @@ export function SalesOverviewTab({
               </Button>
             </div>
 
-            <a
-              href={`https://wa.me/?text=Halo!%20Dapatkan%20akun%20premium%20resmi%20bergaransi%20(Canva%20Pro,%20Gemini%20AI,%20Netflix,%20Spotify)%20di%20Asterra%20Store:%20${encodeURIComponent(
-                referralUrl
-              )}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-[#16A36A] hover:bg-[#15803D] text-white font-semibold text-xs shadow-xs transition-colors"
-            >
-              <Send className="w-3.5 h-3.5" />
-              <span>Bagikan ke Status WhatsApp</span>
-            </a>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() =>
+                  handleShare(
+                    referralUrl,
+                    'Asterra Store - Akun Digital Premium Resmi',
+                    'Dapatkan akun digital premium resmi bergaransi (Canva Pro, Gemini AI, Netflix, Spotify) di Asterra Store:'
+                  )
+                }
+                className="inline-flex items-center justify-center gap-1.5 h-10 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-xs transition-colors cursor-pointer"
+              >
+                <Share2 className="w-3.5 h-3.5" />
+                <span>Bagikan Link</span>
+              </button>
+              <a
+                href={`https://wa.me/?text=Halo!%20Dapatkan%20akun%20premium%20resmi%20bergaransi%20(Canva%20Pro,%20Gemini%20AI,%20Netflix,%20Spotify)%20di%20Asterra%20Store:%20${encodeURIComponent(
+                  referralUrl
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-1.5 h-10 px-3 rounded-xl bg-[#16A36A] hover:bg-[#15803D] text-white font-semibold text-xs shadow-xs transition-colors cursor-pointer"
+              >
+                <Send className="w-3.5 h-3.5" />
+                <span>WhatsApp</span>
+              </a>
+            </div>
           </div>
         </div>
       </div>
@@ -238,24 +266,36 @@ export function SalesOverviewTab({
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
           {/* Card 1: Saldo Komisi Siap Tarik */}
           <div className="bg-white/70 backdrop-blur-xl border border-white/80 rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs space-y-2 sm:space-y-3 hover:border-slate-300 hover:shadow-card-hover transition-all flex flex-col justify-between">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] sm:text-xs font-semibold text-slate-500 tracking-wide truncate">Saldo Siap Tarik</span>
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-emerald-50 text-[#16A36A] flex items-center justify-center border border-emerald-200/60 shrink-0">
-                <Wallet className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <div className="space-y-2 sm:space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] sm:text-xs font-semibold text-slate-500 tracking-wide truncate">Saldo Siap Tarik</span>
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-emerald-50 text-[#16A36A] flex items-center justify-center border border-emerald-200/60 shrink-0">
+                  <Wallet className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                </div>
               </div>
+              <div className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-[#16A36A] tracking-tight tabular-nums font-mono truncate">
+                <AnimatedNumber
+                  value={unpaidCommissionVal}
+                  formatter={(v) => `Rp ${Math.round(v).toLocaleString('id-ID')}`}
+                  showDelta
+                />
+              </div>
+              {onTabChange && (
+                <button
+                  type="button"
+                  onClick={() => onTabChange('sales-wallet')}
+                  className="w-full py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+                >
+                  <Wallet className="w-3.5 h-3.5" />
+                  <span>Tarik Saldo</span>
+                </button>
+              )}
             </div>
-            <div className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-[#16A36A] tracking-tight tabular-nums font-mono truncate">
-              <AnimatedNumber
-                value={unpaidCommissionVal}
-                formatter={(v) => `Rp ${Math.round(v).toLocaleString('id-ID')}`}
-                showDelta
-              />
-            </div>
-            <div className="pt-3 border-t border-border space-y-1.5 text-xs">
-              <div className="flex items-center justify-between text-foreground-muted">
+            <div className="pt-2.5 border-t border-border space-y-1 text-xs">
+              <div className="flex items-center justify-between text-foreground-muted text-[11px]">
                 <span className="flex items-center gap-1">
                   <Clock className="w-3 h-3 text-[#D97706]" />
-                  <span>Tertahan Garansi 3 Hari:</span>
+                  <span>Garansi (3 Hari):</span>
                 </span>
                 <span className="font-semibold text-foreground font-mono">
                   <AnimatedNumber
@@ -264,10 +304,10 @@ export function SalesOverviewTab({
                   />
                 </span>
               </div>
-              <div className="flex items-center justify-between text-foreground-muted">
+              <div className="flex items-center justify-between text-foreground-muted text-[11px]">
                 <span className="flex items-center gap-1">
                   <CheckCircle2 className="w-3 h-3 text-[#16A36A]" />
-                  <span>Total Telah Ditarik:</span>
+                  <span>Total Ditarik:</span>
                 </span>
                 <span className="font-semibold text-foreground font-mono">
                   <AnimatedNumber
@@ -393,12 +433,12 @@ export function SalesOverviewTab({
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 shrink-0 flex-wrap sm:flex-nowrap">
           <Button
             size="sm"
             variant="outline"
             onClick={() => handleCopy(inviteSalesUrl, 'ref-banner-quick')}
-            className="text-xs gap-1.5 h-8 font-medium"
+            className="text-xs gap-1.5 h-9 font-medium flex-1 sm:flex-initial rounded-xl cursor-pointer"
           >
             {copiedLink === 'ref-banner-quick' ? (
               <>
@@ -408,17 +448,32 @@ export function SalesOverviewTab({
             ) : (
               <>
                 <Copy className="w-3.5 h-3.5" />
-                <span>Salin Link Ajak</span>
+                <span>Salin Link</span>
               </>
             )}
           </Button>
+          <button
+            type="button"
+            onClick={() =>
+              handleShare(
+                inviteSalesUrl,
+                'Gabung Mitra Sales Asterra Store',
+                'Ayo gabung jadi Mitra Sales Asterra Store! Dapatkan komisi 10% profit dari setiap penjualan produk digital bergaransi:'
+              )
+            }
+            className="h-9 px-3 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+            title="Bagikan Tautan Pendaftaran"
+          >
+            <Share2 className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Bagikan</span>
+          </button>
           {onTabChange && (
             <Button
               size="sm"
               onClick={() => onTabChange('sales-network')}
-              className="text-xs gap-1.5 h-8 font-semibold"
+              className="text-xs gap-1.5 h-9 font-semibold flex-1 sm:flex-initial rounded-xl cursor-pointer"
             >
-              <span>Lihat Bonus Tim</span>
+              <span>Bonus Tim</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Button>
           )}
@@ -427,80 +482,80 @@ export function SalesOverviewTab({
 
       {/* Fast Navigation Grid (4 Modules) */}
       {onTabChange && (
-        <div className="animate-fade-up stagger-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="animate-fade-up stagger-6 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
           <div
             onClick={() => onTabChange('sales-catalog')}
-            className="bg-surface border border-border rounded-2xl p-5 shadow-xs hover:border-[#171717]/30 hover:shadow-card-hover transition-all cursor-pointer group space-y-2.5 flex flex-col justify-between"
+            className="bg-surface border border-border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs hover:border-[#171717]/30 hover:shadow-card-hover transition-all cursor-pointer group space-y-2 flex flex-col justify-between"
           >
             <div className="flex items-center justify-between">
-              <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#2563EB] flex items-center justify-center group-hover:scale-105 transition-transform border border-blue-200/60">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-blue-50 text-[#2563EB] flex items-center justify-center group-hover:scale-105 transition-transform border border-blue-200/60">
                 <Package className="w-4 h-4" />
               </div>
               <ChevronRight className="w-4 h-4 text-foreground-muted group-hover:translate-x-1 transition-transform" />
             </div>
             <div>
-              <h3 className="font-bold text-sm text-foreground">Katalog Produk & Komisi</h3>
-              <p className="text-xs text-foreground-muted mt-1 leading-relaxed">
-                Jelajahi produk digital Asterra, hitung komisi Anda, dan salin link promosi per produk.
+              <h3 className="font-bold text-xs sm:text-sm text-foreground">Katalog Produk</h3>
+              <p className="text-[11px] sm:text-xs text-foreground-muted mt-0.5 line-clamp-2 leading-relaxed">
+                Jelajahi produk digital & salin link promosi per produk.
               </p>
             </div>
           </div>
 
           <div
             onClick={() => onTabChange('sales-links')}
-            className="bg-surface border border-border rounded-2xl p-5 shadow-xs hover:border-[#171717]/30 hover:shadow-card-hover transition-all cursor-pointer group space-y-2.5 flex flex-col justify-between"
+            className="bg-surface border border-border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs hover:border-[#171717]/30 hover:shadow-card-hover transition-all cursor-pointer group space-y-2 flex flex-col justify-between"
           >
             <div className="flex items-center justify-between">
-              <div className="w-9 h-9 rounded-xl bg-emerald-50 text-[#16A36A] flex items-center justify-center group-hover:scale-105 transition-transform border border-emerald-200/60">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-emerald-50 text-[#16A36A] flex items-center justify-center group-hover:scale-105 transition-transform border border-emerald-200/60">
                 <Share2 className="w-4 h-4" />
               </div>
               <ChevronRight className="w-4 h-4 text-foreground-muted group-hover:translate-x-1 transition-transform" />
             </div>
             <div>
-              <h3 className="font-bold text-sm text-foreground">Generator Link & Materi</h3>
-              <p className="text-xs text-foreground-muted mt-1 leading-relaxed">
-                Buat custom link kampanye dan gunakan template copywriting yang siap dibagikan ke medsos.
+              <h3 className="font-bold text-xs sm:text-sm text-foreground">Generator Link</h3>
+              <p className="text-[11px] sm:text-xs text-foreground-muted mt-0.5 line-clamp-2 leading-relaxed">
+                Custom link kampanye & materi promosi siap pakai.
               </p>
             </div>
           </div>
 
           <div
             onClick={() => onTabChange('sales-network')}
-            className="bg-surface border border-border rounded-2xl p-5 shadow-xs hover:border-[#171717]/30 hover:shadow-card-hover transition-all cursor-pointer group space-y-2.5 flex flex-col justify-between"
+            className="bg-surface border border-border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs hover:border-[#171717]/30 hover:shadow-card-hover transition-all cursor-pointer group space-y-2 flex flex-col justify-between"
           >
             <div className="flex items-center justify-between">
-              <div className="w-9 h-9 rounded-xl bg-amber-50 text-[#D97706] flex items-center justify-center group-hover:scale-105 transition-transform border border-amber-200/60">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-amber-50 text-[#D97706] flex items-center justify-center group-hover:scale-105 transition-transform border border-amber-200/60">
                 <Users className="w-4 h-4" />
               </div>
               <ChevronRight className="w-4 h-4 text-foreground-muted group-hover:translate-x-1 transition-transform" />
             </div>
             <div>
-              <div className="flex items-center justify-between">
-                <h3 className="font-bold text-sm text-foreground">Bonus Tim & Teman</h3>
-                <Badge variant="success" className="text-[10px]">
-                  {networkData?.summary?.totalDownlines || 0} Teman
+              <div className="flex items-center justify-between gap-1">
+                <h3 className="font-bold text-xs sm:text-sm text-foreground">Bonus Tim</h3>
+                <Badge variant="success" className="text-[9px] px-1.5 py-0 font-mono">
+                  {networkData?.summary?.totalDownlines || 0}
                 </Badge>
               </div>
-              <p className="text-xs text-foreground-muted mt-1 leading-relaxed">
-                Pantau teman yang diajak & bonus pasif 2% dari setiap transaksi yang mereka hasilkan.
+              <p className="text-[11px] sm:text-xs text-foreground-muted mt-0.5 line-clamp-2 leading-relaxed">
+                Pantau teman yang diajak & bonus pasif 2% profit.
               </p>
             </div>
           </div>
 
           <div
             onClick={() => onTabChange('sales-wallet')}
-            className="bg-surface border border-border rounded-2xl p-5 shadow-xs hover:border-[#171717]/30 hover:shadow-card-hover transition-all cursor-pointer group space-y-2.5 flex flex-col justify-between"
+            className="bg-surface border border-border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs hover:border-[#171717]/30 hover:shadow-card-hover transition-all cursor-pointer group space-y-2 flex flex-col justify-between"
           >
             <div className="flex items-center justify-between">
-              <div className="w-9 h-9 rounded-xl bg-purple-50 text-[#8B5CF6] flex items-center justify-center group-hover:scale-105 transition-transform border border-purple-200/60">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-purple-50 text-[#8B5CF6] flex items-center justify-center group-hover:scale-105 transition-transform border border-purple-200/60">
                 <Wallet className="w-4 h-4" />
               </div>
               <ChevronRight className="w-4 h-4 text-foreground-muted group-hover:translate-x-1 transition-transform" />
             </div>
             <div>
-              <h3 className="font-bold text-sm text-foreground">Dompet & Pencairan Dana</h3>
-              <p className="text-xs text-foreground-muted mt-1 leading-relaxed">
-                Cairkan komisi Anda langsung ke rekening bank atau e-wallet tanpa biaya admin tersembunyi.
+              <h3 className="font-bold text-xs sm:text-sm text-foreground">Dompet Saldo</h3>
+              <p className="text-[11px] sm:text-xs text-foreground-muted mt-0.5 line-clamp-2 leading-relaxed">
+                Cairkan komisi langsung ke bank / e-wallet resmi Anda.
               </p>
             </div>
           </div>

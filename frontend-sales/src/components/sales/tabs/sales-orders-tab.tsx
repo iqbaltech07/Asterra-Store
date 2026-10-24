@@ -103,85 +103,157 @@ export function SalesOrdersTab({
               </Button>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs text-left">
-                <thead className="bg-surface-raised border-b border-border text-foreground-muted font-medium">
-                  <tr>
-                    <th className="py-3 px-4 font-semibold">Tanggal</th>
-                    <th className="py-3 px-4 font-semibold">ID Pesanan</th>
-                    <th className="py-3 px-4 font-semibold">Campaign Promo</th>
-                    <th className="py-3 px-4 font-semibold">Produk</th>
-                    <th className="py-3 px-4 font-semibold">Pelanggan</th>
-                    <th className="py-3 px-4 font-semibold">Total Nilai</th>
-                    <th className="py-3 px-4 font-semibold">Persentase</th>
-                    <th className="py-3 px-4 font-semibold">Komisi Diterima</th>
-                    <th className="py-3 px-4 font-semibold">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {campaignOrders.map((o, idx) => (
-                    <tr
-                      key={o.id}
-                      className="hover:bg-surface-raised/60 transition-colors animate-fade-up"
-                      style={{ animationDelay: `${Math.min(idx, 10) * 40}ms` }}
-                    >
-                      <td className="py-3 px-4 font-mono text-[11px] text-foreground-muted">
-                        {new Date(o.createdAt).toLocaleDateString('id-ID', {
-                          day: 'numeric',
-                          month: 'short',
-                          year: 'numeric',
-                        })}
-                      </td>
-                      <td className="py-3 px-4 font-mono text-[11px] font-bold text-foreground">
-                        {o.id.substring(0, 12)}...
-                      </td>
-                      <td className="py-3 px-4">
-                        <Badge variant="outline" className="text-[10px] font-semibold text-primary border-primary/20 bg-primary/5">
-                          {o.campaignName || o.campaignId || 'Event Promo'}
-                        </Badge>
-                      </td>
-                      <td className="py-3 px-4 text-foreground font-medium max-w-[180px] truncate">
-                        {o.productNames || 'Produk Digital'}
-                      </td>
-                      <td className="py-3 px-4 font-mono text-foreground-muted text-[11px]">
-                        {o.customerEmail}
-                      </td>
-                      <td className="py-3 px-4 font-bold text-foreground font-mono">
-                        Rp {o.totalAmount.toLocaleString('id-ID')}
-                      </td>
-                      <td className="py-3 px-4">
-                        <span className="font-mono font-bold text-primary px-2 py-0.5 rounded-full text-[11px] bg-primary/10 border border-primary/20">
-                          🔥 {o.campaignRate || o.commissionRate || 15}%
+            <>
+              {/* Mobile View: Compact Order Cards (md:hidden) */}
+              <div className="md:hidden divide-y divide-border">
+                {campaignOrders.map((o, idx) => (
+                  <div
+                    key={o.id}
+                    className="p-3.5 space-y-2.5 hover:bg-surface-raised/40 transition-colors animate-fade-up"
+                    style={{ animationDelay: `${Math.min(idx, 10) * 40}ms` }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-mono text-xs font-bold text-foreground">
+                          {o.id.substring(0, 10)}...
                         </span>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="font-bold text-[#16A36A] font-mono">
+                        <Badge variant="outline" className="text-[9px] font-bold uppercase text-primary border-primary/20 bg-primary/5 px-1.5 py-0">
+                          🔥 {o.campaignRate || o.commissionRate || 15}%
+                        </Badge>
+                      </div>
+                      <StatusBadge status={o.status} />
+                    </div>
+
+                    <div>
+                      <h4 className="font-semibold text-xs text-foreground line-clamp-1">
+                        {o.productNames || 'Produk Digital'}
+                      </h4>
+                      <div className="flex items-center justify-between text-[11px] text-foreground-muted mt-0.5">
+                        <span className="font-mono">{o.customerEmail}</span>
+                        <span>
+                          {new Date(o.createdAt).toLocaleDateString('id-ID', {
+                            day: 'numeric',
+                            month: 'short',
+                          })}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="pt-2 border-t border-border flex items-center justify-between">
+                      <div>
+                        <span className="text-[10px] text-foreground-muted block">Total Belanja</span>
+                        <span className="font-bold text-foreground font-mono text-xs">
+                          Rp {o.totalAmount.toLocaleString('id-ID')}
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-[10px] text-foreground-muted block">Komisi Anda</span>
+                        <div className="font-mono font-extrabold text-sm text-[#16A36A]">
                           + Rp {o.commission.toLocaleString('id-ID')}
                         </div>
-                        <div className="text-[10px] mt-0.5">
-                          {o.commissionStatus === 'final' ? (
-                            <span className="text-emerald-600 font-medium inline-flex items-center gap-0.5">
-                              <CheckCircle2 className="w-2.5 h-2.5" /> Siap Tarik
-                            </span>
-                          ) : o.commissionStatus === 'reversed' ? (
-                            <span className="text-rose-600 font-medium inline-flex items-center gap-0.5">
-                              <AlertCircle className="w-2.5 h-2.5" /> Dibatalkan
-                            </span>
-                          ) : (
-                            <span className="text-amber-500 font-medium inline-flex items-center gap-0.5">
-                              <Clock className="w-2.5 h-2.5" /> Masa Garansi (3 Hari)
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <StatusBadge status={o.status} />
-                      </td>
+                      </div>
+                    </div>
+
+                    <div className="text-[10px]">
+                      {o.commissionStatus === 'final' ? (
+                        <span className="text-emerald-600 font-semibold inline-flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3" /> Siap Ditarik
+                        </span>
+                      ) : o.commissionStatus === 'reversed' ? (
+                        <span className="text-rose-600 font-medium inline-flex items-center gap-1">
+                          <AlertCircle className="w-3 h-3" /> Dibatalkan
+                        </span>
+                      ) : (
+                        <span className="text-amber-600 font-medium inline-flex items-center gap-1">
+                          <Clock className="w-3 h-3" /> Masa Garansi (3 Hari)
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop View: Table (hidden md:block) */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-surface-raised border-b border-border text-foreground-muted font-medium">
+                    <tr>
+                      <th className="py-3 px-4 font-semibold">Tanggal</th>
+                      <th className="py-3 px-4 font-semibold">ID Pesanan</th>
+                      <th className="py-3 px-4 font-semibold">Campaign Promo</th>
+                      <th className="py-3 px-4 font-semibold">Produk</th>
+                      <th className="py-3 px-4 font-semibold">Pelanggan</th>
+                      <th className="py-3 px-4 font-semibold">Total Nilai</th>
+                      <th className="py-3 px-4 font-semibold">Persentase</th>
+                      <th className="py-3 px-4 font-semibold">Komisi Diterima</th>
+                      <th className="py-3 px-4 font-semibold">Status</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {campaignOrders.map((o, idx) => (
+                      <tr
+                        key={o.id}
+                        className="hover:bg-surface-raised/60 transition-colors animate-fade-up"
+                        style={{ animationDelay: `${Math.min(idx, 10) * 40}ms` }}
+                      >
+                        <td className="py-3 px-4 font-mono text-[11px] text-foreground-muted">
+                          {new Date(o.createdAt).toLocaleDateString('id-ID', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric',
+                          })}
+                        </td>
+                        <td className="py-3 px-4 font-mono text-[11px] font-bold text-foreground">
+                          {o.id.substring(0, 12)}...
+                        </td>
+                        <td className="py-3 px-4">
+                          <Badge variant="outline" className="text-[10px] font-semibold text-primary border-primary/20 bg-primary/5">
+                            {o.campaignName || o.campaignId || 'Event Promo'}
+                          </Badge>
+                        </td>
+                        <td className="py-3 px-4 text-foreground font-medium max-w-[180px] truncate">
+                          {o.productNames || 'Produk Digital'}
+                        </td>
+                        <td className="py-3 px-4 font-mono text-foreground-muted text-[11px]">
+                          {o.customerEmail}
+                        </td>
+                        <td className="py-3 px-4 font-bold text-foreground font-mono">
+                          Rp {o.totalAmount.toLocaleString('id-ID')}
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className="font-mono font-bold text-primary px-2 py-0.5 rounded-full text-[11px] bg-primary/10 border border-primary/20">
+                            🔥 {o.campaignRate || o.commissionRate || 15}%
+                          </span>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="font-bold text-[#16A36A] font-mono">
+                            + Rp {o.commission.toLocaleString('id-ID')}
+                          </div>
+                          <div className="text-[10px] mt-0.5">
+                            {o.commissionStatus === 'final' ? (
+                              <span className="text-emerald-600 font-medium inline-flex items-center gap-0.5">
+                                <CheckCircle2 className="w-2.5 h-2.5" /> Siap Tarik
+                              </span>
+                            ) : o.commissionStatus === 'reversed' ? (
+                              <span className="text-rose-600 font-medium inline-flex items-center gap-0.5">
+                                <AlertCircle className="w-2.5 h-2.5" /> Dibatalkan
+                              </span>
+                            ) : (
+                              <span className="text-amber-500 font-medium inline-flex items-center gap-0.5">
+                                <Clock className="w-2.5 h-2.5" /> Masa Garansi (3 Hari)
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <StatusBadge status={o.status} />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </div>
       </div>
@@ -229,82 +301,154 @@ export function SalesOrdersTab({
               </Button>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs text-left">
-                <thead className="bg-surface-raised border-b border-border text-foreground-muted font-medium">
-                  <tr>
-                    <th className="py-3 px-4 font-semibold">Tanggal</th>
-                    <th className="py-3 px-4 font-semibold">ID Pesanan</th>
-                    <th className="py-3 px-4 font-semibold">Produk</th>
-                    <th className="py-3 px-4 font-semibold">Pelanggan</th>
-                    <th className="py-3 px-4 font-semibold">Total Nilai</th>
-                    <th className="py-3 px-4 font-semibold">Profit Transaksi</th>
-                    <th className="py-3 px-4 font-semibold">Komisi Saya ({partnerRate}%)</th>
-                    <th className="py-3 px-4 font-semibold">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {directOrders.map((o, idx) => (
-                    <tr
-                      key={o.id}
-                      className="hover:bg-surface-raised/60 transition-colors animate-fade-up"
-                      style={{ animationDelay: `${Math.min(idx, 10) * 40}ms` }}
-                    >
-                      <td className="py-3 px-4 font-mono text-[11px] text-foreground-muted">
-                        {new Date(o.createdAt).toLocaleDateString('id-ID', {
-                          day: 'numeric',
-                          month: 'short',
-                          year: 'numeric',
-                        })}
-                      </td>
-                      <td className="py-3 px-4 font-mono text-[11px] font-bold text-foreground">
-                        {o.id.substring(0, 10)}...
-                      </td>
-                      <td className="py-3 px-4 text-foreground font-medium max-w-[200px] truncate">
+            <>
+              {/* Mobile View: Compact Direct Order Cards (md:hidden) */}
+              <div className="md:hidden divide-y divide-border">
+                {directOrders.map((o, idx) => (
+                  <div
+                    key={o.id}
+                    className="p-3.5 space-y-2.5 hover:bg-surface-raised/40 transition-colors animate-fade-up"
+                    style={{ animationDelay: `${Math.min(idx, 10) * 40}ms` }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-mono text-xs font-bold text-foreground">
+                          {o.id.substring(0, 10)}...
+                        </span>
+                        <Badge variant="outline" className="text-[9px] font-semibold text-foreground-muted border-border px-1.5 py-0">
+                          {partnerRate}%
+                        </Badge>
+                      </div>
+                      <StatusBadge status={o.status} />
+                    </div>
+
+                    <div>
+                      <h4 className="font-semibold text-xs text-foreground line-clamp-1">
                         {o.productNames || 'Produk Digital'}
-                      </td>
-                      <td className="py-3 px-4 font-mono text-foreground-muted text-[11px]">
-                        {o.customerEmail}
-                      </td>
-                      <td className="py-3 px-4 font-bold text-foreground font-mono">
-                        Rp {o.totalAmount.toLocaleString('id-ID')}
-                      </td>
-                      <td className="py-3 px-4 font-mono font-semibold text-primary">
-                        Rp {(typeof o.transactionProfit === 'number' ? o.transactionProfit : 0).toLocaleString('id-ID')}
-                        {o.transactionProfit === 0 && (
-                          <span className="block text-[10px] text-foreground-muted font-normal">
-                            (Margin tergerus promo)
-                          </span>
-                        )}
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="font-bold text-[#16A36A] font-mono">
+                      </h4>
+                      <div className="flex items-center justify-between text-[11px] text-foreground-muted mt-0.5">
+                        <span className="font-mono">{o.customerEmail}</span>
+                        <span>
+                          {new Date(o.createdAt).toLocaleDateString('id-ID', {
+                            day: 'numeric',
+                            month: 'short',
+                          })}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="pt-2 border-t border-border flex items-center justify-between">
+                      <div>
+                        <span className="text-[10px] text-foreground-muted block">Total Belanja</span>
+                        <span className="font-bold text-foreground font-mono text-xs">
+                          Rp {o.totalAmount.toLocaleString('id-ID')}
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-[10px] text-foreground-muted block">Komisi Saya</span>
+                        <div className="font-mono font-extrabold text-sm text-[#16A36A]">
                           + Rp {o.commission.toLocaleString('id-ID')}
                         </div>
-                        <div className="text-[10px] mt-0.5">
-                          {o.commissionStatus === 'final' ? (
-                            <span className="text-emerald-600 font-medium inline-flex items-center gap-0.5">
-                              <CheckCircle2 className="w-2.5 h-2.5" /> Siap Tarik
-                            </span>
-                          ) : o.commissionStatus === 'reversed' ? (
-                            <span className="text-rose-600 font-medium inline-flex items-center gap-0.5">
-                              <AlertCircle className="w-2.5 h-2.5" /> Dibatalkan / Refund
-                            </span>
-                          ) : (
-                            <span className="text-amber-500 font-medium inline-flex items-center gap-0.5">
-                              <Clock className="w-2.5 h-2.5" /> Masa Garansi (3 Hari)
+                      </div>
+                    </div>
+
+                    <div className="text-[10px]">
+                      {o.commissionStatus === 'final' ? (
+                        <span className="text-emerald-600 font-semibold inline-flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3" /> Siap Ditarik
+                        </span>
+                      ) : o.commissionStatus === 'reversed' ? (
+                        <span className="text-rose-600 font-medium inline-flex items-center gap-1">
+                          <AlertCircle className="w-3 h-3" /> Dibatalkan / Refund
+                        </span>
+                      ) : (
+                        <span className="text-amber-600 font-medium inline-flex items-center gap-1">
+                          <Clock className="w-3 h-3" /> Masa Garansi (3 Hari)
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop View: Table (hidden md:block) */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-surface-raised border-b border-border text-foreground-muted font-medium">
+                    <tr>
+                      <th className="py-3 px-4 font-semibold">Tanggal</th>
+                      <th className="py-3 px-4 font-semibold">ID Pesanan</th>
+                      <th className="py-3 px-4 font-semibold">Produk</th>
+                      <th className="py-3 px-4 font-semibold">Pelanggan</th>
+                      <th className="py-3 px-4 font-semibold">Total Nilai</th>
+                      <th className="py-3 px-4 font-semibold">Profit Transaksi</th>
+                      <th className="py-3 px-4 font-semibold">Komisi Saya ({partnerRate}%)</th>
+                      <th className="py-3 px-4 font-semibold">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {directOrders.map((o, idx) => (
+                      <tr
+                        key={o.id}
+                        className="hover:bg-surface-raised/60 transition-colors animate-fade-up"
+                        style={{ animationDelay: `${Math.min(idx, 10) * 40}ms` }}
+                      >
+                        <td className="py-3 px-4 font-mono text-[11px] text-foreground-muted">
+                          {new Date(o.createdAt).toLocaleDateString('id-ID', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric',
+                          })}
+                        </td>
+                        <td className="py-3 px-4 font-mono text-[11px] font-bold text-foreground">
+                          {o.id.substring(0, 10)}...
+                        </td>
+                        <td className="py-3 px-4 text-foreground font-medium max-w-[200px] truncate">
+                          {o.productNames || 'Produk Digital'}
+                        </td>
+                        <td className="py-3 px-4 font-mono text-foreground-muted text-[11px]">
+                          {o.customerEmail}
+                        </td>
+                        <td className="py-3 px-4 font-bold text-foreground font-mono">
+                          Rp {o.totalAmount.toLocaleString('id-ID')}
+                        </td>
+                        <td className="py-3 px-4 font-mono font-semibold text-primary">
+                          Rp {(typeof o.transactionProfit === 'number' ? o.transactionProfit : 0).toLocaleString('id-ID')}
+                          {o.transactionProfit === 0 && (
+                            <span className="block text-[10px] text-foreground-muted font-normal">
+                              (Margin tergerus promo)
                             </span>
                           )}
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <StatusBadge status={o.status} />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="font-bold text-[#16A36A] font-mono">
+                            + Rp {o.commission.toLocaleString('id-ID')}
+                          </div>
+                          <div className="text-[10px] mt-0.5">
+                            {o.commissionStatus === 'final' ? (
+                              <span className="text-emerald-600 font-medium inline-flex items-center gap-0.5">
+                                <CheckCircle2 className="w-2.5 h-2.5" /> Siap Tarik
+                              </span>
+                            ) : o.commissionStatus === 'reversed' ? (
+                              <span className="text-rose-600 font-medium inline-flex items-center gap-0.5">
+                                <AlertCircle className="w-2.5 h-2.5" /> Dibatalkan / Refund
+                              </span>
+                            ) : (
+                              <span className="text-amber-500 font-medium inline-flex items-center gap-0.5">
+                                <Clock className="w-2.5 h-2.5" /> Masa Garansi (3 Hari)
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <StatusBadge status={o.status} />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </div>
       </div>

@@ -15,6 +15,7 @@ import {
   Check,
   Send,
   ExternalLink,
+  Share2,
 } from 'lucide-react';
 import { AdminTab } from '@/components/admin/admin-sidebar';
 import { getStoreBaseUrl } from '@/lib/utils/url';
@@ -65,6 +66,18 @@ export function SalesCatalogTab({
     navigator.clipboard.writeText(text);
     setCopiedLink(id);
     setTimeout(() => setCopiedLink(null), 2500);
+  };
+
+  const handleShare = async (url: string, title: string, text: string) => {
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({ title, text, url });
+        return;
+      } catch (err) {
+        if ((err as Error)?.name === 'AbortError') return;
+      }
+    }
+    window.open(`https://wa.me/?text=${encodeURIComponent(text + ' ' + url)}`, '_blank');
   };
 
   return (
@@ -227,7 +240,7 @@ export function SalesCatalogTab({
                   <Button
                     size="sm"
                     onClick={() => handleCopy(productUrl, `prod-${p.id}`)}
-                    className="flex-1 text-xs h-9 gap-1.5 font-semibold rounded-xl"
+                    className="flex-1 text-xs h-9 gap-1.5 font-semibold rounded-xl cursor-pointer"
                   >
                     {copiedLink === `prod-${p.id}` ? (
                       <>
@@ -242,6 +255,21 @@ export function SalesCatalogTab({
                     )}
                   </Button>
 
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleShare(
+                        productUrl,
+                        p.name,
+                        `Dapatkan ${p.name} resmi bergaransi hanya ${p.priceFormatted || `Rp ${p.price.toLocaleString('id-ID')}`} di Asterra Store:`
+                      )
+                    }
+                    className="h-9 px-3 rounded-xl border border-blue-200 bg-blue-50 hover:bg-blue-100 text-[#2563EB] flex items-center justify-center transition-colors shrink-0 shadow-xs cursor-pointer"
+                    title="Bagikan Produk"
+                  >
+                    <Share2 className="w-3.5 h-3.5" />
+                  </button>
+
                   <a
                     href={`https://wa.me/?text=Dapatkan%20${encodeURIComponent(
                       p.name
@@ -250,7 +278,7 @@ export function SalesCatalogTab({
                     )}%20di%20Asterra%20Store:%20${encodeURIComponent(productUrl)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="h-9 px-3 rounded-xl border border-border bg-white hover:bg-emerald-50 hover:border-emerald-300 text-foreground-muted hover:text-[#16A36A] flex items-center justify-center transition-colors shrink-0 shadow-xs"
+                    className="h-9 px-3 rounded-xl border border-border bg-white hover:bg-emerald-50 hover:border-emerald-300 text-foreground-muted hover:text-[#16A36A] flex items-center justify-center transition-colors shrink-0 shadow-xs cursor-pointer"
                     title="Bagikan ke WhatsApp"
                   >
                     <Send className="w-3.5 h-3.5" />

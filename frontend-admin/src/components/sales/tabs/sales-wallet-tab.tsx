@@ -78,73 +78,73 @@ export function SalesWalletTab({ partner, onRefetchProfile }: SalesWalletTabProp
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Wallet Balance Cards */}
-        <div className="space-y-4">
-          <div className="bg-surface border border-border rounded-2xl p-6 shadow-xs space-y-3">
+        <div className="grid grid-cols-2 lg:grid-cols-1 gap-2.5 sm:gap-4">
+          <div className="col-span-2 bg-surface border border-border rounded-2xl p-4 sm:p-6 shadow-xs space-y-2 sm:space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-foreground-muted">Saldo Siap Ditarik (Final)</span>
-              <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200/60 flex items-center justify-center">
-                <Wallet className="w-4 h-4" />
+              <span className="text-[11px] sm:text-xs font-semibold text-foreground-muted">Saldo Siap Ditarik (Final)</span>
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200/60 flex items-center justify-center">
+                <Wallet className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
             </div>
-            <div className="text-3xl font-extrabold text-[#16A36A] tracking-tight font-mono">
+            <div className="text-2xl sm:text-3xl font-extrabold text-[#16A36A] tracking-tight font-mono">
               <AnimatedNumber
                 value={unpaid}
                 prefix="Rp "
-                className="text-3xl font-extrabold text-[#16A36A] tracking-tight font-mono"
+                className="text-2xl sm:text-3xl font-extrabold text-[#16A36A] tracking-tight font-mono"
               />
             </div>
-            <div className="pt-2 border-t border-border flex items-center justify-between text-xs text-foreground-muted">
+            <div className="pt-2 border-t border-border flex items-center justify-between text-[11px] sm:text-xs text-foreground-muted">
               <span>Minimal penarikan:</span>
               <strong className="text-foreground font-mono">Rp 50.000</strong>
             </div>
           </div>
 
-          <div className="bg-surface border border-border rounded-2xl p-6 shadow-xs space-y-3">
+          <div className="col-span-1 bg-surface border border-border rounded-xl sm:rounded-2xl p-3.5 sm:p-6 shadow-xs space-y-1.5 sm:space-y-3 flex flex-col justify-between">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-foreground-muted">Masa Garansi (Holding 3 Hari)</span>
-              <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 border border-amber-200/60 flex items-center justify-center">
-                <Clock className="w-4 h-4" />
+              <span className="text-[10px] sm:text-xs font-semibold text-foreground-muted truncate">Masa Garansi (3 Hari)</span>
+              <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-md sm:rounded-xl bg-amber-50 text-amber-600 border border-amber-200/60 flex items-center justify-center shrink-0">
+                <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
               </div>
             </div>
-            <div className="text-2xl font-bold text-amber-600 tracking-tight font-mono">
+            <div className="text-lg sm:text-2xl font-bold text-amber-600 tracking-tight font-mono">
               <AnimatedNumber
                 value={pending}
                 prefix="Rp "
-                className="text-2xl font-bold text-amber-600 tracking-tight font-mono"
+                className="text-lg sm:text-2xl font-bold text-amber-600 tracking-tight font-mono"
               />
             </div>
-            <p className="text-xs text-foreground-muted pt-2 border-t border-border leading-relaxed">
-              Dana komisi pesanan baru selama masa garansi 3 hari. Otomatis cair setelahnya.
+            <p className="text-[10px] sm:text-xs text-foreground-muted pt-1.5 border-t border-border leading-tight">
+              Otomatis cair setelah proteksi selesai.
             </p>
           </div>
 
-          <div className="bg-surface border border-border rounded-2xl p-6 shadow-xs space-y-3">
+          <div className="col-span-1 bg-surface border border-border rounded-xl sm:rounded-2xl p-3.5 sm:p-6 shadow-xs space-y-1.5 sm:space-y-3 flex flex-col justify-between">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-foreground-muted">Total Komisi Telah Dicairkan</span>
-              <div className="w-8 h-8 rounded-xl bg-foreground/5 text-foreground flex items-center justify-center border border-border">
-                <CheckCircle2 className="w-4 h-4" />
+              <span className="text-[10px] sm:text-xs font-semibold text-foreground-muted truncate">Telah Dicairkan</span>
+              <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-md sm:rounded-xl bg-foreground/5 text-foreground flex items-center justify-center border border-border shrink-0">
+                <CheckCircle2 className="w-3 h-3 sm:w-4 sm:h-4" />
               </div>
             </div>
-            <div className="text-2xl font-bold text-foreground tracking-tight font-mono">
+            <div className="text-lg sm:text-2xl font-bold text-foreground tracking-tight font-mono">
               <AnimatedNumber
                 value={partner?.paidCommission || 0}
                 prefix="Rp "
-                className="text-2xl font-bold text-foreground tracking-tight font-mono"
+                className="text-lg sm:text-2xl font-bold text-foreground tracking-tight font-mono"
               />
             </div>
-            <p className="text-xs text-foreground-muted pt-2 border-t border-border">
-              Semua transfer diproses oleh tim keuangan Asterra Store.
+            <p className="text-[10px] sm:text-xs text-foreground-muted pt-1.5 border-t border-border leading-tight">
+              Transfer resmi tim finance.
             </p>
           </div>
 
           {/* Saldo Siap Tarik vs Tertahan Garansi Proportion Bar */}
-          <div className="bg-surface border border-border rounded-xl p-4 shadow-xs space-y-2">
+          <div className="col-span-2 bg-surface border border-border rounded-xl p-3.5 sm:p-4 shadow-xs space-y-2">
             <div className="flex items-center justify-between text-xs">
-              <span className="font-semibold text-foreground">Rasio Likuiditas Saldo Komisi</span>
-              <span className="font-mono text-status-success font-bold">{readyPercentage}% Siap Tarik</span>
+              <span className="font-semibold text-foreground text-[11px] sm:text-xs">Rasio Likuiditas Komisi</span>
+              <span className="font-mono text-status-success font-bold text-[11px] sm:text-xs">{readyPercentage}% Siap Tarik</span>
             </div>
             <AnimatedProgressBar value={readyPercentage} barClassName="bg-status-success" />
-            <div className="flex items-center justify-between text-[11px] text-foreground-muted font-mono">
+            <div className="flex items-center justify-between text-[10px] sm:text-[11px] text-foreground-muted font-mono">
               <span>Siap: Rp {unpaid.toLocaleString('id-ID')}</span>
               <span>Tertahan: Rp {pending.toLocaleString('id-ID')}</span>
             </div>
@@ -233,6 +233,40 @@ export function SalesWalletTab({ partner, onRefetchProfile }: SalesWalletTabProp
                   onChange={(e) => setPayoutAmount(e.target.value)}
                   className="bg-surface-raised border-border text-xs h-10 font-mono rounded-xl"
                 />
+                {/* Quick Nominal Chips for fast 1-tap mobile entry */}
+                <div className="flex items-center gap-1.5 flex-wrap mt-2">
+                  <span className="text-[10px] text-foreground-muted font-medium mr-0.5">Cepat:</span>
+                  {[50000, 100000, 250000, 500000].map((amt) => (
+                    <button
+                      key={amt}
+                      type="button"
+                      disabled={unpaid < amt}
+                      onClick={() => setPayoutAmount(String(amt))}
+                      className={`text-[10px] font-mono px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
+                        Number(payoutAmount) === amt
+                          ? 'bg-primary text-white border-primary font-bold'
+                          : unpaid >= amt
+                          ? 'bg-surface-raised border-border text-foreground hover:bg-surface'
+                          : 'opacity-40 cursor-not-allowed bg-slate-100 border-slate-200 text-slate-400'
+                      }`}
+                    >
+                      {amt >= 1000 ? `${amt / 1000}rb` : amt}
+                    </button>
+                  ))}
+                  {unpaid >= 50000 && (
+                    <button
+                      type="button"
+                      onClick={() => setPayoutAmount(String(unpaid))}
+                      className={`text-[10px] font-mono font-bold px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
+                        Number(payoutAmount) === unpaid
+                          ? 'bg-emerald-600 text-white border-emerald-600'
+                          : 'bg-emerald-50 border-emerald-200/80 text-emerald-700 hover:bg-emerald-100'
+                      }`}
+                    >
+                      Semua Saldo
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -314,46 +348,80 @@ export function SalesWalletTab({ partner, onRefetchProfile }: SalesWalletTabProp
             Belum ada histori pengajuan penarikan dana.
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs text-left">
-              <thead className="bg-surface-raised border-b border-border text-foreground-muted font-medium">
-                <tr>
-                  <th className="py-3 px-4 font-semibold">Tanggal Pengajuan</th>
-                  <th className="py-3 px-4 font-semibold">Tujuan Transfer</th>
-                  <th className="py-3 px-4 font-semibold">Nominal</th>
-                  <th className="py-3 px-4 font-semibold">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {(partner?.payoutRequests || []).map((req, idx) => (
-                  <tr
-                    key={req.id}
-                    className="hover:bg-surface-raised/60 transition-colors animate-fade-up"
-                    style={{ animationDelay: `${Math.min(idx, 10) * 40}ms` }}
-                  >
-                    <td className="py-3 px-4 font-mono text-[11px] text-foreground-muted">
+          <>
+            {/* Mobile View: Compact Cards (md:hidden) */}
+            <div className="md:hidden divide-y divide-border">
+              {(partner?.payoutRequests || []).map((req, idx) => (
+                <div
+                  key={req.id}
+                  className="p-3.5 space-y-2 hover:bg-surface-raised/40 transition-colors animate-fade-up"
+                  style={{ animationDelay: `${Math.min(idx, 10) * 40}ms` }}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-xs text-foreground">{req.bankName}</span>
+                    <StatusBadge status={req.status} />
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-mono font-extrabold text-sm text-[#16A36A]">
+                      Rp {req.amount.toLocaleString('id-ID')}
+                    </span>
+                    <span className="font-mono text-[11px] text-foreground-muted">
                       {new Date(req.requestedAt).toLocaleDateString('id-ID', {
                         day: 'numeric',
                         month: 'short',
                         year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
                       })}
-                    </td>
-                    <td className="py-3 px-4 text-foreground">
-                      <span className="font-bold">{req.bankName}</span> ({req.bankAccount} a.n {req.bankAccountName})
-                    </td>
-                    <td className="py-3 px-4 font-bold text-foreground font-mono">
-                      Rp {req.amount.toLocaleString('id-ID')}
-                    </td>
-                    <td className="py-3 px-4">
-                      <StatusBadge status={req.status} />
-                    </td>
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-foreground-muted font-mono">
+                    Rek. {req.bankAccount} a.n <span className="text-foreground font-semibold">{req.bankAccountName}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop View: Table (hidden md:block) */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-xs text-left">
+                <thead className="bg-surface-raised border-b border-border text-foreground-muted font-medium">
+                  <tr>
+                    <th className="py-3 px-4 font-semibold">Tanggal Pengajuan</th>
+                    <th className="py-3 px-4 font-semibold">Tujuan Transfer</th>
+                    <th className="py-3 px-4 font-semibold">Nominal</th>
+                    <th className="py-3 px-4 font-semibold">Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {(partner?.payoutRequests || []).map((req, idx) => (
+                    <tr
+                      key={req.id}
+                      className="hover:bg-surface-raised/60 transition-colors animate-fade-up"
+                      style={{ animationDelay: `${Math.min(idx, 10) * 40}ms` }}
+                    >
+                      <td className="py-3 px-4 font-mono text-[11px] text-foreground-muted">
+                        {new Date(req.requestedAt).toLocaleDateString('id-ID', {
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </td>
+                      <td className="py-3 px-4 text-foreground">
+                        <span className="font-bold">{req.bankName}</span> ({req.bankAccount} a.n {req.bankAccountName})
+                      </td>
+                      <td className="py-3 px-4 font-bold text-foreground font-mono">
+                        Rp {req.amount.toLocaleString('id-ID')}
+                      </td>
+                      <td className="py-3 px-4">
+                        <StatusBadge status={req.status} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
     </div>
