@@ -225,6 +225,28 @@ export default function HomePage() {
         isTerlaris: true,
         isTerbaru: true,
       },
+      {
+        name: 'Mobile Legends',
+        match: (t: string) => t.includes('mobile legend') || t.includes('mlbb') || t.includes('diamond'),
+        cat: 'Top Up Game & Diamond',
+        tag: 'other' as const,
+        soldCount: 1250,
+        rating: '5.0',
+        isPromo: true,
+        isTerlaris: true,
+        isTerbaru: true,
+      },
+      {
+        name: 'PUBG Mobile',
+        match: (t: string) => t.includes('pubg') || t.includes('uc'),
+        cat: 'Top Up Game & UC',
+        tag: 'other' as const,
+        soldCount: 950,
+        rating: '5.0',
+        isPromo: true,
+        isTerlaris: true,
+        isTerbaru: true,
+      },
     ];
   }, []);
 

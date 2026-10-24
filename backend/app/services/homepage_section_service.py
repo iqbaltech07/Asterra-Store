@@ -378,6 +378,26 @@ class HomepageSectionService:
                 return "claude"
             return str(p.get("id") or "").lower()
 
+        BRAND_DISPLAY_NAMES = {
+            "capcut": "CapCut",
+            "netflix": "Netflix",
+            "google-gemini": "Google Gemini",
+            "chatgpt": "ChatGPT",
+            "canva": "Canva",
+            "alight-motion": "Alight Motion",
+            "youtube": "YouTube",
+            "spotify": "Spotify",
+            "vidio": "Vidio",
+            "wetv": "WeTV",
+            "viu": "Viu",
+            "bstation": "Bstation",
+            "iqiyi": "iQIYI",
+            "mobile-legends": "Mobile Legends",
+            "pubg": "PUBG Mobile",
+            "claude": "Claude",
+            "k-vision": "K-Vision & TV",
+        }
+
         final_products: List[Dict[str, Any]] = []
         selected_ids: set = set()
         selected_brands: set = set()
@@ -427,12 +447,15 @@ class HomepageSectionService:
                 if len(final_products) >= limit:
                     break
 
-        # Pass 2: If still under limit, fill from remaining auto_ranked
+        # Pass 2: If still under limit (e.g. promo only had a few campaign items),
+        # fill from ANY remaining active_products with DISTINCT brand so ZERO duplicate products appear!
         if len(final_products) < limit:
-            for p in auto_ranked:
+            for p in active_products:
                 real_id = str(p.get("id"))
-                if real_id not in selected_ids:
+                b_group = get_brand_group(p)
+                if real_id not in selected_ids and b_group not in selected_brands:
                     selected_ids.add(real_id)
+                    selected_brands.add(b_group)
                     final_products.append(p)
                     if len(final_products) >= limit:
                         break
@@ -443,6 +466,15 @@ class HomepageSectionService:
             p_copy = dict(p)
             name_u = str(p.get("name") or "").upper()
             cat_u = str(p.get("categoryName") or "").upper()
+
+            b_grp = get_brand_group(p)
+            clean_product_name = BRAND_DISPLAY_NAMES.get(b_grp, p.get("brand") or p.get("name"))
+
+            # Calculate minPrice across all variants of this brand in active catalog
+            brand_variants = [v for v in active_products if get_brand_group(v) == b_grp]
+            prices = [v.get("price") for v in brand_variants if (v.get("price") or 0) > 0]
+            brand_min_price = min(prices) if prices else (p.get("price") or 0)
+
             if "AI" in name_u or "CHATGPT" in name_u or "GEMINI" in name_u or "CLAUDE" in name_u:
                 tag = "ai"
             elif "CANVA" in name_u or "DESIGN" in name_u or "DESAINER" in name_u:
@@ -451,38 +483,28 @@ class HomepageSectionService:
                 tag = "video"
             elif "STREAMING" in cat_u or "NETFLIX" in name_u or "YOUTUBE" in name_u or "SPOTIFY" in name_u or "VIDIO" in name_u:
                 tag = "streaming"
+            elif "PUBG" in name_u or "MOBILE LEGEND" in name_u or "DIAMOND" in name_u or "UC" in name_u:
+                tag = "gaming"
             else:
                 tag = "other"
 
-            b_grp = get_brand_group(p)
-            brand_display_names = {
-                "capcut": "CapCut",
-                "netflix": "Netflix",
-                "google-gemini": "Google Gemini",
-                "chatgpt": "ChatGPT",
-                "canva": "Canva",
-                "alight-motion": "Alight Motion",
-                "youtube": "YouTube",
-                "spotify": "Spotify",
-                "vidio": "Vidio",
-                "wetv": "WeTV",
-                "viu": "Viu",
-                "bstation": "Bstation",
-                "iqiyi": "iQIYI",
-                "mobile-legends": "Mobile Legends",
-                "pubg": "PUBG Mobile",
-                "claude": "Claude",
-            }
             p_copy["brandGroup"] = b_grp
-            p_copy["productName"] = brand_display_names.get(b_grp, p.get("brand") or p.get("name"))
+            p_copy["productName"] = clean_product_name
+            p_copy["name"] = clean_product_name
+            p_copy["displayName"] = clean_product_name
+            p_copy["variantName"] = p.get("name")
+            p_copy["skuName"] = p.get("name")
             p_copy["categoryTag"] = tag
-            p_copy["minPrice"] = p.get("price") or 0
-            p_copy["soldCount"] = get_sold(p)
+            p_copy["minPrice"] = brand_min_price
+            p_copy["price"] = brand_min_price
+            p_copy["priceFormatted"] = f"Rp {brand_min_price:,.0f}".replace(",", ".")
+            p_copy["soldCount"] = get_sold(p) or 100
             p_copy["rating"] = "5.0"
-            p_copy["isPromo"] = is_in_active_campaign(p)
+            p_copy["isPromo"] = is_in_active_campaign(p) or section_key == "promo"
             p_copy["badgeLabel"] = "🔥 Promo" if section_key == "promo" else ("⭐ Terlaris" if section_key == "terlaris" else "✨ Baru")
-            p_copy["slug"] = str(p.get("id") or "").lower()
-            p_copy["items"] = [p]
+            p_copy["slug"] = b_grp
+            p_copy["variantCount"] = len(brand_variants)
+            p_copy["items"] = brand_variants
             enriched_products.append(p_copy)
 
         return {

@@ -1041,11 +1041,21 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
             ) : currentSectionData?.data && currentSectionData.data.length > 0 ? (
               <div className="space-y-2 max-h-[520px] overflow-y-auto pr-1">
                 {currentSectionData.data.slice(0, 8).map((prod, rankIdx) => {
-                  const displayName = prod.productName || prod.name;
+                  const prodGroup =
+                    productGroupMap.get(prod.id?.toLowerCase()) ||
+                    productGroupMap.get(prod.brandGroup?.toLowerCase() || '') ||
+                    productGroupMap.get(prod.slug?.toLowerCase() || '') ||
+                    availableProductGroups.find((g) => {
+                      const text = `${prod.productName || ''} ${prod.name || ''} ${prod.id || ''} ${prod.brandGroup || ''}`.toLowerCase();
+                      return g.match(text) || g.name.toLowerCase() === text || g.slug === text;
+                    });
+                  const displayName = prodGroup?.name || prod.productName || prod.name;
+                  const displayPrice = Number(prod.minPrice || prod.price || prodGroup?.minPrice || 0);
+
                   return (
                     <div
                       key={`preview-${prod.id}-${rankIdx}`}
-                      className="p-2.5 rounded-xl border border-border/80 bg-surface-raised flex items-center justify-between gap-3 text-xs hover:border-[#C96F55]/30 transition-colors"
+                      className="p-2.5 rounded-xl border border-border/80 bg-surface-raised flex items-center justify-between gap-3 text-xs hover:border-[#C96F55]/30 transition-colors shadow-2xs"
                     >
                       <div className="flex items-center gap-2.5 min-w-0 flex-1">
                         <span className="w-5 h-5 rounded-md bg-[#C96F55] text-white font-black text-[10px] flex items-center justify-center shrink-0">
@@ -1058,10 +1068,16 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
                           </p>
                           <div className="flex items-center gap-1.5 text-[10px] text-foreground-muted">
                             <span className="text-[#C96F55] font-bold">
-                              Rp {Number(prod.minPrice || prod.price || 0).toLocaleString('id-ID')}
+                              Rp {displayPrice.toLocaleString('id-ID')}
                             </span>
                             <span>·</span>
                             <span>{prod.soldCount ? `${prod.soldCount} terjual` : 'Ready'}</span>
+                            {prodGroup?.variantCount ? (
+                              <>
+                                <span>·</span>
+                                <span>{prodGroup.variantCount} Varian</span>
+                              </>
+                            ) : null}
                           </div>
                         </div>
                       </div>
