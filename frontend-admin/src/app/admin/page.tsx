@@ -31,6 +31,12 @@ import {
   Bell,
   ChevronDown,
 } from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faPen,
+  faCopy as faCopySolid,
+  faTrash,
+} from '@fortawesome/free-solid-svg-icons';
 import { AdminOrdersTab } from '@/components/admin/admin-orders-tab';
 import { AdminLogsTab } from '@/components/admin/admin-logs-tab';
 import { AdminPaymentSettingsTab } from '@/components/admin/admin-payment-settings-tab';
@@ -1064,7 +1070,7 @@ function AdminPageContent() {
           </div>
         )}
 
-        <main className="flex-1 max-w-7xl 2xl:max-w-screen-2xl mx-auto px-4 sm:px-6 xl:px-8 py-6 w-full">
+        <main className="flex-1 max-w-7xl 2xl:max-w-screen-2xl mx-auto px-4 sm:px-6 2xl:px-8 py-6 w-full min-w-0">
           {/* Top Summary Metrics Cards - show on products & vip-explorer */}
           {(activeTab === 'products' || activeTab === 'vip-explorer') && (
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -1328,23 +1334,23 @@ function AdminPageContent() {
                 </p>
               </div>
             ) : (
-              <div className="bg-surface border border-border rounded-xl overflow-hidden shadow-subtle">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs table-fixed min-w-[880px] lg:min-w-0">
+              <div className="bg-surface border border-border rounded-xl overflow-hidden shadow-subtle min-w-0">
+                <div className="overflow-x-auto min-w-0">
+                  <table className="w-full text-left text-xs table-fixed min-w-[860px] xl:min-w-0">
                     <colgroup>
-                      <col className="w-10" />
-                      <col className="w-auto" />
-                      <col className="w-28" />
-                      <col className="w-24" />
-                      <col className="w-24" />
-                      <col className="w-28" />
-                      <col className="w-28" />
-                      <col className="w-24" />
-                      <col className="w-[215px]" />
+                      <col style={{ width: '38px' }} />
+                      <col style={{ width: '28%' }} />
+                      <col style={{ width: '12%' }} />
+                      <col style={{ width: '9%' }} />
+                      <col style={{ width: '9%' }} />
+                      <col style={{ width: '10.5%' }} />
+                      <col style={{ width: '11%' }} />
+                      <col style={{ width: '9.5%' }} />
+                      <col style={{ width: '116px' }} />
                     </colgroup>
                     <thead className="bg-surface-raised border-b border-border text-foreground-muted uppercase tracking-wider text-[11px]">
                       <tr>
-                        <th className="py-3 px-2 sm:px-3 text-center">
+                        <th className="py-3 px-2 text-center">
                           <input
                             type="checkbox"
                             checked={isAllSelected}
@@ -1354,16 +1360,17 @@ function AdminPageContent() {
                             onChange={handleToggleSelectAll}
                             className="w-4 h-4 rounded border-border text-primary focus:ring-primary accent-primary cursor-pointer align-middle"
                             title={isAllSelected ? 'Batalkan pilihan semua' : 'Pilih semua produk terfilter'}
+                            aria-label="Pilih semua produk"
                           />
                         </th>
-                        <th className="py-3 px-3">Produk</th>
-                        <th className="py-3 px-2.5 whitespace-nowrap">Kategori</th>
-                        <th className="py-3 px-2.5 whitespace-nowrap">Harga Modal</th>
-                        <th className="py-3 px-2.5 whitespace-nowrap">Harga Jual</th>
-                        <th className="py-3 px-2.5 whitespace-nowrap">Margin Laba</th>
-                        <th className="py-3 px-2.5 whitespace-nowrap">Stok Supplier</th>
-                        <th className="py-3 px-2.5 whitespace-nowrap">Visibilitas</th>
-                        <th className="py-3 px-3 text-right whitespace-nowrap">Aksi</th>
+                        <th className="py-3 px-2.5 sm:px-3 text-left">Produk</th>
+                        <th className="py-3 px-2 text-left">Kategori</th>
+                        <th className="py-3 px-2 text-left whitespace-nowrap">Harga Modal</th>
+                        <th className="py-3 px-2 text-left whitespace-nowrap">Harga Jual</th>
+                        <th className="py-3 px-2 text-left whitespace-nowrap">Margin Laba</th>
+                        <th className="py-3 px-2 text-left whitespace-nowrap">Stok Supplier</th>
+                        <th className="py-3 px-2 text-left whitespace-nowrap">Visibilitas</th>
+                        <th className="py-3 px-2 text-center whitespace-nowrap">Aksi</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
@@ -1382,15 +1389,16 @@ function AdminPageContent() {
                               isSelected ? 'bg-primary/10' : ''
                             } ${isLiveWarning ? 'bg-status-warning/5' : ''}`}
                           >
-                            <td className="py-3 px-2 sm:px-3 text-center">
+                            <td className="py-3 px-2 text-center">
                               <input
                                 type="checkbox"
                                 checked={isSelected}
                                 onChange={() => handleToggleSelectOne(p.id)}
                                 className="w-4 h-4 rounded border-border text-primary focus:ring-primary accent-primary cursor-pointer align-middle"
+                                aria-label={`Pilih produk ${p.name}`}
                               />
                             </td>
-                            <td className="py-3 px-3 min-w-0">
+                            <td className="py-3 px-2.5 sm:px-3 min-w-0">
                               <div className="flex items-center gap-2.5 min-w-0">
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
@@ -1401,7 +1409,7 @@ function AdminPageContent() {
                                   className="w-9 h-9 rounded-lg object-cover bg-surface-raised border border-border shrink-0"
                                 />
                                 <div className="min-w-0 flex-1">
-                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                  <div className="flex items-start gap-1.5">
                                     <span
                                       className="font-semibold text-foreground text-xs leading-snug line-clamp-2 break-words"
                                       title={p.name}
@@ -1409,15 +1417,15 @@ function AdminPageContent() {
                                       {p.name}
                                     </span>
                                     {p.popular && (
-                                      <Badge className="text-[9px] py-0 px-1 bg-primary text-white shrink-0 font-medium">
+                                      <Badge className="text-[9px] py-0 px-1 bg-primary text-white shrink-0 font-medium mt-0.5">
                                         Populer
                                       </Badge>
                                     )}
                                   </div>
-                                  <div className="text-[10px] text-foreground-muted flex items-center gap-1.5 mt-0.5 truncate">
-                                    <span>ID: {p.id}</span>
-                                    {p.provider === 'vip-reseller' && (
-                                      <span className="text-primary font-mono truncate">
+                                  <div className="text-[10px] text-foreground-muted flex items-center gap-1.5 mt-0.5 min-w-0">
+                                    <span className="shrink-0">ID: {p.id}</span>
+                                    {p.provider === 'vip-reseller' && p.providerCode && (
+                                      <span className="text-primary font-mono truncate" title={`VIP Code: ${p.providerCode}`}>
                                         • VIP: {p.providerCode}
                                       </span>
                                     )}
@@ -1426,21 +1434,21 @@ function AdminPageContent() {
                               </div>
                             </td>
 
-                            <td className="py-3 px-2.5 font-medium text-foreground text-xs min-w-0">
-                              <span className="truncate block" title={p.category.name}>
+                            <td className="py-3 px-2 font-medium text-foreground text-xs min-w-0">
+                              <span className="leading-snug break-words line-clamp-2 block" title={p.category.name}>
                                 {p.category.name}
                               </span>
                             </td>
 
-                            <td className="py-3 px-2.5 font-mono text-foreground-muted text-xs whitespace-nowrap">
+                            <td className="py-3 px-2 font-mono text-foreground-muted text-xs whitespace-nowrap">
                               {p.providerPrice ? `Rp ${p.providerPrice.toLocaleString('id-ID')}` : 'Internal'}
                             </td>
 
-                            <td className="py-3 px-2.5 font-mono font-bold text-foreground text-xs whitespace-nowrap">
+                            <td className="py-3 px-2 font-mono font-bold text-foreground text-xs whitespace-nowrap">
                               Rp {p.price.toLocaleString('id-ID')}
                             </td>
 
-                            <td className="py-3 px-2.5 whitespace-nowrap">
+                            <td className="py-3 px-2 whitespace-nowrap">
                               {(() => {
                                 const margin =
                                   p.providerPrice !== undefined && p.providerPrice !== null && p.providerPrice > 0
@@ -1488,7 +1496,7 @@ function AdminPageContent() {
                               })()}
                             </td>
 
-                            <td className="py-3 px-2.5 whitespace-nowrap">
+                            <td className="py-3 px-2 whitespace-nowrap">
                               {p.provider === 'vip-reseller' ? (
                                 p.providerStatus === 'available' ? (
                                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-status-success/15 text-status-success">
@@ -1519,7 +1527,7 @@ function AdminPageContent() {
                               )}
                             </td>
 
-                            <td className="py-3 px-2.5 whitespace-nowrap">
+                            <td className="py-3 px-2 whitespace-nowrap">
                               <button
                                 type="button"
                                 onClick={() => toggleMutation.mutate(p.id)}
@@ -1545,41 +1553,38 @@ function AdminPageContent() {
                               </button>
                             </td>
 
-                            <td className="py-3 px-3 text-right whitespace-nowrap">
-                              <div className="inline-flex items-center justify-end gap-1">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
+                            <td className="py-3 px-2 text-center whitespace-nowrap">
+                              <div className="inline-flex items-center justify-center gap-1.5">
+                                <button
+                                  type="button"
                                   onClick={() => handleOpenEdit(p)}
-                                  className="h-8 px-2 text-xs border-border text-foreground hover:bg-surface-hover gap-1 font-medium cursor-pointer"
+                                  className="w-8 h-8 rounded-lg bg-surface border border-border text-[#2563EB] hover:text-[#1D4ED8] hover:border-[#2563EB]/40 hover:bg-blue-50/80 dark:hover:bg-blue-950/30 transition-all inline-flex items-center justify-center shadow-2xs focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary cursor-pointer active:scale-95 shrink-0"
                                   title="Edit detail & harga jual"
+                                  aria-label={`Edit ${p.name}`}
                                 >
-                                  <Edit className="w-3.5 h-3.5 text-primary shrink-0" />
-                                  <span>Edit</span>
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
+                                  <FontAwesomeIcon icon={faPen} className="w-3.5 h-3.5 shrink-0" />
+                                </button>
+                                <button
+                                  type="button"
                                   onClick={() => handleDuplicateProduct(p)}
-                                  className="h-8 px-2 text-xs border-border hover:bg-surface-raised text-foreground-muted hover:text-foreground gap-1 font-medium cursor-pointer"
+                                  className="w-8 h-8 rounded-lg bg-surface border border-border text-foreground-muted hover:text-foreground hover:border-border-strong hover:bg-surface-raised transition-all inline-flex items-center justify-center shadow-2xs focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary cursor-pointer active:scale-95 shrink-0"
                                   title="Duplikat produk ini"
+                                  aria-label={`Duplikat ${p.name}`}
                                 >
-                                  <Copy className="w-3.5 h-3.5 shrink-0" />
-                                  <span>Duplikat</span>
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
+                                  <FontAwesomeIcon icon={faCopySolid} className="w-3.5 h-3.5 shrink-0" />
+                                </button>
+                                <button
+                                  type="button"
                                   onClick={() => {
                                     setDeletingProductId(p.id);
                                     setDeletingProductName(p.name);
                                   }}
-                                  className="h-8 px-2 text-xs border-border hover:border-status-error/50 hover:bg-status-error/10 text-status-error gap-1 font-medium cursor-pointer"
+                                  className="w-8 h-8 rounded-lg bg-surface border border-border text-status-error hover:text-red-700 hover:border-status-error/50 hover:bg-status-error/10 transition-all inline-flex items-center justify-center shadow-2xs focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-status-error cursor-pointer active:scale-95 shrink-0"
                                   title="Hapus produk permanen"
+                                  aria-label={`Hapus ${p.name}`}
                                 >
-                                  <Trash2 className="w-3.5 h-3.5 shrink-0" />
-                                  <span>Hapus</span>
-                                </Button>
+                                  <FontAwesomeIcon icon={faTrash} className="w-3.5 h-3.5 shrink-0" />
+                                </button>
                               </div>
                             </td>
                           </tr>
