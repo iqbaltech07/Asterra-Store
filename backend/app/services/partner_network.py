@@ -22,7 +22,18 @@ def calculate_partner_network(partner: Optional[Dict[str, Any]], all_partners: L
     downlines = [p for p in all_partners if p.get("referredById") == partner_id]
     downline_map = {p.get("id"): p for p in downlines if p.get("id")}
 
-    # 1. Sync any completed downline order missing from DB
+    # 1. Sync any completed downline order ONLY IF missing from DB
+    existing_comm_ids = set()
+    try:
+        db = SessionLocal()
+        try:
+            db_comms = db.query(Commission.order_id).filter(Commission.recruiter_id == partner_id).all()
+            existing_comm_ids = {c[0] for c in db_comms if c and c[0]}
+        finally:
+            db.close()
+    except Exception:
+        pass
+
     for d in downlines:
         d_code = str(d.get("code", "")).upper()
         d_id = d.get("id")
@@ -31,11 +42,12 @@ def calculate_partner_network(partner: Optional[Dict[str, Any]], all_partners: L
                 o_st = str(o.get("status") or o.get("order_status") or "").lower()
                 if o_st in ["completed", "paid", "settlement"]:
                     o_id = str(o.get("id", "")).strip().upper()
-                    try:
-                        from app.services.referral_profit_service import ReferralProfitService
-                        ReferralProfitService.sync_order_commissions_and_ledger(o_id, o_st)
-                    except Exception:
-                        pass
+                    if o_id not in existing_comm_ids:
+                        try:
+                            from app.services.referral_profit_service import ReferralProfitService
+                            ReferralProfitService.sync_order_commissions_and_ledger(o_id, o_st)
+                        except Exception:
+                            pass
 
     # 2. Query Commission table from PostgreSQL
     recruiter_comms = []

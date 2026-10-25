@@ -223,15 +223,37 @@ class ReferralProfitService:
                 coo_share = round(distributable_profit * 0.40)
                 business_reserve = distributable_profit - ceo_share - coo_share
 
-                # 6. Status & 3-Day Warranty Window
+                # 6. Status & Holding Warranty Window
                 order_created_at = order.created_at or now
-                holding_until = order_created_at + timedelta(days=cls.HOLDING_DAYS)
+
+                # Pre-fetch existing records to preserve manual releases or finalized statuses
+                comm_record = None
+                if partner:
+                    comm_record = db.query(Commission).filter(Commission.order_id == clean_id).first()
+                ledger_record = db.query(ProfitLedger).filter(ProfitLedger.order_id == clean_id).first()
+
+                # Preserve holding_until if already reached or manually released
+                default_holding_until = order_created_at + timedelta(days=cls.HOLDING_DAYS)
+                if comm_record and comm_record.holding_until and comm_record.holding_until <= now:
+                    holding_until = comm_record.holding_until
+                elif ledger_record and ledger_record.holding_until and ledger_record.holding_until <= now:
+                    holding_until = ledger_record.holding_until
+                else:
+                    holding_until = default_holding_until
+
+                # Check if commission was already finalized or manually released
+                is_already_final = (comm_record and comm_record.status == "final") or (ledger_record and ledger_record.status in ["available", "withdrawn"])
 
                 if status_to_eval in ["cancelled", "expired", "refunded"]:
                     comm_status = "reversed"
                     ledger_status = "reversed"
+                elif is_already_final:
+                    # NEVER demote an already final/available commission back to pending
+                    comm_status = "final"
+                    ledger_status = ledger_record.status if (ledger_record and ledger_record.status in ["available", "withdrawn"]) else "available"
+                    holding_until = comm_record.holding_until if (comm_record and comm_record.holding_until) else now
                 elif status_to_eval in ["completed", "paid", "settlement"]:
-                    if now >= holding_until:
+                    if cls.HOLDING_DAYS == 0 or now >= holding_until:
                         comm_status = "final"
                         ledger_status = "available"
                     else:
@@ -242,9 +264,9 @@ class ReferralProfitService:
                     ledger_status = "pending"
 
                 # 7. Idempotent Upsert into `commissions` table
-                comm_record = None
                 if partner:
-                    comm_record = db.query(Commission).filter(Commission.order_id == clean_id).first()
+                    if not comm_record:
+                        comm_record = db.query(Commission).filter(Commission.order_id == clean_id).first()
                     if comm_record:
                         comm_record.partner_id = partner.id
                         comm_record.recruiter_id = recruiter_id
