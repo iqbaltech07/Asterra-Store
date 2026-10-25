@@ -173,7 +173,7 @@ export function CheckoutCartSummary({
       />
 
       {/* Referral Partner Attribution Banner */}
-      {referralPartner && (
+      {referralPartner && (referralDiscount ?? 0) > 0 && (
         <div className="p-3 rounded-xl border border-status-success/30 bg-status-success/5 text-xs flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <span className="text-[#121A2A] text-xs">
@@ -181,15 +181,9 @@ export function CheckoutCartSummary({
               <span className="text-[11px] font-mono text-[#121A2A]/60">({referralPartner.code})</span>
             </span>
           </div>
-          {(referralDiscount ?? 0) > 0 ? (
-            <span className="text-status-success font-bold text-[10px] bg-status-success/15 px-2 py-0.5 rounded-full shrink-0">
-              Hemat Rp {(referralDiscount ?? 0).toLocaleString('id-ID')}
-            </span>
-          ) : isReferralDiscountUsed ? (
-            <span className="text-[#121A2A]/60 font-semibold text-[10px] bg-black/5 px-2 py-0.5 rounded-full shrink-0" title="Diskon referral 1x telah digunakan pada pesanan sebelumnya. Mitra tetap sah terhubung.">
-              Mitra Terhubung
-            </span>
-          ) : null}
+          <span className="text-status-success font-bold text-[10px] bg-status-success/15 px-2 py-0.5 rounded-full shrink-0">
+            Hemat Rp {(referralDiscount ?? 0).toLocaleString('id-ID')}
+          </span>
         </div>
       )}
 
