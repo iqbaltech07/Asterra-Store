@@ -209,8 +209,8 @@ export const AdminNotificationProvider: React.FC<AdminNotificationProviderProps>
             if (processedEventsRef.current.has(eventKey)) return;
             saveProcessedEvent(eventKey);
 
-            // Subtle audio notification cue for payout request
-            notificationSound.play('order', { orderId: requestId, eventId: eventKey });
+            // Audio notification cue for payout request using Request.mp3
+            notificationSound.play('payout', { orderId: requestId, eventId: eventKey });
 
             // Invalidate Affiliate & Logs queries
             queryClient.invalidateQueries({ queryKey: ['admin-affiliates'] });

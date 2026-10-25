@@ -17,7 +17,7 @@
  * 6. Browser Autoplay Policy auto-unlocker with user gesture listener
  */
 
-export type NotificationSoundType = 'order' | 'cancel' | 'selesai';
+export type NotificationSoundType = 'order' | 'cancel' | 'selesai' | 'payout';
 
 // Backward compatibility alias for existing code
 export type SoundType =
@@ -25,7 +25,9 @@ export type SoundType =
   | 'new_order'
   | 'payment_verified'
   | 'status_updated'
-  | 'alert';
+  | 'alert'
+  | 'request'
+  | 'payout_requested';
 
 export interface AudioQueueItem {
   id: string; // Unique event key, e.g. "log-123" or "AST-ORD-123:cancelled"
@@ -115,7 +117,7 @@ class NotificationAudioPlayer {
   }
 
   private preloadAudio() {
-    const sounds: NotificationSoundType[] = ['order', 'cancel', 'selesai'];
+    const sounds: NotificationSoundType[] = ['order', 'cancel', 'selesai', 'payout'];
     sounds.forEach((sound) => {
       try {
         const audio = new Audio(`/sounds/${sound}.mp3`);
@@ -235,6 +237,9 @@ class NotificationAudioPlayer {
     }
     if (type === 'selesai') {
       return 'selesai';
+    }
+    if (type === 'payout' || type === 'request' || type === 'payout_requested') {
+      return 'payout';
     }
     // Completed or payment_verified does not play sound for Admin
     return null;
