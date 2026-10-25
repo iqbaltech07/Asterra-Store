@@ -1235,8 +1235,8 @@ function AdminPageContent() {
                 <span className="w-2.5 h-2.5 rounded-full bg-rose-500 absolute top-2 right-2 ring-2 ring-white" />
               </button>
 
-              {/* Hubungi via WhatsApp Button (Marketing & Growth -> Affiliate Tab) */}
-              {activeTab === 'affiliate' && adminWhatsAppUrl && (
+              {/* Hubungi via WhatsApp Button (Marketing & Growth -> Affiliate Tab & Sales Portal) */}
+              {(activeTab === 'affiliate' || activeTab.startsWith('sales-') || adminUser?.role === 'sales') && adminWhatsAppUrl && (
                 <a
                   href={adminWhatsAppUrl}
                   target="_blank"
