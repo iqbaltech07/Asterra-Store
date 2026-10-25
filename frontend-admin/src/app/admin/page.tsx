@@ -58,6 +58,7 @@ import { AdminAnalyticsSuite } from '@/components/admin/admin-analytics-suite';
 import { AdminSystemSettingsSuite } from '@/components/admin/admin-system-settings-suite';
 import { AdminNotificationProvider } from '@/context/admin-notification-context';
 import { ImageUploadDropzone, uploadFileToBlob } from '@/components/admin/image-upload-dropzone';
+import { BrandLogoSelector } from '@/components/admin/brand-logo-selector';
 import {
   Select,
   SelectContent,
@@ -383,6 +384,7 @@ function AdminPageContent() {
 
   // Form states for Create/Edit product
   const [formName, setFormName] = useState('');
+  const [formBrand, setFormBrand] = useState('');
   const [formCategory, setFormCategory] = useState('AI Tools');
   const [formCategoryId, setFormCategoryId] = useState('cat-ai-tools');
   const [isCustomCategory, setIsCustomCategory] = useState(false);
@@ -759,6 +761,7 @@ function AdminPageContent() {
           .map((f) => f.trim())
           .filter(Boolean),
         imageUrl: finalImageUrl || undefined,
+        brand: formBrand || undefined,
         popular: formPopular,
         guaranteeTitle: formGuaranteeTitle,
         guaranteeDesc: formGuaranteeDesc,
@@ -880,6 +883,7 @@ function AdminPageContent() {
   const handleOpenEdit = (p: ManagedProductItem) => {
     setEditingProduct(p);
     setFormName(p.name);
+    setFormBrand(p.brand || '');
     setFormCategory(p.category.name);
     setFormCategoryId(p.category.id || `cat-${p.category.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`);
     setIsCustomCategory(false);
@@ -905,6 +909,7 @@ function AdminPageContent() {
   const handleOpenCreate = () => {
     setEditingProduct(null);
     setFormName('');
+    setFormBrand('');
     const firstCat = publicCategories[0]?.name || 'AI Tools';
     const firstCatId = publicCategories[0]?.id || 'cat-ai-tools';
     setFormCategory(firstCat);
@@ -2872,6 +2877,19 @@ function AdminPageContent() {
                 />
               </div>
 
+              {/* Opsi Pilih Logo Brand Resmi (Brandfetch API) */}
+              <BrandLogoSelector
+                value={formImageUrl}
+                brandName={formBrand}
+                productName={formName}
+                onChange={(logoUrl, detectedBrand) => {
+                  setFormImageUrl(logoUrl);
+                  if (detectedBrand) {
+                    setFormBrand(detectedBrand);
+                  }
+                }}
+              />
+
               {/* Product Banner Guard & Anti-Redundansi Notice */}
               {editingProduct &&
                 Boolean(editingProduct.imageUrl && !editingProduct.imageUrl.includes('default-product-banner')) && (
@@ -2919,7 +2937,7 @@ function AdminPageContent() {
                 label={
                   isSpecialPromoBanner
                     ? 'Unggah Banner Promo Khusus (Vercel Blob)'
-                    : 'Banner / Gambar Produk (Vercel Blob)'
+                    : 'Banner / Gambar Tambahan Produk (Opsional)'
                 }
                 description={
                   editingProduct &&
@@ -2929,7 +2947,7 @@ function AdminPageContent() {
                     ? 'Banner resmi sudah aktif. Centang opsi di atas jika ingin mengunggah banner promosi khusus.'
                     : isSpecialPromoBanner
                     ? 'Tarik & lepas gambar promo khusus ke sini (otomatis ditandai prefix promo-).'
-                    : 'Tarik & lepas gambar banner produk ke sini, atau klik untuk memilih file.'
+                    : 'Gunakan jika ingin menambahkan gambar poster/banner custom selain logo Brandfetch.'
                 }
                 mode="lazy"
               />

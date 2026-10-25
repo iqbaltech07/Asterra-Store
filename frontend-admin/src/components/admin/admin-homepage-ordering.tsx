@@ -27,6 +27,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { resolveBrandLogo } from '@/components/ui/product-brand-icon';
 
 type SectionKey = 'promo' | 'terlaris' | 'terbaru';
 
@@ -122,92 +123,15 @@ export interface AdminProductGroup {
 }
 
 export function ProductBrandLogo({ name, className = 'w-10 h-10' }: { name: string; className?: string }) {
+  const logoUrl = resolveBrandLogo(name);
   const n = (name || '').toLowerCase();
 
-  if (n.includes('capcut')) {
+  if (logoUrl) {
+    const isDarkLogo = n.includes('spotify') || n.includes('netflix') || n.includes('mobile legend') || n.includes('pubg');
     return (
-      <div className={`${className} bg-white rounded-xl border border-border/80 flex items-center justify-center p-1 shadow-2xs shrink-0 overflow-hidden`}>
-        <img src="/images/brand/Capcut-logo.png" alt="CapCut" className="w-full h-full object-contain" draggable={false} />
-      </div>
-    );
-  }
-
-  if (n.includes('gemini') || n.includes('google ai') || n.includes('google pro')) {
-    return (
-      <div className={`${className} bg-white rounded-xl border border-border/80 flex items-center justify-center p-1 shadow-2xs shrink-0 overflow-hidden`}>
-        <img src="/images/brand/Google-logo.png" alt="Google Gemini" className="w-full h-full object-contain" draggable={false} />
-      </div>
-    );
-  }
-
-  if (n.includes('chatgpt') || n.includes('openai')) {
-    return (
-      <div className={`${className} bg-white rounded-xl border border-border/80 flex items-center justify-center p-1 shadow-2xs shrink-0 overflow-hidden`}>
-        <img src="/images/brand/ChatGPT-logo.png" alt="ChatGPT" className="w-full h-full object-contain" draggable={false} />
-      </div>
-    );
-  }
-
-  if (n.includes('canva')) {
-    return (
-      <div className={`${className} bg-white rounded-xl border border-border/80 flex items-center justify-center p-0.5 shadow-2xs shrink-0 overflow-hidden`}>
-        <img src="/images/apps/canva.png" alt="Canva" className="w-full h-full object-contain" draggable={false} />
-      </div>
-    );
-  }
-
-  if (n.includes('alight')) {
-    return (
-      <div className={`${className} bg-white rounded-xl border border-border/80 flex items-center justify-center p-0.5 shadow-2xs shrink-0 overflow-hidden`}>
-        <img src="/images/brand/Alightmotion-logo.png" alt="Alight Motion" className="w-full h-full object-cover rounded-lg" draggable={false} />
-      </div>
-    );
-  }
-
-  if (n.includes('netflix') || n.includes('ntflx')) {
-    return (
-      <div className={`${className} bg-black rounded-xl border border-border/80 flex items-center justify-center p-0.5 shadow-2xs shrink-0 overflow-hidden`}>
-        <img src="/images/brand/Netflix-logo.png" alt="Netflix" className="w-full h-full object-cover rounded-lg" draggable={false} />
-      </div>
-    );
-  }
-
-  if (n.includes('spotify')) {
-    return (
-      <div className={`${className} bg-black rounded-xl border border-border/80 flex items-center justify-center p-0.5 shadow-2xs shrink-0 overflow-hidden`}>
-        <img src="/images/brand/Spotify-logo.png" alt="Spotify" className="w-full h-full object-cover rounded-lg" draggable={false} />
-      </div>
-    );
-  }
-
-  if (n.includes('bstation') || n.includes('bilibili')) {
-    return (
-      <div className={`${className} bg-white rounded-xl border border-border/80 flex items-center justify-center p-1 shadow-2xs shrink-0 overflow-hidden`}>
-        <img src="/images/brand/BStation-logo.png" alt="Bstation" className="w-full h-full object-contain" draggable={false} />
-      </div>
-    );
-  }
-
-  if (n.includes('iqiyi')) {
-    return (
-      <div className={`${className} bg-white rounded-xl border border-border/80 flex items-center justify-center p-1 shadow-2xs shrink-0 overflow-hidden`}>
-        <img src="/images/brand/iqiyi-logo.png" alt="iQIYI" className="w-full h-full object-contain" draggable={false} />
-      </div>
-    );
-  }
-
-  if (n.includes('mobile legend') || n.includes('mlbb') || n.includes('diamond')) {
-    return (
-      <div className={`${className} bg-slate-950 rounded-xl border border-border/80 flex items-center justify-center p-0.5 shadow-2xs shrink-0 overflow-hidden`}>
-        <img src="/images/brand/Mobilelegends-logo.png" alt="Mobile Legends" className="w-full h-full object-cover rounded-lg" draggable={false} />
-      </div>
-    );
-  }
-
-  if (n.includes('pubg') || n.includes('uc')) {
-    return (
-      <div className={`${className} bg-slate-950 rounded-xl border border-border/80 flex items-center justify-center p-0.5 shadow-2xs shrink-0 overflow-hidden`}>
-        <img src="/images/brand/Pubg-logo.png" alt="PUBG" className="w-full h-full object-cover rounded-lg" draggable={false} />
+      <div className={`${className} ${isDarkLogo ? 'bg-slate-950 border-slate-800' : 'bg-white border-border/80'} rounded-xl border flex items-center justify-center p-1 shadow-2xs shrink-0 overflow-hidden`}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={logoUrl} alt={name} className="w-full h-full object-contain" draggable={false} />
       </div>
     );
   }
@@ -216,30 +140,6 @@ export function ProductBrandLogo({ name, className = 'w-10 h-10' }: { name: stri
     return (
       <div className={`${className} bg-[#FF0000] rounded-xl border border-border/80 flex items-center justify-center p-1.5 shadow-2xs shrink-0 text-white font-black text-xs`}>
         <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
-      </div>
-    );
-  }
-
-  if (n.includes('vidio')) {
-    return (
-      <div className={`${className} bg-white rounded-xl border border-border/80 flex items-center justify-center p-1 shadow-2xs shrink-0 overflow-hidden`}>
-        <img src="/images/apps/vidio.png" alt="Vidio" className="w-full h-full object-contain" draggable={false} />
-      </div>
-    );
-  }
-
-  if (n.includes('wetv')) {
-    return (
-      <div className={`${className} bg-white rounded-xl border border-border/80 flex items-center justify-center p-1 shadow-2xs shrink-0 overflow-hidden`}>
-        <img src="/images/apps/wetv.png" alt="WeTV" className="w-full h-full object-contain" draggable={false} />
-      </div>
-    );
-  }
-
-  if (n.includes('viu')) {
-    return (
-      <div className={`${className} bg-[#121A2A] rounded-xl border border-border/80 flex items-center justify-center p-1 shadow-2xs shrink-0 overflow-hidden`}>
-        <img src="/images/apps/viu.png" alt="Viu" className="w-full h-full object-contain" draggable={false} />
       </div>
     );
   }

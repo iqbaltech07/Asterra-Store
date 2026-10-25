@@ -1,0 +1,162 @@
+{
+  "canva": {
+    "name": "Canva",
+    "domain": "canva.com",
+    "icon": "https://cdn.brandfetch.io/id9mVQlyB1/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793023757220idOZh3WAwyoemyu-QF",
+    "brandId": "id9mVQlyB1",
+    "verified": true,
+    "claimed": true
+  },
+  "netflix": {
+    "name": "Netflix",
+    "domain": "netflix.com",
+    "icon": "https://cdn.brandfetch.io/ideQwN5lBE/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793023883538idOZh3WAwyFSpMyenO",
+    "brandId": "ideQwN5lBE",
+    "verified": true,
+    "claimed": true
+  },
+  "spotify": {
+    "name": "Spotify",
+    "domain": "spotify.com",
+    "icon": "https://cdn.brandfetch.io/id20mQyGeY/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793023884469idOZh3WAwyRQr-rkA8",
+    "brandId": "id20mQyGeY",
+    "verified": true,
+    "claimed": true
+  },
+  "chatgpt": {
+    "name": "ChatGPT",
+    "domain": "chatgpt.com",
+    "icon": "https://cdn.brandfetch.io/id2UDPob7G/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793023885715idOZh3WAwyqSC5YBUT",
+    "brandId": "id2UDPob7G",
+    "verified": true,
+    "claimed": false
+  },
+  "gemini": {
+    "name": "Gemini",
+    "domain": "gemini.com",
+    "icon": "https://cdn.brandfetch.io/id08hfGdfR/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793023886694idOZh3WAwy4pOEqhRK",
+    "brandId": "id08hfGdfR",
+    "verified": true,
+    "claimed": false
+  },
+  "alight motion": {
+    "name": "Alight Motion",
+    "domain": "alightcreative.com",
+    "icon": "https://cdn.brandfetch.io/idJZOpdSzq/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793023887626idOZh3WAwy3CpX07LP",
+    "brandId": "idJZOpdSzq",
+    "verified": false,
+    "claimed": false
+  },
+  "capcut": {
+    "name": "CapCut",
+    "domain": "capcut.com",
+    "icon": "https://cdn.brandfetch.io/idUmqKFgE3/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793023888576idOZh3WAwyYTjngD9q",
+    "brandId": "idUmqKFgE3",
+    "verified": true,
+    "claimed": false
+  },
+  "vidio": {
+    "name": "Vidio",
+    "domain": "vidio.com",
+    "icon": "https://cdn.brandfetch.io/idqasDdtIB/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793023889431idOZh3WAwyIgSWu1sG",
+    "brandId": "idqasDdtIB",
+    "verified": false,
+    "claimed": false
+  },
+  "viu": {
+    "name": "VIU",
+    "domain": "viu.ca",
+    "icon": "https://cdn.brandfetch.io/id__Aq1cQT/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793023889846idOZh3WAwyXh-T3F78",
+    "brandId": "id__Aq1cQT",
+    "verified": false,
+    "claimed": false
+  },
+  "wetv": {
+    "name": "WeTV",
+    "domain": "wetv.vip",
+    "icon": "https://cdn.brandfetch.io/idp2rkmRV6/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793023890403idOZh3WAwyPG_oYATb",
+    "brandId": "idp2rkmRV6",
+    "verified": true,
+    "claimed": false
+  },
+  "bilibili": {
+    "name": "Bilibili",
+    "domain": "bilibili.com",
+    "icon": "https://cdn.brandfetch.io/idJarLS8mp/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793023891364idOZh3WAwysP5f9nO2",
+    "brandId": "idJarLS8mp",
+    "verified": true,
+    "claimed": false
+  },
+  "iqiyi": {
+    "name": "iQIYI.com",
+    "domain": "iqiyi.com",
+    "icon": "https://cdn.brandfetch.io/idy_RwerrN/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793023892314idOZh3WAwyd5mDJMBX",
+    "brandId": "idy_RwerrN",
+    "verified": true,
+    "claimed": false
+  },
+  "mobile legends": {
+    "name": "Mobile Legends",
+    "domain": "mobilelegends.com",
+    "icon": "https://cdn.brandfetch.io/idD9JU0j92/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793023893276idOZh3WAwy3KJfUAos",
+    "brandId": "idD9JU0j92",
+    "verified": false,
+    "claimed": false
+  },
+  "pubg mobile": {
+    "name": "PUBG MOBILE",
+    "domain": "pubgmobile.jp",
+    "icon": "https://cdn.brandfetch.io/idwl84-2_S/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793023893848idOZh3WAwyPeZBtbmZ",
+    "brandId": "idwl84-2_S",
+    "verified": false,
+    "claimed": false
+  },
+  "youtube": {
+    "name": "YouTube",
+    "domain": "youtube.com",
+    "icon": "https://cdn.brandfetch.io/idVfYwcuQz/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793023894808idOZh3WAwyH5qpOoI-",
+    "brandId": "idVfYwcuQz",
+    "verified": true,
+    "claimed": false
+  },
+  "disney plus": {
+    "name": "Disney +",
+    "domain": "disneyplus.com",
+    "icon": "https://cdn.brandfetch.io/idhQlYRiX2/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793023895841idOZh3WAwyjwtxf5tP",
+    "brandId": "idhQlYRiX2",
+    "verified": true,
+    "claimed": false
+  },
+  "claude": {
+    "name": "Claude",
+    "domain": "claude.ai",
+    "icon": "https://cdn.brandfetch.io/idW5s392j1/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793023896338idOZh3WAwyQ0xNf592",
+    "brandId": "idW5s392j1",
+    "verified": true,
+    "claimed": false
+  },
+  "midjourney": {
+    "name": "Midjourney",
+    "domain": "midjourney.com",
+    "icon": "https://cdn.brandfetch.io/id2zQLfAF7/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793023897276idOZh3WAwyMnY_VMAS",
+    "brandId": "id2zQLfAF7",
+    "verified": true,
+    "claimed": false
+  },
+  "adobe": {
+    "name": "Adobe",
+    "domain": "adobe.com",
+    "icon": "https://cdn.brandfetch.io/id_KsyK7J9/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793023897786idOZh3WAwycFb8YLxa",
+    "brandId": "id_KsyK7J9",
+    "verified": true,
+    "claimed": true
+  },
+  "grammarly": {
+    "name": "Grammarly",
+    "domain": "grammarly.com",
+    "icon": "https://cdn.brandfetch.io/iddd_fYAYR/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793023898647idOZh3WAwy0XLCmxrw",
+    "brandId": "iddd_fYAYR",
+    "verified": true,
+    "claimed": true
+  }
+}

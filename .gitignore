@@ -48,6 +48,7 @@ Thumbs.db
 # Heavy local dumps (use database or active-catalog.json instead)
 data/
 data/managed-catalog.json
+!backend/data/brand-logos-cache.json
 
 # Local scratch, certificates & temp media
 scratch/

@@ -90,6 +90,10 @@ class Settings(BaseSettings):
         "RESEND_FROM",
         os.getenv("SMTP_FROM", "Asterra Store <onboarding@resend.dev>"),
     )
+
+    # Brandfetch API
+    BRANDFETCH_CLIENT_ID: str = os.getenv("BRANDFETCH_CLIENT_ID", "1idOZh3WAwyNTiUHkB7")
+    BRANDFETCH_API_KEY: str = os.getenv("BRANDFETCH_API_KEY", "wZja_h7z1EIx8KrAtYbS_QzVnELZI48RA02MMLQEudYxBbjCS5l6t-s4DLhkXvt9LLzDCnm9-iu9dwwAMK6lwg")
     
     # CORS
     BACKEND_CORS_ORIGINS: List[str] = [

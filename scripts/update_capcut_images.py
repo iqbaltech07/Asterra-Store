@@ -56,7 +56,7 @@ def step2_update_db():
     for r in rows:
         print(f"  ID: {r[0]} | SKU: {r[2]} | Old image: {r[4]}")
 
-    new_image_url = "/images/apps/capcut.png"
+    new_image_url = "https://cdn.brandfetch.io/idUmqKFgE3/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793023888576idOZh3WAwyYTjngD9q"
     cur.execute("""
         UPDATE products
         SET image_url = %s, updated_at = NOW()

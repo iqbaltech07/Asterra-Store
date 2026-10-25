@@ -1,4 +1,5 @@
 import { ProductItem } from '@/lib/products-data';
+import { BRAND_ICONS_MAP } from '@/components/ui/product-brand-icon';
 
 export interface ParsedVariant {
   id: string; // SKU id, e.g. vip-chatgptgo1thngar6b-s1
@@ -69,7 +70,7 @@ export const KNOWN_APPS: AppDefinition[] = [
     aliases: ['chatgpt', 'chat-gpt', 'chat_gpt', 'openai'],
     name: 'ChatGPT',
     category: { id: 'cat-ai-tools', name: 'AI Tools' },
-    imageUrl: '/images/apps/chatgpt.png',
+    imageUrl: BRAND_ICONS_MAP.chatgpt,
     rating: '5.0',
     soldCount: 850,
     description:
@@ -101,7 +102,7 @@ export const KNOWN_APPS: AppDefinition[] = [
     aliases: ['google-gemini', 'gemini', 'google-ai'],
     name: 'Google Gemini',
     category: { id: 'cat-ai-tools', name: 'AI Tools' },
-    imageUrl: '/images/apps/gemini.png',
+    imageUrl: BRAND_ICONS_MAP.gemini,
     rating: '5.0',
     soldCount: 620,
     description:
@@ -124,7 +125,7 @@ export const KNOWN_APPS: AppDefinition[] = [
     aliases: ['canva', 'canva-pro'],
     name: 'Canva',
     category: { id: 'cat-apps-streaming', name: 'Design & Creative' },
-    imageUrl: '/images/apps/canva.png',
+    imageUrl: BRAND_ICONS_MAP.canva,
     rating: '4.9',
     soldCount: 1420,
     description:
@@ -148,7 +149,7 @@ export const KNOWN_APPS: AppDefinition[] = [
     aliases: ['capcut', 'capcut-pro'],
     name: 'CapCut',
     category: { id: 'cat-apps-streaming', name: 'Video Editing' },
-    imageUrl: '/images/banners/capcut-banner.png',
+    imageUrl: BRAND_ICONS_MAP.capcut,
     rating: '4.9',
     soldCount: 980,
     description:
@@ -167,7 +168,7 @@ export const KNOWN_APPS: AppDefinition[] = [
     aliases: ['alight-motion', 'alightmotion', 'alight'],
     name: 'Alight Motion',
     category: { id: 'cat-apps-streaming', name: 'Motion Graphic' },
-    imageUrl: '/images/apps/alightmotion.png',
+    imageUrl: BRAND_ICONS_MAP.alight,
     rating: '4.8',
     soldCount: 340,
     description:
@@ -186,7 +187,7 @@ export const KNOWN_APPS: AppDefinition[] = [
     aliases: ['netflix', 'netflix-premium', 'ntflx'],
     name: 'Netflix',
     category: { id: 'cat-apps-streaming', name: 'Movies & Series' },
-    imageUrl: '/images/apps/netflix.png',
+    imageUrl: BRAND_ICONS_MAP.netflix,
     rating: '4.9',
     soldCount: 760,
     description:
@@ -205,7 +206,7 @@ export const KNOWN_APPS: AppDefinition[] = [
     aliases: ['vidio', 'video-premier'],
     name: 'Vidio',
     category: { id: 'cat-apps-streaming', name: 'Sports & TV Streaming' },
-    imageUrl: '/images/apps/vidio.png',
+    imageUrl: BRAND_ICONS_MAP.vidio,
     rating: '4.9',
     soldCount: 1150,
     description:
@@ -227,7 +228,7 @@ export const KNOWN_APPS: AppDefinition[] = [
     aliases: ['viu', 'viu-premium'],
     name: 'Viu',
     category: { id: 'cat-apps-streaming', name: 'Asian Drama & Variety' },
-    imageUrl: '/images/apps/viu.png',
+    imageUrl: BRAND_ICONS_MAP.viu,
     rating: '4.9',
     soldCount: 910,
     description:
@@ -246,7 +247,7 @@ export const KNOWN_APPS: AppDefinition[] = [
     aliases: ['spotify', 'spotify-premium'],
     name: 'Spotify',
     category: { id: 'cat-apps-streaming', name: 'Music Streaming' },
-    imageUrl: '/images/apps/vidio.png', // Fallback or logo
+    imageUrl: BRAND_ICONS_MAP.spotify,
     rating: '4.9',
     soldCount: 1280,
     description:
@@ -269,7 +270,7 @@ export const KNOWN_APPS: AppDefinition[] = [
     aliases: ['youtube', 'youtube-premium'],
     name: 'YouTube',
     category: { id: 'cat-apps-streaming', name: 'Streaming & Video' },
-    imageUrl: '/images/apps/netflix.png', // Fallback
+    imageUrl: BRAND_ICONS_MAP.youtube,
     rating: '5.0',
     soldCount: 1890,
     description:
@@ -291,7 +292,7 @@ export const KNOWN_APPS: AppDefinition[] = [
     aliases: ['bstation', 'bsprem', 'bilibili'],
     name: 'Bstation',
     category: { id: 'cat-apps-streaming', name: 'Anime & Creators' },
-    imageUrl: '/images/apps/vidio.png',
+    imageUrl: BRAND_ICONS_MAP.bstation,
     rating: '4.9',
     soldCount: 480,
     description:
@@ -310,7 +311,7 @@ export const KNOWN_APPS: AppDefinition[] = [
     aliases: ['iqiyi', 'iqiyi-standard'],
     name: 'iQIYI',
     category: { id: 'cat-apps-streaming', name: 'Drama & Anime' },
-    imageUrl: '/images/apps/vidio.png',
+    imageUrl: BRAND_ICONS_MAP.iqiyi,
     rating: '4.9',
     soldCount: 520,
     description:
@@ -329,7 +330,7 @@ export const KNOWN_APPS: AppDefinition[] = [
     aliases: ['wetv', 'wetv-vip'],
     name: 'WeTV',
     category: { id: 'cat-apps-streaming', name: 'Asian Drama & Anime' },
-    imageUrl: '/images/apps/wetv.png',
+    imageUrl: BRAND_ICONS_MAP.wetv,
     rating: '4.9',
     soldCount: 460,
     description:
