@@ -56,7 +56,6 @@ import { AdminFinanceSuite } from '@/components/admin/admin-finance-suite';
 import { AdminMarketingSuite } from '@/components/admin/admin-marketing-suite';
 import { AdminAnalyticsSuite } from '@/components/admin/admin-analytics-suite';
 import { AdminSystemSettingsSuite } from '@/components/admin/admin-system-settings-suite';
-import { SalesConsoleSuite } from '@/components/sales/sales-console-suite';
 import { AdminNotificationProvider } from '@/context/admin-notification-context';
 import { ImageUploadDropzone, uploadFileToBlob } from '@/components/admin/image-upload-dropzone';
 import {
@@ -198,13 +197,12 @@ function AdminPageContent() {
       if (currentUrlTab) {
         setActiveTab(currentUrlTab);
       } else {
-        const defaultTab = adminUser?.role === 'sales' ? 'sales-overview' : 'dashboard';
-        setActiveTab(defaultTab);
+        setActiveTab('dashboard');
       }
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [getTabFromUrl, adminUser]);
+  }, [getTabFromUrl]);
 
   // Check admin session on mount
   useEffect(() => {
@@ -227,23 +225,28 @@ function AdminPageContent() {
           router.replace(`/admin/login?callbackUrl=${encodeURIComponent(currentUrl)}`);
           return;
         }
-        setAdminUser(data.admin);
-        const currentUrlTab = getTabFromUrl();
+
         const role = (data.admin?.role || 'admin').toLowerCase();
 
+        // Strictly forbid sales partner role from Admin Console
         if (role === 'sales') {
-          if (currentUrlTab && currentUrlTab.startsWith('sales-')) {
-            setActiveTab(currentUrlTab);
-          } else {
-            handleTabChange('sales-overview');
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('asterra_admin_token');
+            localStorage.removeItem('asterra_admin_user');
           }
-        } else {
-          // Admin role: maintain currentUrlTab if valid and not restricted
-          if (currentUrlTab && !RESTRICTED_FOR_OPERATIONAL_ADMIN.includes(currentUrlTab)) {
-            setActiveTab(currentUrlTab);
-          } else if (!currentUrlTab) {
-            setActiveTab('dashboard');
-          }
+          await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+          router.replace('/admin/login?error=sales_forbidden');
+          return;
+        }
+
+        setAdminUser(data.admin);
+        const currentUrlTab = getTabFromUrl();
+
+        // Admin role: maintain currentUrlTab if valid and not restricted
+        if (currentUrlTab && !RESTRICTED_FOR_OPERATIONAL_ADMIN.includes(currentUrlTab)) {
+          setActiveTab(currentUrlTab);
+        } else if (!currentUrlTab) {
+          setActiveTab('dashboard');
         }
       } catch {
         const currentUrl = typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/admin';
@@ -253,7 +256,7 @@ function AdminPageContent() {
       }
     }
     verifyAuth();
-  }, [router, getTabFromUrl, handleTabChange]);
+  }, [router, getTabFromUrl]);
 
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
@@ -333,11 +336,14 @@ function AdminPageContent() {
     if (!adminUser) return;
     const role = (adminUser.role || 'admin').toLowerCase();
 
-    // 1. Sales partner can ONLY access sales-* tabs
+    // 1. Sales partner cannot access Admin Console
     if (role === 'sales') {
-      if (!activeTab.startsWith('sales-')) {
-        handleTabChange('sales-overview');
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('asterra_admin_token');
+        localStorage.removeItem('asterra_admin_user');
       }
+      fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+      router.replace('/admin/login?error=sales_forbidden');
       return;
     }
 
@@ -345,7 +351,7 @@ function AdminPageContent() {
     if (role === 'admin' && RESTRICTED_FOR_OPERATIONAL_ADMIN.includes(activeTab)) {
       handleTabChange('dashboard');
     }
-  }, [adminUser, activeTab, handleTabChange]);
+  }, [adminUser, activeTab, handleTabChange, router]);
 
   // Filter states for Managed Products
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'archived' | 'warning'>('all');
@@ -1261,54 +1267,38 @@ function AdminPageContent() {
 
           {/* Row 2: Page Action Buttons on Right (only shown on tabs with actions) */}
           {activeTab !== 'dashboard' &&
-            ((activeTab === 'products' || activeTab === 'vip-explorer') || adminUser?.role === 'sales') && (
+            (activeTab === 'products' || activeTab === 'vip-explorer') && (
             <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
             {/* Quick Action Buttons per Tab */}
             <div className="flex items-center gap-2 ml-auto">
-              {(activeTab === 'products' || activeTab === 'vip-explorer') &&
-                adminUser?.role !== 'sales' && (
-                <>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => syncVipMutation.mutate()}
-                    disabled={syncVipMutation.isPending}
-                    className="text-xs h-8 px-2.5 sm:px-3 gap-1.5 border-slate-200 hover:bg-slate-50 font-medium"
-                    title="Ambil dan sinkronkan semua layanan dari gateway VIP Reseller"
-                  >
-                    <DownloadCloud className={`w-3.5 h-3.5 text-[#2563EB] ${syncVipMutation.isPending ? 'animate-bounce' : ''}`} />
-                    <span className="hidden sm:inline">{syncVipMutation.isPending ? 'Menyinkronkan...' : 'Sinkronkan VIP'}</span>
-                    <span className="sm:hidden">Sync VIP</span>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => refreshStockMutation.mutate()}
-                    disabled={refreshStockMutation.isPending}
-                    className="text-xs h-8 px-2.5 sm:px-3 gap-1.5 border-slate-200 hover:bg-slate-50 font-medium"
-                    title="Periksa ketersediaan stok live dari VIP Reseller"
-                  >
-                    <RefreshCw className={`w-3.5 h-3.5 text-[#2563EB] ${refreshStockMutation.isPending ? 'animate-spin' : ''}`} />
-                    <span className="hidden sm:inline">{refreshStockMutation.isPending ? 'Memeriksa...' : 'Cek Stok'}</span>
-                    <span className="sm:hidden">Stok</span>
-                  </Button>
-                  <Button size="sm" onClick={handleOpenCreate} className="text-xs h-8 px-3 gap-1.5 shadow-xs font-semibold">
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>Tambah Produk</span>
-                  </Button>
-                </>
-              )}
-
-              {adminUser?.role === 'sales' && (
-                <Button
-                  size="sm"
-                  onClick={() => handleTabChange('sales-wallet')}
-                  className="text-xs h-8 gap-1.5 shadow-xs font-semibold bg-[#16A36A] hover:bg-[#15803D] text-white"
-                >
-                  <Wallet className="w-3.5 h-3.5" />
-                  <span>Dompet Komisi</span>
-                </Button>
-              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => syncVipMutation.mutate()}
+                disabled={syncVipMutation.isPending}
+                className="text-xs h-8 px-2.5 sm:px-3 gap-1.5 border-slate-200 hover:bg-slate-50 font-medium"
+                title="Ambil dan sinkronkan semua layanan dari gateway VIP Reseller"
+              >
+                <DownloadCloud className={`w-3.5 h-3.5 text-[#2563EB] ${syncVipMutation.isPending ? 'animate-bounce' : ''}`} />
+                <span className="hidden sm:inline">{syncVipMutation.isPending ? 'Menyinkronkan...' : 'Sinkronkan VIP'}</span>
+                <span className="sm:hidden">Sync VIP</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => refreshStockMutation.mutate()}
+                disabled={refreshStockMutation.isPending}
+                className="text-xs h-8 px-2.5 sm:px-3 gap-1.5 border-slate-200 hover:bg-slate-50 font-medium"
+                title="Periksa ketersediaan stok live dari VIP Reseller"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 text-[#2563EB] ${refreshStockMutation.isPending ? 'animate-spin' : ''}`} />
+                <span className="hidden sm:inline">{refreshStockMutation.isPending ? 'Memeriksa...' : 'Cek Stok'}</span>
+                <span className="sm:hidden">Stok</span>
+              </Button>
+              <Button size="sm" onClick={handleOpenCreate} className="text-xs h-8 px-3 gap-1.5 shadow-xs font-semibold">
+                <Plus className="w-3.5 h-3.5" />
+                <span>Tambah Produk</span>
+              </Button>
             </div>
           </div>
           )}
@@ -2488,22 +2478,7 @@ function AdminPageContent() {
           </div>
         )}
 
-        {/* TAB 17: PORTAL PENJUALAN (SALES SUITE) */}
-        {(visitedTabs.has('sales-overview') ||
-          visitedTabs.has('sales-catalog') ||
-          visitedTabs.has('sales-links') ||
-          visitedTabs.has('sales-orders') ||
-          visitedTabs.has('sales-network') ||
-          visitedTabs.has('sales-wallet') ||
-          visitedTabs.has('sales-academy')) && (
-          <div className={activeTab.startsWith('sales-') ? 'block animate-tab-glide' : 'hidden'}>
-            <SalesConsoleSuite
-              activeTab={activeTab}
-              onTabChange={handleTabChange}
-              adminUser={adminUser}
-            />
-          </div>
-        )}
+
       </main>
 
       {/* MODAL 1: EDIT / CREATE MANAGED PRODUCT */}

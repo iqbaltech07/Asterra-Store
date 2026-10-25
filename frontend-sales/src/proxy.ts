@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { getSessionCookie } from 'better-auth/cookies';
+import { getAdminBaseUrl } from '@/lib/utils/url';
 
 function isValidToken(val?: string | null): boolean {
   if (!val) return false;
@@ -53,22 +54,24 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   const session = getActiveAuthSession(request);
   const isAuthenticated = Boolean(session);
 
-  // 1. Admin Routes in frontend-sales (Redirect to /sales)
+  // 1. Cross-Portal Redirect: /admin/* belongs to Admin Console (frontend-admin)
   if (pathname.startsWith('/admin')) {
-    return NextResponse.redirect(new URL('/sales', request.url));
+    const targetAdminUrl = new URL(pathname + search, getAdminBaseUrl());
+    return NextResponse.redirect(targetAdminUrl);
   }
 
   // 2. Sales Portal Page Routes Protection (/sales/*)
   if (pathname.startsWith('/sales')) {
     if (pathname === '/sales/login') {
       const isLoggedOut = request.nextUrl.searchParams.has('logged_out');
-      if (isAuthenticated && !isLoggedOut) {
+      const isAdminForbidden = request.nextUrl.searchParams.get('error') === 'admin_forbidden';
+      if (isAuthenticated && !isLoggedOut && !isAdminForbidden) {
         return NextResponse.redirect(new URL('/sales', request.url));
       }
       
       const response = applySecurityHeaders(NextResponse.next());
-      // Clean up lingering cookies if explicitly logged out
-      if (isLoggedOut) {
+      // Clean up lingering cookies if explicitly logged out or admin forbidden
+      if (isLoggedOut || isAdminForbidden) {
         const cookieNames = [
           'better-auth.session_token',
           '__Secure-better-auth.session_token',

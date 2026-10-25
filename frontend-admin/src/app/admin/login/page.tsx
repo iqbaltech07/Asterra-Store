@@ -20,25 +20,39 @@ import {
   faLock,
   faEnvelope,
   faArrowLeft,
+  faArrowRight,
   faSpinner,
   faCircleExclamation,
   faKey,
   faTerminal,
 } from '@fortawesome/free-solid-svg-icons';
 import { AsterraLogo } from '@/components/ui/asterra-logo';
+import { getSalesBaseUrl } from '@/lib/utils/url';
 
 export default function AdminLoginPage() {
   const router = useRouter();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const [isVerifyingSession, setIsVerifyingSession] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [salesPortalUrl, setSalesPortalUrl] = useState<string | null>(null);
 
   // Check if admin is already logged in
   useEffect(() => {
+    // If redirected due to forbidden sales access
+    if (typeof window !== 'undefined' && window.location.search.includes('error=sales_forbidden')) {
+      try {
+        localStorage.removeItem('asterra_admin_token');
+        localStorage.removeItem('asterra_admin_user');
+      } catch {}
+      setSalesPortalUrl(`${getSalesBaseUrl()}/sales/login`);
+      setErrorMessage('Akun Mitra Sales tidak memiliki hak akses ke Admin Console. Silakan masuk melalui Portal Sales.');
+      setIsVerifyingSession(false);
+      return;
+    }
+
     // If just logged out, bypass automatic session checking and display confirmation
     if (typeof window !== 'undefined' && window.location.search.includes('logged_out=1')) {
       try {
@@ -57,10 +71,16 @@ export default function AdminLoginPage() {
           const data = await res.json();
           if (data.authenticated) {
             if (data.admin?.role === 'sales') {
-              router.replace('/sales');
-            } else {
-              router.replace('/admin');
+              try {
+                localStorage.removeItem('asterra_admin_token');
+                localStorage.removeItem('asterra_admin_user');
+              } catch {}
+              setSalesPortalUrl(`${getSalesBaseUrl()}/sales/login`);
+              setErrorMessage('Akun aktif terdeteksi sebagai Mitra Sales. Silakan gunakan Portal Sales Asterra Store.');
+              setIsVerifyingSession(false);
+              return;
             }
+            router.replace('/admin');
             return;
           }
         }
@@ -87,14 +107,24 @@ export default function AdminLoginPage() {
 
       const data = await response.json();
       if (!response.ok || !data.success) {
+        if (data.error?.code === 'PORTAL_ACCESS_DENIED' || data.salesPortalUrl) {
+          setSalesPortalUrl(data.salesPortalUrl || `${getSalesBaseUrl()}/sales/login`);
+        }
         throw new Error(
           data.error?.message ||
             'Kredensial administrator tidak valid atau Anda tidak memiliki hak akses.'
         );
       }
+
+      if (data.admin?.role === 'sales') {
+        setSalesPortalUrl(data.salesPortalUrl || `${getSalesBaseUrl()}/sales/login`);
+        throw new Error('Akun ini terdaftar sebagai Mitra Sales. Silakan masuk melalui Portal Sales Asterra Store.');
+      }
+
       return data;
     },
     onSuccess: (data) => {
+      setSalesPortalUrl(null);
       // Simpan token ke localStorage sebagai fallback untuk verifyAuth di page component
       if (data.token && typeof window !== 'undefined') {
         localStorage.setItem('asterra_admin_token', data.token);
@@ -104,18 +134,12 @@ export default function AdminLoginPage() {
       if (typeof window !== 'undefined') {
         const sp = new URLSearchParams(window.location.search);
         const cb = sp.get('callbackUrl');
-        if (cb && cb.startsWith('/')) {
+        if (cb && cb.startsWith('/') && !cb.startsWith('/sales')) {
           targetUrl = cb;
-        } else if (data.admin?.role === 'sales') {
-          targetUrl = '/sales';
         }
       }
 
-      if (data.admin?.role === 'sales') {
-        setSuccessMessage('Login mitra sales berhasil. Mengalihkan ke panel kontrol...');
-      } else {
-        setSuccessMessage('Otorisasi admin berhasil. Mengalihkan ke panel kontrol...');
-      }
+      setSuccessMessage('Otorisasi admin berhasil. Mengalihkan ke panel kontrol...');
 
       setTimeout(() => {
         window.location.href = targetUrl;
@@ -131,6 +155,7 @@ export default function AdminLoginPage() {
     e.preventDefault();
     setErrorMessage(null);
     setSuccessMessage(null);
+    setSalesPortalUrl(null);
 
     if (!email || !password) {
       setErrorMessage('Email administrator dan kata sandi otorisasi wajib diisi.');
@@ -191,9 +216,22 @@ export default function AdminLoginPage() {
           <CardContent className="space-y-4">
             {/* Feedback Notifications */}
             {errorMessage && (
-              <div className="p-3 rounded-md bg-status-error/10 border border-status-error/20 flex items-start gap-2.5 text-xs text-status-error animate-in fade-in">
-                <FontAwesomeIcon icon={faCircleExclamation} className="w-4 h-4 shrink-0 mt-0.5 text-status-error" />
-                <span className="leading-relaxed">{errorMessage}</span>
+              <div className="p-3 rounded-md bg-status-error/10 border border-status-error/20 flex flex-col gap-2 text-xs text-status-error animate-in fade-in">
+                <div className="flex items-start gap-2.5">
+                  <FontAwesomeIcon icon={faCircleExclamation} className="w-4 h-4 shrink-0 mt-0.5 text-status-error" />
+                  <span className="leading-relaxed">{errorMessage}</span>
+                </div>
+                {salesPortalUrl && (
+                  <div className="pt-1 pl-6">
+                    <a
+                      href={salesPortalUrl}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-status-error text-white font-medium hover:bg-status-error/90 transition-colors shadow-sm"
+                    >
+                      <span>Buka Portal Sales Asterra</span>
+                      <FontAwesomeIcon icon={faArrowRight} className="w-3 h-3" />
+                    </a>
+                  </div>
+                )}
               </div>
             )}
 

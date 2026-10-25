@@ -157,6 +157,31 @@ async def admin_auth_login(request: Request):
     elif partner_match:
         role = "sales"
 
+    # Enforce strict multi-portal separation
+    client_portal = (body.get("portal") or request.headers.get("x-client-portal") or "").strip().lower()
+    if client_portal == "admin" and role == "sales":
+        return JSONResponse(
+            status_code=403,
+            content={
+                "success": False,
+                "error": {
+                    "code": "PORTAL_ACCESS_DENIED",
+                    "message": "Akun ini terdaftar sebagai Mitra Sales. Silakan masuk melalui Portal Sales Asterra Store.",
+                },
+            },
+        )
+    if client_portal == "sales" and role in ["admin", "superadmin"]:
+        return JSONResponse(
+            status_code=403,
+            content={
+                "success": False,
+                "error": {
+                    "code": "PORTAL_ACCESS_DENIED",
+                    "message": "Akun ini terdaftar sebagai Administrator. Silakan masuk melalui Admin Console Asterra Store.",
+                },
+            },
+        )
+
     user_id = (admin_match.get("id") if admin_match else None) or (partner_match.get("id") if partner_match else "adm-root")
     canonical_email = (admin_match.get("email") if admin_match else None) or (partner_match.get("email") if partner_match else clean)
     display_name = (admin_match.get("name") if admin_match else None) or (partner_match.get("name") if partner_match else "Pengguna")

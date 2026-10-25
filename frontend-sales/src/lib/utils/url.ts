@@ -79,3 +79,23 @@ export function getStoreBaseUrl(): string {
 
 export const getStoreUrl = getStoreBaseUrl;
 
+/**
+ * Utility to reliably resolve the Admin Console Base URL
+ */
+export function getAdminBaseUrl(): string {
+  const envAdmin = process.env.NEXT_PUBLIC_ADMIN_URL?.trim();
+  if (envAdmin) {
+    return envAdmin.replace(/\/+$/, '');
+  }
+
+  if (typeof window !== 'undefined') {
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      return `${window.location.protocol}//${window.location.hostname}:3001`;
+    }
+    return 'https://admin.asterrastore.biz.id';
+  }
+
+  return process.env.NODE_ENV === 'production'
+    ? 'https://admin.asterrastore.biz.id'
+    : 'http://localhost:3001';
+}

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getSalesBaseUrl } from '@/lib/utils/url';
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,8 +10,11 @@ export async function POST(request: NextRequest) {
 
     const backendRes = await fetch(`${backendUrl}/api/v1/admin/auth/login`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
+      headers: {
+        'Content-Type': 'application/json',
+        'x-client-portal': 'admin',
+      },
+      body: JSON.stringify({ ...body, portal: 'admin' }),
     });
 
     let data;
@@ -33,6 +37,22 @@ export async function POST(request: NextRequest) {
 
     if (!backendRes.ok || !data.success) {
       return NextResponse.json(data, { status: backendRes.status });
+    }
+
+    // STRICT ROLE GUARD: Reject sales accounts from admin portal
+    if (data.admin?.role === 'sales') {
+      const salesUrl = `${getSalesBaseUrl()}/sales/login`;
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'PORTAL_ACCESS_DENIED',
+            message: 'Akun ini terdaftar sebagai Mitra Sales. Silakan masuk melalui Portal Sales Asterra Store.',
+          },
+          salesPortalUrl: salesUrl,
+        },
+        { status: 403 }
+      );
     }
 
     const response = NextResponse.json(data, { status: 200 });

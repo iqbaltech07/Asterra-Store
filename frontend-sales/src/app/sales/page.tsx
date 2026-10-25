@@ -94,6 +94,18 @@ function SalesPortalContent() {
           router.replace(`/sales/login?callbackUrl=${encodeURIComponent(currentUrl)}`);
           return;
         }
+
+        const role = (data.admin?.role || '').toLowerCase();
+        if (role !== 'sales') {
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('asterra_admin_token');
+            localStorage.removeItem('asterra_admin_user');
+          }
+          await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+          router.replace('/sales/login?error=admin_forbidden');
+          return;
+        }
+
         setAdminUser(data.admin);
         const currentUrlTab = getTabFromUrl();
         if (currentUrlTab) {

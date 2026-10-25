@@ -188,7 +188,7 @@ export function AdminSidebar({
     },
     staleTime: 10000,
     refetchInterval: 15000,
-    enabled: userRole !== 'sales' && propPendingPayoutsCount === undefined,
+    enabled: propPendingPayoutsCount === undefined,
   });
 
   const resolvedPendingPayouts = useMemo(() => {
@@ -199,71 +199,11 @@ export function AdminSidebar({
     return 0;
   }, [propPendingPayoutsCount, payoutsData]);
 
-  // Navigation categories with dropdown items matching user requested 3-role RBAC:
+  // Navigation categories with dropdown items matching RBAC:
   // - superadmin: SEMUA MENU (All 7 groups, 24 items)
   // - admin: HANYA BEBERAPA MENU (Operational groups only)
-  // - sales: KHUSUS SALES SAJA (Portal Penjualan group only)
   const navGroups: NavGroup[] = useMemo(() => {
-    // 1. Role: Sales -> ONLY Sales Portal items!
-    if (userRole === 'sales') {
-      return [
-        {
-          id: 'sales-portal',
-          label: 'PORTAL PENJUALAN',
-          icon: Share2,
-          items: [
-            {
-              id: 'sales-overview',
-              label: 'Ringkasan Performa',
-              icon: LayoutDashboard,
-              description: 'KPI komisi, link referral, & ringkasan penjualan',
-            },
-            {
-              id: 'sales-catalog',
-              label: 'Katalog & Komisi',
-              icon: Package,
-              badge: metrics?.total !== undefined ? metrics.total : '230+',
-              badgeVariant: 'primary',
-              description: 'Katalog toko & kalkulasi estimasi komisi',
-            },
-            {
-              id: 'sales-links',
-              label: 'Tautan & Materi Promo',
-              icon: Share2,
-              description: 'Link kustom UTM & template teks copywriting',
-            },
-            {
-              id: 'sales-orders',
-              label: 'Pesanan Referral Saya',
-              icon: ShoppingBag,
-              description: 'Daftar pesanan dari link referral Anda',
-            },
-            {
-              id: 'sales-network',
-              label: 'Bonus Tim & Teman',
-              icon: Users,
-              badge: 'Komisi Tim',
-              badgeVariant: 'success',
-              description: 'Bonus pasif dari teman yang diajak jadi sales',
-            },
-            {
-              id: 'sales-wallet',
-              label: 'Dompet & Pencairan',
-              icon: Wallet,
-              description: 'Saldo siap tarik & pengajuan penarikan dana',
-            },
-            {
-              id: 'sales-academy',
-              label: 'Panduan & Edukasi',
-              icon: Award,
-              description: 'Pedoman promosi, FAQ komisi, & bantuan admin',
-            },
-          ],
-        },
-      ];
-    }
-
-    // 2. Role: Admin -> Operational items only
+    // 1. Role: Admin -> Operational items only
     if (userRole === 'admin') {
       return [
         {
@@ -606,9 +546,6 @@ export function AdminSidebar({
 
   // Accordion state: which groups are open
   const getInitialOpenGroups = (): Record<string, boolean> => {
-    if (userRole === 'sales') {
-      return { 'sales-portal': true };
-    }
     return {
       overview: true,
       catalog: true,
@@ -622,13 +559,6 @@ export function AdminSidebar({
 
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(getInitialOpenGroups);
 
-  // Sync open groups if role switches
-  useEffect(() => {
-    if (userRole === 'sales') {
-      setOpenGroups({ 'sales-portal': true });
-    }
-  }, [userRole]);
-
   // Auto-expand group if activeTab changes to a child within it
   useEffect(() => {
     const parentGroup = navGroups.find((g) => g.items.some((item) => item.id === activeTab));
@@ -637,42 +567,7 @@ export function AdminSidebar({
     }
   }, [activeTab, navGroups]);
 
-  // Monetira Sliding Indicator Measurement
-  const navContainerRef = React.useRef<HTMLDivElement>(null);
-  const [indicatorStyle, setIndicatorStyle] = useState({
-    top: 0,
-    height: 0,
-    opacity: 0,
-  });
 
-  const updateIndicator = React.useCallback(() => {
-    if (!navContainerRef.current) return;
-    const activeEl = navContainerRef.current.querySelector<HTMLElement>(
-      `[data-active-tab="${activeTab}"]`
-    );
-    if (activeEl) {
-      const containerRect = navContainerRef.current.getBoundingClientRect();
-      const itemRect = activeEl.getBoundingClientRect();
-      const top = itemRect.top - containerRect.top + navContainerRef.current.scrollTop;
-      setIndicatorStyle({
-        top,
-        height: itemRect.height,
-        opacity: 1,
-      });
-    } else {
-      setIndicatorStyle((prev) => ({ ...prev, opacity: 0 }));
-    }
-  }, [activeTab]);
-
-  useEffect(() => {
-    updateIndicator();
-    const timer = setTimeout(updateIndicator, 50);
-    const timer2 = setTimeout(updateIndicator, 240);
-    return () => {
-      clearTimeout(timer);
-      clearTimeout(timer2);
-    };
-  }, [activeTab, openGroups, updateIndicator]);
 
   // Accessibility: Close mobile drawer on Escape key press
   useEffect(() => {

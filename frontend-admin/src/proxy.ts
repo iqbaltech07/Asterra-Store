@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { getSessionCookie } from 'better-auth/cookies';
+import { getSalesBaseUrl } from '@/lib/utils/url';
 
 /**
  * Checks for a valid Better Auth session across requests.
@@ -40,7 +41,9 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   if (pathname.startsWith('/admin')) {
     if (pathname === '/admin/login') {
       const isLoggedOut = request.nextUrl.searchParams.get('logged_out') === '1';
-      if (isLoggedOut) {
+      const isSalesForbidden = request.nextUrl.searchParams.get('error') === 'sales_forbidden';
+
+      if (isLoggedOut || isSalesForbidden) {
         const response = applySecurityHeaders(NextResponse.next());
         ['better-auth.session_token', '__Secure-better-auth.session_token', 'asterra_admin_session', 'asterra_session'].forEach(
           (cookieName) => {
@@ -63,31 +66,10 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     }
   }
 
-  // 2. Sales Portal Page Routes Protection (/sales/*)
+  // 2. Cross-Portal Redirect: /sales/* belongs to Sales Portal (frontend-sales)
   if (pathname.startsWith('/sales')) {
-    if (pathname === '/sales/login') {
-      const isLoggedOut = request.nextUrl.searchParams.get('logged_out') === '1';
-      if (isLoggedOut) {
-        const response = applySecurityHeaders(NextResponse.next());
-        ['better-auth.session_token', '__Secure-better-auth.session_token', 'asterra_admin_session', 'asterra_session'].forEach(
-          (cookieName) => {
-            response.cookies.set(cookieName, '', { path: '/', maxAge: 0, expires: new Date(0) });
-          }
-        );
-        return response;
-      }
-
-      if (isAuthenticated) {
-        return NextResponse.redirect(new URL('/sales', request.url));
-      }
-      return applySecurityHeaders(NextResponse.next());
-    }
-
-    if (!isAuthenticated) {
-      const loginUrl = new URL('/sales/login', request.url);
-      loginUrl.searchParams.set('callbackUrl', pathname + search);
-      return NextResponse.redirect(loginUrl);
-    }
+    const targetSalesUrl = new URL(pathname + search, getSalesBaseUrl());
+    return NextResponse.redirect(targetSalesUrl);
   }
 
   // 3. Admin API Route Protection (/api/v1/admin/*)

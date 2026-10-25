@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getAdminBaseUrl } from '@/lib/utils/url';
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,8 +10,11 @@ export async function POST(request: NextRequest) {
 
     const backendRes = await fetch(`${backendUrl}/api/v1/admin/auth/login`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
+      headers: {
+        'Content-Type': 'application/json',
+        'x-client-portal': 'sales',
+      },
+      body: JSON.stringify({ ...body, portal: 'sales' }),
     });
 
     let data;
@@ -33,6 +37,21 @@ export async function POST(request: NextRequest) {
 
     if (!backendRes.ok || !data.success) {
       return NextResponse.json(data, { status: backendRes.status });
+    }
+
+    // STRICT ROLE GUARD: Reject non-sales accounts from sales portal
+    if (data.admin?.role !== 'sales') {
+      return NextResponse.json(
+        {
+          success: false,
+          adminPortalUrl: `${getAdminBaseUrl()}/admin/login`,
+          error: {
+            code: 'PORTAL_ACCESS_DENIED',
+            message: 'Akun ini terdaftar sebagai Administrator. Silakan masuk melalui Admin Console Asterra Store.',
+          },
+        },
+        { status: 403 }
+      );
     }
 
     const response = NextResponse.json(data, { status: 200 });

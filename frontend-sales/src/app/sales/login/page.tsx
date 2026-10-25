@@ -19,6 +19,7 @@ import {
   faLock,
   faEnvelope,
   faArrowLeft,
+  faArrowRight,
   faSpinner,
   faCircleExclamation,
   faKey,
@@ -26,6 +27,7 @@ import {
   faCircleCheck,
 } from '@fortawesome/free-solid-svg-icons';
 import { AsterraLogo } from '@/components/ui/asterra-logo';
+import { getAdminBaseUrl } from '@/lib/utils/url';
 import { Suspense } from 'react';
 
 function SalesLoginContent() {
@@ -41,6 +43,17 @@ function SalesLoginContent() {
   const [isVerifyingSession, setIsVerifyingSession] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [adminPortalUrl, setAdminPortalUrl] = useState<string | null>(null);
+
+  // Check for error parameters (e.g. redirected admin user)
+  useEffect(() => {
+    if (searchParams.get('error') === 'admin_forbidden') {
+      setErrorMessage(
+        'Akun Anda memiliki hak akses Administrator. Portal Sales ini khusus untuk Mitra Sales Asterra Store.'
+      );
+      setAdminPortalUrl(`${getAdminBaseUrl()}/admin/login`);
+    }
+  }, [searchParams]);
 
   // Check if sales partner is already logged in
   useEffect(() => {
@@ -61,6 +74,18 @@ function SalesLoginContent() {
         if (res.ok) {
           const data = await res.json();
           if (data.authenticated) {
+            const role = (data.admin?.role || '').toLowerCase();
+            if (role !== 'sales') {
+              if (typeof window !== 'undefined') {
+                localStorage.removeItem('asterra_admin_token');
+                localStorage.removeItem('asterra_admin_user');
+              }
+              await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+              setErrorMessage('Akun Anda memiliki hak akses Administrator. Silakan gunakan Admin Console Asterra.');
+              setAdminPortalUrl(`${getAdminBaseUrl()}/admin/login`);
+              setIsVerifyingSession(false);
+              return;
+            }
             router.replace('/sales');
             return;
           }
@@ -85,6 +110,9 @@ function SalesLoginContent() {
 
       const data = await response.json();
       if (!response.ok || !data.success) {
+        if (data.adminPortalUrl) {
+          setAdminPortalUrl(data.adminPortalUrl);
+        }
         throw new Error(
           data.error?.message ||
             'Email atau kata sandi tidak cocok. Pastikan Anda sudah terdaftar sebagai mitra sales.'
@@ -112,6 +140,7 @@ function SalesLoginContent() {
     e.preventDefault();
     setErrorMessage(null);
     setSuccessMessage(null);
+    setAdminPortalUrl(null);
 
     if (!email || !password) {
       setErrorMessage('Email akun sales dan kata sandi wajib diisi.');
@@ -179,9 +208,22 @@ function SalesLoginContent() {
           <CardContent className="space-y-4">
             {/* Feedback Notifications */}
             {errorMessage && (
-              <div className="p-3 rounded-md bg-status-error/10 border border-status-error/20 flex items-start gap-2.5 text-xs text-status-error animate-in fade-in">
-                <FontAwesomeIcon icon={faCircleExclamation} className="text-sm shrink-0 mt-0.5 text-status-error" />
-                <span className="leading-relaxed">{errorMessage}</span>
+              <div className="p-3 rounded-md bg-status-error/10 border border-status-error/20 flex flex-col gap-2 text-xs text-status-error animate-in fade-in">
+                <div className="flex items-start gap-2.5">
+                  <FontAwesomeIcon icon={faCircleExclamation} className="text-sm shrink-0 mt-0.5 text-status-error" />
+                  <span className="leading-relaxed">{errorMessage}</span>
+                </div>
+                {adminPortalUrl && (
+                  <div className="pt-1 pl-6">
+                    <a
+                      href={adminPortalUrl}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-status-error text-white font-medium hover:bg-status-error/90 transition-colors shadow-sm"
+                    >
+                      <span>Buka Admin Console Asterra</span>
+                      <FontAwesomeIcon icon={faArrowRight} className="w-3 h-3" />
+                    </a>
+                  </div>
+                )}
               </div>
             )}
 
