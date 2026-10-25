@@ -209,6 +209,32 @@ async def admin_auth_me(request: Request):
             "admin": None,
         }
 
+    # Verify that the account actually still exists and is active in database
+    user_email = str(payload.get("email") or "").strip().lower()
+    user_role = payload.get("role", "admin")
+
+    exists = False
+    if user_role == "sales":
+        p = PartnerService.find_by_email(user_email)
+        a = AdminUserService.find_by_email(user_email)
+        if (p and str(p.get("status", "")).lower() == "active") or (a and a.get("isActive", True)):
+            exists = True
+    else:
+        a = AdminUserService.find_by_email(user_email)
+        if a and a.get("isActive", True):
+            exists = True
+
+    if not exists:
+        return {
+            "success": False,
+            "authenticated": False,
+            "admin": None,
+            "error": {
+                "code": "ACCOUNT_NOT_FOUND",
+                "message": "Akun tidak ditemukan atau telah dihapus dari sistem.",
+            },
+        }
+
     return {
         "success": True,
         "authenticated": True,

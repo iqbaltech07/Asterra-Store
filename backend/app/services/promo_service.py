@@ -26,7 +26,7 @@ class PromoService:
             db = SessionLocal()
             try:
                 db_promos = db.query(PromoCode).all()
-                if db_promos:
+                if db_promos is not None:
                     data = [p.to_dict() for p in db_promos]
                     cls._promos = data
                     cls.save_promos()

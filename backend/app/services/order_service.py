@@ -47,7 +47,7 @@ class OrderService:
             db = SessionLocal()
             try:
                 db_orders = db.query(Order).options(joinedload(Order.items)).order_by(Order.created_at.desc()).all()
-                if db_orders:
+                if db_orders is not None:
                     normalized = [cls._normalize_order(o.to_dict()) for o in db_orders]
                     cls._orders = normalized
                     cls._last_loaded = datetime.utcnow()

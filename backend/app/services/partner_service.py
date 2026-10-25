@@ -40,7 +40,7 @@ class PartnerService:
             db = SessionLocal()
             try:
                 db_partners = db.query(SalesPartner).order_by(SalesPartner.created_at.asc()).all()
-                if db_partners:
+                if db_partners is not None:
                     data = [p.to_dict() for p in db_partners]
                     cls._partners = data
                     cls._last_loaded = datetime.utcnow()
@@ -200,31 +200,26 @@ class PartnerService:
         if identifier:
             partner = cls.find_by_email(identifier) or cls.find_by_code(identifier) or cls.find_by_id(identifier)
 
-        # Fallback to first active partner if not found
-        if not partner and len(partners) > 0:
-            partner = partners[0]
-
         if not partner:
-            # Minimal default
             return {
-                "id": "partner-default",
-                "code": "AST-FOUNDER",
-                "name": "Mitra Sales Asterra",
-                "email": "sales@asterra.store",
-                "whatsapp": "081234567890",
-                "tier": "Standard (10%)",
-                "rate": 10,
-                "totalClicks": 128,
-                "totalOrders": 14,
-                "totalRevenue": 1450000,
-                "unpaidCommission": 145000,
-                "pendingCommission": 29000,
-                "paidCommission": 450000,
-                "networkCommission": 34000,
-                "bankName": "Bank Central Asia (BCA)",
-                "bankAccount": "8965123456",
-                "status": "active",
-                "joinedAt": "2026-10-01T00:00:00.000Z",
+                "id": "",
+                "code": "",
+                "name": "Mitra Sales Tidak Ditemukan",
+                "email": "",
+                "whatsapp": "",
+                "tier": "None",
+                "rate": 0,
+                "totalClicks": 0,
+                "totalOrders": 0,
+                "totalRevenue": 0,
+                "unpaidCommission": 0,
+                "pendingCommission": 0,
+                "paidCommission": 0,
+                "networkCommission": 0,
+                "bankName": "-",
+                "bankAccount": "-",
+                "status": "inactive",
+                "joinedAt": datetime.utcnow().isoformat() + "Z",
                 "payoutRequests": [],
             }
 

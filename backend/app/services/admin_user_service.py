@@ -25,7 +25,7 @@ class AdminUserService:
             db = SessionLocal()
             try:
                 db_admins = db.query(AdminUser).order_by(AdminUser.created_at.asc()).all()
-                if db_admins:
+                if db_admins is not None:
                     admins_data = [a.to_dict(include_hash=True) for a in db_admins]
                     cls._admins = admins_data
                     # Sync to disk as local backup cache

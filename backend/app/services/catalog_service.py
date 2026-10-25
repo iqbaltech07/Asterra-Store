@@ -96,7 +96,7 @@ class CatalogService:
             db = SessionLocal()
             try:
                 db_prods = db.query(Product).order_by(Product.created_at.desc()).all()
-                if db_prods:
+                if db_prods is not None:
                     normalized = [cls._normalize_product(p.to_dict()) for p in db_prods]
                     cls._cached_products = normalized
                     cls.save_products()
