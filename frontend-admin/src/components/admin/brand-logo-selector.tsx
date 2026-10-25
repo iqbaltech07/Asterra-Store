@@ -89,7 +89,7 @@ export function BrandLogoSelector({
     setHasSearched(true);
 
     try {
-      const res = await fetch(`/api/brands/search?q=${encodeURIComponent(q)}`);
+      const res = await fetch(`/api/v1/brands/search?q=${encodeURIComponent(q)}`);
       if (res.ok) {
         const json = await res.json();
         if (json.success && Array.isArray(json.data)) {
