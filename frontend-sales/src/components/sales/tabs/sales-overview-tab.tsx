@@ -360,6 +360,10 @@ export function SalesOverviewTab({
             title="Grafik Performa Penjualan & Komisi Sales"
             subtitle="Pergerakan omzet referral dan estimasi komisi Anda berdasarkan periode waktu"
             legendLabel="Komisi Referral Terverifikasi"
+            orders={orders}
+            partnerRate={partnerRate}
+            totalCommission={totalCommissionVal}
+            onNavigateAnalytics={() => onTabChange && onTabChange('sales-orders')}
           />
 
           {/* Aktivitas Pesanan Referral Terbaru Table Card */}
