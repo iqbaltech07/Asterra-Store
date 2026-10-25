@@ -1220,41 +1220,10 @@ function AdminPageContent() {
             </div>
           </div>
 
-          {/* Row 2: Status Auto-Sync on Left & Page Action Buttons on Right (hidden on Dashboard for 100% screenshot parity) */}
-          {activeTab !== 'dashboard' && (
-            <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100">
-            {/* Status Auto-Sync Engine */}
-            <div
-              className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 rounded-full bg-slate-50/80 border border-slate-200/70 text-xs shadow-2xs select-none"
-              title={sseConnected ? 'Dual-Channel Auto-Sync Aktif (SSE Gateway + Smart Polling)' : 'Auto-Sync Mode Terjadwal (Smart Polling)'}
-            >
-              <span className="relative flex h-2 w-2 shrink-0">
-                {sseConnected ? (
-                  <>
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                  </>
-                ) : (
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-                )}
-              </span>
-              <span className="font-medium text-slate-700 text-[11px] whitespace-nowrap">
-                {isGlobalFetching > 0 ? (
-                  <span className="flex items-center gap-1 text-[#2563EB]">
-                    <RefreshCw className="w-3 h-3 animate-spin shrink-0" />
-                    <span>Menyinkronkan...</span>
-                  </span>
-                ) : sseConnected ? (
-                  <span className="text-emerald-700 font-semibold">Auto-Sync Live</span>
-                ) : (
-                  <span className="text-amber-700 font-semibold">Auto-Sync (Polling)</span>
-                )}
-              </span>
-              <span className="text-[10px] text-slate-400 font-mono hidden sm:inline border-l border-slate-200 pl-2">
-                {lastSyncTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-              </span>
-            </div>
-
+          {/* Row 2: Page Action Buttons on Right (only shown on tabs with actions) */}
+          {activeTab !== 'dashboard' &&
+            ((activeTab === 'products' || activeTab === 'vip-explorer') || adminUser?.role === 'sales') && (
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
             {/* Quick Action Buttons per Tab */}
             <div className="flex items-center gap-2 ml-auto">
               {(activeTab === 'products' || activeTab === 'vip-explorer') &&
@@ -1385,10 +1354,9 @@ function AdminPageContent() {
                     )}
                   </div>
                   <div className="flex items-center gap-1.5 mt-0.5 sm:mt-1 truncate">
-                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${metrics?.isVipConnected ? 'bg-[#16A36A] animate-pulse' : 'bg-[#D97706]'}`} />
                     <span className={`text-[10px] sm:text-[11px] font-medium truncate ${metrics?.isVipConnected ? 'text-[#16A36A]' : 'text-[#D97706]'}`}>
                       {metrics?.isVipConnected
-                        ? `Live (${metrics.vipUsername || 'Aktif'})`
+                        ? (metrics.vipUsername ? `Akun: ${metrics.vipUsername}` : 'Terhubung')
                         : metrics?.vipStatusMessage || 'Belum Terhubung'}
                     </span>
                   </div>

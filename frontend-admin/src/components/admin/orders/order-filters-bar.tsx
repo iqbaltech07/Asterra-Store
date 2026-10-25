@@ -37,7 +37,7 @@ export function OrderFiltersBar({
   searchQuery,
   setSearchQuery,
   metrics,
-  sseConnected,
+  sseConnected: _sseConnected,
   isMuted,
   audioUnlocked,
   onToggleMute,
@@ -109,33 +109,8 @@ export function OrderFiltersBar({
         </button>
       </div>
 
-      {/* Search Input, Audio Controls & Auto-Sync Bar */}
+      {/* Search Input, Audio Controls & Action Bar */}
       <div className="flex flex-wrap items-center gap-2">
-        {/* SSE & Auto-Sync Status Badge */}
-        <div
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-medium border border-border bg-surface-raised transition-all select-none"
-          title={
-            sseConnected
-              ? 'Auto-sinkronisasi realtime aktif via SSE (0ms push)'
-              : 'Auto-sinkronisasi aktif via fallback background polling (setiap 5 detik)'
-          }
-        >
-          <span
-            className={`w-2 h-2 rounded-full transition-colors ${
-              sseConnected ? 'bg-emerald-500 animate-pulse' : 'bg-sky-500 animate-ping'
-            }`}
-          />
-          <span
-            className={
-              sseConnected
-                ? 'text-emerald-700 dark:text-emerald-400 font-semibold'
-                : 'text-sky-700 dark:text-sky-400 font-semibold'
-            }
-          >
-            {sseConnected ? 'Auto-Sync Live' : 'Auto-Sync (Polling)'}
-          </span>
-        </div>
-
         {/* Sound Mute/Unmute Toggle */}
         <Button
           type="button"

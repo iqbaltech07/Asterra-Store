@@ -187,7 +187,7 @@ export function AdminProvidersTab({ metrics, onNotify, onSyncVip }: AdminProvide
                       : 'bg-amber-50 text-amber-700 border-amber-200/60'
                   }`}
                 >
-                  ● {isConnected ? (isVip ? `Terhubung (${metrics?.vipUsername || 'Live'})` : 'Sehat (100%)') : 'Belum Terhubung'}
+                  {isConnected ? (isVip ? `Terhubung (${metrics?.vipUsername || 'Aktif'})` : 'Sehat (100%)') : 'Belum Terhubung'}
                 </Badge>
               </div>
 

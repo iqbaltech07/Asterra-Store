@@ -168,12 +168,6 @@ export function AdminSystemSettingsSuite({ activeTab, onNotify }: AdminSystemSet
               Atur trigger notifikasi otomatis pesanan baru, pembayaran berhasil, pengiriman akun instan, dan peringatan saldo supplier.
             </p>
           </div>
-
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className="text-xs font-semibold text-status-success border-status-success/30 bg-status-success/10">
-              WhatsApp Gateway: Online
-            </Badge>
-          </div>
         </div>
 
         {/* WhatsApp Gateway Credentials Box */}

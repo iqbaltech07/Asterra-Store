@@ -748,17 +748,16 @@ export function AdminSidebar({
         </button>
       </div>
 
-      {/* 2. Quick Live Status Bar matching Screenshot */}
-      <div className="px-4 pb-3 flex items-center justify-between text-xs">
-        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#1C2028] border border-white/10 text-emerald-400">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-[11px] font-medium text-slate-300">
-            Sistem: <strong className="text-emerald-400 font-semibold">Online</strong>
+      {/* Supplier / VIP Balance Bar */}
+      <div className="px-3 pb-2.5">
+        <div className="flex items-center justify-between px-3 py-1.5 rounded-xl bg-[#1C2028] border border-white/10 text-slate-300 text-xs">
+          <div className="flex items-center gap-2 text-slate-400">
+            <Wallet className="w-3.5 h-3.5 text-slate-400" />
+            <span className="text-[11px] font-medium">Saldo Supplier</span>
+          </div>
+          <span className="font-mono text-[11px] font-semibold text-slate-200">
+            Rp {(metrics?.vipBalance ?? 5979).toLocaleString('id-ID')}
           </span>
-        </div>
-        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#1C2028] border border-white/10 text-slate-300 font-mono text-[11px]">
-          <Wallet className="w-3.5 h-3.5 text-slate-400" />
-          <span>Rp {(metrics?.vipBalance ?? 5979).toLocaleString('id-ID')}</span>
         </div>
       </div>
 

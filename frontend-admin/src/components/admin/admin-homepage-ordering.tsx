@@ -1195,7 +1195,6 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
             <div className="p-4 sm:px-6 sm:py-4 border-b border-border flex items-center justify-between bg-surface">
               <div className="space-y-0.5">
                 <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#C96F55] animate-pulse" />
                   <h3 className="text-sm sm:text-base font-bold text-foreground">
                     Pilih Produk untuk Diprioritaskan
                   </h3>

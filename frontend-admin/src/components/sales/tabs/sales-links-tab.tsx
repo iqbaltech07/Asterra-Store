@@ -104,9 +104,8 @@ export function SalesLinksTab({
               >
                 <div className="space-y-2.5">
                   <div className="flex items-center justify-between gap-1 text-[11px]">
-                    <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200/60 flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                      <span>Aktif</span>
+                    <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+                      Aktif
                     </span>
                     <span className="text-[11px] text-foreground-muted flex items-center gap-1 font-mono">
                       <Calendar className="w-3 h-3" />
