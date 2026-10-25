@@ -1,1 +1,50 @@
-[]
+[
+  {
+    "id": "partner-1792904116023",
+    "name": "Marchelino Kurniawan",
+    "email": "marchelinokurniawan321@gmail.com",
+    "whatsapp": "089266881221",
+    "code": "AST-ACELINO-COOL",
+    "tier": "Standard (10%)",
+    "rate": 10,
+    "totalClicks": 2,
+    "bankName": "Bank Central Asia (BCA)",
+    "bankAccount": "-",
+    "status": "active",
+    "referredById": null,
+    "createdAt": "2026-10-25T04:55:16.035000",
+    "updatedAt": "2026-10-25T05:02:35.757000"
+  },
+  {
+    "id": "partner-1792904290667",
+    "name": "itschlz",
+    "email": "itschlz02@gmail.com",
+    "whatsapp": "085951334587",
+    "code": "AST-CHLZ-COOL",
+    "tier": "Standard (10%)",
+    "rate": 10,
+    "totalClicks": 0,
+    "bankName": "Bank Central Asia (BCA)",
+    "bankAccount": "-",
+    "status": "active",
+    "referredById": "partner-1792904116023",
+    "createdAt": "2026-10-25T04:58:10.674000",
+    "updatedAt": "2026-10-25T04:58:10.674000"
+  },
+  {
+    "id": "partner-1792905015502",
+    "name": "Iqbal",
+    "email": "network.iqbal007@gmail.com",
+    "whatsapp": "08966277715",
+    "code": "AST-IQBAL-3MD",
+    "tier": "Standard (10%)",
+    "rate": 10,
+    "totalClicks": 1,
+    "bankName": "Bank Central Asia (BCA)",
+    "bankAccount": "-",
+    "status": "active",
+    "referredById": "partner-1792904116023",
+    "createdAt": "2026-10-25T05:10:15.512000",
+    "updatedAt": "2026-10-25T05:11:19.387000"
+  }
+]

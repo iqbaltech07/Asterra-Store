@@ -131,15 +131,23 @@ class PartnerService:
                 if str(pr.get("status", "")).lower() in ["approved", "completed", "paid"]
             )
 
-            available_unpaid = max(0.0, final_comm - paid_commission)
+            # Network commissions from team
+            network_data = cls.get_network_for_partner(p_id or p_code)
+            final_net = float(network_data.get("finalNetworkBonus", 0))
+            pending_net = float(network_data.get("pendingNetworkBonus", 0))
+            net_comm = float(network_data.get("totalNetworkBonus", 0))
+
+            available_unpaid = max(0.0, (final_comm + final_net) - paid_commission)
+            total_pending = pending_comm + pending_net
 
             enriched.append({
                 **p,
                 "totalOrders": len(partner_orders),
                 "totalRevenue": total_revenue,
                 "unpaidCommission": available_unpaid,
-                "pendingCommission": pending_comm,
+                "pendingCommission": total_pending,
                 "paidCommission": paid_commission,
+                "networkCommission": net_comm,
                 "_count": {"orders": len(partner_orders)},
             })
 
@@ -248,11 +256,14 @@ class PartnerService:
             if str(p.get("status", "")).lower() in ["approved", "completed", "paid"]
         )
 
-        available_unpaid = max(0.0, final_comm - paid_comm)
-
         # Network commissions from team
         network_data = cls.get_network_for_partner(p_id or p_code)
         network_comm = float(network_data.get("totalNetworkBonus", 0))
+        final_net = float(network_data.get("finalNetworkBonus", 0))
+        pending_net = float(network_data.get("pendingNetworkBonus", 0))
+
+        available_unpaid = max(0.0, (final_comm + final_net) - paid_comm)
+        total_pending = pending_comm + pending_net
 
         return {
             "id": partner.get("id"),
@@ -266,9 +277,11 @@ class PartnerService:
             "totalOrders": len(partner_orders),
             "totalRevenue": total_revenue,
             "unpaidCommission": available_unpaid,
-            "pendingCommission": pending_comm,
+            "pendingCommission": total_pending,
             "paidCommission": paid_comm,
             "networkCommission": network_comm,
+            "finalNetworkCommission": final_net,
+            "pendingNetworkCommission": pending_net,
             "bankName": partner.get("bankName") or "Bank Central Asia (BCA)",
             "bankAccount": partner.get("bankAccount") or "8965123456",
             "status": partner.get("status", "active"),
