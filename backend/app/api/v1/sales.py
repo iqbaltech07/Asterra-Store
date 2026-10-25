@@ -484,10 +484,9 @@ def evaluate_product_campaign_price(
     }
 
 @router.get("/admin/campaigns", tags=["Admin Campaigns"])
-def get_admin_campaigns(status: Optional[str] = Query(None), response: Optional[Response] = None):
+def get_admin_campaigns(response: Response, status: Optional[str] = Query(None)):
     campaigns = CampaignService.get_all_campaigns(filter_status=status)
-    if response:
-        response.headers["Cache-Control"] = "no-cache, must-revalidate"
+    response.headers["Cache-Control"] = "no-cache, must-revalidate"
     return {
         "success": True,
         "data": campaigns,
