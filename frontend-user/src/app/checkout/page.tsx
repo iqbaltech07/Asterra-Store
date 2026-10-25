@@ -69,13 +69,48 @@ function CheckoutPageContent() {
   const isAuthenticated = Boolean(session?.user || legacyUser);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
-  // Form states
-  const [customerName, setCustomerName] = useState('');
-  const [customerEmail, setCustomerEmail] = useState('');
+  // Form states with immediate storage hydration to eliminate visual flickers
+  const [customerName, setCustomerName] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const rawUser = localStorage.getItem('asterra_user');
+        if (rawUser) {
+          const u = JSON.parse(rawUser);
+          if (u?.name) return u.name;
+        }
+      } catch {}
+    }
+    return '';
+  });
+  const [customerEmail, setCustomerEmail] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('asterra_customer_email');
+        if (stored) return stored.trim();
+        const rawUser = localStorage.getItem('asterra_user');
+        if (rawUser) {
+          const u = JSON.parse(rawUser);
+          if (u?.email) return u.email.trim();
+        }
+      } catch {}
+    }
+    return '';
+  });
   const [targetValue, setTargetValue] = useState('');
   const [targetZone, setTargetZone] = useState('');
   const [targetEmail, setTargetEmail] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const rawUser = localStorage.getItem('asterra_user');
+        if (rawUser) {
+          const u = JSON.parse(rawUser);
+          if (u?.phone) return u.phone.trim();
+        }
+      } catch {}
+    }
+    return '';
+  });
   const [customerNotes, setCustomerNotes] = useState('');
 
   // Auto-sync customer name and email from session
@@ -103,7 +138,14 @@ function CheckoutPageContent() {
     name: string;
   } | null>(null);
   const [referralDiscount, setReferralDiscount] = useState<number>(0);
-  const [isReferralDiscountUsed, setIsReferralDiscountUsed] = useState<boolean>(false);
+  const [isReferralDiscountUsed, setIsReferralDiscountUsed] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        return localStorage.getItem('asterra_ref_claimed') === 'true';
+      } catch {}
+    }
+    return false;
+  });
   const [activeCampaignSlug, setActiveCampaignSlug] = useState<string>('');
 
   // 0. Fetch active running promo campaigns
@@ -271,14 +313,29 @@ function CheckoutPageContent() {
       return;
     }
 
+    // Wait until auth session check finishes so we don't validate prematurely without user identity!
+    if (isSessionPending) {
+      return;
+    }
+
     let isCancelled = false;
     const checkRef = async () => {
       try {
-        const effectiveRefEmail = customerEmail.trim() || session?.user?.email || legacyUser?.email || '';
+        const isAlreadyClaimedLocally =
+          typeof window !== 'undefined' && localStorage.getItem('asterra_ref_claimed') === 'true';
+
+        const effectiveRefEmail =
+          customerEmail.trim() ||
+          session?.user?.email ||
+          legacyUser?.email ||
+          (typeof window !== 'undefined' ? localStorage.getItem('asterra_customer_email') || '' : '');
+
+        const effectivePhone = phoneNumber.trim();
+
         const query = new URLSearchParams({
           code: referralCode.trim(),
-          ...(effectiveRefEmail ? { email: effectiveRefEmail } : {}),
-          ...(phoneNumber.trim() ? { phone: phoneNumber.trim() } : {}),
+          ...(effectiveRefEmail ? { email: effectiveRefEmail.trim() } : {}),
+          ...(effectivePhone ? { phone: effectivePhone } : {}),
         });
         const res = await fetch(`/api/v1/affiliate/validate-referral?${query.toString()}`);
         const json = await res.json();
@@ -290,14 +347,14 @@ function CheckoutPageContent() {
             name: json.data.partnerName,
           });
 
-          if (json.data.discountEligible === false) {
-             // Diskon referral sudah 1x dipakai untuk akun ini
-             setReferralDiscount(0);
-             setIsReferralDiscountUsed(true);
-             // JANGAN HAPUS asterra_ref dan JANGAN HAPUS url param! Mitra sales tetap tercatat sah!
+          if (json.data.discountEligible === false || isAlreadyClaimedLocally) {
+            // Diskon referral sudah 1x dipakai untuk akun/perangkat ini
+            setReferralDiscount(0);
+            setIsReferralDiscountUsed(true);
+            // JANGAN HAPUS asterra_ref dan JANGAN HAPUS url param! Mitra sales tetap tercatat sah!
           } else {
-             setReferralDiscount(json.data.discountAmount || 1000);
-             setIsReferralDiscountUsed(false);
+            setReferralDiscount(json.data.discountAmount || 1000);
+            setIsReferralDiscountUsed(false);
           }
         } else {
           setReferralPartner(null);
@@ -317,7 +374,7 @@ function CheckoutPageContent() {
     return () => {
       isCancelled = true;
     };
-  }, [referralCode, customerEmail, targetValue, phoneNumber, targetRequirement.type]);
+  }, [referralCode, customerEmail, phoneNumber, session, isSessionPending, legacyUser]);
 
   // Default fallback ensuring zero-delay rendering for users
   const DEFAULT_PUBLIC_CONFIG: PublicPaymentConfig = {
