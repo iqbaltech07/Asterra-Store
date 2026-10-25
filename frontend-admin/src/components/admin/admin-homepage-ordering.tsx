@@ -123,15 +123,22 @@ export interface AdminProductGroup {
 }
 
 export function ProductBrandLogo({ name, className = 'w-10 h-10' }: { name: string; className?: string }) {
+  const [hasError, setHasError] = useState(false);
   const logoUrl = resolveBrandLogo(name);
   const n = (name || '').toLowerCase();
 
-  if (logoUrl) {
+  if (logoUrl && !hasError) {
     const isDarkLogo = n.includes('spotify') || n.includes('netflix') || n.includes('mobile legend') || n.includes('pubg');
     return (
       <div className={`${className} ${isDarkLogo ? 'bg-slate-950 border-slate-800' : 'bg-white border-border/80'} rounded-xl border flex items-center justify-center p-1 shadow-2xs shrink-0 overflow-hidden`}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={logoUrl} alt={name} className="w-full h-full object-contain" draggable={false} />
+        <img
+          src={logoUrl}
+          alt={name}
+          className="w-full h-full object-contain"
+          draggable={false}
+          onError={() => setHasError(true)}
+        />
       </div>
     );
   }

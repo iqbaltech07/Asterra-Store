@@ -2,7 +2,7 @@
   "canva": {
     "name": "Canva",
     "domain": "canva.com",
-    "icon": "https://cdn.brandfetch.io/id9mVQlyB1/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793023757220idOZh3WAwyoemyu-QF",
+    "icon": "https://cdn.brandfetch.io/id9mVQlyB1/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793027472318idOZh3WAwy_qfRsVgJ",
     "brandId": "id9mVQlyB1",
     "verified": true,
     "claimed": true
@@ -10,7 +10,7 @@
   "netflix": {
     "name": "Netflix",
     "domain": "netflix.com",
-    "icon": "https://cdn.brandfetch.io/ideQwN5lBE/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793023883538idOZh3WAwyFSpMyenO",
+    "icon": "https://cdn.brandfetch.io/ideQwN5lBE/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793027472790idOZh3WAwy2y3rJMTs",
     "brandId": "ideQwN5lBE",
     "verified": true,
     "claimed": true
@@ -18,7 +18,7 @@
   "spotify": {
     "name": "Spotify",
     "domain": "spotify.com",
-    "icon": "https://cdn.brandfetch.io/id20mQyGeY/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793023884469idOZh3WAwyRQr-rkA8",
+    "icon": "https://cdn.brandfetch.io/id20mQyGeY/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793027473639idOZh3WAwyibUeT2DI",
     "brandId": "id20mQyGeY",
     "verified": true,
     "claimed": true
@@ -26,23 +26,39 @@
   "chatgpt": {
     "name": "ChatGPT",
     "domain": "chatgpt.com",
-    "icon": "https://cdn.brandfetch.io/id2UDPob7G/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793023885715idOZh3WAwyqSC5YBUT",
+    "icon": "https://cdn.brandfetch.io/id2UDPob7G/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793027483031idOZh3WAwyHnFHGiET",
     "brandId": "id2UDPob7G",
     "verified": true,
     "claimed": false
   },
+  "openai": {
+    "name": "OpenAI",
+    "domain": "openai.com",
+    "icon": "https://cdn.brandfetch.io/idR3duQxYl/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793027484133idOZh3WAwyyJc-CdrP",
+    "brandId": "idR3duQxYl",
+    "verified": true,
+    "claimed": true
+  },
   "gemini": {
     "name": "Gemini",
-    "domain": "gemini.com",
-    "icon": "https://cdn.brandfetch.io/id08hfGdfR/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793023886694idOZh3WAwy4pOEqhRK",
-    "brandId": "id08hfGdfR",
+    "domain": "google.com",
+    "icon": "https://cdn.brandfetch.io/id6O2oGzv-/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793027484748idOZh3WAwy74DcQgZs",
+    "brandId": "id6O2oGzv-",
     "verified": true,
     "claimed": false
+  },
+  "google": {
+    "name": "Google",
+    "domain": "google.com",
+    "icon": "https://cdn.brandfetch.io/id6O2oGzv-/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793027484748idOZh3WAwy74DcQgZs",
+    "brandId": "id6O2oGzv-",
+    "verified": true,
+    "claimed": true
   },
   "alight motion": {
     "name": "Alight Motion",
     "domain": "alightcreative.com",
-    "icon": "https://cdn.brandfetch.io/idJZOpdSzq/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793023887626idOZh3WAwy3CpX07LP",
+    "icon": "https://cdn.brandfetch.io/idJZOpdSzq/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793027485636idOZh3WAwyu2EbUelQ",
     "brandId": "idJZOpdSzq",
     "verified": false,
     "claimed": false
@@ -50,7 +66,7 @@
   "capcut": {
     "name": "CapCut",
     "domain": "capcut.com",
-    "icon": "https://cdn.brandfetch.io/idUmqKFgE3/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793023888576idOZh3WAwyYTjngD9q",
+    "icon": "https://cdn.brandfetch.io/idUmqKFgE3/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793027486057idOZh3WAwyqchngBlV",
     "brandId": "idUmqKFgE3",
     "verified": true,
     "claimed": false
@@ -58,23 +74,23 @@
   "vidio": {
     "name": "Vidio",
     "domain": "vidio.com",
-    "icon": "https://cdn.brandfetch.io/idqasDdtIB/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793023889431idOZh3WAwyIgSWu1sG",
+    "icon": "https://cdn.brandfetch.io/idqasDdtIB/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793027468196idOZh3WAwyIFUzAvnO",
     "brandId": "idqasDdtIB",
-    "verified": false,
+    "verified": true,
     "claimed": false
   },
   "viu": {
-    "name": "VIU",
-    "domain": "viu.ca",
-    "icon": "https://cdn.brandfetch.io/id__Aq1cQT/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793023889846idOZh3WAwyXh-T3F78",
-    "brandId": "id__Aq1cQT",
-    "verified": false,
+    "name": "Viu",
+    "domain": "viu.com",
+    "icon": "https://cdn.brandfetch.io/idgqyDfIeT/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793027466816idOZh3WAwyPirrLuuZ",
+    "brandId": "idgqyDfIeT",
+    "verified": true,
     "claimed": false
   },
   "wetv": {
     "name": "WeTV",
     "domain": "wetv.vip",
-    "icon": "https://cdn.brandfetch.io/idp2rkmRV6/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793023890403idOZh3WAwyPG_oYATb",
+    "icon": "https://cdn.brandfetch.io/idp2rkmRV6/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793027467285idOZh3WAwyuZrx29rO",
     "brandId": "idp2rkmRV6",
     "verified": true,
     "claimed": false
@@ -87,10 +103,18 @@
     "verified": true,
     "claimed": false
   },
+  "bstation": {
+    "name": "Bstation",
+    "domain": "bstation.net",
+    "icon": "https://cdn.brandfetch.io/idJarLS8mp/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793023891364idOZh3WAwysP5f9nO2",
+    "brandId": "idJarLS8mp",
+    "verified": true,
+    "claimed": false
+  },
   "iqiyi": {
-    "name": "iQIYI.com",
+    "name": "iQIYI",
     "domain": "iqiyi.com",
-    "icon": "https://cdn.brandfetch.io/idy_RwerrN/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793023892314idOZh3WAwyd5mDJMBX",
+    "icon": "https://cdn.brandfetch.io/idy_RwerrN/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793027471879idOZh3WAwyMjmOBsw1",
     "brandId": "idy_RwerrN",
     "verified": true,
     "claimed": false
@@ -98,31 +122,47 @@
   "mobile legends": {
     "name": "Mobile Legends",
     "domain": "mobilelegends.com",
-    "icon": "https://cdn.brandfetch.io/idD9JU0j92/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793023893276idOZh3WAwy3KJfUAos",
+    "icon": "https://cdn.brandfetch.io/idD9JU0j92/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793027486902idOZh3WAwyJ8ISAiE8",
     "brandId": "idD9JU0j92",
     "verified": false,
     "claimed": false
   },
+  "pubg": {
+    "name": "PUBG",
+    "domain": "pubg.com",
+    "icon": "https://cdn.brandfetch.io/idvXXFWwhd/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793027413613idOZh3WAwyiS2JNIjn",
+    "brandId": "idvXXFWwhd",
+    "verified": true,
+    "claimed": false
+  },
   "pubg mobile": {
     "name": "PUBG MOBILE",
-    "domain": "pubgmobile.jp",
-    "icon": "https://cdn.brandfetch.io/idwl84-2_S/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793023893848idOZh3WAwyPeZBtbmZ",
-    "brandId": "idwl84-2_S",
-    "verified": false,
+    "domain": "pubgmobile.com",
+    "icon": "https://cdn.brandfetch.io/idvXXFWwhd/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793027413613idOZh3WAwyiS2JNIjn",
+    "brandId": "idvXXFWwhd",
+    "verified": true,
     "claimed": false
   },
   "youtube": {
     "name": "YouTube",
     "domain": "youtube.com",
-    "icon": "https://cdn.brandfetch.io/idVfYwcuQz/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793023894808idOZh3WAwyH5qpOoI-",
+    "icon": "https://cdn.brandfetch.io/idVfYwcuQz/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793027469064idOZh3WAwyVyHXoxNV",
     "brandId": "idVfYwcuQz",
     "verified": true,
     "claimed": false
   },
-  "disney plus": {
-    "name": "Disney +",
+  "disney": {
+    "name": "Disney+",
     "domain": "disneyplus.com",
-    "icon": "https://cdn.brandfetch.io/idhQlYRiX2/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793023895841idOZh3WAwyjwtxf5tP",
+    "icon": "https://cdn.brandfetch.io/idhQlYRiX2/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793027488693idOZh3WAwy39dtTIig",
+    "brandId": "idhQlYRiX2",
+    "verified": true,
+    "claimed": false
+  },
+  "disney plus": {
+    "name": "Disney+",
+    "domain": "disneyplus.com",
+    "icon": "https://cdn.brandfetch.io/idhQlYRiX2/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793027488693idOZh3WAwy39dtTIig",
     "brandId": "idhQlYRiX2",
     "verified": true,
     "claimed": false
@@ -130,7 +170,7 @@
   "claude": {
     "name": "Claude",
     "domain": "claude.ai",
-    "icon": "https://cdn.brandfetch.io/idW5s392j1/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793023896338idOZh3WAwyQ0xNf592",
+    "icon": "https://cdn.brandfetch.io/idW5s392j1/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793027489605idOZh3WAwyLrj_K7-I",
     "brandId": "idW5s392j1",
     "verified": true,
     "claimed": false
@@ -138,7 +178,7 @@
   "midjourney": {
     "name": "Midjourney",
     "domain": "midjourney.com",
-    "icon": "https://cdn.brandfetch.io/id2zQLfAF7/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793023897276idOZh3WAwyMnY_VMAS",
+    "icon": "https://cdn.brandfetch.io/id2zQLfAF7/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793027490541idOZh3WAwyB7jq1Kg1",
     "brandId": "id2zQLfAF7",
     "verified": true,
     "claimed": false
@@ -146,7 +186,7 @@
   "adobe": {
     "name": "Adobe",
     "domain": "adobe.com",
-    "icon": "https://cdn.brandfetch.io/id_KsyK7J9/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793023897786idOZh3WAwycFb8YLxa",
+    "icon": "https://cdn.brandfetch.io/id_KsyK7J9/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793027491416idOZh3WAwyiHBfVrFi",
     "brandId": "id_KsyK7J9",
     "verified": true,
     "claimed": true
@@ -154,7 +194,7 @@
   "grammarly": {
     "name": "Grammarly",
     "domain": "grammarly.com",
-    "icon": "https://cdn.brandfetch.io/iddd_fYAYR/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793023898647idOZh3WAwy0XLCmxrw",
+    "icon": "https://cdn.brandfetch.io/iddd_fYAYR/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793027492263idOZh3WAwy5VSWQUdD",
     "brandId": "iddd_fYAYR",
     "verified": true,
     "claimed": true
