@@ -7,13 +7,14 @@
     "code": "AST-ACELINO-COOL",
     "tier": "Standard (10%)",
     "rate": 10,
-    "totalClicks": 2,
+    "totalClicks": 4,
     "bankName": "Bank Central Asia (BCA)",
     "bankAccount": "-",
     "status": "active",
     "referredById": null,
     "createdAt": "2026-10-25T04:55:16.035000",
-    "updatedAt": "2026-10-25T05:02:35.757000"
+    "updatedAt": "2026-10-25T08:45:11.813000",
+    "payoutRequests": []
   },
   {
     "id": "partner-1792904290667",
@@ -29,7 +30,8 @@
     "status": "active",
     "referredById": "partner-1792904116023",
     "createdAt": "2026-10-25T04:58:10.674000",
-    "updatedAt": "2026-10-25T04:58:10.674000"
+    "updatedAt": "2026-10-25T04:58:10.674000",
+    "payoutRequests": []
   },
   {
     "id": "partner-1792905015502",
@@ -39,12 +41,13 @@
     "code": "AST-IQBAL-3MD",
     "tier": "Standard (10%)",
     "rate": 10,
-    "totalClicks": 1,
+    "totalClicks": 3,
     "bankName": "Bank Central Asia (BCA)",
     "bankAccount": "-",
     "status": "active",
     "referredById": "partner-1792904116023",
     "createdAt": "2026-10-25T05:10:15.512000",
-    "updatedAt": "2026-10-25T05:11:19.387000"
+    "updatedAt": "2026-10-25T06:10:21.125000",
+    "payoutRequests": []
   }
 ]

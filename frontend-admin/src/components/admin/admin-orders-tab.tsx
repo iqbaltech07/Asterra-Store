@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Order } from '@/lib/orders-data';
 import { OrdersApi, OrdersApiResponse } from '@/lib/api-client';
-import { notificationSound } from '@/lib/utils/notification-sound';
+import { useAdminNotifications } from '@/context/admin-notification-context';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faArrowsRotate,
@@ -25,6 +25,15 @@ import { OrderDetailModal } from './orders/order-detail-modal';
 export function AdminOrdersTab() {
   const queryClient = useQueryClient();
 
+  // Centralized SSE & Notification State
+  const {
+    sseConnected,
+    isMuted,
+    audioUnlocked,
+    handleToggleMute,
+    handleTestSound,
+  } = useAdminNotifications();
+
   // Filters & Modal State
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -32,184 +41,12 @@ export function AdminOrdersTab() {
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [notification, setNotification] = useState<string | null>(null);
 
-  // SSE & Audio Notifications State
-  const [isMuted, setIsMuted] = useState(false);
-  const [audioUnlocked, setAudioUnlocked] = useState(false);
-  const [sseConnected, setSseConnected] = useState(false);
-
   const showNotification = (msg: string) => {
     setNotification(msg);
     setTimeout(() => {
       setNotification((curr) => (curr === msg ? null : curr));
     }, 4000);
   };
-
-  // Sync initial mute and audio unlock states & reconcile any offline events
-  useEffect(() => {
-    setIsMuted(notificationSound.isSoundMuted());
-    const unsub = notificationSound.onUnlockChange((unlocked) => {
-      setAudioUnlocked(unlocked);
-    });
-    // Reconcile missed events while dashboard was closed
-    notificationSound.reconcileOfflineEvents();
-    return unsub;
-  }, []);
-
-  const handleToggleMute = () => {
-    notificationSound.unlockAudio();
-    const nextMuted = notificationSound.toggleMute();
-    setIsMuted(nextMuted);
-    showNotification(nextMuted ? 'Suara notifikasi dibisukan (Muted)' : 'Suara notifikasi diaktifkan');
-  };
-
-  const handleTestSound = () => {
-    notificationSound.unlockAudio().then(() => {
-      notificationSound.play('order', { force: true });
-      showNotification('🔔 Menguji pemutaran suara pesanan masuk (order.mp3)');
-    });
-  };
-
-  // SSE Real-Time Listener with Exponential Backoff Auto-Reconnect
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    let eventSource: EventSource | null = null;
-    let reconnectTimeout: NodeJS.Timeout | null = null;
-    let retryAttempt = 0;
-    let isSubscribed = true;
-
-    const setupConnection = () => {
-      if (!isSubscribed) return;
-
-      if (eventSource) {
-        try {
-          eventSource.close();
-        } catch {}
-        eventSource = null;
-      }
-
-      try {
-        eventSource = new EventSource('/api/v1/events?role=admin');
-
-        eventSource.onopen = () => {
-          if (!isSubscribed) return;
-          setSseConnected(true);
-          retryAttempt = 0;
-        };
-
-        // Event: Pesanan Baru Dibuat -> Putar 'order'
-        eventSource.addEventListener('order:created', (e: MessageEvent) => {
-          if (!isSubscribed) return;
-          try {
-            const payload = e.data ? JSON.parse(e.data) : {};
-            const orderId = payload.order_id || payload.id;
-            notificationSound.play('order', { orderId, eventId: `${orderId}:created` });
-            queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
-            queryClient.invalidateQueries({ queryKey: ['admin-logs'] });
-            queryClient.invalidateQueries({ queryKey: ['admin-metrics'] });
-            if (orderId) {
-              showNotification(`🔔 Pesanan baru masuk: ${orderId}`);
-            }
-          } catch {
-            notificationSound.play('order');
-            queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
-          }
-        });
-
-        // Event: Pesanan Dibatalkan -> Putar 'cancel'
-        eventSource.addEventListener('order:cancelled', (e: MessageEvent) => {
-          if (!isSubscribed) return;
-          try {
-            const payload = e.data ? JSON.parse(e.data) : {};
-            const orderId = payload.order_id || payload.id;
-            notificationSound.play('cancel', { orderId, eventId: `${orderId}:cancelled` });
-            queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
-            queryClient.invalidateQueries({ queryKey: ['admin-logs'] });
-            queryClient.invalidateQueries({ queryKey: ['admin-metrics'] });
-            if (orderId) {
-              showNotification(`❌ Pesanan dibatalkan: ${orderId}`);
-            }
-          } catch {
-            notificationSound.play('cancel');
-            queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
-          }
-        });
-
-        // Event: Pembayaran Terverifikasi (Hanya perbarui data & toast, suara selesai khusus client)
-        eventSource.addEventListener('order:payment_verified', (e: MessageEvent) => {
-          if (!isSubscribed) return;
-          try {
-            const payload = e.data ? JSON.parse(e.data) : {};
-            const orderId = payload.order_id || payload.id;
-            queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
-            queryClient.invalidateQueries({ queryKey: ['admin-logs'] });
-            queryClient.invalidateQueries({ queryKey: ['admin-metrics'] });
-            if (orderId) {
-              showNotification(`💰 Pembayaran terverifikasi: ${orderId}`);
-            }
-          } catch {
-            queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
-          }
-        });
-
-        // Event: Perubahan Status Umum
-        eventSource.addEventListener('order:status_changed', (e: MessageEvent) => {
-          if (!isSubscribed) return;
-          try {
-            const payload = e.data ? JSON.parse(e.data) : {};
-            const orderId = payload.order_id || payload.id;
-            const status = String(payload.status || payload.new_status || '').toLowerCase();
-
-            // Jika dibatalkan, putar 'cancel'
-            if (status === 'cancelled' || status === 'expired' || status === 'batal') {
-              notificationSound.play('cancel', { orderId, eventId: `${orderId}:cancelled` });
-              if (orderId) showNotification(`❌ Pesanan ${orderId} dibatalkan.`);
-            }
-
-            queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
-            queryClient.invalidateQueries({ queryKey: ['admin-logs'] });
-            queryClient.invalidateQueries({ queryKey: ['admin-metrics'] });
-          } catch (err) {
-            console.error('SSE order:status_changed error', err);
-          }
-        });
-
-        eventSource.onerror = () => {
-          if (!isSubscribed) return;
-          setSseConnected(false);
-          try {
-            if (eventSource) eventSource.close();
-          } catch {}
-          eventSource = null;
-
-          retryAttempt++;
-          const delay = Math.min(1500 * Math.pow(1.5, retryAttempt - 1), 12000);
-          reconnectTimeout = setTimeout(() => {
-            setupConnection();
-          }, delay);
-        };
-      } catch (err) {
-        console.warn('[SSE] EventSource init error:', err);
-        setSseConnected(false);
-        reconnectTimeout = setTimeout(() => {
-          setupConnection();
-        }, 3000);
-      }
-    };
-
-    setupConnection();
-
-    return () => {
-      isSubscribed = false;
-      if (reconnectTimeout) clearTimeout(reconnectTimeout);
-      if (eventSource) {
-        try {
-          eventSource.close();
-        } catch {}
-        eventSource = null;
-      }
-    };
-  }, [queryClient]);
 
   // Fetch orders with React Query via centralized OrdersApi with industry-standard Dual-Channel Auto-Sync
   const {

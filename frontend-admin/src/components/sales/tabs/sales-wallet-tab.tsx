@@ -34,19 +34,70 @@ export function SalesWalletTab({ partner, onRefetchProfile }: SalesWalletTabProp
 
   const payoutMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch('/api/partners/payout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          amount: Number(payoutAmount),
-          bankName: payoutBank,
-          bankAccount: payoutAccount,
-          bankAccountName: payoutHolder,
-          notes: payoutNotes,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Gagal mengajukan penarikan');
+      // 1. Client-side input validation
+      const numAmount = Number(payoutAmount);
+      if (isNaN(numAmount) || numAmount < 50000) {
+        throw new Error('Minimal penarikan saldo komisi adalah Rp 50.000.');
+      }
+      if (numAmount > (partner?.unpaidCommission || 0)) {
+        throw new Error('Nominal penarikan melebihi saldo komisi yang siap ditarik.');
+      }
+      if (!payoutAccount.trim() || !payoutHolder.trim()) {
+        throw new Error('Nomor rekening/e-wallet dan nama pemilik rekening wajib diisi lengkap.');
+      }
+
+      const token = typeof window !== 'undefined' ? localStorage.getItem('asterra_admin_token') : null;
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      let res: Response;
+      try {
+        res = await fetch('/api/v1/sales/payout', {
+          method: 'POST',
+          headers,
+          credentials: 'include',
+          body: JSON.stringify({
+            partnerId: partner?.id,
+            amount: numAmount,
+            bankName: payoutBank,
+            bankAccount: payoutAccount.trim(),
+            bankAccountName: payoutHolder.trim(),
+            notes: payoutNotes.trim(),
+          }),
+        });
+      } catch {
+        throw new Error('Pengajuan belum berhasil dikirim. Periksa koneksi internet Anda dan silakan coba kembali beberapa saat lagi.');
+      }
+
+      // Safe Content-Type & status checking to prevent "Unexpected token '<' / <!DOCTYPE" JSON parsing errors
+      const contentType = res.headers.get('content-type') || '';
+      let data: any = null;
+
+      if (contentType.includes('application/json')) {
+        try {
+          data = await res.json();
+        } catch {
+          data = null;
+        }
+      } else {
+        // Log diagnostic information without exposing sensitive data
+        try {
+          const rawText = await res.text();
+          console.warn('[SalesWallet] Server returned non-JSON response status:', res.status, rawText.slice(0, 100));
+        } catch {}
+      }
+
+      if (!res.ok || !data || data.success === false) {
+        const errorMsg =
+          data?.message ||
+          (res.status === 401
+            ? 'Sesi Anda telah kedaluwarsa. Silakan login kembali.'
+            : 'Pengajuan belum berhasil dikirim. Silakan coba kembali beberapa saat lagi.');
+        throw new Error(errorMsg);
+      }
       return data;
     },
     onSuccess: (data) => {

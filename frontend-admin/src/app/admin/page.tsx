@@ -57,6 +57,7 @@ import { AdminMarketingSuite } from '@/components/admin/admin-marketing-suite';
 import { AdminAnalyticsSuite } from '@/components/admin/admin-analytics-suite';
 import { AdminSystemSettingsSuite } from '@/components/admin/admin-system-settings-suite';
 import { SalesConsoleSuite } from '@/components/sales/sales-console-suite';
+import { AdminNotificationProvider } from '@/context/admin-notification-context';
 import { ImageUploadDropzone, uploadFileToBlob } from '@/components/admin/image-upload-dropzone';
 import {
   Select,
@@ -1124,7 +1125,8 @@ function AdminPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F0F4F8] text-foreground flex font-sans selection:bg-primary/20 selection:text-primary relative">
+    <AdminNotificationProvider onNavigateTab={handleTabChange}>
+      <div className="min-h-screen bg-[#F0F4F8] text-foreground flex font-sans selection:bg-primary/20 selection:text-primary relative">
       {/* Subtle Luminous Top-Right Glow matching Screenshot */}
       <div className="absolute top-0 right-0 w-[600px] h-[350px] bg-gradient-to-bl from-blue-100/60 via-slate-100/40 to-transparent pointer-events-none rounded-bl-full blur-3xl -z-10" />
 
@@ -3381,6 +3383,7 @@ function AdminPageContent() {
       </footer>
     </div>
   </div>
+    </AdminNotificationProvider>
   );
 }
 

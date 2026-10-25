@@ -44,18 +44,61 @@ async def create_admin_affiliate(request: Request):
         "data": res.get("partner"),
     }
 
+@router.get("/admin/affiliates/payout-requests", tags=["Admin Affiliates"])
+def get_admin_payout_requests(status: Optional[str] = Query(None)):
+    payouts = PartnerService.get_all_payout_requests(status=status)
+    return {
+        "success": True,
+        "data": payouts,
+        "total": len(payouts),
+    }
+
 @router.post("/admin/affiliates/payout", tags=["Admin Affiliates"])
 async def process_admin_affiliate_payout(request: Request):
     payload = await request.json()
-    RealtimeBroadcaster.broadcast(
-        "affiliate:updated",
-        {"action": "payout", "timestamp": datetime.utcnow().isoformat()},
-        target_role="admin",
+    payout_request_id = payload.get("payoutRequestId") or payload.get("id")
+    action = payload.get("action", "approve")
+    notes = payload.get("notes")
+
+    if payout_request_id:
+        res = PartnerService.process_payout_action(
+            payout_id=payout_request_id,
+            action=action,
+            admin_name="Admin Asterra",
+            notes=notes,
+        )
+        if not res.get("success"):
+            return JSONResponse(status_code=400, content=res)
+
+        RealtimeBroadcaster.broadcast(
+            "affiliate:updated",
+            {
+                "action": "payout_processed",
+                "id": payout_request_id,
+                "status": res.get("data", {}).get("status"),
+                "timestamp": datetime.utcnow().isoformat(),
+            },
+            target_role="admin",
+        )
+        return res
+
+    partner_id = payload.get("partnerId")
+    if partner_id:
+        res = PartnerService.settle_legacy_partner_payout(partner_id)
+        if not res.get("success"):
+            return JSONResponse(status_code=400, content=res)
+
+        RealtimeBroadcaster.broadcast(
+            "affiliate:updated",
+            {"action": "payout", "partnerId": partner_id, "timestamp": datetime.utcnow().isoformat()},
+            target_role="admin",
+        )
+        return res
+
+    return JSONResponse(
+        status_code=400,
+        content={"success": False, "message": "ID pengajuan penarikan komisi tidak disertakan."},
     )
-    return {
-        "success": True,
-        "message": "Pencairan komisi mitra sales berhasil disetujui dan dicatat.",
-    }
 
 # ------------------------------------------
 # 2. Sales Partner Portal
@@ -122,9 +165,84 @@ def get_sales_network(request: Request):
     }
 
 @router.post("/sales/payout", tags=["Sales"])
+@router.post("/partners/payout", tags=["Sales"])
 async def request_sales_payout(request: Request):
+    token = request.cookies.get("asterra_admin_session")
+    if not token:
+        auth_hdr = request.headers.get("authorization", "")
+        if auth_hdr.lower().startswith("bearer "):
+            token = auth_hdr[7:].strip()
+
+    authenticated_partner = None
+    if token:
+        token_payload = verify_admin_session_token(token)
+        if token_payload:
+            email_or_code = token_payload.get("email")
+            role = token_payload.get("role", "sales")
+            if role == "sales" or role == "partner":
+                authenticated_partner = PartnerService.get_profile(email_or_code)
+            elif role in ["admin", "superadmin", "owner", "finance"]:
+                # Admin can submit payout for a partner if partnerId provided
+                pass
+
     payload = await request.json()
-    res = PartnerService.submit_payout(payload)
+
+    # If role is sales, ensure identity comes from verified session
+    if not authenticated_partner and not token:
+        # Check if running in development mode fallback
+        dev_partner_id = payload.get("partnerId")
+        if not dev_partner_id:
+            return JSONResponse(
+                status_code=401,
+                content={"success": False, "message": "Autentikasi sales tidak valid. Silakan login kembali ke Portal Sales."},
+            )
+
+    res = PartnerService.submit_payout(payload, authenticated_partner=authenticated_partner)
+    if not res.get("success"):
+        return JSONResponse(status_code=400, content=res)
+
+    try:
+        req = res.get("request") or {}
+        partner = res.get("partner") or {}
+        partner_name = partner.get("name") or req.get("bankAccountName") or "Mitra Sales"
+        amount = float(req.get("amount") or payload.get("amount") or 0)
+        request_id = req.get("id") or f"payreq-{int(datetime.utcnow().timestamp())}"
+
+        # 1. Real-time Toast & Sound SSE broadcast to Admin Console
+        RealtimeBroadcaster.broadcast(
+            event="payout:requested",
+            data={
+                "id": request_id,
+                "request_id": request_id,
+                "partner_id": partner.get("id") or payload.get("partnerId") or "",
+                "partner_name": partner_name,
+                "partner_code": partner.get("code") or "",
+                "partner_email": partner.get("email") or "",
+                "amount": amount,
+                "bank_name": req.get("bankName") or partner.get("bankName") or "BCA",
+                "bank_account": req.get("bankAccount") or partner.get("bankAccount") or "",
+                "bank_account_name": req.get("bankAccountName") or partner_name,
+                "status": "pending",
+                "notes": req.get("notes") or "",
+                "created_at": req.get("createdAt") or req.get("requestedAt") or (datetime.utcnow().isoformat() + "Z"),
+            },
+            target_role="admin",
+        )
+
+        # 2. Invalidate affiliate lists in admin
+        RealtimeBroadcaster.broadcast(
+            event="affiliate:updated",
+            data={
+                "action": "payout_requested",
+                "id": request_id,
+                "partnerId": partner.get("id"),
+                "timestamp": datetime.utcnow().isoformat(),
+            },
+            target_role="admin",
+        )
+    except Exception as b_err:
+        print(f"[SalesApi] Broadcast error on payout request: {b_err}")
+
     return res
 
 # ------------------------------------------

@@ -9,6 +9,7 @@ from app.models.campaign import PromoCampaign
 from app.models.referral_session import ReferralSession
 from app.models.commission import Commission
 from app.models.profit_ledger import ProfitLedger
+from app.models.payout_request import PayoutRequest
 
 from app.models.category import Category
 
@@ -26,4 +27,5 @@ __all__ = [
     "ReferralSession",
     "Commission",
     "ProfitLedger",
+    "PayoutRequest",
 ]

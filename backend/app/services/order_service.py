@@ -322,9 +322,9 @@ class OrderService:
         raw_total = verified_raw_total
 
         contact = payload.get("customer_contact", {})
-        customer_email = (contact.get("email") or payload.get("customerEmail") or "buyer@asterra.store").strip()
-        customer_phone = (contact.get("phone") or payload.get("customerWhatsapp") or "081234567890").strip()
-        customer_name = (contact.get("name") or payload.get("customerName") or "Pelanggan Asterra").strip()
+        customer_email = (contact.get("email") or payload.get("customerEmail") or payload.get("customer_email") or "buyer@asterra.store").strip()
+        customer_phone = (contact.get("phone") or payload.get("customerWhatsapp") or payload.get("customer_whatsapp") or "081234567890").strip()
+        customer_name = (contact.get("name") or payload.get("customerName") or payload.get("customer_name") or "Pelanggan Asterra").strip()
 
         # 1. Payment config settings (unique code toggle & order expiry)
         from app.services.payment_config_service import PaymentConfigService
@@ -514,6 +514,8 @@ class OrderService:
                 print(f"[OrderService] Partner lookup error: {e}")
 
         # 4. Save directly into Supabase PostgreSQL
+        saved_to_db = False
+        normalized = None
         try:
             db = SessionLocal()
             try:
@@ -701,6 +703,11 @@ class OrderService:
         # Broadcast real-time order creation event to connected Admin SSE subscribers
         try:
             from app.services.realtime_broadcaster import RealtimeBroadcaster
+            item_names = [str(it.get("product_name") or it.get("productName") or "").strip() for it in items if (it.get("product_name") or it.get("productName"))]
+            product_display = item_names[0] if item_names else "Layanan Digital"
+            if len(item_names) > 1:
+                product_display += f" (+{len(item_names)-1} lainnya)"
+
             RealtimeBroadcaster.broadcast(
                 event="order:created",
                 data={
@@ -709,6 +716,8 @@ class OrderService:
                     "customer_name": customer_name,
                     "customer_email": customer_email,
                     "total_amount": total_amount,
+                    "product_name": product_display,
+                    "items_count": len(items) if items else 1,
                     "status": "pending",
                     "payment_method": payload.get("payment_method") or payload.get("paymentMethod") or "manual_bca",
                     "created_at": now.isoformat() + "Z",

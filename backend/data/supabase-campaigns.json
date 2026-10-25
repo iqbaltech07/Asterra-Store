@@ -23,10 +23,10 @@
     "affiliateCommissionOverride": 15.0,
     "status": "running",
     "isActive": true,
-    "totalOrders": 29,
-    "revenue": 2568452.0,
+    "totalOrders": 31,
+    "revenue": 2601432.0,
     "conversionRate": 9.2,
     "createdAt": "2026-10-23T07:44:02.490770",
-    "updatedAt": "2026-10-25T05:32:37.807374"
+    "updatedAt": "2026-10-25T08:46:53.516368"
   }
 ]
