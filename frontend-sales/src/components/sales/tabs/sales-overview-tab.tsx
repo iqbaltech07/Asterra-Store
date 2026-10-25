@@ -43,6 +43,225 @@ export interface SalesOverviewTabProps {
   products?: ProductItem[];
 }
 
+function ProductBrandIcon({ name, className }: { name: string; className?: string }) {
+  const lower = (name || '').toLowerCase();
+  const baseClass = className || 'w-8 h-8 rounded-full border border-slate-200/80 shadow-2xs flex items-center justify-center shrink-0 overflow-hidden bg-white';
+  const darkBaseClass = className || 'w-8 h-8 rounded-full border border-slate-900 shadow-2xs flex items-center justify-center shrink-0 overflow-hidden bg-black';
+
+  // 1. Netflix
+  if (lower.includes('netflix')) {
+    return (
+      <div className={darkBaseClass}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/images/brand/Netflix-logo.png"
+          alt="Netflix"
+          className="w-full h-full object-cover"
+        />
+      </div>
+    );
+  }
+
+  // 2. CapCut
+  if (lower.includes('capcut')) {
+    return (
+      <div className={baseClass}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/images/brand/Capcut-logo.png"
+          alt="CapCut"
+          className="w-full h-full object-cover"
+        />
+      </div>
+    );
+  }
+
+  // 3. Google / Gemini
+  if (lower.includes('gemini') || lower.includes('google')) {
+    return (
+      <div className={baseClass}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/images/brand/Google-logo.png"
+          alt="Google"
+          className="w-full h-full object-cover"
+        />
+      </div>
+    );
+  }
+
+  // 4. Alight Motion
+  if (lower.includes('alight') || lower.includes('motion')) {
+    return (
+      <div className={baseClass}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/images/brand/Alightmotion-logo.png"
+          alt="Alight Motion"
+          className="w-full h-full object-cover"
+        />
+      </div>
+    );
+  }
+
+  // 5. ChatGPT / OpenAI
+  if (lower.includes('chatgpt') || lower.includes('openai') || lower.includes('gpt')) {
+    return (
+      <div className={baseClass}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/images/brand/ChatGPT-logo.png"
+          alt="ChatGPT"
+          className="w-full h-full object-cover"
+        />
+      </div>
+    );
+  }
+
+  // 6. Spotify
+  if (lower.includes('spotify')) {
+    return (
+      <div className={darkBaseClass}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/images/brand/Spotify-logo.png"
+          alt="Spotify"
+          className="w-full h-full object-cover"
+        />
+      </div>
+    );
+  }
+
+  // 7. BStation / Bilibili
+  if (lower.includes('bstation') || lower.includes('bilibili')) {
+    return (
+      <div className={baseClass}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/images/brand/BStation-logo.png"
+          alt="BStation"
+          className="w-full h-full object-cover"
+        />
+      </div>
+    );
+  }
+
+  // 8. iQiyi
+  if (lower.includes('iqiyi')) {
+    return (
+      <div className={baseClass}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/images/brand/iqiyi-logo.png"
+          alt="iQiyi"
+          className="w-full h-full object-cover"
+        />
+      </div>
+    );
+  }
+
+  // 9. Mobile Legends
+  if (lower.includes('mobile legend') || lower.includes('mlbb')) {
+    return (
+      <div className={darkBaseClass}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/images/brand/Mobilelegends-logo.png"
+          alt="Mobile Legends"
+          className="w-full h-full object-cover"
+        />
+      </div>
+    );
+  }
+
+  // 10. PUBG
+  if (lower.includes('pubg')) {
+    return (
+      <div className={darkBaseClass}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/images/brand/Pubg-logo.png"
+          alt="PUBG"
+          className="w-full h-full object-cover"
+        />
+      </div>
+    );
+  }
+
+  // 11. YouTube
+  if (lower.includes('youtube')) {
+    return (
+      <div className={className || "w-8 h-8 rounded-full bg-[#FF0000] border border-red-600 shadow-2xs flex items-center justify-center shrink-0 overflow-hidden"}>
+        <svg className="w-4 h-4 fill-white" viewBox="0 0 24 24">
+          <path d="M21.58 7.19a2.5 2.5 0 00-1.76-1.77C18.26 5 12 5 12 5s-6.26 0-7.82.42A2.5 2.5 0 002.42 7.2C2 8.76 2 12 2 12s0 3.24.42 4.81a2.5 2.5 0 001.76 1.77C5.74 19 12 19 12 19s6.26 0 7.82-.42a2.5 2.5 0 001.76-1.77C22 15.24 22 12 22 12s0-3.24-.42-4.81zM10 15V9l5.2 3-5.2 3z" />
+        </svg>
+      </div>
+    );
+  }
+
+  // 12. Canva
+  if (lower.includes('canva')) {
+    return (
+      <div className={baseClass}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/images/apps/canva.png"
+          alt="Canva"
+          className="w-full h-full object-cover"
+        />
+      </div>
+    );
+  }
+
+  // 13. Vidio
+  if (lower.includes('vidio')) {
+    return (
+      <div className={baseClass}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/images/apps/vidio.png"
+          alt="Vidio"
+          className="w-full h-full object-cover"
+        />
+      </div>
+    );
+  }
+
+  // 14. Viu
+  if (lower.includes('viu')) {
+    return (
+      <div className={baseClass}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/images/apps/viu.png"
+          alt="Viu"
+          className="w-full h-full object-cover"
+        />
+      </div>
+    );
+  }
+
+  // 15. WeTV
+  if (lower.includes('wetv')) {
+    return (
+      <div className={baseClass}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/images/apps/wetv.png"
+          alt="WeTV"
+          className="w-full h-full object-cover"
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className={className || "w-8 h-8 rounded-full bg-slate-100 border border-slate-200/90 shadow-2xs flex items-center justify-center text-slate-600 shrink-0"}>
+      <Package className="w-4 h-4 text-slate-500" />
+    </div>
+  );
+}
+
 export function SalesOverviewTab({
   partner,
   partnerCode,
@@ -412,9 +631,7 @@ export function SalesOverviewTab({
                       </td>
                       <td className="py-3">
                         <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-md bg-slate-50 border border-slate-200/80 p-0.5 flex items-center justify-center shrink-0">
-                            <Package className="w-3.5 h-3.5 text-blue-600" />
-                          </div>
+                          <ProductBrandIcon name={order.product} className="w-6 h-6 rounded-full" />
                           <div>
                             <div className="font-semibold text-slate-800 text-xs">
                               {order.product}
@@ -467,19 +684,12 @@ export function SalesOverviewTab({
             <div className="space-y-3 pt-1">
               {/* Product 1: Google Gemini Pro */}
               <div className="flex items-center justify-between gap-2.5">
-                <div className="flex items-center gap-3">
-                  <span className="text-xs font-semibold text-slate-400 w-3 text-center">1</span>
-                  <div className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-200/80 p-1 flex items-center justify-center shrink-0">
-                    <svg className="w-5 h-5" viewBox="0 0 24 24">
-                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
-                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
-                    </svg>
-                  </div>
-                  <div>
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className="text-xs font-semibold text-slate-400 w-3 text-center shrink-0">1</span>
+                  <ProductBrandIcon name="Google Gemini Pro" />
+                  <div className="min-w-0">
                     <h4 className="text-xs font-bold text-slate-800 line-clamp-1">
-                      Google Gemini Pro Anggota 1 Tahun
+                      Google Gemini Pro Anggota 1...
                     </h4>
                     <p className="text-[10px] text-emerald-600 font-semibold mt-0.5">
                       Estimasi Komisi: Rp 9.570/order
@@ -493,14 +703,10 @@ export function SalesOverviewTab({
 
               {/* Product 2: CapCut Pro */}
               <div className="flex items-center justify-between gap-2.5">
-                <div className="flex items-center gap-3">
-                  <span className="text-xs font-semibold text-slate-400 w-3 text-center">2</span>
-                  <div className="w-8 h-8 rounded-lg bg-black text-white p-1 flex items-center justify-center shrink-0">
-                    <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
-                      <path d="M4 6.5C4 5.12 5.12 4 6.5 4h2.2l3.3 5-3.3 5H6.5C5.12 14 4 12.88 4 11.5v-5zm16 0c0-1.38-1.12-2.5-2.5-2.5h-2.2l-3.3 5 3.3 5h2.2c1.38 0 2.5-1.12 2.5-2.5v-5zM6.5 16h2.2l3.3-5 3.3 5h2.2c1.38 0 2.5 1.12 2.5 2.5v1c0 1.38-1.12 2.5-2.5 2.5h-11C5.12 22 4 20.88 4 19.5v-1C4 17.12 5.12 16 6.5 16z" />
-                    </svg>
-                  </div>
-                  <div>
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className="text-xs font-semibold text-slate-400 w-3 text-center shrink-0">2</span>
+                  <ProductBrandIcon name="CapCut Pro" />
+                  <div className="min-w-0">
                     <h4 className="text-xs font-bold text-slate-800 line-clamp-1">
                       CapCut Pro Private 7 Hari
                     </h4>
@@ -516,14 +722,10 @@ export function SalesOverviewTab({
 
               {/* Product 3: YouTube Premium */}
               <div className="flex items-center justify-between gap-2.5">
-                <div className="flex items-center gap-3">
-                  <span className="text-xs font-semibold text-slate-400 w-3 text-center">3</span>
-                  <div className="w-8 h-8 rounded-lg bg-red-600 text-white p-1 flex items-center justify-center shrink-0">
-                    <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
-                      <path d="M21.58 7.19a2.5 2.5 0 00-1.76-1.77C18.26 5 12 5 12 5s-6.26 0-7.82.42A2.5 2.5 0 002.42 7.2C2 8.76 2 12 2 12s0 3.24.42 4.81a2.5 2.5 0 001.76 1.77C5.74 19 12 19 12 19s6.26 0 7.82-.42a2.5 2.5 0 001.76-1.77C22 15.24 22 12 22 12s0-3.24-.42-4.81zM10 15V9l5.2 3-5.2 3z" />
-                    </svg>
-                  </div>
-                  <div>
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className="text-xs font-semibold text-slate-400 w-3 text-center shrink-0">3</span>
+                  <ProductBrandIcon name="YouTube Premium" />
+                  <div className="min-w-0">
                     <h4 className="text-xs font-bold text-slate-800 line-clamp-1">
                       YouTube Premium Family 1 Bulan
                     </h4>
