@@ -97,8 +97,8 @@
   },
   "bilibili": {
     "name": "Bilibili",
-    "domain": "bilibili.com",
-    "icon": "https://play-lh.googleusercontent.com/yo17-9ouHGh2geCjk4dcZgVWZUcp-f8EhyMaeieZTlXrAtm5dowy32sQ_UfjEaSb6zLmYg-wxVhm3FKt9ppfoQ=w128-h128-e365",
+    "domain": "bilibiliapk.com",
+    "icon": "https://cdn.brandfetch.io/idvcdOiNaT/w/520/h/520/theme/dark/logo.png?c=1bxmocd44vb0pz4epad9gbumplbwHtoKNnM",
     "brandId": "idJarLS8mp",
     "verified": true,
     "claimed": false
@@ -106,7 +106,7 @@
   "bstation": {
     "name": "Bstation",
     "domain": "bstation.net",
-    "icon": "https://play-lh.googleusercontent.com/yo17-9ouHGh2geCjk4dcZgVWZUcp-f8EhyMaeieZTlXrAtm5dowy32sQ_UfjEaSb6zLmYg-wxVhm3FKt9ppfoQ=w128-h128-e365",
+    "icon": "https://cdn.brandfetch.io/idvcdOiNaT/w/520/h/520/theme/dark/logo.png?c=1bxmocd44vb0pz4epad9gbumplbwHtoKNnM",
     "brandId": "idJarLS8mp",
     "verified": true,
     "claimed": false
@@ -177,8 +177,8 @@
   },
   "blibli": {
     "name": "Bilibili / Blibli",
-    "domain": "bilibili.tv",
-    "icon": "https://play-lh.googleusercontent.com/yo17-9ouHGh2geCjk4dcZgVWZUcp-f8EhyMaeieZTlXrAtm5dowy32sQ_UfjEaSb6zLmYg-wxVhm3FKt9ppfoQ=w128-h128-e365",
+    "domain": "bilibiliapk.com",
+    "icon": "https://cdn.brandfetch.io/idvcdOiNaT/w/520/h/520/theme/dark/logo.png?c=1bxmocd44vb0pz4epad9gbumplbwHtoKNnM",
     "brandId": "apk",
     "verified": true,
     "claimed": false
