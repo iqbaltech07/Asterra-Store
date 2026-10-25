@@ -1,7 +1,8 @@
 'use client';
 
-import React from 'react';
-import { Package } from 'lucide-react';
+import React, { useState } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faBox } from '@fortawesome/free-solid-svg-icons';
 
 /**
  * Brandfetch CDN Logo Registry
@@ -57,13 +58,15 @@ export function ProductBrandIcon({
   imageUrl?: string;
   className?: string;
 }) {
+  const [imgError, setImgError] = useState(false);
+
   const resolvedUrl = (imageUrl && (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')))
     ? imageUrl
     : resolveBrandLogo(name, imageUrl || '');
 
   const containerClass = className || 'w-8 h-8 rounded-full border border-slate-200/80 shadow-2xs flex items-center justify-center shrink-0 overflow-hidden bg-white';
 
-  if (resolvedUrl) {
+  if (resolvedUrl && !imgError) {
     return (
       <div className={containerClass}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -72,9 +75,7 @@ export function ProductBrandIcon({
           alt={name}
           className="w-full h-full object-contain p-0.5"
           loading="lazy"
-          onError={(e) => {
-            (e.target as HTMLElement).style.display = 'none';
-          }}
+          onError={() => setImgError(true)}
         />
       </div>
     );
@@ -82,7 +83,7 @@ export function ProductBrandIcon({
 
   return (
     <div className={containerClass}>
-      <Package className="w-4 h-4 text-slate-400" />
+      <FontAwesomeIcon icon={faBox} className="w-3.5 h-3.5 text-slate-400" />
     </div>
   );
 }
