@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { BarChart3, TrendingUp, Calendar, ArrowUpRight } from 'lucide-react';
+import { useCountUp } from '@/lib/hooks/use-count-up';
+import { MOTION_DURATION, MOTION_EASING, MOTION_STAGGER, isReducedMotion } from '@/lib/motion';
 import type { SalesOrder } from './types';
 
 export type SalesPeriod = 'daily' | 'weekly' | 'monthly';
@@ -96,6 +98,22 @@ function formatTickLabel(val: number): string {
   if (val === 0) return '0';
   if (val >= 1000000) return `${(val / 1000000).toFixed(val % 1000000 === 0 ? 0 : 1)}M`;
   return `${Math.round(val / 1000)}K`;
+}
+
+/**
+ * Animated individual revenue label with Monetira-style count-up motion
+ */
+function AnimatedBarRevenue({ value, isHovered }: { value: number; isHovered: boolean }) {
+  const formatted = useCountUp(value, { duration: MOTION_DURATION.chart });
+  return (
+    <span
+      className={`text-[10px] sm:text-[11px] font-mono font-semibold mb-1.5 tabular-nums text-center transition-all duration-200 ${
+        isHovered ? 'text-slate-900 font-bold scale-105' : 'text-slate-700'
+      }`}
+    >
+      Rp {formatted}
+    </span>
+  );
 }
 
 export function SalesTrendChart({
@@ -254,6 +272,8 @@ export function SalesTrendChart({
     return activeData.reduce((acc, curr) => acc + curr.orders, 0);
   }, [activeData]);
 
+  const animatedTotalRevenueStr = useCountUp(totalPeriodRevenue, { duration: MOTION_DURATION.counter });
+
   const maxRevenueInData = useMemo(() => {
     return Math.max(...activeData.map((d) => d.revenue), 1000);
   }, [activeData]);
@@ -268,8 +288,10 @@ export function SalesTrendChart({
     return 'Hari Ini';
   }, [currentPeriod]);
 
+  const reducedMotion = isReducedMotion();
+
   return (
-    <div className="bg-white border border-slate-200/80 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
+    <div className="bg-white border border-slate-200/80 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4 animate-fade-up">
       {/* Header & Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
         <div className="flex items-center gap-3">
@@ -281,7 +303,7 @@ export function SalesTrendChart({
               <h3 className="font-bold text-sm text-slate-900 leading-tight">
                 {title}
               </h3>
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80 transition-all duration-300">
                 <TrendingUp className="w-2.5 h-2.5" />
                 <span>Aktif</span>
               </span>
@@ -340,15 +362,15 @@ export function SalesTrendChart({
         </div>
       </div>
 
-      {/* Period Stats Summary Pill Banner */}
-      <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-xs">
+      {/* Period Stats Summary Pill Banner with Live Animated Count-Up */}
+      <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-xs transition-colors duration-300">
         <div className="flex items-center gap-2 text-slate-600">
           <Calendar className="w-3.5 h-3.5 text-slate-500" />
           <span>
             Total Komisi <strong>{periodBadgeText}</strong>:
           </span>
-          <span className="font-bold text-slate-900 font-mono text-sm">
-            Rp {totalPeriodRevenue.toLocaleString('id-ID')}
+          <span className="font-bold text-slate-900 font-mono text-sm tabular-nums">
+            Rp {animatedTotalRevenueStr}
           </span>
         </div>
         <div className="flex items-center gap-3 text-slate-500 text-[11px]">
@@ -380,12 +402,15 @@ export function SalesTrendChart({
           ))}
         </div>
 
-        {/* Bar Container */}
+        {/* Bar Container with Unified Admin Motion Engine */}
         <div className="relative z-10 pl-12 pr-2 h-56 flex items-end justify-between gap-1.5 sm:gap-3">
           {activeData.map((item, idx) => {
             const heightRatio = Math.min(1, Math.max(0.04, item.revenue / maxAxisValue));
             const barColor = BAR_COLORS[idx % BAR_COLORS.length];
             const isHovered = hoveredIndex === idx;
+
+            // Staggered motion delay matching admin motion tokens
+            const transitionDelayMs = !reducedMotion && mounted ? idx * MOTION_STAGGER.chartBar : 0;
 
             return (
               <div
@@ -409,33 +434,31 @@ export function SalesTrendChart({
                   </div>
                 )}
 
-                {/* Revenue Label Above Bar matching Reference Screenshot */}
-                <span
-                  className={`text-[10px] sm:text-[11px] font-mono font-semibold mb-1.5 tabular-nums text-center transition-colors ${
-                    isHovered ? 'text-slate-900 font-bold scale-105' : 'text-slate-700'
-                  }`}
-                >
-                  Rp {item.revenue.toLocaleString('id-ID')}
-                </span>
+                {/* Animated Revenue Label with Count-Up Motion */}
+                <AnimatedBarRevenue value={item.revenue} isHovered={isHovered} />
 
-                {/* Scaled Bar Track */}
+                {/* Scaled Bar Track with Staggered Height Animation matching Admin */}
                 <div className="w-full h-full flex items-end justify-center">
                   <div
-                    className="w-full max-w-[48px] rounded-t-md transition-all duration-500 ease-out"
+                    className="w-full max-w-[48px] rounded-t-md"
                     style={{
                       height: mounted ? `${Math.round(heightRatio * 100)}%` : '0%',
                       backgroundColor: barColor,
+                      transition: reducedMotion
+                        ? 'none'
+                        : `height ${MOTION_DURATION.chart}ms ${MOTION_EASING.editorial}, opacity 300ms ease, transform 200ms ${MOTION_EASING.springPop}`,
+                      transitionDelay: `${transitionDelayMs}ms`,
                       opacity: hoveredIndex !== null && !isHovered ? 0.45 : 1,
                       transform: isHovered ? 'scaleY(1.025)' : 'scaleY(1)',
                       transformOrigin: 'bottom',
-                      boxShadow: isHovered ? `0 4px 12px ${barColor}40` : 'none',
+                      boxShadow: isHovered ? `0 4px 14px ${barColor}50` : 'none',
                     }}
                   />
                 </div>
 
                 {/* X-Axis Time / Date Label */}
                 <span
-                  className={`text-[10px] sm:text-[11px] font-medium mt-2 transition-colors truncate max-w-full text-center ${
+                  className={`text-[10px] sm:text-[11px] font-medium mt-2 transition-colors duration-200 truncate max-w-full text-center ${
                     isHovered ? 'text-slate-900 font-bold' : 'text-slate-500'
                   }`}
                 >
