@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { Package } from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faBox } from '@fortawesome/free-solid-svg-icons';
 
 export function resolveBrandLogo(name: string = '', fallbackUrl: string = '/images/default-product-banner.png'): string {
   const lower = (name || '').toLowerCase();
@@ -186,7 +187,7 @@ export function ProductBrandIcon({
 
   return (
     <div className={className || "w-8 h-8 rounded-full bg-slate-100 border border-slate-200/90 shadow-2xs flex items-center justify-center text-slate-600 shrink-0"}>
-      <Package className="w-4 h-4 text-slate-500" />
+      <FontAwesomeIcon icon={faBox} className="w-4 h-4 text-slate-500" />
     </div>
   );
 }

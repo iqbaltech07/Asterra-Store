@@ -8,6 +8,7 @@ from typing import Optional, List, Dict, Any
 import httpx
 from fastapi import APIRouter, Request, Response, HTTPException, Query, UploadFile, File, Form
 
+from app.config import settings
 from app.services.catalog_service import CatalogService
 from app.services.banner_service import BannerService
 from app.services.category_service import CategoryService
