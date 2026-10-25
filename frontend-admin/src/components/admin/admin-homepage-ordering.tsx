@@ -124,18 +124,30 @@ export interface AdminProductGroup {
 
 export function ProductBrandLogo({ name, className = 'w-10 h-10' }: { name: string; className?: string }) {
   const [hasError, setHasError] = useState(false);
-  const logoUrl = resolveBrandLogo(name);
   const n = (name || '').toLowerCase();
 
-  if (logoUrl && !hasError) {
-    const isDarkLogo = n.includes('spotify') || n.includes('netflix') || n.includes('mobile legend') || n.includes('pubg');
+  // 1. Game items: jangan di-fetch dulu, gunakan badge Gamepad
+  if (n.includes('mobile legend') || n.includes('mlbb') || n.includes('pubg')) {
     return (
-      <div className={`${className} ${isDarkLogo ? 'bg-slate-950 border-slate-800' : 'bg-white border-border/80'} rounded-xl border flex items-center justify-center p-1 shadow-2xs shrink-0 overflow-hidden`}>
+      <div className={`${className} bg-amber-500/10 border border-amber-500/20 text-amber-500 rounded-xl flex items-center justify-center p-1.5 shadow-2xs shrink-0`}>
+        <Gamepad2 className="w-5 h-5" />
+      </div>
+    );
+  }
+
+  const logoUrl = resolveBrandLogo(name);
+
+  if (logoUrl && !hasError) {
+    // Transparent glyphs that look best on manual white background with padding:
+    const isTransparentLogo = n.includes('chatgpt') || n.includes('openai') || n.includes('gemini') || n.includes('google') || n.includes('youtube');
+
+    return (
+      <div className={`${className} bg-white border-border/80 rounded-xl border flex items-center justify-center shadow-2xs shrink-0 overflow-hidden`}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={logoUrl}
           alt={name}
-          className="w-full h-full object-contain"
+          className={`w-full h-full ${isTransparentLogo ? 'object-contain p-2' : 'object-cover'}`}
           draggable={false}
           onError={() => setHasError(true)}
         />

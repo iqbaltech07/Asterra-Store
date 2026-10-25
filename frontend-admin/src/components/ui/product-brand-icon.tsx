@@ -1,18 +1,18 @@
 'use client';
 
 import React from 'react';
-import { Package } from 'lucide-react';
+import { Package, Gamepad2 } from 'lucide-react';
 
 /**
  * Brandfetch CDN Logo Registry
- * Fast, official WebP icons sourced directly from Brandfetch API
+ * Fast, official icons sourced directly from Brandfetch API & verified official APK stores
  */
 export const BRAND_ICONS_MAP: Record<string, string> = {
   canva: 'https://cdn.brandfetch.io/id9mVQlyB1/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793027472318idOZh3WAwy_qfRsVgJ',
   netflix: 'https://cdn.brandfetch.io/ideQwN5lBE/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793027472790idOZh3WAwy2y3rJMTs',
   spotify: 'https://cdn.brandfetch.io/id20mQyGeY/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793027473639idOZh3WAwyibUeT2DI',
-  chatgpt: 'https://cdn.brandfetch.io/id2UDPob7G/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793027483031idOZh3WAwyHnFHGiET',
-  openai: 'https://cdn.brandfetch.io/idR3duQxYl/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793027484133idOZh3WAwyyJc-CdrP',
+  chatgpt: 'https://cdn.brandfetch.io/id2UDPob7G/theme/dark/logo.svg?c=1bxmocd44vb0pz4epad9gbumplbwHtoKNnM',
+  openai: 'https://cdn.brandfetch.io/id2UDPob7G/theme/dark/logo.svg?c=1bxmocd44vb0pz4epad9gbumplbwHtoKNnM',
   gemini: 'https://cdn.brandfetch.io/id6O2oGzv-/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793027484748idOZh3WAwy74DcQgZs',
   google: 'https://cdn.brandfetch.io/id6O2oGzv-/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793027484748idOZh3WAwy74DcQgZs',
   alight: 'https://cdn.brandfetch.io/idJZOpdSzq/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793027485636idOZh3WAwyu2EbUelQ',
@@ -21,12 +21,10 @@ export const BRAND_ICONS_MAP: Record<string, string> = {
   vidio: 'https://cdn.brandfetch.io/idqasDdtIB/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793027468196idOZh3WAwyIFUzAvnO',
   viu: 'https://cdn.brandfetch.io/idgqyDfIeT/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793027466816idOZh3WAwyPirrLuuZ',
   wetv: 'https://cdn.brandfetch.io/idp2rkmRV6/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793027467285idOZh3WAwyuZrx29rO',
-  bstation: 'https://cdn.brandfetch.io/idJarLS8mp/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793023891364idOZh3WAwysP5f9nO2',
-  bilibili: 'https://cdn.brandfetch.io/idJarLS8mp/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793023891364idOZh3WAwysP5f9nO2',
+  bstation: 'https://play-lh.googleusercontent.com/yo17-9ouHGh2geCjk4dcZgVWZUcp-f8EhyMaeieZTlXrAtm5dowy32sQ_UfjEaSb6zLmYg-wxVhm3FKt9ppfoQ=w128-h128-e365',
+  bilibili: 'https://play-lh.googleusercontent.com/yo17-9ouHGh2geCjk4dcZgVWZUcp-f8EhyMaeieZTlXrAtm5dowy32sQ_UfjEaSb6zLmYg-wxVhm3FKt9ppfoQ=w128-h128-e365',
+  blibli: 'https://play-lh.googleusercontent.com/yo17-9ouHGh2geCjk4dcZgVWZUcp-f8EhyMaeieZTlXrAtm5dowy32sQ_UfjEaSb6zLmYg-wxVhm3FKt9ppfoQ=w128-h128-e365',
   iqiyi: 'https://cdn.brandfetch.io/idy_RwerrN/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793027471879idOZh3WAwyMjmOBsw1',
-  'mobile legend': 'https://cdn.brandfetch.io/idD9JU0j92/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793027486902idOZh3WAwyJ8ISAiE8',
-  mlbb: 'https://cdn.brandfetch.io/idD9JU0j92/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793027486902idOZh3WAwyJ8ISAiE8',
-  pubg: 'https://cdn.brandfetch.io/idvXXFWwhd/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793027413613idOZh3WAwyiS2JNIjn',
   youtube: 'https://cdn.brandfetch.io/idVfYwcuQz/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793027469064idOZh3WAwyVyHXoxNV',
   disney: 'https://cdn.brandfetch.io/idhQlYRiX2/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793027488693idOZh3WAwy39dtTIig',
   claude: 'https://cdn.brandfetch.io/idW5s392j1/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793027489605idOZh3WAwyLrj_K7-I',
@@ -40,6 +38,12 @@ export function resolveBrandLogo(name: string = '', fallbackUrl: string = ''): s
     return fallbackUrl;
   }
   const lower = (name || '').toLowerCase();
+
+  // Game items: jangan di-fetch dulu
+  if (lower.includes('mobile legend') || lower.includes('mlbb') || lower.includes('pubg')) {
+    return '';
+  }
+
   for (const [key, url] of Object.entries(BRAND_ICONS_MAP)) {
     if (lower.includes(key)) {
       return url;
@@ -58,6 +62,18 @@ export function ProductBrandIcon({
   className?: string;
 }) {
   const [hasError, setHasError] = React.useState(false);
+  const n = (name || '').toLowerCase();
+
+  // Game items: jangan di-fetch dulu, gunakan icon Gamepad
+  if (n.includes('mobile legend') || n.includes('mlbb') || n.includes('pubg')) {
+    const containerClass = className || 'w-8 h-8 rounded-full border border-amber-500/20 shadow-2xs flex items-center justify-center shrink-0 overflow-hidden bg-amber-500/10 text-amber-500';
+    return (
+      <div className={containerClass}>
+        <Gamepad2 className="w-4 h-4" />
+      </div>
+    );
+  }
+
   const resolvedUrl = (imageUrl && (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')))
     ? imageUrl
     : resolveBrandLogo(name, imageUrl || '');
@@ -65,13 +81,15 @@ export function ProductBrandIcon({
   const containerClass = className || 'w-8 h-8 rounded-full border border-slate-200/80 shadow-2xs flex items-center justify-center shrink-0 overflow-hidden bg-white';
 
   if (resolvedUrl && !hasError) {
+    const isTransparentLogo = n.includes('chatgpt') || n.includes('openai') || n.includes('gemini') || n.includes('google') || n.includes('youtube');
+
     return (
       <div className={containerClass}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={resolvedUrl}
           alt={name}
-          className="w-full h-full object-contain p-0.5"
+          className={`w-full h-full ${isTransparentLogo ? 'object-contain p-1.5' : 'object-cover'}`}
           loading="lazy"
           onError={() => setHasError(true)}
         />

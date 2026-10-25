@@ -26,7 +26,7 @@
   "chatgpt": {
     "name": "ChatGPT",
     "domain": "chatgpt.com",
-    "icon": "https://cdn.brandfetch.io/id2UDPob7G/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793027483031idOZh3WAwyHnFHGiET",
+    "icon": "https://cdn.brandfetch.io/id2UDPob7G/theme/dark/logo.svg?c=1bxmocd44vb0pz4epad9gbumplbwHtoKNnM",
     "brandId": "id2UDPob7G",
     "verified": true,
     "claimed": false
@@ -34,7 +34,7 @@
   "openai": {
     "name": "OpenAI",
     "domain": "openai.com",
-    "icon": "https://cdn.brandfetch.io/idR3duQxYl/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793027484133idOZh3WAwyyJc-CdrP",
+    "icon": "https://cdn.brandfetch.io/id2UDPob7G/theme/dark/logo.svg?c=1bxmocd44vb0pz4epad9gbumplbwHtoKNnM",
     "brandId": "idR3duQxYl",
     "verified": true,
     "claimed": true
@@ -98,7 +98,7 @@
   "bilibili": {
     "name": "Bilibili",
     "domain": "bilibili.com",
-    "icon": "https://cdn.brandfetch.io/idJarLS8mp/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793023891364idOZh3WAwysP5f9nO2",
+    "icon": "https://play-lh.googleusercontent.com/yo17-9ouHGh2geCjk4dcZgVWZUcp-f8EhyMaeieZTlXrAtm5dowy32sQ_UfjEaSb6zLmYg-wxVhm3FKt9ppfoQ=w128-h128-e365",
     "brandId": "idJarLS8mp",
     "verified": true,
     "claimed": false
@@ -106,7 +106,7 @@
   "bstation": {
     "name": "Bstation",
     "domain": "bstation.net",
-    "icon": "https://cdn.brandfetch.io/idJarLS8mp/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793023891364idOZh3WAwysP5f9nO2",
+    "icon": "https://play-lh.googleusercontent.com/yo17-9ouHGh2geCjk4dcZgVWZUcp-f8EhyMaeieZTlXrAtm5dowy32sQ_UfjEaSb6zLmYg-wxVhm3FKt9ppfoQ=w128-h128-e365",
     "brandId": "idJarLS8mp",
     "verified": true,
     "claimed": false
@@ -116,30 +116,6 @@
     "domain": "iqiyi.com",
     "icon": "https://cdn.brandfetch.io/idy_RwerrN/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793027471879idOZh3WAwyMjmOBsw1",
     "brandId": "idy_RwerrN",
-    "verified": true,
-    "claimed": false
-  },
-  "mobile legends": {
-    "name": "Mobile Legends",
-    "domain": "mobilelegends.com",
-    "icon": "https://cdn.brandfetch.io/idD9JU0j92/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793027486902idOZh3WAwyJ8ISAiE8",
-    "brandId": "idD9JU0j92",
-    "verified": false,
-    "claimed": false
-  },
-  "pubg": {
-    "name": "PUBG",
-    "domain": "pubg.com",
-    "icon": "https://cdn.brandfetch.io/idvXXFWwhd/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793027413613idOZh3WAwyiS2JNIjn",
-    "brandId": "idvXXFWwhd",
-    "verified": true,
-    "claimed": false
-  },
-  "pubg mobile": {
-    "name": "PUBG MOBILE",
-    "domain": "pubgmobile.com",
-    "icon": "https://cdn.brandfetch.io/idvXXFWwhd/w/128/h/128/fallback/lettermark/icon.webp?c=1ax1793027413613idOZh3WAwyiS2JNIjn",
-    "brandId": "idvXXFWwhd",
     "verified": true,
     "claimed": false
   },
@@ -198,5 +174,13 @@
     "brandId": "iddd_fYAYR",
     "verified": true,
     "claimed": true
+  },
+  "blibli": {
+    "name": "Bilibili / Blibli",
+    "domain": "bilibili.tv",
+    "icon": "https://play-lh.googleusercontent.com/yo17-9ouHGh2geCjk4dcZgVWZUcp-f8EhyMaeieZTlXrAtm5dowy32sQ_UfjEaSb6zLmYg-wxVhm3FKt9ppfoQ=w128-h128-e365",
+    "brandId": "apk",
+    "verified": true,
+    "claimed": false
   }
 }
