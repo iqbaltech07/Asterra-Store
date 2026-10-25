@@ -7,13 +7,13 @@
     "code": "AST-ACELINO-COOL",
     "tier": "Standard (10%)",
     "rate": 10,
-    "totalClicks": 5,
+    "totalClicks": 8,
     "bankName": "Bank Central Asia (BCA)",
     "bankAccount": "-",
     "status": "active",
     "referredById": null,
     "createdAt": "2026-10-25T04:55:16.035000",
-    "updatedAt": "2026-10-25T10:08:12.595000",
+    "updatedAt": "2026-10-25T13:27:35.751000",
     "payoutRequests": [
       {
         "id": "payreq-1792923231-48e4",
@@ -91,6 +91,35 @@
     "referredById": "partner-1792904116023",
     "createdAt": "2026-10-25T05:10:15.512000",
     "updatedAt": "2026-10-25T06:10:21.125000",
-    "payoutRequests": []
+    "payoutRequests": [
+      {
+        "id": "payreq-1792933528-00de",
+        "partnerId": "partner-1792905015502",
+        "amount": 50000,
+        "bankName": "BCA",
+        "bankAccount": "089636723",
+        "bankAccountName": "Iqbal",
+        "status": "completed",
+        "notes": "Pencairan komisi kemitraan sales",
+        "processedAt": "2026-10-25T13:05:43.197000Z",
+        "createdAt": "2026-10-25T13:05:28.372000Z",
+        "requestedAt": "2026-10-25T13:05:28.372000Z",
+        "updatedAt": "2026-10-25T13:05:43.197000Z"
+      },
+      {
+        "id": "payreq-1792931735-c1d1",
+        "partnerId": "partner-1792905015502",
+        "amount": 50000,
+        "bankName": "DANA",
+        "bankAccount": "089665456456",
+        "bankAccountName": "Iqbal",
+        "status": "completed",
+        "notes": "Pencairan komisi kemitraan sales",
+        "processedAt": "2026-10-25T12:35:43.894000Z",
+        "createdAt": "2026-10-25T12:35:35.649000Z",
+        "requestedAt": "2026-10-25T12:35:35.649000Z",
+        "updatedAt": "2026-10-25T12:35:43.894000Z"
+      }
+    ]
   }
 ]

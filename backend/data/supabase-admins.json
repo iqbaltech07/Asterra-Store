@@ -7,7 +7,95 @@
     "isActive": true,
     "role": "superadmin",
     "createdAt": "2026-09-30T04:28:20.125000",
-    "updatedAt": "2026-09-30T12:12:50.509000",
+    "updatedAt": "2026-10-25T14:34:45.113000",
     "passwordHash": "$2b$10$kzfa/ronlVttUQVWrnH6Oe7A8TSS/hw.qCIB7Os9bpASvI6BnY1oO"
+  },
+  {
+    "id": "adm-sales-1792904044-AST-",
+    "username": "sales-astiqbalo66t",
+    "email": "salesiqbal@gmail.com",
+    "name": "Iqbal Sales Pro Max",
+    "isActive": true,
+    "role": "sales",
+    "createdAt": "2026-10-25T04:54:04.727000",
+    "updatedAt": "2026-10-25T04:54:04.727000",
+    "passwordHash": "$2b$12$I6Cf8atvFlF2XckjRCMn0unxgT1TTMjRUIlAgs9vAr4CvyGG1VHb."
+  },
+  {
+    "id": "adm-sales-1792904046-AST-",
+    "username": "sales-astfounder",
+    "email": "founder@asterra.store",
+    "name": "Founder Asterra Store",
+    "isActive": true,
+    "role": "sales",
+    "createdAt": "2026-10-25T04:54:06.502000",
+    "updatedAt": "2026-10-25T04:54:06.502000",
+    "passwordHash": "$2b$12$dHPvvZ3R43ChxPhmFY0gcOECP4.c6XwQDPrVb.XPp/kyro2hFmN.O"
+  },
+  {
+    "id": "adm-sales-1792904048-AST-",
+    "username": "sales-astceo9md2",
+    "email": "ceo@asterra.store",
+    "name": "CEO Asterra Store",
+    "isActive": true,
+    "role": "sales",
+    "createdAt": "2026-10-25T04:54:08.203000",
+    "updatedAt": "2026-10-25T04:54:08.203000",
+    "passwordHash": "$2b$12$Am7atN9mAxrKXCfSzQ1PDetOLfqRkUwgOHqjM28X5g93jJTkKjc9O"
+  },
+  {
+    "id": "adm-sales-1792904049-AST-",
+    "username": "sales-astacelinocool",
+    "email": "marchelinokurniawan321@gmail.com",
+    "name": "Acelino",
+    "isActive": true,
+    "role": "sales",
+    "createdAt": "2026-10-25T04:54:09.992000",
+    "updatedAt": "2026-10-25T14:35:05.101000",
+    "passwordHash": "$2b$12$TuQ7WIFAfc7aqxNQjUt3yej1dWJkqIep9.zxl9sDWZxhuISwUA5/G"
+  },
+  {
+    "id": "adm-sales-1792904051-AST-",
+    "username": "sales-astdyahd5ve",
+    "email": "dyhklstr99@gmail.com",
+    "name": "Dyah Ika Lestari",
+    "isActive": true,
+    "role": "sales",
+    "createdAt": "2026-10-25T04:54:11.605000",
+    "updatedAt": "2026-10-25T04:54:11.605000",
+    "passwordHash": "$2b$12$vS9AGwtiEtYItM8vOjK8oONWH1e5eFW.gnOsQgxMTGHrooS8JNzq6"
+  },
+  {
+    "id": "adm-sales-1792904053-AST-",
+    "username": "sales-astsales7md",
+    "email": "sales@asterra.store",
+    "name": "Sales Representative",
+    "isActive": true,
+    "role": "sales",
+    "createdAt": "2026-10-25T04:54:13.300000",
+    "updatedAt": "2026-10-25T04:54:13.300000",
+    "passwordHash": "$2b$12$fgZdb/RDni82gGFVTH3EfOggcVJIWvT5ochzJxPMAJA6bU6AcgoRy"
+  },
+  {
+    "id": "adm-sales-1792904054-AST-",
+    "username": "sales-astitschlzcool",
+    "email": "itschlz02@gmail.com",
+    "name": "itschlz",
+    "isActive": true,
+    "role": "sales",
+    "createdAt": "2026-10-25T04:54:14.995000",
+    "updatedAt": "2026-10-25T04:58:12.306000",
+    "passwordHash": "$2b$12$rpge7Y/GfzFznHGod1vbcOoV2Du16As2dsuISNjGRz6ZQfe32QI2u"
+  },
+  {
+    "id": "adm-sales-1792905017",
+    "username": "sales-astiqbal3md",
+    "email": "network.iqbal007@gmail.com",
+    "name": "Iqbal",
+    "isActive": true,
+    "role": "sales",
+    "createdAt": "2026-10-25T05:10:17.195000",
+    "updatedAt": "2026-10-25T05:10:17.195000",
+    "passwordHash": "$2b$12$JXzopu0HsqjeD32sSO5nAeoyn9n0a5KuzLO.IgXCDHhG.jbwwikVu"
   }
 ]

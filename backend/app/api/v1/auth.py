@@ -285,14 +285,50 @@ async def admin_auth_logout():
     return response
 
 # ------------------------------------------
-# 1.1 Password Reset & OTP Verification
+# 1.1 Password Reset & Link/Token Verification
 # ------------------------------------------
+@router.post("/auth/forgot-password/request-link", tags=["Auth Password Reset"])
+@router.post("/admin/auth/forgot-password/request-link", tags=["Admin Auth"])
+async def forgot_password_request_link(request: Request):
+    body = await request.json()
+    email = (body.get("email") or "").strip().lower()
+    portal = (body.get("portal") or request.headers.get("x-client-portal") or "admin").strip().lower()
+    res = PasswordResetService.request_reset_link(email=email, portal=portal)
+    status_code = 200 if res.get("success") else 400
+    return JSONResponse(status_code=status_code, content=res)
+
+@router.post("/auth/forgot-password/verify-token", tags=["Auth Password Reset"])
+@router.post("/admin/auth/forgot-password/verify-token", tags=["Admin Auth"])
+async def forgot_password_verify_token(request: Request):
+    body = await request.json()
+    token = (body.get("token") or "").strip()
+    portal = (body.get("portal") or request.headers.get("x-client-portal") or "admin").strip().lower()
+    res = PasswordResetService.verify_reset_token(token=token, portal=portal)
+    status_code = 200 if res.get("success") else 400
+    return JSONResponse(status_code=status_code, content=res)
+
+@router.post("/auth/forgot-password/reset-with-token", tags=["Auth Password Reset"])
+@router.post("/admin/auth/forgot-password/reset-with-token", tags=["Admin Auth"])
+async def forgot_password_reset_with_token(request: Request):
+    body = await request.json()
+    token = (body.get("token") or "").strip()
+    portal = (body.get("portal") or request.headers.get("x-client-portal") or "admin").strip().lower()
+    new_password = (body.get("newPassword") or body.get("password") or "").strip()
+    res = PasswordResetService.reset_password_with_token(token=token, portal=portal, new_password=new_password)
+    status_code = 200 if res.get("success") else 400
+    return JSONResponse(status_code=status_code, content=res)
+
 @router.post("/auth/forgot-password/request", tags=["Auth Password Reset"])
 @router.post("/admin/auth/forgot-password/request", tags=["Admin Auth"])
 async def forgot_password_request_otp(request: Request):
     body = await request.json()
     email = (body.get("email") or "").strip().lower()
-    res = PasswordResetService.request_reset_otp(email)
+    portal = (body.get("portal") or request.headers.get("x-client-portal") or "").strip().lower()
+    # If portal is specified or requested with link mode, dispatch reset link
+    if portal in ("admin", "sales"):
+        res = PasswordResetService.request_reset_link(email=email, portal=portal)
+    else:
+        res = PasswordResetService.request_reset_otp(email)
     status_code = 200 if res.get("success") else 400
     return JSONResponse(status_code=status_code, content=res)
 

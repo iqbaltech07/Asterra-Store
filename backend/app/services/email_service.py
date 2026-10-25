@@ -312,9 +312,79 @@ class EmailService:
 
         print(f"\n=======================================================")
         print(f"[EMAIL SERVICE] PASSWORD RESET OTP SENT TO {to_email}")
-        print(f"VERIFICATION CODE: {otp_code}")
         print(f"=======================================================\n")
 
+        return cls._dispatch_email(to_email, subject, html_content)
+
+    @classmethod
+    def send_password_reset_link_email(
+        cls,
+        *,
+        to_email: str,
+        recipient_name: str,
+        reset_url: str,
+        portal: str = "admin",
+        expires_minutes: int = 15,
+    ) -> bool:
+        """
+        Dispatches a secure password reset link email with high-compatibility HTML template.
+        Complies strictly with zero-token logging security constraints.
+        """
+        portal_label = "Administrator" if portal == "admin" else "Mitra Sales"
+        clean_name = (recipient_name or portal_label).strip()
+        subject = f"Atur Ulang Kata Sandi Akun {portal_label} Asterra Store"
+
+        body_content = f"""
+        <p style="font-size: 14px; line-height: 1.6; color: #334155; margin: 0 0 16px 0;">
+          Halo <strong>{clean_name}</strong>, kami menerima permintaan untuk mengatur ulang kata sandi akun <strong>{portal_label}</strong> Asterra Store Anda.
+        </p>
+        <p style="font-size: 14px; line-height: 1.6; color: #334155; margin: 0 0 20px 0;">
+          Silakan klik tombol di bawah ini untuk membuka formulir aman dan menetapkan kata sandi baru:
+        </p>
+
+        <!-- Information Note Box -->
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 20px 0; background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px;">
+          <tr>
+            <td style="padding: 14px 16px; font-size: 13px; color: #166534; line-height: 1.5;">
+              ⏱️ <strong>Masa Berlaku:</strong> Tautan pemulihan ini hanya berlaku selama <strong>{expires_minutes} menit</strong> dan akan otomatis dinonaktifkan setelah digunakan satu kali.
+            </td>
+          </tr>
+        </table>
+
+        <!-- Security Warning Box -->
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 12px 0 20px 0; background-color: #fef2f2; border: 1px solid #fee2e2; border-radius: 12px;">
+          <tr>
+            <td style="padding: 14px 16px; font-size: 12px; color: #991b1b; line-height: 1.6;">
+              🔒 <strong>Pemberitahuan Keamanan:</strong> Jika Anda tidak merasa meminta pengaturan ulang kata sandi, abaikan email ini. Kata sandi akun Anda tidak akan berubah tanpa membuka tautan di atas.
+            </td>
+          </tr>
+        </table>
+
+        <p style="font-size: 12px; line-height: 1.6; color: #64748b; margin: 16px 0 0 0; word-break: break-all;">
+          Jika tombol di atas tidak dapat diklik, salin dan tempel tautan berikut ke browser Anda:<br />
+          <a href="{reset_url}" target="_blank" style="color: #0284c7; text-decoration: underline;">{reset_url}</a>
+        </p>
+        """
+
+        badge_color = "#0284c7" if portal == "admin" else "#059669"
+        badge_bg = "#e0f2fe" if portal == "admin" else "#d1fae5"
+        badge_border = "#bae6fd" if portal == "admin" else "#a7f3d0"
+
+        html_content = cls._render_base_email(
+            preheader=f"Permintaan atur ulang kata sandi akun {portal_label} Asterra Store. Berlaku {expires_minutes} menit.",
+            badge_text=f"Keamanan Akun · {portal_label}",
+            badge_color=badge_color,
+            badge_bg=badge_bg,
+            badge_border=badge_border,
+            title="Atur Ulang Kata Sandi",
+            subtitle=f"Permintaan pengaturan kata sandi baru untuk akun {portal_label}",
+            body_content=body_content,
+            cta_text="Atur Ulang Kata Sandi",
+            cta_url=reset_url,
+            footer_note=f"Email keamanan ini dikirim secara otomatis ke {to_email}. Harap tidak membalas email ini.",
+        )
+
+        print(f"[EmailService] Dispatched password reset link email to {to_email} ({portal_label})")
         return cls._dispatch_email(to_email, subject, html_content)
 
     @classmethod

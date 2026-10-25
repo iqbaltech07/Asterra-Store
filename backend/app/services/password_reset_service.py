@@ -5,6 +5,7 @@ import secrets
 from typing import Dict, Any, Optional
 from datetime import datetime
 
+from app.config import settings
 from app.core.cache import SmartCache
 from app.core.security import get_password_hash
 from app.core.database import SessionLocal
@@ -15,9 +16,370 @@ from app.services.email_service import EmailService
 
 DATA_DIR = pathlib.Path(__file__).resolve().parent.parent.parent / "data"
 RESETS_FILE = DATA_DIR / "pending-password-resets.json"
+TOKENS_FILE = DATA_DIR / "pending-password-reset-tokens.json"
 
 class PasswordResetService:
     _pending_resets: Dict[str, Dict[str, Any]] = {}
+    _pending_tokens: Dict[str, Dict[str, Any]] = {}
+    _email_rate_limits: Dict[str, float] = {}
+
+    @classmethod
+    def _load_token_store(cls) -> Dict[str, Dict[str, Any]]:
+        now = time.time()
+        res = dict(cls._pending_tokens)
+        if TOKENS_FILE.exists():
+            try:
+                file_data = json.loads(TOKENS_FILE.read_text(encoding="utf-8"))
+                if isinstance(file_data, dict):
+                    for k, v in file_data.items():
+                        if isinstance(v, dict) and v.get("expiresAt", 0) > now and not v.get("used", False):
+                            res[k] = v
+            except Exception:
+                pass
+        # Clean expired or used
+        res = {k: v for k, v in res.items() if v.get("expiresAt", 0) > now and not v.get("used", False)}
+        cls._pending_tokens = res
+        return res
+
+    @classmethod
+    def _save_token_store(cls, store: Dict[str, Dict[str, Any]]) -> None:
+        cls._pending_tokens = store
+        try:
+            TOKENS_FILE.parent.mkdir(parents=True, exist_ok=True)
+            TOKENS_FILE.write_text(json.dumps(store, indent=2, ensure_ascii=False), encoding="utf-8")
+        except Exception as e:
+            print(f"[PasswordResetService] Warning: Failed to write tokens file: {e}")
+
+    @classmethod
+    def request_reset_link(cls, email: str, portal: str = "admin") -> Dict[str, Any]:
+        """
+        Processes a password reset link request for either 'admin' or 'sales' portal.
+        Strictly enforces context separation, rate limiting, and anti-enumeration.
+        """
+        portal_clean = (portal or "admin").strip().lower()
+        if portal_clean not in ("admin", "sales"):
+            portal_clean = "admin"
+
+        email_clean = str(email or "").strip().lower()
+        if not email_clean or "@" not in email_clean or len(email_clean) < 5:
+            return {
+                "success": False,
+                "message": "Silakan masukkan format alamat email yang valid.",
+            }
+
+        now = time.time()
+
+        # Cooldown check: prevent requesting more than once per 60 seconds per email
+        last_req = cls._email_rate_limits.get(f"{portal_clean}:{email_clean}", 0)
+        elapsed = now - last_req
+        if elapsed < 60:
+            remaining = int(60 - elapsed)
+            return {
+                "success": False,
+                "cooldown": True,
+                "message": f"Harap tunggu {remaining} detik sebelum meminta tautan baru.",
+                "cooldownSeconds": remaining,
+            }
+
+        # Anti-enumeration response template
+        generic_success_msg = "Jika email tersebut terdaftar, kami akan mengirimkan instruksi untuk mengatur ulang kata sandi."
+
+        # Verify account strictly matching portal role
+        admin_match = None
+        partner_match = None
+        recipient_name = ""
+        matched_role = ""
+
+        if portal_clean == "admin":
+            # Admin portal: MUST be an active administrator (admin or superadmin)
+            admin_match = AdminUserService.find_by_email(email_clean)
+            if not admin_match:
+                try:
+                    db = SessionLocal()
+                    try:
+                        rec = db.query(AdminUser).filter(AdminUser.email.ilike(email_clean)).first()
+                        if rec and rec.is_active:
+                            admin_match = rec.to_dict(include_hash=True)
+                    finally:
+                        db.close()
+                except Exception:
+                    pass
+
+            if admin_match:
+                role = str(admin_match.get("role", "")).lower()
+                is_active = bool(admin_match.get("isActive", True))
+                if role in ("admin", "superadmin") and is_active:
+                    recipient_name = admin_match.get("name") or admin_match.get("username") or "Administrator"
+                    matched_role = role
+                else:
+                    admin_match = None
+
+        elif portal_clean == "sales":
+            # Sales portal: MUST be an active sales partner
+            partner_match = PartnerService.find_by_email(email_clean)
+            admin_match = AdminUserService.find_by_email(email_clean)
+            if not admin_match:
+                try:
+                    db = SessionLocal()
+                    try:
+                        rec = db.query(AdminUser).filter(AdminUser.email.ilike(email_clean)).first()
+                        if rec and rec.is_active and str(rec.role).lower() == "sales":
+                            admin_match = rec.to_dict(include_hash=True)
+                    finally:
+                        db.close()
+                except Exception:
+                    pass
+
+            # Validate active sales status
+            if partner_match and str(partner_match.get("status", "")).lower() in ("inactive", "non-aktif"):
+                partner_match = None
+
+            if admin_match and (str(admin_match.get("role", "")).lower() != "sales" or not admin_match.get("isActive", True)):
+                admin_match = None
+
+            if partner_match or admin_match:
+                recipient_name = (
+                    (partner_match.get("name") if partner_match else None)
+                    or (admin_match.get("name") if admin_match else None)
+                    or "Mitra Sales"
+                )
+                matched_role = "sales"
+
+        # Update rate limit tracker regardless of match to avoid timing enumeration
+        cls._email_rate_limits[f"{portal_clean}:{email_clean}"] = now
+
+        # If no valid account exists for this portal, return generic message without sending email or exposing token
+        if not matched_role:
+            return {
+                "success": True,
+                "message": generic_success_msg,
+                "cooldownSeconds": 60,
+            }
+
+        # Valid account found: generate high-entropy secure URL token
+        token = secrets.token_urlsafe(32)
+        token_data = {
+            "token": token,
+            "email": email_clean,
+            "portal": portal_clean,
+            "role": matched_role,
+            "recipientName": recipient_name,
+            "createdAt": now,
+            "expiresAt": now + (15 * 60),  # 15 minutes
+            "used": False,
+        }
+
+        store = cls._load_token_store()
+        store[token] = token_data
+        cls._save_token_store(store)
+        SmartCache.set("pwd_reset_token", token, token_data, ttl=900)
+
+        # Build trusted reset URL
+        base_url = settings.ADMIN_URL if portal_clean == "admin" else settings.SALES_URL
+        reset_url = f"{base_url.rstrip('/')}/{portal_clean}/reset-password?token={token}"
+
+        # Dispatch email
+        EmailService.send_password_reset_link_email(
+            to_email=email_clean,
+            recipient_name=recipient_name,
+            reset_url=reset_url,
+            portal=portal_clean,
+            expires_minutes=15,
+        )
+
+        return {
+            "success": True,
+            "message": generic_success_msg,
+            "cooldownSeconds": 60,
+        }
+
+    @classmethod
+    def verify_reset_token(cls, token: str, portal: str = "admin") -> Dict[str, Any]:
+        """
+        Validates token existence, expiration, non-used state, and portal separation.
+        """
+        token_clean = str(token or "").strip()
+        portal_clean = str(portal or "admin").strip().lower()
+
+        if not token_clean:
+            return {
+                "success": False,
+                "valid": False,
+                "message": "Token reset kata sandi tidak ditemukan.",
+            }
+
+        store = cls._load_token_store()
+        token_data = store.get(token_clean)
+        if not token_data:
+            cached = SmartCache.get("pwd_reset_token", token_clean)
+            if cached and isinstance(cached, dict):
+                token_data = cached
+
+        if not token_data:
+            return {
+                "success": False,
+                "valid": False,
+                "message": "Tautan pemulihan kata sandi tidak valid atau telah kedaluwarsa.",
+            }
+
+        now = time.time()
+        if token_data.get("used", False):
+            return {
+                "success": False,
+                "valid": False,
+                "message": "Tautan pemulihan kata sandi ini sudah pernah digunakan.",
+            }
+
+        if now > token_data.get("expiresAt", 0):
+            return {
+                "success": False,
+                "valid": False,
+                "message": "Tautan pemulihan kata sandi telah kedaluwarsa (batas waktu 15 menit).",
+            }
+
+        # Strict portal validation
+        if str(token_data.get("portal", "")).lower() != portal_clean:
+            return {
+                "success": False,
+                "valid": False,
+                "message": "Tautan pemulihan ini tidak sesuai dengan portal autentikasi yang diakses.",
+            }
+
+        email = token_data.get("email", "")
+        # Mask email for safe frontend display
+        masked = email
+        if "@" in email:
+            user_part, domain_part = email.split("@", 1)
+            if len(user_part) <= 2:
+                masked = f"{user_part}***@{domain_part}"
+            else:
+                masked = f"{user_part[:2]}***{user_part[-1]}@{domain_part}"
+
+        return {
+            "success": True,
+            "valid": True,
+            "maskedEmail": masked,
+            "portal": portal_clean,
+        }
+
+    @classmethod
+    def reset_password_with_token(cls, token: str, portal: str, new_password: str) -> Dict[str, Any]:
+        """
+        Single-use execution of password change with full verification and database sync.
+        """
+        token_clean = str(token or "").strip()
+        portal_clean = str(portal or "admin").strip().lower()
+        new_pw = str(new_password or "").strip()
+
+        if not new_pw or len(new_pw) < 6:
+            return {
+                "success": False,
+                "message": "Kata sandi baru minimal harus terdiri dari 6 karakter.",
+            }
+
+        # 1. Verify token validity
+        verify_res = cls.verify_reset_token(token_clean, portal_clean)
+        if not verify_res.get("valid"):
+            return verify_res
+
+        store = cls._load_token_store()
+        token_data = store.get(token_clean)
+        if not token_data:
+            cached = SmartCache.get("pwd_reset_token", token_clean)
+            if cached and isinstance(cached, dict):
+                token_data = cached
+
+        if not token_data:
+            return {
+                "success": False,
+                "message": "Sesi pemulihan kata sandi tidak valid.",
+            }
+
+        email_clean = token_data.get("email")
+        recipient_name = token_data.get("recipientName") or "Pengguna Asterra"
+
+        # 2. Invalidate token immediately (Single-use enforcement)
+        token_data["used"] = True
+        store.pop(token_clean, None)
+        cls._save_token_store(store)
+        SmartCache.set("pwd_reset_token", token_clean, None, ttl=1)
+
+        # 3. Hash new password
+        new_pw_hash = get_password_hash(new_pw)
+
+        # 4. Update in database
+        try:
+            db = SessionLocal()
+            try:
+                if portal_clean == "admin":
+                    admin_obj = db.query(AdminUser).filter(
+                        AdminUser.email.ilike(email_clean),
+                        AdminUser.role.in_(["admin", "superadmin"])
+                    ).first()
+                    if not admin_obj:
+                        admin_obj = db.query(AdminUser).filter(AdminUser.email.ilike(email_clean)).first()
+
+                    if admin_obj:
+                        admin_obj.password_hash = new_pw_hash
+                        admin_obj.updated_at = datetime.utcnow()
+                        db.commit()
+                        recipient_name = admin_obj.name or admin_obj.username or recipient_name
+                elif portal_clean == "sales":
+                    sales_admin = db.query(AdminUser).filter(
+                        AdminUser.email.ilike(email_clean),
+                        AdminUser.role == "sales"
+                    ).first()
+
+                    if sales_admin:
+                        sales_admin.password_hash = new_pw_hash
+                        sales_admin.updated_at = datetime.utcnow()
+                        db.commit()
+                        recipient_name = sales_admin.name or recipient_name
+                    else:
+                        partner = PartnerService.find_by_email(email_clean)
+                        p_code = (partner.get("code") or "PARTNER") if partner else "SALES"
+                        p_name = (partner.get("name") if partner else None) or recipient_name
+                        username = f"sales-{p_code.lower().replace('-', '')}"
+                        new_sales = AdminUser(
+                            id=f"adm-sales-{int(time.time() * 1000)}",
+                            username=username,
+                            email=email_clean,
+                            name=p_name,
+                            password_hash=new_pw_hash,
+                            role="sales",
+                            is_active=True,
+                            created_at=datetime.utcnow(),
+                            updated_at=datetime.utcnow(),
+                        )
+                        db.add(new_sales)
+                        db.commit()
+                        recipient_name = p_name
+            finally:
+                db.close()
+        except Exception as e:
+            print(f"[PasswordResetService] Database error updating password: {e}")
+            return {
+                "success": False,
+                "message": f"Gagal memperbarui kata sandi di database: {str(e)}",
+            }
+
+        # 5. Synchronize local AdminUserService cache
+        AdminUserService.update_admin(email_clean, {"password": new_pw})
+        AdminUserService.load_admins(force_reload=True)
+
+        # 6. Send password changed alert email
+        try:
+            EmailService.send_password_changed_notification(
+                to_email=email_clean,
+                recipient_name=recipient_name,
+            )
+        except Exception as e:
+            print(f"[PasswordResetService] Warning: Failed to send confirmation email: {e}")
+
+        return {
+            "success": True,
+            "message": "Kata sandi berhasil diperbarui. Silakan masuk dengan kata sandi baru Anda.",
+        }
 
     @classmethod
     def _load_store(cls) -> Dict[str, Dict[str, Any]]:

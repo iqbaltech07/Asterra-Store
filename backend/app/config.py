@@ -94,6 +94,20 @@ class Settings(BaseSettings):
     # Brandfetch API
     BRANDFETCH_CLIENT_ID: str = os.getenv("BRANDFETCH_CLIENT_ID", "1idOZh3WAwyNTiUHkB7")
     BRANDFETCH_API_KEY: str = os.getenv("BRANDFETCH_API_KEY", "wZja_h7z1EIx8KrAtYbS_QzVnELZI48RA02MMLQEudYxBbjCS5l6t-s4DLhkXvt9LLzDCnm9-iu9dwwAMK6lwg")
+
+    # Application URLs for Secure Password Recovery & Notification Links
+    ADMIN_URL: str = os.getenv(
+        "ADMIN_FRONTEND_URL",
+        os.getenv("ADMIN_URL", "https://admin.asterrastore.biz.id" if os.getenv("ENVIRONMENT") == "production" else "http://localhost:3001"),
+    )
+    SALES_URL: str = os.getenv(
+        "SALES_FRONTEND_URL",
+        os.getenv("SALES_URL", "https://sales.asterrastore.biz.id" if os.getenv("ENVIRONMENT") == "production" else "http://localhost:3002"),
+    )
+    STORE_URL: str = os.getenv(
+        "STORE_FRONTEND_URL",
+        os.getenv("STORE_URL", "https://asterrastore.biz.id" if os.getenv("ENVIRONMENT") == "production" else "http://localhost:3000"),
+    )
     
     # CORS
     BACKEND_CORS_ORIGINS: List[str] = [

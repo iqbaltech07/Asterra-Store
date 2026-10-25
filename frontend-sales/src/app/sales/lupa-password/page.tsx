@@ -1,8 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useRef, Suspense } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -15,41 +14,23 @@ import {
 } from '@/components/ui/card';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faLock,
   faEnvelope,
   faArrowLeft,
   faSpinner,
   faCircleExclamation,
   faCircleCheck,
-  faShieldHalved,
-  faKey,
+  faUsers,
+  faPaperPlane,
   faRotateRight,
-  faEye,
-  faEyeSlash,
-  faCheck,
 } from '@fortawesome/free-solid-svg-icons';
 import { AsterraLogo } from '@/components/ui/asterra-logo';
 
 function SalesForgotPasswordContent() {
-  const router = useRouter();
-
-  // Steps: 'request' -> 'verify_reset' -> 'success'
-  const [step, setStep] = useState<'request' | 'verify_reset' | 'success'>('request');
-
   const [email, setEmail] = useState('');
-  const [otp, setOtp] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
   const [isLoading, setIsLoading] = useState(false);
-  const [isResending, setIsResending] = useState(false);
   const [cooldown, setCooldown] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-
-  const otpInputRef = useRef<HTMLInputElement>(null);
 
   // Cooldown countdown timer
   useEffect(() => {
@@ -60,452 +41,161 @@ function SalesForgotPasswordContent() {
     return () => clearInterval(timer);
   }, [cooldown]);
 
-  // Focus OTP input when transitioning to step 2
-  useEffect(() => {
-    if (step === 'verify_reset') {
-      setTimeout(() => {
-        otpInputRef.current?.focus();
-      }, 150);
-    }
-  }, [step]);
-
-  // Step 1: Send OTP to Email
-  const handleRequestOtp = async (e: React.FormEvent) => {
+  const handleRequestResetLink = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLoading || cooldown > 0) return;
     setErrorMessage(null);
-    setSuccessMessage(null);
 
     const cleanEmail = email.trim().toLowerCase();
-    if (!cleanEmail || !cleanEmail.includes('@')) {
+    if (!cleanEmail || !cleanEmail.includes('@') || cleanEmail.length < 5) {
       setErrorMessage('Silakan masukkan alamat email yang valid.');
       return;
     }
 
     setIsLoading(true);
     try {
-      const res = await fetch('/api/v1/auth/forgot-password/request', {
+      const res = await fetch('/api/v1/auth/forgot-password/request-link', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: cleanEmail }),
+        headers: {
+          'Content-Type': 'application/json',
+          'x-client-portal': 'sales',
+        },
+        body: JSON.stringify({ email: cleanEmail, portal: 'sales' }),
       });
 
       const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.message || 'Gagal mengirim kode OTP. Periksa alamat email Anda.');
+      if (!res.ok && !data.success) {
+        throw new Error(data.message || 'Gagal memproses permintaan reset kata sandi.');
       }
 
-      setSuccessMessage(data.message || 'Kode OTP telah berhasil dikirim ke email Anda.');
-      setStep('verify_reset');
-      setCooldown(60); // 60s cooldown
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Terjadi kesalahan pada server.';
-      setErrorMessage(msg);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Step 2: Resend OTP
-  const handleResendOtp = async () => {
-    if (cooldown > 0 || isResending) return;
-    setErrorMessage(null);
-    setSuccessMessage(null);
-
-    setIsResending(true);
-    try {
-      const res = await fetch('/api/v1/auth/forgot-password/resend', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim().toLowerCase() }),
-      });
-
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.message || 'Gagal mengirim ulang kode OTP.');
-      }
-
-      setSuccessMessage('Kode OTP baru telah dikirimkan ke email Anda.');
+      setSuccessMessage(
+        data.message ||
+          'Jika email tersebut terdaftar, kami akan mengirimkan instruksi untuk mengatur ulang kata sandi. Silakan periksa kotak masuk atau spam email Anda.'
+      );
       setCooldown(60);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Gagal mengirim ulang kode OTP.';
-      setErrorMessage(msg);
-    } finally {
-      setIsResending(false);
-    }
-  };
-
-  // Step 2 Submit: Verify OTP & Reset Password
-  const handleResetPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorMessage(null);
-    setSuccessMessage(null);
-
-    const cleanOtp = otp.trim().replace(/\D/g, '');
-    if (!cleanOtp || cleanOtp.length !== 6) {
-      setErrorMessage('Kode OTP harus terdiri dari 6 digit angka.');
-      return;
-    }
-
-    if (!newPassword || newPassword.length < 6) {
-      setErrorMessage('Kata sandi baru minimal harus terdiri dari 6 karakter.');
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      setErrorMessage('Konfirmasi kata sandi tidak cocok dengan kata sandi baru.');
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const res = await fetch('/api/v1/auth/forgot-password/reset', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: email.trim().toLowerCase(),
-          otp: cleanOtp,
-          newPassword,
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.message || 'Gagal mengatur ulang kata sandi.');
-      }
-
-      setStep('success');
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Terjadi kesalahan saat mengatur ulang kata sandi.';
+      const msg = err instanceof Error ? err.message : 'Terjadi kendala jaringan saat menghubungi server.';
       setErrorMessage(msg);
     } finally {
       setIsLoading(false);
     }
   };
-
-  // Mask email for display
-  const maskedEmail = React.useMemo(() => {
-    if (!email || !email.includes('@')) return email;
-    const [user, domain] = email.split('@');
-    if (user.length <= 2) return `${user}***@${domain}`;
-    return `${user.slice(0, 2)}***${user.slice(-1)}@${domain}`;
-  }, [email]);
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col justify-center items-center px-4 py-12 selection:bg-primary/20 selection:text-primary">
-      {/* Back to Login Link */}
       <div className="w-full max-w-md mb-6 flex items-center justify-between">
         <Link
           href="/sales/login"
           className="inline-flex items-center gap-2 text-xs font-medium text-foreground-muted hover:text-foreground transition-colors group"
         >
           <FontAwesomeIcon icon={faArrowLeft} className="text-xs group-hover:-translate-x-1 transition-transform" />
-          <span>Kembali ke Masuk Portal Sales</span>
+          <span>Kembali ke Masuk Mitra Sales</span>
         </Link>
       </div>
 
-      <Card data-gsap="login-card" className="w-full max-w-md border-border bg-surface shadow-editorial">
+      <Card className="w-full max-w-md border-border bg-surface shadow-editorial">
         <CardHeader className="space-y-2 text-center pb-6 pt-6">
-          <div data-gsap="login-logo" className="flex justify-center mb-2">
+          <div className="flex justify-center mb-2">
             <AsterraLogo variant="light-bg" size="md" />
           </div>
 
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-[11px] font-bold mx-auto">
-            <FontAwesomeIcon icon={faShieldHalved} className="text-xs" />
-            <span>Pemulihan Keamanan Akun</span>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[11px] font-bold mx-auto">
+            <FontAwesomeIcon icon={faUsers} className="text-xs" />
+            <span>Portal Mitra Penjualan (Sales)</span>
           </div>
 
-          <CardTitle data-gsap="login-heading" className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
-            {step === 'request' && 'Lupa Kata Sandi Akun'}
-            {step === 'verify_reset' && 'Verifikasi OTP & Kata Sandi'}
-            {step === 'success' && 'Kata Sandi Berhasil Diperbarui'}
+          <CardTitle className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+            Lupa Kata Sandi?
           </CardTitle>
 
           <CardDescription className="text-xs text-foreground-muted max-w-xs mx-auto leading-relaxed">
-            {step === 'request' && 'Masukkan alamat email akun sales Anda untuk menerima kode OTP verifikasi 6 digit.'}
-            {step === 'verify_reset' && `Kode verifikasi telah dikirim ke ${maskedEmail}. Masukkan kode untuk membuat kata sandi baru.`}
-            {step === 'success' && 'Kata sandi akun Anda telah diperbarui dengan aman. Silakan masuk kembali.'}
+            Masukkan alamat email mitra sales Anda untuk menerima tautan pemulihan kata sandi resmi Asterra Store.
           </CardDescription>
         </CardHeader>
 
-        {/* STEP 1: Request OTP Form */}
-        {step === 'request' && (
-          <form onSubmit={handleRequestOtp}>
-            <CardContent className="space-y-4">
-              {errorMessage && (
-                <div className="p-3 rounded-md bg-status-error/10 border border-status-error/20 flex items-start gap-2.5 text-xs text-status-error animate-in fade-in">
-                  <FontAwesomeIcon icon={faCircleExclamation} className="text-sm shrink-0 mt-0.5 text-status-error" />
-                  <span className="leading-relaxed">{errorMessage}</span>
-                </div>
-              )}
-
-              <div data-gsap="login-input" className="space-y-1.5">
-                <label
-                  htmlFor="reset-email"
-                  className="text-xs font-medium text-foreground flex items-center gap-1.5"
-                >
-                  <FontAwesomeIcon icon={faEnvelope} className="text-xs text-primary" />
-                  <span>Email Akun Sales</span>
-                </label>
-                <Input
-                  id="reset-email"
-                  type="email"
-                  placeholder="nama@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  autoComplete="email"
-                  required
-                  autoFocus
-                  className="bg-surface-raised border-border text-xs h-10"
-                />
+        <form onSubmit={handleRequestResetLink}>
+          <CardContent className="space-y-4">
+            {errorMessage && (
+              <div className="p-3.5 rounded-xl bg-status-error/10 border border-status-error/20 flex items-start gap-2.5 text-xs text-status-error animate-in fade-in">
+                <FontAwesomeIcon icon={faCircleExclamation} className="text-sm shrink-0 mt-0.5 text-status-error" />
+                <span className="leading-relaxed">{errorMessage}</span>
               </div>
+            )}
 
-              <div className="p-3 rounded-xl bg-blue-50/60 dark:bg-blue-950/20 border border-blue-200/60 dark:border-blue-800/40 text-[11px] text-blue-700 dark:text-blue-300 space-y-1">
-                <div className="font-semibold flex items-center gap-1.5">
-                  <span>ℹ️ Informasi Pengiriman OTP</span>
-                </div>
-                <p className="leading-relaxed text-blue-600/90 dark:text-blue-300/80">
-                  Kode 6 digit akan dikirim melalui email resmi Asterra Store dan berlaku selama 10 menit.
-                </p>
-              </div>
-            </CardContent>
-
-            <CardFooter className="flex flex-col space-y-3 pt-2 pb-6">
-              <Button
-                type="submit"
-                data-gsap="login-button"
-                className="w-full gap-2 font-bold h-10 text-xs"
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <FontAwesomeIcon icon={faSpinner} className="text-sm fa-spin" />
-                    <span>Mengirim Kode OTP...</span>
-                  </>
-                ) : (
-                  <>
-                    <FontAwesomeIcon icon={faEnvelope} className="text-xs" />
-                    <span>Kirim Kode OTP ke Email</span>
-                  </>
-                )}
-              </Button>
-
-              <div className="flex items-center justify-center w-full pt-1 text-xs text-foreground-muted">
-                <Link href="/sales/login" className="text-foreground-muted hover:text-foreground font-medium">
-                  Ingat kata sandi Anda? <span className="text-primary font-bold hover:underline">Masuk disini</span>
-                </Link>
-              </div>
-            </CardFooter>
-          </form>
-        )}
-
-        {/* STEP 2: Verify OTP & Input New Password Form */}
-        {step === 'verify_reset' && (
-          <form onSubmit={handleResetPassword}>
-            <CardContent className="space-y-4">
-              {errorMessage && (
-                <div className="p-3 rounded-md bg-status-error/10 border border-status-error/20 flex items-start gap-2.5 text-xs text-status-error animate-in fade-in">
-                  <FontAwesomeIcon icon={faCircleExclamation} className="text-sm shrink-0 mt-0.5 text-status-error" />
-                  <span className="leading-relaxed">{errorMessage}</span>
-                </div>
-              )}
-
-              {successMessage && (
-                <div className="p-3 rounded-md bg-status-success/10 border border-status-success/20 flex items-center gap-2.5 text-xs text-status-success animate-in fade-in">
-                  <FontAwesomeIcon icon={faCircleCheck} className="text-sm shrink-0 text-status-success" />
-                  <span>{successMessage}</span>
-                </div>
-              )}
-
-              {/* OTP Input */}
-              <div data-gsap="login-input" className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label
-                    htmlFor="reset-otp"
-                    className="text-xs font-medium text-foreground flex items-center gap-1.5"
-                  >
-                    <FontAwesomeIcon icon={faShieldHalved} className="text-xs text-primary" />
-                    <span>Kode Verifikasi (OTP)</span>
-                  </label>
-                  <button
-                    type="button"
-                    onClick={handleResendOtp}
-                    disabled={cooldown > 0 || isResending}
-                    className="text-[11px] font-semibold text-primary hover:underline disabled:text-foreground-muted disabled:no-underline flex items-center gap-1 cursor-pointer disabled:cursor-not-allowed"
-                  >
-                    {isResending ? (
-                      <>
-                        <FontAwesomeIcon icon={faSpinner} className="text-[10px] fa-spin" />
-                        <span>Mengirim...</span>
-                      </>
-                    ) : cooldown > 0 ? (
-                      <span>Kirim ulang ({cooldown}s)</span>
-                    ) : (
-                      <>
-                        <FontAwesomeIcon icon={faRotateRight} className="text-[10px]" />
-                        <span>Kirim Ulang OTP</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-                <Input
-                  ref={otpInputRef}
-                  id="reset-otp"
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={6}
-                  placeholder="000000"
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  required
-                  className="bg-surface-raised border-border text-center tracking-[0.4em] font-mono text-base font-bold h-11"
-                />
-              </div>
-
-              {/* New Password */}
-              <div data-gsap="login-input" className="space-y-1.5">
-                <label
-                  htmlFor="new-password"
-                  className="text-xs font-medium text-foreground flex items-center gap-1.5"
-                >
-                  <FontAwesomeIcon icon={faKey} className="text-xs text-primary" />
-                  <span>Kata Sandi Baru</span>
-                </label>
-                <div className="relative">
-                  <Input
-                    id="new-password"
-                    type={showNewPassword ? 'text' : 'password'}
-                    placeholder="Minimal 6 karakter"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    autoComplete="new-password"
-                    required
-                    className="bg-surface-raised border-border text-xs h-10 pr-9"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowNewPassword(!showNewPassword)}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-foreground-muted hover:text-foreground p-1 text-xs"
-                    tabIndex={-1}
-                  >
-                    <FontAwesomeIcon icon={showNewPassword ? faEyeSlash : faEye} />
-                  </button>
+            {successMessage && (
+              <div className="p-3.5 rounded-xl bg-status-success/10 border border-status-success/20 flex items-start gap-2.5 text-xs text-status-success animate-in fade-in">
+                <FontAwesomeIcon icon={faCircleCheck} className="text-sm shrink-0 mt-0.5 text-status-success" />
+                <div className="space-y-1">
+                  <p className="font-semibold">Permintaan Terkirim</p>
+                  <p className="leading-relaxed text-foreground-muted text-[11px]">{successMessage}</p>
                 </div>
               </div>
-
-              {/* Confirm Password */}
-              <div data-gsap="login-input" className="space-y-1.5">
-                <label
-                  htmlFor="confirm-password"
-                  className="text-xs font-medium text-foreground flex items-center gap-1.5"
-                >
-                  <FontAwesomeIcon icon={faLock} className="text-xs text-primary" />
-                  <span>Konfirmasi Kata Sandi Baru</span>
-                </label>
-                <div className="relative">
-                  <Input
-                    id="confirm-password"
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    placeholder="Ulangi kata sandi baru"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    autoComplete="new-password"
-                    required
-                    className="bg-surface-raised border-border text-xs h-10 pr-9"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-foreground-muted hover:text-foreground p-1 text-xs"
-                    tabIndex={-1}
-                  >
-                    <FontAwesomeIcon icon={showConfirmPassword ? faEyeSlash : faEye} />
-                  </button>
-                </div>
-              </div>
-
-              {/* Password checks helper */}
-              <div className="space-y-1 pt-1 text-[11px] text-foreground-muted">
-                <div className={`flex items-center gap-1.5 ${newPassword.length >= 6 ? 'text-status-success font-medium' : ''}`}>
-                  <FontAwesomeIcon icon={faCheck} className="text-[10px]" />
-                  <span>Minimal 6 karakter</span>
-                </div>
-                {confirmPassword && (
-                  <div className={`flex items-center gap-1.5 ${newPassword === confirmPassword ? 'text-status-success font-medium' : 'text-status-error'}`}>
-                    <FontAwesomeIcon icon={newPassword === confirmPassword ? faCheck : faCircleExclamation} className="text-[10px]" />
-                    <span>{newPassword === confirmPassword ? 'Kata sandi cocok' : 'Kata sandi belum cocok'}</span>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-
-            <CardFooter className="flex flex-col space-y-3 pt-2 pb-6">
-              <Button
-                type="submit"
-                data-gsap="login-button"
-                className="w-full gap-2 font-bold h-10 text-xs"
-                disabled={isLoading || otp.length !== 6 || newPassword.length < 6 || newPassword !== confirmPassword}
-              >
-                {isLoading ? (
-                  <>
-                    <FontAwesomeIcon icon={faSpinner} className="text-sm fa-spin" />
-                    <span>Memperbarui Kata Sandi...</span>
-                  </>
-                ) : (
-                  <>
-                    <FontAwesomeIcon icon={faKey} className="text-xs" />
-                    <span>Perbarui Kata Sandi Saya</span>
-                  </>
-                )}
-              </Button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setStep('request');
-                  setOtp('');
-                  setErrorMessage(null);
-                  setSuccessMessage(null);
-                }}
-                className="text-xs text-foreground-muted hover:text-foreground font-medium transition-colors"
-              >
-                Salah memasukkan email? <span className="text-primary font-semibold hover:underline">Ganti Email</span>
-              </button>
-            </CardFooter>
-          </form>
-        )}
-
-        {/* STEP 3: Success Screen */}
-        {step === 'success' && (
-          <CardContent className="space-y-6 pt-2 pb-8 text-center">
-            <div className="w-16 h-16 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center mx-auto text-status-success">
-              <FontAwesomeIcon icon={faCircleCheck} className="text-3xl text-status-success" />
-            </div>
+            )}
 
             <div className="space-y-1.5">
-              <h3 className="font-bold text-base text-foreground">
-                Kata Sandi Baru Siap Digunakan
-              </h3>
-              <p className="text-xs text-foreground-muted max-w-xs mx-auto leading-relaxed">
-                Kata sandi akun kemitraan sales Anda telah berhasil diperbarui. Silakan gunakan kata sandi baru untuk masuk ke Portal Sales.
-              </p>
+              <label
+                htmlFor="sales-reset-email"
+                className="text-xs font-medium text-foreground flex items-center gap-1.5"
+              >
+                <FontAwesomeIcon icon={faEnvelope} className="text-xs text-primary" />
+                <span>Email Akun Mitra Sales</span>
+              </label>
+              <Input
+                id="sales-reset-email"
+                type="email"
+                placeholder="nama@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
+                required
+                autoFocus
+                disabled={isLoading}
+                className="bg-surface-raised border-border text-xs h-10"
+              />
             </div>
 
-            <Button
-              type="button"
-              onClick={() => router.push('/sales/login')}
-              className="w-full gap-2 font-bold h-10 text-xs"
-            >
-              <span>Masuk ke Portal Sales Sekarang</span>
-              <span>&rarr;</span>
-            </Button>
+            <div className="p-3 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-800/40 text-[11px] text-emerald-800 dark:text-emerald-300 space-y-1">
+              <div className="font-semibold flex items-center gap-1.5">
+                <span>ℹ️ Pemulihan Akun Mitra</span>
+              </div>
+              <p className="leading-relaxed text-emerald-700/90 dark:text-emerald-300/80">
+                Tautan pemulihan kata sandi akan dikirim ke email terdaftar dan berlaku selama 15 menit.
+              </p>
+            </div>
           </CardContent>
-        )}
-      </Card>
 
-      {/* Footer Info */}
-      <div className="mt-8 text-center text-[11px] text-foreground-muted space-y-1 max-w-sm">
-        <p>Sistem keamanan reset kata sandi dilindungi oleh enkripsi SSL & verifikasi OTP instan.</p>
-      </div>
+          <CardFooter className="flex flex-col space-y-3 pt-2 pb-6">
+            <Button
+              type="submit"
+              className="w-full gap-2 font-bold h-10 text-xs"
+              disabled={isLoading || cooldown > 0}
+            >
+              {isLoading ? (
+                <>
+                  <FontAwesomeIcon icon={faSpinner} className="text-sm fa-spin" />
+                  <span>Memproses Permintaan...</span>
+                </>
+              ) : cooldown > 0 ? (
+                <>
+                  <FontAwesomeIcon icon={faRotateRight} className="text-xs" />
+                  <span>Kirim Ulang Link ({cooldown}s)</span>
+                </>
+              ) : (
+                <>
+                  <FontAwesomeIcon icon={faPaperPlane} className="text-xs" />
+                  <span>Kirim Link Reset</span>
+                </>
+              )}
+            </Button>
+
+            <div className="flex items-center justify-center w-full pt-1 text-xs text-foreground-muted">
+              <Link href="/sales/login" className="text-foreground-muted hover:text-foreground font-medium">
+                Ingat kata sandi Anda? <span className="text-primary font-bold hover:underline">Masuk disini</span>
+              </Link>
+            </div>
+          </CardFooter>
+        </form>
+      </Card>
     </div>
   );
 }
@@ -514,8 +204,8 @@ export default function SalesForgotPasswordPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
-          <FontAwesomeIcon icon={faSpinner} className="text-xl fa-spin text-primary" />
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <FontAwesomeIcon icon={faSpinner} className="w-6 h-6 text-primary animate-spin" />
         </div>
       }
     >
