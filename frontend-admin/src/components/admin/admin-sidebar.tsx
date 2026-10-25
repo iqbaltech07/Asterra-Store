@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
+import { useQuery } from '@tanstack/react-query';
+import { OrdersApi } from '@/lib/api-client';
 import {
   LayoutDashboard,
   Boxes,
@@ -90,7 +92,33 @@ interface NavSubItem {
   icon: React.ComponentType<{ className?: string }>;
   badge?: string | number | null;
   badgeVariant?: 'default' | 'success' | 'warning' | 'primary';
+  notificationCount?: number | null;
   description?: string;
+}
+
+export function NotificationBadge({
+  count,
+  className,
+}: {
+  count?: number | null;
+  className?: string;
+}) {
+  if (count === undefined || count === null || count <= 0) return null;
+
+  const displayCount = count > 99 ? '99+' : String(count);
+
+  return (
+    <span
+      className={`inline-flex items-center justify-center font-bold text-[10px] leading-none text-white bg-[#EF4444] shadow-xs shadow-red-500/30 shrink-0 select-none ${
+        displayCount.length === 1
+          ? 'w-[18px] h-[18px] rounded-full'
+          : 'min-w-[18px] h-[18px] px-1.5 rounded-full'
+      } ${className || ''}`}
+      aria-label={`${count} notifikasi aktif`}
+    >
+      {displayCount}
+    </span>
+  );
 }
 
 interface NavGroup {
@@ -115,6 +143,8 @@ interface AdminSidebarProps {
   isLoggingOut?: boolean;
   isOpenMobile: boolean;
   onCloseMobile: () => void;
+  pendingOrdersCount?: number;
+  pendingPayoutsCount?: number;
 }
 
 export function AdminSidebar({
@@ -126,8 +156,48 @@ export function AdminSidebar({
   isLoggingOut = false,
   isOpenMobile,
   onCloseMobile,
+  pendingOrdersCount: propPendingOrdersCount,
+  pendingPayoutsCount: propPendingPayoutsCount,
 }: AdminSidebarProps) {
   const userRole = (adminUser?.role || 'admin').toLowerCase();
+
+  // Live Query: Pending/Processing Orders requiring admin action
+  const { data: ordersData } = useQuery({
+    queryKey: ['admin-orders'],
+    queryFn: () => OrdersApi.getAll({ limit: 100 }),
+    staleTime: 10000,
+    refetchInterval: 15000,
+    enabled: userRole !== 'sales' && propPendingOrdersCount === undefined,
+  });
+
+  const resolvedPendingOrders = useMemo(() => {
+    if (propPendingOrdersCount !== undefined) return propPendingOrdersCount;
+    if (!ordersData?.metrics) return 0;
+    return (ordersData.metrics.processing || 0) + (ordersData.metrics.pending || 0);
+  }, [propPendingOrdersCount, ordersData?.metrics]);
+
+  // Live Query: Pending Affiliate Payout Requests requiring admin verification
+  const { data: payoutsData } = useQuery({
+    queryKey: ['admin-payout-requests'],
+    queryFn: async () => {
+      const res = await fetch('/api/v1/admin/affiliates/payout-requests?status=pending', {
+        credentials: 'include',
+      });
+      if (!res.ok) return { success: false, data: [], total: 0 };
+      return res.json();
+    },
+    staleTime: 10000,
+    refetchInterval: 15000,
+    enabled: userRole !== 'sales' && propPendingPayoutsCount === undefined,
+  });
+
+  const resolvedPendingPayouts = useMemo(() => {
+    if (propPendingPayoutsCount !== undefined) return propPendingPayoutsCount;
+    if (!payoutsData) return 0;
+    if (typeof payoutsData.total === 'number') return payoutsData.total;
+    if (Array.isArray(payoutsData.data)) return payoutsData.data.length;
+    return 0;
+  }, [propPendingPayoutsCount, payoutsData]);
 
   // Navigation categories with dropdown items matching user requested 3-role RBAC:
   // - superadmin: SEMUA MENU (All 7 groups, 24 items)
@@ -242,6 +312,7 @@ export function AdminSidebar({
               id: 'orders',
               label: 'Pesanan Pelanggan',
               icon: ShoppingBag,
+              notificationCount: resolvedPendingOrders,
               description: 'Riwayat transaksi & status pembayaran',
             },
             {
@@ -267,8 +338,9 @@ export function AdminSidebar({
               id: 'affiliate',
               label: 'Affiliate / Sales',
               icon: Share2,
-              badge: 'Sistem Sales',
+              badge: resolvedPendingPayouts > 0 ? null : 'Sistem Sales',
               badgeVariant: 'primary',
+              notificationCount: resolvedPendingPayouts,
               description: 'Mitra afiliasi, referral link, & komisi',
             },
             {
@@ -373,6 +445,7 @@ export function AdminSidebar({
             id: 'orders',
             label: 'Pesanan Pelanggan',
             icon: ShoppingBag,
+            notificationCount: resolvedPendingOrders,
             description: 'Riwayat transaksi & status pembayaran',
           },
           {
@@ -398,8 +471,9 @@ export function AdminSidebar({
             id: 'affiliate',
             label: 'Affiliate / Sales',
             icon: Share2,
-            badge: 'Sistem Sales',
+            badge: resolvedPendingPayouts > 0 ? null : 'Sistem Sales',
             badgeVariant: 'primary',
+            notificationCount: resolvedPendingPayouts,
             description: 'Mitra afiliasi, referral link, & komisi',
           },
           {
@@ -528,7 +602,7 @@ export function AdminSidebar({
         ],
       },
     ];
-  }, [userRole, metrics?.total]);
+  }, [userRole, metrics?.total, resolvedPendingOrders, resolvedPendingPayouts]);
 
   // Accordion state: which groups are open
   const getInitialOpenGroups = (): Record<string, boolean> => {
@@ -757,7 +831,7 @@ export function AdminSidebar({
                               : 'text-[#94A3B8] hover:text-[#F4F7FB] hover:bg-white/5'
                           }`}
                         >
-                          <div className="flex items-center gap-2.5 pl-1.5 truncate">
+                          <div className="flex items-center gap-2.5 pl-1.5 truncate min-w-0 mr-1.5">
                             <SubIcon
                               className={`w-4 h-4 shrink-0 transition-colors ${
                                 isActive ? 'text-white' : 'text-[#888888] group-hover:text-white'
@@ -766,19 +840,31 @@ export function AdminSidebar({
                             <span className="truncate">{subItem.label}</span>
                           </div>
 
-                          {subItem.badge !== undefined && subItem.badge !== null && (
-                            <span
-                              className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold shrink-0 ${
-                                subItem.badgeVariant === 'primary'
-                                  ? 'bg-[#2563EB]/25 text-[#93C5FD] border border-[#2563EB]/40'
-                                  : subItem.badgeVariant === 'success'
-                                  ? 'bg-[#16A36A]/25 text-[#86EFAC] border border-[#16A36A]/40'
-                                  : 'bg-white/10 text-[#D1D5DB] border border-white/15'
-                              }`}
-                            >
-                              {subItem.badge}
-                            </span>
-                          )}
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            {/* Live Red Notification Badge for Actionable Items */}
+                            {subItem.notificationCount !== undefined &&
+                              subItem.notificationCount !== null &&
+                              subItem.notificationCount > 0 && (
+                                <NotificationBadge count={subItem.notificationCount} />
+                              )}
+
+                            {/* Secondary Non-Alert Badge */}
+                            {(!subItem.notificationCount || subItem.notificationCount <= 0) &&
+                              subItem.badge !== undefined &&
+                              subItem.badge !== null && (
+                                <span
+                                  className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold shrink-0 ${
+                                    subItem.badgeVariant === 'primary'
+                                      ? 'bg-[#2563EB]/25 text-[#93C5FD] border border-[#2563EB]/40'
+                                      : subItem.badgeVariant === 'success'
+                                      ? 'bg-[#16A36A]/25 text-[#86EFAC] border border-[#16A36A]/40'
+                                      : 'bg-white/10 text-[#D1D5DB] border border-white/15'
+                                  }`}
+                                >
+                                  {subItem.badge}
+                                </span>
+                              )}
+                          </div>
                         </button>
                       );
                     })}

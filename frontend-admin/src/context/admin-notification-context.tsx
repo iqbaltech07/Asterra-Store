@@ -182,7 +182,7 @@ export const AdminNotificationProvider: React.FC<AdminNotificationProviderProps>
             addToast({
               id: `order-${orderId}`,
               type: 'order_created',
-              title: 'Pesanan Baru Masuk!',
+              title: 'Pesanan baru masuk',
               description: `Pesanan ${orderId} telah diterima.`,
               targetTab: 'orders',
               metadata: {
@@ -229,7 +229,7 @@ export const AdminNotificationProvider: React.FC<AdminNotificationProviderProps>
             addToast({
               id: `payout-${requestId}`,
               type: 'payout_requested',
-              title: 'Pengajuan Penarikan Komisi Baru',
+              title: 'Pengajuan penarikan baru',
               description: `Sales ${partnerName} mengajukan penarikan komisi sebesar ${formatRupiah(amount)}.`,
               targetTab: 'affiliate',
               metadata: {
