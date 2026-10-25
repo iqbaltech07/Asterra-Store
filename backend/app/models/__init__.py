@@ -10,8 +10,11 @@ from app.models.referral_session import ReferralSession
 from app.models.commission import Commission
 from app.models.profit_ledger import ProfitLedger
 
+from app.models.category import Category
+
 __all__ = [
     "Product",
+    "Category",
     "Order",
     "OrderItem",
     "AdminUser",

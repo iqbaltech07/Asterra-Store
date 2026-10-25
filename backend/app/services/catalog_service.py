@@ -291,8 +291,39 @@ class CatalogService:
         pct = round((margin / provider_price) * 100) if provider_price > 0 else 0
 
         cat = payload.get("category") or {}
-        cat_id = cat.get("id") or payload.get("categoryId") or "cat-ai-tools"
-        cat_name = cat.get("name") or payload.get("categoryName") or "AI Tools"
+        cat_id = cat.get("id") or payload.get("categoryId")
+        cat_name = cat.get("name") or payload.get("categoryName")
+
+        if cat_name and not cat_id:
+            from app.models.category import Category
+            import re
+            try:
+                db_chk = SessionLocal()
+                try:
+                    c_found = db_chk.query(Category).filter(Category.name.ilike(cat_name.strip())).first()
+                    if c_found:
+                        cat_id = c_found.id
+                        cat_name = c_found.name
+                    else:
+                        c_slug = re.sub(r"[^a-z0-9]+", "-", cat_name.lower()).strip("-")
+                        cat_id = f"cat-{c_slug}"
+                        db_chk.add(Category(
+                            id=cat_id,
+                            name=cat_name.strip(),
+                            slug=c_slug,
+                            display_order=99,
+                            status="active",
+                        ))
+                        db_chk.commit()
+                finally:
+                    db_chk.close()
+            except Exception as e:
+                print(f"[CatalogService] Auto-register category notice: {e}")
+
+        if not cat_id:
+            cat_id = "cat-ai-tools"
+        if not cat_name:
+            cat_name = "AI Tools"
 
         # 1. Save directly to Supabase
         try:
@@ -375,7 +406,23 @@ class CatalogService:
                     if "categoryId" in payload and payload["categoryId"] is not None:
                         prod.category_id = payload["categoryId"]
                     if "categoryName" in payload and payload["categoryName"] is not None:
-                        prod.category_name = payload["categoryName"]
+                        new_cname = str(payload["categoryName"]).strip()
+                        prod.category_name = new_cname
+                        if not payload.get("categoryId"):
+                            from app.models.category import Category
+                            import re
+                            try:
+                                c_found = db.query(Category).filter(Category.name.ilike(new_cname)).first()
+                                if c_found:
+                                    prod.category_id = c_found.id
+                                    prod.category_name = c_found.name
+                                else:
+                                    c_slug = re.sub(r"[^a-z0-9]+", "-", new_cname.lower()).strip("-")
+                                    new_cid = f"cat-{c_slug}"
+                                    db.add(Category(id=new_cid, name=new_cname, slug=c_slug, display_order=99, status="active"))
+                                    prod.category_id = new_cid
+                            except Exception as e:
+                                print(f"[CatalogService] Update category resolve notice: {e}")
                     if "guaranteeTitle" in payload and payload["guaranteeTitle"] is not None:
                         prod.guarantee_title = payload["guaranteeTitle"]
                     if "guaranteeDesc" in payload and payload["guaranteeDesc"] is not None:

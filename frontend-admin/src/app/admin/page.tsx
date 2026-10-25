@@ -375,6 +375,8 @@ function AdminPageContent() {
   // Form states for Create/Edit product
   const [formName, setFormName] = useState('');
   const [formCategory, setFormCategory] = useState('AI Tools');
+  const [formCategoryId, setFormCategoryId] = useState('cat-ai-tools');
+  const [isCustomCategory, setIsCustomCategory] = useState(false);
   const [formPrice, setFormPrice] = useState<number>(0);
   const [formProviderPrice, setFormProviderPrice] = useState<number>(0);
   const [formStock, setFormStock] = useState<number>(100);
@@ -566,6 +568,20 @@ function AdminPageContent() {
     refetchIntervalInBackground: false,
   });
 
+  // Fetch Categories for product form dropdowns
+  const {
+    data: categoriesData,
+  } = useQuery<{ success: boolean; data: { id: string; name: string; slug: string }[] }>({
+    queryKey: ['public-categories'],
+    queryFn: async () => {
+      const res = await fetch('/api/v1/categories');
+      if (!res.ok) return { success: false, data: [] };
+      return res.json();
+    },
+    staleTime: 30000,
+  });
+  const publicCategories = categoriesData?.data || [];
+
   // Fetch VIP Reseller Services Explorer - server searches all 12,500+ cached services in memory
   const {
     data: vipData,
@@ -690,12 +706,19 @@ function AdminPageContent() {
         finalImageUrl = uploadResult.viewUrl;
       }
 
+      const resolvedCatId =
+        formCategoryId ||
+        publicCategories.find((c) => c.name.toLowerCase() === formCategory.trim().toLowerCase())?.id ||
+        `cat-${formCategory.toLowerCase().replace(/[^a-z0-9]/g, '-')}`;
+
       const payload = {
         name: formName,
         category: {
-          id: `cat-${formCategory.toLowerCase().replace(/[^a-z0-9]/g, '-')}`,
+          id: resolvedCatId,
           name: formCategory,
         },
+        categoryId: resolvedCatId,
+        categoryName: formCategory,
         price: formPrice,
         providerPrice: formProviderPrice,
         stock: formStock,
@@ -740,6 +763,8 @@ function AdminPageContent() {
       setStagedFile(null);
       setIsSpecialPromoBanner(false);
       queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-categories'] });
+      queryClient.invalidateQueries({ queryKey: ['public-categories'] });
     },
     onError: (err: Error) => {
       showNotification(`Gagal menyimpan produk: ${err.message}`);
@@ -826,6 +851,8 @@ function AdminPageContent() {
     setEditingProduct(p);
     setFormName(p.name);
     setFormCategory(p.category.name);
+    setFormCategoryId(p.category.id || `cat-${p.category.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`);
+    setIsCustomCategory(false);
     setFormPrice(p.price);
     setFormProviderPrice(p.providerPrice || 0);
     setFormStock(p.stock !== undefined ? p.stock : p.providerStatus === 'empty' ? 0 : 100);
@@ -848,7 +875,11 @@ function AdminPageContent() {
   const handleOpenCreate = () => {
     setEditingProduct(null);
     setFormName('');
-    setFormCategory('AI Tools');
+    const firstCat = publicCategories[0]?.name || 'AI Tools';
+    const firstCatId = publicCategories[0]?.id || 'cat-ai-tools';
+    setFormCategory(firstCat);
+    setFormCategoryId(firstCatId);
+    setIsCustomCategory(false);
     setFormPrice(50000);
     setFormProviderPrice(0);
     setFormStock(100);
@@ -873,6 +904,8 @@ function AdminPageContent() {
     setEditingProduct(null);
     setFormName(`${p.name} (Salinan)`);
     setFormCategory(p.category.name);
+    setFormCategoryId(p.category.id || `cat-${p.category.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`);
+    setIsCustomCategory(false);
     setFormPrice(p.price);
     setFormProviderPrice(p.providerPrice || 0);
     setFormStock(p.stock !== undefined ? p.stock : 100);
@@ -937,9 +970,13 @@ function AdminPageContent() {
       n.includes('SPOTIFY') ||
       n.includes('CANVA');
 
-    setFormCategory(
-      isAi ? 'AI Tools' : isStreaming ? 'Apps & Streaming' : service.type === 'game' ? 'Voucher Game' : 'Apps & Streaming'
-    );
+    const targetCat = isAi
+      ? publicCategories.find((c) => c.id === 'cat-ai-tools') || { id: 'cat-ai-tools', name: 'AI Tools' }
+      : publicCategories.find((c) => c.id === 'cat-apps-streaming') || { id: 'cat-apps-streaming', name: 'Apps & Streaming' };
+
+    setFormCategory(targetCat.name);
+    setFormCategoryId(targetCat.id);
+    setIsCustomCategory(false);
 
     setFormStatus('active'); // Default to active so imported product goes live immediately
     setFormDescription(service.note && service.note !== '-' ? `${service.name}. ${service.note}` : service.name);
@@ -2495,15 +2532,67 @@ function AdminPageContent() {
               </div>
 
               <div>
-                <label className="font-semibold text-foreground block mb-1">Kategori Toko</label>
-                <Input
-                  type="text"
-                  required
-                  value={formCategory}
-                  onChange={(e) => setFormCategory(e.target.value)}
-                  className="bg-surface-raised border-border text-xs"
-                  placeholder="AI Tools, Desain, Streaming..."
-                />
+                <div className="flex items-center justify-between mb-1">
+                  <label className="font-semibold text-foreground block">Kategori Toko</label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsCustomCategory(!isCustomCategory);
+                      if (!isCustomCategory) {
+                        setFormCategory('');
+                        setFormCategoryId('');
+                      } else if (publicCategories.length > 0) {
+                        setFormCategory(publicCategories[0].name);
+                        setFormCategoryId(publicCategories[0].id);
+                      }
+                    }}
+                    className="text-[11px] text-primary hover:underline font-medium"
+                  >
+                    {isCustomCategory ? '← Pilih dari Kategori Terdaftar' : '+ Ketik Kategori Baru'}
+                  </button>
+                </div>
+
+                {isCustomCategory ? (
+                  <Input
+                    type="text"
+                    required
+                    placeholder="Ketik nama kategori baru..."
+                    value={formCategory}
+                    onChange={(e) => {
+                      setFormCategory(e.target.value);
+                      setFormCategoryId(`cat-${e.target.value.toLowerCase().replace(/[^a-z0-9]/g, '-')}`);
+                    }}
+                    className="bg-surface-raised border-border text-xs rounded-xl h-10"
+                  />
+                ) : (
+                  <select
+                    value={formCategoryId || (publicCategories.find((c) => c.name.toLowerCase() === formCategory.toLowerCase())?.id) || ''}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '__NEW__') {
+                        setIsCustomCategory(true);
+                        setFormCategory('');
+                        setFormCategoryId('');
+                      } else {
+                        const selected = publicCategories.find((c) => c.id === val);
+                        if (selected) {
+                          setFormCategoryId(selected.id);
+                          setFormCategory(selected.name);
+                        }
+                      }
+                    }}
+                    className="w-full bg-surface-raised border border-border text-xs rounded-xl h-10 px-3 text-foreground font-medium focus:ring-1 focus:ring-primary focus:outline-none"
+                  >
+                    {publicCategories.map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </option>
+                    ))}
+                    <option value="__NEW__" className="text-primary font-bold">
+                      + Buat Kategori Baru...
+                    </option>
+                  </select>
+                )}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -2943,14 +3032,67 @@ function AdminPageContent() {
               </div>
 
               <div>
-                <label className="font-semibold text-foreground block mb-1">Kategori Asterra</label>
-                <Input
-                  type="text"
-                  required
-                  value={formCategory}
-                  onChange={(e) => setFormCategory(e.target.value)}
-                  className="bg-surface-raised border-border text-xs"
-                />
+                <div className="flex items-center justify-between mb-1">
+                  <label className="font-semibold text-foreground block">Kategori Asterra</label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsCustomCategory(!isCustomCategory);
+                      if (!isCustomCategory) {
+                        setFormCategory('');
+                        setFormCategoryId('');
+                      } else if (publicCategories.length > 0) {
+                        setFormCategory(publicCategories[0].name);
+                        setFormCategoryId(publicCategories[0].id);
+                      }
+                    }}
+                    className="text-[11px] text-primary hover:underline font-medium"
+                  >
+                    {isCustomCategory ? '← Pilih dari Kategori Terdaftar' : '+ Ketik Kategori Baru'}
+                  </button>
+                </div>
+
+                {isCustomCategory ? (
+                  <Input
+                    type="text"
+                    required
+                    placeholder="Ketik nama kategori baru..."
+                    value={formCategory}
+                    onChange={(e) => {
+                      setFormCategory(e.target.value);
+                      setFormCategoryId(`cat-${e.target.value.toLowerCase().replace(/[^a-z0-9]/g, '-')}`);
+                    }}
+                    className="bg-surface-raised border-border text-xs rounded-xl h-10"
+                  />
+                ) : (
+                  <select
+                    value={formCategoryId || (publicCategories.find((c) => c.name.toLowerCase() === formCategory.toLowerCase())?.id) || ''}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '__NEW__') {
+                        setIsCustomCategory(true);
+                        setFormCategory('');
+                        setFormCategoryId('');
+                      } else {
+                        const selected = publicCategories.find((c) => c.id === val);
+                        if (selected) {
+                          setFormCategoryId(selected.id);
+                          setFormCategory(selected.name);
+                        }
+                      }
+                    }}
+                    className="w-full bg-surface-raised border border-border text-xs rounded-xl h-10 px-3 text-foreground font-medium focus:ring-1 focus:ring-primary focus:outline-none"
+                  >
+                    {publicCategories.map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </option>
+                    ))}
+                    <option value="__NEW__" className="text-primary font-bold">
+                      + Buat Kategori Baru...
+                    </option>
+                  </select>
+                )}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

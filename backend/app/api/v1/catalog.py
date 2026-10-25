@@ -8,9 +8,9 @@ from typing import Optional, List, Dict, Any
 import httpx
 from fastapi import APIRouter, Request, Response, HTTPException, Query, UploadFile, File, Form
 
-from app.config import settings
 from app.services.catalog_service import CatalogService
 from app.services.banner_service import BannerService
+from app.services.category_service import CategoryService
 
 router = APIRouter()
 
@@ -719,4 +719,73 @@ async def update_admin_homepage_section(section_key: str, request: Request):
         raise HTTPException(status_code=400, detail=str(ve))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Gagal memperbarui urutan section: {str(e)}")
+
+
+# ------------------------------------------
+# 8. Category Management Endpoints
+# ------------------------------------------
+@router.get("/categories", tags=["Categories"])
+def get_public_categories():
+    categories = CategoryService.get_public_categories()
+    return {
+        "success": True,
+        "data": categories,
+        "total": len(categories),
+    }
+
+@router.get("/admin/categories", tags=["Admin Categories"])
+def get_admin_categories():
+    categories = CategoryService.get_admin_categories()
+    return {
+        "success": True,
+        "data": categories,
+        "total": len(categories),
+    }
+
+@router.post("/admin/categories", tags=["Admin Categories"])
+async def create_admin_category(request: Request):
+    payload = await request.json()
+    try:
+        new_cat = CategoryService.create_category(payload)
+        cache.invalidate("catalog")
+        return {
+            "success": True,
+            "message": f"Kategori '{new_cat.get('name')}' berhasil ditambahkan.",
+            "data": new_cat,
+        }
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Gagal menambahkan kategori: {str(e)}")
+
+@router.patch("/admin/categories/{category_id}", tags=["Admin Categories"])
+async def update_admin_category(category_id: str, request: Request):
+    payload = await request.json()
+    try:
+        updated = CategoryService.update_category(category_id, payload)
+        if not updated:
+            raise HTTPException(status_code=404, detail="Kategori tidak ditemukan.")
+        cache.invalidate("catalog")
+        return {
+            "success": True,
+            "message": f"Kategori '{updated.get('name')}' berhasil diperbarui.",
+            "data": updated,
+        }
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Gagal memperbarui kategori: {str(e)}")
+
+@router.delete("/admin/categories/{category_id}", tags=["Admin Categories"])
+def delete_admin_category(category_id: str):
+    try:
+        res = CategoryService.delete_category(category_id)
+        cache.invalidate("catalog")
+        return res
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Gagal menghapus kategori: {str(e)}")
+
+
 
