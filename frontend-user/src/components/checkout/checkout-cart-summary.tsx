@@ -172,35 +172,6 @@ export function CheckoutCartSummary({
         promoFeedback={promoFeedback}
       />
 
-      {/* Referral Partner Attribution Banner */}
-      {referralPartner && (referralDiscount ?? 0) > 0 && (
-        <div className="p-3 rounded-xl border border-status-success/30 bg-status-success/5 text-xs flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <span className="text-[#121A2A] text-xs">
-              Mitra Sales: <strong className="text-status-success font-semibold">{referralPartner.name}</strong>{' '}
-              <span className="text-[11px] font-mono text-[#121A2A]/60">({referralPartner.code})</span>
-            </span>
-          </div>
-          <span className="text-status-success font-bold text-[10px] bg-status-success/15 px-2 py-0.5 rounded-full shrink-0">
-            Hemat Rp {(referralDiscount ?? 0).toLocaleString('id-ID')}
-          </span>
-        </div>
-      )}
-
-      {/* Active Promo Campaign Banner */}
-      {activeCampaign && (campaignDiscount ?? 0) > 0 && (
-        <div className="p-3 rounded-xl border border-[#C96F55]/30 bg-[#C96F55]/5 text-xs flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <span className="text-[#121A2A] text-xs">
-              Promo: <strong className="text-[#C96F55] font-semibold">{activeCampaign.name}</strong>
-            </span>
-          </div>
-          <span className="text-[#C96F55] font-bold text-[10px] bg-[#C96F55]/15 px-2 py-0.5 rounded-full shrink-0">
-            Hemat Rp {(campaignDiscount ?? 0).toLocaleString('id-ID')}
-          </span>
-        </div>
-      )}
-
       {/* Calculation Breakdown */}
       <div className="space-y-2 pt-2 border-t border-[rgba(18,26,42,0.08)] text-xs">
         <div className="flex justify-between text-[#121A2A]/60">
@@ -217,14 +188,14 @@ export function CheckoutCartSummary({
 
         {(referralDiscount ?? 0) > 0 && (
           <div className="flex justify-between text-status-success font-semibold">
-            <span>Diskon Referral Mitra:</span>
+            <span>Diskon Referral:</span>
             <span>-Rp {(referralDiscount ?? 0).toLocaleString('id-ID')}</span>
           </div>
         )}
 
         {(campaignDiscount ?? 0) > 0 && (
           <div className="flex justify-between text-status-success font-semibold">
-            <span>Diskon Campaign Promo:</span>
+            <span>Diskon Promo:</span>
             <span>-Rp {(campaignDiscount ?? 0).toLocaleString('id-ID')}</span>
           </div>
         )}
