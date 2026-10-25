@@ -58,7 +58,6 @@ import { AdminAnalyticsSuite } from '@/components/admin/admin-analytics-suite';
 import { AdminSystemSettingsSuite } from '@/components/admin/admin-system-settings-suite';
 import { SalesConsoleSuite } from '@/components/sales/sales-console-suite';
 import { ImageUploadDropzone, uploadFileToBlob } from '@/components/admin/image-upload-dropzone';
-import { resolveBrandLogo } from '@/components/ui/product-brand-icon';
 import {
   Select,
   SelectContent,
@@ -1629,11 +1628,11 @@ function AdminPageContent() {
                               <div className="flex items-center gap-2.5 min-w-0">
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
-                                  src={resolveBrandLogo(p.name, p.imageUrl)}
+                                  src={p.imageUrl}
                                   alt={p.name}
                                   loading="lazy"
                                   decoding="async"
-                                  className="w-9 h-9 rounded-lg object-contain p-0.5 bg-surface-raised border border-border shrink-0"
+                                  className="w-9 h-9 rounded-lg object-cover bg-surface-raised border border-border shrink-0"
                                 />
                                 <div className="min-w-0 flex-1">
                                   <div className="flex items-start gap-1.5">
@@ -1869,11 +1868,11 @@ function AdminPageContent() {
                         />
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
-                          src={resolveBrandLogo(p.name, p.imageUrl)}
+                          src={p.imageUrl}
                           alt={p.name}
                           loading="lazy"
                           decoding="async"
-                          className="w-11 h-11 rounded-lg object-contain p-0.5 bg-surface-raised border border-border shrink-0"
+                          className="w-11 h-11 rounded-lg object-cover bg-surface-raised border border-border shrink-0"
                         />
                         <div className="min-w-0 flex-1">
                           <div className="flex items-start justify-between gap-1.5">

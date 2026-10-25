@@ -6,7 +6,6 @@ import { findRelevantProducts } from '@/lib/services/product-relevance';
 import { resolveProductFamily } from '@/lib/services/product-variant-parser';
 import { ProductDetailClient, ProductDetailData } from './product-detail-client';
 import { ProductItem } from '@/lib/products-data';
-import { resolveBrandLogo } from '@/components/ui/product-brand-icon';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || process.env.BACKEND_URL || 'http://localhost:8000';
 
@@ -155,8 +154,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
 
   const activeVariant = familyData?.selectedVariant;
   const productName = familyData?.name || baseProduct?.name || 'Produk Digital';
-  const rawImageUrl = familyData?.imageUrl || baseProduct?.imageUrl || '/images/default-product-banner.png';
-  const productImageUrl = resolveBrandLogo(productName, rawImageUrl);
+  const productImageUrl = familyData?.imageUrl || baseProduct?.imageUrl || '/images/default-product-banner.png';
   const productDesc = familyData?.description || baseProduct?.description || '';
   const productFeatures = familyData?.features || baseProduct?.features || ['Garansi 100% Penggantian', 'Aktivasi Instan'];
   const productCategory = familyData?.category || baseProduct?.category || { id: 'cat-digital', name: 'Layanan Digital' };

@@ -10,38 +10,6 @@ DATA_DIR = pathlib.Path(__file__).resolve().parent.parent.parent / "data"
 CATALOG_PATH = DATA_DIR / "active-catalog.json"
 MANAGED_PATH = DATA_DIR / "managed-catalog.json"
 
-def resolve_brand_image_url(name: str = "", current_url: str = "") -> str:
-    n = (name or "").lower()
-    if "netflix" in n or "ntflx" in n:
-        return "/images/brand/Netflix-logo.png"
-    if "capcut" in n:
-        return "/images/brand/Capcut-logo.png"
-    if "gemini" in n or "google" in n:
-        return "/images/brand/Google-logo.png"
-    if "alight" in n or "motion" in n:
-        return "/images/brand/Alightmotion-logo.png"
-    if "chatgpt" in n or "openai" in n or "gpt" in n:
-        return "/images/brand/ChatGPT-logo.png"
-    if "spotify" in n or "spy" in n:
-        return "/images/brand/Spotify-logo.png"
-    if "bstation" in n or "bilibili" in n or "bsprem" in n:
-        return "/images/brand/BStation-logo.png"
-    if "iqiyi" in n:
-        return "/images/brand/iqiyi-logo.png"
-    if "mobile legend" in n or "mlbb" in n or "diamond" in n:
-        return "/images/brand/Mobilelegends-logo.png"
-    if "pubg" in n:
-        return "/images/brand/Pubg-logo.png"
-    if "canva" in n:
-        return "/images/apps/canva.png"
-    if "vidio" in n:
-        return "/images/apps/vidio.png"
-    if "viu" in n:
-        return "/images/apps/viu.png"
-    if "wetv" in n:
-        return "/images/apps/wetv.png"
-    return current_url or "/images/default-product-banner.png"
-
 class CatalogService:
     _cached_products: Optional[List[Dict[str, Any]]] = None
     _cached_vip_services: Optional[List[Dict[str, Any]]] = None
@@ -49,10 +17,6 @@ class CatalogService:
     @staticmethod
     def _normalize_product(p: Dict[str, Any]) -> Dict[str, Any]:
         p = dict(p)
-        curr_img = p.get("imageUrl") or p.get("image_url") or ""
-        resolved_img = resolve_brand_image_url(p.get("name") or "", curr_img)
-        p["imageUrl"] = resolved_img
-        p["image_url"] = resolved_img
         cat = p.get("category")
         cat_id = ""
         cat_name = ""

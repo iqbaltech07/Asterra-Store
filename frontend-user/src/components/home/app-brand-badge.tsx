@@ -42,7 +42,7 @@ export function AppBrandBadge({ name }: { name: string }) {
     );
   }
 
-  if (n.includes('gemini') || n.includes('google ai') || n.includes('google pro')) {
+  if (n.includes('gemini') || n.includes('google') || n.includes('google ai') || n.includes('google pro')) {
     return (
       <div className="w-full h-full bg-white rounded-lg sm:rounded-xl flex items-center justify-center p-1 shadow-2xs border border-slate-200/80">
         <img
@@ -55,7 +55,7 @@ export function AppBrandBadge({ name }: { name: string }) {
     );
   }
 
-  if (n.includes('chatgpt') || n.includes('openai')) {
+  if (n.includes('chatgpt') || n.includes('openai') || n.includes('gpt')) {
     return (
       <div className="w-full h-full bg-white rounded-lg sm:rounded-xl flex items-center justify-center p-1 shadow-2xs border border-slate-200/80">
         <img
@@ -81,7 +81,7 @@ export function AppBrandBadge({ name }: { name: string }) {
     );
   }
 
-  if (n.includes('alight')) {
+  if (n.includes('alight') || n.includes('motion')) {
     return (
       <div className="w-full h-full bg-white rounded-lg sm:rounded-xl flex items-center justify-center p-1 shadow-2xs border border-slate-200/80">
         <img
