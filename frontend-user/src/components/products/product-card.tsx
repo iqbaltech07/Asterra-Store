@@ -10,6 +10,7 @@ import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { ProductItem } from '@/lib/products-data';
 import { calculateCampaignPrice, getCampaignCountdown, ActiveCampaign } from '@/lib/utils/promo-pricing';
 import { useActiveCampaigns } from '@/lib/hooks/use-active-campaigns';
+import { resolveBrandLogo } from '@/components/ui/product-brand-icon';
 
 export function ProductPromoCountdownBadge({
   endsAtOrDate,
@@ -103,14 +104,14 @@ export function ProductCard({
             </div>
           )}
 
-          <Link href={`/products/${product.id}`} prefetch={true} className="block w-full h-full relative">
+          <Link href={`/products/${product.id}`} prefetch={true} className="block w-full h-full relative flex items-center justify-center p-2">
             <Image
-              src={product.imageUrl}
+              src={resolveBrandLogo(product.name, product.imageUrl)}
               alt={product.name}
               fill
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
               priority={priorityImage}
-              className="object-cover group-hover:scale-104 transition-transform duration-300"
+              className="object-contain p-2 group-hover:scale-105 transition-transform duration-300"
             />
           </Link>
 

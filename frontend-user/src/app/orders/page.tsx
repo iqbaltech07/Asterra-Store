@@ -29,6 +29,7 @@ import {
 } from '@/lib/hooks/use-dynamic-orders';
 import { useCatalogProducts } from '@/lib/hooks/use-catalog-products';
 import { ProductCard } from '@/components/products/product-card';
+import { ProductBrandIcon } from '@/components/ui/product-brand-icon';
 
 const STATUS_FILTERS = [
   { value: 'all', label: 'Semua Status' },
@@ -491,9 +492,7 @@ function GlobalOrdersContent() {
                     className="bg-surface border border-border rounded-xl p-4 sm:p-5 transition-all duration-150 hover:border-primary/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
                   >
                     <div className="flex items-start gap-3.5">
-                      <div className="w-10 h-10 rounded-xl bg-surface-raised border border-border flex items-center justify-center text-primary shrink-0 mt-0.5">
-                        <FontAwesomeIcon icon={faBox} className="w-4 h-4" />
-                      </div>
+                      <ProductBrandIcon name={order.product_name} className="w-10 h-10 rounded-xl" />
                       <div data-gsap="order-info" className="space-y-1">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="font-mono font-bold text-sm text-foreground">

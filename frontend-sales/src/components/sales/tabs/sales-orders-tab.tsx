@@ -15,6 +15,7 @@ import {
 import { AdminTab } from '@/components/admin/admin-sidebar';
 import { SalesOrder } from '../types';
 import { StatusBadge } from '@/components/ui/status-badge';
+import { ProductBrandIcon } from '@/components/ui/product-brand-icon';
 
 interface SalesOrdersTabProps {
   partnerCode: string;
@@ -124,18 +125,21 @@ export function SalesOrdersTab({
                       <StatusBadge status={o.status} />
                     </div>
 
-                    <div>
-                      <h4 className="font-semibold text-xs text-foreground line-clamp-1">
-                        {o.productNames || 'Produk Digital'}
-                      </h4>
-                      <div className="flex items-center justify-between text-[11px] text-foreground-muted mt-0.5">
-                        <span className="font-mono">{o.customerEmail}</span>
-                        <span>
-                          {new Date(o.createdAt).toLocaleDateString('id-ID', {
-                            day: 'numeric',
-                            month: 'short',
-                          })}
-                        </span>
+                    <div className="flex items-center gap-2.5">
+                      <ProductBrandIcon name={o.productNames} className="w-8 h-8 rounded-lg" />
+                      <div className="min-w-0 flex-1">
+                        <h4 className="font-semibold text-xs text-foreground line-clamp-1">
+                          {o.productNames || 'Produk Digital'}
+                        </h4>
+                        <div className="flex items-center justify-between text-[11px] text-foreground-muted mt-0.5">
+                          <span className="font-mono">{o.customerEmail}</span>
+                          <span>
+                            {new Date(o.createdAt).toLocaleDateString('id-ID', {
+                              day: 'numeric',
+                              month: 'short',
+                            })}
+                          </span>
+                        </div>
                       </div>
                     </div>
 
@@ -211,8 +215,11 @@ export function SalesOrdersTab({
                             {o.campaignName || o.campaignId || 'Event Promo'}
                           </Badge>
                         </td>
-                        <td className="py-3 px-4 text-foreground font-medium max-w-[180px] truncate">
-                          {o.productNames || 'Produk Digital'}
+                        <td className="py-3 px-4 text-foreground font-medium max-w-[200px]">
+                          <div className="flex items-center gap-2">
+                            <ProductBrandIcon name={o.productNames} className="w-6 h-6 rounded-md" />
+                            <span className="truncate">{o.productNames || 'Produk Digital'}</span>
+                          </div>
                         </td>
                         <td className="py-3 px-4 font-mono text-foreground-muted text-[11px]">
                           {o.customerEmail}
@@ -322,18 +329,21 @@ export function SalesOrdersTab({
                       <StatusBadge status={o.status} />
                     </div>
 
-                    <div>
-                      <h4 className="font-semibold text-xs text-foreground line-clamp-1">
-                        {o.productNames || 'Produk Digital'}
-                      </h4>
-                      <div className="flex items-center justify-between text-[11px] text-foreground-muted mt-0.5">
-                        <span className="font-mono">{o.customerEmail}</span>
-                        <span>
-                          {new Date(o.createdAt).toLocaleDateString('id-ID', {
-                            day: 'numeric',
-                            month: 'short',
-                          })}
-                        </span>
+                    <div className="flex items-center gap-2.5">
+                      <ProductBrandIcon name={o.productNames} className="w-8 h-8 rounded-lg" />
+                      <div className="min-w-0 flex-1">
+                        <h4 className="font-semibold text-xs text-foreground line-clamp-1">
+                          {o.productNames || 'Produk Digital'}
+                        </h4>
+                        <div className="flex items-center justify-between text-[11px] text-foreground-muted mt-0.5">
+                          <span className="font-mono">{o.customerEmail}</span>
+                          <span>
+                            {new Date(o.createdAt).toLocaleDateString('id-ID', {
+                              day: 'numeric',
+                              month: 'short',
+                            })}
+                          </span>
+                        </div>
                       </div>
                     </div>
 
@@ -403,8 +413,11 @@ export function SalesOrdersTab({
                         <td className="py-3 px-4 font-mono text-[11px] font-bold text-foreground">
                           {o.id.substring(0, 10)}...
                         </td>
-                        <td className="py-3 px-4 text-foreground font-medium max-w-[200px] truncate">
-                          {o.productNames || 'Produk Digital'}
+                        <td className="py-3 px-4 text-foreground font-medium max-w-[200px]">
+                          <div className="flex items-center gap-2">
+                            <ProductBrandIcon name={o.productNames} className="w-6 h-6 rounded-md" />
+                            <span className="truncate">{o.productNames || 'Produk Digital'}</span>
+                          </div>
                         </td>
                         <td className="py-3 px-4 font-mono text-foreground-muted text-[11px]">
                           {o.customerEmail}

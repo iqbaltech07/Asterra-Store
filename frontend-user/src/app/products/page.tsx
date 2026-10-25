@@ -7,6 +7,7 @@ import { useSearchParams } from 'next/navigation';
 import { useCatalogProducts } from '@/lib/hooks/use-catalog-products';
 import { useActiveCampaigns } from '@/lib/hooks/use-active-campaigns';
 import { calculateCampaignPrice, isPromoItem, ActiveCampaign } from '@/lib/utils/promo-pricing';
+import { resolveBrandLogo } from '@/components/ui/product-brand-icon';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -420,14 +421,14 @@ function ProductsContent() {
                           {promoCalc.discountBadge}
                         </div>
                       )}
-                      <Link href={`/products/${product.id}`} prefetch={true} className="block w-full h-full relative">
+                      <Link href={`/products/${product.id}`} prefetch={true} className="block w-full h-full relative flex items-center justify-center p-1">
                         <Image
-                          src={product.imageUrl}
+                          src={resolveBrandLogo(product.name, product.imageUrl)}
                           alt={product.name}
                           fill
                           sizes="80px"
                           priority={idx < 4}
-                          className="object-cover"
+                          className="object-contain p-1"
                         />
                       </Link>
                     </div>

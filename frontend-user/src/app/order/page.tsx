@@ -31,6 +31,7 @@ import {
 } from '@/components/checkout/checkout-manual-modal';
 import { OrdersApi } from '@/lib/api-client';
 import { usePaymentConfig } from '@/lib/hooks/use-payment-config';
+import { ProductBrandIcon } from '@/components/ui/product-brand-icon';
 
 import {
   STATUS_FILTERS,
@@ -1031,10 +1032,12 @@ function PrivateOrderContent() {
                           key={item.id}
                           className="py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs"
                         >
-                          <div className="space-y-0.5">
-                            <h4 className="font-medium text-foreground">
-                              {pName}
-                            </h4>
+                          <div className="flex items-center gap-3">
+                            <ProductBrandIcon name={pName} className="w-8 h-8 rounded-lg" />
+                            <div className="space-y-0.5">
+                              <h4 className="font-medium text-foreground">
+                                {pName}
+                              </h4>
                             <div className="flex flex-wrap items-center gap-2 text-foreground-muted text-[11px]">
                               <span>{itemQty} lisensi</span>
                               {targetEmail && (
@@ -1047,6 +1050,7 @@ function PrivateOrderContent() {
                               )}
                             </div>
                           </div>
+                        </div>
 
                           <div className="text-left sm:text-right shrink-0">
                             <span className="font-semibold text-foreground tabular-nums">

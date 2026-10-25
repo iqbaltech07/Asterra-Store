@@ -17,6 +17,7 @@ import {
 import { formatWhatsAppUrl, formatDateTimeIndo } from '@/lib/utils/format';
 
 import { OrderStatusBadge } from './order-badges';
+import { ProductBrandIcon } from '@/components/ui/product-brand-icon';
 
 interface OrderTableRowProps {
   order: Order;
@@ -101,10 +102,12 @@ export function OrderTableRow({ order, onOpenDetail, onCopyEmail }: OrderTableRo
       {/* Products */}
       <td className="py-3.5 px-4 align-top">
         {firstItem ? (
-          <div>
-            <span className="font-medium text-foreground block truncate max-w-[200px]">
-              {firstItem.product_name}
-            </span>
+          <div className="flex items-start gap-2.5">
+            <ProductBrandIcon name={firstItem.product_name} className="w-7 h-7 rounded-lg mt-0.5" />
+            <div className="min-w-0">
+              <span className="font-medium text-foreground block truncate max-w-[200px]" title={firstItem.product_name}>
+                {firstItem.product_name}
+              </span>
             <div className="flex items-center gap-2 mt-0.5 text-[11px] text-foreground-muted">
               <span>Qty: {firstItem.quantity}x</span>
               {firstItem.purchased_details?.duration && (
@@ -118,6 +121,7 @@ export function OrderTableRow({ order, onOpenDetail, onCopyEmail }: OrderTableRo
                 +{extraItemsCount} item lainnya
               </span>
             )}
+            </div>
           </div>
         ) : (
           <span className="text-foreground-muted italic">Tidak ada item</span>

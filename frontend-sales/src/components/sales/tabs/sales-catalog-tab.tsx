@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { AdminTab } from '@/components/admin/admin-sidebar';
 import { getStoreBaseUrl } from '@/lib/utils/url';
+import { ProductBrandIcon } from '@/components/ui/product-brand-icon';
 import { ProductItem } from '../types';
 
 interface SalesCatalogTabProps {
@@ -207,9 +208,12 @@ export function SalesCatalogTab({
                     </Badge>
                   </div>
 
-                  <h4 className="font-bold text-sm text-foreground group-hover:text-[#2563EB] transition-colors line-clamp-2">
-                    {p.name}
-                  </h4>
+                  <div className="flex items-center gap-3">
+                    <ProductBrandIcon name={p.name} className="w-10 h-10 rounded-xl" />
+                    <h4 className="font-bold text-sm text-foreground group-hover:text-[#2563EB] transition-colors line-clamp-2">
+                      {p.name}
+                    </h4>
+                  </div>
 
                   <div className="bg-[#F8F9FB] border border-border/80 rounded-xl p-3 space-y-2 text-xs">
                     <div className="flex items-center justify-between">

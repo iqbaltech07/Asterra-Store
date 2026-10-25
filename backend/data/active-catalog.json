@@ -58,7 +58,7 @@
     ],
     "status": "active",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/brand/Mobilelegends-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "FL84_10-S98",
@@ -75,7 +75,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-10-22T00:59:14.961000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/Mobilelegends-logo.png"
   },
   {
     "id": "vip-ytpreminvt1bln-s3",
@@ -138,7 +139,7 @@
     ],
     "status": "active",
     "stock": 99,
-    "imageUrl": "/api/v1/media/products/netflix-premium-shared-30-hari-1-profile-garansi-2-3aeee62229ca.webp",
+    "imageUrl": "/images/brand/Netflix-logo.png",
     "popular": true,
     "provider": "vip-reseller",
     "providerCode": "NTFLXSHARE30DGAR28D-S2",
@@ -155,7 +156,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-10-01T18:11:07.158000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/Netflix-logo.png"
   },
   {
     "id": "vip-ntflxshare30dgar14d-s2",
@@ -178,7 +180,7 @@
     ],
     "status": "active",
     "stock": 100,
-    "imageUrl": "/api/v1/media/products/netflix-premium-shared-30-hari-1-profile-garansi-1-3aeee62229ca.webp",
+    "imageUrl": "/images/brand/Netflix-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "NTFLXSHARE30DGAR14D-S2",
@@ -195,7 +197,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-10-01T18:10:45.122000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/Netflix-logo.png"
   },
   {
     "id": "prod-muniiqze-jyh0",
@@ -216,7 +219,7 @@
     ],
     "status": "active",
     "stock": 14,
-    "imageUrl": "/api/v1/media/products/google-pro-18-1790736901110-LL1bkZ5Z9k9DxOGTi0mq9P2EM8AQTw.png",
+    "imageUrl": "/images/brand/Google-logo.png",
     "popular": true,
     "provider": "native",
     "providerCode": null,
@@ -233,7 +236,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-30T02:55:10.108000",
-    "updatedAt": "2026-10-12T05:47:06.130000"
+    "updatedAt": "2026-10-12T05:47:06.130000",
+    "image_url": "/images/brand/Google-logo.png"
   },
   {
     "id": "vip-ytprem4bln10pcs-s2",
@@ -656,7 +660,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/viu.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "VIU3BLNPRM-S3",
@@ -673,7 +677,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:39.215000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/viu.png"
   },
   {
     "id": "vip-viu6blnprm-s1",
@@ -696,7 +701,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/viu.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "VIU6BLNPRM-S1",
@@ -713,7 +718,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:39.215000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/viu.png"
   },
   {
     "id": "vip-viu1blnprm-s1",
@@ -736,7 +742,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/viu.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "VIU1BLNPRM-S1",
@@ -753,7 +759,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:39.214000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/viu.png"
   },
   {
     "id": "vip-viu1thngar1bln-s1",
@@ -776,7 +783,7 @@
     ],
     "status": "active",
     "stock": 100,
-    "imageUrl": "/api/v1/media/products/Katalog_Product_-_VIU_Private-1790813990437-t6EVARTYXg9O8KtKcEKPmNV7seS4zW.jpg",
+    "imageUrl": "/images/apps/viu.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "VIU1THNGAR1BLN-S1",
@@ -793,7 +800,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:39.214000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/viu.png"
   },
   {
     "id": "vip-viu6blnprm-s2",
@@ -816,7 +824,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/viu.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "VIU6BLNPRM-S2",
@@ -833,7 +841,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:39.214000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/viu.png"
   },
   {
     "id": "vip-viu1blnprm-s2",
@@ -856,7 +865,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/viu.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "VIU1BLNPRM-S2",
@@ -873,7 +882,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:39.213000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/viu.png"
   },
   {
     "id": "vip-viu3blngar2bln-s3",
@@ -896,7 +906,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/viu.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "VIU3BLNGAR2BLN-S3",
@@ -913,7 +923,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:39.213000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/viu.png"
   },
   {
     "id": "vip-wetvshared1bln-s1",
@@ -936,7 +947,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/wetv.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "WETVSHARED1BLN-S1",
@@ -953,7 +964,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:39.213000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/wetv.png"
   },
   {
     "id": "vip-viu1bln-s1",
@@ -976,7 +988,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/viu.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "VIU1BLN-S1",
@@ -993,7 +1005,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:39.212000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/viu.png"
   },
   {
     "id": "vip-wetvprivate1bln-s1",
@@ -1016,7 +1029,7 @@
     ],
     "status": "active",
     "stock": 100,
-    "imageUrl": "/api/v1/media/products/Katalog_Product_-_WeTV_Private-1790812187844-5Lc9stzGa22TthvhxEgjiUjqYmXuvt.png",
+    "imageUrl": "/images/apps/wetv.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "WETVPRIVATE1BLN-S1",
@@ -1033,7 +1046,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:39.211000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/wetv.png"
   },
   {
     "id": "vip-viu3blnprm-s2",
@@ -1056,7 +1070,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/viu.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "VIU3BLNPRM-S2",
@@ -1073,7 +1087,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:39.211000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/viu.png"
   },
   {
     "id": "vip-wetvshared1thn-s2",
@@ -1096,7 +1111,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/wetv.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "WETVSHARED1THN-S2",
@@ -1113,7 +1128,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:39.210000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/wetv.png"
   },
   {
     "id": "vip-ytpremindpo10x-s2",
@@ -1176,7 +1192,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/wetv.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "WETVSHARED3BLN-S1",
@@ -1193,7 +1209,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:39.209000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/wetv.png"
   },
   {
     "id": "vip-wetvshared1thn-s1",
@@ -1216,7 +1233,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/wetv.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "WETVSHARED1THN-S1",
@@ -1233,7 +1250,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:39.209000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/wetv.png"
   },
   {
     "id": "vip-viu6bln-s1",
@@ -1256,7 +1274,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/viu.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "VIU6BLN-S1",
@@ -1273,7 +1291,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:39.207000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/viu.png"
   },
   {
     "id": "vip-wetvshared1bln-s2",
@@ -1296,7 +1315,7 @@
     ],
     "status": "active",
     "stock": 100,
-    "imageUrl": "/api/v1/media/products/Katalog_Product_-_WeTV_Shared-1790812377463-YUkaYPDBaosvHCXlkU7PiU0s8A7IsW.png",
+    "imageUrl": "/images/apps/wetv.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "WETVSHARED1BLN-S2",
@@ -1313,7 +1332,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:39.206000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/wetv.png"
   },
   {
     "id": "vip-viu3bln-s1",
@@ -1336,7 +1356,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/viu.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "VIU3BLN-S1",
@@ -1353,7 +1373,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:39.206000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/viu.png"
   },
   {
     "id": "vip-viu6blngar3bln-s3",
@@ -1376,7 +1397,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/viu.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "VIU6BLNGAR3BLN-S3",
@@ -1393,7 +1414,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:39.205000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/viu.png"
   },
   {
     "id": "vip-viu6blnprm-s3",
@@ -1416,7 +1438,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/viu.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "VIU6BLNPRM-S3",
@@ -1433,7 +1455,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:39.205000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/viu.png"
   },
   {
     "id": "vip-viu1thngar3bln-s1",
@@ -1456,7 +1479,7 @@
     ],
     "status": "active",
     "stock": 100,
-    "imageUrl": "/api/v1/media/products/Katalog_Product_-_VIU_Private-1790814037070-NXw2Z5yVEIznM12tFwHZQ0AkFAEvN5.jpg",
+    "imageUrl": "/images/apps/viu.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "VIU1THNGAR3BLN-S1",
@@ -1473,7 +1496,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:39.205000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/viu.png"
   },
   {
     "id": "vip-viu3blnprm-s1",
@@ -1496,7 +1520,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/viu.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "VIU3BLNPRM-S1",
@@ -1513,7 +1537,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:39.205000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/viu.png"
   },
   {
     "id": "vip-visionpremprivate1bln-s2",
@@ -1616,7 +1641,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/brand/iqiyi-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "MLCMPGN3-S1AUTO",
@@ -1633,7 +1658,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.774000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/iqiyi-logo.png"
   },
   {
     "id": "vip-vidioprivate2bln-s1",
@@ -1656,7 +1682,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/vidio.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "VIDIOPRIVATE2BLN-S1",
@@ -1673,7 +1699,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.774000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/vidio.png"
   },
   {
     "id": "vip-mlcmpgn2-s1a",
@@ -1696,7 +1723,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/brand/iqiyi-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "MLCMPGN2-S1A",
@@ -1713,7 +1740,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.773000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/iqiyi-logo.png"
   },
   {
     "id": "vip-geminiprohead1thngar6bln-s1",
@@ -1736,7 +1764,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/brand/Google-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "GEMINIPROHEAD1THNGAR6BLN-S1",
@@ -1753,7 +1781,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.773000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/Google-logo.png"
   },
   {
     "id": "vip-mlcmpgn3-s1a",
@@ -1776,7 +1805,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/brand/iqiyi-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "MLCMPGN3-S1A",
@@ -1793,7 +1822,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.773000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/iqiyi-logo.png"
   },
   {
     "id": "vip-iqiyishared-s2",
@@ -1816,7 +1846,7 @@
     ],
     "status": "active",
     "stock": 0,
-    "imageUrl": "/api/v1/media/products/WhatsApp_Image_2026-09-30_at_20_44_31-1790808905668-8hfBsByAgetqjVKVHfHEogS9nzhnl4.jpeg",
+    "imageUrl": "/images/brand/iqiyi-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "IQIYISHARED-S2",
@@ -1833,7 +1863,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.773000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/iqiyi-logo.png"
   },
   {
     "id": "vip-visionprivate1bln-s1",
@@ -1896,7 +1927,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/api/v1/media/products/WhatsApp_Image_2026-09-30_at_20_44_31-1790808935923-E527KLJ7khtywuCriAYUHGGKTNpclS.jpeg",
+    "imageUrl": "/images/brand/iqiyi-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "IQIYIPRIVATE-S1",
@@ -1913,7 +1944,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.773000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/iqiyi-logo.png"
   },
   {
     "id": "vip-vidioworldcupinfo-s24",
@@ -1976,7 +2008,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/vidio.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "VIDIOWORLDCUPMOBILEEE-S23",
@@ -1993,7 +2025,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.773000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/vidio.png"
   },
   {
     "id": "vip-visionshared1bln-s1",
@@ -2056,7 +2089,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/vidio.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "VIDIOWORLDCUPALLSCREENN-S22",
@@ -2073,7 +2106,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.773000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/vidio.png"
   },
   {
     "id": "vip-vidioshared6bln-s1",
@@ -2096,7 +2130,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/vidio.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "VIDIOSHARED6BLN-S1",
@@ -2113,7 +2147,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.773000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/vidio.png"
   },
   {
     "id": "vip-vidiofifaworldcupall-s1",
@@ -2136,7 +2171,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/vidio.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "VIDIOFIFAWORLDCUPALL-S1",
@@ -2153,7 +2188,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.773000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/vidio.png"
   },
   {
     "id": "vip-spyadm1bln-s1",
@@ -2176,7 +2212,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/brand/Spotify-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "SPYADM1BLN-S1",
@@ -2193,7 +2229,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.773000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/Spotify-logo.png"
   },
   {
     "id": "vip-vidiotv1thngar3b-s1",
@@ -2216,7 +2253,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/vidio.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "VIDIOTV1THNGAR3B-S1",
@@ -2233,7 +2270,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.772000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/vidio.png"
   },
   {
     "id": "vip-vidioplatmobprivate-s1",
@@ -2256,7 +2294,7 @@
     ],
     "status": "active",
     "stock": 100,
-    "imageUrl": "/api/v1/media/products/Katalog_Product_-_Vidio_Private-1790814542164-54evSl4RqPGALi9SESCbImY7sbdcvY.jpg",
+    "imageUrl": "/images/apps/vidio.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "VIDIOPLATMOBPRIVATE-S1",
@@ -2273,7 +2311,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.772000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/vidio.png"
   },
   {
     "id": "vip-mlcmpgn8-s1001",
@@ -2296,7 +2335,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/brand/iqiyi-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "MLCMPGN8-S1001",
@@ -2313,7 +2352,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.772000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/iqiyi-logo.png"
   },
   {
     "id": "vip-vidioprivate-s1",
@@ -2336,7 +2376,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/vidio.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "VIDIOPRIVATE-S1",
@@ -2353,7 +2393,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.772000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/vidio.png"
   },
   {
     "id": "vip-vidioshared1bln-s2",
@@ -2376,7 +2417,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/vidio.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "VIDIOSHARED1BLN-S2",
@@ -2393,7 +2434,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.772000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/vidio.png"
   },
   {
     "id": "vip-vidioprivate12bln-s1",
@@ -2416,7 +2458,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/vidio.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "VIDIOPRIVATE12BLN-S1",
@@ -2433,7 +2475,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.772000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/vidio.png"
   },
   {
     "id": "vip-vidioworldcupmobilee-s23",
@@ -2456,7 +2499,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/vidio.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "VIDIOWORLDCUPMOBILEE-S23",
@@ -2473,7 +2516,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.772000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/vidio.png"
   },
   {
     "id": "vip-vidiofifaworldcupkhusus-s1",
@@ -2496,7 +2540,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/vidio.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "VIDIOFIFAWORLDCUPKHUSUS-S1",
@@ -2513,7 +2557,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.772000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/vidio.png"
   },
   {
     "id": "vip-vidioprivate6bln-s1",
@@ -2536,7 +2581,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/vidio.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "VIDIOPRIVATE6BLN-S1",
@@ -2553,7 +2598,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.772000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/vidio.png"
   },
   {
     "id": "vip-vidioshared2bln-s2",
@@ -2576,7 +2622,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/vidio.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "VIDIOSHARED2BLN-S2",
@@ -2593,7 +2639,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.771000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/vidio.png"
   },
   {
     "id": "vip-vidiosharedmbl1bln-s2",
@@ -2616,7 +2663,7 @@
     ],
     "status": "active",
     "stock": 100,
-    "imageUrl": "/api/v1/media/products/Katalog_Product_-_Vidio_Shared-1790814384910-DiMwWeUjP0NJAeQNPBxbF5cSvUlABX.jpg",
+    "imageUrl": "/images/apps/vidio.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "VIDIOSHAREDMBL1BLN-S2",
@@ -2633,7 +2680,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.771000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/vidio.png"
   },
   {
     "id": "vip-vidioprivate12bln1xgar-s1",
@@ -2656,7 +2704,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/vidio.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "VIDIOPRIVATE12BLN1XGAR-S1",
@@ -2673,7 +2721,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.771000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/vidio.png"
   },
   {
     "id": "vip-geminiprohead1thngar1bln-s1",
@@ -2696,7 +2745,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/brand/Google-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "GEMINIPROHEAD1THNGAR1BLN-S1",
@@ -2713,7 +2762,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.771000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/Google-logo.png"
   },
   {
     "id": "vip-vidiotv1thngar1b-s1",
@@ -2736,7 +2786,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/vidio.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "VIDIOTV1THNGAR1B-S1",
@@ -2753,7 +2803,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.771000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/vidio.png"
   },
   {
     "id": "vip-vidioprivate3bln-s1",
@@ -2776,7 +2827,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/vidio.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "VIDIOPRIVATE3BLN-S1",
@@ -2793,7 +2844,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.771000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/vidio.png"
   },
   {
     "id": "vip-vidioshared12bln-s1",
@@ -2816,7 +2868,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/vidio.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "VIDIOSHARED12BLN-S1",
@@ -2833,7 +2885,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.771000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/vidio.png"
   },
   {
     "id": "vip-vidioshared2bln-s1",
@@ -2856,7 +2909,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/vidio.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "VIDIOSHARED2BLN-S1",
@@ -2873,7 +2926,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.770000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/vidio.png"
   },
   {
     "id": "vip-vidioshared3bln-s1",
@@ -2896,7 +2950,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/vidio.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "VIDIOSHARED3BLN-S1",
@@ -2913,7 +2967,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.770000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/vidio.png"
   },
   {
     "id": "vip-vidioshared2blnprm-s2",
@@ -2936,7 +2991,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/vidio.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "VIDIOSHARED2BLNPRM-S2",
@@ -2953,7 +3008,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.769000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/vidio.png"
   },
   {
     "id": "vip-vidioshared-s1",
@@ -2976,7 +3032,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/vidio.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "VIDIOSHARED-S1",
@@ -2993,7 +3049,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.767000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/vidio.png"
   },
   {
     "id": "vip-vidiotv6blngar1b-s1",
@@ -3016,7 +3073,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/vidio.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "VIDIOTV6BLNGAR1B-S1",
@@ -3033,7 +3090,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.767000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/vidio.png"
   },
   {
     "id": "vip-vidiotv6blngar3b-s1",
@@ -3056,7 +3114,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/vidio.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "VIDIOTV6BLNGAR3B-S1",
@@ -3073,7 +3131,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.767000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/vidio.png"
   },
   {
     "id": "vip-vidioprivate1blnprm-s1",
@@ -3096,7 +3155,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/vidio.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "VIDIOPRIVATE1BLNPRM-S1",
@@ -3113,7 +3172,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.764000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/vidio.png"
   },
   {
     "id": "vip-vidioshared1blnprom-s1",
@@ -3136,7 +3196,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/vidio.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "VIDIOSHARED1BLNPROM-S1",
@@ -3153,7 +3213,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.763000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/vidio.png"
   },
   {
     "id": "vip-vidioshared3bln-s2",
@@ -3176,7 +3237,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/vidio.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "VIDIOSHARED3BLN-S2",
@@ -3193,7 +3254,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.763000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/vidio.png"
   },
   {
     "id": "vip-vidioprivate12blnnogar-s1",
@@ -3216,7 +3278,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/vidio.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "VIDIOPRIVATE12BLNNOGAR-S1",
@@ -3233,7 +3295,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.762000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/vidio.png"
   },
   {
     "id": "vip-spyadm1blnus-s1",
@@ -3256,7 +3319,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/brand/Spotify-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "SPYADM1BLNUS-S1",
@@ -3273,7 +3336,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.761000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/Spotify-logo.png"
   },
   {
     "id": "vip-mlcmpgn7-s1001",
@@ -3296,7 +3360,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/brand/iqiyi-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "MLCMPGN7-S1001",
@@ -3313,7 +3377,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.761000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/iqiyi-logo.png"
   },
   {
     "id": "vip-spyinvt1bln-s1",
@@ -3336,7 +3401,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/brand/Spotify-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "SPYINVT1BLN-S1",
@@ -3353,7 +3418,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.761000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/Spotify-logo.png"
   },
   {
     "id": "vip-mlcmpgn2-s1auto",
@@ -3376,7 +3442,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/brand/iqiyi-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "MLCMPGN2-S1AUTO",
@@ -3393,7 +3459,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.760000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/iqiyi-logo.png"
   },
   {
     "id": "vip-geminiprohead1thngar3bln-s2",
@@ -3416,7 +3483,7 @@
     ],
     "status": "active",
     "stock": 99,
-    "imageUrl": "/api/v1/media/products/google-pro-1790683373626-l6DHtwqBLQsyYGof7xaOrw43UPcJXP.png",
+    "imageUrl": "/images/brand/Google-logo.png",
     "popular": true,
     "provider": "vip-reseller",
     "providerCode": "GEMINIPROHEAD1THNGAR3BLN-S2",
@@ -3433,7 +3500,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.760000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/Google-logo.png"
   },
   {
     "id": "vip-iqiyishared-s1",
@@ -3456,7 +3524,7 @@
     ],
     "status": "active",
     "stock": 100,
-    "imageUrl": "/api/v1/media/products/Katalog_Product_-_IQIYI-1790809056432-1KcNpIyfyQ9zPYyH5W7tDHEcTHspcQ.jpeg",
+    "imageUrl": "/images/brand/iqiyi-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "IQIYISHARED-S1",
@@ -3473,7 +3541,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.760000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/iqiyi-logo.png"
   },
   {
     "id": "vip-mlcmpgn2-s1001",
@@ -3496,7 +3565,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/brand/iqiyi-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "MLCMPGN2-S1001",
@@ -3513,7 +3582,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.760000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/iqiyi-logo.png"
   },
   {
     "id": "vip-geminiprohead1thngar6bln-s2",
@@ -3536,7 +3606,7 @@
     ],
     "status": "active",
     "stock": 99,
-    "imageUrl": "/api/v1/media/products/google-pro-1790683219906-0kv6FUwJttUEZOh1SEvAzvPhuenSos.png",
+    "imageUrl": "/images/brand/Google-logo.png",
     "popular": true,
     "provider": "vip-reseller",
     "providerCode": "GEMINIPROHEAD1THNGAR6BLN-S2",
@@ -3553,7 +3623,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.759000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/Google-logo.png"
   },
   {
     "id": "vip-geminiprohead1thngar1bln-s2",
@@ -3576,7 +3647,7 @@
     ],
     "status": "active",
     "stock": 99,
-    "imageUrl": "/api/v1/media/products/google-pro-1790683347951-wUY5Q1gZCX0zgxxR6RWlOwUmhRNID7.png",
+    "imageUrl": "/images/brand/Google-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "GEMINIPROHEAD1THNGAR1BLN-S2",
@@ -3593,7 +3664,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.759000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/Google-logo.png"
   },
   {
     "id": "vip-chatgpt1bgar7d-s1",
@@ -3616,7 +3688,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/brand/ChatGPT-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "CHATGPT1BGAR7D-S1",
@@ -3633,7 +3705,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.330000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/ChatGPT-logo.png"
   },
   {
     "id": "vip-disney1blnshrd5u-s1",
@@ -3696,7 +3769,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/brand/ChatGPT-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "CHATGPTPLUS1BGAR4D-S1",
@@ -3713,7 +3786,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.329000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/ChatGPT-logo.png"
   },
   {
     "id": "vip-chatgptplus1bshared-s1",
@@ -3736,7 +3810,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/brand/ChatGPT-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "CHATGPTPLUS1BSHARED-S1",
@@ -3753,7 +3827,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.329000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/ChatGPT-logo.png"
   },
   {
     "id": "vip-chatgptplus1bgar28d-s1",
@@ -3776,7 +3851,7 @@
     ],
     "status": "active",
     "stock": 0,
-    "imageUrl": "/api/v1/media/products/chatgpt-plus-1790683638050-ZsNY4ENHbAoGYTMFXuHvyOMcc4DTDj.png",
+    "imageUrl": "/images/brand/ChatGPT-logo.png",
     "popular": true,
     "provider": "vip-reseller",
     "providerCode": "CHATGPTPLUS1BGAR28D-S1",
@@ -3793,7 +3868,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.329000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/ChatGPT-logo.png"
   },
   {
     "id": "vip-chatgptplus1bgar14d-s1",
@@ -3816,7 +3892,7 @@
     ],
     "status": "active",
     "stock": 0,
-    "imageUrl": "/api/v1/media/products/chatgpt-plus-1790683721091-3MLiyvTDBTfoNPIRXYbKvKCBeybuS6.png",
+    "imageUrl": "/images/brand/ChatGPT-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "CHATGPTPLUS1BGAR14D-S1",
@@ -3833,7 +3909,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.329000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/ChatGPT-logo.png"
   },
   {
     "id": "vip-chatgptgo1thngar6b-s1",
@@ -3856,7 +3933,7 @@
     ],
     "status": "active",
     "stock": 0,
-    "imageUrl": "/api/v1/media/products/chatgpt-go-1790683677930-YUJcz4hPGBLD68TGPRQ5XYAC9hU4bS.png",
+    "imageUrl": "/images/brand/ChatGPT-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "CHATGPTGO1THNGAR6B-S1",
@@ -3873,7 +3950,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.329000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/ChatGPT-logo.png"
   },
   {
     "id": "vip-eggeventwg-s50",
@@ -3896,7 +3974,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/brand/Google-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "EGGEVENTWG-S50",
@@ -3913,7 +3991,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.329000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/Google-logo.png"
   },
   {
     "id": "vip-geminiproinvt1thngar1bln-s2",
@@ -3936,7 +4015,7 @@
     ],
     "status": "active",
     "stock": 99,
-    "imageUrl": "/api/v1/media/products/google-pro-1790683258865-0odrb3mF35ylJCso1q4eks6uUbBv8v.png",
+    "imageUrl": "/images/brand/Google-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "GEMINIPROINVT1THNGAR1BLN-S2",
@@ -3953,7 +4032,8 @@
     "privacyTitle": "Shared Account",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.329000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/Google-logo.png"
   },
   {
     "id": "vip-geminiproinvt1thngar1bln-s1",
@@ -3976,7 +4056,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/brand/Google-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "GEMINIPROINVT1THNGAR1BLN-S1",
@@ -3993,7 +4073,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.328000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/Google-logo.png"
   },
   {
     "id": "vip-disney2bln-s1",
@@ -4056,7 +4137,7 @@
     ],
     "status": "active",
     "stock": 95,
-    "imageUrl": "/api/v1/media/products/google-pro-1790683398028-ZYtEJghD6u02AIc8oDfdfDFj95TyN4.png",
+    "imageUrl": "/images/brand/Google-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "GEMINIPROINVT1THNGAR3BLN-S2",
@@ -4073,7 +4154,8 @@
     "privacyTitle": "Shared Account",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.328000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/Google-logo.png"
   },
   {
     "id": "vip-geminiproinvt1thngar6bln-s2",
@@ -4096,7 +4178,7 @@
     ],
     "status": "active",
     "stock": 100,
-    "imageUrl": "/api/v1/media/products/google-pro-1790683415958-qYLMLgeDqzuqmup4fogHAPP3YHSAD3.png",
+    "imageUrl": "/images/brand/Google-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "GEMINIPROINVT1THNGAR6BLN-S2",
@@ -4113,7 +4195,8 @@
     "privacyTitle": "Shared Account",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.328000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/Google-logo.png"
   },
   {
     "id": "vip-geminiproinvt1thngar6bln-s1",
@@ -4136,7 +4219,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/brand/Google-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "GEMINIPROINVT1THNGAR6BLN-S1",
@@ -4153,7 +4236,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.328000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/Google-logo.png"
   },
   {
     "id": "vip-disney1thbbasicprivate-s2",
@@ -4256,7 +4340,7 @@
     ],
     "status": "active",
     "stock": 0,
-    "imageUrl": "/api/v1/media/products/chatgpt-plus-1790683697731-KAP1WM3CzOKt4ZJvWe9Inp6BPeyAaf.png",
+    "imageUrl": "/images/brand/ChatGPT-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "CHATGPTPLUS3BGAR1BLN-S1",
@@ -4273,7 +4357,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.328000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/ChatGPT-logo.png"
   },
   {
     "id": "vip-chatgptplus3bgar3bln-s1",
@@ -4296,7 +4381,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/brand/ChatGPT-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "CHATGPTPLUS3BGAR3BLN-S1",
@@ -4313,7 +4398,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.327000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/ChatGPT-logo.png"
   },
   {
     "id": "vip-chatgptteacher1thngar6b-s1",
@@ -4336,7 +4422,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/brand/ChatGPT-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "CHATGPTTEACHER1THNGAR6B-S1",
@@ -4353,7 +4439,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.327000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/ChatGPT-logo.png"
   },
   {
     "id": "vip-disney1bln-s1",
@@ -4456,7 +4543,7 @@
     ],
     "status": "active",
     "stock": 0,
-    "imageUrl": "/images/banners/capcut-banner.png",
+    "imageUrl": "/images/brand/Capcut-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "CAPCUTSHARED1BLNGAR28D-S2",
@@ -4473,7 +4560,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.327000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/Capcut-logo.png"
   },
   {
     "id": "vip-disney1blnprivate-s1",
@@ -4576,7 +4664,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/brand/ChatGPT-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "CHATGPTOWNER1BGAR7D-S1",
@@ -4593,7 +4681,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.326000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/ChatGPT-logo.png"
   },
   {
     "id": "vip-chatgptplus1bgar3d5pcs-s1",
@@ -4616,7 +4705,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/brand/ChatGPT-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "CHATGPTPLUS1BGAR3D5PCS-S1",
@@ -4633,7 +4722,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.326000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/ChatGPT-logo.png"
   },
   {
     "id": "vip-chatgptplus1bgar7d5pcs-s1",
@@ -4656,7 +4746,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/brand/ChatGPT-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "CHATGPTPLUS1BGAR7D5PCS-S1",
@@ -4673,7 +4763,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.326000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/ChatGPT-logo.png"
   },
   {
     "id": "vip-chatgptplus1thngar6b-s1",
@@ -4696,7 +4787,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/brand/ChatGPT-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "CHATGPTPLUS1THNGAR6B-S1",
@@ -4713,7 +4804,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.325000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/ChatGPT-logo.png"
   },
   {
     "id": "vip-chatgptplus1bgar3d-s1",
@@ -4736,7 +4828,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/brand/ChatGPT-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "CHATGPTPLUS1BGAR3D-S1",
@@ -4753,7 +4845,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.325000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/ChatGPT-logo.png"
   },
   {
     "id": "vip-chatgptplus1bgar28d-s2",
@@ -4776,7 +4869,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/brand/ChatGPT-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "CHATGPTPLUS1BGAR28D-S2",
@@ -4793,7 +4886,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.325000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/ChatGPT-logo.png"
   },
   {
     "id": "vip-chatgptplus1bgar7d-s1",
@@ -4816,7 +4910,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/brand/ChatGPT-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "CHATGPTPLUS1BGAR7D-S1",
@@ -4833,7 +4927,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.325000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/ChatGPT-logo.png"
   },
   {
     "id": "vip-capcutprivate21d-s2",
@@ -4856,7 +4951,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/banners/capcut-banner.png",
+    "imageUrl": "/images/brand/Capcut-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "CAPCUTPRIVATE21D-S2",
@@ -4873,7 +4968,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.324000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/Capcut-logo.png"
   },
   {
     "id": "vip-chatgptowner1bgar28d-s1",
@@ -4896,7 +4992,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/brand/ChatGPT-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "CHATGPTOWNER1BGAR28D-S1",
@@ -4913,7 +5009,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.323000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/ChatGPT-logo.png"
   },
   {
     "id": "vip-chatgptteacher1thngar1b-s1",
@@ -4936,7 +5033,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/brand/ChatGPT-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "CHATGPTTEACHER1THNGAR1B-S1",
@@ -4953,7 +5050,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.323000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/ChatGPT-logo.png"
   },
   {
     "id": "vip-chatgptgo1thngar1b-s1",
@@ -4976,7 +5074,7 @@
     ],
     "status": "active",
     "stock": 0,
-    "imageUrl": "/api/v1/media/products/chatgpt-go-1790741410852-oqFvh5vvY2DgpOT5v7Fvk5CoRulqIf.png",
+    "imageUrl": "/images/brand/ChatGPT-logo.png",
     "popular": true,
     "provider": "vip-reseller",
     "providerCode": "CHATGPTGO1THNGAR1B-S1",
@@ -4993,7 +5091,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.322000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/ChatGPT-logo.png"
   },
   {
     "id": "vip-chatgpt1bgar28d-s1",
@@ -5016,7 +5115,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/brand/ChatGPT-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "CHATGPT1BGAR28D-S1",
@@ -5033,7 +5132,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.322000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/ChatGPT-logo.png"
   },
   {
     "id": "vip-capcutprivate30d-s1",
@@ -5056,7 +5156,7 @@
     ],
     "status": "active",
     "stock": 100,
-    "imageUrl": "/images/banners/capcut-banner.png",
+    "imageUrl": "/images/brand/Capcut-logo.png",
     "popular": true,
     "provider": "vip-reseller",
     "providerCode": "CAPCUTPRIVATE30D-S1",
@@ -5073,7 +5173,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.321000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/Capcut-logo.png"
   },
   {
     "id": "vip-capcutshared1thn-s1",
@@ -5096,7 +5197,7 @@
     ],
     "status": "active",
     "stock": 0,
-    "imageUrl": "/images/banners/capcut-banner.png",
+    "imageUrl": "/images/brand/Capcut-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "CAPCUTSHARED1THN-S1",
@@ -5113,7 +5214,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.320000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/Capcut-logo.png"
   },
   {
     "id": "vip-capcutprivate1bln-s3",
@@ -5136,7 +5238,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/banners/capcut-banner.png",
+    "imageUrl": "/images/brand/Capcut-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "CAPCUTPRIVATE1BLN-S3",
@@ -5153,7 +5255,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.319000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/Capcut-logo.png"
   },
   {
     "id": "vip-capcutshared1bln-s2",
@@ -5176,7 +5279,7 @@
     ],
     "status": "active",
     "stock": 0,
-    "imageUrl": "/images/banners/capcut-banner.png",
+    "imageUrl": "/images/brand/Capcut-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "CAPCUTSHARED1BLN-S2",
@@ -5193,7 +5296,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.318000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/Capcut-logo.png"
   },
   {
     "id": "vip-capcutprivate1bln-s2",
@@ -5216,7 +5320,7 @@
     ],
     "status": "active",
     "stock": 0,
-    "imageUrl": "/images/banners/capcut-banner.png",
+    "imageUrl": "/images/brand/Capcut-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "CAPCUTPRIVATE1BLN-S2",
@@ -5233,7 +5337,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.318000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/Capcut-logo.png"
   },
   {
     "id": "vip-capcutshared1bln-s3",
@@ -5256,7 +5361,7 @@
     ],
     "status": "active",
     "stock": 0,
-    "imageUrl": "/images/banners/capcut-banner.png",
+    "imageUrl": "/images/brand/Capcut-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "CAPCUTSHARED1BLN-S3",
@@ -5273,7 +5378,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.318000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/Capcut-logo.png"
   },
   {
     "id": "vip-capcutprivate1blngar28d-s2",
@@ -5296,7 +5402,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/banners/capcut-banner.png",
+    "imageUrl": "/images/brand/Capcut-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "CAPCUTPRIVATE1BLNGAR28D-S2",
@@ -5313,7 +5419,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.317000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/Capcut-logo.png"
   },
   {
     "id": "vip-capcutshared1bln-s1",
@@ -5336,7 +5443,7 @@
     ],
     "status": "active",
     "stock": 0,
-    "imageUrl": "/images/banners/capcut-banner.png",
+    "imageUrl": "/images/brand/Capcut-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "CAPCUTSHARED1BLN-S1",
@@ -5353,7 +5460,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.317000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/Capcut-logo.png"
   },
   {
     "id": "vip-capcutprivate7d-s1",
@@ -5376,7 +5484,7 @@
     ],
     "status": "active",
     "stock": 99,
-    "imageUrl": "/images/banners/capcut-banner.png",
+    "imageUrl": "/images/brand/Capcut-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "CAPCUTPRIVATE7D-S1",
@@ -5393,7 +5501,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.317000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/Capcut-logo.png"
   },
   {
     "id": "vip-canva1bln-s1",
@@ -5416,7 +5525,7 @@
     ],
     "status": "active",
     "stock": 0,
-    "imageUrl": "/api/v1/media/products/canva-pro-1790681634749-dstgTfzHEgTz1vMwWLLEvKhdrLKGaS.png",
+    "imageUrl": "/images/apps/canva.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "CANVA1BLN-S1",
@@ -5433,7 +5542,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.316000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/canva.png"
   },
   {
     "id": "vip-canvadesainer12bln-s1",
@@ -5456,7 +5566,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/canva.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "CANVADESAINER12BLN-S1",
@@ -5473,7 +5583,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.314000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/canva.png"
   },
   {
     "id": "vip-canvaanggota12bln-s1",
@@ -5496,7 +5607,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/canva.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "CANVAANGGOTA12BLN-S1",
@@ -5513,7 +5624,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.314000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/canva.png"
   },
   {
     "id": "vip-canvaedu1thn-s1",
@@ -5536,7 +5648,7 @@
     ],
     "status": "active",
     "stock": 97,
-    "imageUrl": "/api/v1/media/products/canva-edu-1790683491210-zvlx2s4T06sZ9ViESIKTka0UHKh1RU.png",
+    "imageUrl": "/images/apps/canva.png",
     "popular": true,
     "provider": "vip-reseller",
     "providerCode": "CANVAEDU1THN-S1",
@@ -5553,7 +5665,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.314000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/canva.png"
   },
   {
     "id": "vip-canvatestt-s6",
@@ -5576,7 +5689,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/canva.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "CANVATESTT-S6",
@@ -5593,7 +5706,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:38.313000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/canva.png"
   },
   {
     "id": "vip-bspremprivate3bln-s1",
@@ -5616,7 +5730,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/brand/BStation-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "BSPREMPRIVATE3BLN-S1",
@@ -5633,7 +5747,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:37.895000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/BStation-logo.png"
   },
   {
     "id": "vip-canvaanggota1bln-s1",
@@ -5656,7 +5771,7 @@
     ],
     "status": "active",
     "stock": 98,
-    "imageUrl": "/api/v1/media/products/canva-pro-1790683514735-WQVwJnlUdQInzaMPaJiu9n6R63OtEm.png",
+    "imageUrl": "/images/apps/canva.png",
     "popular": true,
     "provider": "vip-reseller",
     "providerCode": "CANVAANGGOTA1BLN-S1",
@@ -5673,7 +5788,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:37.895000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/canva.png"
   },
   {
     "id": "vip-canvadesainer6bln-s1",
@@ -5696,7 +5812,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/canva.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "CANVADESAINER6BLN-S1",
@@ -5713,7 +5829,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:37.895000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/canva.png"
   },
   {
     "id": "vip-bspremshrd3bln-s1",
@@ -5736,7 +5853,7 @@
     ],
     "status": "active",
     "stock": 100,
-    "imageUrl": "/api/v1/media/products/Katalog_Product_-_BStation-1790810723438-RFnfJyqyPXFbfVRmFd4kXRlB3p956C.png",
+    "imageUrl": "/images/brand/BStation-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "BSPREMSHRD3BLN-S1",
@@ -5753,7 +5870,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:37.895000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/BStation-logo.png"
   },
   {
     "id": "vip-canvalifetime-s1",
@@ -5776,7 +5894,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/canva.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "CANVALIFETIME-S1",
@@ -5793,7 +5911,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:37.895000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/canva.png"
   },
   {
     "id": "vip-canvaanggota2bln-s1",
@@ -5816,7 +5935,7 @@
     ],
     "status": "active",
     "stock": 100,
-    "imageUrl": "/api/v1/media/products/canva-pro-1790683536617-U7K1D5WtHb8ELbwMENElRisnFDvrtZ.png",
+    "imageUrl": "/images/apps/canva.png",
     "popular": true,
     "provider": "vip-reseller",
     "providerCode": "CANVAANGGOTA2BLN-S1",
@@ -5833,7 +5952,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:37.895000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/canva.png"
   },
   {
     "id": "vip-canvaanggota6bln-s1",
@@ -5856,7 +5976,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/canva.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "CANVAANGGOTA6BLN-S1",
@@ -5873,7 +5993,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:37.895000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/canva.png"
   },
   {
     "id": "vip-canvadesainer1bln-s1",
@@ -5896,7 +6017,7 @@
     ],
     "status": "active",
     "stock": 99,
-    "imageUrl": "/api/v1/media/products/canva-pro-1790683555315-DvCdcGMCJmY3HPQlN9hRBhKIXFFyh7.png",
+    "imageUrl": "/images/apps/canva.png",
     "popular": true,
     "provider": "vip-reseller",
     "providerCode": "CANVADESAINER1BLN-S1",
@@ -5913,7 +6034,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:37.895000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/canva.png"
   },
   {
     "id": "vip-canvadesainerlifetime-s1",
@@ -5936,7 +6058,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/canva.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "CANVADESAINERLIFETIME-S1",
@@ -5953,7 +6075,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:37.895000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/canva.png"
   },
   {
     "id": "vip-bspremshrd1thn-s1",
@@ -5976,7 +6099,7 @@
     ],
     "status": "active",
     "stock": 100,
-    "imageUrl": "/api/v1/media/products/Katalog_Product_-_BStation-1790809566146-VtepI0JvqZ1PDQKsHnJjoRq6BoAVvw.jpeg",
+    "imageUrl": "/images/brand/BStation-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "BSPREMSHRD1THN-S1",
@@ -5993,7 +6116,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:37.895000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/BStation-logo.png"
   },
   {
     "id": "vip-canva6bln-s1",
@@ -6016,7 +6140,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/canva.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "CANVA6BLN-S1",
@@ -6033,7 +6157,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:37.895000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/apps/canva.png"
   },
   {
     "id": "vip-bspremshrd1bln-s1",
@@ -6056,7 +6181,7 @@
     ],
     "status": "active",
     "stock": 100,
-    "imageUrl": "/api/v1/media/products/Katalog_Product_-_BStation-1790810319252-8d1kQE6USsiBRvp16leSM1d1axOLAT.png",
+    "imageUrl": "/images/brand/BStation-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "BSPREMSHRD1BLN-S1",
@@ -6073,7 +6198,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:37.895000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/BStation-logo.png"
   },
   {
     "id": "vip-xlkvpm530",
@@ -6096,7 +6222,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/vidio.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "XLKVPM530",
@@ -6113,7 +6239,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:37.894000",
-    "updatedAt": "2026-10-01T18:14:33.271000"
+    "updatedAt": "2026-10-01T18:14:33.271000",
+    "image_url": "/images/apps/vidio.png"
   },
   {
     "id": "vip-xlkvdm530",
@@ -6136,7 +6263,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/brand/Mobilelegends-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "XLKVDM530",
@@ -6153,7 +6280,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:37.894000",
-    "updatedAt": "2026-10-01T18:13:36.876000"
+    "updatedAt": "2026-10-01T18:13:36.876000",
+    "image_url": "/images/brand/Mobilelegends-logo.png"
   },
   {
     "id": "vip-bspremprivate2bln-s1",
@@ -6176,7 +6304,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/brand/BStation-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "BSPREMPRIVATE2BLN-S1",
@@ -6193,7 +6321,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:37.894000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/BStation-logo.png"
   },
   {
     "id": "vip-bspremprivate1bln-s1",
@@ -6216,7 +6345,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/brand/BStation-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "BSPREMPRIVATE1BLN-S1",
@@ -6233,7 +6362,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:37.894000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/BStation-logo.png"
   },
   {
     "id": "vip-alightmotionpriv1thn-s1",
@@ -6256,7 +6386,7 @@
     ],
     "status": "active",
     "stock": 99,
-    "imageUrl": "/api/v1/media/products/Katalog_Product_-_Alightmotion-1790809215551-BajDHkbPKZkpqRPNRfPGh5ts7D9GN8.jpeg",
+    "imageUrl": "/images/brand/Alightmotion-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "ALIGHTMOTIONPRIV1THN-S1",
@@ -6273,7 +6403,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:37.894000",
-    "updatedAt": "2026-10-24T14:32:56.008000"
+    "updatedAt": "2026-10-24T14:32:56.008000",
+    "image_url": "/images/brand/Alightmotion-logo.png"
   },
   {
     "id": "vip-xlkvpbs530",
@@ -6296,7 +6427,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/vidio.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "XLKVPBS530",
@@ -6313,7 +6444,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:37.894000",
-    "updatedAt": "2026-10-01T18:14:45.182000"
+    "updatedAt": "2026-10-01T18:14:45.182000",
+    "image_url": "/images/apps/vidio.png"
   },
   {
     "id": "vip-xlkvdbs530",
@@ -6336,7 +6468,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/brand/Mobilelegends-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "XLKVDBS530",
@@ -6353,7 +6485,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:37.894000",
-    "updatedAt": "2026-10-01T18:13:55.632000"
+    "updatedAt": "2026-10-01T18:13:55.632000",
+    "image_url": "/images/brand/Mobilelegends-logo.png"
   },
   {
     "id": "vip-vidio365",
@@ -6376,7 +6509,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/vidio.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "VIDIO365",
@@ -6393,7 +6526,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:37.893000",
-    "updatedAt": "2026-10-01T18:14:06.123000"
+    "updatedAt": "2026-10-01T18:14:06.123000",
+    "image_url": "/images/apps/vidio.png"
   },
   {
     "id": "vip-visionspotv30",
@@ -6496,7 +6630,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/vidio.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "VIDIO7",
@@ -6513,7 +6647,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:37.893000",
-    "updatedAt": "2026-10-01T18:14:12.455000"
+    "updatedAt": "2026-10-01T18:14:12.455000",
+    "image_url": "/images/apps/vidio.png"
   },
   {
     "id": "vip-vidio30",
@@ -6536,7 +6671,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/vidio.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "VIDIO30",
@@ -6553,7 +6688,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:37.893000",
-    "updatedAt": "2026-10-07T06:57:39.332000"
+    "updatedAt": "2026-10-07T06:57:39.332000",
+    "image_url": "/images/apps/vidio.png"
   },
   {
     "id": "vip-visionpaketeuro",
@@ -6696,7 +6832,7 @@
     ],
     "status": "archived",
     "stock": 100,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/brand/Netflix-logo.png",
     "popular": true,
     "provider": "vip-reseller",
     "providerCode": "TD10GBYTN",
@@ -6713,7 +6849,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:37.891000",
-    "updatedAt": "2026-10-01T18:14:41.114000"
+    "updatedAt": "2026-10-01T18:14:41.114000",
+    "image_url": "/images/brand/Netflix-logo.png"
   },
   {
     "id": "vip-tpy23",
@@ -6816,7 +6953,7 @@
     ],
     "status": "archived",
     "stock": 100,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/apps/viu.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "TD10GBUNL",
@@ -6833,7 +6970,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:37.891000",
-    "updatedAt": "2026-10-01T18:14:10.413000"
+    "updatedAt": "2026-10-01T18:14:10.413000",
+    "image_url": "/images/apps/viu.png"
   },
   {
     "id": "vip-tpy1030",
@@ -7496,7 +7634,7 @@
     ],
     "status": "archived",
     "stock": 0,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/brand/Spotify-logo.png",
     "popular": false,
     "provider": "vip-reseller",
     "providerCode": "VSPOTIFY30",
@@ -7513,7 +7651,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:37.883000",
-    "updatedAt": "2026-10-01T18:14:36.314000"
+    "updatedAt": "2026-10-01T18:14:36.314000",
+    "image_url": "/images/brand/Spotify-logo.png"
   },
   {
     "id": "vip-sddh33",
@@ -8016,7 +8155,7 @@
     ],
     "status": "archived",
     "stock": 100,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/brand/Mobilelegends-logo.png",
     "popular": true,
     "provider": "vip-reseller",
     "providerCode": "NEXALLCHANNEL2903",
@@ -8033,7 +8172,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:37.294000",
-    "updatedAt": "2026-10-01T18:14:36.080000"
+    "updatedAt": "2026-10-01T18:14:36.080000",
+    "image_url": "/images/brand/Mobilelegends-logo.png"
   },
   {
     "id": "vip-nexallchannel2901",
@@ -8056,7 +8196,7 @@
     ],
     "status": "archived",
     "stock": 100,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/brand/Mobilelegends-logo.png",
     "popular": true,
     "provider": "vip-reseller",
     "providerCode": "NEXALLCHANNEL2901",
@@ -8073,7 +8213,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:37.294000",
-    "updatedAt": "2026-10-01T18:14:36.787000"
+    "updatedAt": "2026-10-01T18:14:36.787000",
+    "image_url": "/images/brand/Mobilelegends-logo.png"
   },
   {
     "id": "vip-nexmola2701",
@@ -8136,7 +8277,7 @@
     ],
     "status": "archived",
     "stock": 100,
-    "imageUrl": "/images/default-product-banner.png",
+    "imageUrl": "/images/brand/Mobilelegends-logo.png",
     "popular": true,
     "provider": "vip-reseller",
     "providerCode": "NEXALLCHANNEL2906",
@@ -8153,7 +8294,8 @@
     "privacyTitle": "Akun Private",
     "privacyDesc": "Ruang kerja aman & personal",
     "createdAt": "2026-09-25T03:33:37.294000",
-    "updatedAt": "2026-10-01T18:14:38.282000"
+    "updatedAt": "2026-10-01T18:14:38.282000",
+    "image_url": "/images/brand/Mobilelegends-logo.png"
   },
   {
     "id": "vip-nexmola2703",

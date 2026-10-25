@@ -28,6 +28,7 @@ import { useActiveCampaigns } from '@/lib/hooks/use-active-campaigns';
 import { calculateCampaignPrice, getCampaignCountdown } from '@/lib/utils/promo-pricing';
 import { ParsedVariant } from '@/lib/services/product-variant-parser';
 import { saveRecentlyViewed } from '@/lib/services/recently-viewed';
+import { resolveBrandLogo } from '@/components/ui/product-brand-icon';
 import { animateProductDetailPage } from '@/lib/animations/gsap-utils';
 import type {
   DurationOption,
@@ -464,12 +465,12 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
                 <div data-gsap="product-image" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl overflow-hidden relative shadow-card group">
                   <div className="relative h-56 sm:h-72 md:h-96 w-full bg-[#121A2A]/5 overflow-hidden">
                     <Image
-                      src={(/capcut/i.test(product.id) || /capcut/i.test(variantDetails.title)) ? "/images/banners/capcut-banner.png" : (activeVariant?.imageUrl || product.imageUrl)}
+                      src={resolveBrandLogo(product.name, activeVariant?.imageUrl || product.imageUrl)}
                       alt={variantDetails.title}
                       fill
                       priority
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 60vw, 700px"
-                      className="object-cover group-hover:scale-103 transition-transform duration-300"
+                      className="object-contain p-4 group-hover:scale-103 transition-transform duration-300"
                     />
 
                     {/* Gradient Overlay for Text Readability */}

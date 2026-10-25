@@ -126,7 +126,7 @@ export function ProductBrandLogo({ name, className = 'w-10 h-10' }: { name: stri
   if (n.includes('capcut')) {
     return (
       <div className={`${className} bg-white rounded-xl border border-border/80 flex items-center justify-center p-1 shadow-2xs shrink-0 overflow-hidden`}>
-        <img src="/images/apps/capcut.png" alt="CapCut" className="w-full h-full object-contain" draggable={false} />
+        <img src="/images/brand/Capcut-logo.png" alt="CapCut" className="w-full h-full object-contain" draggable={false} />
       </div>
     );
   }
@@ -134,7 +134,7 @@ export function ProductBrandLogo({ name, className = 'w-10 h-10' }: { name: stri
   if (n.includes('gemini') || n.includes('google ai') || n.includes('google pro')) {
     return (
       <div className={`${className} bg-white rounded-xl border border-border/80 flex items-center justify-center p-1 shadow-2xs shrink-0 overflow-hidden`}>
-        <img src="/images/apps/gemini.png" alt="Google Gemini" className="w-full h-full object-contain" draggable={false} />
+        <img src="/images/brand/Google-logo.png" alt="Google Gemini" className="w-full h-full object-contain" draggable={false} />
       </div>
     );
   }
@@ -142,7 +142,7 @@ export function ProductBrandLogo({ name, className = 'w-10 h-10' }: { name: stri
   if (n.includes('chatgpt') || n.includes('openai')) {
     return (
       <div className={`${className} bg-white rounded-xl border border-border/80 flex items-center justify-center p-1 shadow-2xs shrink-0 overflow-hidden`}>
-        <img src="/images/apps/chatgpt.png" alt="ChatGPT" className="w-full h-full object-contain" draggable={false} />
+        <img src="/images/brand/ChatGPT-logo.png" alt="ChatGPT" className="w-full h-full object-contain" draggable={false} />
       </div>
     );
   }
@@ -157,16 +157,56 @@ export function ProductBrandLogo({ name, className = 'w-10 h-10' }: { name: stri
 
   if (n.includes('alight')) {
     return (
-      <div className={`${className} bg-[#181d2a] rounded-xl border border-border/80 flex items-center justify-center p-0.5 shadow-2xs shrink-0 overflow-hidden`}>
-        <img src="/images/apps/alightmotion.png" alt="Alight Motion" className="w-full h-full object-cover rounded-lg" draggable={false} />
+      <div className={`${className} bg-white rounded-xl border border-border/80 flex items-center justify-center p-0.5 shadow-2xs shrink-0 overflow-hidden`}>
+        <img src="/images/brand/Alightmotion-logo.png" alt="Alight Motion" className="w-full h-full object-cover rounded-lg" draggable={false} />
       </div>
     );
   }
 
-  if (n.includes('netflix')) {
+  if (n.includes('netflix') || n.includes('ntflx')) {
     return (
-      <div className={`${className} bg-black rounded-xl border border-border/80 flex items-center justify-center p-1 shadow-2xs shrink-0 overflow-hidden`}>
-        <img src="/images/apps/netflix.png" alt="Netflix" className="w-full h-full object-contain" draggable={false} />
+      <div className={`${className} bg-black rounded-xl border border-border/80 flex items-center justify-center p-0.5 shadow-2xs shrink-0 overflow-hidden`}>
+        <img src="/images/brand/Netflix-logo.png" alt="Netflix" className="w-full h-full object-cover rounded-lg" draggable={false} />
+      </div>
+    );
+  }
+
+  if (n.includes('spotify')) {
+    return (
+      <div className={`${className} bg-black rounded-xl border border-border/80 flex items-center justify-center p-0.5 shadow-2xs shrink-0 overflow-hidden`}>
+        <img src="/images/brand/Spotify-logo.png" alt="Spotify" className="w-full h-full object-cover rounded-lg" draggable={false} />
+      </div>
+    );
+  }
+
+  if (n.includes('bstation') || n.includes('bilibili')) {
+    return (
+      <div className={`${className} bg-white rounded-xl border border-border/80 flex items-center justify-center p-1 shadow-2xs shrink-0 overflow-hidden`}>
+        <img src="/images/brand/BStation-logo.png" alt="Bstation" className="w-full h-full object-contain" draggable={false} />
+      </div>
+    );
+  }
+
+  if (n.includes('iqiyi')) {
+    return (
+      <div className={`${className} bg-white rounded-xl border border-border/80 flex items-center justify-center p-1 shadow-2xs shrink-0 overflow-hidden`}>
+        <img src="/images/brand/iqiyi-logo.png" alt="iQIYI" className="w-full h-full object-contain" draggable={false} />
+      </div>
+    );
+  }
+
+  if (n.includes('mobile legend') || n.includes('mlbb') || n.includes('diamond')) {
+    return (
+      <div className={`${className} bg-slate-950 rounded-xl border border-border/80 flex items-center justify-center p-0.5 shadow-2xs shrink-0 overflow-hidden`}>
+        <img src="/images/brand/Mobilelegends-logo.png" alt="Mobile Legends" className="w-full h-full object-cover rounded-lg" draggable={false} />
+      </div>
+    );
+  }
+
+  if (n.includes('pubg') || n.includes('uc')) {
+    return (
+      <div className={`${className} bg-slate-950 rounded-xl border border-border/80 flex items-center justify-center p-0.5 shadow-2xs shrink-0 overflow-hidden`}>
+        <img src="/images/brand/Pubg-logo.png" alt="PUBG" className="w-full h-full object-cover rounded-lg" draggable={false} />
       </div>
     );
   }
@@ -175,14 +215,6 @@ export function ProductBrandLogo({ name, className = 'w-10 h-10' }: { name: stri
     return (
       <div className={`${className} bg-[#FF0000] rounded-xl border border-border/80 flex items-center justify-center p-1.5 shadow-2xs shrink-0 text-white font-black text-xs`}>
         <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
-      </div>
-    );
-  }
-
-  if (n.includes('spotify')) {
-    return (
-      <div className={`${className} bg-[#1DB954] rounded-xl border border-border/80 flex items-center justify-center p-1.5 shadow-2xs shrink-0 text-[#121A2A]`}>
-        <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.485 17.31c-.216.353-.674.468-1.026.252-2.812-1.718-6.351-2.107-10.52-1.155-.403.092-.808-.16-.9-.562-.092-.403.16-.808.562-.9 4.568-1.042 8.487-.597 11.632 1.325.352.216.467.674.252 1.04zm1.464-3.26c-.272.441-.849.582-1.29.31-3.218-1.978-8.125-2.55-11.93-1.394-.498.151-1.03-.133-1.181-.63-.151-.498.133-1.03.63-1.181 4.356-1.322 9.775-.681 13.46 1.585.442.272.583.849.311 1.29zm.126-3.41c-3.858-2.29-10.223-2.502-13.886-1.39-.59.18-1.22-.162-1.4-.753-.18-.59.162-1.22.753-1.4 4.218-1.28 11.252-1.032 15.702 1.61.53.314.704 1.004.39 1.534-.314.53-1.004.704-1.534.39l-.025.01z"/></svg>
       </div>
     );
   }
@@ -211,42 +243,10 @@ export function ProductBrandLogo({ name, className = 'w-10 h-10' }: { name: stri
     );
   }
 
-  if (n.includes('bstation')) {
-    return (
-      <div className={`${className} bg-[#23ADE5] rounded-xl border border-border/80 flex items-center justify-center p-1 shadow-2xs shrink-0 text-white font-black text-[11px]`}>
-        Bstation
-      </div>
-    );
-  }
-
-  if (n.includes('iqiyi')) {
-    return (
-      <div className={`${className} bg-[#00CC4C] rounded-xl border border-border/80 flex items-center justify-center p-1 shadow-2xs shrink-0 text-white font-black text-xs`}>
-        iQIYI
-      </div>
-    );
-  }
-
   if (n.includes('claude')) {
     return (
       <div className={`${className} bg-[#D97706]/15 rounded-xl border border-[#D97706]/30 flex items-center justify-center p-1 shadow-2xs shrink-0 text-[#D97706] font-black text-xs`}>
         Claude
-      </div>
-    );
-  }
-
-  if (n.includes('mobile legend') || n.includes('mlbb') || n.includes('diamond')) {
-    return (
-      <div className={`${className} bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl border border-blue-400/30 flex items-center justify-center p-1.5 shadow-2xs shrink-0 text-white`}>
-        <Gamepad2 className="w-5 h-5" />
-      </div>
-    );
-  }
-
-  if (n.includes('pubg') || n.includes('uc')) {
-    return (
-      <div className={`${className} bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl border border-amber-400/30 flex items-center justify-center p-1.5 shadow-2xs shrink-0 text-white`}>
-        <Gamepad2 className="w-5 h-5" />
       </div>
     );
   }

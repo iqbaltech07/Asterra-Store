@@ -1,4 +1,5 @@
 import { ProductItem } from '@/lib/products-data';
+import { resolveBrandLogo } from '@/components/ui/product-brand-icon';
 
 export interface ParsedVariant {
   id: string; // SKU id, e.g. vip-chatgptgo1thngar6b-s1
@@ -69,7 +70,7 @@ export const KNOWN_APPS: AppDefinition[] = [
     aliases: ['chatgpt', 'chat-gpt', 'chat_gpt', 'openai'],
     name: 'ChatGPT',
     category: { id: 'cat-ai-tools', name: 'AI Tools' },
-    imageUrl: '/images/apps/chatgpt.png',
+    imageUrl: '/images/brand/ChatGPT-logo.png',
     rating: '5.0',
     soldCount: 850,
     description:
@@ -101,7 +102,7 @@ export const KNOWN_APPS: AppDefinition[] = [
     aliases: ['google-gemini', 'gemini', 'google-ai'],
     name: 'Google Gemini',
     category: { id: 'cat-ai-tools', name: 'AI Tools' },
-    imageUrl: '/images/apps/gemini.png',
+    imageUrl: '/images/brand/Google-logo.png',
     rating: '5.0',
     soldCount: 620,
     description:
@@ -148,7 +149,7 @@ export const KNOWN_APPS: AppDefinition[] = [
     aliases: ['capcut', 'capcut-pro'],
     name: 'CapCut',
     category: { id: 'cat-apps-streaming', name: 'Video Editing' },
-    imageUrl: '/images/banners/capcut-banner.png',
+    imageUrl: '/images/brand/Capcut-logo.png',
     rating: '4.9',
     soldCount: 980,
     description:
@@ -167,7 +168,7 @@ export const KNOWN_APPS: AppDefinition[] = [
     aliases: ['alight-motion', 'alightmotion', 'alight'],
     name: 'Alight Motion',
     category: { id: 'cat-apps-streaming', name: 'Motion Graphic' },
-    imageUrl: '/images/apps/alightmotion.png',
+    imageUrl: '/images/brand/Alightmotion-logo.png',
     rating: '4.8',
     soldCount: 340,
     description:
@@ -186,7 +187,7 @@ export const KNOWN_APPS: AppDefinition[] = [
     aliases: ['netflix', 'netflix-premium', 'ntflx'],
     name: 'Netflix',
     category: { id: 'cat-apps-streaming', name: 'Movies & Series' },
-    imageUrl: '/images/apps/netflix.png',
+    imageUrl: '/images/brand/Netflix-logo.png',
     rating: '4.9',
     soldCount: 760,
     description:
@@ -199,6 +200,105 @@ export const KNOWN_APPS: AppDefinition[] = [
     ],
     match: (t) => t.includes('netflix') || t.includes('ntflx'),
     parsePaket: () => 'Netflix Premium',
+  },
+  {
+    slug: 'spotify',
+    aliases: ['spotify', 'spotify-premium'],
+    name: 'Spotify',
+    category: { id: 'cat-apps-streaming', name: 'Music Streaming' },
+    imageUrl: '/images/brand/Spotify-logo.png',
+    rating: '4.9',
+    soldCount: 1280,
+    description:
+      'Dengarkan jutaan lagu dan podcast favorit tanpa jeda iklan, kualitas audio bitrate tertinggi, serta lewati trek musik tanpa batas.',
+    features: [
+      'Bebas iklan audio dan visual saat mendengarkan musik',
+      'Kualitas audio streaming tertinggi (High Quality 320kbps)',
+      'Unduh lagu favorit untuk didengarkan secara offline',
+      'Aktivasi resmi bergaransi',
+    ],
+    match: (t) => (t.includes('spotify') || t.includes('spy')) && !t.includes('data'),
+    parsePaket: (n) => {
+      if (/admin/i.test(n)) return 'Spotify Premium Admin';
+      if (/anggota/i.test(n)) return 'Spotify Premium Anggota';
+      return 'Spotify Premium';
+    },
+  },
+  {
+    slug: 'bstation',
+    aliases: ['bstation', 'bsprem', 'bilibili'],
+    name: 'Bstation',
+    category: { id: 'cat-apps-streaming', name: 'Anime & Creators' },
+    imageUrl: '/images/brand/BStation-logo.png',
+    rating: '4.9',
+    soldCount: 480,
+    description:
+      'Platform anime legal terbesar di Asia Tenggara. Nonton anime musim terbaru kualitas Full HD hingga 4K, video kreator pop culture, dan game ACG.',
+    features: [
+      'Streaming anime simulcast kualitas tinggi 1080P hingga 4K',
+      'Bebas iklan dengan subtitle bahasa Indonesia resmi',
+      'Pilihan Private atau Shared hemat biaya',
+      'Garansi penuh Asterra Store',
+    ],
+    match: (t) => t.includes('bstation') || t.includes('bsprem') || t.includes('bilibili'),
+    parsePaket: () => 'Bstation Premium',
+  },
+  {
+    slug: 'iqiyi',
+    aliases: ['iqiyi', 'iqiyi-standard'],
+    name: 'iQIYI',
+    category: { id: 'cat-apps-streaming', name: 'Drama & Anime' },
+    imageUrl: '/images/brand/iqiyi-logo.png',
+    rating: '4.9',
+    soldCount: 520,
+    description:
+      'Platform streaming drama China (C-Drama), serial romantis, variety show, dan anime favorit dengan fitur VIP eksklusif.',
+    features: [
+      'Nonton episode baru lebih cepat dari pengguna reguler',
+      'Kualitas streaming 1080P dengan Dolby Atmos audio',
+      'Bebas jeda iklan sponsor',
+      'Garansi akun resmi aktif sesuai masa paket',
+    ],
+    match: (t) => t.includes('iqiyi') && !t.includes('diamonds'),
+    parsePaket: () => 'iQIYI Standard VIP',
+  },
+  {
+    slug: 'mobile-legends',
+    aliases: ['mobile-legends', 'mlbb', 'mobile legend'],
+    name: 'Mobile Legends',
+    category: { id: 'cat-gaming', name: 'Games & Top-Up' },
+    imageUrl: '/images/brand/Mobilelegends-logo.png',
+    rating: '5.0',
+    soldCount: 2450,
+    description:
+      'Top up Diamond Mobile Legends: Bang Bang termurah, proses otomatis 1-5 detik, resmi dan aman 100%.',
+    features: [
+      'Proses instan 24 jam nonstop',
+      'Legal 100% via ID & Server resmi Moonton',
+      'Tersedia Weekly Diamond Pass dan Event Promo',
+      'Garansi aman tanpa resiko banned',
+    ],
+    match: (t) => t.includes('mobile legend') || t.includes('mlbb') || t.includes('diamond'),
+    parsePaket: (n) => n,
+  },
+  {
+    slug: 'pubg-mobile',
+    aliases: ['pubg', 'pubg-mobile', 'pubgm'],
+    name: 'PUBG Mobile',
+    category: { id: 'cat-gaming', name: 'Games & Top-Up' },
+    imageUrl: '/images/brand/Pubg-logo.png',
+    rating: '4.9',
+    soldCount: 1680,
+    description:
+      'Top up UC PUBG Mobile resmi termurah dan kilat langsung ke akun pemain Anda.',
+    features: [
+      'Proses instan otomatis',
+      'Cukup masukkan Player ID',
+      'Legal dan aman dari Tencent / Level Infinite',
+      'Garansi transaksi berhasil',
+    ],
+    match: (t) => t.includes('pubg') || t.includes('uc'),
+    parsePaket: (n) => n,
   },
   {
     slug: 'vidio',
@@ -242,29 +342,6 @@ export const KNOWN_APPS: AppDefinition[] = [
     parsePaket: () => 'Viu Premium',
   },
   {
-    slug: 'spotify',
-    aliases: ['spotify', 'spotify-premium'],
-    name: 'Spotify',
-    category: { id: 'cat-apps-streaming', name: 'Music Streaming' },
-    imageUrl: '/images/apps/vidio.png', // Fallback or logo
-    rating: '4.9',
-    soldCount: 1280,
-    description:
-      'Dengarkan jutaan lagu dan podcast favorit tanpa jeda iklan, kualitas audio bitrate tertinggi, serta lewati trek musik tanpa batas.',
-    features: [
-      'Bebas iklan audio dan visual saat mendengarkan musik',
-      'Kualitas audio streaming tertinggi (High Quality 320kbps)',
-      'Unduh lagu favorit untuk didengarkan secara offline',
-      'Aktivasi resmi bergaransi',
-    ],
-    match: (t) => (t.includes('spotify') || t.includes('spy')) && !t.includes('data'),
-    parsePaket: (n) => {
-      if (/admin/i.test(n)) return 'Spotify Premium Admin';
-      if (/anggota/i.test(n)) return 'Spotify Premium Anggota';
-      return 'Spotify Premium';
-    },
-  },
-  {
     slug: 'youtube',
     aliases: ['youtube', 'youtube-premium'],
     name: 'YouTube',
@@ -285,44 +362,6 @@ export const KNOWN_APPS: AppDefinition[] = [
       if (/family/i.test(n)) return 'YouTube Family';
       return 'YouTube Individu';
     },
-  },
-  {
-    slug: 'bstation',
-    aliases: ['bstation', 'bsprem', 'bilibili'],
-    name: 'Bstation',
-    category: { id: 'cat-apps-streaming', name: 'Anime & Creators' },
-    imageUrl: '/images/apps/vidio.png',
-    rating: '4.9',
-    soldCount: 480,
-    description:
-      'Platform anime legal terbesar di Asia Tenggara. Nonton anime musim terbaru kualitas Full HD hingga 4K, video kreator pop culture, dan game ACG.',
-    features: [
-      'Streaming anime simulcast kualitas tinggi 1080P hingga 4K',
-      'Bebas iklan dengan subtitle bahasa Indonesia resmi',
-      'Pilihan Private atau Shared hemat biaya',
-      'Garansi penuh Asterra Store',
-    ],
-    match: (t) => t.includes('bstation') || t.includes('bsprem') || t.includes('bilibili'),
-    parsePaket: () => 'Bstation Premium',
-  },
-  {
-    slug: 'iqiyi',
-    aliases: ['iqiyi', 'iqiyi-standard'],
-    name: 'iQIYI',
-    category: { id: 'cat-apps-streaming', name: 'Drama & Anime' },
-    imageUrl: '/images/apps/vidio.png',
-    rating: '4.9',
-    soldCount: 520,
-    description:
-      'Platform streaming drama China (C-Drama), serial romantis, variety show, dan anime favorit dengan fitur VIP eksklusif.',
-    features: [
-      'Nonton episode baru lebih cepat dari pengguna reguler',
-      'Kualitas streaming 1080P dengan Dolby Atmos audio',
-      'Bebas jeda iklan sponsor',
-      'Garansi akun resmi aktif sesuai masa paket',
-    ],
-    match: (t) => t.includes('iqiyi') && !t.includes('diamonds'),
-    parsePaket: () => 'iQIYI Standard VIP',
   },
   {
     slug: 'wetv',
@@ -457,9 +496,7 @@ export function parseProductVariant(
     isOutOfStock,
     description: p.description,
     features: p.features,
-    imageUrl: (/capcut/i.test(name) || /capcut/i.test(id))
-      ? '/images/banners/capcut-banner.png'
-      : p.imageUrl,
+    imageUrl: resolveBrandLogo(name, p.imageUrl),
   };
 }
 
@@ -549,7 +586,7 @@ export function resolveProductFamily(
       slug: directProduct.id,
       name: directProduct.name,
       category: directProduct.category,
-      imageUrl: directProduct.imageUrl || '/images/default-product-banner.png',
+      imageUrl: resolveBrandLogo(directProduct.name, directProduct.imageUrl),
       rating: '4.9',
       soldCount: 150,
       description: cleanHtmlContent(directProduct.description) || 'Layanan digital resmi bergaransi.',
@@ -576,7 +613,7 @@ export function resolveProductFamily(
       slug: cleanId,
       name: baseP.name.split('[')[0].trim(),
       category: baseP.category,
-      imageUrl: baseP.imageUrl || '/images/default-product-banner.png',
+      imageUrl: resolveBrandLogo(baseP.name, baseP.imageUrl),
       rating: '4.9',
       soldCount: 200,
       description: baseP.description || 'Layanan digital resmi bergaransi di Asterra Store.',
