@@ -221,6 +221,12 @@ function SalesLoginContent() {
                   <FontAwesomeIcon icon={faKey} className="text-xs text-primary" />
                   <span>Kata Sandi Akun</span>
                 </label>
+                <Link
+                  href="/sales/lupa-password"
+                  className="text-[11px] font-semibold text-primary hover:underline transition-colors"
+                >
+                  Lupa Kata Sandi?
+                </Link>
               </div>
               <Input
                 id="sales-password"

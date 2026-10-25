@@ -10,6 +10,7 @@ from app.core.auth import create_admin_session_token, verify_admin_session_token
 from app.services.admin_user_service import AdminUserService
 from app.services.partner_service import PartnerService
 from app.services.order_service import OrderService
+from app.services.password_reset_service import PasswordResetService
 
 router = APIRouter()
 
@@ -257,6 +258,48 @@ async def admin_auth_logout():
     ]:
         response.delete_cookie(key=cookie_name, path="/")
     return response
+
+# ------------------------------------------
+# 1.1 Password Reset & OTP Verification
+# ------------------------------------------
+@router.post("/auth/forgot-password/request", tags=["Auth Password Reset"])
+@router.post("/admin/auth/forgot-password/request", tags=["Admin Auth"])
+async def forgot_password_request_otp(request: Request):
+    body = await request.json()
+    email = (body.get("email") or "").strip().lower()
+    res = PasswordResetService.request_reset_otp(email)
+    status_code = 200 if res.get("success") else 400
+    return JSONResponse(status_code=status_code, content=res)
+
+@router.post("/auth/forgot-password/verify", tags=["Auth Password Reset"])
+@router.post("/admin/auth/forgot-password/verify", tags=["Admin Auth"])
+async def forgot_password_verify_otp(request: Request):
+    body = await request.json()
+    email = (body.get("email") or "").strip().lower()
+    otp = (body.get("otp") or "").strip()
+    res = PasswordResetService.verify_reset_otp(email, otp)
+    status_code = 200 if res.get("success") else 400
+    return JSONResponse(status_code=status_code, content=res)
+
+@router.post("/auth/forgot-password/reset", tags=["Auth Password Reset"])
+@router.post("/admin/auth/forgot-password/reset", tags=["Admin Auth"])
+async def forgot_password_reset(request: Request):
+    body = await request.json()
+    email = (body.get("email") or "").strip().lower()
+    otp = (body.get("otp") or "").strip()
+    new_password = (body.get("newPassword") or body.get("password") or "").strip()
+    res = PasswordResetService.reset_password(email, otp, new_password)
+    status_code = 200 if res.get("success") else 400
+    return JSONResponse(status_code=status_code, content=res)
+
+@router.post("/auth/forgot-password/resend", tags=["Auth Password Reset"])
+@router.post("/admin/auth/forgot-password/resend", tags=["Admin Auth"])
+async def forgot_password_resend_otp(request: Request):
+    body = await request.json()
+    email = (body.get("email") or "").strip().lower()
+    res = PasswordResetService.resend_reset_otp(email)
+    status_code = 200 if res.get("success") else 400
+    return JSONResponse(status_code=status_code, content=res)
 
 # ------------------------------------------
 # 2. Customer Authentication (Storefront)

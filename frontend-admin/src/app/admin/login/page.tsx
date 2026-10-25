@@ -224,13 +224,21 @@ export default function AdminLoginPage() {
             </div>
 
             <div className="space-y-1.5">
-              <label
-                htmlFor="admin-password"
-                className="text-xs font-medium text-foreground-muted flex items-center gap-1.5"
-              >
-                <FontAwesomeIcon icon={faKey} className="w-3.5 h-3.5 text-primary" />
-                <span>Kunci Sandi Otorisasi</span>
-              </label>
+              <div className="flex items-center justify-between">
+                <label
+                  htmlFor="admin-password"
+                  className="text-xs font-medium text-foreground-muted flex items-center gap-1.5"
+                >
+                  <FontAwesomeIcon icon={faKey} className="w-3.5 h-3.5 text-primary" />
+                  <span>Kunci Sandi Otorisasi</span>
+                </label>
+                <Link
+                  href="/admin/lupa-password"
+                  className="text-[11px] font-semibold text-primary hover:underline transition-colors"
+                >
+                  Lupa Kata Sandi?
+                </Link>
+              </div>
               <Input
                 id="admin-password"
                 type="password"

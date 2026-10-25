@@ -14,10 +14,42 @@ class EmailService:
         if not to_email or "@" not in to_email:
             return False
 
+        import os
         resend_key = (settings.RESEND_API_KEY or "").strip()
         sender = (settings.RESEND_FROM or "Asterra Store <onboarding@resend.dev>").strip()
 
-        # Fallback simulation if Resend API key is not yet configured (e.g. local dev without key)
+        # 1. Check if direct SMTP is configured (e.g. Gmail / Brevo / Custom SMTP)
+        smtp_host = os.getenv("SMTP_HOST", "").strip()
+        smtp_user = os.getenv("SMTP_USER", "").strip()
+        smtp_pass = os.getenv("SMTP_PASSWORD", os.getenv("SMTP_PASS", "")).strip()
+        smtp_port = int(os.getenv("SMTP_PORT", "587"))
+
+        if smtp_host and smtp_user and smtp_pass:
+            try:
+                import smtplib
+                from email.mime.text import MIMEText
+                from email.mime.multipart import MIMEMultipart
+
+                msg = MIMEMultipart("alternative")
+                msg["Subject"] = subject
+                msg["From"] = sender
+                msg["To"] = to_email
+                msg.attach(MIMEText(html_content, "html", "utf-8"))
+
+                if smtp_port == 465:
+                    server = smtplib.SMTP_SSL(smtp_host, smtp_port, timeout=12.0)
+                else:
+                    server = smtplib.SMTP(smtp_host, smtp_port, timeout=12.0)
+                    server.starttls()
+                server.login(smtp_user, smtp_pass)
+                server.sendmail(sender, [to_email], msg.as_string())
+                server.quit()
+                print(f"[EmailService:SMTP] Email delivered to {to_email} ('{subject}') via {smtp_host}")
+                return True
+            except Exception as e:
+                print(f"[EmailService:SMTP] Error sending via SMTP: {e}")
+
+        # 2. Fallback simulation if Resend API key is not yet configured (e.g. local dev without key)
         if not resend_key or "your-" in resend_key or resend_key in ["re_placeholder", "test"]:
             print(f"[EmailService:Sandbox] Dispatched simulated email to {to_email}: '{subject}'")
             return True
@@ -227,6 +259,92 @@ class EmailService:
         print(f"[EMAIL SERVICE] OTP SENT TO {to_email}")
         print(f"VERIFICATION CODE: {otp_code}")
         print(f"=======================================================\n")
+
+        return cls._dispatch_email(to_email, subject, html_content)
+
+    @classmethod
+    def send_password_reset_otp_email(cls, to_email: str, recipient_name: str, otp_code: str) -> bool:
+        """
+        Sends a 6-digit OTP email for password reset / recovery.
+        """
+        subject = f"{otp_code} adalah Kode OTP Reset Kata Sandi Akun Asterra Store Anda"
+        clean_name = (recipient_name or "Pengguna Asterra").strip()
+
+        body_content = f"""
+        <p style="font-size: 14px; line-height: 1.6; color: #334155; margin: 0 0 16px 0;">
+          Halo <strong>{clean_name}</strong>, kami menerima permintaan untuk mengatur ulang kata sandi akun Asterra Store Anda. Gunakan kode verifikasi (OTP) berikut untuk melanjutkan:
+        </p>
+
+        <!-- OTP Code Box -->
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 20px 0; background-color: #f8fafc; border: 2px dashed #0284c7; border-radius: 12px;">
+          <tr>
+            <td align="center" style="padding: 22px 16px;">
+              <span style="font-size: 11px; font-weight: 700; color: #64748b; letter-spacing: 1px; text-transform: uppercase; display: block; margin-bottom: 6px;">KODE VERIFIKASI (OTP)</span>
+              <div style="font-family: ui-monospace, Menlo, Monaco, Consolas, 'Courier New', monospace; font-size: 36px; font-weight: 800; letter-spacing: 8px; color: #0284c7; margin: 0;">
+                {otp_code}
+              </div>
+              <span style="font-size: 12px; color: #0369a1; font-weight: 600; display: block; margin-top: 6px;">⏱️ Berlaku selama 10 menit</span>
+            </td>
+          </tr>
+        </table>
+
+        <!-- Security Notice -->
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #fef2f2; border: 1px solid #fee2e2; border-radius: 10px; margin-top: 16px;">
+          <tr>
+            <td style="padding: 14px 16px; font-size: 12px; color: #991b1b; line-height: 1.6;">
+              🔒 <strong>Penting:</strong> Jangan berikan kode OTP ini kepada siapa pun, termasuk staf Asterra Store. Jika Anda tidak merasa meminta reset kata sandi, abaikan email ini dan kata sandi akun Anda akan tetap aman.
+            </td>
+          </tr>
+        </table>
+        """
+
+        html_content = cls._render_base_email(
+            preheader=f"Kode OTP Reset Kata Sandi Anda: {otp_code}. Berlaku 10 menit.",
+            badge_text="Keamanan Akun · Reset Password",
+            badge_color="#dc2626",
+            badge_bg="#fee2e2",
+            badge_border="#fca5a5",
+            title="Atur Ulang Kata Sandi Akun",
+            subtitle="Gunakan kode OTP berikut untuk memverifikasi kepemilikan akun Anda",
+            body_content=body_content,
+            footer_note=f"Email keamanan ini dikirim khusus ke {to_email} untuk pengaturan ulang kata sandi.",
+        )
+
+        print(f"\n=======================================================")
+        print(f"[EMAIL SERVICE] PASSWORD RESET OTP SENT TO {to_email}")
+        print(f"VERIFICATION CODE: {otp_code}")
+        print(f"=======================================================\n")
+
+        return cls._dispatch_email(to_email, subject, html_content)
+
+    @classmethod
+    def send_password_changed_notification(cls, to_email: str, recipient_name: str) -> bool:
+        """
+        Sends an email notification alerting the user that their password was successfully changed.
+        """
+        subject = "Kata Sandi Akun Asterra Store Berhasil Diperbarui"
+        clean_name = (recipient_name or "Pengguna Asterra").strip()
+
+        body_content = f"""
+        <p style="font-size: 14px; line-height: 1.6; color: #334155; margin: 0 0 16px 0;">
+          Halo <strong>{clean_name}</strong>, kami menginformasikan bahwa kata sandi untuk akun Asterra Store Anda ({to_email}) telah berhasil diperbarui.
+        </p>
+        <p style="font-size: 13px; line-height: 1.6; color: #64748b;">
+          Jika Anda yang melakukan perubahan ini, Anda dapat mengabaikan email ini. Jika Anda tidak merasa melakukannya, segera hubungi Customer Service Asterra Store untuk mengamankan akun Anda.
+        </p>
+        """
+
+        html_content = cls._render_base_email(
+            preheader="Kata sandi akun Asterra Store Anda telah berhasil diperbarui.",
+            badge_text="Keamanan Akun",
+            badge_color="#059669",
+            badge_bg="#d1fae5",
+            badge_border="#a7f3d0",
+            title="Kata Sandi Berhasil Diperbarui",
+            subtitle="Pemberitahuan keamanan akun Asterra Store",
+            body_content=body_content,
+            footer_note=f"Pemberitahuan keamanan ini dikirim otomatis ke {to_email}.",
+        )
 
         return cls._dispatch_email(to_email, subject, html_content)
 
