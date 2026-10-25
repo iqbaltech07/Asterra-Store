@@ -994,13 +994,23 @@ function AdminPageContent() {
   const metrics = productsData?.metrics;
   const allProducts = useMemo(() => productsData?.data || [], [productsData?.data]);
 
-  // Extract unique categories dynamically from products in database [T4 Fix]
+  // Extract categories dynamically from Database Category table + real products
   const availableCategories = useMemo(() => {
     const cats = new Map<string, { id: string; name: string; count: number }>();
+
+    // 1. Seed from official database categories
+    publicCategories.forEach((c) => {
+      cats.set(c.id, { id: c.id, name: c.name, count: 0 });
+    });
+
+    // 2. Count products for each category
     allProducts.forEach((p) => {
       if (p.category?.name) {
-        const id = p.category.id || p.category.name;
-        const name = p.category.name;
+        const matched = publicCategories.find(
+          (c) => c.id === p.category?.id || c.name.toLowerCase() === p.category?.name.toLowerCase()
+        );
+        const id = matched?.id || p.category.id || p.category.name;
+        const name = matched?.name || p.category.name;
         const existing = cats.get(id);
         if (existing) {
           existing.count++;
@@ -1010,7 +1020,7 @@ function AdminPageContent() {
       }
     });
     return Array.from(cats.values()).sort((a, b) => a.name.localeCompare(b.name));
-  }, [allProducts]);
+  }, [publicCategories, allProducts]);
 
   // Client-Side In-Memory Filtering for Managed Products (0 API request on search/filter)
   const filteredProducts = useMemo(() => {

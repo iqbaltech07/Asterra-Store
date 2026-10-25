@@ -484,7 +484,7 @@ def evaluate_product_campaign_price(
     }
 
 @router.get("/admin/campaigns", tags=["Admin Campaigns"])
-def get_admin_campaigns(status: Optional[str] = Query(None), response: Response = None):
+def get_admin_campaigns(status: Optional[str] = Query(None), response: Optional[Response] = None):
     campaigns = CampaignService.get_all_campaigns(filter_status=status)
     if response:
         response.headers["Cache-Control"] = "no-cache, must-revalidate"
@@ -499,11 +499,11 @@ async def create_admin_campaign(request: Request):
     payload = await request.json()
     try:
         created = CampaignService.create_campaign(payload)
-        cache.invalidate("campaigns", "catalog")
+        cache.invalidate("campaigns", "catalog", "homepage_sections")
         RealtimeBroadcaster.broadcast(
             "campaign:updated",
             {"action": "created", "id": created.get("id"), "timestamp": datetime.utcnow().isoformat()},
-            target_role="admin",
+            target_role="all",
         )
         return {
             "success": True,
@@ -522,11 +522,11 @@ async def update_admin_campaign(campaign_id: str, request: Request):
     updated = CampaignService.update_campaign(campaign_id, payload)
     if not updated:
         raise HTTPException(status_code=404, detail="Campaign tidak ditemukan.")
-    cache.invalidate("campaigns", "catalog")
+    cache.invalidate("campaigns", "catalog", "homepage_sections")
     RealtimeBroadcaster.broadcast(
         "campaign:updated",
         {"action": "updated", "id": campaign_id, "timestamp": datetime.utcnow().isoformat()},
-        target_role="admin",
+        target_role="all",
     )
     return {
         "success": True,
@@ -541,11 +541,11 @@ def toggle_admin_campaign(campaign_id: str):
     if not updated:
         raise HTTPException(status_code=404, detail="Campaign tidak ditemukan.")
     label = "diaktifkan" if updated.get("isActive") else "dinonaktifkan"
-    cache.invalidate("campaigns", "catalog")
+    cache.invalidate("campaigns", "catalog", "homepage_sections")
     RealtimeBroadcaster.broadcast(
         "campaign:updated",
         {"action": "toggled", "id": campaign_id, "timestamp": datetime.utcnow().isoformat()},
-        target_role="admin",
+        target_role="all",
     )
     return {
         "success": True,
@@ -558,11 +558,11 @@ def delete_admin_campaign(campaign_id: str):
     success = CampaignService.delete_campaign(campaign_id)
     if not success:
         raise HTTPException(status_code=404, detail="Campaign tidak ditemukan.")
-    cache.invalidate("campaigns", "catalog")
+    cache.invalidate("campaigns", "catalog", "homepage_sections")
     RealtimeBroadcaster.broadcast(
         "campaign:updated",
         {"action": "deleted", "id": campaign_id, "timestamp": datetime.utcnow().isoformat()},
-        target_role="admin",
+        target_role="all",
     )
     return {
         "success": True,

@@ -282,6 +282,11 @@ export default function HomePage() {
       };
     }).filter((app) => app.items.length > 0 && app.minPrice > 0);
 
+    // Rule: If Promo tab is active but no campaign is running, show no promo products!
+    if (activeCategory === 'promo' && (!activeCampaigns || activeCampaigns.length === 0)) {
+      return [];
+    }
+
     // 2. Authoritative Backend Section Ordering:
     // If backend provides prioritized items (from Admin manual ordering or auto ranking),
     // map them to distinct Product applications to avoid duplicate variants and display clean Brand entities
@@ -299,8 +304,8 @@ export default function HomePage() {
         });
 
         if (matched && !seenNames.has(matched.name)) {
-          if (activeCategory === 'promo' && activeCampaigns && activeCampaigns.length > 0) {
-            const hasPromo = activeCampaigns.some((camp) =>
+          if (activeCategory === 'promo') {
+            const hasPromo = (activeCampaigns || []).some((camp) =>
               isProductInCampaign(matched, camp) ||
               matched.items.some((it) =>
                 isProductInCampaign({ id: it.id, name: it.name, category: it.category?.name }, camp)

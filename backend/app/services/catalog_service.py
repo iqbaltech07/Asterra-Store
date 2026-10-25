@@ -2,7 +2,7 @@ import json
 import pathlib
 import os
 from datetime import datetime
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
 from app.core.database import SessionLocal
 from app.models.product import Product
 
@@ -283,6 +283,63 @@ class CatalogService:
         }
 
     @classmethod
+    def _ensure_category_exists(cls, db, raw_cat_id: Optional[str], raw_cat_name: Optional[str]) -> Tuple[str, str]:
+        """
+        Ensures the category exists in the PostgreSQL categories table.
+        If it doesn't exist, automatically generates and inserts it into table category.
+        Returns the synchronized (category_id, category_name).
+        """
+        from app.models.category import Category
+        from app.services.category_service import CategoryService
+        from sqlalchemy import func
+        import re
+
+        CategoryService.ensure_table_and_defaults()
+        c_name = str(raw_cat_name or "").strip()
+        c_id = str(raw_cat_id or "").strip()
+
+        if not c_name and not c_id:
+            return "cat-ai-tools", "AI Tools"
+
+        # 1. Look up existing category in DB
+        c_found = None
+        if c_id:
+            c_found = db.query(Category).filter(Category.id == c_id).first()
+        if not c_found and c_name:
+            c_found = db.query(Category).filter(Category.name.ilike(c_name)).first()
+
+        if c_found:
+            return c_found.id, c_found.name
+
+        # 2. Category doesn't exist in table yet -> Auto-generate & persist to categories table!
+        final_name = c_name or c_id
+        c_slug = re.sub(r"[^a-z0-9]+", "-", final_name.lower()).strip("-") or "kategori"
+        final_id = c_id if (c_id and c_id.startswith("cat-")) else f"cat-{c_slug}"
+
+        # Prevent duplicate ID or slug
+        clash = db.query(Category).filter((Category.id == final_id) | (Category.slug == c_slug)).first()
+        if clash:
+            final_id = f"cat-{c_slug}-{int(datetime.utcnow().timestamp())}"
+            c_slug = f"{c_slug}-{int(datetime.utcnow().timestamp())}"
+
+        max_order = db.query(func.max(Category.display_order)).scalar() or 0
+        now = datetime.utcnow()
+        new_cat = Category(
+            id=final_id,
+            name=final_name,
+            slug=c_slug,
+            display_order=int(max_order + 1),
+            status="active",
+            icon="Layers",
+            created_at=now,
+            updated_at=now,
+        )
+        db.add(new_cat)
+        db.flush()
+        print(f"[CatalogService] Auto-generated and synced new category into Category table: {final_name} ({final_id})")
+        return new_cat.id, new_cat.name
+
+    @classmethod
     def create_product(cls, payload: Dict[str, Any]) -> Dict[str, Any]:
         product_id = payload.get("id") or f"prod-{int(datetime.utcnow().timestamp() * 1000)}"
         price = int(payload.get("price", 0))
@@ -291,44 +348,14 @@ class CatalogService:
         pct = round((margin / provider_price) * 100) if provider_price > 0 else 0
 
         cat = payload.get("category") or {}
-        cat_id = cat.get("id") or payload.get("categoryId")
-        cat_name = cat.get("name") or payload.get("categoryName")
-
-        if cat_name and not cat_id:
-            from app.models.category import Category
-            import re
-            try:
-                db_chk = SessionLocal()
-                try:
-                    c_found = db_chk.query(Category).filter(Category.name.ilike(cat_name.strip())).first()
-                    if c_found:
-                        cat_id = c_found.id
-                        cat_name = c_found.name
-                    else:
-                        c_slug = re.sub(r"[^a-z0-9]+", "-", cat_name.lower()).strip("-")
-                        cat_id = f"cat-{c_slug}"
-                        db_chk.add(Category(
-                            id=cat_id,
-                            name=cat_name.strip(),
-                            slug=c_slug,
-                            display_order=99,
-                            status="active",
-                        ))
-                        db_chk.commit()
-                finally:
-                    db_chk.close()
-            except Exception as e:
-                print(f"[CatalogService] Auto-register category notice: {e}")
-
-        if not cat_id:
-            cat_id = "cat-ai-tools"
-        if not cat_name:
-            cat_name = "AI Tools"
+        raw_cat_id = cat.get("id") or payload.get("categoryId")
+        raw_cat_name = cat.get("name") or payload.get("categoryName")
 
         # 1. Save directly to Supabase
         try:
             db = SessionLocal()
             try:
+                cat_id, cat_name = cls._ensure_category_exists(db, raw_cat_id, raw_cat_name)
                 new_prod = Product(
                     id=product_id,
                     name=payload.get("name", ""),
@@ -403,26 +430,12 @@ class CatalogService:
                         prod.popular = bool(payload["popular"])
                     if "brand" in payload and payload["brand"] is not None:
                         prod.brand = payload["brand"]
-                    if "categoryId" in payload and payload["categoryId"] is not None:
-                        prod.category_id = payload["categoryId"]
-                    if "categoryName" in payload and payload["categoryName"] is not None:
-                        new_cname = str(payload["categoryName"]).strip()
-                        prod.category_name = new_cname
-                        if not payload.get("categoryId"):
-                            from app.models.category import Category
-                            import re
-                            try:
-                                c_found = db.query(Category).filter(Category.name.ilike(new_cname)).first()
-                                if c_found:
-                                    prod.category_id = c_found.id
-                                    prod.category_name = c_found.name
-                                else:
-                                    c_slug = re.sub(r"[^a-z0-9]+", "-", new_cname.lower()).strip("-")
-                                    new_cid = f"cat-{c_slug}"
-                                    db.add(Category(id=new_cid, name=new_cname, slug=c_slug, display_order=99, status="active"))
-                                    prod.category_id = new_cid
-                            except Exception as e:
-                                print(f"[CatalogService] Update category resolve notice: {e}")
+                    if ("categoryName" in payload and payload["categoryName"] is not None) or ("categoryId" in payload and payload["categoryId"] is not None):
+                        raw_cid = str(payload.get("categoryId") or prod.category_id or "")
+                        raw_cname = str(payload.get("categoryName") or prod.category_name or "")
+                        resolved_id, resolved_name = cls._ensure_category_exists(db, raw_cid, raw_cname)
+                        prod.category_id = resolved_id
+                        prod.category_name = resolved_name
                     if "guaranteeTitle" in payload and payload["guaranteeTitle"] is not None:
                         prod.guarantee_title = payload["guaranteeTitle"]
                     if "guaranteeDesc" in payload and payload["guaranteeDesc"] is not None:
@@ -638,16 +651,17 @@ class CatalogService:
 
         margin = price - provider_price if provider_price > 0 else 0
         pct = round((margin / provider_price) * 100) if provider_price > 0 else 0
-        cat_id = f"cat-{category_name.lower().replace(' ', '-')}"
-
         prod_id = f"vip-{code.lower().replace(' ', '-')}"
 
         try:
             db = SessionLocal()
             try:
+                resolved_cat_id, resolved_cat_name = cls._ensure_category_exists(db, None, category_name or "VIP Reseller")
                 existing = db.query(Product).filter((Product.provider_code.ilike(code)) | (Product.id == prod_id)).first()
                 if existing:
                     existing.name = name or existing.name
+                    existing.category_id = resolved_cat_id
+                    existing.category_name = resolved_cat_name
                     existing.price = price or existing.price
                     existing.price_formatted = f"Rp {existing.price:,.0f}".replace(",", ".")
                     existing.provider_price = provider_price or existing.provider_price
@@ -665,8 +679,8 @@ class CatalogService:
                     new_prod = Product(
                         id=prod_id,
                         name=name,
-                        category_id=cat_id,
-                        category_name=category_name,
+                        category_id=resolved_cat_id,
+                        category_name=resolved_cat_name,
                         brand="VIP Reseller",
                         price=price,
                         price_formatted=f"Rp {price:,.0f}".replace(",", "."),

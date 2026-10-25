@@ -98,11 +98,16 @@ def get_admin_products(
 async def create_admin_product(request: Request):
     payload = await request.json()
     new_product = CatalogService.create_product(payload)
-    cache.invalidate("catalog")
+    cache.invalidate("catalog", "categories", "homepage_sections")
     RealtimeBroadcaster.broadcast(
         "catalog:updated",
         {"action": "created", "id": new_product.get("id"), "name": new_product.get("name")},
-        target_role="admin",
+        target_role="all",
+    )
+    RealtimeBroadcaster.broadcast(
+        "category:updated",
+        {"action": "sync"},
+        target_role="all",
     )
     return {
         "success": True,
@@ -116,11 +121,16 @@ async def update_admin_product(product_id: str, request: Request):
     updated = CatalogService.update_product(product_id, payload)
     if not updated:
         raise HTTPException(status_code=404, detail="Produk tidak ditemukan untuk diperbarui.")
-    cache.invalidate("catalog")
+    cache.invalidate("catalog", "categories", "homepage_sections")
     RealtimeBroadcaster.broadcast(
         "catalog:updated",
         {"action": "updated", "id": product_id, "name": updated.get("name")},
-        target_role="admin",
+        target_role="all",
+    )
+    RealtimeBroadcaster.broadcast(
+        "category:updated",
+        {"action": "sync"},
+        target_role="all",
     )
     return {
         "success": True,
@@ -133,11 +143,16 @@ def delete_admin_product(product_id: str):
     deleted = CatalogService.delete_product(product_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Produk tidak ditemukan untuk dihapus.")
-    cache.invalidate("catalog")
+    cache.invalidate("catalog", "categories", "homepage_sections")
     RealtimeBroadcaster.broadcast(
         "catalog:updated",
         {"action": "deleted", "id": product_id},
-        target_role="admin",
+        target_role="all",
+    )
+    RealtimeBroadcaster.broadcast(
+        "category:updated",
+        {"action": "sync"},
+        target_role="all",
     )
     return {
         "success": True,
@@ -215,7 +230,17 @@ def get_admin_vip_services(
 async def import_admin_vip_service(request: Request):
     payload = await request.json()
     imported = CatalogService.import_vip_service(payload)
-    cache.invalidate("catalog")
+    cache.invalidate("catalog", "categories", "homepage_sections")
+    RealtimeBroadcaster.broadcast(
+        "catalog:updated",
+        {"action": "imported", "id": imported.get("id"), "name": imported.get("name")},
+        target_role="all",
+    )
+    RealtimeBroadcaster.broadcast(
+        "category:updated",
+        {"action": "sync"},
+        target_role="all",
+    )
     return {
         "success": True,
         "message": f"Layanan '{imported.get('name')}' berhasil diimpor ke katalog Asterra Store.",

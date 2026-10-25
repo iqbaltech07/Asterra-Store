@@ -101,24 +101,43 @@ function ProductsContent() {
   // Fetch active campaigns for real-time promotional pricing (shared query cache)
   const { campaigns: activeCampaigns } = useActiveCampaigns();
 
-  // Extract dynamic categories from real products with intentional priority order
-  const categories = useMemo(() => {
-    const set = new Set<string>(['Semua']);
-    const priorityCategories = ['AI Tools', 'Apps & Streaming', 'Layanan Digital', 'Voucher Game'];
+  // Fetch real categories from database
+  const { data: categoriesResponse } = useQuery<{ success: boolean; data: { id: string; name: string; slug: string }[] }>({
+    queryKey: ['public-categories'],
+    queryFn: async () => {
+      const res = await fetch('/api/v1/categories');
+      if (!res.ok) return { success: false, data: [] };
+      return res.json();
+    },
+    staleTime: 60 * 1000,
+  });
 
-    priorityCategories.forEach((priority) => {
-      if (allProducts.some((p) => p.category?.name?.toLowerCase() === priority.toLowerCase())) {
-        const found = allProducts.find((p) => p.category?.name?.toLowerCase() === priority.toLowerCase());
-        if (found?.category?.name) set.add(found.category.name);
+  // Extract dynamic categories directly from Database Category table + real products
+  const categories = useMemo(() => {
+    const list = ['Semua'];
+    const seen = new Set<string>(['semua']);
+
+    // 1. Prioritize official categories from DB
+    const dbCats = categoriesResponse?.data || [];
+    dbCats.forEach((c) => {
+      const name = c.name?.trim();
+      if (name && !seen.has(name.toLowerCase())) {
+        seen.add(name.toLowerCase());
+        list.push(name);
       }
     });
 
+    // 2. Append any categories from active catalog products not yet listed
     allProducts.forEach((p) => {
-      if (p.category?.name) set.add(p.category.name);
+      const name = p.category?.name?.trim();
+      if (name && !seen.has(name.toLowerCase())) {
+        seen.add(name.toLowerCase());
+        list.push(name);
+      }
     });
 
-    return Array.from(set);
-  }, [allProducts]);
+    return list;
+  }, [categoriesResponse?.data, allProducts]);
 
   // Client-side filtering & sorting
   const filteredProducts = useMemo(() => {

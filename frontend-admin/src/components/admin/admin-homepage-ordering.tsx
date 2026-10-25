@@ -108,6 +108,7 @@ export interface AdminProductGroup {
   name: string;
   slug: string;
   categoryName: string;
+  categoryId?: string;
   categoryTag: 'ai' | 'design' | 'video' | 'streaming' | 'gaming' | 'other';
   rating: string;
   soldCount: number;
@@ -453,7 +454,7 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
   const [activeSection, setActiveSection] = useState<SectionKey>('promo');
   const [isAddPickerOpen, setIsAddPickerOpen] = useState(false);
   const [searchPickerQuery, setSearchPickerQuery] = useState('');
-  const [pickerCategoryFilter, setPickerCategoryFilter] = useState<'all' | 'video' | 'ai' | 'streaming' | 'gaming'>('all');
+  const [pickerCategoryFilter, setPickerCategoryFilter] = useState<string>('all');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // 1. Fetch live sections and computed preview
@@ -477,6 +478,18 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
     },
     staleTime: 60 * 1000,
   });
+
+  // 3. Fetch real categories from Database for dynamic filter tabs
+  const { data: categoriesData } = useQuery<{ success: boolean; data: { id: string; name: string; slug: string }[] }>({
+    queryKey: ['public-categories'],
+    queryFn: async () => {
+      const res = await fetch('/api/v1/categories');
+      if (!res.ok) return { success: false, data: [] };
+      return res.json();
+    },
+    staleTime: 30 * 1000,
+  });
+  const dbCategories = categoriesData?.data || [];
 
 
 
@@ -621,8 +634,19 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
       const originalPrice = isPromo ? Math.round(minPrice / 0.85) : minPrice;
       const savings = originalPrice > minPrice ? originalPrice - minPrice : 0;
 
+      const firstItem = items[0];
+      const realCatName =
+        firstItem?.categoryName ||
+        (firstItem as any)?.category?.name ||
+        def.categoryName;
+      const realCatId =
+        (firstItem as any)?.categoryId ||
+        (firstItem as any)?.category?.id;
+
       return {
         ...def,
+        categoryName: realCatName,
+        categoryId: realCatId,
         items,
         variantCount: items.length || 1,
         minPrice,
@@ -643,21 +667,73 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
     return map;
   }, [availableProductGroups]);
 
+  // Dynamic category filter pills computed from DB categories + available products
+  const categoryPills = useMemo(() => {
+    const pills: Array<{ key: string; label: string }> = [
+      { key: 'all', label: `Semua (${availableProductGroups.length})` },
+    ];
+
+    dbCategories.forEach((cat) => {
+      const targetId = cat.id.toLowerCase();
+      const targetName = cat.name.toLowerCase();
+
+      const count = availableProductGroups.filter((g) => {
+        const gName = (g.categoryName || '').toLowerCase();
+        const gId = (g.categoryId || '').toLowerCase();
+        return (
+          gId === targetId ||
+          gName === targetName ||
+          g.items.some(
+            (it) =>
+              (it.categoryName || '').toLowerCase() === targetName ||
+              ((it as any).categoryId || '').toLowerCase() === targetId ||
+              ((it as any).category?.name || '').toLowerCase() === targetName ||
+              ((it as any).category?.id || '').toLowerCase() === targetId
+          )
+        );
+      }).length;
+
+      pills.push({
+        key: cat.id,
+        label: count > 0 ? `${cat.name} (${count})` : cat.name,
+      });
+    });
+
+    return pills;
+  }, [availableProductGroups, dbCategories]);
+
   // Filtered products for modal picker (strictly distinct Product level)
   const filteredProductGroupsForPicker = useMemo(() => {
     const q = searchPickerQuery.toLowerCase().trim();
     return availableProductGroups.filter((g) => {
-      // Category filter pill
-      if (pickerCategoryFilter === 'video' && g.categoryTag !== 'video' && g.categoryTag !== 'design') return false;
-      if (pickerCategoryFilter === 'ai' && g.categoryTag !== 'ai') return false;
-      if (pickerCategoryFilter === 'streaming' && g.categoryTag !== 'streaming') return false;
-      if (pickerCategoryFilter === 'gaming' && g.categoryTag !== 'gaming') return false;
+      // Dynamic DB Category filter pill
+      if (pickerCategoryFilter !== 'all') {
+        const selectedCat = dbCategories.find((c) => c.id === pickerCategoryFilter);
+        const targetId = pickerCategoryFilter.toLowerCase();
+        const targetName = selectedCat?.name.toLowerCase() || targetId;
+
+        const gId = (g.categoryId || '').toLowerCase();
+        const gName = (g.categoryName || '').toLowerCase();
+
+        const matchesCategory =
+          gId === targetId ||
+          gName === targetName ||
+          g.items.some(
+            (it) =>
+              (it.categoryName || '').toLowerCase() === targetName ||
+              ((it as any).categoryId || '').toLowerCase() === targetId ||
+              ((it as any).category?.name || '').toLowerCase() === targetName ||
+              ((it as any).category?.id || '').toLowerCase() === targetId
+          );
+
+        if (!matchesCategory) return false;
+      }
 
       if (!q) return true;
-      const text = `${g.name} ${g.categoryName} ${g.slug}`.toLowerCase();
+      const text = `${g.name} ${g.categoryName || ''} ${g.slug}`.toLowerCase();
       return text.includes(q);
     });
-  }, [availableProductGroups, pickerCategoryFilter, searchPickerQuery]);
+  }, [availableProductGroups, pickerCategoryFilter, searchPickerQuery, dbCategories]);
 
   return (
     <div className="space-y-6">
@@ -1160,21 +1236,15 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
                 )}
               </div>
 
-              {/* Category Filter Pills */}
+              {/* Category Filter Pills (Dynamically retrieved from PostgreSQL DB categories) */}
               <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs">
-                {[
-                  { key: 'all', label: `Semua (${availableProductGroups.length})` },
-                  { key: 'video', label: 'Video & Desain' },
-                  { key: 'ai', label: 'AI Tools' },
-                  { key: 'streaming', label: 'Streaming & Musik' },
-                  { key: 'gaming', label: 'Top Up Game' },
-                ].map((tab) => {
+                {categoryPills.map((tab) => {
                   const isActive = pickerCategoryFilter === tab.key;
                   return (
                     <button
                       key={tab.key}
                       type="button"
-                      onClick={() => setPickerCategoryFilter(tab.key as any)}
+                      onClick={() => setPickerCategoryFilter(tab.key)}
                       className={`px-3 py-1.5 rounded-lg font-semibold text-[11px] whitespace-nowrap transition-all cursor-pointer ${
                         isActive
                           ? 'bg-[#C96F55] text-white shadow-2xs font-bold'

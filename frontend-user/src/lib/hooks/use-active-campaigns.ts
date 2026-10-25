@@ -38,10 +38,10 @@ export function useActiveCampaigns(options?: { enabled?: boolean }) {
   const query = useQuery<ActiveCampaignsResponse>({
     queryKey: ['active-campaigns'],
     queryFn: fetchActiveCampaigns,
-    staleTime: 3 * 60 * 1000,
+    staleTime: 30 * 1000,
     gcTime: 15 * 60 * 1000,
     placeholderData: (previousData) => previousData,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
     enabled: options?.enabled ?? true,
   });
 
