@@ -17,6 +17,9 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { Button } from '@/components/ui/button';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export const metadata: Metadata = {
   title: 'Program Mitra Affiliate | Asterra Store',
   description:
@@ -25,7 +28,7 @@ export const metadata: Metadata = {
     title: 'Program Mitra Affiliate - Asterra Store',
     description:
       'Dapatkan komisi langsung 10% dari setiap penjualan produk digital bergaransi. Daftar gratis dan kelola referral di Portal Sales.',
-    images: ['/images/banners/hero-banner-affiliate.webp'],
+    images: ['/images/banners/hero-banner-seller.webp'],
   },
 };
 
@@ -47,7 +50,7 @@ export default function AffiliatePage() {
             className="group block relative w-full overflow-hidden rounded-xl sm:rounded-2xl md:rounded-3xl border border-[rgba(18,26,42,0.08)] shadow-xs hover:shadow-md transition-shadow aspect-[1024/254]"
           >
             <Image
-              src="/images/banners/hero-banner-affiliate.webp"
+              src="/images/banners/hero-banner-seller.webp"
               alt="Program Affiliate Asterra Store - Dapatkan Komisi 10% Langsung dari Setiap Transaksi Produk Digital"
               width={2048}
               height={508}

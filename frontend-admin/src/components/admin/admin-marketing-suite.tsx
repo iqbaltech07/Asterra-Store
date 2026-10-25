@@ -72,7 +72,7 @@ const INITIAL_BANNERS: BannerItem[] = [
     ctaText: 'Daftar Affiliate',
     destinationUrl: '/daftar-sales',
     linkUrl: '/daftar-sales',
-    imageUrl: '/images/banners/hero-banner-affiliate.webp',
+    imageUrl: '/images/banners/hero-banner-seller.webp',
     displayOrder: 1,
     status: 'active',
     isActive: true,

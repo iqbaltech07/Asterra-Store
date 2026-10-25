@@ -46,7 +46,7 @@ export const INITIAL_STOREFRONT_BANNERS: PromoBannerItem[] = [
     ctaText: 'Daftar Affiliate',
     bannerType: 'hero',
     type: 'hero',
-    imageUrl: '/images/banners/hero-banner-affiliate.webp',
+    imageUrl: '/images/banners/hero-banner-seller.webp',
     linkUrl: '/daftar-sales',
     destinationUrl: '/daftar-sales',
     targetPage: 'home',
