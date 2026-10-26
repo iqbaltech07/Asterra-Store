@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faCreditCard,
@@ -61,8 +61,10 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
   );
 
   // Fetch current payment settings from API
-  const fetchSettings = useCallback(async () => {
-    setIsLoading(true);
+  const fetchSettings = useCallback(async (isInitial = false) => {
+    if (isInitial) {
+      setIsLoading(true);
+    }
     try {
       const res = await fetch('/api/v1/admin/payment-config');
       if (!res.ok) throw new Error('Gagal mengambil pengaturan pembayaran');
@@ -70,61 +72,56 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
       if (json.success && json.data) {
         const d: PaymentConfig = json.data;
         setConfig(d);
-        setMode(d.mode);
-        setIsBankActive((d.isBankActive ?? d.is_bank_active) !== false);
-        setIsQrisActive((d.isQrisActive ?? d.is_qris_active) !== false);
-        setIsDanaActive((d.isDanaActive ?? d.is_dana_active) !== false);
-        setBankName(d.bankName || 'Bank Central Asia (BCA)');
-        setBankAccountNumber(d.bankAccountNumber || '8965123456');
-        setBankAccountName(d.bankAccountName || 'Asterra Store Official');
-        setQrisImageUrl(d.qrisImageUrl || '/images/qris-toko.png');
-        setQrisMerchantName(d.qrisMerchantName || 'ASTERRA STORE QRIS');
-        setDanaNumber(d.danaNumber || '081234567890');
-        setDanaAccountName(d.danaAccountName || 'Asterra Store');
-        setConfirmationWhatsapp(d.confirmationWhatsapp || '6281234567890');
-        setCsEmail(d.csEmail || 'support@asterra.store');
-        setCsWhatsappNumbers(
-          Array.isArray(d.csWhatsappNumbers) && d.csWhatsappNumbers.length > 0
-            ? d.csWhatsappNumbers
-            : [d.confirmationWhatsapp || '6281234567890']
-        );
-        setEnableUniqueCode(typeof d.enableUniqueCode === 'boolean' ? d.enableUniqueCode : true);
-        setOrderExpiryHours(d.orderExpiryHours || 24);
-        setInstructions(d.instructions || '');
+        if (isInitial) {
+          setMode(d.mode);
+          setIsBankActive((d.isBankActive ?? d.is_bank_active) !== false);
+          setIsQrisActive((d.isQrisActive ?? d.is_qris_active) !== false);
+          setIsDanaActive((d.isDanaActive ?? d.is_dana_active) !== false);
+          setBankName(d.bankName || 'Bank Central Asia (BCA)');
+          setBankAccountNumber(d.bankAccountNumber || '8965123456');
+          setBankAccountName(d.bankAccountName || 'Asterra Store Official');
+          setQrisImageUrl(d.qrisImageUrl || '');
+          setQrisMerchantName(d.qrisMerchantName || 'ASTERRA STORE QRIS');
+          setDanaNumber(d.danaNumber || '081234567890');
+          setDanaAccountName(d.danaAccountName || 'Asterra Store');
+          setConfirmationWhatsapp(d.confirmationWhatsapp || '6281234567890');
+          setCsEmail(d.csEmail || 'support@asterra.store');
+          setCsWhatsappNumbers(
+            Array.isArray(d.csWhatsappNumbers) && d.csWhatsappNumbers.length > 0
+              ? d.csWhatsappNumbers
+              : [d.confirmationWhatsapp || '6281234567890']
+          );
+          setEnableUniqueCode(typeof d.enableUniqueCode === 'boolean' ? d.enableUniqueCode : true);
+          setOrderExpiryHours(d.orderExpiryHours || 24);
+          setInstructions(d.instructions || '');
+        }
       }
     } catch (err) {
       console.error(err);
-      onNotify('Gagal memuat pengaturan pembayaran dari server.');
+      if (isInitial) {
+        onNotify('Gagal memuat pengaturan pembayaran dari server.');
+      }
     } finally {
-      setIsLoading(false);
+      if (isInitial) {
+        setIsLoading(false);
+      }
     }
   }, [onNotify]);
 
   useEffect(() => {
     setCurrentBaseUrl(getAppBaseUrl());
-    fetchSettings();
+    fetchSettings(true);
 
-    const handleAutoSync = () => {
-      if (!isSaving) {
-        fetchSettings();
-      }
+    const handleCustomRefresh = () => {
+      fetchSettings(false);
     };
 
-    window.addEventListener('focus', handleAutoSync);
-    window.addEventListener('admin:refresh-payment-config', handleAutoSync);
-
-    const timer = setInterval(() => {
-      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
-        handleAutoSync();
-      }
-    }, 60000);
+    window.addEventListener('admin:refresh-payment-config', handleCustomRefresh);
 
     return () => {
-      window.removeEventListener('focus', handleAutoSync);
-      window.removeEventListener('admin:refresh-payment-config', handleAutoSync);
-      clearInterval(timer);
+      window.removeEventListener('admin:refresh-payment-config', handleCustomRefresh);
     };
-  }, [fetchSettings, isSaving]);
+  }, [fetchSettings]);
 
   const handleCopy = (text: string, key: string) => {
     navigator.clipboard.writeText(text);
@@ -171,6 +168,9 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
       }
 
       setMode(targetMode);
+      if (data.data) {
+        setConfig(data.data);
+      }
       onNotify(data.message || `Pengaturan pembayaran berhasil diperbarui. Mode: ${targetMode.toUpperCase()}`);
     } catch (err: unknown) {
       const error = err as Error;
@@ -256,7 +256,7 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
               type="button"
               variant="outline"
               size="sm"
-              onClick={fetchSettings}
+              onClick={() => fetchSettings(true)}
               disabled={isLoading || isSaving}
               className="text-xs gap-1.5 border-border"
               title="Refresh status dari database"
@@ -399,6 +399,28 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
                 label="Gambar Barcode QRIS Toko"
                 description="Tarik & lepas file gambar barcode QRIS toko Anda ke sini untuk disimpan di Vercel Blob (Private Mode)."
               />
+
+              {config && (
+                qrisImageUrl !== (config.qrisImageUrl || '') ||
+                qrisMerchantName !== (config.qrisMerchantName || '') ||
+                isQrisActive !== ((config.isQrisActive ?? config.is_qris_active) !== false)
+              ) && (
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 rounded-xl bg-primary/10 border border-primary/25 text-xs animate-in fade-in-50">
+                  <div className="flex items-center gap-2 text-foreground font-medium">
+                    <FontAwesomeIcon icon={faFloppyDisk} className="w-4 h-4 text-primary" />
+                    <span>Perubahan pengaturan QRIS belum tersimpan!</span>
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => handleSave()}
+                    disabled={isSaving}
+                    className="h-8 text-xs px-4 bg-primary text-white hover:bg-primary/90 font-semibold cursor-pointer shadow-xs"
+                  >
+                    {isSaving ? 'Menyimpan...' : 'Simpan QRIS Sekarang'}
+                  </Button>
+                </div>
+              )}
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 

@@ -72,17 +72,35 @@ export async function uploadFileToBlob(
     body: formData,
   });
 
-  const data = await res.json();
+  let data: {
+    success?: boolean;
+    url?: string;
+    viewUrl?: string;
+    detail?: string;
+    error?: string;
+    message?: string;
+    data?: {
+      viewUrl?: string;
+      url?: string;
+      pathname?: string;
+      deduplicated?: boolean;
+    };
+  } = {};
+  try {
+    data = await res.json();
+  } catch {
+    data = { error: `Server response error (${res.status} ${res.statusText})` };
+  }
 
   if (!res.ok || !data.success) {
-    const errMsg = data.detail || data.error || 'Gagal mengunggah file ke Vercel Blob.';
+    const errMsg = data.detail || data.error || data.message || `Gagal mengunggah file (Status ${res.status}).`;
     throw new Error(errMsg);
   }
 
   return {
-    viewUrl: data.data?.viewUrl || data.url,
-    url: data.data?.url || data.url,
-    pathname: data.data?.pathname,
+    viewUrl: data.data?.viewUrl || data.url || '',
+    url: data.data?.url || data.url || '',
+    pathname: data.data?.pathname || '',
     deduplicated: data.data?.deduplicated ?? false,
   };
 }
@@ -129,6 +147,16 @@ export function ImageUploadDropzone({
     };
   }, [localPreview]);
 
+  const handleTriggerFileInput = (e?: React.MouseEvent) => {
+    e?.preventDefault();
+    e?.stopPropagation();
+    if (disabled || isUploading || isCompressing) return;
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+      fileInputRef.current.click();
+    }
+  };
+
   const processFile = useCallback(
     async (file: File) => {
       setUploadError(null);
@@ -145,19 +173,17 @@ export function ImageUploadDropzone({
         return;
       }
 
-      // Instant local preview (Pilar 2: no upload yet in lazy mode)
+      // Instant local preview
       const objectUrl = URL.createObjectURL(file);
       setLocalPreview(objectUrl);
       setImgError(false);
 
       if (mode === 'lazy') {
         // --- LAZY MODE ---
-        // Compress client-side, then pass File to parent for deferred upload
         setIsCompressing(true);
         try {
           const compressed = await compressImageToWebP(file);
           onFileStaged?.(compressed);
-          // Don't call onChange yet — parent will set the final URL after upload on submit
         } catch {
           setUploadError('Gagal mengompres gambar.');
         } finally {
@@ -218,8 +244,8 @@ export function ImageUploadDropzone({
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
       processFile(file);
-      e.target.value = '';
     }
+    e.target.value = '';
   };
 
   const handlePaste = (e: React.ClipboardEvent) => {
@@ -238,20 +264,45 @@ export function ImageUploadDropzone({
     }
   };
 
-  const handleCopyUrl = () => {
-    if (value && typeof window !== 'undefined') {
-      navigator.clipboard.writeText(value);
+  const handleCopyUrl = async (e?: React.MouseEvent) => {
+    e?.preventDefault();
+    e?.stopPropagation();
+    const urlToCopy = value || displayImage;
+    if (!urlToCopy || typeof window === 'undefined') return;
+
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(urlToCopy);
+      } else {
+        const textArea = document.createElement('textarea');
+        textArea.value = urlToCopy;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-9999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+      }
       setCopySuccess(true);
       setTimeout(() => setCopySuccess(false), 2000);
+    } catch (err) {
+      console.warn('Gagal menyalin URL ke clipboard:', err);
     }
   };
 
-  const handleRemove = () => {
+  const handleRemove = (e?: React.MouseEvent) => {
+    e?.preventDefault();
+    e?.stopPropagation();
     if (localPreview && localPreview.startsWith('blob:')) {
       URL.revokeObjectURL(localPreview);
     }
     setLocalPreview(null);
     setImgError(false);
+    setUploadError(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
     onFileStaged?.(null);
     onChange('');
   };
@@ -274,20 +325,25 @@ export function ImageUploadDropzone({
         </label>
         <button
           type="button"
-          onClick={() => setShowManualInput(!showManualInput)}
-          className="text-[11px] text-foreground-muted hover:text-primary transition-colors flex items-center gap-1"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setShowManualInput(!showManualInput);
+          }}
+          className="text-[11px] text-foreground-muted hover:text-primary transition-colors flex items-center gap-1 cursor-pointer"
         >
           <FontAwesomeIcon icon={faLink} className="w-3 h-3" />
           <span>{showManualInput ? 'Sembunyikan URL Manual' : 'Input URL Manual'}</span>
         </button>
       </div>
 
-      {/* Hidden Native File Input */}
+      {/* Accessible Native File Input */}
       <input
         ref={fileInputRef}
         type="file"
         accept={ACCEPTED_TYPES.join(',')}
-        className="hidden"
+        className="sr-only"
+        tabIndex={-1}
         onChange={handleFileInputChange}
         disabled={disabled || isBusy}
       />
@@ -310,17 +366,21 @@ export function ImageUploadDropzone({
         </div>
       )}
 
-      {/* Image Preview State (When image URL exists) */}
+      {/* Image Preview State (When image exists) */}
       {displayImage ? (
         <div className="relative rounded-xl border border-border bg-surface-raised/40 p-3 space-y-3 transition-all hover:border-primary/40">
           <div className="flex flex-col sm:flex-row items-center gap-3">
             {/* Thumbnail Box */}
-            <div className="relative w-full sm:w-36 h-24 rounded-lg bg-surface border border-border/80 overflow-hidden shrink-0 group flex items-center justify-center">
+            <div
+              onClick={handleTriggerFileInput}
+              className="relative w-full sm:w-36 h-24 rounded-lg bg-surface border border-border/80 overflow-hidden shrink-0 group flex items-center justify-center cursor-pointer"
+              title="Klik gambar untuk mengganti file"
+            >
               {!imgError ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={displayImage}
-                  alt="Preview Banner Produk"
+                  alt="Preview Gambar"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   onError={() => setImgError(true)}
                 />
@@ -341,18 +401,29 @@ export function ImageUploadDropzone({
                 </div>
               )}
 
-              {/* Open in new tab overlay */}
+              {/* Hover overlay with action triggers */}
               {!isBusy && (
-                <a
-                  href={displayImage}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white gap-1 text-[11px] font-medium"
-                  title="Buka Gambar di Tab Baru"
-                >
-                  <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="w-3.5 h-3.5" />
-                  <span>Lihat</span>
-                </a>
+                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 text-white">
+                  <button
+                    type="button"
+                    onClick={handleTriggerFileInput}
+                    className="p-1.5 rounded-md bg-white/20 hover:bg-white/30 text-white text-[11px] font-medium flex items-center gap-1 transition-colors"
+                    title="Ganti File Gambar"
+                  >
+                    <FontAwesomeIcon icon={faArrowsRotate} className="w-3 h-3" />
+                    <span>Ganti</span>
+                  </button>
+                  <a
+                    href={displayImage}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="p-1.5 rounded-md bg-white/20 hover:bg-white/30 text-white text-[11px] font-medium flex items-center gap-1 transition-colors"
+                    title="Buka Gambar di Tab Baru"
+                  >
+                    <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="w-3 h-3" />
+                  </a>
+                </div>
               )}
             </div>
 
@@ -390,23 +461,27 @@ export function ImageUploadDropzone({
                   type="button"
                   size="sm"
                   variant="outline"
-                  onClick={() => fileInputRef.current?.click()}
+                  onClick={handleTriggerFileInput}
                   disabled={disabled || isBusy}
-                  className="h-7 text-xs gap-1.5 border-border hover:border-primary/50"
+                  className="h-7 text-xs gap-1.5 border-border hover:border-primary/50 cursor-pointer"
                 >
                   <FontAwesomeIcon icon={faArrowsRotate} className="w-3 h-3 text-primary" />
                   <span>Ganti File</span>
                 </Button>
 
-                {value && (
+                {(value || displayImage) && (
                   <Button
                     type="button"
                     size="sm"
                     variant="outline"
                     onClick={handleCopyUrl}
-                    className="h-7 text-xs gap-1.5 border-border"
+                    className="h-7 text-xs gap-1.5 border-border cursor-pointer"
                   >
-                    {copySuccess ? <FontAwesomeIcon icon={faCheck} className="w-3 h-3 text-status-success" /> : <FontAwesomeIcon icon={faLink} className="w-3 h-3" />}
+                    {copySuccess ? (
+                      <FontAwesomeIcon icon={faCheck} className="w-3 h-3 text-status-success" />
+                    ) : (
+                      <FontAwesomeIcon icon={faLink} className="w-3 h-3" />
+                    )}
                     <span>{copySuccess ? 'Tersalin' : 'Salin URL'}</span>
                   </Button>
                 )}
@@ -417,7 +492,7 @@ export function ImageUploadDropzone({
                   variant="outline"
                   onClick={handleRemove}
                   disabled={disabled || isBusy}
-                  className="h-7 text-xs gap-1.5 text-status-error hover:bg-status-error/10 hover:text-status-error border-border hover:border-status-error/30"
+                  className="h-7 text-xs gap-1.5 text-status-error hover:bg-status-error/10 hover:text-status-error border-border hover:border-status-error/30 cursor-pointer"
                 >
                   <FontAwesomeIcon icon={faTrash} className="w-3 h-3" />
                   <span>Hapus</span>
@@ -432,7 +507,7 @@ export function ImageUploadDropzone({
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
-          onClick={() => !isBusy && fileInputRef.current?.click()}
+          onClick={handleTriggerFileInput}
           className={`relative border-2 border-dashed rounded-xl p-5 text-center cursor-pointer transition-all duration-200 select-none ${
             isDragging
               ? 'border-primary bg-primary/10 scale-[1.01] shadow-md shadow-primary/10'
@@ -503,7 +578,11 @@ export function ImageUploadDropzone({
             <Input
               type="url"
               value={value}
-              onChange={(e) => onChange(e.target.value)}
+              onChange={(e) => {
+                setLocalPreview(null);
+                setImgError(false);
+                onChange(e.target.value);
+              }}
               placeholder="https://... atau /api/v1/media/products/..."
               className="text-xs bg-surface-raised border-border font-mono flex-1 h-8"
               disabled={disabled || isBusy}
@@ -514,7 +593,7 @@ export function ImageUploadDropzone({
                 size="sm"
                 variant="outline"
                 onClick={handleRemove}
-                className="h-8 text-xs px-2 text-foreground-muted hover:text-status-error"
+                className="h-8 text-xs px-2 text-foreground-muted hover:text-status-error cursor-pointer"
                 title="Kosongkan URL"
               >
                 ✕
