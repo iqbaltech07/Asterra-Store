@@ -522,7 +522,6 @@ function GlobalOrdersContent() {
                     <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-border">
                       {order.order_status === 'processing' ? (
                         <div className="flex items-center gap-1.5 text-[11px] text-foreground-muted">
-                          <span className="w-1.5 h-1.5 rounded-full bg-status-info animate-ping" />
                           <span>{order.process_estimate || 'Estimasi 10-30 Menit'}</span>
                         </div>
                       ) : order.order_status === 'completed' ? (
