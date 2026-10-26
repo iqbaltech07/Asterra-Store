@@ -41,8 +41,8 @@ export const INITIAL_STOREFRONT_BANNERS: PromoBannerItem[] = [
   },
   {
     id: 'banner_53f48c92dd91',
-    title: 'Program Mitra Affiliate Asterra Store — Raih Komisi 10% Penjualan Produk Digital',
-    description: 'Rekomendasikan produk lisensi digital resmi, raih komisi 10% per transaksi. Dashboard real-time, pencairan kilat ke rekening/e-wallet.',
+    title: 'Program Mitra Affiliate Asterra Store — Raih Komisi 10% – 15% + 2% Penjualan Produk Digital',
+    description: 'Rekomendasikan produk lisensi digital resmi, raih komisi 10% hingga 15% plus bonus sponsor 2%. Dashboard real-time, pencairan kilat ke rekening/e-wallet.',
     ctaText: 'Daftar Affiliate',
     bannerType: 'hero',
     type: 'hero',

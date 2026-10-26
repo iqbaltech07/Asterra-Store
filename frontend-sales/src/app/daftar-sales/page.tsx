@@ -518,7 +518,7 @@ function DaftarSalesContent() {
               </h1>
               <p className="text-xs sm:text-sm text-foreground-muted leading-relaxed">
                 Anda kini resmi menjadi bagian dari Tim Sales & Mitra Afiliasi Asterra Store dengan skema bagi hasil{' '}
-                <strong className="text-status-success font-semibold">10% dari Profit Transaksi</strong>.
+                <strong className="text-status-success font-semibold">10% – 15% dari Profit Transaksi</strong>.
               </p>
             </div>
 
@@ -567,7 +567,7 @@ function DaftarSalesContent() {
                   <span>Cara Kerja Penghasilan Anda:</span>
                 </p>
                 <p className="text-[11px] text-foreground-muted leading-relaxed">
-                  Setiap transaksi dari pembeli yang membuka website Asterra Store menggunakan link referral Anda akan otomatis tercatat. Komisi sebesar 10% dari Profit Bersih Transaksi akan otomatis dialokasikan ke akun Anda (dengan masa holding garansi 3 hari).
+                  Setiap transaksi dari pembeli yang membuka website Asterra Store menggunakan link referral Anda akan otomatis tercatat. Komisi sebesar 10% hingga 15% (sesuai performa) dari Profit Bersih Transaksi akan otomatis dialokasikan ke akun Anda (dengan masa holding garansi 3 hari).
                 </p>
               </div>
             </div>
@@ -867,7 +867,7 @@ function DaftarSalesContent() {
                               <span className="font-mono text-foreground-muted">({sponsorData.code})</span>
                             </p>
                             <p className="text-[11px] text-foreground-muted leading-tight mt-0.5">
-                              Anda mendaftar di bawah bimbingan mitra ini. Hak komisi penjualan langsung Anda tetap 100% utuh (10%).
+                              Anda mendaftar di bawah bimbingan mitra ini. Hak komisi penjualan langsung Anda tetap 100% utuh (10% – 15%).
                             </p>
                           </div>
                         </div>
@@ -997,7 +997,7 @@ function DaftarSalesContent() {
                   </span>
                 </div>
                 <Badge variant="outline" className="text-[10px] text-status-success border-status-success/40 bg-status-success/15 font-semibold">
-                  10% dari Profit Transaksi
+                  10% – 15% dari Profit Transaksi
                 </Badge>
               </div>
             </div>
