@@ -207,11 +207,11 @@ export function OrderDetailModal({
             variant="ghost"
             size="sm"
             onClick={onClose}
-            className="h-7 w-7 p-0 rounded-full text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] shrink-0 cursor-pointer"
+            className="h-8.5 w-8.5 p-0 rounded-full text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] shrink-0 cursor-pointer"
             title="Tutup (Esc)"
             aria-label="Tutup popup"
           >
-            <FontAwesomeIcon icon={faXmark} className="w-3.5 h-3.5" />
+            <FontAwesomeIcon icon={faXmark} className="w-4 h-4" />
           </Button>
         </div>
 
@@ -228,10 +228,10 @@ export function OrderDetailModal({
                 variant="outline"
                 size="sm"
                 onClick={handleCopyValidation}
-                className="h-6 text-[10px] gap-1 px-2 border-[#E2E8F0] bg-white text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] cursor-pointer"
+                className="h-8 text-xs gap-1.5 px-3 border-[#CBD5E1] bg-white text-[#475569] hover:text-[#0F172A] hover:bg-[#F8FAFC] cursor-pointer rounded-lg font-medium"
                 title="Salin ringkasan data validasi"
               >
-                <FontAwesomeIcon icon={faCopy} className="w-2.5 h-2.5" />
+                <FontAwesomeIcon icon={faCopy} className="w-3 h-3" />
                 <span>Salin Data Validasi</span>
               </Button>
             </div>
@@ -463,19 +463,19 @@ export function OrderDetailModal({
               </span>
             </div>
 
-            {/* 4 Status Choice Buttons - Light Mode Consistent */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+            {/* 4 Status Choice Buttons - Normal Comfortable Proportions */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {/* 1. Pending (Abu-abu netral) */}
               <button
                 type="button"
                 onClick={() => setNewStatus('pending')}
-                className={`h-7.5 px-2 rounded-md border text-center transition-all text-xs flex items-center justify-center gap-1.5 cursor-pointer ${
+                className={`h-9.5 px-3 rounded-xl border text-center transition-all text-xs sm:text-[13px] font-semibold flex items-center justify-center gap-2 cursor-pointer ${
                   newStatus === 'pending'
-                    ? 'border-[#64748B] bg-[#F8FAFC] text-[#0F172A] font-bold ring-2 ring-[#64748B]/30 shadow-xs'
-                    : 'border-[#E2E8F0] bg-white text-[#64748B] hover:bg-[#F8FAFC] hover:border-[#CBD5E1] hover:text-[#0F172A]'
+                    ? 'border-[#64748B] bg-[#F1F5F9] text-[#0F172A] font-bold ring-2 ring-[#64748B]/30 shadow-xs'
+                    : 'border-[#CBD5E1] bg-white text-[#64748B] hover:bg-[#F8FAFC] hover:border-[#94A3B8] hover:text-[#0F172A]'
                 }`}
               >
-                <FontAwesomeIcon icon={faClock} className="w-3 h-3 shrink-0" />
+                <FontAwesomeIcon icon={faClock} className="w-3.5 h-3.5 shrink-0" />
                 <span>Pending</span>
               </button>
 
@@ -483,13 +483,13 @@ export function OrderDetailModal({
               <button
                 type="button"
                 onClick={() => setNewStatus('processing')}
-                className={`h-7.5 px-2 rounded-md border text-center transition-all text-xs flex items-center justify-center gap-1.5 cursor-pointer ${
+                className={`h-9.5 px-3 rounded-xl border text-center transition-all text-xs sm:text-[13px] font-semibold flex items-center justify-center gap-2 cursor-pointer ${
                   newStatus === 'processing'
                     ? 'border-[#2563EB] bg-[#EFF6FF] text-[#2563EB] font-bold ring-2 ring-[#2563EB]/30 shadow-xs'
-                    : 'border-[#E2E8F0] bg-white text-[#64748B] hover:bg-[#EFF6FF] hover:border-[#BFDBFE] hover:text-[#2563EB]'
+                    : 'border-[#CBD5E1] bg-white text-[#64748B] hover:bg-[#EFF6FF] hover:border-[#93C5FD] hover:text-[#2563EB]'
                 }`}
               >
-                <FontAwesomeIcon icon={faClock} className="w-3 h-3 shrink-0" />
+                <FontAwesomeIcon icon={faClock} className="w-3.5 h-3.5 shrink-0" />
                 <span>Di Proses</span>
               </button>
 
@@ -497,13 +497,13 @@ export function OrderDetailModal({
               <button
                 type="button"
                 onClick={() => setNewStatus('completed')}
-                className={`h-7.5 px-2 rounded-md border text-center transition-all text-xs flex items-center justify-center gap-1.5 cursor-pointer ${
+                className={`h-9.5 px-3 rounded-xl border text-center transition-all text-xs sm:text-[13px] font-semibold flex items-center justify-center gap-2 cursor-pointer ${
                   newStatus === 'completed'
                     ? 'border-[#16A34A] bg-[#F0FDF4] text-[#16A34A] font-bold ring-2 ring-[#16A34A]/30 shadow-xs'
-                    : 'border-[#E2E8F0] bg-white text-[#64748B] hover:bg-[#F0FDF4] hover:border-[#BBF7D0] hover:text-[#16A34A]'
+                    : 'border-[#CBD5E1] bg-white text-[#64748B] hover:bg-[#F0FDF4] hover:border-[#86EFAC] hover:text-[#16A34A]'
                 }`}
               >
-                <FontAwesomeIcon icon={faCircleCheck} className="w-3 h-3 shrink-0" />
+                <FontAwesomeIcon icon={faCircleCheck} className="w-3.5 h-3.5 shrink-0" />
                 <span>Selesai</span>
               </button>
 
@@ -511,13 +511,13 @@ export function OrderDetailModal({
               <button
                 type="button"
                 onClick={() => setNewStatus('cancelled')}
-                className={`h-7.5 px-2 rounded-md border text-center transition-all text-xs flex items-center justify-center gap-1.5 cursor-pointer ${
+                className={`h-9.5 px-3 rounded-xl border text-center transition-all text-xs sm:text-[13px] font-semibold flex items-center justify-center gap-2 cursor-pointer ${
                   newStatus === 'cancelled'
                     ? 'border-[#DC2626] bg-[#FEF2F2] text-[#DC2626] font-bold ring-2 ring-[#DC2626]/30 shadow-xs'
-                    : 'border-[#E2E8F0] bg-white text-[#64748B] hover:bg-[#FEF2F2] hover:border-[#FECACA] hover:text-[#DC2626]'
+                    : 'border-[#CBD5E1] bg-white text-[#64748B] hover:bg-[#FEF2F2] hover:border-[#FCA5A5] hover:text-[#DC2626]'
                 }`}
               >
-                <FontAwesomeIcon icon={faBan} className="w-3 h-3 shrink-0" />
+                <FontAwesomeIcon icon={faBan} className="w-3.5 h-3.5 shrink-0" />
                 <span>Dibatalkan</span>
               </button>
             </div>
@@ -529,18 +529,18 @@ export function OrderDetailModal({
                 placeholder="Catatan perubahan audit log (opsional)..."
                 value={statusNotes}
                 onChange={(e) => setStatusNotes(e.target.value)}
-                className="text-xs bg-white border border-[#E2E8F0] text-[#0F172A] placeholder:text-[#94A3B8] focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] h-7 px-2.5 rounded-md"
+                className="text-xs sm:text-sm bg-white border border-[#CBD5E1] text-[#0F172A] placeholder:text-[#94A3B8] focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] h-9 px-3 rounded-lg"
               />
             </div>
 
             {/* Anti-Fraud Verification Checklist Box for Manual Orders */}
             {isAntiFraudRequired && (
-              <div className="p-2 bg-[#FFFBEB] border border-[#FDE68A] rounded-md space-y-1 text-xs">
-                <div className="flex items-center gap-1.5 text-[#D97706] font-semibold text-[11px]">
+              <div className="p-2.5 bg-[#FFFBEB] border border-[#FDE68A] rounded-lg space-y-1.5 text-xs">
+                <div className="flex items-center gap-1.5 text-[#D97706] font-semibold text-xs">
                   <FontAwesomeIcon icon={faShieldHalved} className="w-3.5 h-3.5 shrink-0" />
                   <span>Verifikasi Mutasi Rekening Anti-Fraud</span>
                 </div>
-                <p className="text-[10.5px] text-[#92400E] leading-tight">
+                <p className="text-[11px] text-[#92400E] leading-relaxed">
                   Nominal wajib dicek di mutasi m-Banking/DANA:{' '}
                   <strong className="text-[#0F172A] font-mono text-xs">
                     Rp {order.total_amount.toLocaleString('id-ID')}
@@ -552,14 +552,14 @@ export function OrderDetailModal({
                   ) : null}
                   .
                 </p>
-                <label className="flex items-center gap-2 cursor-pointer pt-0.5 bg-white p-1.5 rounded border border-[#FDE68A]">
+                <label className="flex items-center gap-2 cursor-pointer pt-0.5 bg-white p-2 rounded-md border border-[#FDE68A]">
                   <input
                     type="checkbox"
                     checked={isMutationVerified}
                     onChange={(e) => setIsMutationVerified(e.target.checked)}
-                    className="w-3.5 h-3.5 accent-[#2563EB] cursor-pointer"
+                    className="w-4 h-4 accent-[#2563EB] cursor-pointer"
                   />
-                  <span className="text-[10.5px] font-medium text-[#0F172A]">
+                  <span className="text-[11px] font-medium text-[#0F172A]">
                     Saya telah memeriksa mutasi riil di m-Banking/DANA, bukan hanya screenshot.
                   </span>
                 </label>
@@ -569,24 +569,24 @@ export function OrderDetailModal({
 
           {/* Section D: VIP Reseller Live Gateway Integration Card (Conditional) */}
           {order.provider === 'vip-reseller' && (
-            <div className="bg-white border border-[#E2E8F0] rounded-lg p-2 sm:p-2.5 space-y-2 text-xs shadow-2xs">
+            <div className="bg-white border border-[#E2E8F0] rounded-lg p-2.5 sm:p-3 space-y-2 text-xs shadow-2xs">
               <div className="flex items-center justify-between pb-1.5 border-b border-[#E2E8F0]">
                 <div className="flex items-center gap-1.5">
-                  <span className="font-bold text-[#0F172A] text-xs">VIP Reseller Gateway</span>
-                  <span className="px-1.5 py-0.2 rounded text-[9.5px] font-mono uppercase bg-[#EFF6FF] border border-[#BFDBFE] text-[#2563EB] font-bold">
+                  <span className="font-bold text-[#0F172A] text-xs sm:text-sm">VIP Reseller Gateway</span>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-mono uppercase bg-[#EFF6FF] border border-[#BFDBFE] text-[#2563EB] font-bold">
                     {order.provider_status || 'Waiting'}
                   </span>
                 </div>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1.5">
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
                     disabled={isSyncingVip}
                     onClick={handleSyncVip}
-                    className="h-6 text-[10px] border-[#E2E8F0] bg-white text-[#0F172A] hover:bg-[#F8FAFC] gap-1 cursor-pointer px-2"
+                    className="h-8.5 text-xs border-[#CBD5E1] bg-white text-[#0F172A] hover:bg-[#F8FAFC] gap-1.5 cursor-pointer px-3 rounded-lg font-medium"
                   >
-                    <FontAwesomeIcon icon={faRotateLeft} className={`w-2.5 h-2.5 ${isSyncingVip ? 'animate-spin' : ''}`} />
+                    <FontAwesomeIcon icon={faRotateLeft} className={`w-3 h-3 ${isSyncingVip ? 'animate-spin' : ''}`} />
                     <span>{isSyncingVip ? 'Memeriksa...' : 'Cek Status'}</span>
                   </Button>
                   {!order.provider_trxid && (
@@ -595,7 +595,7 @@ export function OrderDetailModal({
                       size="sm"
                       disabled={isFulfillingVip}
                       onClick={handleFulfillVip}
-                      className="h-6 text-[10px] bg-[#2563EB] text-white hover:bg-[#1D4ED8] gap-1 font-semibold cursor-pointer px-2"
+                      className="h-8.5 text-xs bg-[#2563EB] text-white hover:bg-[#1D4ED8] gap-1.5 font-semibold cursor-pointer px-3.5 rounded-lg"
                     >
                       <span>{isFulfillingVip ? 'Memproses...' : 'Kirim VIP'}</span>
                     </Button>
@@ -705,13 +705,13 @@ export function OrderDetailModal({
             )}
           </div>
 
-          <div className="flex items-center gap-2 ml-auto">
+          <div className="flex items-center gap-2.5 ml-auto">
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={onClose}
-              className="text-xs h-7.5 px-3 border-[#E2E8F0] bg-white text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#0F172A] cursor-pointer"
+              className="text-xs sm:text-sm h-9.5 px-4 sm:px-5 rounded-xl border-[#CBD5E1] bg-white text-[#475569] hover:bg-[#F8FAFC] hover:text-[#0F172A] font-semibold cursor-pointer"
             >
               Tutup
             </Button>
@@ -720,9 +720,9 @@ export function OrderDetailModal({
               size="sm"
               onClick={handleSave}
               disabled={isSaveDisabled}
-              className="text-xs gap-1.5 h-7.5 px-3.5 font-semibold bg-[#2563EB] hover:bg-[#1D4ED8] text-white shadow-xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="text-xs sm:text-sm gap-2 h-9.5 px-5 sm:px-6 rounded-xl font-semibold bg-[#2563EB] hover:bg-[#1D4ED8] text-white shadow-xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <FontAwesomeIcon icon={faCheck} className="w-3 h-3" />
+              <FontAwesomeIcon icon={faCheck} className="w-3.5 h-3.5" />
               <span>{isUpdating ? 'Menyimpan...' : 'Simpan Status'}</span>
             </Button>
           </div>
