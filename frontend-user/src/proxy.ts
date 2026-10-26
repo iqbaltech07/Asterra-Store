@@ -39,8 +39,14 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 
   // 1. Admin Page Routes Protection (/admin/*)
   if (pathname.startsWith('/admin')) {
-    if (pathname === '/admin/login') {
-      if (isAuthenticated) {
+    const isPublicAdminRoute =
+      pathname === '/admin/login' ||
+      pathname === '/admin/lupa-password' ||
+      pathname === '/admin/forgot-password' ||
+      pathname === '/admin/reset-password';
+
+    if (isPublicAdminRoute) {
+      if (pathname === '/admin/login' && isAuthenticated) {
         return NextResponse.redirect(new URL('/admin', request.url));
       }
       return applySecurityHeaders(NextResponse.next());
@@ -55,8 +61,14 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 
   // 2. Sales Portal Page Routes Protection (/sales/*)
   if (pathname.startsWith('/sales')) {
-    if (pathname === '/sales/login') {
-      if (isAuthenticated) {
+    const isPublicSalesRoute =
+      pathname === '/sales/login' ||
+      pathname === '/sales/lupa-password' ||
+      pathname === '/sales/forgot-password' ||
+      pathname === '/sales/reset-password';
+
+    if (isPublicSalesRoute) {
+      if (pathname === '/sales/login' && isAuthenticated) {
         return NextResponse.redirect(new URL('/sales', request.url));
       }
       return applySecurityHeaders(NextResponse.next());

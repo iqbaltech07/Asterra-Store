@@ -39,22 +39,30 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 
   // 1. Admin Page Routes Protection (/admin/*)
   if (pathname.startsWith('/admin')) {
-    if (pathname === '/admin/login') {
-      const isLoggedOut = request.nextUrl.searchParams.get('logged_out') === '1';
-      const isSalesForbidden = request.nextUrl.searchParams.get('error') === 'sales_forbidden';
+    const isPublicAdminRoute =
+      pathname === '/admin/login' ||
+      pathname === '/admin/lupa-password' ||
+      pathname === '/admin/forgot-password' ||
+      pathname === '/admin/reset-password';
 
-      if (isLoggedOut || isSalesForbidden) {
-        const response = applySecurityHeaders(NextResponse.next());
-        ['better-auth.session_token', '__Secure-better-auth.session_token', 'asterra_admin_session', 'asterra_session'].forEach(
-          (cookieName) => {
-            response.cookies.set(cookieName, '', { path: '/', maxAge: 0, expires: new Date(0) });
-          }
-        );
-        return response;
-      }
+    if (isPublicAdminRoute) {
+      if (pathname === '/admin/login') {
+        const isLoggedOut = request.nextUrl.searchParams.get('logged_out') === '1';
+        const isSalesForbidden = request.nextUrl.searchParams.get('error') === 'sales_forbidden';
 
-      if (isAuthenticated) {
-        return NextResponse.redirect(new URL('/admin', request.url));
+        if (isLoggedOut || isSalesForbidden) {
+          const response = applySecurityHeaders(NextResponse.next());
+          ['better-auth.session_token', '__Secure-better-auth.session_token', 'asterra_admin_session', 'asterra_session'].forEach(
+            (cookieName) => {
+              response.cookies.set(cookieName, '', { path: '/', maxAge: 0, expires: new Date(0) });
+            }
+          );
+          return response;
+        }
+
+        if (isAuthenticated) {
+          return NextResponse.redirect(new URL('/admin', request.url));
+        }
       }
       return applySecurityHeaders(NextResponse.next());
     }

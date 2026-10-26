@@ -62,27 +62,38 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 
   // 2. Sales Portal Page Routes Protection (/sales/*)
   if (pathname.startsWith('/sales')) {
-    if (pathname === '/sales/login') {
-      const isLoggedOut = request.nextUrl.searchParams.has('logged_out');
-      const isAdminForbidden = request.nextUrl.searchParams.get('error') === 'admin_forbidden';
-      if (isAuthenticated && !isLoggedOut && !isAdminForbidden) {
-        return NextResponse.redirect(new URL('/sales', request.url));
+    const isPublicSalesRoute =
+      pathname === '/sales/login' ||
+      pathname === '/sales/lupa-password' ||
+      pathname === '/sales/forgot-password' ||
+      pathname === '/sales/reset-password';
+
+    if (isPublicSalesRoute) {
+      if (pathname === '/sales/login') {
+        const isLoggedOut = request.nextUrl.searchParams.has('logged_out');
+        const isAdminForbidden = request.nextUrl.searchParams.get('error') === 'admin_forbidden';
+        if (isAuthenticated && !isLoggedOut && !isAdminForbidden) {
+          return NextResponse.redirect(new URL('/sales', request.url));
+        }
+        
+        const response = applySecurityHeaders(NextResponse.next());
+        // Clean up lingering cookies if explicitly logged out or admin forbidden
+        if (isLoggedOut || isAdminForbidden) {
+          const cookieNames = [
+            'better-auth.session_token',
+            '__Secure-better-auth.session_token',
+            'asterra_admin_session',
+            'asterra_session',
+          ];
+          cookieNames.forEach((name) => {
+            response.cookies.delete(name);
+          });
+        }
+        return response;
       }
-      
-      const response = applySecurityHeaders(NextResponse.next());
-      // Clean up lingering cookies if explicitly logged out or admin forbidden
-      if (isLoggedOut || isAdminForbidden) {
-        const cookieNames = [
-          'better-auth.session_token',
-          '__Secure-better-auth.session_token',
-          'asterra_admin_session',
-          'asterra_session',
-        ];
-        cookieNames.forEach((name) => {
-          response.cookies.delete(name);
-        });
-      }
-      return response;
+
+      // Password recovery and reset routes can be accessed without login
+      return applySecurityHeaders(NextResponse.next());
     }
 
     if (!isAuthenticated) {
