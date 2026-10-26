@@ -94,6 +94,7 @@ export function AdminOrdersTab() {
       } else if (selectedOrder) {
         setSelectedOrder((prev) => (prev ? { ...prev, order_status: variables.status as any } : null));
       }
+      setIsDetailModalOpen(false);
     },
     onError: (err: Error) => {
       showNotification(`Error: ${err.message}`);
