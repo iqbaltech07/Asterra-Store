@@ -74,7 +74,10 @@ export function SalesTrendChart({
   const maxAxisValue = 50000;
 
   return (
-    <div className="bg-white border border-slate-200/80 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
+    <div
+      className="bg-white border border-slate-200/80 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4 card-hover-elevation animate-fade-up"
+      style={{ animationDelay: '60ms' }}
+    >
       {/* Header & Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
         <div className="flex items-center gap-3">

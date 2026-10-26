@@ -68,7 +68,6 @@ import {
 } from '@/components/ui/select';
 import { AsterraLogo } from '@/components/ui/asterra-logo';
 import { AnimatedNumber } from '@/components/ui/animated-number';
-import { useMountOnce } from '@/lib/hooks/use-mount-once';
 import { PaymentConfig } from '@/types/payment';
 import { formatWhatsAppUrl } from '@/lib/utils/format';
 
@@ -180,7 +179,6 @@ function AdminPageContent() {
   const [activeTab, setActiveTab] = useState<AdminTab>(initialUrlTab || 'dashboard');
   const [visitedTabs, setVisitedTabs] = useState<Set<AdminTab>>(() => new Set(['dashboard', 'orders', initialUrlTab || 'dashboard']));
   const [isSidebarMobileOpen, setIsSidebarMobileOpen] = useState(false);
-  const hasMounted = useMountOnce();
 
   const handleTabChange = useCallback((newTab: AdminTab) => {
     setActiveTab(newTab);
@@ -1325,7 +1323,10 @@ function AdminPageContent() {
           {/* Top Summary Metrics Cards - show on products & vip-explorer */}
           {(activeTab === 'products' || activeTab === 'vip-explorer') && (
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 mb-4 sm:mb-6">
-              <div className={`motion-card-interactive bg-surface border border-border rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-5 shadow-xs flex flex-col justify-between hover:border-primary/40 ${!hasMounted ? 'animate-fade-up stagger-1' : ''}`}>
+              <div
+                className="card-hover-elevation animate-kpi-reveal bg-surface border border-border rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-5 shadow-xs flex flex-col justify-between hover:border-primary/40 cursor-default"
+                style={{ animationDelay: '0ms' }}
+              >
                 <div className="flex items-center justify-between text-[11px] sm:text-xs text-foreground-muted mb-1.5 sm:mb-2">
                   <span className="font-medium truncate">Aktif di Katalog</span>
                   <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-emerald-50 text-[#16A36A] flex items-center justify-center shrink-0">
@@ -1340,7 +1341,10 @@ function AdminPageContent() {
                 </div>
               </div>
 
-              <div className={`motion-card-interactive bg-surface border border-border rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-5 shadow-xs flex flex-col justify-between hover:border-primary/40 ${!hasMounted ? 'animate-fade-up stagger-2' : ''}`}>
+              <div
+                className="card-hover-elevation animate-kpi-reveal bg-surface border border-border rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-5 shadow-xs flex flex-col justify-between hover:border-primary/40 cursor-default"
+                style={{ animationDelay: '70ms' }}
+              >
                 <div className="flex items-center justify-between text-[11px] sm:text-xs text-foreground-muted mb-1.5 sm:mb-2">
                   <span className="font-medium truncate">Diarsipkan (Draft)</span>
                   <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-gray-100 text-gray-500 flex items-center justify-center shrink-0">
@@ -1355,7 +1359,10 @@ function AdminPageContent() {
                 </div>
               </div>
 
-              <div className={`motion-card-interactive bg-surface border border-border rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-5 shadow-xs flex flex-col justify-between hover:border-primary/40 ${!hasMounted ? 'animate-fade-up stagger-3' : ''}`}>
+              <div
+                className="card-hover-elevation animate-kpi-reveal bg-surface border border-border rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-5 shadow-xs flex flex-col justify-between hover:border-primary/40 cursor-default"
+                style={{ animationDelay: '140ms' }}
+              >
                 <div className="flex items-center justify-between text-[11px] sm:text-xs text-foreground-muted mb-1.5 sm:mb-2">
                   <span className="font-medium truncate">Perhatian Stok</span>
                   <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
@@ -1370,7 +1377,10 @@ function AdminPageContent() {
                 </div>
               </div>
 
-              <div className={`motion-card-interactive bg-surface border border-border rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-5 shadow-xs flex flex-col justify-between hover:border-primary/40 ${!hasMounted ? 'animate-fade-up stagger-4' : ''}`}>
+              <div
+                className="card-hover-elevation animate-kpi-reveal bg-surface border border-border rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-5 shadow-xs flex flex-col justify-between hover:border-primary/40 cursor-default"
+                style={{ animationDelay: '210ms' }}
+              >
                 <div className="flex items-center justify-between text-[11px] sm:text-xs text-foreground-muted mb-1.5 sm:mb-2">
                   <span className="font-medium truncate">Saldo VIP</span>
                   <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-blue-50 text-[#2563EB] flex items-center justify-center shrink-0">

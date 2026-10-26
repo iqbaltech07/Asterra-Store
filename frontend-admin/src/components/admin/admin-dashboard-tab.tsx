@@ -19,7 +19,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { SparklinePath } from '@/components/ui/sparkline-path';
 import { useCountUp } from '@/lib/hooks/use-count-up';
-import { useMountOnce } from '@/lib/hooks/use-mount-once';
 import { SalesTrendChart } from './sales-trend-chart';
 import { AdminTab } from './admin-sidebar';
 import { ProductBrandIcon } from '@/components/ui/product-brand-icon';
@@ -137,10 +136,9 @@ export function AdminDashboardTab({
     formatter: (v) => `Rp ${Math.round(v).toLocaleString('id-ID')}`,
   });
   const displayPending = useCountUp(targetPending);
-  const hasMounted = useMountOnce();
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 animate-fade-up">
       {/* 1. Top Operational Alert Banners matching Reference Screenshot 100% */}
       <div className="space-y-3">
         {/* Banner 1: Saldo Supplier VIP Reseller matching gambar3 with exact luminous sheen motif */}
@@ -224,9 +222,7 @@ export function AdminDashboardTab({
         <div
           onClick={() => onNavigateTab('revenue')}
           style={{ animationDelay: '0ms' }}
-          className={`bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-2xs card-hover-elevation cursor-pointer flex flex-col justify-between ${
-            !hasMounted ? 'animate-kpi-reveal' : ''
-          }`}
+          className="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-2xs card-hover-elevation animate-kpi-reveal cursor-pointer flex flex-col justify-between"
         >
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
@@ -259,9 +255,7 @@ export function AdminDashboardTab({
         <div
           onClick={() => onNavigateTab('orders')}
           style={{ animationDelay: '60ms' }}
-          className={`bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-2xs card-hover-elevation cursor-pointer flex flex-col justify-between ${
-            !hasMounted ? 'animate-kpi-reveal' : ''
-          }`}
+          className="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-2xs card-hover-elevation animate-kpi-reveal cursor-pointer flex flex-col justify-between"
         >
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
@@ -293,9 +287,7 @@ export function AdminDashboardTab({
         <div
           onClick={() => onNavigateTab('customers')}
           style={{ animationDelay: '120ms' }}
-          className={`bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-2xs card-hover-elevation cursor-pointer flex flex-col justify-between ${
-            !hasMounted ? 'animate-kpi-reveal' : ''
-          }`}
+          className="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-2xs card-hover-elevation animate-kpi-reveal cursor-pointer flex flex-col justify-between"
         >
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
@@ -328,9 +320,7 @@ export function AdminDashboardTab({
         <div
           onClick={() => onNavigateTab('profit')}
           style={{ animationDelay: '180ms' }}
-          className={`bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-2xs card-hover-elevation cursor-pointer flex flex-col justify-between ${
-            !hasMounted ? 'animate-kpi-reveal' : ''
-          }`}
+          className="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-2xs card-hover-elevation animate-kpi-reveal cursor-pointer flex flex-col justify-between"
         >
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
@@ -362,9 +352,7 @@ export function AdminDashboardTab({
         <div
           onClick={() => onNavigateTab('orders')}
           style={{ animationDelay: '240ms' }}
-          className={`bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-2xs card-hover-elevation cursor-pointer flex flex-col justify-between col-span-2 sm:col-span-1 ${
-            !hasMounted ? 'animate-kpi-reveal' : ''
-          }`}
+          className="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-2xs card-hover-elevation animate-kpi-reveal cursor-pointer flex flex-col justify-between col-span-2 sm:col-span-1"
         >
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
@@ -405,7 +393,10 @@ export function AdminDashboardTab({
           />
 
           {/* Card 2: Aktivitas Transaksi Terbaru */}
-          <div className="bg-white border border-slate-200/80 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
+          <div
+            className="bg-white border border-slate-200/80 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4 card-hover-elevation animate-fade-up"
+            style={{ animationDelay: '120ms' }}
+          >
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-900 shrink-0">
@@ -490,7 +481,10 @@ export function AdminDashboardTab({
         {/* Right Pane (4 Cols): Produk Terlaris & Performa Affiliate Sales */}
         <div className="xl:col-span-4 space-y-5 sm:space-y-6">
           {/* Card 1: Produk Terlaris */}
-          <div className="bg-white border border-slate-200/80 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
+          <div
+            className="bg-white border border-slate-200/80 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4 card-hover-elevation animate-fade-up"
+            style={{ animationDelay: '180ms' }}
+          >
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="font-bold text-sm text-slate-900 flex items-center gap-2">
                 <Flame className="w-4 h-4 text-slate-900 fill-slate-900" />
@@ -534,7 +528,10 @@ export function AdminDashboardTab({
           </div>
 
           {/* Card 2: Performa Affiliate Sales */}
-          <div className="bg-white border border-slate-200/80 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4">
+          <div
+            className="bg-white border border-slate-200/80 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4 card-hover-elevation animate-fade-up"
+            style={{ animationDelay: '240ms' }}
+          >
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <h3 className="font-bold text-sm text-slate-900 flex items-center gap-2">
                 <Share2 className="w-4 h-4 text-slate-900" />
