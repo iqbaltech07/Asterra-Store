@@ -14,7 +14,6 @@ import {
 import Link from 'next/link';
 import { AdminSidebar, AdminTab } from '@/components/admin/admin-sidebar';
 import { SalesConsoleSuite } from '@/components/sales/sales-console-suite';
-import { Search } from 'lucide-react';
 
 const TAB_TITLES: Record<string, { category: string; title: string }> = {
   'sales-overview': { category: 'Portal Penjualan', title: 'Ringkasan Performa & Komisi Sales' },
@@ -225,15 +224,8 @@ function SalesPortalContent() {
               </div>
             </div>
 
-            {/* Quick Header Actions matching Screenshot */}
+            {/* Quick Header Actions */}
             <div className="flex items-center gap-3 shrink-0">
-              {/* Search Pill Input with responsive width */}
-              <div className="hidden md:flex items-center gap-2 bg-white/90 border border-slate-200/90 rounded-full px-4 py-2 text-xs text-slate-400 shadow-2xs hover:border-slate-300 transition-colors w-56 lg:w-72">
-                <Search className="w-4 h-4 text-slate-400 shrink-0" />
-                <span className="flex-1 text-slate-400 select-none truncate text-xs">Cari produk, link, materi...</span>
-                <kbd className="hidden lg:inline-block px-2 py-0.5 text-[10px] bg-slate-100 text-slate-500 rounded border border-slate-200 font-mono">Ctrl + K</kbd>
-              </div>
-
               {/* Dompet Shortcut (desktop & tablet) */}
               <Button
                 size="sm"
@@ -255,21 +247,6 @@ function SalesPortalContent() {
                 <span className="hidden md:inline">Lihat Toko</span>
                 <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="text-[10px] text-slate-400" />
               </Link>
-
-              {/* Desktop Sales Partner Avatar Chip matching Screenshot */}
-              <div className="hidden sm:flex items-center gap-2.5 pl-1.5 pr-3 py-1.5 rounded-full bg-white border border-slate-200/90 shadow-2xs hover:border-slate-300 hover:shadow-xs transition-all cursor-default">
-                <div className="w-7 h-7 rounded-full bg-[#111318] text-white font-bold text-[11px] flex items-center justify-center shrink-0">
-                  {adminUser?.name ? adminUser.name.charAt(0).toUpperCase() : 'SP'}
-                </div>
-                <div className="flex flex-col text-left leading-none">
-                  <span className="text-xs font-bold text-slate-900 truncate max-w-[120px]">
-                    {adminUser?.name || 'Mitra Sales'}
-                  </span>
-                  <span className="text-[10px] text-slate-400 font-normal mt-0.5">
-                    Sales Partner
-                  </span>
-                </div>
-              </div>
             </div>
           </div>
         </header>

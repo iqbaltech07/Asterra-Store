@@ -293,6 +293,28 @@ export function AdminAffiliateTab({ onNotify }: AdminAffiliateTabProps) {
     return true;
   });
 
+  // Resolve sales partner's direct WhatsApp URL, prioritizing phone number from transfer destination (bankAccount)
+  const resolvePartnerWaUrl = (payout: PayoutRequestItem) => {
+    const partner = affiliates.find((a) => a.id === payout.partnerId || a.code === payout.partnerCode);
+    const cleanAccount = payout.bankAccount ? payout.bankAccount.replace(/\D/g, '') : '';
+    const isAccountPhone =
+      cleanAccount.startsWith('08') ||
+      cleanAccount.startsWith('628') ||
+      cleanAccount.startsWith('8') ||
+      cleanAccount.startsWith('09');
+
+    const targetPhone = isAccountPhone
+      ? cleanAccount
+      : (payout.partnerWhatsapp && payout.partnerWhatsapp !== '-'
+          ? payout.partnerWhatsapp
+          : (partner?.whatsapp && partner.whatsapp !== '-' ? partner.whatsapp : cleanAccount));
+
+    return formatWhatsAppUrl(
+      targetPhone,
+      `Halo ${payout.partnerName}, update pengajuan pencairan komisi Asterra Store ID ${payout.id} (Rp ${payout.amount.toLocaleString('id-ID')}) ke ${payout.bankName} (${payout.bankAccount}).`
+    );
+  };
+
   return (
     <div className="space-y-6">
       {/* 1. Antrean Pencairan Dana Komisi Sales (Payout Queue) */}
@@ -407,13 +429,8 @@ export function AdminAffiliateTab({ onNotify }: AdminAffiliateTabProps) {
                   const isCompleted = payout.status === 'completed' || payout.status === 'approved';
                   const isRejected = payout.status === 'rejected';
 
-                  // Resolve WhatsApp phone number for the partner
-                  const partner = affiliates.find((a) => a.id === payout.partnerId || a.code === payout.partnerCode);
-                  const rawWa = payout.partnerWhatsapp || partner?.whatsapp;
-                  const waUrl = formatWhatsAppUrl(
-                    rawWa,
-                    `Halo ${payout.partnerName}, update pengajuan pencairan komisi Asterra Store ID ${payout.id}`
-                  );
+                  // Resolve WhatsApp phone number for the sales partner directly
+                  const waUrl = resolvePartnerWaUrl(payout);
 
                   return (
                     <tr key={payout.id} className="hover:bg-surface-raised/50 transition-colors">
@@ -538,13 +555,8 @@ export function AdminAffiliateTab({ onNotify }: AdminAffiliateTabProps) {
               const isPending = payout.status === 'pending';
               const isCompleted = payout.status === 'completed' || payout.status === 'approved';
               const isRejected = payout.status === 'rejected';
-
-              const partner = affiliates.find((a) => a.id === payout.partnerId || a.code === payout.partnerCode);
-              const rawWa = payout.partnerWhatsapp || partner?.whatsapp;
-              const waUrl = formatWhatsAppUrl(
-                rawWa,
-                `Halo ${payout.partnerName}, update pengajuan pencairan komisi Asterra Store ID ${payout.id}`
-              );
+              // Resolve WhatsApp phone number for the sales partner directly
+              const waUrl = resolvePartnerWaUrl(payout);
 
               return (
                 <div key={payout.id} className="p-3.5 bg-surface-raised rounded-xl border border-border space-y-2.5 text-xs">
