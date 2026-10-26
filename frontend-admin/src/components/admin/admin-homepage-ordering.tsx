@@ -1246,9 +1246,15 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
 
                           {/* Status Badges Row (Gambar 2 Style: Ready, Garansi, DISKON 15%) */}
                           <div className="flex flex-wrap items-center gap-1.5 mt-2.5">
-                            <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold border border-blue-200 bg-blue-50/80 text-blue-700">
-                              Ready
-                            </span>
+                            {prod.items && prod.items.length > 0 && prod.items.every(p => (p.stock !== undefined && p.stock <= 0) || (p as any).providerStatus === 'empty' || p.status !== 'active') ? (
+                              <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold border border-red-200 bg-red-50/80 text-red-700">
+                                Stok Habis
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold border border-blue-200 bg-blue-50/80 text-blue-700">
+                                Ready
+                              </span>
+                            )}
                             <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold border border-emerald-200 bg-emerald-50/80 text-emerald-700">
                               Garansi
                             </span>

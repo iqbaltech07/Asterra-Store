@@ -263,6 +263,15 @@ export default function HomePage() {
       const activePrices = items.map((p) => p.price).filter((p) => p > 0);
       const minPrice = activePrices.length > 0 ? Math.min(...activePrices) : 0;
 
+      const isOutOfStock =
+        items.length === 0 ||
+        items.every((p) => {
+          const isZeroStock = p.stock !== undefined && p.stock <= 0;
+          const isEmpty = p.providerStatus === 'empty';
+          const isUnavailable = p.status === 'out_of_stock' || p.status === 'archived';
+          return isZeroStock || isEmpty || isUnavailable;
+        });
+
       return {
         name: target.name,
         slug: target.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
@@ -279,6 +288,7 @@ export default function HomePage() {
         isPromo: target.isPromo,
         items,
         minPrice,
+        isOutOfStock,
       };
     }).filter((app) => app.items.length > 0 && app.minPrice > 0);
 
@@ -426,6 +436,15 @@ export default function HomePage() {
       const activePrices = items.map((p) => p.price).filter((p) => p > 0);
       const minPrice = activePrices.length > 0 ? Math.min(...activePrices) : 0;
 
+      const isOutOfStock =
+        items.length === 0 ||
+        items.every((p) => {
+          const isZeroStock = p.stock !== undefined && p.stock <= 0;
+          const isEmpty = p.providerStatus === 'empty';
+          const isUnavailable = p.status === 'out_of_stock' || p.status === 'archived';
+          return isZeroStock || isEmpty || isUnavailable;
+        });
+
       return {
         name: conf.name,
         slug: conf.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
@@ -435,6 +454,7 @@ export default function HomePage() {
         rating: conf.rating,
         items,
         minPrice,
+        isOutOfStock,
       };
     });
 

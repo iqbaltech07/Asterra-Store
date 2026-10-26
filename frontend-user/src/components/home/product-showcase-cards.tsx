@@ -33,6 +33,18 @@ export interface ApplicationGroupItem {
   isPromo?: boolean;
   imageUrl?: string;
   items: ProductItem[];
+  isOutOfStock?: boolean;
+}
+
+export function isAppOutOfStock(app: ApplicationGroupItem): boolean {
+  if (typeof app.isOutOfStock === 'boolean') return app.isOutOfStock;
+  if (!app.items || app.items.length === 0) return true;
+  return app.items.every((item) => {
+    const isZeroStock = item.stock !== undefined && item.stock <= 0;
+    const isEmpty = item.providerStatus === 'empty';
+    const isInactive = item.status === 'out_of_stock' || item.status === 'archived';
+    return isZeroStock || isEmpty || isInactive;
+  });
 }
 
 export function FeaturedGridCardSkeleton() {
@@ -98,6 +110,7 @@ export function FeaturedGridCard({
   if (!minPrice || minPrice <= 0) return null;
   const promoCalc = calculateCampaignPrice(minPrice, app, activeCampaigns);
   const isPromo = promoCalc.hasPromo;
+  const isOutOfStock = isAppOutOfStock(app);
 
   return (
     <div
@@ -129,16 +142,22 @@ export function FeaturedGridCard({
               <FontAwesomeIcon icon={faStar} className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-amber-500 shrink-0" />
               <span className="font-semibold text-[#121A2A]">{app.rating || '5.0'}</span>
               <span className="text-[#121A2A]/45 truncate">
-                ({app.soldCount ? `${app.soldCount.toLocaleString('id-ID')} terjual` : 'Ready'})
+                ({app.soldCount ? `${app.soldCount.toLocaleString('id-ID')} terjual` : (isOutOfStock ? 'Stok Habis' : 'Ready')})
               </span>
             </div>
           </div>
         </div>
 
         <div className="flex items-center gap-1 sm:gap-1.5 mt-2 sm:mt-2.5 pt-0.5 flex-wrap">
-          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200/60 leading-none">
-            Ready
-          </span>
+          {isOutOfStock ? (
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-semibold bg-red-50 text-red-600 border border-red-200/60 leading-none">
+              Stok Habis
+            </span>
+          ) : (
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200/60 leading-none">
+              Ready
+            </span>
+          )}
           <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60 leading-none">
             Garansi
           </span>
@@ -224,6 +243,7 @@ export function ShowcaseLoopingCard({
   if (!minPrice || minPrice <= 0) return null;
   const promoCalc = calculateCampaignPrice(minPrice, app, activeCampaigns);
   const isPromo = promoCalc.hasPromo;
+  const isOutOfStock = isAppOutOfStock(app);
 
   return (
     <div
@@ -260,9 +280,15 @@ export function ShowcaseLoopingCard({
         </div>
 
         <div className="flex items-center gap-1.5 mt-2.5 pt-0.5">
-          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200/60 leading-none">
-            Ready
-          </span>
+          {isOutOfStock ? (
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-red-50 text-red-600 border border-red-200/60 leading-none">
+              Stok Habis
+            </span>
+          ) : (
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200/60 leading-none">
+              Ready
+            </span>
+          )}
           <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60 leading-none">
             Garansi
           </span>
