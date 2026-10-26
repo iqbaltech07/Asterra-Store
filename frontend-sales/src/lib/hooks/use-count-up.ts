@@ -5,6 +5,7 @@ import { MOTION_DURATION, isReducedMotion } from '@/lib/motion';
 
 export interface UseCountUpOptions {
   duration?: number;
+  delay?: number;
   formatter?: (val: number) => string;
   enablePulse?: boolean;
 }
@@ -32,6 +33,7 @@ export function useCountUpDetails(
 ): CountUpDetails {
   const {
     duration = MOTION_DURATION.counter,
+    delay = 0,
     formatter = (v) => Math.round(v).toLocaleString('id-ID'),
     enablePulse = true,
   } = options;
@@ -119,9 +121,10 @@ export function useCountUpDetails(
       }
     };
 
+    const effectiveDelay = delay > 0 ? delay : (isFirstMount ? 60 : 0);
     const delayTimer = setTimeout(() => {
       rafRef.current = requestAnimationFrame(animate);
-    }, isFirstMount ? 60 : 0);
+    }, effectiveDelay);
 
     return () => {
       clearTimeout(delayTimer);
@@ -132,7 +135,7 @@ export function useCountUpDetails(
         clearTimeout(pulseTimerRef.current);
       }
     };
-  }, [targetValue, duration, enablePulse]);
+  }, [targetValue, duration, delay, enablePulse]);
 
   const pulseClass = isPulsing
     ? direction === 'up'

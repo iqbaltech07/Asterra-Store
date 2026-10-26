@@ -4,9 +4,16 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { BarChart3, TrendingUp, Calendar, ArrowUpRight } from 'lucide-react';
 import { useCountUp } from '@/lib/hooks/use-count-up';
 import { MOTION_DURATION, MOTION_EASING, MOTION_STAGGER, isReducedMotion } from '@/lib/motion';
+import { SlidingPillTabs, SlidingTabOption } from '@/components/ui/sliding-pill-tabs';
 import type { SalesOrder } from './types';
 
 export type SalesPeriod = 'daily' | 'weekly' | 'monthly';
+
+const PERIOD_TABS: Array<SlidingTabOption<SalesPeriod>> = [
+  { id: 'daily', label: 'Hari Ini' },
+  { id: 'weekly', label: '7 Hari' },
+  { id: 'monthly', label: '30 Hari' },
+];
 
 export interface SalesDataPoint {
   label: string;
@@ -314,52 +321,14 @@ export function SalesTrendChart({
           </div>
         </div>
 
-        {/* Period Switcher Pills (Hari Ini, 7 Hari, 30 Hari) */}
-        <div
-          role="tablist"
-          aria-label="Filter Periode Grafik"
-          className="flex items-center bg-slate-100/90 p-1 rounded-full text-xs shadow-2xs self-start sm:self-auto"
-        >
-          <button
-            type="button"
-            role="tab"
-            aria-selected={currentPeriod === 'daily'}
-            onClick={() => handlePeriodChange('daily')}
-            className={`px-3.5 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer ${
-              currentPeriod === 'daily'
-                ? 'bg-[#334155] text-white shadow-xs'
-                : 'text-slate-500 hover:text-slate-900'
-            }`}
-          >
-            Hari Ini
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={currentPeriod === 'weekly'}
-            onClick={() => handlePeriodChange('weekly')}
-            className={`px-3.5 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer ${
-              currentPeriod === 'weekly'
-                ? 'bg-[#334155] text-white shadow-xs'
-                : 'text-slate-500 hover:text-slate-900'
-            }`}
-          >
-            7 Hari
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={currentPeriod === 'monthly'}
-            onClick={() => handlePeriodChange('monthly')}
-            className={`px-3.5 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer ${
-              currentPeriod === 'monthly'
-                ? 'bg-[#334155] text-white shadow-xs'
-                : 'text-slate-500 hover:text-slate-900'
-            }`}
-          >
-            30 Hari
-          </button>
-        </div>
+        {/* Period Switcher with Smooth Sliding Pill Indicator */}
+        <SlidingPillTabs<SalesPeriod>
+          tabs={PERIOD_TABS}
+          activeTab={currentPeriod}
+          onChange={handlePeriodChange}
+          ariaLabel="Filter Periode Grafik"
+          className="self-start sm:self-auto"
+        />
       </div>
 
       {/* Period Stats Summary Pill Banner with Live Animated Count-Up */}

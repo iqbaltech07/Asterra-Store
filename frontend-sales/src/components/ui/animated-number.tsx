@@ -6,6 +6,8 @@ import { ArrowUpRight, ArrowDownRight } from 'lucide-react';
 
 export interface AnimatedNumberProps {
   value: number;
+  duration?: number;
+  delay?: number;
   formatter?: (val: number) => string;
   showDelta?: boolean;
   className?: string;
@@ -16,6 +18,8 @@ export interface AnimatedNumberProps {
 
 export function AnimatedNumber({
   value,
+  duration,
+  delay,
   formatter,
   showDelta = false,
   className = '',
@@ -30,6 +34,8 @@ export function AnimatedNumber({
     isPulsing,
     isAnimating,
   } = useCountUpDetails(value, {
+    duration,
+    delay,
     formatter: formatter || ((v) => Math.round(v).toLocaleString('id-ID')),
   });
 

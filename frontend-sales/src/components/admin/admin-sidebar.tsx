@@ -748,7 +748,7 @@ export function AdminSidebar({
                         >
                           <div className="flex items-center gap-2.5 pl-1.5 truncate">
                             <SubIcon
-                              className={`w-4 h-4 shrink-0 transition-colors ${
+                              className={`w-4 h-4 shrink-0 transition-all duration-200 group-hover:translate-x-0.5 ${
                                 isActive ? 'text-white' : 'text-[#888888] group-hover:text-white'
                               }`}
                             />

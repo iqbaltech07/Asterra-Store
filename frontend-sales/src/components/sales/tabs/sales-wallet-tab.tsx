@@ -130,7 +130,10 @@ export function SalesWalletTab({ partner, onRefetchProfile }: SalesWalletTabProp
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Wallet Balance Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-1 gap-2.5 sm:gap-4">
-          <div className="col-span-2 bg-surface border border-border rounded-2xl p-4 sm:p-6 shadow-xs space-y-2 sm:space-y-3">
+          <div
+            className="col-span-2 bg-surface border border-border rounded-2xl p-4 sm:p-6 shadow-xs space-y-2 sm:space-y-3 card-hover-elevation animate-kpi-reveal"
+            style={{ animationDelay: '0ms' }}
+          >
             <div className="flex items-center justify-between">
               <span className="text-[11px] sm:text-xs font-semibold text-foreground-muted">Saldo Siap Ditarik (Final)</span>
               <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200/60 flex items-center justify-center">
@@ -150,7 +153,10 @@ export function SalesWalletTab({ partner, onRefetchProfile }: SalesWalletTabProp
             </div>
           </div>
 
-          <div className="col-span-1 bg-surface border border-border rounded-xl sm:rounded-2xl p-3.5 sm:p-6 shadow-xs space-y-1.5 sm:space-y-3 flex flex-col justify-between">
+          <div
+            className="col-span-1 bg-surface border border-border rounded-xl sm:rounded-2xl p-3.5 sm:p-6 shadow-xs space-y-1.5 sm:space-y-3 flex flex-col justify-between card-hover-elevation animate-kpi-reveal"
+            style={{ animationDelay: '80ms' }}
+          >
             <div className="flex items-center justify-between">
               <span className="text-[10px] sm:text-xs font-semibold text-foreground-muted truncate">Masa Garansi (3 Hari)</span>
               <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-md sm:rounded-xl bg-amber-50 text-amber-600 border border-amber-200/60 flex items-center justify-center shrink-0">
@@ -169,7 +175,10 @@ export function SalesWalletTab({ partner, onRefetchProfile }: SalesWalletTabProp
             </p>
           </div>
 
-          <div className="col-span-1 bg-surface border border-border rounded-xl sm:rounded-2xl p-3.5 sm:p-6 shadow-xs space-y-1.5 sm:space-y-3 flex flex-col justify-between">
+          <div
+            className="col-span-1 bg-surface border border-border rounded-xl sm:rounded-2xl p-3.5 sm:p-6 shadow-xs space-y-1.5 sm:space-y-3 flex flex-col justify-between card-hover-elevation animate-kpi-reveal"
+            style={{ animationDelay: '160ms' }}
+          >
             <div className="flex items-center justify-between">
               <span className="text-[10px] sm:text-xs font-semibold text-foreground-muted truncate">Telah Dicairkan</span>
               <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-md sm:rounded-xl bg-foreground/5 text-foreground flex items-center justify-center border border-border shrink-0">
@@ -189,7 +198,10 @@ export function SalesWalletTab({ partner, onRefetchProfile }: SalesWalletTabProp
           </div>
 
           {/* Saldo Siap Tarik vs Tertahan Garansi Proportion Bar */}
-          <div className="col-span-2 bg-surface border border-border rounded-xl p-3.5 sm:p-4 shadow-xs space-y-2">
+          <div
+            className="col-span-2 bg-surface border border-border rounded-xl p-3.5 sm:p-4 shadow-xs space-y-2 card-hover-elevation animate-kpi-reveal"
+            style={{ animationDelay: '240ms' }}
+          >
             <div className="flex items-center justify-between text-xs">
               <span className="font-semibold text-foreground text-[11px] sm:text-xs">Rasio Likuiditas Komisi</span>
               <span className="font-mono text-status-success font-bold text-[11px] sm:text-xs">{readyPercentage}% Siap Tarik</span>
@@ -368,10 +380,18 @@ export function SalesWalletTab({ partner, onRefetchProfile }: SalesWalletTabProp
                 !payoutAccount ||
                 !payoutHolder
               }
-              className="w-full text-xs font-bold h-11 gap-2 shadow-xs rounded-xl"
+              className="w-full text-xs font-bold h-11 gap-2 shadow-xs rounded-xl active:scale-[0.98] transition-all cursor-pointer"
             >
               {payoutMutation.isPending ? (
-                <span>Mengirim Pengajuan...</span>
+                <span className="flex items-center gap-2">
+                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <span>Mengirim Pengajuan...</span>
+                </span>
+              ) : payoutSuccessMsg ? (
+                <span className="flex items-center gap-2 text-emerald-300">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-300" />
+                  <span>Pengajuan Terkirim!</span>
+                </span>
               ) : (
                 <>
                   <Wallet className="w-4 h-4" />

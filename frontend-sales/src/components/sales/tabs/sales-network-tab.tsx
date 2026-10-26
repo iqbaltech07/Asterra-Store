@@ -9,8 +9,6 @@ import {
   RefreshCw,
   UserPlus,
   CheckCircle2,
-  Copy,
-  Check,
   Send,
   DollarSign,
   Clock,
@@ -19,8 +17,10 @@ import {
   ShoppingBag,
   Award,
   Percent,
-  Share2,
 } from 'lucide-react';
+import { AnimatedNumber } from '@/components/ui/animated-number';
+import { CopyButton } from '@/components/ui/copy-button';
+import { ShareButton } from '@/components/ui/share-button';
 import { NetworkDataResponse } from '../types';
 
 interface SalesNetworkTabProps {
@@ -30,8 +30,8 @@ interface SalesNetworkTabProps {
   networkData: NetworkDataResponse | null | undefined;
   isLoading?: boolean;
   onRefresh: () => void;
-  handleCopy: (text: string, id: string) => void;
-  copiedLink: string | null;
+  handleCopy?: (text: string, id: string) => void;
+  copiedLink?: string | null;
 }
 
 export function SalesNetworkTab({
@@ -41,21 +41,9 @@ export function SalesNetworkTab({
   networkData,
   isLoading = false,
   onRefresh,
-  handleCopy,
-  copiedLink,
+  handleCopy: _handleCopy,
+  copiedLink: _copiedLink,
 }: SalesNetworkTabProps) {
-  const handleShare = async (url: string, title: string, text: string) => {
-    if (typeof navigator !== 'undefined' && navigator.share) {
-      try {
-        await navigator.share({ title, text, url });
-        return;
-      } catch (err) {
-        if ((err as Error)?.name === 'AbortError') return;
-      }
-    }
-    window.open(`https://wa.me/?text=${inviteWaMessage}`, '_blank');
-  };
-
   return (
     <div className="space-y-6">
       {/* Header & Title */}
@@ -78,7 +66,7 @@ export function SalesNetworkTab({
           size="sm"
           onClick={onRefresh}
           disabled={isLoading}
-          className="gap-2 text-xs self-start sm:self-auto shrink-0 border-border rounded-xl"
+          className="gap-2 text-xs self-start sm:self-auto shrink-0 border-border rounded-xl cursor-pointer"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
           <span>Muat Ulang</span>
@@ -125,47 +113,29 @@ export function SalesNetworkTab({
               <Input
                 readOnly
                 value={inviteSalesUrl}
-                className="bg-surface border-border text-xs font-mono h-10 select-all rounded-xl"
+                className="bg-surface border-border text-xs font-mono h-10 select-all rounded-xl flex-1"
               />
-              <Button
-                size="sm"
-                onClick={() => handleCopy(inviteSalesUrl, 'invite-sales')}
-                className="h-10 px-3.5 gap-1.5 shrink-0 text-xs font-semibold"
-              >
-                {copiedLink === 'invite-sales' ? (
-                  <>
-                    <Check className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Tersalin</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-3.5 h-3.5" />
-                    <span>Salin</span>
-                  </>
-                )}
-              </Button>
+              <CopyButton
+                text={inviteSalesUrl}
+                label="Salin"
+                copiedLabel="Tersalin!"
+                className="h-10 px-3.5 shrink-0"
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() =>
-                  handleShare(
-                    inviteSalesUrl,
-                    'Ayo Gabung Jadi Mitra Sales Asterra Store',
-                    'Ayo gabung jadi Mitra Sales resmi Asterra Store! Dapatkan komisi profit bersih 10% hingga 15% dari setiap penjualan produk digital bergaransi:'
-                  )
-                }
-                className="inline-flex items-center justify-center gap-1.5 h-10 px-3 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs shadow-xs transition-colors cursor-pointer"
-              >
-                <Share2 className="w-3.5 h-3.5" />
-                <span>Bagikan Link</span>
-              </button>
+              <ShareButton
+                url={inviteSalesUrl}
+                title="Ayo Gabung Jadi Mitra Sales Asterra Store"
+                text="Ayo gabung jadi Mitra Sales resmi Asterra Store! Dapatkan komisi profit bersih 10% hingga 15% dari setiap penjualan produk digital bergaransi:"
+                variant="purple"
+                className="h-10 text-xs font-semibold"
+              />
               <a
-                href={`https://wa.me/?text=${inviteWaMessage}`}
+                href={`https://wa.me/?text=${encodeURIComponent(inviteWaMessage)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-1.5 h-10 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs transition-colors shadow-xs cursor-pointer"
+                className="inline-flex items-center justify-center gap-1.5 h-10 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-semibold text-xs transition-all shadow-xs cursor-pointer"
               >
                 <Send className="w-3.5 h-3.5" />
                 <span>WhatsApp</span>
@@ -177,7 +147,10 @@ export function SalesNetworkTab({
 
       {/* 3 Metric Cards - Responsive Density */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-4">
-        <div className="col-span-2 sm:col-span-1 bg-surface border border-border rounded-xl sm:rounded-2xl p-4 sm:p-5 shadow-xs space-y-2">
+        <div
+          className="col-span-2 sm:col-span-1 bg-surface border border-border rounded-xl sm:rounded-2xl p-4 sm:p-5 shadow-xs space-y-2 card-hover-elevation animate-kpi-reveal"
+          style={{ animationDelay: '0ms' }}
+        >
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-foreground-muted">Total Bonus Teman Sales</span>
             <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200/60 flex items-center justify-center">
@@ -185,7 +158,7 @@ export function SalesNetworkTab({
             </div>
           </div>
           <div className="text-xl sm:text-2xl font-extrabold text-foreground tracking-tight font-mono">
-            Rp {(networkData?.totalNetworkBonus || 0).toLocaleString('id-ID')}
+            <AnimatedNumber value={networkData?.totalNetworkBonus || 0} prefix="Rp " duration={750} delay={60} />
           </div>
           <div className="pt-2 border-t border-border space-y-1 text-xs">
             <div className="flex items-center justify-between">
@@ -194,7 +167,7 @@ export function SalesNetworkTab({
                 <span>Siap Tarik (Final):</span>
               </span>
               <span className="font-semibold text-emerald-600 font-mono text-[11px]">
-                Rp {(networkData?.finalNetworkBonus || 0).toLocaleString('id-ID')}
+                <AnimatedNumber value={networkData?.finalNetworkBonus || 0} prefix="Rp " duration={750} delay={120} />
               </span>
             </div>
             <div className="flex items-center justify-between">
@@ -203,13 +176,16 @@ export function SalesNetworkTab({
                 <span>Masa Garansi (3 Hari):</span>
               </span>
               <span className="font-semibold text-amber-500 font-mono text-[11px]">
-                Rp {(networkData?.pendingNetworkBonus || 0).toLocaleString('id-ID')}
+                <AnimatedNumber value={networkData?.pendingNetworkBonus || 0} prefix="Rp " duration={750} delay={160} />
               </span>
             </div>
           </div>
         </div>
 
-        <div className="col-span-1 bg-surface border border-border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs space-y-1.5 sm:space-y-2 flex flex-col justify-between">
+        <div
+          className="col-span-1 bg-surface border border-border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs space-y-1.5 sm:space-y-2 flex flex-col justify-between card-hover-elevation animate-kpi-reveal"
+          style={{ animationDelay: '80ms' }}
+        >
           <div className="flex items-center justify-between">
             <span className="text-[11px] sm:text-xs font-semibold text-foreground-muted truncate">Teman Terdaftar</span>
             <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-primary/10 text-primary border border-primary/20 flex items-center justify-center shrink-0">
@@ -217,14 +193,17 @@ export function SalesNetworkTab({
             </div>
           </div>
           <div className="text-lg sm:text-2xl font-extrabold text-foreground tracking-tight font-mono">
-            {(networkData?.totalTeamMembers || 0).toLocaleString('id-ID')} Orang
+            <AnimatedNumber value={networkData?.totalTeamMembers || 0} suffix=" Orang" duration={750} delay={140} />
           </div>
           <p className="text-[10px] sm:text-xs text-foreground-muted pt-1.5 border-t border-border leading-tight">
             Mitra referral langsung.
           </p>
         </div>
 
-        <div className="col-span-1 bg-surface border border-border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs space-y-1.5 sm:space-y-2 flex flex-col justify-between">
+        <div
+          className="col-span-1 bg-surface border border-border rounded-xl sm:rounded-2xl p-3.5 sm:p-5 shadow-xs space-y-1.5 sm:space-y-2 flex flex-col justify-between card-hover-elevation animate-kpi-reveal"
+          style={{ animationDelay: '160ms' }}
+        >
           <div className="flex items-center justify-between">
             <span className="text-[11px] sm:text-xs font-semibold text-foreground-muted truncate">Pesanan Tim</span>
             <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl bg-blue-50 text-blue-600 border border-blue-200/60 flex items-center justify-center shrink-0">
@@ -232,7 +211,7 @@ export function SalesNetworkTab({
             </div>
           </div>
           <div className="text-lg sm:text-2xl font-extrabold text-foreground tracking-tight font-mono">
-            {(networkData?.totalTeamOrders || 0).toLocaleString('id-ID')} Order
+            <AnimatedNumber value={networkData?.totalTeamOrders || 0} suffix=" Order" duration={750} delay={220} />
           </div>
           <p className="text-[10px] sm:text-xs text-foreground-muted pt-1.5 border-t border-border leading-tight">
             Omzet: <strong className="text-foreground font-mono">Rp {(networkData?.totalTeamRevenue || 0).toLocaleString('id-ID')}</strong>
@@ -262,8 +241,12 @@ export function SalesNetworkTab({
           <>
             {/* Mobile View: Compact Team Cards (md:hidden) */}
             <div className="md:hidden divide-y divide-border">
-              {(networkData?.teamMembers || []).map((m) => (
-                <div key={m.id} className="p-3.5 space-y-2">
+              {(networkData?.teamMembers || []).map((m, idx) => (
+                <div
+                  key={m.id}
+                  className="p-3.5 space-y-2 animate-fade-up"
+                  style={{ animationDelay: `${Math.min(idx, 8) * 30}ms` }}
+                >
                   <div className="flex items-center justify-between">
                     <div>
                       <h4 className="font-bold text-xs text-foreground">{m.name}</h4>
@@ -311,8 +294,12 @@ export function SalesNetworkTab({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {(networkData?.teamMembers || []).map((m) => (
-                    <tr key={m.id} className="hover:bg-surface-raised/60 transition-colors">
+                  {(networkData?.teamMembers || []).map((m, idx) => (
+                    <tr
+                      key={m.id}
+                      className="hover:bg-surface-raised/60 transition-colors animate-fade-up"
+                      style={{ animationDelay: `${Math.min(idx, 8) * 30}ms` }}
+                    >
                       <td className="py-3 px-4 text-foreground font-semibold">
                         {m.name}
                       </td>

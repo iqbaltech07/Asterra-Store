@@ -7,6 +7,7 @@ import {
   MessageSquare,
   Send,
 } from 'lucide-react';
+import { Accordion, AccordionItem } from '@/components/ui/accordion';
 
 export function SalesAcademyTab() {
   return (
@@ -20,7 +21,7 @@ export function SalesAcademyTab() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Guide 1: Etika Promosi */}
-        <div className="bg-surface border border-border rounded-2xl p-6 shadow-xs space-y-4">
+        <div className="bg-surface border border-border rounded-2xl p-6 shadow-xs space-y-4 card-hover-elevation">
           <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200/60 flex items-center justify-center">
             <ShieldCheck className="w-5 h-5" />
           </div>
@@ -53,37 +54,49 @@ export function SalesAcademyTab() {
           </ul>
         </div>
 
-        {/* Guide 2: FAQ Komisi */}
-        <div className="bg-surface border border-border rounded-2xl p-6 shadow-xs space-y-4">
+        {/* Guide 2: FAQ Komisi with Zero-Layout-Shift Accordion */}
+        <div className="bg-surface border border-border rounded-2xl p-6 shadow-xs space-y-4 card-hover-elevation">
           <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary border border-primary/20 flex items-center justify-center">
             <HelpCircle className="w-5 h-5" />
           </div>
           <h3 className="font-bold text-base text-foreground">Pertanyaan Umum Seputar Komisi (FAQ)</h3>
-          <div className="text-xs text-foreground-muted space-y-3.5 leading-relaxed">
-            <div className="p-3.5 rounded-xl bg-surface-raised border border-border">
-              <p className="font-semibold text-foreground mb-1">Kapan komisi masuk dan siap ditarik?</p>
-              <p className="text-[11px]">
+
+          <Accordion type="single" defaultValue="faq-1" className="space-y-2.5">
+            <AccordionItem
+              value="faq-1"
+              trigger={<span className="font-semibold text-foreground text-xs">Kapan komisi masuk dan siap ditarik?</span>}
+              className="rounded-xl border border-border bg-surface-raised overflow-hidden"
+            >
+              <div className="p-3.5 text-[11px] text-foreground-muted leading-relaxed border-t border-border/70">
                 Komisi tercatat seketika saat pembeli membayar dan masuk status <strong>Masa Garansi (Holding 3 Hari)</strong> untuk mengantisipasi klaim garansi/refund. Setelah 3 hari, saldo otomatis pindah ke <strong>Saldo Siap Ditarik</strong>.
-              </p>
-            </div>
-            <div className="p-3.5 rounded-xl bg-surface-raised border border-border">
-              <p className="font-semibold text-foreground mb-1">Dari mana sumber bonus 2% ajak teman?</p>
-              <p className="text-[11px]">
+              </div>
+            </AccordionItem>
+
+            <AccordionItem
+              value="faq-2"
+              trigger={<span className="font-semibold text-foreground text-xs">Dari mana sumber bonus 2% ajak teman?</span>}
+              className="rounded-xl border border-border bg-surface-raised overflow-hidden"
+            >
+              <div className="p-3.5 text-[11px] text-foreground-muted leading-relaxed border-t border-border/70">
                 Bonus rekrutmen 2% dihitung dari Profit Transaksi yang dihasilkan oleh teman langsung Anda. Komisi penjualan teman Anda tetap utuh 100% (10% – 15% dari Profit Transaksi) tanpa ada potongan.
-              </p>
-            </div>
-            <div className="p-3.5 rounded-xl bg-surface-raised border border-border">
-              <p className="font-semibold text-foreground mb-1">Apakah ini sistem MLM atau piramida?</p>
-              <p className="text-[11px]">
+              </div>
+            </AccordionItem>
+
+            <AccordionItem
+              value="faq-3"
+              trigger={<span className="font-semibold text-foreground text-xs">Apakah ini sistem MLM atau piramida?</span>}
+              className="rounded-xl border border-border bg-surface-raised overflow-hidden"
+            >
+              <div className="p-3.5 text-[11px] text-foreground-muted leading-relaxed border-t border-border/70">
                 Bukan MLM. Asterra Store menerapkan <strong>1-Level Referral Murni (Single-Tier)</strong>. Anda hanya mendapat bonus dari teman yang langsung mendaftar dengan kode Anda (tidak ada level 2 atau seterusnya).
-              </p>
-            </div>
-          </div>
+              </div>
+            </AccordionItem>
+          </Accordion>
         </div>
       </div>
 
       {/* Contact Sales Coordinator */}
-      <div className="bg-surface border border-border rounded-2xl p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-surface border border-border rounded-2xl p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 card-hover-elevation">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200/60 flex items-center justify-center shrink-0">
             <MessageSquare className="w-5 h-5" />
@@ -99,7 +112,7 @@ export function SalesAcademyTab() {
           href="https://wa.me/6281298765432?text=Halo%20Koordinator%20Sales%20Asterra%20Store,%20saya%20ingin%20konsultasi%20materi%20promosi%20dan%20katalog."
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs shrink-0 transition-colors shadow-xs"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-semibold text-xs shrink-0 transition-all shadow-xs cursor-pointer"
         >
           <Send className="w-3.5 h-3.5" />
           <span>WhatsApp Koordinator Sales</span>

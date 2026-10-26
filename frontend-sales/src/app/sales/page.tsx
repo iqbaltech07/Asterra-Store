@@ -10,7 +10,6 @@ import {
   faShareNodes,
   faStore,
   faArrowUpRightFromSquare,
-  faChevronDown,
 } from '@fortawesome/free-solid-svg-icons';
 import Link from 'next/link';
 import { AdminSidebar, AdminTab } from '@/components/admin/admin-sidebar';
@@ -239,7 +238,7 @@ function SalesPortalContent() {
               <Button
                 size="sm"
                 onClick={() => handleTabChange('sales-wallet')}
-                className="text-xs gap-1.5 shadow-xs font-semibold bg-[#16A36A] hover:bg-[#15803D] text-white rounded-full h-9 px-3.5 cursor-pointer"
+                className="text-xs gap-1.5 shadow-xs font-semibold bg-[#16A36A] hover:bg-[#15803D] active:scale-95 text-white rounded-full h-9 px-3.5 cursor-pointer transition-all"
               >
                 <FontAwesomeIcon icon={faWallet} className="text-xs" />
                 <span className="hidden xs:inline">Dompet Komisi</span>
@@ -250,7 +249,7 @@ function SalesPortalContent() {
                 href="/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-slate-200/90 bg-white hover:bg-slate-50 text-xs text-slate-700 font-medium shadow-2xs transition-colors"
+                className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-slate-200/90 bg-white hover:bg-slate-50 active:scale-95 text-xs text-slate-700 font-medium shadow-2xs transition-all"
               >
                 <FontAwesomeIcon icon={faStore} className="text-xs text-[#2563EB]" />
                 <span className="hidden md:inline">Lihat Toko</span>
@@ -258,7 +257,7 @@ function SalesPortalContent() {
               </Link>
 
               {/* Desktop Sales Partner Avatar Chip matching Screenshot */}
-              <div className="hidden sm:flex items-center gap-2.5 pl-1.5 pr-3 py-1.5 rounded-full bg-white border border-slate-200/90 shadow-2xs">
+              <div className="hidden sm:flex items-center gap-2.5 pl-1.5 pr-3 py-1.5 rounded-full bg-white border border-slate-200/90 shadow-2xs hover:border-slate-300 hover:shadow-xs transition-all cursor-default">
                 <div className="w-7 h-7 rounded-full bg-[#111318] text-white font-bold text-[11px] flex items-center justify-center shrink-0">
                   {adminUser?.name ? adminUser.name.charAt(0).toUpperCase() : 'SP'}
                 </div>
@@ -300,7 +299,7 @@ function SalesPortalContent() {
           >
             <div
               className={`p-1 rounded-lg transition-all ${
-                activeTab === 'sales-overview' ? 'bg-blue-50 text-[#2563EB]' : ''
+                activeTab === 'sales-overview' ? 'bg-blue-50 text-[#2563EB] animate-scale-pop' : ''
               }`}
             >
               <FontAwesomeIcon icon={faStore} className="w-4 h-4" />
@@ -320,7 +319,7 @@ function SalesPortalContent() {
           >
             <div
               className={`p-1 rounded-lg transition-all ${
-                activeTab === 'sales-catalog' ? 'bg-blue-50 text-[#2563EB]' : ''
+                activeTab === 'sales-catalog' ? 'bg-blue-50 text-[#2563EB] animate-scale-pop' : ''
               }`}
             >
               <FontAwesomeIcon icon={faBars} className="w-4 h-4" />
@@ -340,7 +339,7 @@ function SalesPortalContent() {
           >
             <div
               className={`p-1 rounded-lg transition-all ${
-                activeTab === 'sales-links' ? 'bg-blue-50 text-[#2563EB]' : ''
+                activeTab === 'sales-links' ? 'bg-blue-50 text-[#2563EB] animate-scale-pop' : ''
               }`}
             >
               <FontAwesomeIcon icon={faShareNodes} className="w-4 h-4" />
@@ -360,7 +359,7 @@ function SalesPortalContent() {
           >
             <div
               className={`p-1 rounded-lg transition-all ${
-                activeTab === 'sales-orders' ? 'bg-blue-50 text-[#2563EB]' : ''
+                activeTab === 'sales-orders' ? 'bg-blue-50 text-[#2563EB] animate-scale-pop' : ''
               }`}
             >
               <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="w-4 h-4" />
@@ -380,7 +379,7 @@ function SalesPortalContent() {
           >
             <div
               className={`p-1 rounded-lg transition-all ${
-                activeTab === 'sales-wallet' ? 'bg-emerald-50 text-[#16A36A]' : ''
+                activeTab === 'sales-wallet' ? 'bg-emerald-50 text-[#16A36A] animate-scale-pop' : ''
               }`}
             >
               <FontAwesomeIcon icon={faWallet} className="w-4 h-4" />
@@ -390,11 +389,15 @@ function SalesPortalContent() {
         </div>
       </nav>
 
-      {/* Mobile Quick Menu Sheet / Drawer (for secondary tabs & account) */}
+      {/* Mobile Quick Menu Sheet / Drawer with backdrop close & staggered items */}
       {isMobileMenuOpen && (
-        <div className="fixed inset-0 z-50 flex flex-col justify-end lg:hidden bg-black/60 backdrop-blur-xs animate-in fade-in">
+        <div
+          onClick={() => setIsMobileMenuOpen(false)}
+          className="fixed inset-0 z-50 flex flex-col justify-end lg:hidden bg-black/60 backdrop-blur-xs animate-in fade-in transition-opacity"
+        >
           <div
-            className="bg-white rounded-t-3xl border-t border-slate-200 p-5 space-y-4 max-h-[85vh] overflow-y-auto animate-in slide-in-from-bottom duration-200 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-t-3xl border-t border-slate-200 p-5 space-y-4 max-h-[85vh] overflow-y-auto animate-in slide-in-from-bottom duration-300 shadow-2xl"
           >
             {/* Sheet Handle */}
             <div className="w-12 h-1.5 rounded-full bg-slate-300 mx-auto" />
@@ -417,14 +420,14 @@ function SalesPortalContent() {
               <button
                 type="button"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-900 cursor-pointer"
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 active:scale-95 flex items-center justify-center text-slate-500 hover:text-slate-900 cursor-pointer transition-all"
                 aria-label="Tutup Menu"
               >
                 ✕
               </button>
             </div>
 
-            {/* Secondary Navigation Options */}
+            {/* Secondary Navigation Options with 40ms stagger */}
             <div className="space-y-1.5">
               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block px-1 mb-1">
                 Menu & Fitur Lainnya
@@ -437,11 +440,12 @@ function SalesPortalContent() {
                   handleTabChange('sales-network');
                   setIsMobileMenuOpen(false);
                 }}
-                className={`w-full flex items-center justify-between p-3 rounded-2xl border transition-all text-left cursor-pointer ${
+                className={`w-full flex items-center justify-between p-3 rounded-2xl border transition-all text-left cursor-pointer active:scale-[0.98] animate-fade-up ${
                   activeTab === 'sales-network'
                     ? 'bg-blue-50/80 border-blue-200 text-[#2563EB] font-bold'
                     : 'bg-slate-50/70 border-slate-200/80 text-slate-700 hover:bg-slate-100'
                 }`}
+                style={{ animationDelay: '0ms' }}
               >
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-xl bg-purple-50 text-[#8B5CF6] flex items-center justify-center border border-purple-200/60">
@@ -462,11 +466,12 @@ function SalesPortalContent() {
                   handleTabChange('sales-academy');
                   setIsMobileMenuOpen(false);
                 }}
-                className={`w-full flex items-center justify-between p-3 rounded-2xl border transition-all text-left cursor-pointer ${
+                className={`w-full flex items-center justify-between p-3 rounded-2xl border transition-all text-left cursor-pointer active:scale-[0.98] animate-fade-up ${
                   activeTab === 'sales-academy'
                     ? 'bg-blue-50/80 border-blue-200 text-[#2563EB] font-bold'
                     : 'bg-slate-50/70 border-slate-200/80 text-slate-700 hover:bg-slate-100'
                 }`}
+                style={{ animationDelay: '40ms' }}
               >
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-xl bg-amber-50 text-[#D97706] flex items-center justify-center border border-amber-200/60">
@@ -486,7 +491,8 @@ function SalesPortalContent() {
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="w-full flex items-center justify-between p-3 rounded-2xl border border-slate-200/80 bg-slate-50/70 text-slate-700 hover:bg-slate-100 transition-all text-left"
+                className="w-full flex items-center justify-between p-3 rounded-2xl border border-slate-200/80 bg-slate-50/70 text-slate-700 hover:bg-slate-100 active:scale-[0.98] transition-all text-left animate-fade-up"
+                style={{ animationDelay: '80ms' }}
               >
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-xl bg-blue-50 text-[#2563EB] flex items-center justify-center border border-blue-200/60">
@@ -502,11 +508,11 @@ function SalesPortalContent() {
             </div>
 
             {/* Logout Action */}
-            <div className="pt-2 border-t border-slate-100">
+            <div className="pt-2 border-t border-slate-100 animate-fade-up" style={{ animationDelay: '120ms' }}>
               <Button
                 variant="outline"
                 onClick={handleLogout}
-                className="w-full h-11 text-xs font-bold text-rose-600 border-rose-200 hover:bg-rose-50 rounded-2xl gap-2 cursor-pointer"
+                className="w-full h-11 text-xs font-bold text-rose-600 border-rose-200 hover:bg-rose-50 active:scale-[0.98] rounded-2xl gap-2 cursor-pointer transition-all"
               >
                 <span>Keluar dari Akun Sales</span>
               </Button>

@@ -1,15 +1,12 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import {
   Flame,
   Calendar,
   Share2,
-  Copy,
-  Check,
   Send,
   ExternalLink,
   ShieldCheck,
@@ -18,6 +15,9 @@ import {
   Users,
 } from 'lucide-react';
 import { getStoreBaseUrl } from '@/lib/utils/url';
+import { CopyButton } from '@/components/ui/copy-button';
+import { ShareButton } from '@/components/ui/share-button';
+import { Accordion, AccordionItem } from '@/components/ui/accordion';
 import type { ProductItem, CampaignItem } from '../types';
 
 export interface SalesLinksTabProps {
@@ -25,8 +25,8 @@ export interface SalesLinksTabProps {
   campaigns?: CampaignItem[];
   partnerCode: string;
   partnerRate: number;
-  copiedLink: string | null;
-  handleCopy: (text: string, id: string) => void;
+  copiedLink?: string | null;
+  handleCopy?: (text: string, id: string) => void;
 }
 
 export function SalesLinksTab({
@@ -34,23 +34,12 @@ export function SalesLinksTab({
   campaigns = [],
   partnerCode,
   partnerRate,
-  copiedLink,
-  handleCopy,
+  copiedLink: _copiedLink,
+  handleCopy: _handleCopy,
 }: SalesLinksTabProps) {
   const [selectedProductForLink, setSelectedProductForLink] = useState('');
   const [selectedCampaignForLink, setSelectedCampaignForLink] = useState('');
 
-  const handleShare = async (url: string, title: string, text: string) => {
-    if (typeof navigator !== 'undefined' && navigator.share) {
-      try {
-        await navigator.share({ title, text, url });
-        return;
-      } catch (err) {
-        if ((err as Error)?.name === 'AbortError') return;
-      }
-    }
-    window.open(`https://wa.me/?text=${encodeURIComponent(text ? text + ' ' + url : url)}`, '_blank');
-  };
 
   const customGeneratedUrl = useMemo(() => {
     const base = getStoreBaseUrl();
@@ -97,10 +86,11 @@ export function SalesLinksTab({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
-            {campaigns.map((camp) => (
+            {campaigns.map((camp, idx) => (
               <div
                 key={camp.id}
-                className="rounded-xl border border-border bg-surface-raised hover:border-foreground/20 hover:shadow-sm p-4 flex flex-col justify-between space-y-4 transition-all"
+                className="rounded-2xl border border-border bg-surface-raised p-4 flex flex-col justify-between space-y-4 card-hover-elevation animate-fade-up"
+                style={{ animationDelay: `${Math.min(idx, 5) * 50}ms` }}
               >
                 <div className="space-y-2.5">
                   <div className="flex items-center justify-between gap-1 text-[11px]">
@@ -138,45 +128,27 @@ export function SalesLinksTab({
 
                 <div className="space-y-2 pt-2 border-t border-border">
                   <div className="flex items-center gap-2">
-                    <Button
+                    <CopyButton
+                      text={camp.affiliateLink}
+                      label="Salin Link"
+                      copiedLabel="Tersalin!"
                       size="sm"
-                      onClick={() => handleCopy(camp.affiliateLink, `camp-${camp.id}`)}
-                      className="flex-1 h-9 text-xs font-semibold gap-1.5 rounded-xl cursor-pointer"
-                    >
-                      {copiedLink === `camp-${camp.id}` ? (
-                        <>
-                          <Check className="w-3.5 h-3.5 text-emerald-400" />
-                          <span>Tersalin!</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-3.5 h-3.5" />
-                          <span>Salin Link</span>
-                        </>
-                      )}
-                    </Button>
+                      className="flex-1"
+                    />
 
-                    <button
-                      type="button"
-                      onClick={() =>
-                        handleShare(
-                          camp.affiliateLink,
-                          camp.name,
-                          camp.whatsappShareText
-                        )
-                      }
-                      className="h-9 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition-colors shrink-0 gap-1 text-xs font-semibold shadow-xs cursor-pointer"
-                      title="Bagikan Tautan Event"
-                    >
-                      <Share2 className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">Bagikan</span>
-                    </button>
+                    <ShareButton
+                      url={camp.affiliateLink}
+                      title={camp.name}
+                      text={camp.whatsappShareText}
+                      variant="blue"
+                      size="sm"
+                    />
 
                     <a
                       href={`https://wa.me/?text=${encodeURIComponent(camp.whatsappShareText)}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="h-9 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center transition-colors shrink-0 gap-1 text-xs font-semibold shadow-xs cursor-pointer"
+                      className="h-9 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white flex items-center justify-center transition-all shrink-0 gap-1 text-xs font-semibold shadow-xs cursor-pointer"
                       title="Bagikan ke WhatsApp"
                     >
                       <Send className="w-3.5 h-3.5" />
@@ -277,42 +249,24 @@ export function SalesLinksTab({
                   className="bg-surface-raised border-border text-xs font-mono h-10 select-all rounded-xl flex-1"
                 />
                 <div className="flex items-center gap-2 shrink-0">
-                  <Button
-                    onClick={() => handleCopy(customGeneratedUrl, 'custom-url')}
-                    className="h-10 px-3.5 text-xs font-semibold gap-1.5 flex-1 sm:flex-initial rounded-xl cursor-pointer"
-                  >
-                    {copiedLink === 'custom-url' ? (
-                      <>
-                        <Check className="w-3.5 h-3.5 text-emerald-400" />
-                        <span>Tersalin!</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-3.5 h-3.5" />
-                        <span>Salin</span>
-                      </>
-                    )}
-                  </Button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      handleShare(
-                        customGeneratedUrl,
-                        'Tautan Rekomendasi Asterra Store',
-                        'Dapatkan akun digital premium resmi bergaransi (Canva, Gemini AI, Netflix, Spotify) di Asterra Store:'
-                      )
-                    }
-                    className="h-10 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition-colors text-xs font-semibold shadow-xs cursor-pointer gap-1.5"
-                    title="Bagikan Tautan"
-                  >
-                    <Share2 className="w-3.5 h-3.5" />
-                    <span>Bagikan</span>
-                  </button>
+                  <CopyButton
+                    text={customGeneratedUrl}
+                    label="Salin"
+                    copiedLabel="Tersalin!"
+                    className="h-10 px-3.5"
+                  />
+                  <ShareButton
+                    url={customGeneratedUrl}
+                    title="Tautan Rekomendasi Asterra Store"
+                    text="Dapatkan akun digital premium resmi bergaransi (Canva, Gemini AI, Netflix, Spotify) di Asterra Store:"
+                    variant="blue"
+                    className="h-10 px-3"
+                  />
                   <a
                     href={customGeneratedUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="h-10 px-3 rounded-xl border border-border bg-surface-raised hover:bg-surface text-foreground-muted hover:text-foreground flex items-center justify-center transition-colors shrink-0"
+                    className="h-10 px-3 rounded-xl border border-border bg-surface-raised hover:bg-surface text-foreground-muted hover:text-foreground flex items-center justify-center transition-all shrink-0 active:scale-95 cursor-pointer"
                     title="Buka Tautan"
                   >
                     <ExternalLink className="w-4 h-4" />
@@ -334,7 +288,7 @@ export function SalesLinksTab({
           </div>
         </div>
 
-        {/* Ready-to-use Copywriting Templates */}
+        {/* Ready-to-use Copywriting Templates with Accordion */}
         <div className="rounded-2xl border border-border bg-surface p-4 sm:p-6 shadow-xs space-y-4 sm:space-y-5">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-foreground/5 flex items-center justify-center text-foreground">
@@ -346,50 +300,51 @@ export function SalesLinksTab({
             </div>
           </div>
 
-          <div className="space-y-3.5 max-h-[520px] overflow-y-auto pr-1">
+          <Accordion type="single" defaultValue="wa-story" className="space-y-3">
             {/* Template 1: WhatsApp Status */}
             {(() => {
               const text1 = `Halo teman-teman! Lagi butuh akun Canva Pro, Gemini AI, ChatGPT Plus, atau Netflix private bergaransi resmi tanpa takut kena suspend? Langsung order aman lewat link resmi ini ya: ${customGeneratedUrl}`;
               return (
-                <div className="rounded-xl border border-border bg-surface-raised p-3.5 sm:p-4 space-y-2.5 text-xs">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-foreground flex items-center gap-1.5">
-                      <MessageSquare className="w-3.5 h-3.5 text-emerald-600" />
+                <AccordionItem
+                  value="wa-story"
+                  trigger={
+                    <span className="font-bold text-foreground flex items-center gap-2 text-xs">
+                      <MessageSquare className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                       <span>WhatsApp Story / Status</span>
                     </span>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleCopy(text1, 'copy-wa')}
-                      className="h-8 text-[11px] gap-1 px-2.5 border-border rounded-lg cursor-pointer"
-                    >
-                      {copiedLink === 'copy-wa' ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
-                      <span>{copiedLink === 'copy-wa' ? 'Tersalin!' : 'Salin'}</span>
-                    </Button>
+                  }
+                  className="rounded-xl border border-border bg-surface-raised overflow-hidden"
+                >
+                  <div className="p-3.5 sm:p-4 space-y-3 text-xs border-t border-border/70">
+                    <p className="text-foreground-muted leading-relaxed text-[11px] bg-surface p-3 rounded-lg border border-border">
+                      &ldquo;{text1}&rdquo;
+                    </p>
+                    <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
+                      <CopyButton
+                        text={text1}
+                        label="Salin Teks"
+                        copiedLabel="Tersalin!"
+                        size="sm"
+                      />
+                      <ShareButton
+                        url={customGeneratedUrl}
+                        title="Rekomendasi Akun Digital"
+                        text={text1}
+                        variant="blue"
+                        size="sm"
+                      />
+                      <a
+                        href={`https://wa.me/?text=${encodeURIComponent(text1)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-[11px] font-semibold transition-all cursor-pointer shadow-xs"
+                      >
+                        <Send className="w-3 h-3" />
+                        <span>Status WhatsApp</span>
+                      </a>
+                    </div>
                   </div>
-                  <p className="text-foreground-muted leading-relaxed text-[11px] bg-surface p-3 rounded-lg border border-border">
-                    &ldquo;{text1}&rdquo;
-                  </p>
-                  <div className="flex items-center justify-end gap-2 pt-1">
-                    <button
-                      type="button"
-                      onClick={() => handleShare(customGeneratedUrl, 'Rekomendasi Akun Digital', text1)}
-                      className="inline-flex items-center gap-1 h-8 px-2.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-[#2563EB] text-[11px] font-semibold transition-colors cursor-pointer border border-blue-200/60"
-                    >
-                      <Share2 className="w-3 h-3" />
-                      <span>Bagikan</span>
-                    </button>
-                    <a
-                      href={`https://wa.me/?text=${encodeURIComponent(text1)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 h-8 px-2.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-[11px] font-semibold transition-colors cursor-pointer border border-emerald-200/60"
-                    >
-                      <Send className="w-3 h-3" />
-                      <span>Status WhatsApp</span>
-                    </a>
-                  </div>
-                </div>
+                </AccordionItem>
               );
             })()}
 
@@ -397,45 +352,46 @@ export function SalesLinksTab({
             {(() => {
               const text2 = `Halo kak! Mau infoin nih kalau butuh tools produktivitas & hiburan premium (Canva, ChatGPT, Netflix, dll) yang resmi dan ada garansi ganti baru 100%, rekomendasiku beli di Asterra Store aja kak. Harganya jauh lebih hemat dan prosesnya instan: ${customGeneratedUrl}`;
               return (
-                <div className="rounded-xl border border-border bg-surface-raised p-3.5 sm:p-4 space-y-2.5 text-xs">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-foreground flex items-center gap-1.5">
-                      <Users className="w-3.5 h-3.5 text-primary" />
+                <AccordionItem
+                  value="personal"
+                  trigger={
+                    <span className="font-bold text-foreground flex items-center gap-2 text-xs">
+                      <Users className="w-3.5 h-3.5 text-primary shrink-0" />
                       <span>Chat Rekomendasi Personal</span>
                     </span>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleCopy(text2, 'copy-personal')}
-                      className="h-8 text-[11px] gap-1 px-2.5 border-border rounded-lg cursor-pointer"
-                    >
-                      {copiedLink === 'copy-personal' ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
-                      <span>{copiedLink === 'copy-personal' ? 'Tersalin!' : 'Salin'}</span>
-                    </Button>
+                  }
+                  className="rounded-xl border border-border bg-surface-raised overflow-hidden"
+                >
+                  <div className="p-3.5 sm:p-4 space-y-3 text-xs border-t border-border/70">
+                    <p className="text-foreground-muted leading-relaxed text-[11px] bg-surface p-3 rounded-lg border border-border">
+                      &ldquo;{text2}&rdquo;
+                    </p>
+                    <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
+                      <CopyButton
+                        text={text2}
+                        label="Salin Teks"
+                        copiedLabel="Tersalin!"
+                        size="sm"
+                      />
+                      <ShareButton
+                        url={customGeneratedUrl}
+                        title="Rekomendasi Personal"
+                        text={text2}
+                        variant="blue"
+                        size="sm"
+                      />
+                      <a
+                        href={`https://wa.me/?text=${encodeURIComponent(text2)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-[11px] font-semibold transition-all cursor-pointer shadow-xs"
+                      >
+                        <Send className="w-3 h-3" />
+                        <span>Kirim WA</span>
+                      </a>
+                    </div>
                   </div>
-                  <p className="text-foreground-muted leading-relaxed text-[11px] bg-surface p-3 rounded-lg border border-border">
-                    &ldquo;{text2}&rdquo;
-                  </p>
-                  <div className="flex items-center justify-end gap-2 pt-1">
-                    <button
-                      type="button"
-                      onClick={() => handleShare(customGeneratedUrl, 'Rekomendasi Personal', text2)}
-                      className="inline-flex items-center gap-1 h-8 px-2.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-[#2563EB] text-[11px] font-semibold transition-colors cursor-pointer border border-blue-200/60"
-                    >
-                      <Share2 className="w-3 h-3" />
-                      <span>Bagikan</span>
-                    </button>
-                    <a
-                      href={`https://wa.me/?text=${encodeURIComponent(text2)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 h-8 px-2.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-[11px] font-semibold transition-colors cursor-pointer border border-emerald-200/60"
-                    >
-                      <Send className="w-3 h-3" />
-                      <span>WhatsApp</span>
-                    </a>
-                  </div>
-                </div>
+                </AccordionItem>
               );
             })()}
 
@@ -443,36 +399,37 @@ export function SalesLinksTab({
             {(() => {
               const text3 = `Layanan Akun Digital Premium Resmi & Bergaransi 100%\n\n✅ Canva Pro, ChatGPT Plus, Netflix, Spotify ready kilat\n✅ Bergaransi penuh & amanah\n✅ Proses 1 - 15 menit selesai\n\nKatalog lengkap & order resmi:\n👉 ${customGeneratedUrl}`;
               return (
-                <div className="rounded-xl border border-border bg-surface-raised p-3.5 sm:p-4 space-y-2.5 text-xs">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-foreground flex items-center gap-1.5">
-                      <Share2 className="w-3.5 h-3.5 text-primary" />
+                <AccordionItem
+                  value="ig-bio"
+                  trigger={
+                    <span className="font-bold text-foreground flex items-center gap-2 text-xs">
+                      <Share2 className="w-3.5 h-3.5 text-primary shrink-0" />
                       <span>Caption Instagram / Bio Link</span>
                     </span>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleCopy(text3, 'copy-ig')}
-                      className="h-8 text-[11px] gap-1 px-2.5 border-border rounded-lg cursor-pointer"
-                    >
-                      {copiedLink === 'copy-ig' ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
-                      <span>{copiedLink === 'copy-ig' ? 'Tersalin!' : 'Salin'}</span>
-                    </Button>
+                  }
+                  className="rounded-xl border border-border bg-surface-raised overflow-hidden"
+                >
+                  <div className="p-3.5 sm:p-4 space-y-3 text-xs border-t border-border/70">
+                    <p className="text-foreground-muted leading-relaxed text-[11px] bg-surface p-3 rounded-lg border border-border whitespace-pre-line font-mono">
+                      {text3}
+                    </p>
+                    <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
+                      <CopyButton
+                        text={text3}
+                        label="Salin Teks"
+                        copiedLabel="Tersalin!"
+                        size="sm"
+                      />
+                      <ShareButton
+                        url={customGeneratedUrl}
+                        title="Materi Bio & Instagram"
+                        text={text3}
+                        variant="blue"
+                        size="sm"
+                      />
+                    </div>
                   </div>
-                  <p className="text-foreground-muted leading-relaxed text-[11px] bg-surface p-3 rounded-lg border border-border whitespace-pre-line font-mono">
-                    {text3}
-                  </p>
-                  <div className="flex items-center justify-end gap-2 pt-1">
-                    <button
-                      type="button"
-                      onClick={() => handleShare(customGeneratedUrl, 'Materi Bio & Instagram', text3)}
-                      className="inline-flex items-center gap-1 h-8 px-2.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-[#2563EB] text-[11px] font-semibold transition-colors cursor-pointer border border-blue-200/60"
-                    >
-                      <Share2 className="w-3 h-3" />
-                      <span>Bagikan</span>
-                    </button>
-                  </div>
-                </div>
+                </AccordionItem>
               );
             })()}
 
@@ -480,48 +437,49 @@ export function SalesLinksTab({
             {(() => {
               const text4 = `Selamat siang rekan-rekan! Izin berbagi info bermanfaat untuk kebutuhan tugas, kantor, dan hiburan. Bagi yang butuh akses resmi Canva Pro, AI tools, atau streaming dengan garansi aktif dan harga terjangkau, silakan cek katalog resmi Asterra Store di: ${customGeneratedUrl} 🙏`;
               return (
-                <div className="rounded-xl border border-border bg-surface-raised p-3.5 sm:p-4 space-y-2.5 text-xs">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-foreground flex items-center gap-1.5">
-                      <Send className="w-3.5 h-3.5 text-primary" />
+                <AccordionItem
+                  value="group"
+                  trigger={
+                    <span className="font-bold text-foreground flex items-center gap-2 text-xs">
+                      <Send className="w-3.5 h-3.5 text-primary shrink-0" />
                       <span>Broadcast Komunitas & Grup</span>
                     </span>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleCopy(text4, 'copy-group')}
-                      className="h-8 text-[11px] gap-1 px-2.5 border-border rounded-lg cursor-pointer"
-                    >
-                      {copiedLink === 'copy-group' ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
-                      <span>{copiedLink === 'copy-group' ? 'Tersalin!' : 'Salin'}</span>
-                    </Button>
+                  }
+                  className="rounded-xl border border-border bg-surface-raised overflow-hidden"
+                >
+                  <div className="p-3.5 sm:p-4 space-y-3 text-xs border-t border-border/70">
+                    <p className="text-foreground-muted leading-relaxed text-[11px] bg-surface p-3 rounded-lg border border-border">
+                      &ldquo;{text4}&rdquo;
+                    </p>
+                    <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
+                      <CopyButton
+                        text={text4}
+                        label="Salin Teks"
+                        copiedLabel="Tersalin!"
+                        size="sm"
+                      />
+                      <ShareButton
+                        url={customGeneratedUrl}
+                        title="Broadcast Komunitas"
+                        text={text4}
+                        variant="blue"
+                        size="sm"
+                      />
+                      <a
+                        href={`https://wa.me/?text=${encodeURIComponent(text4)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-[11px] font-semibold transition-all cursor-pointer shadow-xs"
+                      >
+                        <Send className="w-3 h-3" />
+                        <span>Kirim ke Grup</span>
+                      </a>
+                    </div>
                   </div>
-                  <p className="text-foreground-muted leading-relaxed text-[11px] bg-surface p-3 rounded-lg border border-border">
-                    &ldquo;{text4}&rdquo;
-                  </p>
-                  <div className="flex items-center justify-end gap-2 pt-1">
-                    <button
-                      type="button"
-                      onClick={() => handleShare(customGeneratedUrl, 'Broadcast Komunitas', text4)}
-                      className="inline-flex items-center gap-1 h-8 px-2.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-[#2563EB] text-[11px] font-semibold transition-colors cursor-pointer border border-blue-200/60"
-                    >
-                      <Share2 className="w-3 h-3" />
-                      <span>Bagikan</span>
-                    </button>
-                    <a
-                      href={`https://wa.me/?text=${encodeURIComponent(text4)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 h-8 px-2.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-[11px] font-semibold transition-colors cursor-pointer border border-emerald-200/60"
-                    >
-                      <Send className="w-3 h-3" />
-                      <span>Kirim ke Grup</span>
-                    </a>
-                  </div>
-                </div>
+                </AccordionItem>
               );
             })()}
-          </div>
+          </Accordion>
         </div>
       </div>
     </div>

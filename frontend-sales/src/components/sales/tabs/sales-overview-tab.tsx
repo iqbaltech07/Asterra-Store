@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import {
   Wallet,
   ShoppingBag,
@@ -12,14 +12,16 @@ import {
   Share2,
   Award,
   Package,
-  Copy,
-  Check,
   Info,
 } from 'lucide-react';
 import { SalesTrendChart } from '../sales-trend-chart';
 import { AdminTab } from '@/components/admin/admin-sidebar';
 import { getStoreBaseUrl } from '@/lib/utils/url';
 import { ProductBrandIcon } from '@/components/ui/product-brand-icon';
+import { AnimatedNumber } from '@/components/ui/animated-number';
+import { AnimatedProgressBar } from '@/components/ui/animated-progress-bar';
+import { SparklinePath } from '@/components/ui/sparkline-path';
+import { CopyButton } from '@/components/ui/copy-button';
 import type { SalesProfileData, NetworkDataResponse, SalesOrder, ProductItem } from '../types';
 
 export interface CampaignTeaserItem {
@@ -48,15 +50,33 @@ export function SalesOverviewTab({
   partner,
   partnerCode,
   partnerRate,
-  copiedLink,
-  handleCopy,
   onTabChange,
   networkData,
-  inviteSalesUrl,
+  inviteSalesUrl: _inviteSalesUrl,
   orders = [],
   products = [],
 }: SalesOverviewTabProps) {
   const referralUrl = `${getStoreBaseUrl()}/?ref=${partnerCode || 'AST-SALES'}`;
+
+  // Track initial visit vs return visits to avoid repetitive slow staggers on tab switching
+  const isInitialVisitRef = useRef<boolean>(true);
+  const [isMounted, setIsMounted] = useState<boolean>(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+    if (typeof window !== 'undefined') {
+      try {
+        const hasRevealed = sessionStorage.getItem('asterra_kpi_revealed') === 'true';
+        if (hasRevealed) {
+          isInitialVisitRef.current = false;
+        } else {
+          sessionStorage.setItem('asterra_kpi_revealed', 'true');
+        }
+      } catch {}
+    }
+  }, []);
+
+  const isInitial = isMounted && isInitialVisitRef.current;
 
   // Conversion rate calculation
   const conversionRate = useMemo(() => {
@@ -123,9 +143,9 @@ export function SalesOverviewTab({
 
   return (
     <div className="space-y-4 sm:space-y-5 animate-fade-up">
-      {/* 1. TOP SALES HIGHLIGHT BANNERS (Design matching Screenshot 100%) */}
+      {/* 1. TOP SALES HIGHLIGHT BANNERS */}
       <div className="space-y-2.5">
-        {/* Banner 1: Metallic Slate with Exact Luminous Sheen motif kilau-kilau */}
+        {/* Banner 1: Metallic Slate with Luminous Sheen Beam */}
         <div
           className="relative overflow-hidden rounded-2xl p-4 sm:px-5 sm:py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md border border-white/15 text-white"
           style={{
@@ -133,12 +153,12 @@ export function SalesOverviewTab({
               'linear-gradient(108deg, #252E3E 0%, #303B4E 24%, #455571 45%, #506385 52%, #38465D 70%, #222937 100%)',
           }}
         >
-          {/* Motif Kilau-Kilau Luminous Sheen Beams */}
+          {/* Ambient Slow Sheen Loop */}
           <div
-            className="absolute inset-0 pointer-events-none select-none"
+            className="absolute inset-0 pointer-events-none select-none animate-metallic-sheen"
             style={{
               background:
-                'linear-gradient(116deg, transparent 18%, rgba(255,255,255,0.02) 28%, rgba(255,255,255,0.14) 44%, rgba(255,255,255,0.26) 50%, rgba(255,255,255,0.06) 56%, transparent 74%)',
+                'linear-gradient(116deg, transparent 20%, rgba(255,255,255,0.02) 30%, rgba(255,255,255,0.12) 48%, rgba(255,255,255,0.22) 52%, rgba(255,255,255,0.05) 58%, transparent 75%)',
             }}
           />
           <div className="absolute top-0 right-0 w-80 h-full bg-gradient-to-l from-blue-300/[0.12] to-transparent pointer-events-none" />
@@ -146,7 +166,6 @@ export function SalesOverviewTab({
 
           {/* Left Content: Circular Glass Badge & Sales Program Info */}
           <div className="flex items-center gap-3.5 relative z-10 min-w-0">
-            {/* Circular Glass Badge */}
             <div className="w-11 h-11 rounded-full bg-[#3B4A64]/70 border border-white/25 shadow-inner backdrop-blur-md flex items-center justify-center shrink-0">
               <Award className="w-5 h-5 text-amber-400 stroke-[1.8]" />
             </div>
@@ -162,30 +181,20 @@ export function SalesOverviewTab({
             </div>
           </div>
 
-          {/* Right Action: Quick Copy Link & Generator Button */}
+          {/* Right Action: Reusable CopyButton & Generator Link */}
           <div className="flex items-center gap-2 self-start sm:self-auto shrink-0 relative z-10">
-            <button
-              type="button"
-              onClick={() => handleCopy(referralUrl, 'ref-banner-link')}
-              className="px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white font-semibold text-xs border border-white/20 transition-all flex items-center gap-1.5 cursor-pointer backdrop-blur-md"
+            <CopyButton
+              text={referralUrl}
+              variant="pill"
+              label={`Link: ${partnerCode}`}
+              copiedLabel="Tersalin!"
+              minWidth="120px"
               title="Salin Link Referral"
-            >
-              {copiedLink === 'ref-banner-link' ? (
-                <>
-                  <Check className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Link Tersalin</span>
-                </>
-              ) : (
-                <>
-                  <Copy className="w-3.5 h-3.5 text-slate-300" />
-                  <span>Link: {partnerCode}</span>
-                </>
-              )}
-            </button>
+            />
             <button
               type="button"
               onClick={() => onTabChange && onTabChange('sales-links')}
-              className="px-4 py-2 rounded-full border border-white/30 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold backdrop-blur-md transition-all shadow-xs flex items-center gap-1.5 cursor-pointer shrink-0"
+              className="px-4 py-2 rounded-full border border-white/30 bg-white/10 hover:bg-white/20 active:scale-95 text-white text-xs font-semibold backdrop-blur-md transition-all shadow-xs flex items-center gap-1.5 cursor-pointer shrink-0"
             >
               <span>Generator Tautan</span>
               <span className="text-[11px]">→</span>
@@ -193,27 +202,41 @@ export function SalesOverviewTab({
           </div>
         </div>
 
-        {/* Banner 2: Soft Rose Milestone Tier Booster Banner */}
+        {/* Banner 2: Soft Rose Milestone Tier Booster Banner with Animated Progress */}
         <div className="rounded-2xl bg-[#FFF1F2] border border-rose-200/90 p-3.5 sm:px-5 sm:py-3.5 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
             <div className="w-9 h-9 rounded-xl bg-white text-rose-500 flex items-center justify-center shrink-0 border border-rose-200 shadow-2xs">
               <Package className="w-5 h-5" />
             </div>
-            <div>
-              <h4 className="text-xs sm:text-sm font-bold text-slate-900 tracking-tight">
-                Target Milestone Tier VIP — Komisi Naik ke 15%
-              </h4>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center justify-between gap-2">
+                <h4 className="text-xs sm:text-sm font-bold text-slate-900 tracking-tight">
+                  Target Milestone Tier VIP — Komisi Naik ke 15%
+                </h4>
+                <span className="text-[11px] font-mono font-bold text-rose-600 shrink-0">
+                  {partner?.tierProgress?.currentOrders || totalOrdersVal}/50 Order
+                </span>
+              </div>
               <p className="text-[11px] sm:text-xs text-slate-600 mt-0.5 leading-tight">
                 Tingkatkan omzet referral Anda! Capai target 50 transaksi sukses untuk otomatis menaikkan komisi dari {partnerRate}% menjadi{' '}
-                <strong className="text-rose-600 font-bold">15% Profit Transaksi</strong>{' '}
-                (Progres: {partner?.tierProgress?.currentOrders || totalOrdersVal}/50 order).
+                <strong className="text-rose-600 font-bold">15% Profit Transaksi</strong>.
               </p>
+              {/* Animated Progress Bar */}
+              <div className="mt-2 max-w-sm">
+                <AnimatedProgressBar
+                  value={partner?.tierProgress?.currentOrders || totalOrdersVal}
+                  max={50}
+                  showShimmer
+                  className="h-1.5 bg-rose-100 border-none"
+                  barClassName="bg-rose-500"
+                />
+              </div>
             </div>
           </div>
           <button
             type="button"
             onClick={() => onTabChange && onTabChange('sales-catalog')}
-            className="px-3.5 py-1.5 rounded-full bg-white hover:bg-rose-50 text-rose-600 font-semibold text-xs border border-rose-300 transition-all flex items-center gap-1.5 self-start sm:self-auto shrink-0 shadow-2xs cursor-pointer"
+            className="px-3.5 py-1.5 rounded-full bg-white hover:bg-rose-50 active:scale-95 text-rose-600 font-semibold text-xs border border-rose-300 transition-all flex items-center gap-1.5 self-start sm:self-auto shrink-0 shadow-2xs cursor-pointer"
           >
             <span>Katalog Promosi ({products.length || 230}+)</span>
             <span className="text-[10px]">→</span>
@@ -221,10 +244,15 @@ export function SalesOverviewTab({
         </div>
       </div>
 
-      {/* 2. FIVE METRIC CARDS ROW (Exact same executive layout & sparklines, with Sales Metrics!) */}
+      {/* 2. FIVE METRIC CARDS ROW (With Staggered Reveal, Count-Up, and Animated SVG Sparklines) */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
         {/* Card 1: Saldo Siap Tarik */}
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs flex flex-col justify-between hover:border-slate-300 transition-all">
+        <div
+          className={`bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs flex flex-col justify-between card-hover-elevation ${
+            isInitial ? 'animate-kpi-reveal' : ''
+          }`}
+          style={{ animationDelay: isInitial ? '0ms' : '0ms' }}
+        >
           <div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -233,14 +261,23 @@ export function SalesOverviewTab({
                 </div>
                 <span className="text-xs font-medium text-slate-500">Saldo Siap Tarik</span>
               </div>
-              {/* Upward Emerald Sparkline */}
-              <svg className="w-7 h-4 text-emerald-500" viewBox="0 0 28 16" fill="none">
-                <path d="M1 14L8 10L15 12L22 4L27 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M22 2H27V7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              {/* Animated Emerald Sparkline */}
+              <SparklinePath
+                path="M1 14L8 10L15 12L22 4L27 2"
+                arrowPath="M22 2H27V7"
+                endDot={{ cx: 27, cy: 2 }}
+                color="#16A36A"
+                gradientId="sparkline-emerald"
+                delay={isInitial ? 0 : 0}
+              />
             </div>
             <div className="mt-3 text-xl lg:text-2xl font-black text-slate-900 tracking-tight font-sans">
-              Rp {unpaidCommissionVal.toLocaleString('id-ID')}
+              <AnimatedNumber
+                value={unpaidCommissionVal}
+                prefix="Rp "
+                delay={isInitial ? 0 : 0}
+                className="font-sans font-black text-slate-900"
+              />
             </div>
           </div>
           <div className="mt-3 pt-2 border-t border-slate-100 flex items-center gap-1 text-[11px] text-[#16A36A] font-medium">
@@ -250,7 +287,12 @@ export function SalesOverviewTab({
         </div>
 
         {/* Card 2: Pesanan Referral */}
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs flex flex-col justify-between hover:border-slate-300 transition-all">
+        <div
+          className={`bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs flex flex-col justify-between card-hover-elevation ${
+            isInitial ? 'animate-kpi-reveal' : ''
+          }`}
+          style={{ animationDelay: isInitial ? '80ms' : '0ms' }}
+        >
           <div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -259,14 +301,22 @@ export function SalesOverviewTab({
                 </div>
                 <span className="text-xs font-medium text-slate-500">Pesanan Referral</span>
               </div>
-              {/* Upward Indigo Sparkline */}
-              <svg className="w-7 h-4 text-indigo-400" viewBox="0 0 28 16" fill="none">
-                <path d="M1 13L8 11L15 13L21 6L27 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M22 3H27V8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              {/* Animated Indigo Sparkline */}
+              <SparklinePath
+                path="M1 13L8 11L15 13L21 6L27 3"
+                arrowPath="M22 3H27V8"
+                endDot={{ cx: 27, cy: 3 }}
+                color="#6366F1"
+                gradientId="sparkline-indigo"
+                delay={isInitial ? 80 : 0}
+              />
             </div>
             <div className="mt-3 text-xl lg:text-2xl font-black text-slate-900 tracking-tight font-sans">
-              {totalOrdersVal}
+              <AnimatedNumber
+                value={totalOrdersVal}
+                delay={isInitial ? 80 : 0}
+                className="font-sans font-black text-slate-900"
+              />
             </div>
           </div>
           <div className="mt-3 pt-2 border-t border-slate-100 text-[11px] text-slate-500 font-medium">
@@ -275,7 +325,12 @@ export function SalesOverviewTab({
         </div>
 
         {/* Card 3: Klik & Kunjungan Link */}
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs flex flex-col justify-between hover:border-slate-300 transition-all">
+        <div
+          className={`bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs flex flex-col justify-between card-hover-elevation ${
+            isInitial ? 'animate-kpi-reveal' : ''
+          }`}
+          style={{ animationDelay: isInitial ? '160ms' : '0ms' }}
+        >
           <div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -284,14 +339,22 @@ export function SalesOverviewTab({
                 </div>
                 <span className="text-xs font-medium text-slate-500">Klik &amp; Kunjungan</span>
               </div>
-              {/* Upward Sky Blue Sparkline */}
-              <svg className="w-7 h-4 text-sky-400" viewBox="0 0 28 16" fill="none">
-                <path d="M1 14L9 11L15 13L21 7L27 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M22 2H27V7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              {/* Animated Sky Blue Sparkline */}
+              <SparklinePath
+                path="M1 14L9 11L15 13L21 7L27 2"
+                arrowPath="M22 2H27V7"
+                endDot={{ cx: 27, cy: 2 }}
+                color="#0284C7"
+                gradientId="sparkline-sky"
+                delay={isInitial ? 160 : 0}
+              />
             </div>
             <div className="mt-3 text-xl lg:text-2xl font-black text-slate-900 tracking-tight font-sans">
-              {totalClicksVal}
+              <AnimatedNumber
+                value={totalClicksVal}
+                delay={isInitial ? 160 : 0}
+                className="font-sans font-black text-slate-900"
+              />
             </div>
           </div>
           <div className="mt-3 pt-2 border-t border-slate-100 flex items-center gap-1 text-[11px] text-[#0284C7] font-medium">
@@ -301,7 +364,12 @@ export function SalesOverviewTab({
         </div>
 
         {/* Card 4: Total Akumulasi Komisi */}
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs flex flex-col justify-between hover:border-slate-300 transition-all">
+        <div
+          className={`bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs flex flex-col justify-between card-hover-elevation ${
+            isInitial ? 'animate-kpi-reveal' : ''
+          }`}
+          style={{ animationDelay: isInitial ? '240ms' : '0ms' }}
+        >
           <div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -310,14 +378,23 @@ export function SalesOverviewTab({
                 </div>
                 <span className="text-xs font-medium text-slate-500">Total Komisi</span>
               </div>
-              {/* Upward Amber Sparkline */}
-              <svg className="w-7 h-4 text-amber-400" viewBox="0 0 28 16" fill="none">
-                <path d="M1 14L8 12L15 13L21 8L27 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M22 4H27V9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              {/* Animated Amber Sparkline */}
+              <SparklinePath
+                path="M1 14L8 12L15 13L21 8L27 4"
+                arrowPath="M22 4H27V9"
+                endDot={{ cx: 27, cy: 4 }}
+                color="#D97706"
+                gradientId="sparkline-amber"
+                delay={isInitial ? 240 : 0}
+              />
             </div>
             <div className="mt-3 text-xl lg:text-2xl font-black text-slate-900 tracking-tight font-sans">
-              Rp {totalCommissionVal.toLocaleString('id-ID')}
+              <AnimatedNumber
+                value={totalCommissionVal}
+                prefix="Rp "
+                delay={isInitial ? 240 : 0}
+                className="font-sans font-black text-slate-900"
+              />
             </div>
           </div>
           <div className="mt-3 pt-2 border-t border-slate-100 text-[11px] text-slate-500 font-medium">
@@ -326,7 +403,12 @@ export function SalesOverviewTab({
         </div>
 
         {/* Card 5: Komisi Garansi (3 Hari) */}
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs flex flex-col justify-between hover:border-slate-300 transition-all col-span-2 sm:col-span-1">
+        <div
+          className={`bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs flex flex-col justify-between card-hover-elevation col-span-2 sm:col-span-1 ${
+            isInitial ? 'animate-kpi-reveal' : ''
+          }`}
+          style={{ animationDelay: isInitial ? '320ms' : '0ms' }}
+        >
           <div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -335,14 +417,23 @@ export function SalesOverviewTab({
                 </div>
                 <span className="text-xs font-medium text-slate-500">Komisi Garansi</span>
               </div>
-              {/* Upward Purple Sparkline */}
-              <svg className="w-7 h-4 text-purple-400" viewBox="0 0 28 16" fill="none">
-                <path d="M1 14L8 11L16 13L22 6L27 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M22 2H27V7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              {/* Animated Purple Sparkline */}
+              <SparklinePath
+                path="M1 14L8 11L16 13L22 6L27 2"
+                arrowPath="M22 2H27V7"
+                endDot={{ cx: 27, cy: 2 }}
+                color="#8B5CF6"
+                gradientId="sparkline-purple"
+                delay={isInitial ? 320 : 0}
+              />
             </div>
             <div className="mt-3 text-xl lg:text-2xl font-black text-slate-900 tracking-tight font-sans">
-              Rp {pendingCommissionVal.toLocaleString('id-ID')}
+              <AnimatedNumber
+                value={pendingCommissionVal}
+                prefix="Rp "
+                delay={isInitial ? 320 : 0}
+                className="font-sans font-black text-slate-900"
+              />
             </div>
           </div>
           <div className="mt-3 pt-2 border-t border-slate-100 text-[11px] text-purple-600 font-medium">
@@ -575,7 +666,6 @@ export function SalesOverviewTab({
               <button
                 type="button"
                 onClick={() => {
-                  if (inviteSalesUrl) handleCopy(inviteSalesUrl, 'invite-sales');
                   if (onTabChange) onTabChange('sales-network');
                 }}
                 className="text-[11px] font-bold text-blue-600 hover:underline shrink-0 cursor-pointer flex items-center gap-0.5"

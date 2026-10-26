@@ -11,15 +11,15 @@ import {
   Percent,
   ShieldCheck,
   ArrowRight,
-  Copy,
-  Check,
   Send,
   ExternalLink,
-  Share2,
 } from 'lucide-react';
 import { AdminTab } from '@/components/admin/admin-sidebar';
 import { getStoreBaseUrl } from '@/lib/utils/url';
 import { ProductBrandIcon } from '@/components/ui/product-brand-icon';
+import { CopyButton } from '@/components/ui/copy-button';
+import { ShareButton } from '@/components/ui/share-button';
+import { SlidingPillTabs } from '@/components/ui/sliding-pill-tabs';
 import { ProductItem } from '../types';
 
 interface SalesCatalogTabProps {
@@ -39,7 +39,6 @@ export function SalesCatalogTab({
 }: SalesCatalogTabProps) {
   const [productSearch, setProductSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [copiedLink, setCopiedLink] = useState<string | null>(null);
 
   const categories = useMemo(() => {
     const set = new Set<string>();
@@ -63,23 +62,13 @@ export function SalesCatalogTab({
     });
   }, [products, productSearch, selectedCategory]);
 
-  const handleCopy = (text: string, id: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedLink(id);
-    setTimeout(() => setCopiedLink(null), 2500);
-  };
 
-  const handleShare = async (url: string, title: string, text: string) => {
-    if (typeof navigator !== 'undefined' && navigator.share) {
-      try {
-        await navigator.share({ title, text, url });
-        return;
-      } catch (err) {
-        if ((err as Error)?.name === 'AbortError') return;
-      }
-    }
-    window.open(`https://wa.me/?text=${encodeURIComponent(text + ' ' + url)}`, '_blank');
-  };
+  const categoryTabs = useMemo(() => {
+    return [
+      { id: 'all', label: `Semua (${products.length})` },
+      ...categories.map((cat) => ({ id: cat, label: cat })),
+    ];
+  }, [categories, products.length]);
 
   return (
     <div className="space-y-6">
@@ -116,7 +105,7 @@ export function SalesCatalogTab({
             variant="outline"
             size="sm"
             onClick={() => onTabChange('sales-links')}
-            className="text-xs h-8 bg-white border-blue-200 text-[#2563EB] hover:bg-blue-50 gap-1 font-semibold rounded-xl"
+            className="text-xs h-8 bg-white border-blue-200 text-[#2563EB] hover:bg-blue-50 gap-1 font-semibold rounded-xl active:scale-95"
           >
             <span>Materi Promosi</span>
             <ArrowRight className="w-3 h-3" />
@@ -124,37 +113,25 @@ export function SalesCatalogTab({
         </div>
       </div>
 
-      {/* Search & Category Filter Bar */}
-      <div className="flex flex-col sm:flex-row gap-3">
+      {/* Search & Category Filter Bar with Sliding Pill Tabs */}
+      <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
         <div className="relative flex-1">
           <Search className="w-4 h-4 text-foreground-muted absolute left-3.5 top-1/2 -translate-y-1/2" />
           <Input
             placeholder="Cari produk digital (misal: Canva, Netflix, Spotify, ChatGPT)..."
             value={productSearch}
             onChange={(e) => setProductSearch(e.target.value)}
-            className="pl-10 bg-white border-border text-xs h-10"
+            className="pl-10 bg-white border-border text-xs h-10 rounded-xl"
           />
         </div>
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
-          <Button
-            variant={selectedCategory === 'all' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setSelectedCategory('all')}
-            className="text-xs h-10 shrink-0 font-medium rounded-xl"
-          >
-            Semua ({products.length})
-          </Button>
-          {categories.map((cat) => (
-            <Button
-              key={cat}
-              variant={selectedCategory === cat ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setSelectedCategory(cat)}
-              className="text-xs h-10 shrink-0 font-medium rounded-xl"
-            >
-              {cat}
-            </Button>
-          ))}
+        <div className="overflow-x-auto pb-1 max-w-full">
+          <SlidingPillTabs
+            tabs={categoryTabs}
+            activeTab={selectedCategory}
+            onChange={setSelectedCategory}
+            ariaLabel="Kategori Produk"
+            pillClassName="bg-primary text-white shadow-xs"
+          />
         </div>
       </div>
 
@@ -179,8 +156,11 @@ export function SalesCatalogTab({
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-          {filteredProducts.map((p) => {
+        <div
+          key={`${selectedCategory}-${productSearch}`}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5"
+        >
+          {filteredProducts.map((p, idx) => {
             const productUrl = `${getStoreBaseUrl()}/products/${p.id}?ref=${partnerCode}`;
             const catName = p.categoryName || p.category?.name || 'Digital';
 
@@ -193,7 +173,8 @@ export function SalesCatalogTab({
             return (
               <div
                 key={p.id}
-                className="bg-surface border border-border rounded-2xl p-5 shadow-xs flex flex-col justify-between space-y-4 hover:border-[#171717]/30 hover:shadow-card-hover transition-all group"
+                className="bg-surface border border-border rounded-2xl p-5 shadow-xs flex flex-col justify-between space-y-4 card-hover-elevation animate-fade-up group"
+                style={{ animationDelay: `${Math.min(idx, 7) * 40}ms` }}
               >
                 <div className="space-y-3">
                   <div className="flex items-center justify-between gap-2">
@@ -241,38 +222,22 @@ export function SalesCatalogTab({
                 </div>
 
                 <div className="pt-2 border-t border-border flex items-center gap-2">
-                  <Button
+                  <CopyButton
+                    text={productUrl}
+                    label="Salin Link"
+                    copiedLabel="Tersalin!"
                     size="sm"
-                    onClick={() => handleCopy(productUrl, `prod-${p.id}`)}
-                    className="flex-1 text-xs h-9 gap-1.5 font-semibold rounded-xl cursor-pointer"
-                  >
-                    {copiedLink === `prod-${p.id}` ? (
-                      <>
-                        <Check className="w-3.5 h-3.5 text-[#16A36A]" />
-                        <span>Tersalin!</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-3.5 h-3.5" />
-                        <span>Salin Link</span>
-                      </>
-                    )}
-                  </Button>
+                    className="flex-1"
+                  />
 
-                  <button
-                    type="button"
-                    onClick={() =>
-                      handleShare(
-                        productUrl,
-                        p.name,
-                        `Dapatkan ${p.name} resmi bergaransi hanya ${p.priceFormatted || `Rp ${p.price.toLocaleString('id-ID')}`} di Asterra Store:`
-                      )
-                    }
-                    className="h-9 px-3 rounded-xl border border-blue-200 bg-blue-50 hover:bg-blue-100 text-[#2563EB] flex items-center justify-center transition-colors shrink-0 shadow-xs cursor-pointer"
-                    title="Bagikan Produk"
-                  >
-                    <Share2 className="w-3.5 h-3.5" />
-                  </button>
+                  <ShareButton
+                    url={productUrl}
+                    title={p.name}
+                    text={`Dapatkan ${p.name} resmi bergaransi hanya ${p.priceFormatted || `Rp ${p.price.toLocaleString('id-ID')}`} di Asterra Store:`}
+                    variant="outline"
+                    size="sm"
+                    iconOnly
+                  />
 
                   <a
                     href={`https://wa.me/?text=Dapatkan%20${encodeURIComponent(
@@ -282,7 +247,7 @@ export function SalesCatalogTab({
                     )}%20di%20Asterra%20Store:%20${encodeURIComponent(productUrl)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="h-9 px-3 rounded-xl border border-border bg-white hover:bg-emerald-50 hover:border-emerald-300 text-foreground-muted hover:text-[#16A36A] flex items-center justify-center transition-colors shrink-0 shadow-xs cursor-pointer"
+                    className="h-9 px-3 rounded-xl border border-border bg-white hover:bg-emerald-50 hover:border-emerald-300 text-foreground-muted hover:text-[#16A36A] active:scale-95 flex items-center justify-center transition-all shrink-0 shadow-xs cursor-pointer"
                     title="Bagikan ke WhatsApp"
                   >
                     <Send className="w-3.5 h-3.5" />
@@ -292,7 +257,7 @@ export function SalesCatalogTab({
                     href={productUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="h-9 px-3 rounded-xl border border-border bg-white hover:bg-surface-secondary text-foreground-muted hover:text-foreground flex items-center justify-center transition-colors shrink-0 shadow-xs"
+                    className="h-9 px-3 rounded-xl border border-border bg-white hover:bg-surface-secondary text-foreground-muted hover:text-foreground active:scale-95 flex items-center justify-center transition-all shrink-0 shadow-xs"
                     title="Buka Halaman Produk"
                   >
                     <ExternalLink className="w-3.5 h-3.5" />
