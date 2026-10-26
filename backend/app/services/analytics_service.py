@@ -208,37 +208,271 @@ class AnalyticsService:
         }
 
     @classmethod
-    def get_analytics_suite_data(cls) -> Dict[str, Any]:
+    def get_analytics_suite_data(cls, period: str = "30d") -> Dict[str, Any]:
         orders = OrderService.load_orders()
         profit_data = FinanceService.get_profit_distribution()
         profit_summary = profit_data.get("summary", {})
         partners = PartnerService.get_all_partners()
         managed_products = CatalogService.load_managed_products()
 
-        # 1. Sales Time Series (Chronological daily sales from real orders)
-        daily_records = {}
+        from datetime import timezone
+        WIB = timezone(timedelta(hours=7))
+        now_wib = datetime.now(WIB)
+        today_date = now_wib.date()
+
+        # Parse completed orders with timezone and units
+        parsed_orders = []
         for o in orders:
             status = str(o.get("status", "")).lower()
             if status in ["completed", "paid", "settlement"]:
-                created_str = o.get("createdAt") or o.get("created_at") or ""
-                amt = float(o.get("totalAmount") or o.get("rawAmount") or 0.0)
+                created_str = o.get("createdAt") or o.get("created_at") or now_wib.isoformat()
                 try:
-                    dt = datetime.fromisoformat(created_str.replace("Z", "+00:00"))
-                    date_label = dt.strftime("%d %b")
+                    if "Z" in created_str:
+                        dt = datetime.fromisoformat(created_str.replace("Z", "+00:00")).astimezone(WIB)
+                    elif "+" in created_str:
+                        dt = datetime.fromisoformat(created_str).astimezone(WIB)
+                    else:
+                        dt = datetime.fromisoformat(created_str).replace(tzinfo=timezone.utc).astimezone(WIB)
                 except Exception:
-                    date_label = "01 Okt"
+                    dt = now_wib
 
-                if date_label not in daily_records:
-                    daily_records[date_label] = {"date": date_label, "revenue": 0.0, "orders": 0}
-                daily_records[date_label]["revenue"] += amt
-                daily_records[date_label]["orders"] += 1
+                gross_amt = float(o.get("rawAmount") or o.get("totalAmount") or 0.0)
+                net_amt = float(o.get("totalAmount") or o.get("rawAmount") or 0.0)
+                items = o.get("items") or []
+                units = sum(int(it.get("quantity", 1)) for it in items) or 1
+                parsed_orders.append({
+                    "order": o,
+                    "dt": dt,
+                    "gross_amt": gross_amt,
+                    "net_amt": net_amt,
+                    "units": units,
+                    "items": items,
+                })
 
-        sales_time_series = list(reversed(list(daily_records.values())))
-        if not sales_time_series:
-            sales_time_series = [{"date": "Hari Ini", "revenue": profit_summary.get("totalNetRevenue", 0.0), "orders": profit_summary.get("totalOrders", 0)}]
+        # Helper to compute breakdown stats for any subset of orders
+        def compute_breakdowns(orders_subset):
+            total_rev = sum(po["gross_amt"] for po in orders_subset)
+            total_orders = len(orders_subset)
+            aov = round(total_rev / total_orders) if total_orders > 0 else 0
+            total_units = sum(po["units"] for po in orders_subset)
+
+            # Category Breakdown
+            cat_map = {}
+            for po in orders_subset:
+                items = po["items"]
+                for it in items:
+                    p_name = it.get("productName") or it.get("product_name") or ""
+                    raw_cat = it.get("category") or "Katalog"
+                    cat_name = raw_cat.get("name") if isinstance(raw_cat, dict) else str(raw_cat)
+
+                    if any(k in p_name.lower() for k in ["gemini", "gpt", "ai", "claude"]):
+                        cat_name = "AI Tools & Productivity"
+                    elif any(k in p_name.lower() for k in ["netflix", "spotify", "youtube", "vidio", "disney"]):
+                        cat_name = "Streaming & Hiburan"
+                    elif any(k in p_name.lower() for k in ["canva", "capcut", "adobe", "figma"]):
+                        cat_name = "Desain & Grafis"
+
+                    price = float(it.get("price") or it.get("unit_price") or 0.0)
+                    qty = int(it.get("quantity", 1))
+                    item_rev = (price * qty) if price > 0 else po["gross_amt"]
+                    cat_map[cat_name] = cat_map.get(cat_name, 0.0) + item_rev
+
+            total_cat_rev = sum(cat_map.values()) or total_rev or 1.0
+            category_distribution = []
+            for c_name, c_rev in sorted(cat_map.items(), key=lambda x: x[1], reverse=True):
+                category_distribution.append({
+                    "name": c_name,
+                    "revenue": c_rev,
+                    "percentage": round((c_rev / total_cat_rev) * 100, 1),
+                })
+            if not category_distribution:
+                category_distribution = [
+                    {"name": "AI Tools & Productivity", "revenue": 0, "percentage": 0},
+                    {"name": "Streaming & Hiburan", "revenue": 0, "percentage": 0},
+                    {"name": "Desain & Grafis", "revenue": 0, "percentage": 0},
+                ]
+
+            # Payment Methods Breakdown
+            method_map = {}
+            for po in orders_subset:
+                m = str(po["order"].get("paymentMethod") or po["order"].get("payment_method") or "QRIS").lower()
+                if "qris" in m:
+                    label = "QRIS Real-Time"
+                elif "dana" in m:
+                    label = "DANA / E-Wallet"
+                elif "bca" in m:
+                    label = "BCA Virtual Account"
+                elif "mandiri" in m:
+                    label = "Mandiri Virtual Account"
+                elif "transfer" in m or "manual" in m:
+                    label = "Bank Transfer Manual"
+                else:
+                    label = po["order"].get("paymentMethod") or "QRIS Real-Time"
+                method_map[label] = method_map.get(label, 0) + 1
+
+            total_method_orders = sum(method_map.values()) or total_orders or 1
+            payment_methods = []
+            for m_name, m_cnt in sorted(method_map.items(), key=lambda x: x[1], reverse=True):
+                payment_methods.append({
+                    "name": m_name,
+                    "orders": m_cnt,
+                    "percentage": round((m_cnt / total_method_orders) * 100, 1),
+                })
+            if not payment_methods:
+                payment_methods = [
+                    {"name": "QRIS Real-Time", "orders": 0, "percentage": 0},
+                    {"name": "DANA / E-Wallet", "orders": 0, "percentage": 0},
+                    {"name": "BCA Virtual Account", "orders": 0, "percentage": 0},
+                ]
+
+            # Channel Acquisition Breakdown
+            channel_map = {"Mitra Afiliasi & Sales": 0, "Campaign Promo / Kupon": 0, "Direct Toko / Search": 0}
+            for po in orders_subset:
+                ord_data = po["order"]
+                if ord_data.get("referralCode") or ord_data.get("salesPartnerId"):
+                    channel_map["Mitra Afiliasi & Sales"] += 1
+                elif float(ord_data.get("promoDiscount") or 0) > 0 or ord_data.get("campaignId"):
+                    channel_map["Campaign Promo / Kupon"] += 1
+                else:
+                    channel_map["Direct Toko / Search"] += 1
+
+            total_channel_orders = sum(channel_map.values()) or total_orders or 1
+            channels = []
+            for ch_name, ch_cnt in sorted(channel_map.items(), key=lambda x: x[1], reverse=True):
+                channels.append({
+                    "name": ch_name,
+                    "orders": ch_cnt,
+                    "percentage": round((ch_cnt / total_channel_orders) * 100, 1),
+                })
+
+            return {
+                "kpi": {
+                    "grossRevenue": total_rev,
+                    "totalOrders": total_orders,
+                    "averageOrderValue": aov,
+                    "totalUnits": total_units,
+                },
+                "categoryDistribution": category_distribution,
+                "paymentMethods": payment_methods,
+                "channels": channels,
+            }
+
+        # 1. TODAY: Hourly 3-hour intervals
+        today_orders = [po for po in parsed_orders if po["dt"].date() == today_date]
+        today_breakdown = compute_breakdowns(today_orders)
+        hour_intervals = [0, 3, 6, 9, 12, 15, 18, 21]
+        today_series = [{"label": f"{h:02d}:00", "date": f"Hari ini {h:02d}:00", "revenue": 0.0, "orders": 0, "units": 0} for h in hour_intervals]
+        for po in today_orders:
+            h = po["dt"].hour
+            closest_h = min(hour_intervals, key=lambda x: abs(x - h))
+            idx = hour_intervals.index(closest_h)
+            today_series[idx]["revenue"] += po["gross_amt"]
+            today_series[idx]["orders"] += 1
+            today_series[idx]["units"] += po["units"]
+
+        # 2. 7 DAYS: Daily from 6 days ago up to today
+        seven_days_ago = today_date - timedelta(days=6)
+        seven_days_orders = [po for po in parsed_orders if po["dt"].date() >= seven_days_ago]
+        seven_days_breakdown = compute_breakdowns(seven_days_orders)
+        seven_days_series = []
+        for i in range(6, -1, -1):
+            d = today_date - timedelta(days=i)
+            day_label = d.strftime("%d %b")
+            day_orders = [po for po in seven_days_orders if po["dt"].date() == d]
+            seven_days_series.append({
+                "label": day_label,
+                "date": day_label,
+                "revenue": sum(po["gross_amt"] for po in day_orders),
+                "orders": len(day_orders),
+                "units": sum(po["units"] for po in day_orders),
+            })
+
+        # 3. 30 DAYS: Daily breakdown across 30 days
+        thirty_days_ago = today_date - timedelta(days=29)
+        thirty_days_orders = [po for po in parsed_orders if po["dt"].date() >= thirty_days_ago]
+        thirty_days_breakdown = compute_breakdowns(thirty_days_orders)
+        thirty_days_series = []
+        for i in range(29, -1, -1):
+            d = today_date - timedelta(days=i)
+            day_label = d.strftime("%d %b")
+            day_orders = [po for po in thirty_days_orders if po["dt"].date() == d]
+            thirty_days_series.append({
+                "label": day_label,
+                "date": day_label,
+                "revenue": sum(po["gross_amt"] for po in day_orders),
+                "orders": len(day_orders),
+                "units": sum(po["units"] for po in day_orders),
+            })
+
+        # 4. MONTH: 4 weekly buckets of current month
+        first_of_month = today_date.replace(day=1)
+        month_orders = [po for po in parsed_orders if po["dt"].date() >= first_of_month]
+        month_breakdown = compute_breakdowns(month_orders)
+        month_weeks = {}
+        for w in range(1, 5):
+            month_weeks[f"Minggu {w}"] = {"revenue": 0.0, "orders": 0, "units": 0, "date": f"Minggu {w} ({now_wib.strftime('%b %Y')})"}
+        for po in month_orders:
+            week_num = min(4, max(1, (po["dt"].day - 1) // 7 + 1))
+            k = f"Minggu {week_num}"
+            month_weeks[k]["revenue"] += po["gross_amt"]
+            month_weeks[k]["orders"] += 1
+            month_weeks[k]["units"] += po["units"]
+        month_series = [{"label": k, "date": v["date"], "revenue": v["revenue"], "orders": v["orders"], "units": v["units"]} for k, v in month_weeks.items()]
+
+        # 5. YEAR: 12 months
+        year_orders = [po for po in parsed_orders if po["dt"].year == today_date.year]
+        year_breakdown = compute_breakdowns(year_orders)
+        month_names = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"]
+        year_series = [{"label": m, "date": f"{m} {today_date.year}", "revenue": 0.0, "orders": 0, "units": 0} for m in month_names]
+        for po in year_orders:
+            m_idx = po["dt"].month - 1
+            if 0 <= m_idx < 12:
+                year_series[m_idx]["revenue"] += po["gross_amt"]
+                year_series[m_idx]["orders"] += 1
+                year_series[m_idx]["units"] += po["units"]
+
+        all_periods = {
+            "today": {
+                "salesTimeSeries": today_series,
+                "kpi": today_breakdown["kpi"],
+                "categoryDistribution": today_breakdown["categoryDistribution"],
+                "paymentMethods": today_breakdown["paymentMethods"],
+                "channels": today_breakdown["channels"],
+            },
+            "7d": {
+                "salesTimeSeries": seven_days_series,
+                "kpi": seven_days_breakdown["kpi"],
+                "categoryDistribution": seven_days_breakdown["categoryDistribution"],
+                "paymentMethods": seven_days_breakdown["paymentMethods"],
+                "channels": seven_days_breakdown["channels"],
+            },
+            "30d": {
+                "salesTimeSeries": thirty_days_series,
+                "kpi": thirty_days_breakdown["kpi"],
+                "categoryDistribution": thirty_days_breakdown["categoryDistribution"],
+                "paymentMethods": thirty_days_breakdown["paymentMethods"],
+                "channels": thirty_days_breakdown["channels"],
+            },
+            "month": {
+                "salesTimeSeries": month_series,
+                "kpi": month_breakdown["kpi"],
+                "categoryDistribution": month_breakdown["categoryDistribution"],
+                "paymentMethods": month_breakdown["paymentMethods"],
+                "channels": month_breakdown["channels"],
+            },
+            "year": {
+                "salesTimeSeries": year_series,
+                "kpi": year_breakdown["kpi"],
+                "categoryDistribution": year_breakdown["categoryDistribution"],
+                "paymentMethods": year_breakdown["paymentMethods"],
+                "channels": year_breakdown["channels"],
+            },
+        }
+
+        active_period = period if period in all_periods else "30d"
+        selected_data = all_periods[active_period]
 
         # 2. Merchandise Performance Matrix
-        # Group sales by product
         sold_by_prod = {}
         for o in orders:
             if str(o.get("status", "")).lower() in ["completed", "paid", "settlement"]:
@@ -251,13 +485,10 @@ class AnalyticsService:
                     sold_by_prod[p_name]["rev"] += price * qty if price > 0 else float(o.get("totalAmount", 0))
 
         prod_matrix = []
-        managed_map = {str(p.get("id")): p for p in managed_products}
-
         for idx, (p_name, s_data) in enumerate(sorted(sold_by_prod.items(), key=lambda x: x[1]["units"], reverse=True)):
             rev = s_data["rev"]
             units = s_data["units"]
 
-            # Lookup providerPrice from catalog if available
             matched_p = next((p for p in managed_products if p.get("name") == p_name), None)
             if matched_p and matched_p.get("providerPrice"):
                 cogs = float(matched_p["providerPrice"]) * units
@@ -321,7 +552,13 @@ class AnalyticsService:
         business_reserve = profit_summary.get("totalBusinessReserve", round(profit_distribution * 0.20))
 
         return {
-            "salesTimeSeries": sales_time_series,
+            "period": active_period,
+            "salesTimeSeries": selected_data["salesTimeSeries"],
+            "periodKpi": selected_data["kpi"],
+            "categoryDistribution": selected_data["categoryDistribution"],
+            "paymentMethods": selected_data["paymentMethods"],
+            "channels": selected_data["channels"],
+            "periods": all_periods,
             "productPerformanceData": prod_matrix,
             "affiliatePerformanceData": aff_matrix,
             "financialReport": {

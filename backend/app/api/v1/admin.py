@@ -28,10 +28,10 @@ def get_analytics_overview():
     }
 
 @router.get("/admin/analytics/suite", tags=["Admin Analytics"])
-def get_analytics_suite():
+def get_analytics_suite(period: Optional[str] = Query("30d")):
     return {
         "success": True,
-        "data": AnalyticsService.get_analytics_suite_data(),
+        "data": AnalyticsService.get_analytics_suite_data(period=period or "30d"),
     }
 
 @router.get("/admin/finance/summary", tags=["Admin Finance"])

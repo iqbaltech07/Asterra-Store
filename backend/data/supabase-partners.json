@@ -7,14 +7,28 @@
     "code": "AST-ACELINO-COOL",
     "tier": "Standard (10%)",
     "rate": 10,
-    "totalClicks": 8,
+    "totalClicks": 13,
     "bankName": "Bank Central Asia (BCA)",
     "bankAccount": "-",
     "status": "active",
     "referredById": null,
     "createdAt": "2026-10-25T04:55:16.035000",
-    "updatedAt": "2026-10-25T13:27:35.751000",
+    "updatedAt": "2026-10-26T08:09:44.237000",
     "payoutRequests": [
+      {
+        "id": "payreq-1792990557-c01a",
+        "partnerId": "partner-1792904116023",
+        "amount": 50000,
+        "bankName": "DANA",
+        "bankAccount": "089655223792",
+        "bankAccountName": "Marchelino Kurniawan",
+        "status": "completed",
+        "notes": "Pencairan komisi kemitraan sales",
+        "processedAt": "2026-10-26T04:56:19.923000Z",
+        "createdAt": "2026-10-26T04:55:57.343000Z",
+        "requestedAt": "2026-10-26T04:55:57.343000Z",
+        "updatedAt": "2026-10-26T04:56:19.923000Z"
+      },
       {
         "id": "payreq-1792923231-48e4",
         "partnerId": "partner-1792904116023",
@@ -121,5 +135,22 @@
         "updatedAt": "2026-10-25T12:35:43.894000Z"
       }
     ]
+  },
+  {
+    "id": "partner-1793000830391",
+    "name": "iqbalferdiansyah",
+    "email": "iqbalasli07@gmail.com",
+    "whatsapp": "08961245622",
+    "code": "AST-IQBAL",
+    "tier": "Standard (10%)",
+    "rate": 10,
+    "totalClicks": 0,
+    "bankName": "Bank Central Asia (BCA)",
+    "bankAccount": "-",
+    "status": "active",
+    "referredById": null,
+    "createdAt": "2026-10-26T07:47:10.423000",
+    "updatedAt": "2026-10-26T07:47:10.423000",
+    "payoutRequests": []
   }
 ]

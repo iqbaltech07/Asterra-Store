@@ -34,9 +34,33 @@ import { Badge } from '@/components/ui/badge';
 import { getPerformanceColor, PERFORMANCE_COLORS } from '@/lib/utils/chart-performance-colors';
 
 interface SalesTimeSeriesItem {
+  label?: string;
   date: string;
   revenue: number;
   orders: number;
+  units?: number;
+}
+
+interface PeriodBreakdownItem {
+  name: string;
+  revenue?: number;
+  orders?: number;
+  percentage: number;
+}
+
+interface PeriodKpiData {
+  grossRevenue: number;
+  totalOrders: number;
+  averageOrderValue: number;
+  totalUnits: number;
+}
+
+interface PeriodDetail {
+  salesTimeSeries: SalesTimeSeriesItem[];
+  kpi: PeriodKpiData;
+  categoryDistribution: PeriodBreakdownItem[];
+  paymentMethods: PeriodBreakdownItem[];
+  channels: PeriodBreakdownItem[];
 }
 
 interface ProductPerformanceItem {
@@ -83,7 +107,13 @@ interface FinancialReportData {
 }
 
 interface AnalyticsSuiteData {
+  period?: string;
   salesTimeSeries: SalesTimeSeriesItem[];
+  periodKpi?: PeriodKpiData;
+  categoryDistribution?: PeriodBreakdownItem[];
+  paymentMethods?: PeriodBreakdownItem[];
+  channels?: PeriodBreakdownItem[];
+  periods?: Record<'today' | '7d' | '30d' | 'month' | 'year', PeriodDetail>;
   productPerformanceData: ProductPerformanceItem[];
   affiliatePerformanceData: AffiliatePerformanceItem[];
   financialReport: FinancialReportData;
@@ -94,16 +124,57 @@ interface AdminAnalyticsSuiteProps {
   onNotify?: (msg: string) => void;
 }
 
+function triggerCsvDownload(filename: string, headers: string[], rows: (string | number)[][]) {
+  const csvContent = [
+    headers.map((h) => `"${h.replace(/"/g, '""')}"`).join(','),
+    ...rows.map((row) =>
+      row.map((val) => `"${String(val ?? '').replace(/"/g, '""')}"`).join(',')
+    ),
+  ].join('\n');
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  link.setAttribute('download', filename);
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+function formatRupiahShort(value: number): string {
+  if (value >= 1_000_000_000) {
+    return `${(value / 1_000_000_000).toFixed(1)}B`;
+  }
+  if (value >= 1_000_000) {
+    return `${(value / 1_000_000).toFixed(1)}M`;
+  }
+  if (value >= 1_000) {
+    return `${Math.round(value / 1_000)}K`;
+  }
+  return value.toLocaleString('id-ID');
+}
+
 export function AdminAnalyticsSuite({ activeTab, onNotify }: AdminAnalyticsSuiteProps) {
   // Period filter: Today, 7 Days, 30 Days, This Month, This Year
   const [selectedPeriod, setSelectedPeriod] = useState<'today' | '7d' | '30d' | 'month' | 'year'>('30d');
   const [productSearch, setProductSearch] = useState('');
   const [productCategoryFilter, setProductCategoryFilter] = useState('all');
   const [selectedProductDetail, setSelectedProductDetail] = useState<ProductPerformanceItem | null>(null);
+  const [hoveredBarIndex, setHoveredBarIndex] = useState<number | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setMounted(true), 120);
+    return () => clearTimeout(timer);
+  }, []);
+
   const { data: suiteResponse, isLoading: isLoadingSuite } = useQuery<{ success: boolean; data: AnalyticsSuiteData }>({
-    queryKey: ['admin-analytics-suite'],
+    queryKey: ['admin-analytics-suite', selectedPeriod],
     queryFn: async () => {
-      const res = await fetch('/api/v1/admin/analytics/suite');
+      const res = await fetch(`/api/v1/admin/analytics/suite?period=${selectedPeriod}`);
       if (!res.ok) throw new Error('Failed to fetch analytics suite data');
       return res.json();
     },
@@ -117,16 +188,103 @@ export function AdminAnalyticsSuite({ activeTab, onNotify }: AdminAnalyticsSuite
 
   const suiteData = suiteResponse?.data || null;
 
-  const salesTimeSeries = suiteData?.salesTimeSeries || [];
+  // Resolve active period data from multi-period cache or active payload
+  const activePeriodData: PeriodDetail | null = suiteData?.periods?.[selectedPeriod] || null;
+
+  const salesTimeSeries = activePeriodData?.salesTimeSeries || suiteData?.salesTimeSeries || [];
+  const activeKpi = activePeriodData?.kpi || suiteData?.periodKpi || {
+    grossRevenue: suiteData?.financialReport?.grossRevenue || 0,
+    totalOrders: salesTimeSeries.reduce((a, b) => a + (b.orders || 0), 0),
+    averageOrderValue: 0,
+    totalUnits: 0,
+  };
+  const categoryDistribution = activePeriodData?.categoryDistribution || suiteData?.categoryDistribution || [];
+  const paymentMethods = activePeriodData?.paymentMethods || suiteData?.paymentMethods || [];
+  const channels = activePeriodData?.channels || suiteData?.channels || [];
+
   const productPerformanceData = suiteData?.productPerformanceData || [];
   const affiliatePerformanceData = suiteData?.affiliatePerformanceData || [];
   const financialReport = suiteData?.financialReport;
 
+  // CSV Export for Sales Summary
+  const handleExportSalesCsv = () => {
+    const headers = ['Tanggal / Periode', 'Omzet Bruto (Rp)', 'Jumlah Pesanan', 'Status'];
+    const rows = salesTimeSeries.map((s) => [
+      s.label || s.date,
+      s.revenue,
+      s.orders,
+      'Terverifikasi SSOT',
+    ]);
+    triggerCsvDownload(`laporan-penjualan-asterra-${selectedPeriod}-${new Date().toISOString().slice(0, 10)}.csv`, headers, rows);
+    onNotify?.(`Laporan penjualan (${selectedPeriod}) berhasil diekspor ke CSV.`);
+  };
+
+  // CSV Export for Product Matrix
+  const handleExportProductMatrixCsv = () => {
+    const headers = ['Nama Produk', 'Kategori', 'Provider', 'Unit Terjual', 'Omzet Bruto', 'HPP Modal', 'Laba Kotor', 'Margin (%)', 'Refund Rate (%)'];
+    const rows = productPerformanceData.map((p) => [
+      p.name,
+      p.category,
+      p.provider,
+      p.unitsSold,
+      p.revenue,
+      p.cogs,
+      p.profit,
+      p.marginPercent,
+      p.refundRate,
+    ]);
+    triggerCsvDownload(`matriks-performa-produk-asterra-${new Date().toISOString().slice(0, 10)}.csv`, headers, rows);
+    onNotify?.('Matriks performa produk berhasil diekspor ke format CSV.');
+  };
+
+  // CSV Export for Affiliate Matrix
+  const handleExportAffiliateCsv = () => {
+    const headers = ['Kode Referral', 'Nama Mitra', 'Jumlah Klik', 'Pesanan Referral', 'Konversi (%)', 'Omzet Dihasilkan (Rp)', 'Komisi Mitra (Rp)', 'Status'];
+    const rows = affiliatePerformanceData.map((a) => [
+      a.code,
+      a.partnerName,
+      a.clicks,
+      a.referralOrders,
+      a.conversionRate,
+      a.generatedRevenue,
+      a.commissionEarned,
+      a.activeStatus,
+    ]);
+    triggerCsvDownload(`laporan-afiliasi-sales-asterra-${new Date().toISOString().slice(0, 10)}.csv`, headers, rows);
+    onNotify?.('Laporan performa afiliasi & sales berhasil diunduh.');
+  };
+
+  // CSV Export for Financial Report
+  const handleExportFinancialCsv = () => {
+    const headers = ['Komponen Laba Rugi', 'Nominal (Rp)', 'Keterangan'];
+    const rows = [
+      ['Pendapatan Penjualan Bruto', financialReport?.grossRevenue || 0, 'Total Gross Revenue Toko'],
+      ['Diskon & Potongan Referral', financialReport?.discounts || 0, 'Total Voucher & Promo'],
+      ['Pendapatan Bersih (Net Revenue)', financialReport?.netRevenue || 0, 'Gross - Diskon'],
+      ['Harga Pokok Penjualan (HPP)', financialReport?.cogs || 0, 'Modal Supplier VIP Reseller'],
+      ['Laba Kotor (Gross Profit)', financialReport?.grossProfit || 0, 'Net Revenue - HPP'],
+      ['Biaya Payment Gateway', financialReport?.pgFees || 0, 'Fee Tripay / Merchant'],
+      ['Komisi Afiliasi & Sales', financialReport?.commissions || 0, 'Hak Komisi Mitra'],
+      ['Total Beban Operasional', financialReport?.totalOpex || 0, 'Gateway + Komisi'],
+      ['Laba Bersih Operasional', financialReport?.netOperatingProfit || 0, 'Gross Profit - Beban Operasional'],
+      ['Alokasi CEO Share (40%)', financialReport?.ceoShare || 0, 'Bagi Hasil CEO'],
+      ['Alokasi COO Share (40%)', financialReport?.cooShare || 0, 'Bagi Hasil COO'],
+      ['Cadangan Usaha (20%)', financialReport?.businessReserve || 0, 'Dana Cadangan Asterra'],
+    ];
+    triggerCsvDownload(`laporan-keuangan-asterra-${new Date().toISOString().slice(0, 10)}.csv`, headers, rows);
+    onNotify?.('Laporan keuangan resmi Asterra berhasil diekspor.');
+  };
 
   // =========================================================================
   // 1. SALES SUMMARY TAB
   // =========================================================================
   if (activeTab === 'sales-summary') {
+    const maxRev = Math.max(...salesTimeSeries.map((s) => s.revenue || 0), 50000);
+    const timeSeriesRevenues = salesTimeSeries.map((x) => x.revenue);
+
+    // Calculate 5 Y-Axis ticks from maxRev down to 0
+    const yTicks = [maxRev, maxRev * 0.75, maxRev * 0.5, maxRev * 0.25, 0];
+
     return (
       <div className="space-y-6">
         {/* Header */}
@@ -146,16 +304,16 @@ export function AdminAnalyticsSuite({ activeTab, onNotify }: AdminAnalyticsSuite
 
           <div className="flex items-center gap-2">
             {/* Period Switcher */}
-            <div className="flex items-center bg-surface-raised border border-border rounded-lg p-1 text-xs">
+            <div className="flex items-center bg-surface-raised border border-border rounded-lg p-1 text-xs shadow-2xs">
               {(['today', '7d', '30d', 'month', 'year'] as const).map((p) => (
                 <button
                   key={p}
                   type="button"
                   onClick={() => setSelectedPeriod(p)}
-                  className={`px-2.5 py-1 rounded capitalize transition-colors ${
+                  className={`px-2.5 py-1 rounded capitalize transition-all cursor-pointer ${
                     selectedPeriod === p
                       ? 'bg-primary text-primary-foreground font-semibold shadow-xs'
-                      : 'text-foreground-muted hover:text-foreground'
+                      : 'text-foreground-muted hover:text-foreground hover:bg-surface/60'
                   }`}
                 >
                   {p === 'today' ? 'Hari Ini' : p === '7d' ? '7 Hari' : p === '30d' ? '30 Hari' : p === 'month' ? 'Bulan Ini' : 'Tahun Ini'}
@@ -166,8 +324,8 @@ export function AdminAnalyticsSuite({ activeTab, onNotify }: AdminAnalyticsSuite
             <Button
               size="sm"
               variant="outline"
-              onClick={() => onNotify?.('Laporan penjualan CSV sedang di-generate...')}
-              className="text-xs gap-1.5 border-border"
+              onClick={handleExportSalesCsv}
+              className="text-xs gap-1.5 border-border hover:bg-surface-raised"
             >
               <Download className="w-3.5 h-3.5" />
               <span>Ekspor CSV</span>
@@ -176,136 +334,196 @@ export function AdminAnalyticsSuite({ activeTab, onNotify }: AdminAnalyticsSuite
         </div>
 
         {/* 4 Executive KPI Cards */}
-        {(() => {
-          const totalRev = financialReport?.grossRevenue ?? salesTimeSeries.reduce((a, b) => a + (b.revenue || 0), 0);
-          const totalOrders = salesTimeSeries.reduce((a, b) => a + (b.orders || 0), 0);
-          const aov = totalOrders > 0 ? Math.round(totalRev / totalOrders) : 0;
-          const totalUnits = productPerformanceData.length > 0 ? productPerformanceData.reduce((a, b) => a + (b.unitsSold || 0), 0) : totalOrders;
-          const maxRev = Math.max(...salesTimeSeries.map((s) => s.revenue || 0), 50000);
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-surface border border-border rounded-xl p-4 shadow-xs transition-all hover:border-primary/40">
+            <span className="text-[11px] text-foreground-muted block mb-1">Gross Revenue (Omzet)</span>
+            <div className="text-2xl font-bold text-foreground font-mono">
+              Rp {activeKpi.grossRevenue.toLocaleString('id-ID')}
+            </div>
+            <div className="flex items-center gap-1 text-[10px] text-status-success font-semibold mt-1">
+              <TrendingUp className="w-3 h-3" />
+              <span>Terverifikasi Gateway</span>
+            </div>
+          </div>
 
-          return (
-            <>
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-surface border border-border rounded-xl p-4 shadow-xs">
-                  <span className="text-[11px] text-foreground-muted block mb-1">Gross Revenue (Omzet)</span>
-                  <div className="text-2xl font-bold text-foreground font-mono">
-                    Rp {totalRev.toLocaleString('id-ID')}
-                  </div>
-                  <div className="flex items-center gap-1 text-[10px] text-status-success font-semibold mt-1">
-                    <TrendingUp className="w-3 h-3" />
-                    <span>Terverifikasi Gateway</span>
-                  </div>
-                </div>
+          <div className="bg-surface border border-border rounded-xl p-4 shadow-xs transition-all hover:border-primary/40">
+            <span className="text-[11px] text-foreground-muted block mb-1">Total Pesanan Berhasil</span>
+            <div className="text-2xl font-bold text-foreground font-mono">{activeKpi.totalOrders} Orders</div>
+            <div className="flex items-center gap-1 text-[10px] text-status-success font-semibold mt-1">
+              <TrendingUp className="w-3 h-3" />
+              <span>Lunas & Selesai</span>
+            </div>
+          </div>
 
-                <div className="bg-surface border border-border rounded-xl p-4 shadow-xs">
-                  <span className="text-[11px] text-foreground-muted block mb-1">Total Pesanan Berhasil</span>
-                  <div className="text-2xl font-bold text-foreground font-mono">{totalOrders} Orders</div>
-                  <div className="flex items-center gap-1 text-[10px] text-status-success font-semibold mt-1">
-                    <TrendingUp className="w-3 h-3" />
-                    <span>Lunas & Selesai</span>
-                  </div>
-                </div>
+          <div className="bg-surface border border-border rounded-xl p-4 shadow-xs transition-all hover:border-primary/40">
+            <span className="text-[11px] text-foreground-muted block mb-1">Average Order Value (AOV)</span>
+            <div className="text-2xl font-bold text-primary font-mono">
+              Rp {activeKpi.averageOrderValue.toLocaleString('id-ID')}
+            </div>
+            <span className="text-[10px] text-foreground-muted">Rata-rata keranjang per checkout</span>
+          </div>
 
-                <div className="bg-surface border border-border rounded-xl p-4 shadow-xs">
-                  <span className="text-[11px] text-foreground-muted block mb-1">Average Order Value (AOV)</span>
-                  <div className="text-2xl font-bold text-primary font-mono">
-                    Rp {aov.toLocaleString('id-ID')}
-                  </div>
-                  <span className="text-[10px] text-foreground-muted">Rata-rata keranjang per checkout</span>
-                </div>
+          <div className="bg-surface border border-border rounded-xl p-4 shadow-xs transition-all hover:border-primary/40">
+            <span className="text-[11px] text-foreground-muted block mb-1">Volume Unit Terjual</span>
+            <div className="text-2xl font-bold text-foreground font-mono">{activeKpi.totalUnits} Unit</div>
+            <span className="text-[10px] text-status-success font-semibold">Distribusi Katalog</span>
+          </div>
+        </div>
 
-                <div className="bg-surface border border-border rounded-xl p-4 shadow-xs">
-                  <span className="text-[11px] text-foreground-muted block mb-1">Volume Unit Terjual</span>
-                  <div className="text-2xl font-bold text-foreground font-mono">{totalUnits} Unit</div>
-                  <span className="text-[10px] text-status-success font-semibold">Distribusi Katalog</span>
-                </div>
+        {/* Time-Series Chart Interactive Container */}
+        <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-bold text-sm text-foreground">Grafik Volume Transaksi & Pertumbuhan Omzet</h3>
+              <p className="text-xs text-foreground-muted">
+                {selectedPeriod === 'today'
+                  ? 'Distribusi pendapatan per jam hari ini terverifikasi gateway'
+                  : selectedPeriod === '7d'
+                  ? 'Tren pendapatan harian selama 7 hari terakhir'
+                  : selectedPeriod === '30d'
+                  ? 'Tren pergerakan omzet 30 hari kalender'
+                  : selectedPeriod === 'month'
+                  ? 'Akumulasi omzet per minggu di bulan berjalan'
+                  : 'Distribusi omzet per bulan sepanjang tahun berjalan'}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-status-success opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-status-success" />
+              </span>
+              <Badge variant="outline" className="text-xs font-mono text-status-success border-status-success/30">
+                Real-Time SSOT
+              </Badge>
+            </div>
+          </div>
+
+          {/* Bar Visualizer Canvas Area */}
+          <div className="pt-4 pb-2 px-1">
+            <div className="relative h-60 sm:h-68 select-none">
+              {/* Y-Axis Grid Lines & Tick Labels */}
+              <div className="absolute inset-0 pb-8 pl-12 sm:pl-14 pr-2 flex flex-col justify-between pointer-events-none select-none z-0">
+                {yTicks.map((tickVal, i) => (
+                  <div key={i} className="flex items-center gap-3 w-full">
+                    <span className="text-[10px] font-mono text-foreground-muted/70 w-10 sm:w-12 text-right shrink-0 tabular-nums">
+                      {tickVal === 0 ? '0' : formatRupiahShort(tickVal)}
+                    </span>
+                    <div className="flex-1 border-b border-border/40" />
+                  </div>
+                ))}
               </div>
 
-              {/* Time-Series Chart Interactive Container */}
-              <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-bold text-sm text-foreground">Grafik Volume Transaksi & Pertumbuhan Omzet</h3>
-                    <p className="text-xs text-foreground-muted">Distribusi pendapatan harian terverifikasi sistem</p>
+              {/* Bar Columns Container */}
+              <div className="relative z-10 pl-12 sm:pl-14 pr-2 h-full flex items-end justify-between gap-1 sm:gap-2.5">
+                {salesTimeSeries.length === 0 ? (
+                  <div className="w-full h-full flex items-center justify-center text-xs text-foreground-muted">
+                    Belum ada data penjualan tercatat pada periode ini
                   </div>
-                  <Badge variant="outline" className="text-xs font-mono text-status-success border-status-success/30">
-                    Real-Time SSOT
-                  </Badge>
-                </div>
+                ) : (
+                  salesTimeSeries.map((s, idx) => {
+                    const heightPercent = s.revenue > 0 ? Math.min(100, Math.max(6, Math.round((s.revenue / maxRev) * 100))) : 0;
+                    const palette = getPerformanceColor(s.revenue, timeSeriesRevenues);
+                    const isHovered = hoveredBarIndex === idx;
 
-                {/* Bar Visualizer */}
-                <div className="pt-6 pb-2 px-2">
-                  <div className="h-44 flex items-end gap-3 sm:gap-6 border-b border-border/70 pb-2">
-                    {salesTimeSeries.length === 0 ? (
-                      <div className="w-full h-full flex items-center justify-center text-xs text-foreground-muted">
-                        Belum ada data penjualan tercatat
-                      </div>
-                    ) : (() => {
-                      const timeSeriesRevenues = salesTimeSeries.map((x) => x.revenue);
-                      return salesTimeSeries.map((s, idx) => {
-                        const heightPercent = Math.min(100, Math.max(15, Math.round((s.revenue / maxRev) * 100)));
-                        const palette = getPerformanceColor(s.revenue, timeSeriesRevenues);
-                        return (
-                          <div key={idx} className="flex-1 flex flex-col items-center gap-2 group relative">
-                            {/* Tooltip on hover */}
-                            <div className="absolute -top-12 opacity-0 group-hover:opacity-100 transition-opacity bg-surface border border-border text-foreground text-[10px] py-1.5 px-2.5 rounded-lg pointer-events-none whitespace-nowrap shadow-lg z-20 font-mono flex flex-col gap-0.5">
-                              <div className="flex items-center gap-2">
-                                <span className="font-bold">Rp {s.revenue.toLocaleString('id-ID')}</span>
-                                <span
-                                  className="text-[9px] font-semibold px-1 py-0.2 rounded"
-                                  style={{ backgroundColor: `${palette.bg}22`, color: palette.bg === '#9CA3AF' ? '#4B5563' : palette.bg }}
-                                >
-                                  {palette.label}
-                                </span>
-                              </div>
-                              <span className="text-[9px] text-foreground-muted font-sans">{s.orders} orders terverifikasi</span>
-                            </div>
-                            <div
-                              className="w-full transition-all rounded-t-sm group-hover:scale-y-[1.03] group-hover:brightness-110 cursor-pointer origin-bottom"
-                              style={{
-                                height: `${heightPercent}%`,
-                                backgroundColor: palette.bg,
-                                boxShadow: `0 4px 12px ${palette.glow}`,
-                              }}
-                            />
-                            <span className="text-[10px] font-mono text-foreground-muted whitespace-nowrap">
-                              {s.date}
+                    return (
+                      <div
+                        key={idx}
+                        onMouseEnter={() => setHoveredBarIndex(idx)}
+                        onMouseLeave={() => setHoveredBarIndex(null)}
+                        className="flex-1 h-full flex flex-col items-center justify-end group relative cursor-pointer min-w-0"
+                      >
+                        {/* Tooltip on hover */}
+                        <div
+                          className={`absolute -top-16 opacity-0 group-hover:opacity-100 transition-all duration-200 bg-surface border border-border text-foreground text-[10px] py-1.5 px-3 rounded-lg pointer-events-none whitespace-nowrap shadow-xl z-30 font-mono flex flex-col gap-0.5 ${
+                            isHovered ? 'opacity-100 translate-y-0' : 'pointer-events-none'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold">Rp {s.revenue.toLocaleString('id-ID')}</span>
+                            <span
+                              className="text-[9px] font-semibold px-1 py-0.2 rounded"
+                              style={{ backgroundColor: `${palette.bg}22`, color: palette.bg === '#9CA3AF' ? '#4B5563' : palette.bg }}
+                            >
+                              {palette.label}
                             </span>
                           </div>
-                        );
-                      });
-                    })()}
-                  </div>
+                          <div className="flex items-center justify-between gap-2 text-[9px] text-foreground-muted font-sans">
+                            <span>{s.orders} orders terverifikasi</span>
+                            <span className="font-mono text-foreground/70">{s.date}</span>
+                          </div>
+                        </div>
 
-                  {/* Performance Color Scale Legend */}
-                  <div className="pt-3 flex items-center flex-wrap gap-2.5 text-[10px] text-foreground-muted">
-                    <span className="font-semibold text-foreground/80">Skala Nilai:</span>
-                    <div className="flex items-center gap-1">
-                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: PERFORMANCE_COLORS.zero.bg }} />
-                      <span>Nol</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: PERFORMANCE_COLORS.lowest.bg }} />
-                      <span>Terendah</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: PERFORMANCE_COLORS.low.bg }} />
-                      <span>Rendah</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: PERFORMANCE_COLORS.medium.bg }} />
-                      <span>Menengah</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: PERFORMANCE_COLORS.high.bg }} />
-                      <span>Tinggi</span>
-                    </div>
-                  </div>
+                        {/* Revenue Label Above Bar for Quick Reference */}
+                        <span
+                          className={`text-[9px] sm:text-[10px] font-mono text-foreground-muted/70 group-hover:text-foreground font-semibold mb-1 tabular-nums whitespace-nowrap transition-colors overflow-hidden text-ellipsis ${
+                            salesTimeSeries.length > 15 ? 'hidden sm:block' : 'block'
+                          }`}
+                        >
+                          {s.revenue > 0 ? formatRupiahShort(s.revenue) : ''}
+                        </span>
+
+                        {/* Scaled Bar Track */}
+                        <div className="w-full flex-1 flex items-end justify-center min-h-0 pb-1">
+                          <div
+                            className="w-full max-w-[28px] sm:max-w-[40px] rounded-t-sm transition-all duration-500 ease-out origin-bottom group-hover:scale-y-[1.03] group-hover:brightness-110"
+                            style={{
+                              height: mounted ? (s.revenue > 0 ? `${heightPercent}%` : '3px') : '0%',
+                              backgroundColor: palette.bg,
+                              boxShadow: s.revenue > 0 ? `0 4px 12px ${palette.glow}` : 'none',
+                              opacity: hoveredBarIndex !== null && !isHovered ? 0.55 : 1,
+                            }}
+                          />
+                        </div>
+
+                        {/* X-Axis Date / Label */}
+                        <span
+                          className={`text-[9px] sm:text-[10px] font-mono text-foreground-muted group-hover:text-foreground whitespace-nowrap mt-1.5 transition-colors overflow-hidden text-ellipsis ${
+                            salesTimeSeries.length > 20 && idx % 3 !== 0 && idx !== salesTimeSeries.length - 1
+                              ? 'hidden sm:inline'
+                              : 'inline'
+                          }`}
+                        >
+                          {s.label || s.date}
+                        </span>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+
+            {/* Performance Color Scale Legend */}
+            <div className="pt-4 border-t border-border/60 flex items-center justify-between flex-wrap gap-2 text-[10px] text-foreground-muted">
+              <div className="flex items-center flex-wrap gap-2.5">
+                <span className="font-semibold text-foreground/80">Skala Nilai:</span>
+                <div className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: PERFORMANCE_COLORS.zero.bg }} />
+                  <span>Nol</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: PERFORMANCE_COLORS.lowest.bg }} />
+                  <span>Terendah</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: PERFORMANCE_COLORS.low.bg }} />
+                  <span>Rendah</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: PERFORMANCE_COLORS.medium.bg }} />
+                  <span>Menengah</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: PERFORMANCE_COLORS.high.bg }} />
+                  <span>Tinggi</span>
                 </div>
               </div>
-            </>
-          );
-        })()}
+
+              <div className="text-[10px] text-foreground-muted font-mono">
+                Menampilkan {salesTimeSeries.length} titik data ({selectedPeriod.toUpperCase()})
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Breakdown Triple Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -315,36 +533,34 @@ export function AdminAnalyticsSuite({ activeTab, onNotify }: AdminAnalyticsSuite
               <span>Distribusi Kategori</span>
               <PieChart className="w-3.5 h-3.5 text-foreground-muted" />
             </h3>
-            <div className="space-y-2 text-xs">
-              <div className="space-y-1">
-                <div className="flex justify-between text-foreground">
-                  <span>Desain & Grafis</span>
-                  <span className="font-mono font-bold">42% (Rp 9.59M)</span>
-                </div>
-                <div className="w-full bg-border rounded-full h-1.5 overflow-hidden">
-                  <div className="bg-primary h-1.5 rounded-full" style={{ width: '42%' }} />
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <div className="flex justify-between text-foreground">
-                  <span>AI Tools & Productivity</span>
-                  <span className="font-mono font-bold">34% (Rp 7.76M)</span>
-                </div>
-                <div className="w-full bg-border rounded-full h-1.5 overflow-hidden">
-                  <div className="bg-status-success h-1.5 rounded-full" style={{ width: '34%' }} />
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <div className="flex justify-between text-foreground">
-                  <span>Streaming & Hiburan</span>
-                  <span className="font-mono font-bold">24% (Rp 5.48M)</span>
-                </div>
-                <div className="w-full bg-border rounded-full h-1.5 overflow-hidden">
-                  <div className="bg-status-warning h-1.5 rounded-full" style={{ width: '24%' }} />
-                </div>
-              </div>
+            <div className="space-y-2.5 text-xs">
+              {categoryDistribution.length === 0 ? (
+                <div className="text-foreground-muted text-[11px] py-2">Belum ada data kategori pesanan.</div>
+              ) : (
+                categoryDistribution.map((cat, idx) => {
+                  const colors = [
+                    'bg-primary',
+                    'bg-status-success',
+                    'bg-status-warning',
+                    'bg-purple-500',
+                    'bg-blue-500',
+                  ];
+                  const barColor = colors[idx % colors.length];
+                  return (
+                    <div key={cat.name} className="space-y-1">
+                      <div className="flex justify-between text-foreground">
+                        <span className="truncate pr-2">{cat.name}</span>
+                        <span className="font-mono font-bold shrink-0">
+                          {cat.percentage}% {cat.revenue ? `(Rp ${formatRupiahShort(cat.revenue)})` : ''}
+                        </span>
+                      </div>
+                      <div className="w-full bg-border rounded-full h-1.5 overflow-hidden">
+                        <div className={`${barColor} h-1.5 rounded-full transition-all duration-500`} style={{ width: `${Math.min(100, Math.max(3, cat.percentage))}%` }} />
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
 
@@ -355,18 +571,18 @@ export function AdminAnalyticsSuite({ activeTab, onNotify }: AdminAnalyticsSuite
               <Receipt className="w-3.5 h-3.5 text-foreground-muted" />
             </h3>
             <div className="space-y-2 text-xs">
-              <div className="p-2 rounded bg-surface-raised border border-border flex items-center justify-between">
-                <span className="font-medium text-foreground">QRIS Real-Time</span>
-                <span className="font-bold text-primary font-mono">64% (438 Orders)</span>
-              </div>
-              <div className="p-2 rounded bg-surface-raised border border-border flex items-center justify-between">
-                <span className="font-medium text-foreground">BCA Virtual Account</span>
-                <span className="font-bold text-foreground font-mono">22% (150 Orders)</span>
-              </div>
-              <div className="p-2 rounded bg-surface-raised border border-border flex items-center justify-between">
-                <span className="font-medium text-foreground">Bank Transfer Manual</span>
-                <span className="font-bold text-foreground font-mono">14% (96 Orders)</span>
-              </div>
+              {paymentMethods.length === 0 ? (
+                <div className="text-foreground-muted text-[11px] py-2">Belum ada riwayat metode pembayaran.</div>
+              ) : (
+                paymentMethods.map((pm) => (
+                  <div key={pm.name} className="p-2.5 rounded-lg bg-surface-raised border border-border flex items-center justify-between">
+                    <span className="font-medium text-foreground">{pm.name}</span>
+                    <span className="font-bold text-primary font-mono">
+                      {pm.percentage}% ({pm.orders || 0} Orders)
+                    </span>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
@@ -377,18 +593,26 @@ export function AdminAnalyticsSuite({ activeTab, onNotify }: AdminAnalyticsSuite
               <Share2 className="w-3.5 h-3.5 text-foreground-muted" />
             </h3>
             <div className="space-y-2 text-xs">
-              <div className="p-2 rounded bg-surface-raised border border-border flex items-center justify-between">
-                <span className="font-medium text-foreground">Direct Toko / Search</span>
-                <span className="font-bold text-foreground font-mono">58%</span>
-              </div>
-              <div className="p-2 rounded bg-surface-raised border border-border flex items-center justify-between">
-                <span className="font-medium text-foreground">Mitra Afiliasi & Sales</span>
-                <span className="font-bold text-status-success font-mono">32%</span>
-              </div>
-              <div className="p-2 rounded bg-surface-raised border border-border flex items-center justify-between">
-                <span className="font-medium text-foreground">Campaign Promo / Kupon</span>
-                <span className="font-bold text-status-warning font-mono">10%</span>
-              </div>
+              {channels.length === 0 ? (
+                <div className="text-foreground-muted text-[11px] py-2">Belum ada data sumber saluran.</div>
+              ) : (
+                channels.map((ch, idx) => {
+                  const textColor =
+                    idx === 0
+                      ? 'text-status-success'
+                      : idx === 1
+                      ? 'text-foreground'
+                      : 'text-status-warning';
+                  return (
+                    <div key={ch.name} className="p-2.5 rounded-lg bg-surface-raised border border-border flex items-center justify-between">
+                      <span className="font-medium text-foreground">{ch.name}</span>
+                      <span className={`font-bold font-mono ${textColor}`}>
+                        {ch.percentage}% {ch.orders ? `(${ch.orders} Orders)` : ''}
+                      </span>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
         </div>
@@ -426,11 +650,11 @@ export function AdminAnalyticsSuite({ activeTab, onNotify }: AdminAnalyticsSuite
           <Button
             size="sm"
             variant="outline"
-            onClick={() => onNotify?.('Matriks performa produk diekspor ke format Excel.')}
-            className="text-xs gap-1.5 border-border"
+            onClick={handleExportProductMatrixCsv}
+            className="text-xs gap-1.5 border-border hover:bg-surface-raised cursor-pointer"
           >
             <FileSpreadsheet className="w-3.5 h-3.5" />
-            <span>Ekspor Matrix (XLSX)</span>
+            <span>Ekspor Matrix (CSV)</span>
           </Button>
         </div>
 
@@ -441,12 +665,16 @@ export function AdminAnalyticsSuite({ activeTab, onNotify }: AdminAnalyticsSuite
             <select
               value={productCategoryFilter}
               onChange={(e) => setProductCategoryFilter(e.target.value)}
-              className="h-8 rounded-md border border-border bg-surface-raised px-2.5 text-xs text-foreground"
+              className="h-8 rounded-md border border-border bg-surface-raised px-2.5 text-xs text-foreground cursor-pointer"
             >
               <option value="all">Semua Kategori</option>
-              <option value="Desain & Grafis">Desain & Grafis</option>
-              <option value="AI Tools">AI Tools</option>
-              <option value="Streaming & Hiburan">Streaming & Hiburan</option>
+              {Array.from(new Set(productPerformanceData.map((p) => p.category)))
+                .filter(Boolean)
+                .map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
             </select>
           </div>
 
@@ -632,8 +860,8 @@ export function AdminAnalyticsSuite({ activeTab, onNotify }: AdminAnalyticsSuite
           <Button
             size="sm"
             variant="outline"
-            onClick={() => onNotify?.('Laporan performa afiliasi telah diunduh.')}
-            className="text-xs gap-1.5 border-border"
+            onClick={handleExportAffiliateCsv}
+            className="text-xs gap-1.5 border-border hover:bg-surface-raised cursor-pointer"
           >
             <Download className="w-3.5 h-3.5" />
             <span>Ekspor Data Afiliasi</span>
@@ -764,11 +992,11 @@ export function AdminAnalyticsSuite({ activeTab, onNotify }: AdminAnalyticsSuite
 
           <Button
             size="sm"
-            onClick={() => onNotify?.('Laporan keuangan lengkap (Excel) berhasil di-export.')}
-            className="text-xs gap-1.5 shadow-xs"
+            onClick={handleExportFinancialCsv}
+            className="text-xs gap-1.5 shadow-xs cursor-pointer"
           >
             <FileSpreadsheet className="w-3.5 h-3.5" />
-            <span>Unduh Excel (XLSX)</span>
+            <span>Unduh Laporan (CSV)</span>
           </Button>
         </div>
       </div>
