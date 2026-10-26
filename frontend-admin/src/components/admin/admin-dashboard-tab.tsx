@@ -17,26 +17,12 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { SparklinePath } from '@/components/ui/sparkline-path';
 import { useCountUp } from '@/lib/hooks/use-count-up';
 import { useMountOnce } from '@/lib/hooks/use-mount-once';
 import { SalesTrendChart } from './sales-trend-chart';
 import { AdminTab } from './admin-sidebar';
 import { ProductBrandIcon } from '@/components/ui/product-brand-icon';
-
-
-function TrendSparkline({ color }: { color: string }) {
-  return (
-    <svg className="w-7 h-3.5 shrink-0" viewBox="0 0 28 14" fill="none">
-      <path
-        d="M2 12L9 8L16 10L26 2"
-        stroke={color}
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
 
 interface AdminDashboardTabProps {
   metrics?: {
@@ -165,9 +151,9 @@ export function AdminDashboardTab({
               'linear-gradient(108deg, #252E3E 0%, #303B4E 24%, #455571 45%, #506385 52%, #38465D 70%, #222937 100%)',
           }}
         >
-          {/* Motif Kilau-Kilau Luminous Sheen Beams matching gambar3 */}
+          {/* Motif Kilau-Kilau Luminous Sheen Beams matching sales animate-metallic-sheen */}
           <div
-            className="absolute inset-0 pointer-events-none select-none"
+            className="absolute inset-0 pointer-events-none select-none animate-metallic-sheen"
             style={{
               background:
                 'linear-gradient(116deg, transparent 18%, rgba(255,255,255,0.02) 28%, rgba(255,255,255,0.14) 44%, rgba(255,255,255,0.26) 50%, rgba(255,255,255,0.06) 56%, transparent 74%)',
@@ -232,13 +218,14 @@ export function AdminDashboardTab({
         </div>
       </div>
 
-      {/* 2. Top Row of 5 Metric Cards matching Screenshot 100% */}
+      {/* 2. Top Row of 5 Metric Cards matching Screenshot & Sales Motion */}
       <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3.5 sm:gap-4">
         {/* Card 1: Total Revenue */}
         <div
           onClick={() => onNavigateTab('revenue')}
-          className={`bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-2xs hover:shadow-card-hover hover:border-primary/40 transition-all duration-200 cursor-pointer flex flex-col justify-between ${
-            !hasMounted ? 'animate-fade-up stagger-1' : ''
+          style={{ animationDelay: '0ms' }}
+          className={`bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-2xs card-hover-elevation cursor-pointer flex flex-col justify-between ${
+            !hasMounted ? 'animate-kpi-reveal' : ''
           }`}
         >
           <div className="flex items-center justify-between mb-3">
@@ -248,7 +235,14 @@ export function AdminDashboardTab({
               </div>
               <span className="text-xs font-medium text-slate-500">Total Revenue</span>
             </div>
-            <TrendSparkline color="#2563EB" />
+            <SparklinePath
+              path="M1 14L8 10L15 12L22 4L27 2"
+              arrowPath="M22 2H27V7"
+              endDot={{ cx: 27, cy: 2 }}
+              color="#2563EB"
+              gradientId="sparkline-admin-revenue"
+              delay={0}
+            />
           </div>
           <div className="space-y-1">
             <div className="text-2xl font-bold text-slate-900 tracking-tight font-sans">
@@ -264,8 +258,9 @@ export function AdminDashboardTab({
         {/* Card 2: Total Orders */}
         <div
           onClick={() => onNavigateTab('orders')}
-          className={`bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-2xs hover:shadow-card-hover hover:border-primary/40 transition-all duration-200 cursor-pointer flex flex-col justify-between ${
-            !hasMounted ? 'animate-fade-up stagger-2' : ''
+          style={{ animationDelay: '60ms' }}
+          className={`bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-2xs card-hover-elevation cursor-pointer flex flex-col justify-between ${
+            !hasMounted ? 'animate-kpi-reveal' : ''
           }`}
         >
           <div className="flex items-center justify-between mb-3">
@@ -275,7 +270,14 @@ export function AdminDashboardTab({
               </div>
               <span className="text-xs font-medium text-slate-500">Total Orders</span>
             </div>
-            <TrendSparkline color="#9333EA" />
+            <SparklinePath
+              path="M1 13L8 11L15 13L21 6L27 3"
+              arrowPath="M22 3H27V8"
+              endDot={{ cx: 27, cy: 3 }}
+              color="#9333EA"
+              gradientId="sparkline-admin-orders"
+              delay={60}
+            />
           </div>
           <div className="space-y-1">
             <div className="text-2xl font-bold text-slate-900 tracking-tight font-sans">
@@ -290,8 +292,9 @@ export function AdminDashboardTab({
         {/* Card 3: Customers */}
         <div
           onClick={() => onNavigateTab('customers')}
-          className={`bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-2xs hover:shadow-card-hover hover:border-primary/40 transition-all duration-200 cursor-pointer flex flex-col justify-between ${
-            !hasMounted ? 'animate-fade-up stagger-3' : ''
+          style={{ animationDelay: '120ms' }}
+          className={`bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-2xs card-hover-elevation cursor-pointer flex flex-col justify-between ${
+            !hasMounted ? 'animate-kpi-reveal' : ''
           }`}
         >
           <div className="flex items-center justify-between mb-3">
@@ -301,7 +304,14 @@ export function AdminDashboardTab({
               </div>
               <span className="text-xs font-medium text-slate-500">Customers</span>
             </div>
-            <TrendSparkline color="#10B981" />
+            <SparklinePath
+              path="M1 14L9 11L15 13L21 7L27 2"
+              arrowPath="M22 2H27V7"
+              endDot={{ cx: 27, cy: 2 }}
+              color="#10B981"
+              gradientId="sparkline-admin-customers"
+              delay={120}
+            />
           </div>
           <div className="space-y-1">
             <div className="text-2xl font-bold text-slate-900 tracking-tight font-sans">
@@ -317,8 +327,9 @@ export function AdminDashboardTab({
         {/* Card 4: Gross Profit */}
         <div
           onClick={() => onNavigateTab('profit')}
-          className={`bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-2xs hover:shadow-card-hover hover:border-primary/40 transition-all duration-200 cursor-pointer flex flex-col justify-between ${
-            !hasMounted ? 'animate-fade-up stagger-4' : ''
+          style={{ animationDelay: '180ms' }}
+          className={`bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-2xs card-hover-elevation cursor-pointer flex flex-col justify-between ${
+            !hasMounted ? 'animate-kpi-reveal' : ''
           }`}
         >
           <div className="flex items-center justify-between mb-3">
@@ -328,7 +339,14 @@ export function AdminDashboardTab({
               </div>
               <span className="text-xs font-medium text-slate-500">Gross Profit</span>
             </div>
-            <TrendSparkline color="#F59E0B" />
+            <SparklinePath
+              path="M1 13L8 10L15 12L21 5L27 2"
+              arrowPath="M22 2H27V7"
+              endDot={{ cx: 27, cy: 2 }}
+              color="#F59E0B"
+              gradientId="sparkline-admin-profit"
+              delay={180}
+            />
           </div>
           <div className="space-y-1">
             <div className="text-2xl font-bold text-slate-900 tracking-tight font-sans">
@@ -343,18 +361,25 @@ export function AdminDashboardTab({
         {/* Card 5: Pending Orders */}
         <div
           onClick={() => onNavigateTab('orders')}
-          className={`bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-2xs hover:shadow-card-hover hover:border-primary/40 transition-all duration-200 cursor-pointer flex flex-col justify-between col-span-2 sm:col-span-1 ${
-            !hasMounted ? 'animate-fade-up stagger-5' : ''
+          style={{ animationDelay: '240ms' }}
+          className={`bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-2xs card-hover-elevation cursor-pointer flex flex-col justify-between col-span-2 sm:col-span-1 ${
+            !hasMounted ? 'animate-kpi-reveal' : ''
           }`}
         >
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100 shrink-0">
+              <div className="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center border border-rose-100 shrink-0">
                 <Clock className="w-4 h-4" />
               </div>
               <span className="text-xs font-medium text-slate-500">Pending Orders</span>
             </div>
-            <TrendSparkline color="#2563EB" />
+            <SparklinePath
+              path="M1 12L8 12L15 11L21 12L27 12"
+              endDot={{ cx: 27, cy: 12 }}
+              color="#EF4444"
+              gradientId="sparkline-admin-pending"
+              delay={240}
+            />
           </div>
           <div className="space-y-1">
             <div className="text-2xl font-bold text-slate-900 tracking-tight font-sans">

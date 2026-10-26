@@ -1203,7 +1203,7 @@ function AdminPageContent() {
               >
                 <Menu className="w-5 h-5" />
               </button>
-              <div className="flex flex-col min-w-0" key={activeTab}>
+              <div className="flex flex-col min-w-0 animate-text-smooth" key={activeTab}>
                 <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium truncate">
                   <span>Admin Console</span>
                   <span>/</span>

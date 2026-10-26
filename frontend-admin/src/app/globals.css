@@ -218,7 +218,7 @@ body {
 @keyframes tabGlideIn {
   0% {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(10px);
   }
   100% {
     opacity: 1;
@@ -227,7 +227,7 @@ body {
 }
 
 .animate-tab-glide {
-  animation: tabGlideIn 0.18s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation: tabGlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @keyframes fadeUp {
@@ -273,17 +273,17 @@ body {
   animation: textMorphSmooth 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-/* Stagger Utilities (Monetira Editorial Cascade) */
-.stagger-1 { animation-delay: 50ms !important; }
-.stagger-2 { animation-delay: 100ms !important; }
-.stagger-3 { animation-delay: 150ms !important; }
-.stagger-4 { animation-delay: 200ms !important; }
-.stagger-5 { animation-delay: 250ms !important; }
-.stagger-6 { animation-delay: 300ms !important; }
-.stagger-7 { animation-delay: 350ms !important; }
-.stagger-8 { animation-delay: 400ms !important; }
+/* Stagger Utilities (Monetira Editorial Cascade - Exact Sales Match) */
+.stagger-1 { animation-delay: 70ms !important; }
+.stagger-2 { animation-delay: 140ms !important; }
+.stagger-3 { animation-delay: 210ms !important; }
+.stagger-4 { animation-delay: 280ms !important; }
+.stagger-5 { animation-delay: 350ms !important; }
+.stagger-6 { animation-delay: 420ms !important; }
+.stagger-7 { animation-delay: 490ms !important; }
+.stagger-8 { animation-delay: 560ms !important; }
 
-/* Table Row Smooth Stagger (capped at 10 items max, 20ms steps) */
+/* Table Row Smooth Stagger (capped at 10 items max, 30ms steps matching sales) */
 @keyframes tableRowFade {
   0% {
     opacity: 0;
@@ -296,19 +296,19 @@ body {
 }
 
 .animate-row-stagger {
-  animation: tableRowFade 0.18s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation: tableRowFade 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-.row-stagger-1 { animation-delay: 20ms; }
-.row-stagger-2 { animation-delay: 40ms; }
-.row-stagger-3 { animation-delay: 60ms; }
-.row-stagger-4 { animation-delay: 80ms; }
-.row-stagger-5 { animation-delay: 100ms; }
-.row-stagger-6 { animation-delay: 120ms; }
-.row-stagger-7 { animation-delay: 140ms; }
-.row-stagger-8 { animation-delay: 160ms; }
-.row-stagger-9 { animation-delay: 180ms; }
-.row-stagger-10 { animation-delay: 200ms; }
+.row-stagger-1 { animation-delay: 30ms; }
+.row-stagger-2 { animation-delay: 60ms; }
+.row-stagger-3 { animation-delay: 90ms; }
+.row-stagger-4 { animation-delay: 120ms; }
+.row-stagger-5 { animation-delay: 150ms; }
+.row-stagger-6 { animation-delay: 180ms; }
+.row-stagger-7 { animation-delay: 210ms; }
+.row-stagger-8 { animation-delay: 240ms; }
+.row-stagger-9 { animation-delay: 270ms; }
+.row-stagger-10 { animation-delay: 300ms; }
 
 @keyframes faqSlideDown {
   from {
@@ -325,30 +325,105 @@ body {
   animation: faqSlideDown 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Monetira Motion Replication Utilities */
+/* Monetira Motion Replication Utilities matching Sales */
 .motion-card-interactive {
-  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.2s ease;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
 }
 
 .motion-card-interactive:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.08), 0 4px 10px -2px rgba(37, 99, 235, 0.05);
-  border-color: rgba(37, 99, 235, 0.35);
+  box-shadow: 0 10px 25px -5px rgba(18, 26, 42, 0.08), 0 8px 10px -6px rgba(18, 26, 42, 0.04);
 }
 
 .motion-btn-interactive {
-  transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1), background-color 0.15s ease, box-shadow 0.15s ease;
+  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .motion-btn-interactive:active {
   transform: scale(0.97);
 }
 
-/* Sidebar Accordion CSS Grid Transition (250ms ease-out, child fade-in 50ms delay) */
+/* KPI Cards Staggered Reveal Animation */
+@keyframes kpiCardReveal {
+  0% {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-kpi-reveal {
+  animation: kpiCardReveal 500ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Metallic Slate Slow Sheen Loop */
+@keyframes slowMetallicSheen {
+  0% {
+    transform: translateX(-150%) skewX(-20deg);
+  }
+  100% {
+    transform: translateX(250%) skewX(-20deg);
+  }
+}
+
+.animate-metallic-sheen {
+  animation: slowMetallicSheen 10s linear infinite;
+}
+
+/* Product Catalog & Campaign Card Hover Elevation & Border Sheen */
+.card-hover-elevation {
+  position: relative;
+  transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 300ms cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 250ms ease;
+  overflow: hidden;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .card-hover-elevation:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 14px 34px -4px rgba(31, 55, 90, 0.10), 0 4px 12px -2px rgba(31, 55, 90, 0.05);
+    border-color: rgba(37, 99, 235, 0.35);
+    will-change: transform;
+  }
+
+  .card-hover-elevation::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(
+      105deg,
+      transparent 30%,
+      rgba(255, 255, 255, 0.35) 50%,
+      transparent 70%
+    );
+    transform: translateX(-150%) skewX(-20deg);
+    opacity: 0;
+  }
+
+  .card-hover-elevation:hover::after {
+    opacity: 1;
+    transform: translateX(150%) skewX(-20deg);
+    transition: transform 700ms cubic-bezier(0.16, 1, 0.3, 1), opacity 200ms ease;
+  }
+}
+
+@media (hover: none) or (pointer: coarse) {
+  .card-hover-elevation:active {
+    transform: scale(0.99);
+    transition: transform 120ms ease;
+  }
+}
+
+/* Sidebar Accordion CSS Grid Transition (220ms ease-out matching sales) */
 .accordion-grid-wrapper {
   display: grid;
   grid-template-rows: 0fr;
-  transition: grid-template-rows 250ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: grid-template-rows 220ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .accordion-grid-wrapper.is-open {
@@ -358,7 +433,7 @@ body {
 .accordion-grid-content {
   min-height: 0;
   overflow: hidden;
-  transition: opacity 200ms ease 50ms, visibility 250ms;
+  transition: opacity 200ms ease 40ms, visibility 220ms;
 }
 
 .accordion-grid-wrapper:not(.is-open) .accordion-grid-content {
@@ -508,6 +583,9 @@ body {
 .user-reduce-motion .animate-scale-pop,
 .user-reduce-motion .animate-shimmer,
 .user-reduce-motion .animate-highlight-fade,
+.user-reduce-motion .animate-kpi-reveal,
+.user-reduce-motion .animate-metallic-sheen,
+.user-reduce-motion .card-hover-elevation,
 .user-reduce-motion .motion-card-interactive,
 .user-reduce-motion .motion-btn-interactive,
 .user-reduce-motion .accordion-grid-wrapper,
@@ -521,4 +599,7 @@ body {
   transition: none !important;
   opacity: 1 !important;
   transform: none !important;
+}
+.user-reduce-motion .card-hover-elevation::after {
+  display: none !important;
 }

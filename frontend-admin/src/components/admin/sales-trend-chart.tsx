@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { BarChart3 } from 'lucide-react';
 import { SlidingPillTabs, SlidingPillTabItem } from '@/components/ui/sliding-pill-tabs';
-import { MOTION_DURATION, MOTION_EASING } from '@/lib/motion';
+import { MOTION_DURATION, MOTION_EASING, MOTION_STAGGER } from '@/lib/motion';
 
 export type SalesPeriod = 'daily' | 'weekly' | 'monthly';
 
@@ -118,36 +118,39 @@ export function SalesTrendChart({
           ))}
         </div>
 
-        {/* Bar Container */}
+        {/* Bar Container with Unified Motion Engine matching Sales */}
         <div className="relative z-10 pl-11 pr-2 h-56 flex items-end justify-between gap-2 sm:gap-4">
           {activeData.map((item, idx) => {
             const heightRatio = Math.min(1, Math.max(0.04, item.revenue / maxAxisValue));
             const barColor = BAR_COLORS[idx % BAR_COLORS.length];
             const isHovered = hoveredIndex === idx;
+            const transitionDelayMs = mounted ? idx * MOTION_STAGGER.chartBar : 0;
 
             return (
               <div
-                key={idx}
+                key={`${salesPeriod}-${idx}`}
                 onMouseEnter={() => setHoveredIndex(idx)}
                 onMouseLeave={() => setHoveredIndex(null)}
                 className="flex-1 flex flex-col items-center justify-end h-full group cursor-pointer"
               >
                 {/* Revenue Label Above Bar matching Reference Screenshot */}
-                <span className="text-[11px] font-mono font-semibold text-slate-700 mb-1.5 tabular-nums text-center">
+                <span className="text-[11px] font-mono font-semibold text-slate-700 mb-1.5 tabular-nums text-center transition-colors group-hover:text-slate-900">
                   Rp {item.revenue.toLocaleString('id-ID')}
                 </span>
 
-                {/* Scaled Bar Track */}
+                {/* Scaled Bar Track with Staggered Animation & Glow */}
                 <div className="w-full h-full flex items-end justify-center">
                   <div
                     className="w-full max-w-[48px] rounded-t-sm"
                     style={{
                       height: mounted ? `${Math.round(heightRatio * 100)}%` : '0%',
                       backgroundColor: barColor,
-                      opacity: hoveredIndex !== null && !isHovered ? 0.5 : 1,
-                      transform: isHovered ? 'scaleY(1.03)' : 'scaleY(1)',
+                      opacity: hoveredIndex !== null && !isHovered ? 0.45 : 1,
+                      transform: isHovered ? 'scaleY(1.025)' : 'scaleY(1)',
                       transformOrigin: 'bottom',
-                      transition: `transform ${MOTION_DURATION.chart}ms ${MOTION_EASING.standard}, height ${MOTION_DURATION.chart}ms ${MOTION_EASING.standard}, opacity 150ms ease`,
+                      boxShadow: isHovered ? `0 4px 14px ${barColor}50` : 'none',
+                      transition: `height ${MOTION_DURATION.chart}ms ${MOTION_EASING.editorial}, opacity 300ms ease, transform 200ms ${MOTION_EASING.springPop}`,
+                      transitionDelay: `${transitionDelayMs}ms`,
                     }}
                   />
                 </div>
