@@ -7,6 +7,7 @@ import {
   Key,
   Activity,
   CheckCircle2,
+  X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -274,21 +275,23 @@ export function AdminProvidersTab({ metrics, onNotify, onSyncVip }: AdminProvide
 
       {/* 3. Modal Konfigurasi Kredensial API */}
       {isCredentialModalOpen && selectedProvider && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-surface border border-border rounded-2xl w-full max-w-md shadow-2xl p-6 space-y-4 text-xs">
-            <div className="flex items-center justify-between border-b border-border pb-3.5">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white border border-[#E2E8F0] rounded-2xl w-full max-w-md max-h-[calc(100dvh-40px)] flex flex-col shadow-2xl overflow-hidden box-border animate-in zoom-in-95 duration-200">
+            {/* Sticky Header */}
+            <div className="shrink-0 px-5 py-3.5 border-b border-[#E2E8F0] bg-white flex items-center justify-between gap-3">
               <div>
-                <h3 className="font-bold text-sm text-foreground">Konfigurasi API {selectedProvider.name}</h3>
-                <p className="text-[11px] text-foreground-muted mt-0.5">
+                <h3 className="text-base font-bold text-[#0F172A]">Konfigurasi API {selectedProvider.name}</h3>
+                <p className="text-[11px] text-[#64748B] mt-0.5">
                   Kredensial API disimpan secara aman di environment server internal.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsCredentialModalOpen(false)}
-                className="text-foreground-muted hover:text-foreground p-1 rounded-lg"
+                className="h-8 w-8 p-0 rounded-full text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] flex items-center justify-center shrink-0 cursor-pointer transition-colors"
+                aria-label="Tutup modal"
               >
-                ✕
+                <X className="w-4 h-4" />
               </button>
             </div>
 
@@ -298,44 +301,54 @@ export function AdminProvidersTab({ metrics, onNotify, onSyncVip }: AdminProvide
                 setIsCredentialModalOpen(false);
                 onNotify?.(`Kredensial API untuk ${selectedProvider.name} berhasil diperbarui.`);
               }}
-              className="space-y-3.5"
+              className="flex-1 flex flex-col overflow-hidden m-0 p-0"
             >
-              <div>
-                <label className="font-semibold text-foreground block mb-1">API ID / Account ID</label>
-                <Input
-                  value={apiId}
-                  onChange={(e) => setApiId(e.target.value)}
-                  className="bg-surface-raised border-border text-xs font-mono rounded-xl h-10"
-                />
+              {/* Scrollable Body */}
+              <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3.5 text-xs bg-[#F8FAFC]">
+                <div className="bg-white border border-[#E2E8F0] rounded-xl p-3.5 sm:p-4 shadow-2xs space-y-3">
+                  <div>
+                    <label className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block mb-1">API ID / Account ID</label>
+                    <Input
+                      value={apiId}
+                      onChange={(e) => setApiId(e.target.value)}
+                      className="bg-white border-[#E2E8F0] text-xs font-mono text-[#0F172A] rounded-lg h-9 px-3 focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block mb-1">API Key / Secret Token</label>
+                    <Input
+                      type="password"
+                      value={apiKey}
+                      onChange={(e) => setApiKey(e.target.value)}
+                      className="bg-white border-[#E2E8F0] text-xs font-mono text-[#0F172A] rounded-lg h-9 px-3 focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
+                    />
+                  </div>
+                </div>
+
+                <div className="p-3.5 bg-white rounded-xl border border-[#E2E8F0] space-y-1 shadow-2xs">
+                  <span className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block">IP Whitelist Gateway Server</span>
+                  <span className="font-mono text-[#2563EB] text-xs block font-bold">192.168.1.17 / Server Production Asterra</span>
+                  <span className="text-[10px] text-[#64748B] block mt-0.5">Pastikan IP ini terdaftar di dashboard supplier agar request tidak diblokir.</span>
+                </div>
               </div>
 
-              <div>
-                <label className="font-semibold text-foreground block mb-1">API Key / Secret Token</label>
-                <Input
-                  type="password"
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                  className="bg-surface-raised border-border text-xs font-mono rounded-xl h-10"
-                />
-              </div>
-
-              <div className="p-3.5 bg-surface-raised rounded-xl border border-border space-y-1">
-                <span className="font-semibold text-foreground block text-[11px]">IP Whitelist Gateway Server</span>
-                <span className="font-mono text-primary text-[11px] block font-bold">192.168.1.17 / Server Production Asterra</span>
-                <span className="text-[10px] text-foreground-muted">Pastikan IP ini terdaftar di dashboard supplier agar request tidak diblokir.</span>
-              </div>
-
-              <div className="pt-2 flex items-center justify-end gap-2 border-t border-border">
+              {/* Sticky Footer */}
+              <div className="shrink-0 px-4 sm:px-5 py-3 border-t border-[#E2E8F0] bg-white flex items-center justify-end gap-2">
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   onClick={() => setIsCredentialModalOpen(false)}
-                  className="rounded-xl h-9 text-xs"
+                  className="text-xs h-8 px-3.5 border-[#E2E8F0] bg-white text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#0F172A] rounded-lg cursor-pointer"
                 >
                   Batal
                 </Button>
-                <Button type="submit" size="sm" className="rounded-xl h-9 text-xs font-semibold">
+                <Button
+                  type="submit"
+                  size="sm"
+                  className="text-xs gap-1.5 h-8 px-4 font-semibold bg-[#2563EB] hover:bg-[#1D4ED8] text-white shadow-xs rounded-lg cursor-pointer"
+                >
                   Simpan Kredensial
                 </Button>
               </div>

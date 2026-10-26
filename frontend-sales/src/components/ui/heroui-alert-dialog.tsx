@@ -121,7 +121,7 @@ export function AlertDialogBackdrop({
     <div
       className={
         className ||
-        'fixed inset-0 z-50 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200'
+        'fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200'
       }
     >
       {children}
@@ -141,7 +141,7 @@ export function AlertDialogContainer({
     <div
       className={
         className ||
-        'fixed inset-0 z-50 flex items-center justify-center p-4'
+        'fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4'
       }
       onClick={(e) => {
         if (e.target === e.currentTarget) {
@@ -167,7 +167,7 @@ export function AlertDialogDialog({
       aria-modal="true"
       className={
         className ||
-        'relative w-full max-w-[420px] bg-surface border border-border rounded-2xl shadow-2xl p-6 space-y-4 animate-in zoom-in-95 duration-200'
+        'relative w-full max-w-[440px] bg-white border border-[#E2E8F0] rounded-2xl shadow-2xl p-5 sm:p-6 space-y-4 animate-in zoom-in-95 duration-200 text-[#0F172A]'
       }
     >
       {children}
@@ -187,11 +187,11 @@ export function AlertDialogCloseTrigger({
       onClick={() => setIsOpen(false)}
       className={
         className ||
-        'absolute top-4 right-4 text-foreground-muted hover:text-foreground p-1.5 rounded-lg hover:bg-surface-raised transition-colors'
+        'absolute top-3.5 right-3.5 h-8 w-8 p-0 rounded-full text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] flex items-center justify-center transition-colors cursor-pointer'
       }
       aria-label="Tutup"
     >
-      <FontAwesomeIcon icon={faXmark} className="w-4 h-4" />
+      <FontAwesomeIcon icon={faXmark} className="w-3.5 h-3.5" />
     </button>
   );
 }
@@ -203,7 +203,7 @@ export function AlertDialogHeader({
   children: React.ReactNode;
   className?: string;
 }) {
-  return <div className={className || 'space-y-2'}>{children}</div>;
+  return <div className={className || 'space-y-1.5'}>{children}</div>;
 }
 
 export function AlertDialogHeading({
@@ -214,7 +214,7 @@ export function AlertDialogHeading({
   className?: string;
 }) {
   return (
-    <h3 className={className || 'text-base font-bold text-foreground'}>
+    <h3 className={className || 'text-base font-bold text-[#0F172A]'}>
       {children}
     </h3>
   );
@@ -228,27 +228,27 @@ export function AlertDialogIcon({
 }) {
   if (status === 'danger') {
     return (
-      <div className="w-10 h-10 rounded-xl bg-status-error/15 border border-status-error/30 flex items-center justify-center text-status-error shrink-0">
+      <div className="w-10 h-10 rounded-xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600 shrink-0">
         <FontAwesomeIcon icon={faCircleExclamation} className="w-5 h-5" />
       </div>
     );
   }
   if (status === 'warning') {
     return (
-      <div className="w-10 h-10 rounded-xl bg-status-warning/15 border border-status-warning/30 flex items-center justify-center text-status-warning shrink-0">
+      <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 shrink-0">
         <FontAwesomeIcon icon={faTriangleExclamation} className="w-5 h-5" />
       </div>
     );
   }
   if (status === 'success') {
     return (
-      <div className="w-10 h-10 rounded-xl bg-status-success/15 border border-status-success/30 flex items-center justify-center text-status-success shrink-0">
+      <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 shrink-0">
         <FontAwesomeIcon icon={faCircleCheck} className="w-5 h-5" />
       </div>
     );
   }
   return (
-    <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0">
+    <div className="w-10 h-10 rounded-xl bg-[#EFF6FF] border border-[#BFDBFE] flex items-center justify-center text-[#2563EB] shrink-0">
       <FontAwesomeIcon icon={faCircleInfo} className="w-5 h-5" />
     </div>
   );
@@ -261,7 +261,7 @@ export function AlertDialogBody({
   children: React.ReactNode;
   className?: string;
 }) {
-  return <div className={className || 'text-xs space-y-3'}>{children}</div>;
+  return <div className={className || 'text-xs space-y-3 text-[#64748B]'}>{children}</div>;
 }
 
 export function AlertDialogFooter({
@@ -274,7 +274,7 @@ export function AlertDialogFooter({
   const { setIsOpen } = useAlertDialog();
 
   return (
-    <div className={className || 'flex items-center justify-end gap-2.5 pt-3 border-t border-border'}>
+    <div className={className || 'flex items-center justify-end gap-2 pt-3 border-t border-[#E2E8F0]'}>
       {React.Children.map(children, (child) => {
         if (!React.isValidElement(child)) return child;
         if ((child.props as { slot?: string }).slot === 'close') {

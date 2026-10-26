@@ -559,33 +559,43 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
 
       {/* CREATE PROMO CODE MODAL */}
       {isCreateModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsCreateModalOpen(false);
+          }}
+        >
           <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-xs animate-in fade-in"
-            onClick={() => setIsCreateModalOpen(false)}
-          />
-
-          <div className="relative w-full max-w-lg bg-surface border border-border rounded-2xl shadow-2xl p-6 sm:p-7 z-10 space-y-5 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-start justify-between pb-3.5 border-b border-border">
-              <div>
-                <h3 className="text-base font-bold text-foreground flex items-center gap-2">
-                  <FontAwesomeIcon icon={faTag} className="w-4 h-4 text-primary" />
+            role="dialog"
+            aria-modal="true"
+            className="bg-white border border-[#E2E8F0] rounded-2xl w-full max-w-lg max-h-[calc(100dvh-40px)] flex flex-col shadow-2xl overflow-hidden box-border animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="shrink-0 px-5 py-3.5 border-b border-[#E2E8F0] bg-white flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <h3 className="text-base font-bold text-[#0F172A] flex items-center gap-2">
+                  <FontAwesomeIcon icon={faTag} className="w-4 h-4 text-[#2563EB]" />
                   <span>Generate Kode Promo Baru</span>
                 </h3>
-                <p className="text-xs text-foreground-muted mt-0.5">
+                <p className="text-[11px] text-[#64748B] mt-0.5">
                   Tentukan besaran diskon, syarat belanja, dan batas kuota voucher.
                 </p>
               </div>
-              <button
-                type="button"
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => setIsCreateModalOpen(false)}
-                className="text-foreground-muted hover:text-foreground p-1 rounded-lg"
+                className="h-8 w-8 p-0 rounded-full text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] shrink-0 cursor-pointer"
+                title="Tutup (Esc)"
               >
                 <FontAwesomeIcon icon={faXmark} className="w-4 h-4" />
-              </button>
+              </Button>
             </div>
 
-            <form onSubmit={handleCreatePromoSubmit} className="space-y-4 text-xs">
+            <form onSubmit={handleCreatePromoSubmit} className="flex-1 flex flex-col min-h-0 overflow-hidden">
+              <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3.5 text-xs bg-[#F8FAFC]">
+                <div className="bg-white border border-[#E2E8F0] rounded-xl p-3.5 sm:p-4 shadow-2xs space-y-3.5">
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-foreground flex items-center justify-between">
                   <span>Kode Promo *</span>
@@ -740,14 +750,17 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
                   <span>Aktifkan voucher ini segera setelah dibuat</span>
                 </label>
               </div>
+                </div>
+              </div>
 
-              <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-border">
+              {/* Sticky Footer */}
+              <div className="shrink-0 px-4 sm:px-5 py-3 border-t border-[#E2E8F0] bg-white flex items-center justify-end gap-2">
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   onClick={() => setIsCreateModalOpen(false)}
-                  className="text-xs border-border rounded-xl h-9"
+                  className="text-xs h-8 px-3.5 border-[#E2E8F0] bg-white text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#0F172A] rounded-lg cursor-pointer"
                 >
                   Batal
                 </Button>
@@ -756,7 +769,7 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
                   type="submit"
                   size="sm"
                   disabled={isSubmitting}
-                  className="text-xs font-semibold gap-1.5 px-4 rounded-xl h-9"
+                  className="text-xs gap-1.5 h-8 px-4 font-semibold bg-[#2563EB] hover:bg-[#1D4ED8] text-white shadow-xs rounded-lg cursor-pointer disabled:opacity-50"
                 >
                   {isSubmitting ? (
                     <>

@@ -787,124 +787,151 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
 
         {/* Modal Create/Edit Campaign */}
         {isCampaignModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/50 backdrop-blur-xs animate-in fade-in">
-            <div className="bg-surface border border-border rounded-xl w-full max-w-lg shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
-              <div className="border-b border-border pb-3">
-                <h3 className="font-bold text-base text-foreground">
-                  {editingCampaign ? 'Pengaturan Campaign Promosi' : 'Buat Campaign Promosi Baru'}
-                </h3>
-                <p className="text-xs text-foreground-muted">
-                  Tentukan periode aktif, aturan diskon konsumen, dan bonus insentif affiliate.
-                </p>
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200">
+            <div className="bg-white border border-[#E2E8F0] rounded-2xl w-full max-w-lg max-h-[calc(100dvh-40px)] flex flex-col shadow-2xl overflow-hidden box-border animate-in zoom-in-95 duration-200">
+              {/* Sticky Header */}
+              <div className="shrink-0 px-5 py-3.5 border-b border-[#E2E8F0] bg-white flex items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-base font-bold text-[#0F172A]">
+                    {editingCampaign ? 'Pengaturan Campaign Promosi' : 'Buat Campaign Promosi Baru'}
+                  </h3>
+                  <p className="text-[11px] text-[#64748B] mt-0.5">
+                    Tentukan periode aktif, aturan diskon konsumen, dan bonus insentif affiliate.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsCampaignModalOpen(false)}
+                  className="h-8 w-8 p-0 rounded-full text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] flex items-center justify-center shrink-0 cursor-pointer transition-colors"
+                  aria-label="Tutup modal"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
 
-              <form onSubmit={handleSaveCampaign} className="space-y-4 text-xs">
-                <div>
-                  <label className="font-semibold text-foreground block mb-1">Nama Campaign Promo</label>
-                  <Input
-                    required
-                    value={campName}
-                    onChange={(e) => setCampName(e.target.value)}
-                    placeholder="Contoh: Flash Sale 11.11 Super Deals"
-                    className="bg-surface-raised border-border text-xs"
-                  />
+              <form onSubmit={handleSaveCampaign} className="flex-1 flex flex-col overflow-hidden m-0 p-0">
+                {/* Scrollable Body */}
+                <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3.5 text-xs bg-[#F8FAFC]">
+                  <div className="bg-white border border-[#E2E8F0] rounded-xl p-3.5 sm:p-4 shadow-2xs space-y-3">
+                    <div>
+                      <label className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block mb-1">Nama Campaign Promo</label>
+                      <Input
+                        required
+                        value={campName}
+                        onChange={(e) => setCampName(e.target.value)}
+                        placeholder="Contoh: Flash Sale 11.11 Super Deals"
+                        className="bg-white border-[#E2E8F0] text-xs text-[#0F172A] rounded-lg h-9 px-3 focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block mb-1">Deskripsi / Sub-Copy</label>
+                      <Input
+                        value={campTagline}
+                        onChange={(e) => setCampTagline(e.target.value)}
+                        placeholder="Contoh: Diskon 20% untuk semua akun AI & Streaming"
+                        className="bg-white border-[#E2E8F0] text-xs text-[#0F172A] rounded-lg h-9 px-3 focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="bg-white border border-[#E2E8F0] rounded-xl p-3.5 sm:p-4 shadow-2xs space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block mb-1">Tanggal Mulai</label>
+                        <Input
+                          type="date"
+                          required
+                          value={campStartDate}
+                          onChange={(e) => setCampStartDate(e.target.value)}
+                          className="bg-white border-[#E2E8F0] text-xs text-[#0F172A] rounded-lg h-9 px-3 focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block mb-1">Tanggal Selesai</label>
+                        <Input
+                          type="date"
+                          required
+                          value={campEndDate}
+                          onChange={(e) => setCampEndDate(e.target.value)}
+                          className="bg-white border-[#E2E8F0] text-xs text-[#0F172A] rounded-lg h-9 px-3 focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block mb-1">Tipe Diskon</label>
+                        <select
+                          value={campDiscountType}
+                          onChange={(e) => setCampDiscountType(e.target.value as any)}
+                          className="w-full h-9 rounded-lg border border-[#E2E8F0] bg-white px-3 text-xs text-[#0F172A] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
+                        >
+                          <option value="percentage">Persentase (% Diskon)</option>
+                          <option value="fixed">Nominal Tetap (Rp Potongan)</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block mb-1">
+                          Nilai Diskon ({campDiscountType === 'percentage' ? '%' : 'Rp'})
+                        </label>
+                        <Input
+                          type="number"
+                          required
+                          min="1"
+                          value={campDiscountValue}
+                          onChange={(e) => setCampDiscountValue(Number(e.target.value))}
+                          className="bg-white border-[#E2E8F0] text-xs font-mono font-bold text-[#0F172A] rounded-lg h-9 px-3 focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block mb-1">Target Kategori Produk</label>
+                        <select
+                          value={campCategory}
+                          onChange={(e) => setCampCategory(e.target.value)}
+                          className="w-full h-9 rounded-lg border border-[#E2E8F0] bg-white px-3 text-xs text-[#0F172A] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
+                        >
+                          <option value="Semua Kategori">Semua Kategori</option>
+                          <option value="AI Tools">AI Tools & Productivity</option>
+                          <option value="Streaming">Streaming & Hiburan</option>
+                          <option value="Desain & Grafis">Desain & Grafis</option>
+                          <option value="Cloud & Penyimpanan">Cloud & Penyimpanan</option>
+                          <option value="VPN & Keamanan">VPN & Keamanan</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block mb-1">Bonus Komisi Affiliate (%)</label>
+                        <Input
+                          type="number"
+                          min="0"
+                          max="30"
+                          value={campAffiliateBonus}
+                          onChange={(e) => setCampAffiliateBonus(Number(e.target.value))}
+                          className="bg-white border-[#E2E8F0] text-xs font-mono text-emerald-600 font-bold rounded-lg h-9 px-3 focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
+                          placeholder="Contoh: 5"
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                <div>
-                  <label className="font-semibold text-foreground block mb-1">Deskripsi / Sub-Copy</label>
-                  <Input
-                    value={campTagline}
-                    onChange={(e) => setCampTagline(e.target.value)}
-                    placeholder="Contoh: Diskon 20% untuk semua akun AI & Streaming"
-                    className="bg-surface-raised border-border text-xs"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="font-semibold text-foreground block mb-1">Tanggal Mulai</label>
-                    <Input
-                      type="date"
-                      required
-                      value={campStartDate}
-                      onChange={(e) => setCampStartDate(e.target.value)}
-                      className="bg-surface-raised border-border text-xs"
-                    />
-                  </div>
-                  <div>
-                    <label className="font-semibold text-foreground block mb-1">Tanggal Selesai</label>
-                    <Input
-                      type="date"
-                      required
-                      value={campEndDate}
-                      onChange={(e) => setCampEndDate(e.target.value)}
-                      className="bg-surface-raised border-border text-xs"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="font-semibold text-foreground block mb-1">Tipe Diskon</label>
-                    <select
-                      value={campDiscountType}
-                      onChange={(e) => setCampDiscountType(e.target.value as any)}
-                      className="w-full h-9 rounded-md border border-border bg-surface-raised px-3 text-xs text-foreground"
-                    >
-                      <option value="percentage">Persentase (% Diskon)</option>
-                      <option value="fixed">Nominal Tetap (Rp Potongan)</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="font-semibold text-foreground block mb-1">
-                      Nilai Diskon ({campDiscountType === 'percentage' ? '%' : 'Rp'})
-                    </label>
-                    <Input
-                      type="number"
-                      required
-                      min="1"
-                      value={campDiscountValue}
-                      onChange={(e) => setCampDiscountValue(Number(e.target.value))}
-                      className="bg-surface-raised border-border text-xs font-mono font-bold"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="font-semibold text-foreground block mb-1">Target Kategori Produk</label>
-                    <select
-                      value={campCategory}
-                      onChange={(e) => setCampCategory(e.target.value)}
-                      className="w-full h-9 rounded-md border border-border bg-surface-raised px-3 text-xs text-foreground"
-                    >
-                      <option value="Semua Kategori">Semua Kategori</option>
-                      <option value="AI Tools">AI Tools & Productivity</option>
-                      <option value="Streaming">Streaming & Hiburan</option>
-                      <option value="Desain & Grafis">Desain & Grafis</option>
-                      <option value="Cloud & Penyimpanan">Cloud & Penyimpanan</option>
-                      <option value="VPN & Keamanan">VPN & Keamanan</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="font-semibold text-foreground block mb-1">Bonus Komisi Affiliate (%)</label>
-                    <Input
-                      type="number"
-                      min="0"
-                      max="30"
-                      value={campAffiliateBonus}
-                      onChange={(e) => setCampAffiliateBonus(Number(e.target.value))}
-                      className="bg-surface-raised border-border text-xs font-mono text-status-success font-bold"
-                      placeholder="Contoh: 5"
-                    />
-                  </div>
-                </div>
-
-                <div className="pt-3 border-t border-border flex items-center justify-end gap-2">
-                  <Button type="button" variant="outline" onClick={() => setIsCampaignModalOpen(false)} className="text-xs">
+                {/* Sticky Footer */}
+                <div className="shrink-0 px-4 sm:px-5 py-3 border-t border-[#E2E8F0] bg-white flex items-center justify-end gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsCampaignModalOpen(false)}
+                    className="text-xs h-8 px-3.5 border-[#E2E8F0] bg-white text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#0F172A] rounded-lg cursor-pointer"
+                  >
                     Batal
                   </Button>
-                  <Button type="submit" className="text-xs">
+                  <Button
+                    type="submit"
+                    className="text-xs gap-1.5 h-8 px-4 font-semibold bg-[#2563EB] hover:bg-[#1D4ED8] text-white shadow-xs rounded-lg cursor-pointer"
+                  >
                     {editingCampaign ? 'Simpan Perubahan' : 'Luncurkan Campaign'}
                   </Button>
                 </div>
@@ -1274,159 +1301,181 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
 
       {/* Modal Create/Edit Banner */}
       {isBannerModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/50 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-surface border border-border rounded-xl w-full max-w-lg shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
-            <div className="border-b border-border pb-3">
-              <h3 className="font-bold text-base text-foreground">
-                {editingBanner ? 'Edit Banner Etalase' : 'Tambah Banner Etalase Baru'}
-              </h3>
-              <p className="text-xs text-foreground-muted">
-                Atur visual, judul, call to action, dan destinasi tombol bagi pembeli.
-              </p>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white border border-[#E2E8F0] rounded-2xl w-full max-w-lg max-h-[calc(100dvh-40px)] flex flex-col shadow-2xl overflow-hidden box-border animate-in zoom-in-95 duration-200">
+            {/* Sticky Header */}
+            <div className="shrink-0 px-5 py-3.5 border-b border-[#E2E8F0] bg-white flex items-center justify-between gap-3">
+              <div>
+                <h3 className="text-base font-bold text-[#0F172A]">
+                  {editingBanner ? 'Edit Banner Etalase' : 'Tambah Banner Etalase Baru'}
+                </h3>
+                <p className="text-[11px] text-[#64748B] mt-0.5">
+                  Atur visual, judul, call to action, dan destinasi tombol bagi pembeli.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsBannerModalOpen(false)}
+                className="h-8 w-8 p-0 rounded-full text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] flex items-center justify-center shrink-0 cursor-pointer transition-colors"
+                aria-label="Tutup modal"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
 
-            <form onSubmit={handleSaveBanner} className="space-y-4 text-xs">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="font-semibold text-foreground block mb-1">Tipe Penempatan</label>
-                  <select
-                    value={banType}
-                    onChange={(e) => setBanType(e.target.value as any)}
-                    className="w-full h-9 rounded-md border border-border bg-surface-raised px-3 text-xs text-foreground"
-                  >
-                    <option value="hero">Hero Main Banner</option>
-                    <option value="promo-bar">Promotional Banner Bar</option>
-                    <option value="announcement">Announcement Ticker Bar</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="font-semibold text-foreground block mb-1">Urutan Prioritas Tampil</label>
-                  <Input
-                    type="number"
-                    min="1"
-                    value={banOrder}
-                    onChange={(e) => setBanOrder(Number(e.target.value))}
-                    className="bg-surface-raised border-border text-xs font-mono"
-                  />
-                </div>
-              </div>
+            <form onSubmit={handleSaveBanner} className="flex-1 flex flex-col overflow-hidden m-0 p-0">
+              {/* Scrollable Body */}
+              <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3.5 text-xs bg-[#F8FAFC]">
+                <div className="bg-white border border-[#E2E8F0] rounded-xl p-3.5 sm:p-4 shadow-2xs space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block mb-1">Tipe Penempatan</label>
+                      <select
+                        value={banType}
+                        onChange={(e) => setBanType(e.target.value as any)}
+                        className="w-full h-9 rounded-lg border border-[#E2E8F0] bg-white px-3 text-xs text-[#0F172A] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
+                      >
+                        <option value="hero">Hero Main Banner</option>
+                        <option value="promo-bar">Promotional Banner Bar</option>
+                        <option value="announcement">Announcement Ticker Bar</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block mb-1">Urutan Prioritas Tampil</label>
+                      <Input
+                        type="number"
+                        min="1"
+                        value={banOrder}
+                        onChange={(e) => setBanOrder(Number(e.target.value))}
+                        className="bg-white border-[#E2E8F0] text-xs font-mono text-[#0F172A] rounded-lg h-9 px-3 focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
+                      />
+                    </div>
+                  </div>
 
-              <div>
-                <label className="font-semibold text-foreground block mb-1">Judul Utama Banner</label>
-                <Input
-                  required
-                  value={banTitle}
-                  onChange={(e) => setBanTitle(e.target.value)}
-                  placeholder="Contoh: Canva Pro 1 Bulan Private Resmi"
-                  className="bg-surface-raised border-border text-xs"
-                />
-              </div>
+                  <div>
+                    <label className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block mb-1">Judul Utama Banner</label>
+                    <Input
+                      required
+                      value={banTitle}
+                      onChange={(e) => setBanTitle(e.target.value)}
+                      placeholder="Contoh: Canva Pro 1 Bulan Private Resmi"
+                      className="bg-white border-[#E2E8F0] text-xs text-[#0F172A] rounded-lg h-9 px-3 focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
+                    />
+                  </div>
 
-              <div>
-                <label className="font-semibold text-foreground block mb-1">Deskripsi Pendukung</label>
-                <Input
-                  value={banDesc}
-                  onChange={(e) => setBanDesc(e.target.value)}
-                  placeholder="Contoh: Fitur AI Magic Studio lengkap dengan garansi ganti akun."
-                  className="bg-surface-raised border-border text-xs"
-                />
-              </div>
+                  <div>
+                    <label className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block mb-1">Deskripsi Pendukung</label>
+                    <Input
+                      value={banDesc}
+                      onChange={(e) => setBanDesc(e.target.value)}
+                      placeholder="Contoh: Fitur AI Magic Studio lengkap dengan garansi ganti akun."
+                      className="bg-white border-[#E2E8F0] text-xs text-[#0F172A] rounded-lg h-9 px-3 focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
+                    />
+                  </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="font-semibold text-foreground block mb-1">Teks Tombol (CTA)</label>
-                  <Input
-                    value={banCta}
-                    onChange={(e) => setBanCta(e.target.value)}
-                    placeholder="Beli Sekarang / Eksplor"
-                    className="bg-surface-raised border-border text-xs"
-                  />
-                </div>
-                <div>
-                  <label className="font-semibold text-foreground block mb-1">URL Tujuan</label>
-                  <Input
-                    value={banUrl}
-                    onChange={(e) => setBanUrl(e.target.value)}
-                    placeholder="/#katalog atau /product/canva-pro"
-                    className="bg-surface-raised border-border text-xs font-mono"
-                  />
-                </div>
-              </div>
-
-              {/* Visual Banner Upload Dropzone */}
-              {/* Visual Banner Upload Dropzone with Specification Hint */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label className="font-semibold text-foreground block">Visual Banner (Gambar)</label>
-                  <button
-                    type="button"
-                    onClick={() => setIsSpecGuideOpen(true)}
-                    className="text-[11px] text-primary hover:underline flex items-center gap-1 font-medium cursor-pointer"
-                  >
-                    <Info className="w-3 h-3" />
-                    Standar Rasio 3:1
-                  </button>
-                </div>
-
-                <div className="p-2.5 rounded-lg bg-primary/10 border border-primary/20 text-xs flex items-start gap-2.5 text-foreground">
-                  <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                  <div className="text-[11px] leading-relaxed text-foreground-muted">
-                    <span className="font-semibold text-foreground">Standar Banner:</span> Resolusi master{' '}
-                    <strong className="text-primary font-mono font-bold">2640 x 882 px</strong> (Rasio 3:1). Pastikan teks & maskot berada di{' '}
-                    <strong className="text-foreground">Safe Zone tengah 80%</strong> agar tidak terpotong di layar HP. Format WebP/PNG maks. 5MB.
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block mb-1">Teks Tombol (CTA)</label>
+                      <Input
+                        value={banCta}
+                        onChange={(e) => setBanCta(e.target.value)}
+                        placeholder="Beli Sekarang / Eksplor"
+                        className="bg-white border-[#E2E8F0] text-xs text-[#0F172A] rounded-lg h-9 px-3 focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block mb-1">URL Tujuan</label>
+                      <Input
+                        value={banUrl}
+                        onChange={(e) => setBanUrl(e.target.value)}
+                        placeholder="/#katalog atau /product/canva-pro"
+                        className="bg-white border-[#E2E8F0] text-xs font-mono text-[#0F172A] rounded-lg h-9 px-3 focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
+                      />
+                    </div>
                   </div>
                 </div>
 
-                <ImageUploadDropzone
-                  value={banImageUrl}
-                  onChange={(url) => setBanImageUrl(url)}
-                  onFileStaged={(file) => setStagedBannerFile(file)}
-                  folder="banners"
-                  label="Pilih atau Tarik File Banner"
-                  description="Format JPG, PNG, WEBP, atau AVIF (Maks. 5MB). Otomatis dideduplikasi ke Vercel Blob."
-                  mode="lazy"
-                  isSpecialPromo={true}
-                />
-              </div>
+                {/* Visual Banner Upload Dropzone */}
+                <div className="bg-white border border-[#E2E8F0] rounded-xl p-3.5 sm:p-4 shadow-2xs space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block">Visual Banner (Gambar)</label>
+                    <button
+                      type="button"
+                      onClick={() => setIsSpecGuideOpen(true)}
+                      className="text-[11px] text-[#2563EB] hover:underline flex items-center gap-1 font-medium cursor-pointer"
+                    >
+                      <Info className="w-3 h-3" />
+                      Standar Rasio 3:1
+                    </button>
+                  </div>
 
-              <div className="grid grid-cols-2 gap-3 items-center">
-                <div>
-                  <label className="font-semibold text-foreground block mb-1">Jadwal Kadaluarsa (Opsional)</label>
-                  <Input
-                    type="date"
-                    value={banSchedule}
-                    onChange={(e) => setBanSchedule(e.target.value)}
-                    className="bg-surface-raised border-border text-xs"
+                  <div className="p-2.5 rounded-lg bg-[#EFF6FF] border border-[#BFDBFE] text-xs flex items-start gap-2.5">
+                    <Info className="w-4 h-4 text-[#2563EB] shrink-0 mt-0.5" />
+                    <div className="text-[11px] leading-relaxed text-[#1E3A8A]">
+                      <span className="font-semibold text-[#0F172A]">Standar Banner:</span> Resolusi master{' '}
+                      <strong className="text-[#2563EB] font-mono font-bold">2640 x 882 px</strong> (Rasio 3:1). Pastikan teks & maskot berada di{' '}
+                      <strong className="text-[#0F172A]">Safe Zone tengah 80%</strong> agar tidak terpotong di layar HP. Format WebP/PNG maks. 5MB.
+                    </div>
+                  </div>
+
+                  <ImageUploadDropzone
+                    value={banImageUrl}
+                    onChange={(url) => setBanImageUrl(url)}
+                    onFileStaged={(file) => setStagedBannerFile(file)}
+                    folder="banners"
+                    label="Pilih atau Tarik File Banner"
+                    description="Format JPG, PNG, WEBP, atau AVIF (Maks. 5MB). Otomatis dideduplikasi ke Vercel Blob."
+                    mode="lazy"
+                    isSpecialPromo={true}
                   />
-                  <span className="text-[10px] text-foreground-muted mt-0.5 block">
-                    Otomatis non-aktif setelah tanggal ini tiba.
-                  </span>
                 </div>
-                <div className="pt-2">
-                  <label className="font-semibold text-foreground block mb-1">Status Publikasi</label>
-                  <label className="flex items-center gap-2 cursor-pointer mt-1">
-                    <input
-                      type="checkbox"
-                      checked={banIsActive}
-                      onChange={(e) => setBanIsActive(e.target.checked)}
-                      className="w-4 h-4 rounded text-primary border-border focus:ring-primary"
-                    />
-                    <span className="text-xs text-foreground font-medium">Aktifkan di etalase</span>
-                  </label>
+
+                <div className="bg-white border border-[#E2E8F0] rounded-xl p-3.5 sm:p-4 shadow-2xs">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+                    <div>
+                      <label className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block mb-1">Jadwal Kadaluarsa (Opsional)</label>
+                      <Input
+                        type="date"
+                        value={banSchedule}
+                        onChange={(e) => setBanSchedule(e.target.value)}
+                        className="bg-white border-[#E2E8F0] text-xs text-[#0F172A] rounded-lg h-9 px-3 focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
+                      />
+                      <span className="text-[10px] text-[#64748B] mt-1 block">
+                        Otomatis non-aktif setelah tanggal ini tiba.
+                      </span>
+                    </div>
+                    <div className="pt-2">
+                      <label className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block mb-1">Status Publikasi</label>
+                      <label className="flex items-center gap-2 cursor-pointer mt-1">
+                        <input
+                          type="checkbox"
+                          checked={banIsActive}
+                          onChange={(e) => setBanIsActive(e.target.checked)}
+                          className="w-4 h-4 rounded text-[#2563EB] border-[#E2E8F0] focus:ring-[#2563EB]"
+                        />
+                        <span className="text-xs text-[#0F172A] font-medium">Aktifkan di etalase</span>
+                      </label>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="pt-3 border-t border-border flex items-center justify-end gap-2">
+              {/* Sticky Footer */}
+              <div className="shrink-0 px-4 sm:px-5 py-3 border-t border-[#E2E8F0] bg-white flex items-center justify-end gap-2">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => setIsBannerModalOpen(false)}
                   disabled={isSavingBanner}
-                  className="text-xs"
+                  className="text-xs h-8 px-3.5 border-[#E2E8F0] bg-white text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#0F172A] rounded-lg cursor-pointer"
                 >
                   Batal
                 </Button>
-                <Button type="submit" disabled={isSavingBanner} className="text-xs gap-1.5">
+                <Button
+                  type="submit"
+                  disabled={isSavingBanner}
+                  className="text-xs gap-1.5 h-8 px-4 font-semibold bg-[#2563EB] hover:bg-[#1D4ED8] text-white shadow-xs rounded-lg cursor-pointer disabled:opacity-50"
+                >
                   {isSavingBanner && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                   <span>{isSavingBanner ? 'Menyimpan...' : editingBanner ? 'Simpan Perubahan' : 'Publikasikan Banner'}</span>
                 </Button>
@@ -1438,141 +1487,150 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
 
       {/* Modal Panduan & Aturan Ukuran Banner (3:1) */}
       {isSpecGuideOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/60 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-surface border border-border rounded-2xl w-full max-w-2xl shadow-2xl p-6 space-y-5 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-start justify-between border-b border-border pb-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white border border-[#E2E8F0] rounded-2xl w-full max-w-2xl max-h-[calc(100dvh-40px)] flex flex-col shadow-2xl overflow-hidden box-border animate-in zoom-in-95 duration-200">
+            {/* Sticky Header */}
+            <div className="shrink-0 px-5 py-3.5 border-b border-[#E2E8F0] bg-white flex items-start justify-between gap-3">
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider bg-primary/15 text-primary border border-primary/25">
+                  <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider bg-[#EFF6FF] text-[#2563EB] border border-[#BFDBFE]">
                     Official Design Guidelines
                   </span>
-                  <span className="text-[11px] text-foreground-muted">Asterra Store Hero Standards</span>
+                  <span className="text-[11px] text-[#64748B]">Asterra Store Hero Standards</span>
                 </div>
-                <h3 className="font-extrabold text-base sm:text-lg text-foreground tracking-tight">
+                <h3 className="font-extrabold text-base sm:text-lg text-[#0F172A] tracking-tight">
                   Aturan & Standar Ukuran Banner Etalase (Rasio 3:1)
                 </h3>
-                <p className="text-xs text-foreground-muted mt-0.5">
+                <p className="text-[11px] text-[#64748B] mt-0.5">
                   Ikuti panduan berikut agar seluruh banner promosi tampil pas, tajam, dan tidak terpotong pada layar desktop maupun smartphone.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsSpecGuideOpen(false)}
-                className="p-1 rounded-lg text-foreground-muted hover:text-foreground hover:bg-surface-raised cursor-pointer"
+                className="h-8 w-8 p-0 rounded-full text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] flex items-center justify-center shrink-0 cursor-pointer transition-colors"
                 title="Tutup Panduan"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Spec Cards Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs">
-              {/* Card 1: Rasio Canvas */}
-              <div className="bg-surface-raised border border-border/80 rounded-xl p-4 space-y-2">
-                <div className="flex items-center gap-2 text-primary font-bold">
-                  <div className="w-6 h-6 rounded-md bg-primary/15 flex items-center justify-center text-xs">1</div>
-                  <span>Rasio Aspek Baku (3 : 1)</span>
-                </div>
-                <p className="text-[11px] text-foreground-muted leading-relaxed">
-                  Kanvas resmi menggunakan rasio widescreen <strong className="text-foreground">3:1</strong> (Lebar 3 x Tinggi 1).
-                </p>
-                <div className="p-2.5 rounded-lg bg-surface border border-border space-y-1 font-mono text-[11px]">
-                  <div className="flex justify-between">
-                    <span className="text-foreground-muted">Rekomendasi Utama:</span>
-                    <strong className="text-primary font-bold">2640 x 882 px</strong>
+            {/* Scrollable Body */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3.5 text-xs bg-[#F8FAFC]">
+              {/* Spec Cards Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                {/* Card 1: Rasio Canvas */}
+                <div className="bg-white border border-[#E2E8F0] rounded-xl p-3.5 sm:p-4 space-y-2 shadow-2xs">
+                  <div className="flex items-center gap-2 text-[#2563EB] font-bold">
+                    <div className="w-6 h-6 rounded-md bg-[#EFF6FF] border border-[#BFDBFE] flex items-center justify-center text-xs">1</div>
+                    <span>Rasio Aspek Baku (3 : 1)</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-foreground-muted">Resolusi Minimum:</span>
-                    <span className="text-foreground">1920 x 640 px</span>
+                  <p className="text-[11px] text-[#64748B] leading-relaxed">
+                    Kanvas resmi menggunakan rasio widescreen <strong className="text-[#0F172A]">3:1</strong> (Lebar 3 x Tinggi 1).
+                  </p>
+                  <div className="p-2.5 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0] space-y-1 font-mono text-[11px]">
+                    <div className="flex justify-between">
+                      <span className="text-[#64748B]">Rekomendasi Utama:</span>
+                      <strong className="text-[#2563EB] font-bold">2640 x 882 px</strong>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-[#64748B]">Resolusi Minimum:</span>
+                      <span className="text-[#0F172A]">1920 x 640 px</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Card 2: Safe Zone */}
+                <div className="bg-white border border-[#E2E8F0] rounded-xl p-3.5 sm:p-4 space-y-2 shadow-2xs">
+                  <div className="flex items-center gap-2 text-[#2563EB] font-bold">
+                    <div className="w-6 h-6 rounded-md bg-[#EFF6FF] border border-[#BFDBFE] flex items-center justify-center text-xs">2</div>
+                    <span>Safe Zone 80% (Mobile Safety)</span>
+                  </div>
+                  <p className="text-[11px] text-[#64748B] leading-relaxed">
+                    Pastikan elemen krusial (headline, tombol CTA, maskot) berada di <strong className="text-[#0F172A]">80% area tengah kanvas</strong>.
+                  </p>
+                  <div className="p-2.5 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0] space-y-1 text-[11px]">
+                    <div className="flex justify-between">
+                      <span className="text-[#64748B]">Margin Kiri & Kanan:</span>
+                      <strong className="text-[#0F172A] font-mono">Min. 10% (bebas teks)</strong>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-[#64748B]">Tampilan HP (390px):</span>
+                      <span className="text-emerald-600 font-semibold">Bebas dari cut-off</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Card 3: Format & Ukuran File */}
+                <div className="bg-white border border-[#E2E8F0] rounded-xl p-3.5 sm:p-4 space-y-2 shadow-2xs">
+                  <div className="flex items-center gap-2 text-[#2563EB] font-bold">
+                    <div className="w-6 h-6 rounded-md bg-[#EFF6FF] border border-[#BFDBFE] flex items-center justify-center text-xs">3</div>
+                    <span>Format File & Kompresi</span>
+                  </div>
+                  <p className="text-[11px] text-[#64748B] leading-relaxed">
+                    Unggah file berformat modern untuk kecepatan muat kilat dan gambar anti-buram.
+                  </p>
+                  <div className="p-2.5 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0] space-y-1 text-[11px]">
+                    <div className="flex justify-between">
+                      <span className="text-[#64748B]">Format Terbaik:</span>
+                      <strong className="text-[#2563EB] font-bold">.WEBP / .PNG</strong>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-[#64748B]">Maks. Ukuran File:</span>
+                      <span className="text-[#0F172A] font-mono">5 MB (Optimal &lt; 500KB)</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Card 4: Brand & Maskot Asterra */}
+                <div className="bg-white border border-[#E2E8F0] rounded-xl p-3.5 sm:p-4 space-y-2 shadow-2xs">
+                  <div className="flex items-center gap-2 text-[#2563EB] font-bold">
+                    <div className="w-6 h-6 rounded-md bg-[#EFF6FF] border border-[#BFDBFE] flex items-center justify-center text-xs">4</div>
+                    <span>Warna Brand & Maskot Asterra</span>
+                  </div>
+                  <p className="text-[11px] text-[#64748B] leading-relaxed">
+                    Desain bersih, tegas, <strong className="text-[#0F172A]">no AI-slop</strong> atau elemen ungu acak.
+                  </p>
+                  <div className="p-2.5 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0] flex items-center gap-2 text-[10px] font-mono">
+                    <div className="flex items-center gap-1">
+                      <span className="w-3.5 h-3.5 rounded-full bg-[#121A2A] border border-[#E2E8F0] inline-block" />
+                      <span className="text-[#0F172A]">#121A2A</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span className="w-3.5 h-3.5 rounded-full bg-[#E85D3F] inline-block" />
+                      <span className="text-[#0F172A]">#E85D3F</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span className="w-3.5 h-3.5 rounded-full bg-[#F8F6F1] border border-[#E2E8F0] inline-block" />
+                      <span className="text-[#0F172A]">#F8F6F1</span>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Card 2: Safe Zone */}
-              <div className="bg-surface-raised border border-border/80 rounded-xl p-4 space-y-2">
-                <div className="flex items-center gap-2 text-primary font-bold">
-                  <div className="w-6 h-6 rounded-md bg-primary/15 flex items-center justify-center text-xs">2</div>
-                  <span>Safe Zone 80% (Mobile Safety)</span>
+              {/* Visual Canvas Diagram */}
+              <div className="p-4 rounded-xl border border-[#E2E8F0] bg-[#0F172A] text-white space-y-2 text-center select-none shadow-xs">
+                <div className="text-[10px] font-mono uppercase tracking-wider text-[#E85D3F] font-bold">
+                  Diagram Proporsi Banner Widescreen 3:1 (2640 x 882 px)
                 </div>
-                <p className="text-[11px] text-foreground-muted leading-relaxed">
-                  Pastikan elemen krusial (headline, tombol CTA, maskot) berada di <strong className="text-foreground">80% area tengah kanvas</strong>.
-                </p>
-                <div className="p-2.5 rounded-lg bg-surface border border-border space-y-1 text-[11px]">
-                  <div className="flex justify-between">
-                    <span className="text-foreground-muted">Margin Kiri & Kanan:</span>
-                    <strong className="text-foreground font-mono">Min. 10% (bebas teks)</strong>
+                <div className="border border-dashed border-[#E85D3F]/50 rounded-lg p-5 bg-black/40 flex items-center justify-between text-xs">
+                  <div className="text-[10px] text-zinc-400 font-mono px-2 py-1 rounded bg-black/60">Margin 10%</div>
+                  <div className="space-y-1">
+                    <div className="text-xs sm:text-sm font-extrabold text-white">★ SAFE ZONE 80% TENGAH ★</div>
+                    <div className="text-[10px] sm:text-[11px] text-zinc-300">Tempatkan Maskot, Headline Promo, & Tombol CTA di Sini</div>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-foreground-muted">Tampilan HP (390px):</span>
-                    <span className="text-status-success font-semibold">Bebas dari cut-off</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Card 3: Format & Ukuran File */}
-              <div className="bg-surface-raised border border-border/80 rounded-xl p-4 space-y-2">
-                <div className="flex items-center gap-2 text-primary font-bold">
-                  <div className="w-6 h-6 rounded-md bg-primary/15 flex items-center justify-center text-xs">3</div>
-                  <span>Format File & Kompresi</span>
-                </div>
-                <p className="text-[11px] text-foreground-muted leading-relaxed">
-                  Unggah file berformat modern untuk kecepatan muat kilat dan gambar anti-buram.
-                </p>
-                <div className="p-2.5 rounded-lg bg-surface border border-border space-y-1 text-[11px]">
-                  <div className="flex justify-between">
-                    <span className="text-foreground-muted">Format Terbaik:</span>
-                    <strong className="text-primary font-bold">.WEBP / .PNG</strong>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-foreground-muted">Maks. Ukuran File:</span>
-                    <span className="text-foreground font-mono">5 MB (Optimal &lt; 500KB)</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Card 4: Brand & Maskot Asterra */}
-              <div className="bg-surface-raised border border-border/80 rounded-xl p-4 space-y-2">
-                <div className="flex items-center gap-2 text-primary font-bold">
-                  <div className="w-6 h-6 rounded-md bg-primary/15 flex items-center justify-center text-xs">4</div>
-                  <span>Warna Brand & Maskot Asterra</span>
-                </div>
-                <p className="text-[11px] text-foreground-muted leading-relaxed">
-                  Desain bersih, tegas, <strong className="text-foreground">no AI-slop</strong> atau elemen ungu acak.
-                </p>
-                <div className="p-2.5 rounded-lg bg-surface border border-border flex items-center gap-2 text-[10px] font-mono">
-                  <div className="flex items-center gap-1">
-                    <span className="w-3.5 h-3.5 rounded-full bg-[#121A2A] border border-white/20 inline-block" />
-                    <span>#121A2A</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <span className="w-3.5 h-3.5 rounded-full bg-[#E85D3F] inline-block" />
-                    <span>#E85D3F</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <span className="w-3.5 h-3.5 rounded-full bg-[#F8F6F1] border border-border inline-block" />
-                    <span>#F8F6F1</span>
-                  </div>
+                  <div className="text-[10px] text-zinc-400 font-mono px-2 py-1 rounded bg-black/60">Margin 10%</div>
                 </div>
               </div>
             </div>
 
-            {/* Visual Canvas Diagram */}
-            <div className="p-4 rounded-xl border border-border bg-[#121A2A] text-white space-y-2 text-center select-none">
-              <div className="text-[10px] font-mono uppercase tracking-wider text-[#E85D3F] font-bold">
-                Diagram Proporsi Banner Widescreen 3:1 (2640 x 882 px)
-              </div>
-              <div className="border border-dashed border-[#E85D3F]/50 rounded-lg p-5 bg-black/30 flex items-center justify-between text-xs">
-                <div className="text-[10px] text-zinc-400 font-mono px-2 py-1 rounded bg-black/40">Margin 10%</div>
-                <div className="space-y-1">
-                  <div className="text-xs sm:text-sm font-extrabold text-white">★ SAFE ZONE 80% TENGAH ★</div>
-                  <div className="text-[10px] sm:text-[11px] text-zinc-300">Tempatkan Maskot, Headline Promo, & Tombol CTA di Sini</div>
-                </div>
-                <div className="text-[10px] text-zinc-400 font-mono px-2 py-1 rounded bg-black/40">Margin 10%</div>
-              </div>
-            </div>
-
-            <div className="pt-2 border-t border-border flex justify-end">
-              <Button size="sm" onClick={() => setIsSpecGuideOpen(false)} className="text-xs">
+            {/* Sticky Footer */}
+            <div className="shrink-0 px-4 sm:px-5 py-3 border-t border-[#E2E8F0] bg-white flex justify-end">
+              <Button
+                type="button"
+                onClick={() => setIsSpecGuideOpen(false)}
+                className="text-xs h-8 px-4 font-semibold bg-[#2563EB] hover:bg-[#1D4ED8] text-white shadow-xs rounded-lg cursor-pointer"
+              >
                 Mengerti & Tutup Panduan
               </Button>
             </div>

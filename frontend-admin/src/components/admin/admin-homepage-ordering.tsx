@@ -1106,26 +1106,24 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
         </div>
       </div>
 
-      {/* Modal Picker: Add Product to Manual Ordering (Strictly Product Level, Modeled after Gambar 2) */}
+      {/* Modal Picker: Add Product to Manual Ordering */}
       {isAddPickerOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
-          <div className="bg-surface border border-border rounded-2xl w-full max-w-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-scale-up">
-            {/* Modal Header */}
-            <div className="p-4 sm:px-6 sm:py-4 border-b border-border flex items-center justify-between bg-surface">
-              <div className="space-y-0.5">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-sm sm:text-base font-bold text-foreground">
-                    Pilih Produk untuk Diprioritaskan
-                  </h3>
-                </div>
-                <p className="text-xs text-foreground-muted">
-                  Pilih dari <strong className="text-foreground">{availableProductGroups.length} produk aplikasi</strong> di katalog Asterra Store (bukan SKU varian)
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white border border-[#E2E8F0] rounded-2xl w-full max-w-3xl max-h-[calc(100dvh-40px)] flex flex-col shadow-2xl overflow-hidden box-border animate-in zoom-in-95 duration-200">
+            {/* Sticky Header */}
+            <div className="shrink-0 px-5 py-3.5 border-b border-[#E2E8F0] bg-white flex items-center justify-between gap-3">
+              <div>
+                <h3 className="text-base font-bold text-[#0F172A]">
+                  Pilih Produk untuk Diprioritaskan
+                </h3>
+                <p className="text-[11px] text-[#64748B] mt-0.5">
+                  Pilih dari <strong className="text-[#0F172A]">{availableProductGroups.length} produk aplikasi</strong> di katalog Asterra Store
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsAddPickerOpen(false)}
-                className="w-8 h-8 rounded-xl text-foreground-muted hover:text-foreground hover:bg-surface-raised flex items-center justify-center transition-colors cursor-pointer"
+                className="h-8 w-8 p-0 rounded-full text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] flex items-center justify-center shrink-0 cursor-pointer transition-colors"
                 title="Tutup Modal"
               >
                 <X className="w-4 h-4" />
@@ -1133,29 +1131,29 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
             </div>
 
             {/* Search Input & Category Filter Tabs */}
-            <div className="p-3 sm:p-4 border-b border-border/80 bg-surface-raised space-y-3">
+            <div className="shrink-0 p-3 sm:p-4 border-b border-[#E2E8F0] bg-white space-y-2.5">
               <div className="relative">
-                <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-foreground-muted pointer-events-none" />
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#64748B] pointer-events-none" />
                 <Input
                   value={searchPickerQuery}
                   onChange={(e) => setSearchPickerQuery(e.target.value)}
                   placeholder="Cari nama produk (misal: CapCut, Netflix, Gemini, ChatGPT, Canva, MLBB)..."
-                  className="pl-9 pr-9 text-xs sm:text-sm h-10 bg-surface border-border focus:border-[#C96F55] focus:ring-1 focus:ring-[#C96F55] rounded-xl"
+                  className="pl-9 pr-9 text-xs h-9 bg-white border-[#E2E8F0] text-[#0F172A] focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] rounded-lg"
                   autoFocus
                 />
                 {searchPickerQuery && (
                   <button
                     type="button"
                     onClick={() => setSearchPickerQuery('')}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground-muted hover:text-foreground p-0.5 rounded cursor-pointer"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#64748B] hover:text-[#0F172A] p-0.5 rounded cursor-pointer"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
                 )}
               </div>
 
-              {/* Category Filter Pills (Dynamically retrieved from PostgreSQL DB categories) */}
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs">
+              {/* Category Filter Pills */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 no-scrollbar text-xs">
                 {categoryPills.map((tab) => {
                   const isActive = pickerCategoryFilter === tab.key;
                   return (
@@ -1163,10 +1161,10 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
                       key={tab.key}
                       type="button"
                       onClick={() => setPickerCategoryFilter(tab.key)}
-                      className={`px-3 py-1.5 rounded-lg font-semibold text-[11px] whitespace-nowrap transition-all cursor-pointer ${
+                      className={`px-3 py-1 rounded-lg font-semibold text-[11px] whitespace-nowrap transition-all cursor-pointer ${
                         isActive
-                          ? 'bg-[#C96F55] text-white shadow-2xs font-bold'
-                          : 'bg-surface border border-border/80 text-foreground-muted hover:text-foreground hover:bg-surface-raised'
+                          ? 'bg-[#2563EB] text-white shadow-2xs font-bold'
+                          : 'bg-[#F8FAFC] border border-[#E2E8F0] text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9]'
                       }`}
                     >
                       {tab.label}
@@ -1176,17 +1174,17 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
               </div>
             </div>
 
-            {/* Product Cards Grid (Modeled after Gambar 2) */}
-            <div className="p-3 sm:p-5 overflow-y-auto space-y-3 flex-1 bg-surface-raised/40">
+            {/* Product Cards Grid */}
+            <div className="p-3 sm:p-5 overflow-y-auto space-y-3 flex-1 bg-[#F8FAFC]">
               {filteredProductGroupsForPicker.length === 0 ? (
-                <div className="py-12 px-4 text-center border-2 border-dashed border-border rounded-2xl bg-surface space-y-2">
-                  <div className="w-10 h-10 rounded-full bg-surface-raised flex items-center justify-center mx-auto text-foreground-muted">
+                <div className="py-12 px-4 text-center border border-dashed border-[#E2E8F0] rounded-xl bg-white space-y-2">
+                  <div className="w-10 h-10 rounded-full bg-[#F8FAFC] flex items-center justify-center mx-auto text-[#64748B]">
                     <Search className="w-5 h-5" />
                   </div>
-                  <p className="text-xs font-semibold text-foreground">
+                  <p className="text-xs font-semibold text-[#0F172A]">
                     Tidak ada produk yang cocok dengan pencarian
                   </p>
-                  <p className="text-[11px] text-foreground-muted">
+                  <p className="text-[11px] text-[#64748B]">
                     Coba kata kunci lain atau pilih tab kategori yang berbeda.
                   </p>
                   {searchPickerQuery && (
@@ -1198,7 +1196,7 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
                         setSearchPickerQuery('');
                         setPickerCategoryFilter('all');
                       }}
-                      className="text-xs h-7 mt-2"
+                      className="text-xs h-7 mt-2 border-[#E2E8F0] bg-white text-[#64748B] hover:bg-[#F8FAFC] rounded-lg"
                     >
                       Reset Pencarian
                     </Button>
@@ -1219,22 +1217,22 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
                     return (
                       <div
                         key={prod.id}
-                        className={`rounded-2xl border p-3.5 bg-surface transition-all flex flex-col justify-between shadow-2xs ${
+                        className={`rounded-xl border p-3.5 bg-white transition-all flex flex-col justify-between shadow-2xs ${
                           isSelected
-                            ? 'border-emerald-300 ring-1 ring-emerald-200/50 bg-emerald-50/10'
-                            : 'border-border/80 hover:border-[#C96F55]/60 hover:shadow-xs'
+                            ? 'border-emerald-300 ring-1 ring-emerald-200/50 bg-emerald-50/20'
+                            : 'border-[#E2E8F0] hover:border-[#2563EB]/60 hover:shadow-xs'
                         }`}
                       >
                         <div>
-                          {/* Top: Brand Logo + Name + Star Rating & Sales (Gambar 2 Layout) */}
+                          {/* Top: Brand Logo + Name + Star Rating & Sales */}
                           <div className="flex items-start gap-3">
                             <ProductBrandLogo name={prod.name} className="w-12 h-12" />
 
                             <div className="min-w-0 flex-1">
-                              <h4 className="text-sm font-bold text-foreground truncate" title={prod.name}>
+                              <h4 className="text-sm font-bold text-[#0F172A] truncate" title={prod.name}>
                                 {prod.name}
                               </h4>
-                              <div className="flex items-center gap-1.5 text-xs text-foreground-muted mt-0.5">
+                              <div className="flex items-center gap-1.5 text-xs text-[#64748B] mt-0.5">
                                 <span className="flex items-center gap-0.5 font-bold text-amber-500">
                                   <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
                                   {prod.rating}
@@ -1244,7 +1242,7 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
                             </div>
                           </div>
 
-                          {/* Status Badges Row (Gambar 2 Style: Ready, Garansi, DISKON 15%) */}
+                          {/* Status Badges Row */}
                           <div className="flex flex-wrap items-center gap-1.5 mt-2.5">
                             {prod.items && prod.items.length > 0 && prod.items.every(p => (p.stock !== undefined && p.stock <= 0) || (p as any).providerStatus === 'empty' || p.status !== 'active') ? (
                               <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold border border-red-200 bg-red-50/80 text-red-700">
@@ -1261,20 +1259,20 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
                             <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#C96F55] text-white flex items-center gap-1">
                               🔥 DISKON 15%
                             </span>
-                            <span className="px-2 py-0.5 rounded-md text-[10px] font-medium border border-border bg-surface-raised text-foreground-muted">
+                            <span className="px-2 py-0.5 rounded-md text-[10px] font-medium border border-[#E2E8F0] bg-[#F8FAFC] text-[#64748B]">
                               {prod.variantCount} Varian
                             </span>
                           </div>
                         </div>
 
                         {/* Divider */}
-                        <div className="border-t border-border/60 my-2.5" />
+                        <div className="border-t border-[#E2E8F0] my-2.5" />
 
-                        {/* Bottom: Pricing & Action Button (Gambar 2 Style) */}
+                        {/* Bottom: Pricing & Action Button */}
                         <div className="flex items-center justify-between gap-2 pt-0.5">
                           <div>
                             <div className="flex items-center gap-1.5">
-                              <span className="line-through text-[11px] text-foreground-muted">
+                              <span className="line-through text-[11px] text-[#64748B]">
                                 Rp {prod.originalPrice.toLocaleString('id-ID')}
                               </span>
                               <span className="px-1.5 py-0.2 rounded border border-rose-200 bg-rose-50 text-[10px] font-bold text-rose-600">
@@ -1291,7 +1289,7 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
                               <button
                                 type="button"
                                 disabled
-                                className="px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold flex items-center gap-1 shrink-0 opacity-90 cursor-default"
+                                className="px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold flex items-center gap-1 shrink-0 opacity-90 cursor-default"
                               >
                                 <CheckCircle2 className="w-3.5 h-3.5" />
                                 <span>Terpilih</span>
@@ -1300,7 +1298,7 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
                               <button
                                 type="button"
                                 onClick={() => handleAddProduct(prod.id)}
-                                className="px-3.5 py-1.5 rounded-xl bg-[#C96F55] text-white hover:bg-[#b55e45] text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all active:scale-95 shrink-0 cursor-pointer"
+                                className="px-3.5 py-1.5 rounded-lg bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all active:scale-95 shrink-0 cursor-pointer"
                               >
                                 <span>Pilih</span>
                                 <ArrowRight className="w-3.5 h-3.5" />
@@ -1315,20 +1313,18 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
               )}
             </div>
 
-            {/* Modal Footer */}
-            <div className="p-3 sm:px-6 sm:py-3 border-t border-border bg-surface flex items-center justify-between text-xs text-foreground-muted">
+            {/* Modal Sticky Footer */}
+            <div className="shrink-0 px-4 sm:px-6 py-3 border-t border-[#E2E8F0] bg-white flex items-center justify-between text-xs text-[#64748B]">
               <span>
                 Dipilih:{' '}
-                <strong className="text-foreground">{draftManualIds.length}</strong> produk
+                <strong className="text-[#0F172A] font-semibold">{draftManualIds.length}</strong> produk
               </span>
               <Button
                 type="button"
-                variant="outline"
-                size="sm"
                 onClick={() => setIsAddPickerOpen(false)}
-                className="text-xs h-8 px-4 rounded-xl hover:bg-surface-raised cursor-pointer"
+                className="text-xs h-8 px-4 font-semibold bg-[#2563EB] hover:bg-[#1D4ED8] text-white shadow-xs rounded-lg cursor-pointer"
               >
-                Tutup
+                Selesai Memilih
               </Button>
             </div>
           </div>

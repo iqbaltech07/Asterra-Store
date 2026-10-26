@@ -26,6 +26,7 @@ import {
   ExternalLink,
   Printer,
   ChevronRight,
+  X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -529,49 +530,66 @@ export function AdminAnalyticsSuite({ activeTab, onNotify }: AdminAnalyticsSuite
 
         {/* Product Detail Modal */}
         {selectedProductDetail && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/50 backdrop-blur-xs animate-in fade-in">
-            <div className="bg-surface border border-border rounded-xl w-full max-w-md shadow-2xl p-6 space-y-4">
-              <div className="border-b border-border pb-3">
-                <h3 className="font-bold text-base text-foreground">{selectedProductDetail.name}</h3>
-                <p className="text-xs text-foreground-muted">
-                  Kategori: {selectedProductDetail.category} • Supplier: {selectedProductDetail.provider}
-                </p>
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200">
+            <div className="bg-white border border-[#E2E8F0] rounded-2xl w-full max-w-md max-h-[calc(100dvh-40px)] flex flex-col shadow-2xl overflow-hidden box-border animate-in zoom-in-95 duration-200">
+              {/* Sticky Header */}
+              <div className="shrink-0 px-5 py-3.5 border-b border-[#E2E8F0] bg-white flex items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-base font-bold text-[#0F172A]">{selectedProductDetail.name}</h3>
+                  <p className="text-[11px] text-[#64748B] mt-0.5">
+                    Kategori: {selectedProductDetail.category} • Supplier: {selectedProductDetail.provider}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedProductDetail(null)}
+                  className="h-8 w-8 p-0 rounded-full text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] flex items-center justify-center shrink-0 cursor-pointer transition-colors"
+                  aria-label="Tutup modal"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
 
-              <div className="space-y-3 text-xs">
+              {/* Scrollable Body */}
+              <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3.5 text-xs bg-[#F8FAFC]">
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="p-3 rounded-lg bg-surface-raised border border-border">
-                    <span className="text-[10px] text-foreground-muted block">Total Unit Terjual</span>
-                    <span className="font-bold text-base text-foreground font-mono">{selectedProductDetail.unitsSold} pcs</span>
+                  <div className="p-3.5 rounded-xl bg-white border border-[#E2E8F0] shadow-2xs space-y-1">
+                    <span className="text-[10px] text-[#64748B] uppercase font-semibold tracking-wider block">Total Unit Terjual</span>
+                    <span className="font-bold text-base text-[#0F172A] font-mono">{selectedProductDetail.unitsSold} pcs</span>
                   </div>
-                  <div className="p-3 rounded-lg bg-surface-raised border border-border">
-                    <span className="text-[10px] text-foreground-muted block">Tingkat Konversi</span>
-                    <span className="font-bold text-base text-status-success font-mono">{selectedProductDetail.conversionRate}%</span>
-                  </div>
-                </div>
-
-                <div className="p-3 rounded-lg bg-primary/10 border border-primary/25 space-y-1">
-                  <div className="flex justify-between">
-                    <span className="text-foreground">Akumulasi Omzet:</span>
-                    <span className="font-bold font-mono text-primary">Rp {selectedProductDetail.revenue.toLocaleString('id-ID')}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-foreground-muted">Modal Terbayar:</span>
-                    <span className="font-mono text-foreground-muted">Rp {selectedProductDetail.cogs.toLocaleString('id-ID')}</span>
-                  </div>
-                  <div className="flex justify-between pt-1 border-t border-primary/20 font-bold">
-                    <span className="text-status-success">Laba Bersih Produk:</span>
-                    <span className="font-mono text-status-success">Rp {selectedProductDetail.profit.toLocaleString('id-ID')} ({selectedProductDetail.marginPercent}%)</span>
+                  <div className="p-3.5 rounded-xl bg-white border border-[#E2E8F0] shadow-2xs space-y-1">
+                    <span className="text-[10px] text-[#64748B] uppercase font-semibold tracking-wider block">Tingkat Konversi</span>
+                    <span className="font-bold text-base text-emerald-600 font-mono">{selectedProductDetail.conversionRate}%</span>
                   </div>
                 </div>
 
-                <p className="text-[11px] text-foreground-muted">
+                <div className="p-3.5 rounded-xl bg-white border border-[#E2E8F0] shadow-2xs space-y-2">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-[#64748B]">Akumulasi Omzet:</span>
+                    <span className="font-bold font-mono text-[#2563EB]">Rp {selectedProductDetail.revenue.toLocaleString('id-ID')}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-[#64748B]">Modal Terbayar:</span>
+                    <span className="font-mono text-[#64748B]">Rp {selectedProductDetail.cogs.toLocaleString('id-ID')}</span>
+                  </div>
+                  <div className="flex justify-between items-center pt-2 border-t border-[#E2E8F0] font-bold text-xs">
+                    <span className="text-emerald-600">Laba Bersih Produk:</span>
+                    <span className="font-mono text-emerald-600">Rp {selectedProductDetail.profit.toLocaleString('id-ID')} ({selectedProductDetail.marginPercent}%)</span>
+                  </div>
+                </div>
+
+                <p className="text-[11px] text-[#64748B] leading-relaxed">
                   Tingkat komplain & retur produk ini adalah {selectedProductDetail.refundRate}%, berada dalam batas toleransi aman (&lt; 2.0%).
                 </p>
               </div>
 
-              <div className="pt-2 border-t border-border flex justify-end">
-                <Button size="sm" onClick={() => setSelectedProductDetail(null)} className="text-xs">
+              {/* Sticky Footer */}
+              <div className="shrink-0 px-4 sm:px-5 py-3 border-t border-[#E2E8F0] bg-white flex justify-end">
+                <Button
+                  type="button"
+                  onClick={() => setSelectedProductDetail(null)}
+                  className="text-xs h-8 px-4 font-semibold bg-[#2563EB] hover:bg-[#1D4ED8] text-white shadow-xs rounded-lg cursor-pointer"
+                >
                   Tutup Rincian
                 </Button>
               </div>

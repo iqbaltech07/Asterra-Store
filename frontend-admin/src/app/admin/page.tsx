@@ -2488,27 +2488,43 @@ function AdminPageContent() {
 
       {/* MODAL 1: EDIT / CREATE MANAGED PRODUCT */}
       {(editingProduct || isCreateModalOpen) && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-surface border border-border rounded-xl w-full max-w-lg shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto animate-scale-pop">
-            <div className="flex items-center justify-between border-b border-border pb-3">
-              <div>
-                <h3 className="font-bold text-base text-foreground">
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setEditingProduct(null);
+              setIsCreateModalOpen(false);
+            }
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="bg-white border border-[#E2E8F0] rounded-2xl w-full max-w-xl max-h-[calc(100dvh-40px)] flex flex-col shadow-2xl overflow-hidden box-border animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="shrink-0 px-5 py-3.5 border-b border-[#E2E8F0] bg-white flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <h3 className="text-base font-bold text-[#0F172A]">
                   {editingProduct ? 'Pengaturan Detail & Harga Produk' : 'Tambah Produk Baru ke Asterra'}
                 </h3>
-                <p className="text-xs text-foreground-muted">
+                <p className="text-[11px] text-[#64748B] mt-0.5">
                   Tentukan nama, harga jual konsumen, dan status visibilitas katalog.
                 </p>
               </div>
-              <button
-                type="button"
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => {
                   setEditingProduct(null);
                   setIsCreateModalOpen(false);
                 }}
-                className="text-foreground-muted hover:text-foreground p-1"
+                className="h-8 w-8 p-0 rounded-full text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] shrink-0 cursor-pointer"
+                title="Tutup (Esc)"
               >
-                <X className="w-5 h-5" />
-              </button>
+                <X className="w-4 h-4" />
+              </Button>
             </div>
 
             <form
@@ -2516,8 +2532,10 @@ function AdminPageContent() {
                 e.preventDefault();
                 saveProductMutation.mutate();
               }}
-              className="space-y-4 text-xs"
+              className="flex-1 flex flex-col min-h-0 overflow-hidden"
             >
+              <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3.5 text-xs bg-[#F8FAFC]">
+                <div className="bg-white border border-[#E2E8F0] rounded-xl p-3.5 sm:p-4 shadow-2xs space-y-3.5">
               <div>
                 <label className="font-semibold text-foreground block mb-1">Nama Produk</label>
                 <Input
@@ -2965,7 +2983,11 @@ function AdminPageContent() {
                 </label>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-4 border-t border-border">
+                </div>
+              </div>
+
+              {/* Sticky Footer */}
+              <div className="shrink-0 px-4 sm:px-5 py-3 border-t border-[#E2E8F0] bg-white flex items-center justify-end gap-2">
                 <Button
                   type="button"
                   variant="outline"
@@ -2974,10 +2996,16 @@ function AdminPageContent() {
                     setEditingProduct(null);
                     setIsCreateModalOpen(false);
                   }}
+                  className="text-xs h-8 px-3.5 border-[#E2E8F0] bg-white text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#0F172A] rounded-lg cursor-pointer"
                 >
                   Batal
                 </Button>
-                <Button type="submit" size="sm" disabled={saveProductMutation.isPending}>
+                <Button
+                  type="submit"
+                  size="sm"
+                  disabled={saveProductMutation.isPending}
+                  className="text-xs gap-1.5 h-8 px-4 font-semibold bg-[#2563EB] hover:bg-[#1D4ED8] text-white shadow-xs rounded-lg cursor-pointer disabled:opacity-50"
+                >
                   {saveProductMutation.isPending ? 'Menyimpan...' : 'Simpan Pengaturan'}
                 </Button>
               </div>
@@ -2988,24 +3016,37 @@ function AdminPageContent() {
 
       {/* MODAL 2: IMPORT FROM VIP RESELLER */}
       {importingService && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/40 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-surface border border-border rounded-xl w-full max-w-lg shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto animate-scale-pop">
-            <div className="flex items-center justify-between border-b border-border pb-3">
-              <div>
-                <h3 className="font-bold text-base text-foreground">
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setImportingService(null);
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="bg-white border border-[#E2E8F0] rounded-2xl w-full max-w-xl max-h-[calc(100dvh-40px)] flex flex-col shadow-2xl overflow-hidden box-border animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="shrink-0 px-5 py-3.5 border-b border-[#E2E8F0] bg-white flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <h3 className="text-base font-bold text-[#0F172A]">
                   Impor Layanan ke Asterra Store
                 </h3>
-                <p className="text-xs text-foreground-muted">
+                <p className="text-[11px] text-[#64748B] mt-0.5">
                   Tentukan harga jual retail dan status awal produk sebelum diterbitkan.
                 </p>
               </div>
-              <button
-                type="button"
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => setImportingService(null)}
-                className="text-foreground-muted hover:text-foreground p-1"
+                className="h-8 w-8 p-0 rounded-full text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] shrink-0 cursor-pointer"
+                title="Tutup (Esc)"
               >
-                <X className="w-5 h-5" />
-              </button>
+                <X className="w-4 h-4" />
+              </Button>
             </div>
 
             <form
@@ -3013,8 +3054,10 @@ function AdminPageContent() {
                 e.preventDefault();
                 importMutation.mutate();
               }}
-              className="space-y-4 text-xs"
+              className="flex-1 flex flex-col min-h-0 overflow-hidden"
             >
+              <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3.5 text-xs bg-[#F8FAFC]">
+                <div className="bg-white border border-[#E2E8F0] rounded-xl p-3.5 sm:p-4 shadow-2xs space-y-3.5">
               <div className="p-3 bg-surface-raised rounded-lg space-y-1">
                 <div className="flex justify-between">
                   <span className="text-foreground-muted">Kode Layanan VIP:</span>
@@ -3219,16 +3262,26 @@ function AdminPageContent() {
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-4 border-t border-border">
+                </div>
+              </div>
+
+              {/* Sticky Footer */}
+              <div className="shrink-0 px-4 sm:px-5 py-3 border-t border-[#E2E8F0] bg-white flex items-center justify-end gap-2">
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   onClick={() => setImportingService(null)}
+                  className="text-xs h-8 px-3.5 border-[#E2E8F0] bg-white text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#0F172A] rounded-lg cursor-pointer"
                 >
                   Batal
                 </Button>
-                <Button type="submit" size="sm" disabled={importMutation.isPending}>
+                <Button
+                  type="submit"
+                  size="sm"
+                  disabled={importMutation.isPending}
+                  className="text-xs gap-1.5 h-8 px-4 font-semibold bg-[#2563EB] hover:bg-[#1D4ED8] text-white shadow-xs rounded-lg cursor-pointer disabled:opacity-50"
+                >
                   {importMutation.isPending ? 'Mengimpor...' : 'Impor ke Katalog'}
                 </Button>
               </div>
@@ -3302,23 +3355,55 @@ function AdminPageContent() {
 
       {/* Single Product Delete Confirmation Modal [T7] */}
       {deletingProductId && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-surface border border-border rounded-xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-in zoom-in-95 duration-200">
-            <div className="flex items-center gap-3 text-status-error">
-              <div className="w-10 h-10 rounded-full bg-status-error/10 border border-status-error/20 flex items-center justify-center">
-                <Trash2 className="w-5 h-5 text-status-error" />
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setDeletingProductId(null);
+              setDeletingProductName('');
+            }
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="bg-white border border-[#E2E8F0] rounded-2xl w-full max-w-md max-h-[calc(100dvh-40px)] flex flex-col shadow-2xl overflow-hidden box-border animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="shrink-0 px-5 py-3.5 border-b border-[#E2E8F0] bg-white flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5 text-rose-600">
+                <Trash2 className="w-5 h-5 shrink-0" />
+                <h3 className="text-base font-bold text-[#0F172A]">Hapus Produk?</h3>
               </div>
-              <div>
-                <h3 className="text-base font-bold text-foreground">Hapus Produk?</h3>
-                <p className="text-xs text-foreground-muted">Tindakan ini tidak dapat dibatalkan.</p>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setDeletingProductId(null);
+                  setDeletingProductName('');
+                }}
+                className="h-8 w-8 p-0 rounded-full text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] shrink-0 cursor-pointer"
+                title="Tutup (Esc)"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+
+            {/* Scrollable Body */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3.5 text-xs bg-[#F8FAFC]">
+              <div className="bg-white border border-[#E2E8F0] rounded-xl p-3.5 sm:p-4 shadow-2xs space-y-2">
+                <p className="text-[#64748B] leading-relaxed">
+                  Apakah Anda yakin ingin menghapus produk <strong className="text-rose-600 font-bold">{deletingProductName}</strong> dari katalog dan database Asterra Store?
+                </p>
+                <p className="text-amber-700 bg-amber-50 border border-amber-200/60 p-2.5 rounded-lg text-[11px] leading-relaxed">
+                  Tindakan ini permanen dan tidak dapat dibatalkan. Riwayat pesanan lama yang memuat produk ini akan tetap diarsipkan untuk audit akuntansi.
+                </p>
               </div>
             </div>
 
-            <p className="text-xs text-foreground bg-surface-raised border border-border p-3 rounded-lg leading-relaxed">
-              Apakah Anda yakin ingin menghapus produk <strong className="text-status-error">{deletingProductName}</strong> dari database Asterra Store?
-            </p>
-
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
+            {/* Sticky Footer */}
+            <div className="shrink-0 px-4 sm:px-5 py-3 border-t border-[#E2E8F0] bg-white flex items-center justify-end gap-2">
               <Button
                 type="button"
                 variant="outline"
@@ -3328,6 +3413,7 @@ function AdminPageContent() {
                   setDeletingProductName('');
                 }}
                 disabled={deleteProductMutation.isPending}
+                className="text-xs h-8 px-3.5 border-[#E2E8F0] bg-white text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#0F172A] rounded-lg cursor-pointer"
               >
                 Batal
               </Button>
@@ -3337,6 +3423,7 @@ function AdminPageContent() {
                 size="sm"
                 onClick={() => deleteProductMutation.mutate(deletingProductId)}
                 disabled={deleteProductMutation.isPending}
+                className="text-xs h-8 px-4 font-semibold rounded-lg cursor-pointer bg-rose-600 hover:bg-rose-700 text-white"
               >
                 {deleteProductMutation.isPending ? 'Menghapus...' : 'Ya, Hapus Produk'}
               </Button>
@@ -3347,29 +3434,56 @@ function AdminPageContent() {
 
       {/* Bulk Delete Confirmation Modal [T7] */}
       {isBulkDeleteModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-surface border border-border rounded-xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-in zoom-in-95 duration-200">
-            <div className="flex items-center gap-3 text-status-error">
-              <div className="w-10 h-10 rounded-full bg-status-error/10 border border-status-error/20 flex items-center justify-center">
-                <AlertTriangle className="w-5 h-5 text-status-error" />
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsBulkDeleteModalOpen(false);
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="bg-white border border-[#E2E8F0] rounded-2xl w-full max-w-md max-h-[calc(100dvh-40px)] flex flex-col shadow-2xl overflow-hidden box-border animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="shrink-0 px-5 py-3.5 border-b border-[#E2E8F0] bg-white flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5 text-rose-600">
+                <AlertTriangle className="w-5 h-5 shrink-0" />
+                <h3 className="text-base font-bold text-[#0F172A]">Hapus {selectedIds.length} Produk Sekaligus?</h3>
               </div>
-              <div>
-                <h3 className="text-base font-bold text-foreground">Hapus {selectedIds.length} Produk Sekaligus?</h3>
-                <p className="text-xs text-foreground-muted">Tindakan penghapusan massal permanen.</p>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsBulkDeleteModalOpen(false)}
+                className="h-8 w-8 p-0 rounded-full text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] shrink-0 cursor-pointer"
+                title="Tutup (Esc)"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+
+            {/* Scrollable Body */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3.5 text-xs bg-[#F8FAFC]">
+              <div className="bg-white border border-[#E2E8F0] rounded-xl p-3.5 sm:p-4 shadow-2xs space-y-2">
+                <p className="text-[#0F172A] leading-relaxed">
+                  Anda akan menghapus <strong className="text-rose-600 font-bold">{selectedIds.length} produk</strong> sekaligus dari database Asterra Store.
+                </p>
+                <p className="text-rose-700 bg-rose-50 border border-rose-200/60 p-2.5 rounded-lg text-[11px] leading-relaxed">
+                  Tindakan penghapusan massal permanen. Produk yang telah dihapus tidak akan dapat dipulihkan kembali.
+                </p>
               </div>
             </div>
 
-            <p className="text-xs text-foreground bg-surface-raised border border-border p-3 rounded-lg leading-relaxed">
-              Anda akan menghapus <strong className="text-status-error">{selectedIds.length} produk</strong> sekaligus dari database. Produk yang telah dihapus tidak akan dapat dipulihkan kembali.
-            </p>
-
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
+            {/* Sticky Footer */}
+            <div className="shrink-0 px-4 sm:px-5 py-3 border-t border-[#E2E8F0] bg-white flex items-center justify-end gap-2">
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={() => setIsBulkDeleteModalOpen(false)}
                 disabled={bulkDeleteMutation.isPending}
+                className="text-xs h-8 px-3.5 border-[#E2E8F0] bg-white text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#0F172A] rounded-lg cursor-pointer"
               >
                 Batal
               </Button>
@@ -3379,6 +3493,7 @@ function AdminPageContent() {
                 size="sm"
                 onClick={() => bulkDeleteMutation.mutate(selectedIds)}
                 disabled={bulkDeleteMutation.isPending}
+                className="text-xs h-8 px-4 font-semibold rounded-lg cursor-pointer bg-rose-600 hover:bg-rose-700 text-white"
               >
                 {bulkDeleteMutation.isPending ? 'Menghapus Massal...' : `Hapus ${selectedIds.length} Produk`}
               </Button>

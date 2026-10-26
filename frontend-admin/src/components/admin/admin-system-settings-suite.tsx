@@ -23,6 +23,7 @@ import {
   ExternalLink,
   Code,
   Key,
+  X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -327,51 +328,71 @@ export function AdminSystemSettingsSuite({ activeTab, onNotify }: AdminSystemSet
 
         {/* Template Editor Modal */}
         {selectedRule && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/50 backdrop-blur-xs animate-in fade-in">
-            <div className="bg-surface border border-border rounded-xl w-full max-w-lg shadow-2xl p-6 space-y-4">
-              <div className="border-b border-border pb-3">
-                <h3 className="font-bold text-base text-foreground">Kustomisasi Template Notifikasi</h3>
-                <p className="text-xs text-foreground-muted">{selectedRule.event}</p>
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200">
+            <div className="bg-white border border-[#E2E8F0] rounded-2xl w-full max-w-lg max-h-[calc(100dvh-40px)] flex flex-col shadow-2xl overflow-hidden box-border animate-in zoom-in-95 duration-200">
+              {/* Sticky Header */}
+              <div className="shrink-0 px-5 py-3.5 border-b border-[#E2E8F0] bg-white flex items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-base font-bold text-[#0F172A]">Kustomisasi Template Notifikasi</h3>
+                  <p className="text-[11px] text-[#64748B] mt-0.5">{selectedRule.event}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedRule(null)}
+                  className="h-8 w-8 p-0 rounded-full text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] flex items-center justify-center shrink-0 cursor-pointer transition-colors"
+                  aria-label="Tutup modal"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
 
-              <div className="space-y-3 text-xs">
-                <div>
-                  <label className="font-semibold text-foreground block mb-1">Isi Pesan WhatsApp / SMS</label>
+              {/* Scrollable Body */}
+              <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3.5 text-xs bg-[#F8FAFC]">
+                <div className="bg-white border border-[#E2E8F0] rounded-xl p-3.5 sm:p-4 shadow-2xs space-y-2">
+                  <label className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block">Isi Pesan WhatsApp / SMS</label>
                   <textarea
-                    rows={5}
+                    rows={6}
                     value={selectedRule.template}
                     onChange={(e) => setSelectedRule({ ...selectedRule, template: e.target.value })}
-                    className="w-full rounded-md border border-border bg-surface-raised p-3 text-xs font-mono text-foreground"
+                    className="w-full rounded-lg border border-[#E2E8F0] bg-white p-3 text-xs font-mono text-[#0F172A] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
                   />
                 </div>
 
-                <div className="p-3 rounded-lg bg-surface-raised border border-border space-y-1">
-                  <span className="text-[10px] font-semibold text-foreground block uppercase tracking-wider">
+                <div className="p-3.5 rounded-xl bg-white border border-[#E2E8F0] shadow-2xs space-y-2">
+                  <span className="text-[10px] font-semibold text-[#64748B] uppercase tracking-wider block">
                     Daftar Tag Dinamis yang Tersedia:
                   </span>
-                  <div className="flex flex-wrap gap-1.5 pt-1 text-[10px] font-mono">
-                    <span className="px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">{'{{customer_name}}'}</span>
-                    <span className="px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">{'{{order_id}}'}</span>
-                    <span className="px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">{'{{product_name}}'}</span>
-                    <span className="px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">{'{{total_price}}'}</span>
-                    <span className="px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">{'{{account_credentials}}'}</span>
-                    <span className="px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">{'{{expiry_time}}'}</span>
+                  <div className="flex flex-wrap gap-1.5 text-[10px] font-mono">
+                    <span className="px-2 py-0.5 rounded-md bg-[#EFF6FF] text-[#2563EB] border border-[#BFDBFE]">{'{{customer_name}}'}</span>
+                    <span className="px-2 py-0.5 rounded-md bg-[#EFF6FF] text-[#2563EB] border border-[#BFDBFE]">{'{{order_id}}'}</span>
+                    <span className="px-2 py-0.5 rounded-md bg-[#EFF6FF] text-[#2563EB] border border-[#BFDBFE]">{'{{product_name}}'}</span>
+                    <span className="px-2 py-0.5 rounded-md bg-[#EFF6FF] text-[#2563EB] border border-[#BFDBFE]">{'{{total_price}}'}</span>
+                    <span className="px-2 py-0.5 rounded-md bg-[#EFF6FF] text-[#2563EB] border border-[#BFDBFE]">{'{{account_credentials}}'}</span>
+                    <span className="px-2 py-0.5 rounded-md bg-[#EFF6FF] text-[#2563EB] border border-[#BFDBFE]">{'{{expiry_time}}'}</span>
                   </div>
                 </div>
               </div>
 
-              <div className="pt-3 border-t border-border flex justify-end gap-2">
-                <Button size="sm" variant="outline" onClick={() => setSelectedRule(null)} className="text-xs">
+              {/* Sticky Footer */}
+              <div className="shrink-0 px-4 sm:px-5 py-3 border-t border-[#E2E8F0] bg-white flex justify-end gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedRule(null)}
+                  className="text-xs h-8 px-3.5 border-[#E2E8F0] bg-white text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#0F172A] rounded-lg cursor-pointer"
+                >
                   Batal
                 </Button>
                 <Button
+                  type="button"
                   size="sm"
                   onClick={() => {
                     setRules((prev) => prev.map((r) => (r.id === selectedRule.id ? selectedRule : r)));
                     onNotify?.('Template notifikasi berhasil diperbarui.');
                     setSelectedRule(null);
                   }}
-                  className="text-xs"
+                  className="text-xs gap-1.5 h-8 px-4 font-semibold bg-[#2563EB] hover:bg-[#1D4ED8] text-white shadow-xs rounded-lg cursor-pointer"
                 >
                   Simpan Template
                 </Button>

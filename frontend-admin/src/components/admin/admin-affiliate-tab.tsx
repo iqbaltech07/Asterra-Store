@@ -15,6 +15,7 @@ import {
   MessageSquare,
   AlertCircle,
   XCircle,
+  X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -627,129 +628,144 @@ export function AdminAffiliateTab({ onNotify }: AdminAffiliateTabProps) {
 
       {/* 6. Modal Tambah Mitra Sales */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-surface border border-border rounded-2xl w-full max-w-md shadow-2xl p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-border pb-3.5">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white border border-[#E2E8F0] rounded-2xl w-full max-w-lg max-h-[calc(100dvh-40px)] flex flex-col shadow-2xl overflow-hidden box-border animate-in zoom-in-95 duration-200">
+            {/* Sticky Header */}
+            <div className="shrink-0 px-5 py-3.5 border-b border-[#E2E8F0] bg-white flex items-center justify-between gap-3">
               <div>
-                <h3 className="font-bold text-sm text-foreground">Tambah Mitra Sales / Afiliasi Baru</h3>
-                <p className="text-[11px] text-foreground-muted mt-0.5">
+                <h3 className="text-base font-bold text-[#0F172A]">Tambah Mitra Sales / Afiliasi Baru</h3>
+                <p className="text-[11px] text-[#64748B] mt-0.5">
                   Daftarkan kreator, influencer, atau agen sales dengan kode referral unik.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsAddModalOpen(false)}
-                className="text-foreground-muted hover:text-foreground p-1 rounded-lg"
+                className="h-8 w-8 p-0 rounded-full text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] flex items-center justify-center shrink-0 cursor-pointer transition-colors"
+                aria-label="Tutup modal"
               >
-                ✕
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleAddPartner} className="space-y-3.5 text-xs">
-              <div>
-                <label className="font-semibold text-foreground block mb-1">Nama Mitra / Akun</label>
-                <Input
-                  required
-                  placeholder="Contoh: Aldi Syahputra (Tech Reviewer)"
-                  value={newName}
-                  onChange={(e) => setNewName(e.target.value)}
-                  className="bg-surface-raised border-border text-xs rounded-xl h-10"
-                />
+            <form onSubmit={handleAddPartner} className="flex-1 flex flex-col overflow-hidden m-0 p-0">
+              {/* Scrollable Body */}
+              <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3.5 text-xs bg-[#F8FAFC]">
+                <div className="bg-white border border-[#E2E8F0] rounded-xl p-3.5 sm:p-4 shadow-2xs space-y-3">
+                  <div>
+                    <label className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block mb-1">Nama Mitra / Akun</label>
+                    <Input
+                      required
+                      placeholder="Contoh: Aldi Syahputra (Tech Reviewer)"
+                      value={newName}
+                      onChange={(e) => setNewName(e.target.value)}
+                      className="bg-white border-[#E2E8F0] rounded-lg text-xs text-[#0F172A] h-9 px-3 focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block mb-1">Email</label>
+                      <Input
+                        type="email"
+                        placeholder="aldi@creator.id"
+                        value={newEmail}
+                        onChange={(e) => setNewEmail(e.target.value)}
+                        className="bg-white border-[#E2E8F0] rounded-lg text-xs text-[#0F172A] h-9 px-3 focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block mb-1">Nomor WhatsApp</label>
+                      <Input
+                        placeholder="08123456789"
+                        value={newWhatsapp}
+                        onChange={(e) => setNewWhatsapp(e.target.value)}
+                        className="bg-white border-[#E2E8F0] rounded-lg text-xs text-[#0F172A] h-9 px-3 font-mono focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block mb-1">
+                      Kata Sandi Akun Sales <span className="text-rose-500">*</span>
+                    </label>
+                    <Input
+                      type="password"
+                      required
+                      placeholder="Minimal 6 karakter untuk login mitra"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="bg-white border-[#E2E8F0] rounded-lg text-xs text-[#0F172A] h-9 px-3 font-mono focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
+                    />
+                    <span className="text-[10px] text-[#64748B] mt-1 block">
+                      Digunakan mitra untuk login ke portal sales (/sales/login).
+                    </span>
+                  </div>
+                </div>
+
+                <div className="bg-white border border-[#E2E8F0] rounded-xl p-3.5 sm:p-4 shadow-2xs space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block mb-1">Kode Referral</label>
+                      <Input
+                        required
+                        placeholder="Contoh: ALDI-VIP"
+                        value={newCode}
+                        onChange={(e) => setNewCode(e.target.value)}
+                        className="bg-white border-[#E2E8F0] rounded-lg text-xs font-mono font-bold uppercase text-[#0F172A] h-9 px-3 focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block mb-1">Komisi (% Profit)</label>
+                      <Input
+                        type="number"
+                        min="1"
+                        max="50"
+                        required
+                        value={newRate}
+                        onChange={(e) => setNewRate(Number(e.target.value))}
+                        className="bg-white border-[#E2E8F0] rounded-lg text-xs font-bold text-[#0F172A] h-9 px-3 font-mono focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block mb-1">Rekening Bank / E-Wallet</label>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      <Input
+                        placeholder="Bank (BCA/Mandiri)"
+                        value={newBank}
+                        onChange={(e) => setNewBank(e.target.value)}
+                        className="bg-white border-[#E2E8F0] rounded-lg text-xs text-[#0F172A] h-9 px-3 focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
+                      />
+                      <Input
+                        placeholder="No. Rekening a/n Nama"
+                        value={newAccount}
+                        onChange={(e) => setNewAccount(e.target.value)}
+                        className="bg-white border-[#E2E8F0] rounded-lg text-xs text-[#0F172A] h-9 px-3 font-mono sm:col-span-2 focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-2.5">
-                <div>
-                  <label className="font-semibold text-foreground block mb-1">Email</label>
-                  <Input
-                    type="email"
-                    placeholder="aldi@creator.id"
-                    value={newEmail}
-                    onChange={(e) => setNewEmail(e.target.value)}
-                    className="bg-surface-raised border-border text-xs rounded-xl h-10"
-                  />
-                </div>
-                <div>
-                  <label className="font-semibold text-foreground block mb-1">Nomor WhatsApp</label>
-                  <Input
-                    placeholder="08123456789"
-                    value={newWhatsapp}
-                    onChange={(e) => setNewWhatsapp(e.target.value)}
-                    className="bg-surface-raised border-border text-xs rounded-xl h-10 font-mono"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="font-semibold text-foreground block mb-1">
-                  Kata Sandi Akun Sales <span className="text-rose-500">*</span>
-                </label>
-                <Input
-                  type="password"
-                  required
-                  placeholder="Minimal 6 karakter untuk login mitra"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  className="bg-surface-raised border-border text-xs rounded-xl h-10 font-mono"
-                />
-                <span className="text-[10px] text-foreground-muted mt-0.5 block">
-                  Digunakan mitra untuk login ke portal sales (/sales/login).
-                </span>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2.5">
-                <div>
-                  <label className="font-semibold text-foreground block mb-1">Kode Referral</label>
-                  <Input
-                    required
-                    placeholder="Contoh: ALDI-VIP"
-                    value={newCode}
-                    onChange={(e) => setNewCode(e.target.value)}
-                    className="bg-surface-raised border-border text-xs font-mono font-bold uppercase rounded-xl h-10"
-                  />
-                </div>
-                <div>
-                  <label className="font-semibold text-foreground block mb-1">Komisi (% Profit)</label>
-                  <Input
-                    type="number"
-                    min="1"
-                    max="50"
-                    required
-                    value={newRate}
-                    onChange={(e) => setNewRate(Number(e.target.value))}
-                    className="bg-surface-raised border-border text-xs font-bold rounded-xl h-10 font-mono"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="font-semibold text-foreground block mb-1">Rekening Bank / E-Wallet</label>
-                <div className="grid grid-cols-3 gap-2">
-                  <Input
-                    placeholder="Bank (BCA/Mandiri)"
-                    value={newBank}
-                    onChange={(e) => setNewBank(e.target.value)}
-                    className="bg-surface-raised border-border text-xs col-span-1 rounded-xl h-10"
-                  />
-                  <Input
-                    placeholder="No. Rekening a/n Nama"
-                    value={newAccount}
-                    onChange={(e) => setNewAccount(e.target.value)}
-                    className="bg-surface-raised border-border text-xs col-span-2 rounded-xl h-10 font-mono"
-                  />
-                </div>
-              </div>
-
-              <div className="pt-2 flex items-center justify-end gap-2 border-t border-border">
+              {/* Sticky Footer */}
+              <div className="shrink-0 px-4 sm:px-5 py-3 border-t border-[#E2E8F0] bg-white flex items-center justify-end gap-2">
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="rounded-xl h-9 text-xs"
+                  className="text-xs h-8 px-3.5 border-[#E2E8F0] bg-white text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#0F172A] rounded-lg cursor-pointer"
                 >
                   Batal
                 </Button>
-                <Button type="submit" size="sm" disabled={isSubmitting} className="rounded-xl h-9 text-xs font-semibold">
+                <Button
+                  type="submit"
+                  size="sm"
+                  disabled={isSubmitting}
+                  className="text-xs gap-1.5 h-8 px-4 font-semibold bg-[#2563EB] hover:bg-[#1D4ED8] text-white shadow-xs rounded-lg cursor-pointer disabled:opacity-50"
+                >
                   {isSubmitting ? 'Menyimpan...' : 'Simpan & Buat Mitra'}
                 </Button>
               </div>
@@ -760,31 +776,53 @@ export function AdminAffiliateTab({ onNotify }: AdminAffiliateTabProps) {
 
       {/* 7. Modal Konfirmasi Payout Komisi (Partner Level) */}
       {selectedPartnerForPayout && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-surface border border-border rounded-2xl w-full max-w-sm shadow-2xl p-6 space-y-4 text-xs">
-            <div className="flex items-center gap-2 text-amber-600">
-              <Wallet className="w-5 h-5 shrink-0" />
-              <h3 className="font-bold text-sm text-foreground">Konfirmasi Pencairan Komisi</h3>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white border border-[#E2E8F0] rounded-2xl w-full max-w-md max-h-[calc(100dvh-40px)] flex flex-col shadow-2xl overflow-hidden box-border animate-in zoom-in-95 duration-200">
+            {/* Header */}
+            <div className="shrink-0 px-5 py-3.5 border-b border-[#E2E8F0] bg-white flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="p-1.5 rounded-lg bg-amber-50 text-amber-600 border border-amber-200 shrink-0">
+                  <Wallet className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-[#0F172A]">Konfirmasi Pencairan Komisi</h3>
+                  <p className="text-[11px] text-[#64748B] mt-0.5">Pencatatan transfer komisi mitra sales</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedPartnerForPayout(null)}
+                className="h-8 w-8 p-0 rounded-full text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] flex items-center justify-center shrink-0 cursor-pointer transition-colors"
+                aria-label="Tutup modal"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
-            <p className="text-foreground-muted leading-relaxed">
-              Anda akan mencatat pembayaran komisi sebesar{' '}
-              <strong className="text-foreground font-bold font-mono">
-                Rp {(selectedPartnerForPayout.unpaidCommission || selectedPartnerForPayout.pendingCommission || 0).toLocaleString('id-ID')}
-              </strong>{' '}
-              kepada:
-            </p>
-            <div className="p-3.5 bg-surface-raised rounded-xl border border-border font-mono text-[11px] space-y-1">
-              <div>Penerima: {selectedPartnerForPayout.name}</div>
-              <div>Bank: {selectedPartnerForPayout.bankName}</div>
-              <div>Rekening: {selectedPartnerForPayout.bankAccount}</div>
+
+            {/* Body */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3.5 text-xs bg-[#F8FAFC]">
+              <p className="text-[#64748B] leading-relaxed">
+                Anda akan mencatat pembayaran komisi sebesar{' '}
+                <strong className="text-[#0F172A] font-bold font-mono">
+                  Rp {(selectedPartnerForPayout.unpaidCommission || selectedPartnerForPayout.pendingCommission || 0).toLocaleString('id-ID')}
+                </strong>{' '}
+                kepada:
+              </p>
+              <div className="p-3.5 bg-white rounded-xl border border-[#E2E8F0] font-mono text-[11px] space-y-1.5 shadow-2xs">
+                <div className="text-[#0F172A] font-medium"><span className="text-[#64748B]">Penerima:</span> {selectedPartnerForPayout.name}</div>
+                <div className="text-[#0F172A] font-medium"><span className="text-[#64748B]">Bank:</span> {selectedPartnerForPayout.bankName}</div>
+                <div className="text-[#0F172A] font-medium"><span className="text-[#64748B]">Rekening:</span> {selectedPartnerForPayout.bankAccount}</div>
+              </div>
             </div>
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
+
+            {/* Footer */}
+            <div className="shrink-0 px-4 sm:px-5 py-3 border-t border-[#E2E8F0] bg-white flex items-center justify-end gap-2">
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={() => setSelectedPartnerForPayout(null)}
-                className="rounded-xl h-9 text-xs"
+                className="text-xs h-8 px-3.5 border-[#E2E8F0] bg-white text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#0F172A] rounded-lg cursor-pointer"
               >
                 Batal
               </Button>
@@ -793,7 +831,7 @@ export function AdminAffiliateTab({ onNotify }: AdminAffiliateTabProps) {
                 size="sm"
                 disabled={isProcessingPayout}
                 onClick={() => handlePayout(selectedPartnerForPayout)}
-                className="bg-emerald-600 text-white hover:bg-emerald-700 rounded-xl h-9 text-xs font-semibold"
+                className="bg-emerald-600 text-white hover:bg-emerald-700 rounded-lg h-8 px-4 text-xs font-semibold shadow-xs cursor-pointer disabled:opacity-50"
               >
                 {isProcessingPayout ? 'Memproses...' : 'Konfirmasi Transfer Berhasil'}
               </Button>
@@ -804,69 +842,94 @@ export function AdminAffiliateTab({ onNotify }: AdminAffiliateTabProps) {
 
       {/* 8. Modal Approval / Penolakan Payout Spesifik */}
       {selectedPayoutForAction && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-surface border border-border rounded-2xl w-full max-w-sm shadow-2xl p-6 space-y-4 text-xs">
-            <div className="flex items-center gap-2">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white border border-[#E2E8F0] rounded-2xl w-full max-w-md max-h-[calc(100dvh-40px)] flex flex-col shadow-2xl overflow-hidden box-border animate-in zoom-in-95 duration-200">
+            {/* Header */}
+            <div className="shrink-0 px-5 py-3.5 border-b border-[#E2E8F0] bg-white flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                {payoutActionType === 'approve' ? (
+                  <>
+                    <div className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200 shrink-0">
+                      <CheckCircle2 className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold text-[#0F172A]">Setujui & Konfirmasi Transfer</h3>
+                      <p className="text-[11px] text-[#64748B] mt-0.5">Verifikasi pembayaran pencairan dana</p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="p-1.5 rounded-lg bg-rose-50 text-rose-600 border border-rose-200 shrink-0">
+                      <AlertCircle className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold text-[#0F172A]">Tolak Pengajuan Penarikan</h3>
+                      <p className="text-[11px] text-[#64748B] mt-0.5">Saldo akan dikembalikan ke akun mitra</p>
+                    </div>
+                  </>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedPayoutForAction(null)}
+                className="h-8 w-8 p-0 rounded-full text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] flex items-center justify-center shrink-0 cursor-pointer transition-colors"
+                aria-label="Tutup modal"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3.5 text-xs bg-[#F8FAFC]">
               {payoutActionType === 'approve' ? (
-                <>
-                  <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-                  <h3 className="font-bold text-sm text-foreground">Setujui & Konfirmasi Transfer</h3>
-                </>
+                <p className="text-[#64748B] leading-relaxed">
+                  Anda akan mengonfirmasi bahwa transfer dana komisi sebesar{' '}
+                  <strong className="text-[#0F172A] font-bold font-mono">
+                    Rp {selectedPayoutForAction.amount.toLocaleString('id-ID')}
+                  </strong>{' '}
+                  telah berhasil ditransfer kepada:
+                </p>
               ) : (
-                <>
-                  <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
-                  <h3 className="font-bold text-sm text-foreground">Tolak Pengajuan Penarikan</h3>
-                </>
+                <p className="text-[#64748B] leading-relaxed">
+                  Pengajuan pencairan sebesar{' '}
+                  <strong className="text-[#0F172A] font-bold font-mono">
+                    Rp {selectedPayoutForAction.amount.toLocaleString('id-ID')}
+                  </strong>{' '}
+                  akan ditolak dan saldo komisi akan dikembalikan ke saldo mitra:
+                </p>
+              )}
+
+              <div className="p-3.5 bg-white rounded-xl border border-[#E2E8F0] font-mono text-[11px] space-y-1.5 shadow-2xs">
+                <div className="text-[#0F172A] font-medium"><span className="text-[#64748B]">ID:</span> {selectedPayoutForAction.id}</div>
+                <div className="text-[#0F172A] font-medium"><span className="text-[#64748B]">Mitra:</span> {selectedPayoutForAction.partnerName}</div>
+                <div className="text-[#0F172A] font-medium"><span className="text-[#64748B]">Bank / E-Wallet:</span> {selectedPayoutForAction.bankName}</div>
+                <div className="text-[#0F172A] font-medium"><span className="text-[#64748B]">Nomor Rekening:</span> {selectedPayoutForAction.bankAccount}</div>
+                <div className="text-[#0F172A] font-medium"><span className="text-[#64748B]">Atas Nama:</span> {selectedPayoutForAction.bankAccountName}</div>
+              </div>
+
+              {payoutActionType === 'reject' && (
+                <div>
+                  <label className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block mb-1">
+                    Alasan Penolakan (Catatan untuk mitra):
+                  </label>
+                  <Input
+                    placeholder="Contoh: Nomor rekening tidak valid / salah nama"
+                    value={rejectionNotes}
+                    onChange={(e) => setRejectionNotes(e.target.value)}
+                    className="bg-white border-[#E2E8F0] text-xs rounded-lg text-[#0F172A] h-9 px-3 focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
+                  />
+                </div>
               )}
             </div>
 
-            {payoutActionType === 'approve' ? (
-              <p className="text-foreground-muted leading-relaxed">
-                Anda akan mengonfirmasi bahwa transfer dana komisi sebesar{' '}
-                <strong className="text-foreground font-bold font-mono">
-                  Rp {selectedPayoutForAction.amount.toLocaleString('id-ID')}
-                </strong>{' '}
-                telah berhasil ditransfer kepada:
-              </p>
-            ) : (
-              <p className="text-foreground-muted leading-relaxed">
-                Pengajuan pencairan sebesar{' '}
-                <strong className="text-foreground font-bold font-mono">
-                  Rp {selectedPayoutForAction.amount.toLocaleString('id-ID')}
-                </strong>{' '}
-                akan ditolak dan saldo komisi akan dikembalikan ke saldo mitra:
-              </p>
-            )}
-
-            <div className="p-3.5 bg-surface-raised rounded-xl border border-border font-mono text-[11px] space-y-1">
-              <div>ID: {selectedPayoutForAction.id}</div>
-              <div>Mitra: {selectedPayoutForAction.partnerName}</div>
-              <div>Bank / E-Wallet: {selectedPayoutForAction.bankName}</div>
-              <div>Nomor Rekening: {selectedPayoutForAction.bankAccount}</div>
-              <div>Atas Nama: {selectedPayoutForAction.bankAccountName}</div>
-            </div>
-
-            {payoutActionType === 'reject' && (
-              <div>
-                <label className="font-semibold text-foreground block mb-1">
-                  Alasan Penolakan (Catatan untuk mitra):
-                </label>
-                <Input
-                  placeholder="Contoh: Nomor rekening tidak valid / salah nama"
-                  value={rejectionNotes}
-                  onChange={(e) => setRejectionNotes(e.target.value)}
-                  className="bg-surface-raised border-border text-xs rounded-xl h-9"
-                />
-              </div>
-            )}
-
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
+            {/* Footer */}
+            <div className="shrink-0 px-4 sm:px-5 py-3 border-t border-[#E2E8F0] bg-white flex items-center justify-end gap-2">
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={() => setSelectedPayoutForAction(null)}
-                className="rounded-xl h-9 text-xs"
+                className="text-xs h-8 px-3.5 border-[#E2E8F0] bg-white text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#0F172A] rounded-lg cursor-pointer"
               >
                 Batal
               </Button>
@@ -879,7 +942,7 @@ export function AdminAffiliateTab({ onNotify }: AdminAffiliateTabProps) {
                   payoutActionType === 'approve'
                     ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
                     : 'bg-rose-600 hover:bg-rose-700 text-white'
-                } rounded-xl h-9 text-xs font-semibold`}
+                } rounded-lg h-8 px-4 text-xs font-semibold shadow-xs cursor-pointer disabled:opacity-50`}
               >
                 {isProcessingPayout
                   ? 'Memproses...'

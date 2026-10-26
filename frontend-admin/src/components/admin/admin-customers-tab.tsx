@@ -337,60 +337,72 @@ export function AdminCustomersTab({ onNotify }: AdminCustomersTabProps) {
 
       {/* 5. Customer 360° Profile Modal */}
       {selectedCustomer && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-surface border border-border rounded-2xl w-full max-w-lg shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto text-xs">
-            <div className="flex items-center justify-between border-b border-border pb-3.5">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white border border-[#E2E8F0] rounded-2xl w-full max-w-lg max-h-[calc(100dvh-40px)] flex flex-col shadow-2xl overflow-hidden box-border animate-in zoom-in-95 duration-200">
+            {/* Sticky Header */}
+            <div className="shrink-0 px-5 py-3.5 border-b border-[#E2E8F0] bg-white flex items-center justify-between gap-3">
               <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-xl bg-foreground/5 border border-border flex items-center justify-center text-foreground font-bold text-sm">
+                <div className="w-9 h-9 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] flex items-center justify-center text-[#2563EB] font-bold text-sm shrink-0">
                   {selectedCustomer.name.charAt(0)}
                 </div>
                 <div>
-                  <h3 className="font-bold text-base text-foreground">{selectedCustomer.name}</h3>
-                  <span className="text-[11px] text-foreground-muted font-mono">{selectedCustomer.email}</span>
+                  <h3 className="text-base font-bold text-[#0F172A]">{selectedCustomer.name}</h3>
+                  <span className="text-[11px] text-[#64748B] font-mono mt-0.5 block">{selectedCustomer.email}</span>
                 </div>
               </div>
               <button
+                type="button"
                 onClick={() => setSelectedCustomer(null)}
-                className="p-1.5 rounded-xl text-foreground-muted hover:text-foreground hover:bg-surface-raised transition-colors"
+                className="h-8 w-8 p-0 rounded-full text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] flex items-center justify-center shrink-0 cursor-pointer transition-colors"
+                aria-label="Tutup modal"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 text-xs">
-              <div className="p-3.5 rounded-xl bg-surface-raised border border-border space-y-1">
-                <span className="text-foreground-muted text-[11px] block">Tier Pelanggan</span>
-                <span className="font-bold text-foreground text-sm">{selectedCustomer.tier}</span>
+            {/* Scrollable Body */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3.5 text-xs bg-[#F8FAFC]">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3.5 rounded-xl bg-white border border-[#E2E8F0] shadow-2xs space-y-1">
+                  <span className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block">Tier Pelanggan</span>
+                  <span className="font-bold text-[#0F172A] text-sm">{selectedCustomer.tier}</span>
+                </div>
+                <div className="p-3.5 rounded-xl bg-white border border-[#E2E8F0] shadow-2xs space-y-1">
+                  <span className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block">Total Belanja</span>
+                  <span className="font-bold text-[#0F172A] font-mono text-sm">
+                    Rp {selectedCustomer.totalSpent.toLocaleString('id-ID')}
+                  </span>
+                </div>
               </div>
-              <div className="p-3.5 rounded-xl bg-surface-raised border border-border space-y-1">
-                <span className="text-foreground-muted text-[11px] block">Total Belanja</span>
-                <span className="font-bold text-foreground font-mono text-sm">
-                  Rp {selectedCustomer.totalSpent.toLocaleString('id-ID')}
-                </span>
+
+              <div className="bg-white border border-[#E2E8F0] rounded-xl p-3.5 sm:p-4 shadow-2xs space-y-3">
+                <span className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block">Riwayat Pesanan Terakhir</span>
+                <div className="space-y-2 max-h-56 overflow-y-auto pr-0.5">
+                  {selectedCustomer.recentOrders.length === 0 ? (
+                    <div className="text-center py-6 text-[#64748B] text-xs">Belum ada riwayat transaksi.</div>
+                  ) : (
+                    selectedCustomer.recentOrders.map((ord) => (
+                      <div key={ord.orderId} className="p-3 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0] flex items-center justify-between">
+                        <div>
+                          <span className="font-bold text-[#0F172A] block">{ord.product}</span>
+                          <span className="text-[10px] text-[#64748B] font-mono">{ord.orderId} • {ord.date}</span>
+                        </div>
+                        <span className="font-bold text-[#0F172A] font-mono">Rp {ord.amount.toLocaleString('id-ID')}</span>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
             </div>
 
-            <div className="space-y-2">
-              <span className="font-semibold text-foreground text-xs block">Riwayat Pesanan Terakhir:</span>
-              <div className="space-y-1.5 max-h-48 overflow-y-auto">
-                {selectedCustomer.recentOrders.map((ord) => (
-                  <div key={ord.orderId} className="p-3 rounded-xl bg-surface-raised border border-border flex items-center justify-between">
-                    <div>
-                      <span className="font-bold text-foreground block">{ord.product}</span>
-                      <span className="text-[10px] text-foreground-muted font-mono">{ord.orderId} • {ord.date}</span>
-                    </div>
-                    <span className="font-bold text-foreground font-mono">Rp {ord.amount.toLocaleString('id-ID')}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="pt-2">
+            {/* Sticky Footer */}
+            <div className="shrink-0 px-4 sm:px-5 py-3 border-t border-[#E2E8F0] bg-white flex items-center justify-end">
               <Button
+                type="button"
                 onClick={() => setSelectedCustomer(null)}
-                className="w-full text-xs font-semibold rounded-xl h-10"
+                className="text-xs h-8 px-4 font-semibold bg-[#2563EB] hover:bg-[#1D4ED8] text-white shadow-xs rounded-lg cursor-pointer"
               >
-                Tutup Ringkasan
+                Tutup Profil
               </Button>
             </div>
           </div>

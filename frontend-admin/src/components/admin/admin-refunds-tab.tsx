@@ -236,80 +236,96 @@ export function AdminRefundsTab({ onNotify }: AdminRefundsTabProps) {
 
       {/* 4. Modal Penanganan Tiket */}
       {selectedTicket && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-surface border border-border rounded-2xl w-full max-w-lg shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto text-xs">
-            <div className="flex items-center justify-between border-b border-border pb-3.5">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white border border-[#E2E8F0] rounded-2xl w-full max-w-lg max-h-[calc(100dvh-40px)] flex flex-col shadow-2xl overflow-hidden box-border animate-in zoom-in-95 duration-200">
+            {/* Sticky Header */}
+            <div className="shrink-0 px-5 py-3.5 border-b border-[#E2E8F0] bg-white flex items-center justify-between gap-3">
               <div>
-                <h3 className="font-bold text-sm text-foreground">Kelola Tiket Garansi: {selectedTicket.id}</h3>
-                <span className="text-[11px] text-foreground-muted font-mono">Pesanan: {selectedTicket.orderId}</span>
+                <h3 className="text-base font-bold text-[#0F172A]">Kelola Tiket Garansi: {selectedTicket.id}</h3>
+                <p className="text-[11px] text-[#64748B] font-mono mt-0.5">Pesanan: {selectedTicket.orderId}</p>
               </div>
               <button
+                type="button"
                 onClick={() => setSelectedTicket(null)}
-                className="text-foreground-muted hover:text-foreground p-1 rounded-lg"
+                className="h-8 w-8 p-0 rounded-full text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] flex items-center justify-center shrink-0 cursor-pointer transition-colors"
+                aria-label="Tutup modal"
               >
-                ✕
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="space-y-3 bg-surface-raised p-4 rounded-xl border border-border">
-              <div className="flex items-center justify-between">
-                <span className="text-foreground-muted font-medium">Pelanggan:</span>
-                <span className="font-bold text-foreground">{selectedTicket.customerName} ({selectedTicket.customerWhatsapp})</span>
+            {/* Scrollable Body */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3.5 text-xs bg-[#F8FAFC]">
+              <div className="bg-white border border-[#E2E8F0] rounded-xl p-3.5 sm:p-4 shadow-2xs space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[#64748B] font-medium">Pelanggan:</span>
+                  <span className="font-bold text-[#0F172A]">{selectedTicket.customerName} ({selectedTicket.customerWhatsapp})</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[#64748B] font-medium">Produk:</span>
+                  <span className="font-bold text-[#0F172A]">{selectedTicket.product}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[#64748B] font-medium">Nilai Transaksi:</span>
+                  <span className="font-bold text-[#0F172A] font-mono">Rp {selectedTicket.amount.toLocaleString('id-ID')}</span>
+                </div>
+                <div className="pt-2 border-t border-[#E2E8F0]">
+                  <span className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block mb-1.5">Keluhan Konsumen</span>
+                  <p className="text-[#0F172A] bg-[#F8FAFC] p-3 rounded-lg border border-[#E2E8F0] leading-relaxed">
+                    {selectedTicket.reason}
+                  </p>
+                </div>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-foreground-muted font-medium">Produk:</span>
-                <span className="font-bold text-foreground">{selectedTicket.product}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-foreground-muted font-medium">Nilai Transaksi:</span>
-                <span className="font-bold text-foreground font-mono">Rp {selectedTicket.amount.toLocaleString('id-ID')}</span>
-              </div>
-              <div className="pt-2 border-t border-border">
-                <span className="text-foreground-muted block mb-1 font-medium">Keluhan Konsumen:</span>
-                <p className="text-foreground bg-surface p-3 rounded-lg border border-border leading-relaxed">
-                  {selectedTicket.reason}
-                </p>
+
+              <div className="bg-white border border-[#E2E8F0] rounded-xl p-3.5 sm:p-4 shadow-2xs space-y-2">
+                <label className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block">Catatan Internal / Solusi Tiket</label>
+                <Input
+                  type="text"
+                  placeholder="Catatan penanganan (contoh: Akun baru telah dikirim via WA)"
+                  value={internalNoteInput}
+                  onChange={(e) => setInternalNoteInput(e.target.value)}
+                  className="bg-white border-[#E2E8F0] text-xs rounded-lg text-[#0F172A] h-9 px-3 focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
+                />
               </div>
             </div>
 
-            <div>
-              <label className="font-semibold text-foreground block mb-1">Catatan Internal / Solusi Tiket:</label>
-              <Input
-                type="text"
-                placeholder="Catatan penanganan (contoh: Akun baru telah dikirim via WA)"
-                value={internalNoteInput}
-                onChange={(e) => setInternalNoteInput(e.target.value)}
-                className="bg-surface-raised border-border text-xs rounded-xl h-10"
-              />
-            </div>
-
-            <div className="space-y-2 pt-2 border-t border-border">
-              <span className="font-semibold text-foreground block">Ubah Status Tiket:</span>
-              <div className="grid grid-cols-3 gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleUpdateStatus(selectedTicket.id, 'Reviewing')}
-                  className="rounded-xl h-9 text-xs"
-                >
-                  Sedang Ditinjau
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleUpdateStatus(selectedTicket.id, 'Approved')}
-                  className="rounded-xl h-9 text-xs text-primary"
-                >
-                  Setujui Garansi
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={() => handleUpdateStatus(selectedTicket.id, 'Resolved')}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl h-9 text-xs font-semibold"
-                >
-                  Selesai (Resolved)
-                </Button>
-              </div>
+            {/* Sticky Footer */}
+            <div className="shrink-0 px-4 sm:px-5 py-3 border-t border-[#E2E8F0] bg-white flex flex-wrap items-center justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setSelectedTicket(null)}
+                className="text-xs h-8 px-3 border-[#E2E8F0] bg-white text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#0F172A] rounded-lg cursor-pointer"
+              >
+                Tutup
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => handleUpdateStatus(selectedTicket.id, 'Reviewing')}
+                className="text-xs h-8 px-3 border-[#E2E8F0] bg-white text-[#0F172A] hover:bg-[#F8FAFC] rounded-lg cursor-pointer"
+              >
+                Sedang Ditinjau
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => handleUpdateStatus(selectedTicket.id, 'Approved')}
+                className="text-xs h-8 px-3 border-[#BFDBFE] bg-[#EFF6FF] text-[#2563EB] hover:bg-[#DBEAFE] rounded-lg cursor-pointer font-medium"
+              >
+                Setujui Garansi
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => handleUpdateStatus(selectedTicket.id, 'Resolved')}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg h-8 px-3.5 text-xs font-semibold shadow-xs cursor-pointer"
+              >
+                Selesai (Resolved)
+              </Button>
             </div>
           </div>
         </div>

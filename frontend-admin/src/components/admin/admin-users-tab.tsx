@@ -846,130 +846,153 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
 
       {/* MODAL: Edit Data Administrator */}
       {editModalAdmin && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in-0">
-          <div className="bg-surface border border-border rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95">
-            <div className="flex items-center justify-between p-4 border-b border-border bg-surface-raised">
-              <div className="flex items-center gap-2">
-                <FontAwesomeIcon
-                  icon={editModalAdmin.role === 'sales' ? faUserTie : faUserGear}
-                  className={`w-4 h-4 ${editModalAdmin.role === 'sales' ? 'text-status-success' : 'text-primary'}`}
-                />
-                <h3 className="font-semibold text-sm text-foreground">
-                  Edit Data {editModalAdmin.role === 'sales' ? 'Akun Tim Sales' : 'Administrator'}
-                </h3>
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setEditModalAdmin(null);
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="bg-white border border-[#E2E8F0] rounded-2xl w-full max-w-md max-h-[calc(100dvh-40px)] flex flex-col shadow-2xl overflow-hidden box-border animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="shrink-0 px-5 py-3.5 border-b border-[#E2E8F0] bg-white flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${editModalAdmin.role === 'sales' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-[#2563EB]'}`}>
+                  <FontAwesomeIcon
+                    icon={editModalAdmin.role === 'sales' ? faUserTie : faUserGear}
+                    className="w-4 h-4"
+                  />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-[#0F172A]">
+                    Edit Data {editModalAdmin.role === 'sales' ? 'Akun Tim Sales' : 'Administrator'}
+                  </h3>
+                  <p className="text-[11px] text-[#64748B]">Perbarui informasi akun dan hak akses login</p>
+                </div>
               </div>
-              <button
-                type="button"
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => setEditModalAdmin(null)}
-                className="text-foreground-muted hover:text-foreground p-1 rounded-md"
+                className="h-8 w-8 p-0 rounded-full text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] shrink-0 cursor-pointer"
+                title="Tutup (Esc)"
               >
                 <FontAwesomeIcon icon={faXmark} className="w-4 h-4" />
-              </button>
+              </Button>
             </div>
 
-            <form onSubmit={handleSaveEditAdmin} className="p-4 space-y-3.5">
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-foreground-muted">Username</label>
-                <Input
-                  type="text"
-                  value={`@${editModalAdmin.username}`}
-                  disabled
-                  className="text-xs bg-surface-raised/50 border-border text-foreground-muted cursor-not-allowed"
-                />
+            <form onSubmit={handleSaveEditAdmin} className="flex-1 flex flex-col min-h-0 overflow-hidden">
+              <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3.5 text-xs bg-[#F8FAFC]">
+                <div className="bg-white border border-[#E2E8F0] rounded-xl p-3.5 sm:p-4 shadow-2xs space-y-3">
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block">Username</label>
+                    <Input
+                      type="text"
+                      value={`@${editModalAdmin.username}`}
+                      disabled
+                      className="text-xs bg-[#F8FAFC] border-[#E2E8F0] text-[#64748B] cursor-not-allowed rounded-lg"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block">Alamat Email</label>
+                    <Input
+                      type="email"
+                      value={editModalAdmin.email}
+                      disabled
+                      className="text-xs bg-[#F8FAFC] border-[#E2E8F0] text-[#64748B] cursor-not-allowed font-mono rounded-lg"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block">Nama Lengkap</label>
+                    <Input
+                      type="text"
+                      placeholder="Nama Lengkap"
+                      value={editFormName}
+                      onChange={(e) => setEditFormName(e.target.value)}
+                      className="text-xs bg-white border-[#E2E8F0] text-[#0F172A] rounded-lg focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
+                    />
+                  </div>
+
+                  {/* Peran / Hak Akses */}
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block">Peran / Hak Akses</label>
+                    <Select
+                      value={editFormRole}
+                      onValueChange={(val: string) => setEditFormRole(val as 'admin' | 'superadmin' | 'sales')}
+                    >
+                      <SelectTrigger className="text-xs bg-white border-[#E2E8F0] text-[#0F172A] rounded-lg">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent align="start">
+                        <SelectItem value="superadmin">
+                          <div className="space-y-0.5">
+                            <span className="font-semibold text-[#2563EB] block">Super Admin</span>
+                            <span className="text-[10px] text-[#64748B] block">
+                              Akses penuh sistem, kelola produk, transaksi, dan akun admin lain
+                            </span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="admin">
+                          <div className="space-y-0.5">
+                            <span className="font-semibold block text-[#0F172A]">Admin</span>
+                            <span className="text-[10px] text-[#64748B] block">
+                              Kelola pesanan, verifikasi manual, dan monitoring katalog
+                            </span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="sales">
+                          <div className="space-y-0.5">
+                            <span className="font-semibold text-emerald-600 block">Sales</span>
+                            <span className="text-[10px] text-[#64748B] block">
+                              Akses portal sales (@sales-*), referral tracking, omzet afiliasi, dan komisi
+                            </span>
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Status Akun Aktif / Non-Aktif */}
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block">Status Akun Login</label>
+                    <Select
+                      value={editFormIsActive ? 'active' : 'inactive'}
+                      onValueChange={(val: string) => setEditFormIsActive(val === 'active')}
+                    >
+                      <SelectTrigger className="text-xs bg-white border-[#E2E8F0] text-[#0F172A] rounded-lg">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent align="start">
+                        <SelectItem value="active">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-emerald-600">Aktif (Bisa Login ke Admin)</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="inactive">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-rose-600">Non-Aktif (Akses Login Ditolak)</span>
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
               </div>
 
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-foreground-muted">Alamat Email</label>
-                <Input
-                  type="email"
-                  value={editModalAdmin.email}
-                  disabled
-                  className="text-xs bg-surface-raised/50 border-border text-foreground-muted cursor-not-allowed font-mono"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-foreground">Nama Lengkap</label>
-                <Input
-                  type="text"
-                  placeholder="Nama Lengkap"
-                  value={editFormName}
-                  onChange={(e) => setEditFormName(e.target.value)}
-                  className="text-xs bg-surface-raised border-border"
-                />
-              </div>
-
-              {/* Peran / Hak Akses */}
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-foreground">Peran / Hak Akses</label>
-                <Select
-                  value={editFormRole}
-                  onValueChange={(val: string) => setEditFormRole(val as 'admin' | 'superadmin' | 'sales')}
-                >
-                  <SelectTrigger className="text-xs bg-surface-raised border-border">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent align="start">
-                    <SelectItem value="superadmin">
-                      <div className="space-y-0.5">
-                        <span className="font-semibold text-primary block">Super Admin</span>
-                        <span className="text-[10px] text-foreground-muted block">
-                          Akses penuh sistem, kelola produk, transaksi, dan akun admin lain
-                        </span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="admin">
-                      <div className="space-y-0.5">
-                        <span className="font-semibold block">Admin</span>
-                        <span className="text-[10px] text-foreground-muted block">
-                          Kelola pesanan, verifikasi manual, dan monitoring katalog
-                        </span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="sales">
-                      <div className="space-y-0.5">
-                        <span className="font-semibold text-status-success block">Sales</span>
-                        <span className="text-[10px] text-foreground-muted block">
-                          Akses portal sales (@sales-*), referral tracking, omzet afiliasi, dan komisi
-                        </span>
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Status Akun Aktif / Non-Aktif */}
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-foreground">Status Akun Login</label>
-                <Select
-                  value={editFormIsActive ? 'active' : 'inactive'}
-                  onValueChange={(val: string) => setEditFormIsActive(val === 'active')}
-                >
-                  <SelectTrigger className="text-xs bg-surface-raised border-border">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent align="start">
-                    <SelectItem value="active">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-status-success">Aktif (Bisa Login ke Admin)</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="inactive">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-status-error">Non-Aktif (Akses Login Ditolak)</span>
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
+              {/* Sticky Footer */}
+              <div className="shrink-0 px-4 sm:px-5 py-3 border-t border-[#E2E8F0] bg-white flex items-center justify-end gap-2">
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   onClick={() => setEditModalAdmin(null)}
-                  className="text-xs border-border"
+                  className="text-xs h-8 px-3.5 border-[#E2E8F0] bg-white text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#0F172A] rounded-lg cursor-pointer"
                 >
                   Batal
                 </Button>
@@ -977,7 +1000,7 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
                   type="submit"
                   size="sm"
                   disabled={isSavingEdit}
-                  className="text-xs font-medium gap-1.5"
+                  className="text-xs gap-1.5 h-8 px-4 font-semibold bg-[#2563EB] hover:bg-[#1D4ED8] text-white shadow-xs rounded-lg cursor-pointer disabled:opacity-50"
                 >
                   {isSavingEdit ? (
                     <FontAwesomeIcon icon={faArrowsRotate} className="w-3.5 h-3.5 animate-spin" />
@@ -994,138 +1017,165 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
 
       {/* MODAL: Tambah Admin Baru */}
       {isCreateModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in-0">
-          <div className="bg-surface border border-border rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95">
-            <div className="flex items-center justify-between p-4 border-b border-border bg-surface-raised">
-              <div className="flex items-center gap-2">
-                <FontAwesomeIcon
-                  icon={createModalType === 'sales' ? faUserTie : faUserPlus}
-                  className={`w-4 h-4 ${createModalType === 'sales' ? 'text-status-success' : 'text-primary'}`}
-                />
-                <h3 className="font-semibold text-sm text-foreground">
-                  {createModalType === 'sales' ? 'Tambah Akun Tim Sales Baru' : 'Tambah Administrator Baru'}
-                </h3>
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in-0"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsCreateModalOpen(false);
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="bg-white border border-[#E2E8F0] rounded-2xl w-full max-w-md max-h-[calc(100dvh-40px)] flex flex-col shadow-2xl overflow-hidden box-border animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="shrink-0 px-5 py-3.5 border-b border-[#E2E8F0] bg-white flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${createModalType === 'sales' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-[#2563EB]'}`}>
+                  <FontAwesomeIcon
+                    icon={createModalType === 'sales' ? faUserTie : faUserPlus}
+                    className="w-4 h-4"
+                  />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-[#0F172A]">
+                    {createModalType === 'sales' ? 'Tambah Akun Tim Sales Baru' : 'Tambah Administrator Baru'}
+                  </h3>
+                  <p className="text-[11px] text-[#64748B]">Buat kredensial login dan tentukan hak akses</p>
+                </div>
               </div>
-              <button
-                type="button"
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => setIsCreateModalOpen(false)}
-                className="text-foreground-muted hover:text-foreground p-1 rounded-md"
+                className="h-8 w-8 p-0 rounded-full text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] shrink-0 cursor-pointer"
+                title="Tutup (Esc)"
               >
                 <FontAwesomeIcon icon={faXmark} className="w-4 h-4" />
-              </button>
+              </Button>
             </div>
 
-            <form onSubmit={handleCreateAdmin} className="p-4 space-y-3.5">
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-foreground">
-                  Username <span className="text-status-error">*</span>
-                </label>
-                <Input
-                  type="text"
-                  placeholder={createModalType === 'sales' ? 'misal: sales-budi atau budi' : 'misal: admin_keuangan'}
-                  value={formUsername}
-                  onChange={(e) => setFormUsername(e.target.value)}
-                  required
-                  className="text-xs bg-surface-raised border-border"
-                />
-                <span className="text-[11px] text-foreground-muted">
-                  {createModalType === 'sales'
-                    ? 'ID login akun sales (bisa awalan sales- atau username unik).'
-                    : 'Digunakan untuk login (huruf kecil, tanpa spasi).'}
-                </span>
-              </div>
+            <form onSubmit={handleCreateAdmin} className="flex-1 flex flex-col min-h-0 overflow-hidden">
+              <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3.5 text-xs bg-[#F8FAFC]">
+                <div className="bg-white border border-[#E2E8F0] rounded-xl p-3.5 sm:p-4 shadow-2xs space-y-3">
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block">
+                      Username <span className="text-rose-600">*</span>
+                    </label>
+                    <Input
+                      type="text"
+                      placeholder={createModalType === 'sales' ? 'misal: sales-budi atau budi' : 'misal: admin_keuangan'}
+                      value={formUsername}
+                      onChange={(e) => setFormUsername(e.target.value)}
+                      required
+                      className="text-xs bg-white border-[#E2E8F0] text-[#0F172A] rounded-lg focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
+                    />
+                    <span className="text-[10px] text-[#64748B]">
+                      {createModalType === 'sales'
+                        ? 'ID login akun sales (bisa awalan sales- atau username unik).'
+                        : 'Digunakan untuk login (huruf kecil, tanpa spasi).'}
+                    </span>
+                  </div>
 
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-foreground">Nama Lengkap</label>
-                <Input
-                  type="text"
-                  placeholder={createModalType === 'sales' ? 'misal: Budi Santoso' : 'misal: Iqbal Administrator'}
-                  value={formName}
-                  onChange={(e) => setFormName(e.target.value)}
-                  className="text-xs bg-surface-raised border-border"
-                />
-              </div>
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block">Nama Lengkap</label>
+                    <Input
+                      type="text"
+                      placeholder={createModalType === 'sales' ? 'misal: Budi Santoso' : 'misal: Iqbal Administrator'}
+                      value={formName}
+                      onChange={(e) => setFormName(e.target.value)}
+                      className="text-xs bg-white border-[#E2E8F0] text-[#0F172A] rounded-lg focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
+                    />
+                  </div>
 
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-foreground">
-                  Alamat Email <span className="text-status-error">*</span>
-                </label>
-                <Input
-                  type="email"
-                  placeholder={createModalType === 'sales' ? 'sales.budi@asterra.store' : 'admin@asterra.store'}
-                  value={formEmail}
-                  onChange={(e) => setFormEmail(e.target.value)}
-                  required
-                  className="text-xs bg-surface-raised border-border"
-                />
-                <span className="text-[11px] text-foreground-muted">
-                  {createModalType === 'sales'
-                    ? 'Email yang digunakan untuk login portal sales.'
-                    : 'Bisa juga dipakai untuk login ke panel admin.'}
-                </span>
-              </div>
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block">
+                      Alamat Email <span className="text-rose-600">*</span>
+                    </label>
+                    <Input
+                      type="email"
+                      placeholder={createModalType === 'sales' ? 'sales.budi@asterra.store' : 'admin@asterra.store'}
+                      value={formEmail}
+                      onChange={(e) => setFormEmail(e.target.value)}
+                      required
+                      className="text-xs bg-white border-[#E2E8F0] text-[#0F172A] font-mono rounded-lg focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
+                    />
+                    <span className="text-[10px] text-[#64748B]">
+                      {createModalType === 'sales'
+                        ? 'Email yang digunakan untuk login portal sales.'
+                        : 'Bisa juga dipakai untuk login ke panel admin.'}
+                    </span>
+                  </div>
 
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-foreground">
-                  Kata Sandi <span className="text-status-error">*</span>
-                </label>
-                <Input
-                  type="password"
-                  placeholder="Minimal 6 karakter"
-                  value={formPassword}
-                  onChange={(e) => setFormPassword(e.target.value)}
-                  required
-                  minLength={6}
-                  className="text-xs bg-surface-raised border-border"
-                />
-              </div>
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block">
+                      Kata Sandi <span className="text-rose-600">*</span>
+                    </label>
+                    <Input
+                      type="password"
+                      placeholder="Minimal 6 karakter"
+                      value={formPassword}
+                      onChange={(e) => setFormPassword(e.target.value)}
+                      required
+                      minLength={6}
+                      className="text-xs bg-white border-[#E2E8F0] text-[#0F172A] rounded-lg focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
+                    />
+                  </div>
 
-              <div className="grid grid-cols-2 gap-3 pt-1">
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-foreground">Peran / Role</label>
-                  <Select
-                    value={formRole}
-                    onValueChange={(val: string) => setFormRole(val as 'admin' | 'superadmin' | 'sales')}
-                  >
-                    <SelectTrigger className="text-xs bg-surface-raised border-border h-9">
-                      <SelectValue placeholder="Pilih Role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="admin">Admin Standar</SelectItem>
-                      <SelectItem value="superadmin">
-                        <span className="text-primary font-medium">Super Admin</span>
-                      </SelectItem>
-                      <SelectItem value="sales">
-                        <span className="text-status-success font-medium">Tim Sales</span>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <div className="grid grid-cols-2 gap-3 pt-1">
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block">Peran / Role</label>
+                      <Select
+                        value={formRole}
+                        onValueChange={(val: string) => setFormRole(val as 'admin' | 'superadmin' | 'sales')}
+                      >
+                        <SelectTrigger className="text-xs bg-white border-[#E2E8F0] text-[#0F172A] rounded-lg h-9">
+                          <SelectValue placeholder="Pilih Role" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="admin">Admin Standar</SelectItem>
+                          <SelectItem value="superadmin">
+                            <span className="text-[#2563EB] font-medium">Super Admin</span>
+                          </SelectItem>
+                          <SelectItem value="sales">
+                            <span className="text-emerald-600 font-medium">Tim Sales</span>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block">Status Awal</label>
+                      <Select
+                        value={formIsActive ? 'active' : 'inactive'}
+                        onValueChange={(val) => setFormIsActive(val === 'active')}
+                      >
+                        <SelectTrigger className="text-xs bg-white border-[#E2E8F0] text-[#0F172A] rounded-lg h-9">
+                          <SelectValue placeholder="Pilih Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="active">
+                            <span className="text-emerald-600 font-medium">Aktif (Bisa Login)</span>
+                          </SelectItem>
+                          <SelectItem value="inactive">
+                            <span className="text-rose-600 font-medium">Non-Aktif</span>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
                 </div>
-
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-foreground">Status Awal</label>
-                  <Select
-                    value={formIsActive ? 'active' : 'inactive'}
-                    onValueChange={(val) => setFormIsActive(val === 'active')}
-                  >
-                    <SelectTrigger className="text-xs bg-surface-raised border-border h-9">
-                      <SelectValue placeholder="Pilih Status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="active">Aktif (Bisa Login)</SelectItem>
-                      <SelectItem value="inactive">Non-Aktif</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
+              {/* Sticky Footer */}
+              <div className="shrink-0 px-4 sm:px-5 py-3 border-t border-[#E2E8F0] bg-white flex items-center justify-end gap-2">
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   onClick={() => setIsCreateModalOpen(false)}
-                  className="text-xs border-border"
+                  className="text-xs h-8 px-3.5 border-[#E2E8F0] bg-white text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#0F172A] rounded-lg cursor-pointer"
                 >
                   Batal
                 </Button>
@@ -1133,10 +1183,10 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
                   type="submit"
                   size="sm"
                   disabled={isSubmitting}
-                  className={`text-xs font-medium gap-1.5 ${
+                  className={`text-xs gap-1.5 h-8 px-4 font-semibold rounded-lg cursor-pointer disabled:opacity-50 ${
                     formRole === 'sales'
-                      ? 'bg-status-success hover:bg-status-success/90 text-white'
-                      : ''
+                      ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs'
+                      : 'bg-[#2563EB] hover:bg-[#1D4ED8] text-white shadow-xs'
                   }`}
                 >
                   {isSubmitting ? (
@@ -1154,49 +1204,72 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
 
       {/* MODAL: Ganti Kata Sandi */}
       {editingAdmin && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in-0">
-          <div className="bg-surface border border-border rounded-xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95">
-            <div className="flex items-center justify-between p-4 border-b border-border bg-surface-raised">
-              <div className="flex items-center gap-2">
-                <FontAwesomeIcon icon={faKey} className="w-4 h-4 text-primary" />
-                <h3 className="font-semibold text-sm text-foreground">Ganti Kata Sandi</h3>
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in-0"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setEditingAdmin(null);
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="bg-white border border-[#E2E8F0] rounded-2xl w-full max-w-sm max-h-[calc(100dvh-40px)] flex flex-col shadow-2xl overflow-hidden box-border animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="shrink-0 px-5 py-3.5 border-b border-[#E2E8F0] bg-white flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-blue-50 text-[#2563EB] flex items-center justify-center">
+                  <FontAwesomeIcon icon={faKey} className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-[#0F172A]">Ganti Kata Sandi</h3>
+                  <p className="text-[11px] text-[#64748B]">Perbarui kata sandi akun pengguna</p>
+                </div>
               </div>
-              <button
-                type="button"
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => setEditingAdmin(null)}
-                className="text-foreground-muted hover:text-foreground p-1 rounded-md"
+                className="h-8 w-8 p-0 rounded-full text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] shrink-0 cursor-pointer"
+                title="Tutup (Esc)"
               >
                 <FontAwesomeIcon icon={faXmark} className="w-4 h-4" />
-              </button>
+              </Button>
             </div>
 
-            <form onSubmit={handleResetPassword} className="p-4 space-y-3.5">
-              <p className="text-xs text-foreground-muted">
-                Atur kata sandi baru untuk administrator{' '}
-                <strong className="text-foreground">{editingAdmin.username}</strong> (
-                {editingAdmin.email}).
-              </p>
+            <form onSubmit={handleResetPassword} className="flex-1 flex flex-col min-h-0 overflow-hidden">
+              <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3.5 text-xs bg-[#F8FAFC]">
+                <div className="bg-white border border-[#E2E8F0] rounded-xl p-3.5 sm:p-4 shadow-2xs space-y-3">
+                  <p className="text-[#64748B] leading-relaxed">
+                    Atur kata sandi baru untuk administrator{' '}
+                    <strong className="text-[#0F172A]">@{editingAdmin.username}</strong> (
+                    {editingAdmin.email}).
+                  </p>
 
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-foreground">Kata Sandi Baru</label>
-                <Input
-                  type="password"
-                  placeholder="Minimal 6 karakter"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  required
-                  minLength={6}
-                  className="text-xs bg-surface-raised border-border"
-                />
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block">Kata Sandi Baru</label>
+                    <Input
+                      type="password"
+                      placeholder="Minimal 6 karakter"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      required
+                      minLength={6}
+                      className="text-xs bg-white border-[#E2E8F0] text-[#0F172A] rounded-lg focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
+                    />
+                  </div>
+                </div>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
+              {/* Sticky Footer */}
+              <div className="shrink-0 px-4 sm:px-5 py-3 border-t border-[#E2E8F0] bg-white flex items-center justify-end gap-2">
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   onClick={() => setEditingAdmin(null)}
-                  className="text-xs border-border"
+                  className="text-xs h-8 px-3.5 border-[#E2E8F0] bg-white text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#0F172A] rounded-lg cursor-pointer"
                 >
                   Batal
                 </Button>
@@ -1204,7 +1277,7 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
                   type="submit"
                   size="sm"
                   disabled={isResettingPassword}
-                  className="text-xs font-medium gap-1.5"
+                  className="text-xs gap-1.5 h-8 px-4 font-semibold bg-[#2563EB] hover:bg-[#1D4ED8] text-white shadow-xs rounded-lg cursor-pointer disabled:opacity-50"
                 >
                   {isResettingPassword ? (
                     <FontAwesomeIcon icon={faArrowsRotate} className="w-3.5 h-3.5 animate-spin" />
@@ -1221,49 +1294,74 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
 
       {/* MODAL: Konfirmasi Hapus Admin */}
       {deletingAdmin && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in-0">
-          <div className="bg-surface border border-border rounded-xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95">
-            <div className="p-4 space-y-3">
-              <div className="w-10 h-10 rounded-full bg-status-error/15 text-status-error flex items-center justify-center mx-auto">
-                <FontAwesomeIcon icon={faTriangleExclamation} className="w-5 h-5" />
-              </div>
-              <div className="text-center space-y-1">
-                <h3 className="font-semibold text-sm text-foreground">
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in-0"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setDeletingAdmin(null);
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="bg-white border border-[#E2E8F0] rounded-2xl w-full max-w-sm max-h-[calc(100dvh-40px)] flex flex-col shadow-2xl overflow-hidden box-border animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="shrink-0 px-5 py-3.5 border-b border-[#E2E8F0] bg-white flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5 text-rose-600">
+                <FontAwesomeIcon icon={faTriangleExclamation} className="w-4 h-4" />
+                <h3 className="font-bold text-base text-[#0F172A]">
                   Hapus {deletingAdmin.role === 'sales' ? 'Akun Sales' : 'Administrator'}?
                 </h3>
-                <p className="text-xs text-foreground-muted leading-relaxed">
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setDeletingAdmin(null)}
+                className="h-8 w-8 p-0 rounded-full text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] shrink-0 cursor-pointer"
+                title="Tutup (Esc)"
+              >
+                <FontAwesomeIcon icon={faXmark} className="w-4 h-4" />
+              </Button>
+            </div>
+
+            {/* Scrollable Body */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3.5 text-xs bg-[#F8FAFC]">
+              <div className="bg-white border border-[#E2E8F0] rounded-xl p-3.5 sm:p-4 shadow-2xs space-y-2">
+                <p className="text-[#64748B] leading-relaxed">
                   Apakah Anda yakin ingin menghapus akun{' '}
-                  <strong className="text-foreground">@{deletingAdmin.username}</strong> (
+                  <strong className="text-[#0F172A]">@{deletingAdmin.username}</strong> (
                   {deletingAdmin.email})? Tindakan ini tidak dapat dibatalkan.
                 </p>
               </div>
+            </div>
 
-              <div className="flex items-center justify-center gap-2 pt-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setDeletingAdmin(null)}
-                  className="text-xs border-border"
-                >
-                  Batal
-                </Button>
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="sm"
-                  onClick={handleDeleteAdmin}
-                  disabled={isDeleting}
-                  className="text-xs font-medium gap-1.5"
-                >
-                  {isDeleting ? (
-                    <FontAwesomeIcon icon={faArrowsRotate} className="w-3.5 h-3.5 animate-spin" />
-                  ) : (
-                    <FontAwesomeIcon icon={faTrash} className="w-3.5 h-3.5" />
-                  )}
-                  <span>Ya, Hapus {deletingAdmin.role === 'sales' ? 'Sales' : 'Admin'}</span>
-                </Button>
-              </div>
+            {/* Sticky Footer */}
+            <div className="shrink-0 px-4 sm:px-5 py-3 border-t border-[#E2E8F0] bg-white flex items-center justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setDeletingAdmin(null)}
+                className="text-xs h-8 px-3.5 border-[#E2E8F0] bg-white text-[#64748B] hover:bg-[#F8FAFC] hover:text-[#0F172A] rounded-lg cursor-pointer"
+              >
+                Batal
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                onClick={handleDeleteAdmin}
+                disabled={isDeleting}
+                className="text-xs h-8 px-4 font-semibold rounded-lg cursor-pointer bg-rose-600 hover:bg-rose-700 text-white"
+              >
+                {isDeleting ? (
+                  <FontAwesomeIcon icon={faArrowsRotate} className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <FontAwesomeIcon icon={faTrash} className="w-3.5 h-3.5" />
+                )}
+                <span>Ya, Hapus {deletingAdmin.role === 'sales' ? 'Sales' : 'Admin'}</span>
+              </Button>
             </div>
           </div>
         </div>
