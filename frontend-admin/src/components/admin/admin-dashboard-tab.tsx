@@ -18,6 +18,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useCountUp } from '@/lib/hooks/use-count-up';
+import { useMountOnce } from '@/lib/hooks/use-mount-once';
 import { SalesTrendChart } from './sales-trend-chart';
 import { AdminTab } from './admin-sidebar';
 import { ProductBrandIcon } from '@/components/ui/product-brand-icon';
@@ -150,6 +151,7 @@ export function AdminDashboardTab({
     formatter: (v) => `Rp ${Math.round(v).toLocaleString('id-ID')}`,
   });
   const displayPending = useCountUp(targetPending);
+  const hasMounted = useMountOnce();
 
   return (
     <div className="space-y-5">
@@ -198,7 +200,7 @@ export function AdminDashboardTab({
           <button
             type="button"
             onClick={() => onNavigateTab('providers')}
-            className="relative z-10 px-4 py-2 rounded-full border border-white/30 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold backdrop-blur-md transition-all shadow-xs flex items-center gap-1.5 cursor-pointer shrink-0 self-start sm:self-auto"
+            className="relative z-10 px-4 py-2 rounded-full border border-white/30 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold backdrop-blur-md transition-all shadow-xs flex items-center gap-1.5 cursor-pointer shrink-0 self-start sm:self-auto active:scale-95"
           >
             <span>Cek Provider VIP</span>
             <span className="text-[11px]">→</span>
@@ -223,7 +225,7 @@ export function AdminDashboardTab({
           <Button
             size="sm"
             onClick={() => onNavigateTab('products')}
-            className="text-xs h-8 bg-white hover:bg-rose-50 border border-rose-200 text-rose-600 rounded-full font-semibold shrink-0 px-4 shadow-2xs"
+            className="text-xs h-8 bg-white hover:bg-rose-50 border border-rose-200 text-rose-600 rounded-full font-semibold shrink-0 px-4 shadow-2xs active:scale-95"
           >
             Tinjau Katalog ({metrics?.totalWarnings || 15}) →
           </Button>
@@ -235,7 +237,9 @@ export function AdminDashboardTab({
         {/* Card 1: Total Revenue */}
         <div
           onClick={() => onNavigateTab('revenue')}
-          className="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-2xs hover:shadow-xs transition-shadow cursor-pointer flex flex-col justify-between"
+          className={`bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-2xs hover:shadow-card-hover hover:border-primary/40 transition-all duration-200 cursor-pointer flex flex-col justify-between ${
+            !hasMounted ? 'animate-fade-up stagger-1' : ''
+          }`}
         >
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
@@ -260,7 +264,9 @@ export function AdminDashboardTab({
         {/* Card 2: Total Orders */}
         <div
           onClick={() => onNavigateTab('orders')}
-          className="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-2xs hover:shadow-xs transition-shadow cursor-pointer flex flex-col justify-between"
+          className={`bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-2xs hover:shadow-card-hover hover:border-primary/40 transition-all duration-200 cursor-pointer flex flex-col justify-between ${
+            !hasMounted ? 'animate-fade-up stagger-2' : ''
+          }`}
         >
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
@@ -284,7 +290,9 @@ export function AdminDashboardTab({
         {/* Card 3: Customers */}
         <div
           onClick={() => onNavigateTab('customers')}
-          className="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-2xs hover:shadow-xs transition-shadow cursor-pointer flex flex-col justify-between"
+          className={`bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-2xs hover:shadow-card-hover hover:border-primary/40 transition-all duration-200 cursor-pointer flex flex-col justify-between ${
+            !hasMounted ? 'animate-fade-up stagger-3' : ''
+          }`}
         >
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
@@ -309,7 +317,9 @@ export function AdminDashboardTab({
         {/* Card 4: Gross Profit */}
         <div
           onClick={() => onNavigateTab('profit')}
-          className="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-2xs hover:shadow-xs transition-shadow cursor-pointer flex flex-col justify-between"
+          className={`bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-2xs hover:shadow-card-hover hover:border-primary/40 transition-all duration-200 cursor-pointer flex flex-col justify-between ${
+            !hasMounted ? 'animate-fade-up stagger-4' : ''
+          }`}
         >
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
@@ -333,7 +343,9 @@ export function AdminDashboardTab({
         {/* Card 5: Pending Orders */}
         <div
           onClick={() => onNavigateTab('orders')}
-          className="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-2xs hover:shadow-xs transition-shadow cursor-pointer flex flex-col justify-between col-span-2 sm:col-span-1"
+          className={`bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-2xs hover:shadow-card-hover hover:border-primary/40 transition-all duration-200 cursor-pointer flex flex-col justify-between col-span-2 sm:col-span-1 ${
+            !hasMounted ? 'animate-fade-up stagger-5' : ''
+          }`}
         >
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">

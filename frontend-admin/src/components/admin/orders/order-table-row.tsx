@@ -21,17 +21,19 @@ import { ProductBrandIcon } from '@/components/ui/product-brand-icon';
 
 interface OrderTableRowProps {
   order: Order;
+  index?: number;
   onOpenDetail: (order: Order) => void;
   onCopyEmail: (email: string) => void;
 }
 
-export function OrderTableRow({ order, onOpenDetail, onCopyEmail }: OrderTableRowProps) {
+export function OrderTableRow({ order, index, onOpenDetail, onCopyEmail }: OrderTableRowProps) {
   const firstItem = order.items?.[0];
   const extraItemsCount = (order.items?.length || 0) - 1;
   const waUrl = formatWhatsAppUrl(order.customer_whatsapp);
+  const staggerClass = index !== undefined && index < 10 ? `animate-row-stagger row-stagger-${index + 1}` : '';
 
   return (
-    <tr className="hover:bg-surface-raised/40 transition-colors border-b border-border/60 animate-fade-up">
+    <tr className={`hover:bg-surface-raised/60 transition-colors duration-120 border-b border-border/60 ${staggerClass}`}>
       {/* Order ID & Date */}
       <td className="py-3.5 px-4 align-top">
         <div className="font-mono font-bold text-foreground text-xs flex items-center gap-1.5">

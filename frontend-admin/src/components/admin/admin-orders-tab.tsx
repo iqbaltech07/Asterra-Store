@@ -185,10 +185,11 @@ export function AdminOrdersTab() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {orders.map((order: Order) => (
+                  {orders.map((order: Order, idx: number) => (
                     <OrderTableRow
                       key={order.id}
                       order={order}
+                      index={idx}
                       onOpenDetail={handleOpenDetail}
                       onCopyEmail={handleCopyEmail}
                     />

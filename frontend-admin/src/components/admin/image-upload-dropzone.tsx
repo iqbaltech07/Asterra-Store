@@ -133,10 +133,12 @@ export function ImageUploadDropzone({
   // Active display image: prefers local preview during/right after upload, otherwise value
   const displayImage = localPreview || value;
   const isPrivateBlob = displayImage?.includes('/api/v1/media') || displayImage?.includes('blob.vercel-storage.com');
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   useEffect(() => {
     setImgError(false);
-  }, [value]);
+    setImageLoaded(false);
+  }, [displayImage]);
 
   // Clean up object URLs on unmount
   useEffect(() => {
@@ -381,7 +383,10 @@ export function ImageUploadDropzone({
                 <img
                   src={displayImage}
                   alt="Preview Gambar"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  onLoad={() => setImageLoaded(true)}
+                  className={`w-full h-full object-cover group-hover:scale-105 transition-all duration-200 ${
+                    imageLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
+                  }`}
                   onError={() => setImgError(true)}
                 />
               ) : (

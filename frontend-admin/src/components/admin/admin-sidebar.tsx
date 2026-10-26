@@ -684,8 +684,10 @@ export function AdminSidebar({
               {/* Category Dropdown Header */}
               <button
                 type="button"
+                id={`group-${group.id}-header`}
                 onClick={() => toggleGroup(group.id)}
                 aria-expanded={isOpen}
+                aria-controls={`group-${group.id}-content`}
                 className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-colors ${
                   hasActiveChild
                     ? 'text-white'
@@ -699,14 +701,20 @@ export function AdminSidebar({
                   </span>
                 </div>
                 <ChevronDown
-                  className={`w-3.5 h-3.5 transition-transform duration-200 text-[#888888] ${
-                    isOpen ? 'rotate-0' : '-rotate-90'
+                  className={`w-3.5 h-3.5 transition-transform duration-250 text-[#888888] ${
+                    isOpen ? 'rotate-0' : '-rotate-180'
                   }`}
                 />
               </button>
 
               {/* Sub-items Container (Smooth CSS Grid Accordion) */}
-              <div className={`accordion-grid-wrapper ${isOpen ? 'is-open' : ''}`}>
+              <div
+                id={`group-${group.id}-content`}
+                role="region"
+                aria-labelledby={`group-${group.id}-header`}
+                className={`accordion-grid-wrapper ${isOpen ? 'is-open' : ''}`}
+                inert={!isOpen}
+              >
                 <div className="accordion-grid-content">
                   <div className="pl-1.5 space-y-0.5 pt-0.5 border-l border-white/10 ml-3">
                     {group.items.map((subItem) => {
@@ -718,16 +726,17 @@ export function AdminSidebar({
                           key={subItem.id}
                           type="button"
                           data-active-tab={subItem.id}
+                          tabIndex={isOpen ? 0 : -1}
                           onClick={() => handleSelectTab(subItem.id)}
-                          className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-medium transition-all group relative ${
+                          className={`w-full flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-medium transition-all duration-150 group relative ${
                             isActive
-                              ? 'bg-[#303844] text-[#F4F7FB] font-semibold border border-white/15 shadow-sm'
+                              ? 'bg-[#303844] text-[#F4F7FB] font-semibold border border-white/15 shadow-sm before:absolute before:left-0 before:top-2 before:bottom-2 before:w-1 before:bg-[#2563EB] before:rounded-r-full'
                               : 'text-[#94A3B8] hover:text-[#F4F7FB] hover:bg-white/5'
                           }`}
                         >
                           <div className="flex items-center gap-2.5 pl-1.5 truncate min-w-0 mr-1.5">
                             <SubIcon
-                              className={`w-4 h-4 shrink-0 transition-colors ${
+                              className={`w-4 h-4 shrink-0 transition-all duration-150 group-hover:translate-x-0.5 ${
                                 isActive ? 'text-white' : 'text-[#888888] group-hover:text-white'
                               }`}
                             />
@@ -747,7 +756,7 @@ export function AdminSidebar({
                               subItem.badge !== undefined &&
                               subItem.badge !== null && (
                                 <span
-                                  className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold shrink-0 ${
+                                  className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold shrink-0 transition-transform duration-150 group-hover:scale-105 ${
                                     subItem.badgeVariant === 'primary'
                                       ? 'bg-[#2563EB]/25 text-[#93C5FD] border border-[#2563EB]/40'
                                       : subItem.badgeVariant === 'success'

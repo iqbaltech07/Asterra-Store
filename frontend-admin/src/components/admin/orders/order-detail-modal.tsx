@@ -167,7 +167,7 @@ export function OrderDetailModal({
 
   const modalContent = (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-950/60 backdrop-blur-md animate-modal-backdrop"
       onClick={(e) => {
         if (e.target === e.currentTarget) {
           onClose();
@@ -178,7 +178,7 @@ export function OrderDetailModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="order-detail-modal-title"
-        className="bg-white border border-[#E2E8F0] rounded-2xl w-full max-w-[780px] max-h-[calc(100dvh-40px)] flex flex-col shadow-2xl overflow-hidden box-border animate-in zoom-in-95 duration-200"
+        className="bg-white border border-[#E2E8F0] rounded-2xl w-full max-w-[780px] max-h-[calc(100dvh-40px)] flex flex-col shadow-2xl overflow-hidden box-border animate-modal-dialog"
         onClick={(e) => e.stopPropagation()}
       >
         {/* 1. STICKY MODAL HEADER - LIGHT MODE */}

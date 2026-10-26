@@ -685,22 +685,20 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
           {/* Quick Actions */}
           <div className="flex items-center gap-2 self-start sm:self-auto">
             {isDirty && (
-              <Badge variant="warning" className="text-[11px] animate-pulse">
+              <Badge variant="warning" className="text-[11px] animate-in fade-in duration-200 animate-pulse">
                 Ada Perubahan Belum Disimpan
               </Badge>
             )}
             <Button
               type="button"
               size="sm"
+              loading={saveMutation.isPending}
+              loadingText="Menyimpan..."
               disabled={saveMutation.isPending || !isDirty}
               onClick={handleSave}
               className="bg-primary text-white hover:bg-primary/90 text-xs h-9 px-4 gap-1.5 font-semibold shadow-xs"
             >
-              {saveMutation.isPending ? (
-                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                <Save className="w-3.5 h-3.5" />
-              )}
+              <Save className="w-3.5 h-3.5" />
               <span>Simpan Urutan</span>
             </Button>
           </div>
@@ -933,7 +931,7 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
                     return (
                       <div
                         key={`manual-item-${idOrName}-${idx}`}
-                        className="bg-surface-raised border border-border/80 hover:border-[#C96F55]/40 rounded-2xl p-3 flex items-center justify-between gap-3 transition-colors shadow-2xs"
+                        className="bg-surface-raised border border-border/80 hover:border-[#C96F55]/40 rounded-2xl p-3 flex items-center justify-between gap-3 transition-all duration-200 shadow-2xs hover:shadow-card-hover"
                       >
                         {/* Position Number Pill & Logo */}
                         <div className="flex items-center gap-3 min-w-0 flex-1">

@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { BarChart3 } from 'lucide-react';
+import { SlidingPillTabs, SlidingPillTabItem } from '@/components/ui/sliding-pill-tabs';
+import { MOTION_DURATION, MOTION_EASING } from '@/lib/motion';
 
 export type SalesPeriod = 'daily' | 'weekly' | 'monthly';
 
@@ -17,6 +19,12 @@ export interface SalesTrendChartProps {
   onPeriodChange: (period: SalesPeriod) => void;
   isLoading?: boolean;
 }
+
+const PERIOD_TABS: SlidingPillTabItem<SalesPeriod>[] = [
+  { id: 'daily', label: 'Hari Ini' },
+  { id: 'weekly', label: '7 Hari' },
+  { id: 'monthly', label: '30 Hari' },
+];
 
 const BAR_COLORS = [
   '#475569', // 08:00 - Dark charcoal slate
@@ -83,52 +91,13 @@ export function SalesTrendChart({
           </div>
         </div>
 
-        {/* Period Switcher Pills matching Screenshot */}
-        <div
-          role="tablist"
-          aria-label="Filter Periode Grafik"
-          className="flex items-center bg-slate-100/90 p-1 rounded-full text-xs shadow-2xs self-start sm:self-auto"
-        >
-          <button
-            type="button"
-            role="tab"
-            aria-selected={salesPeriod === 'daily'}
-            onClick={() => onPeriodChange('daily')}
-            className={`px-3.5 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer ${
-              salesPeriod === 'daily'
-                ? 'bg-[#334155] text-white shadow-xs'
-                : 'text-slate-500 hover:text-slate-900'
-            }`}
-          >
-            Hari Ini
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={salesPeriod === 'weekly'}
-            onClick={() => onPeriodChange('weekly')}
-            className={`px-3.5 py-1 rounded-full text-xs font-medium transition-all cursor-pointer ${
-              salesPeriod === 'weekly'
-                ? 'bg-[#334155] text-white shadow-xs font-semibold'
-                : 'text-slate-500 hover:text-slate-900'
-            }`}
-          >
-            7 Hari
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={salesPeriod === 'monthly'}
-            onClick={() => onPeriodChange('monthly')}
-            className={`px-3.5 py-1 rounded-full text-xs font-medium transition-all cursor-pointer ${
-              salesPeriod === 'monthly'
-                ? 'bg-[#334155] text-white shadow-xs font-semibold'
-                : 'text-slate-500 hover:text-slate-900'
-            }`}
-          >
-            30 Hari
-          </button>
-        </div>
+        {/* Period Switcher Pills using GPU-accelerated SlidingPillTabs */}
+        <SlidingPillTabs<SalesPeriod>
+          items={PERIOD_TABS}
+          activeId={salesPeriod}
+          onChange={onPeriodChange}
+          ariaLabel="Filter Periode Grafik"
+        />
       </div>
 
       {/* Chart Canvas Area */}
@@ -171,13 +140,14 @@ export function SalesTrendChart({
                 {/* Scaled Bar Track */}
                 <div className="w-full h-full flex items-end justify-center">
                   <div
-                    className="w-full max-w-[48px] rounded-t-sm transition-all duration-500"
+                    className="w-full max-w-[48px] rounded-t-sm"
                     style={{
                       height: mounted ? `${Math.round(heightRatio * 100)}%` : '0%',
                       backgroundColor: barColor,
                       opacity: hoveredIndex !== null && !isHovered ? 0.5 : 1,
-                      transform: isHovered ? 'scaleY(1.02)' : 'scaleY(1)',
+                      transform: isHovered ? 'scaleY(1.03)' : 'scaleY(1)',
                       transformOrigin: 'bottom',
+                      transition: `transform ${MOTION_DURATION.chart}ms ${MOTION_EASING.standard}, height ${MOTION_DURATION.chart}ms ${MOTION_EASING.standard}, opacity 150ms ease`,
                     }}
                   />
                 </div>

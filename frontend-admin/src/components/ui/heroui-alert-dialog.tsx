@@ -121,7 +121,7 @@ export function AlertDialogBackdrop({
     <div
       className={
         className ||
-        'fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200'
+        'fixed inset-0 z-[100] bg-slate-950/60 backdrop-blur-md animate-modal-backdrop'
       }
     >
       {children}
@@ -167,7 +167,7 @@ export function AlertDialogDialog({
       aria-modal="true"
       className={
         className ||
-        'relative w-full max-w-[440px] bg-white border border-[#E2E8F0] rounded-2xl shadow-2xl p-5 sm:p-6 space-y-4 animate-in zoom-in-95 duration-200 text-[#0F172A]'
+        'relative w-full max-w-[440px] bg-white border border-[#E2E8F0] rounded-2xl shadow-2xl p-5 sm:p-6 space-y-4 animate-modal-dialog text-[#0F172A]'
       }
     >
       {children}
@@ -284,6 +284,11 @@ export function AlertDialogFooter({
               if (originalOnClick) originalOnClick(e);
               setIsOpen(false);
             },
+          });
+        }
+        if ((child.props as { variant?: string }).variant === 'destructive') {
+          return React.cloneElement(child as React.ReactElement<{ className?: string }>, {
+            className: `${(child.props as { className?: string }).className || ''} animate-alert-pulse-once`,
           });
         }
         return child;

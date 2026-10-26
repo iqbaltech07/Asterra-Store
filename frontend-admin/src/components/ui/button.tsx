@@ -1,13 +1,58 @@
+'use client';
+
 import * as React from 'react';
+import { Loader2, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { MOTION_DURATION } from '@/lib/motion';
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'default' | 'primary' | 'navy' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
   size?: 'default' | 'sm' | 'lg' | 'icon';
+  loading?: boolean;
+  loadingText?: string;
+  success?: boolean;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = 'default', size = 'default', ...props }, ref) => {
+  (
+    {
+      className,
+      variant = 'default',
+      size = 'default',
+      loading = false,
+      loadingText,
+      success = false,
+      disabled,
+      children,
+      ...props
+    },
+    ref
+  ) => {
+    const btnRef = React.useRef<HTMLButtonElement | null>(null);
+    const [lockedMinWidth, setLockedMinWidth] = React.useState<number | undefined>(undefined);
+
+    // Lock minimum width when loading starts so button width never abruptly collapses or shifts layout
+    React.useEffect(() => {
+      if (loading && btnRef.current) {
+        setLockedMinWidth(btnRef.current.offsetWidth);
+      } else if (!loading) {
+        // Smoothly release locked width after transition
+        const timer = setTimeout(() => {
+          setLockedMinWidth(undefined);
+        }, MOTION_DURATION.micro);
+        return () => clearTimeout(timer);
+      }
+    }, [loading]);
+
+    const setMergedRef = (element: HTMLButtonElement | null) => {
+      btnRef.current = element;
+      if (typeof ref === 'function') {
+        ref(element);
+      } else if (ref) {
+        (ref as React.MutableRefObject<HTMLButtonElement | null>).current = element;
+      }
+    };
+
     const variantStyles = {
       default:
         'bg-[#34404F] text-white hover:bg-[#25303D] active:bg-[#1E2732] shadow-xs border border-white/10 font-medium transition-all',
@@ -36,18 +81,39 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     return (
       <button
+        ref={setMergedRef}
+        disabled={disabled || loading}
+        style={{
+          minWidth: lockedMinWidth ? `${lockedMinWidth}px` : undefined,
+          ...props.style,
+        }}
         className={cn(
-          'inline-flex items-center justify-center whitespace-nowrap transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB]/40 disabled:pointer-events-none disabled:opacity-50 select-none active:scale-[0.98] cursor-pointer',
+          'relative inline-flex items-center justify-center whitespace-nowrap transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB]/40 disabled:pointer-events-none disabled:opacity-50 select-none active:scale-[0.98] cursor-pointer',
           variantStyles,
           sizeStyles,
           className
         )}
-        ref={ref}
         {...props}
-      />
+      >
+        {/* Loading Spinner with smooth opacity cross-fade */}
+        {loading ? (
+          <span className="inline-flex items-center gap-1.5 animate-in fade-in duration-150">
+            <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />
+            {loadingText && <span>{loadingText}</span>}
+          </span>
+        ) : success ? (
+          <span className="inline-flex items-center gap-1.5 text-emerald-300 animate-in zoom-in-75 duration-150">
+            <Check className="w-3.5 h-3.5 shrink-0" />
+            <span>{children}</span>
+          </span>
+        ) : (
+          children
+        )}
+      </button>
     );
   }
 );
 Button.displayName = 'Button';
 
 export { Button };
+

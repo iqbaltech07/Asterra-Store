@@ -8,7 +8,7 @@ export function OrderStatusBadge({ status }: { status: Order['order_status'] }) 
   switch (status) {
     case 'completed':
       return (
-        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-status-success/15 text-status-success border border-status-success/30">
+        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-status-success/15 text-status-success border border-status-success/30 animate-scale-pop">
           <FontAwesomeIcon icon={faCircleCheck} className="w-3.5 h-3.5" />
           <span>Selesai</span>
         </span>
@@ -29,7 +29,7 @@ export function OrderStatusBadge({ status }: { status: Order['order_status'] }) 
       );
     default:
       return (
-        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-status-warning/15 text-status-warning border border-status-warning/30">
+        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-status-warning/15 text-status-warning border border-status-warning/30 animate-pulse-glow">
           <FontAwesomeIcon icon={faClock} className="w-3.5 h-3.5" />
           <span>Menunggu Bayar</span>
         </span>

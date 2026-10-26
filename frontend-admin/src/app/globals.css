@@ -218,7 +218,7 @@ body {
 @keyframes tabGlideIn {
   0% {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(6px);
   }
   100% {
     opacity: 1;
@@ -227,7 +227,7 @@ body {
 }
 
 .animate-tab-glide {
-  animation: tabGlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: tabGlideIn 0.18s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 @keyframes fadeUp {
@@ -274,14 +274,41 @@ body {
 }
 
 /* Stagger Utilities (Monetira Editorial Cascade) */
-.stagger-1 { animation-delay: 70ms !important; }
-.stagger-2 { animation-delay: 140ms !important; }
-.stagger-3 { animation-delay: 210ms !important; }
-.stagger-4 { animation-delay: 280ms !important; }
-.stagger-5 { animation-delay: 350ms !important; }
-.stagger-6 { animation-delay: 420ms !important; }
-.stagger-7 { animation-delay: 490ms !important; }
-.stagger-8 { animation-delay: 560ms !important; }
+.stagger-1 { animation-delay: 50ms !important; }
+.stagger-2 { animation-delay: 100ms !important; }
+.stagger-3 { animation-delay: 150ms !important; }
+.stagger-4 { animation-delay: 200ms !important; }
+.stagger-5 { animation-delay: 250ms !important; }
+.stagger-6 { animation-delay: 300ms !important; }
+.stagger-7 { animation-delay: 350ms !important; }
+.stagger-8 { animation-delay: 400ms !important; }
+
+/* Table Row Smooth Stagger (capped at 10 items max, 20ms steps) */
+@keyframes tableRowFade {
+  0% {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-row-stagger {
+  animation: tableRowFade 0.18s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.row-stagger-1 { animation-delay: 20ms; }
+.row-stagger-2 { animation-delay: 40ms; }
+.row-stagger-3 { animation-delay: 60ms; }
+.row-stagger-4 { animation-delay: 80ms; }
+.row-stagger-5 { animation-delay: 100ms; }
+.row-stagger-6 { animation-delay: 120ms; }
+.row-stagger-7 { animation-delay: 140ms; }
+.row-stagger-8 { animation-delay: 160ms; }
+.row-stagger-9 { animation-delay: 180ms; }
+.row-stagger-10 { animation-delay: 200ms; }
 
 @keyframes faqSlideDown {
   from {
@@ -300,27 +327,28 @@ body {
 
 /* Monetira Motion Replication Utilities */
 .motion-card-interactive {
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.2s ease;
 }
 
 .motion-card-interactive:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 25px -5px rgba(18, 26, 42, 0.08), 0 8px 10px -6px rgba(18, 26, 42, 0.04);
+  box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.08), 0 4px 10px -2px rgba(37, 99, 235, 0.05);
+  border-color: rgba(37, 99, 235, 0.35);
 }
 
 .motion-btn-interactive {
-  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.15s ease, box-shadow 0.15s ease;
+  transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1), background-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .motion-btn-interactive:active {
   transform: scale(0.97);
 }
 
-/* Monetira Accordion CSS Grid Transition */
+/* Sidebar Accordion CSS Grid Transition (250ms ease-out, child fade-in 50ms delay) */
 .accordion-grid-wrapper {
   display: grid;
   grid-template-rows: 0fr;
-  transition: grid-template-rows 220ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition: grid-template-rows 250ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .accordion-grid-wrapper.is-open {
@@ -330,6 +358,52 @@ body {
 .accordion-grid-content {
   min-height: 0;
   overflow: hidden;
+  transition: opacity 200ms ease 50ms, visibility 250ms;
+}
+
+.accordion-grid-wrapper:not(.is-open) .accordion-grid-content {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.accordion-grid-wrapper.is-open .accordion-grid-content {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+/* Modal & Drawer Smooth Physics (scale 0.97 -> 1, backdrop blur 0 -> 8px) */
+@keyframes modalBackdropEnter {
+  0% {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+    -webkit-backdrop-filter: blur(0px);
+  }
+  100% {
+    opacity: 1;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+}
+
+.animate-modal-backdrop {
+  animation: modalBackdropEnter 0.2s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes modalContainerEnter {
+  0% {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-modal-dialog {
+  animation: modalContainerEnter 0.22s cubic-bezier(0.34, 1.25, 0.64, 1) both;
 }
 
 /* Monetira Sliding Indicator */
@@ -386,7 +460,47 @@ body {
   animation: highlightFade 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Controlled Reduced Motion (only if user explicitly opts in via settings) */
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.08);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 2.5s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+}
+
+@keyframes alertPulseOnce {
+  0% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 5px rgba(239, 68, 68, 0.15);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
+}
+
+.animate-alert-pulse-once {
+  animation: alertPulseOnce 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 1;
+}
+
+/* Controlled & OS Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 .user-reduce-motion .animate-page-enter,
 .user-reduce-motion .animate-tab-glide,
 .user-reduce-motion .animate-text-smooth,
@@ -397,7 +511,12 @@ body {
 .user-reduce-motion .motion-card-interactive,
 .user-reduce-motion .motion-btn-interactive,
 .user-reduce-motion .accordion-grid-wrapper,
-.user-reduce-motion .sidebar-indicator {
+.user-reduce-motion .sidebar-indicator,
+.user-reduce-motion .animate-modal-backdrop,
+.user-reduce-motion .animate-modal-dialog,
+.user-reduce-motion .animate-row-stagger,
+.user-reduce-motion .animate-pulse-glow,
+.user-reduce-motion .animate-alert-pulse-once {
   animation: none !important;
   transition: none !important;
   opacity: 1 !important;
