@@ -58,25 +58,11 @@ export function SalesOverviewTab({
 }: SalesOverviewTabProps) {
   const referralUrl = `${getStoreBaseUrl()}/?ref=${partnerCode || 'AST-SALES'}`;
 
-  // Track initial visit vs return visits to avoid repetitive slow staggers on tab switching
-  const isInitialVisitRef = useRef<boolean>(true);
   const [isMounted, setIsMounted] = useState<boolean>(false);
 
   useEffect(() => {
     setIsMounted(true);
-    if (typeof window !== 'undefined') {
-      try {
-        const hasRevealed = sessionStorage.getItem('asterra_kpi_revealed') === 'true';
-        if (hasRevealed) {
-          isInitialVisitRef.current = false;
-        } else {
-          sessionStorage.setItem('asterra_kpi_revealed', 'true');
-        }
-      } catch {}
-    }
   }, []);
-
-  const isInitial = isMounted && isInitialVisitRef.current;
 
   // Conversion rate calculation
   const conversionRate = useMemo(() => {
@@ -222,10 +208,8 @@ export function SalesOverviewTab({
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
         {/* Card 1: Saldo Siap Tarik */}
         <div
-          className={`bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs flex flex-col justify-between card-hover-elevation ${
-            isInitial ? 'animate-kpi-reveal' : ''
-          }`}
-          style={{ animationDelay: isInitial ? '0ms' : '0ms' }}
+          className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs flex flex-col justify-between card-hover-elevation animate-kpi-reveal"
+          style={{ animationDelay: '0ms' }}
         >
           <div>
             <div className="flex items-center justify-between">
@@ -242,14 +226,14 @@ export function SalesOverviewTab({
                 endDot={{ cx: 27, cy: unpaidCommissionVal > 0 ? 2 : 12 }}
                 color="#16A36A"
                 gradientId="sparkline-emerald"
-                delay={isInitial ? 0 : 0}
+                delay={0}
               />
             </div>
             <div className="mt-3 text-xl lg:text-2xl font-black text-slate-900 tracking-tight font-sans">
               <AnimatedNumber
                 value={unpaidCommissionVal}
                 prefix="Rp "
-                delay={isInitial ? 0 : 0}
+                delay={0}
                 className="font-sans font-black text-slate-900"
               />
             </div>
@@ -262,10 +246,8 @@ export function SalesOverviewTab({
 
         {/* Card 2: Pesanan Referral */}
         <div
-          className={`bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs flex flex-col justify-between card-hover-elevation ${
-            isInitial ? 'animate-kpi-reveal' : ''
-          }`}
-          style={{ animationDelay: isInitial ? '80ms' : '0ms' }}
+          className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs flex flex-col justify-between card-hover-elevation animate-kpi-reveal"
+          style={{ animationDelay: '60ms' }}
         >
           <div>
             <div className="flex items-center justify-between">
@@ -282,13 +264,13 @@ export function SalesOverviewTab({
                 endDot={{ cx: 27, cy: totalOrdersVal > 0 ? 3 : 12 }}
                 color="#6366F1"
                 gradientId="sparkline-indigo"
-                delay={isInitial ? 80 : 0}
+                delay={60}
               />
             </div>
             <div className="mt-3 text-xl lg:text-2xl font-black text-slate-900 tracking-tight font-sans">
               <AnimatedNumber
                 value={totalOrdersVal}
-                delay={isInitial ? 80 : 0}
+                delay={60}
                 className="font-sans font-black text-slate-900"
               />
             </div>
@@ -300,10 +282,8 @@ export function SalesOverviewTab({
 
         {/* Card 3: Klik & Kunjungan Link */}
         <div
-          className={`bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs flex flex-col justify-between card-hover-elevation ${
-            isInitial ? 'animate-kpi-reveal' : ''
-          }`}
-          style={{ animationDelay: isInitial ? '160ms' : '0ms' }}
+          className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs flex flex-col justify-between card-hover-elevation animate-kpi-reveal"
+          style={{ animationDelay: '120ms' }}
         >
           <div>
             <div className="flex items-center justify-between">
@@ -320,13 +300,13 @@ export function SalesOverviewTab({
                 endDot={{ cx: 27, cy: totalClicksVal > 0 ? 2 : 12 }}
                 color="#0284C7"
                 gradientId="sparkline-sky"
-                delay={isInitial ? 160 : 0}
+                delay={120}
               />
             </div>
             <div className="mt-3 text-xl lg:text-2xl font-black text-slate-900 tracking-tight font-sans">
               <AnimatedNumber
                 value={totalClicksVal}
-                delay={isInitial ? 160 : 0}
+                delay={120}
                 className="font-sans font-black text-slate-900"
               />
             </div>
@@ -339,10 +319,8 @@ export function SalesOverviewTab({
 
         {/* Card 4: Total Akumulasi Komisi */}
         <div
-          className={`bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs flex flex-col justify-between card-hover-elevation ${
-            isInitial ? 'animate-kpi-reveal' : ''
-          }`}
-          style={{ animationDelay: isInitial ? '240ms' : '0ms' }}
+          className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs flex flex-col justify-between card-hover-elevation animate-kpi-reveal"
+          style={{ animationDelay: '180ms' }}
         >
           <div>
             <div className="flex items-center justify-between">
@@ -359,14 +337,14 @@ export function SalesOverviewTab({
                 endDot={{ cx: 27, cy: totalCommissionVal > 0 ? 4 : 12 }}
                 color="#D97706"
                 gradientId="sparkline-amber"
-                delay={isInitial ? 240 : 0}
+                delay={180}
               />
             </div>
             <div className="mt-3 text-xl lg:text-2xl font-black text-slate-900 tracking-tight font-sans">
               <AnimatedNumber
                 value={totalCommissionVal}
                 prefix="Rp "
-                delay={isInitial ? 240 : 0}
+                delay={180}
                 className="font-sans font-black text-slate-900"
               />
             </div>
@@ -378,10 +356,8 @@ export function SalesOverviewTab({
 
         {/* Card 5: Komisi Garansi (3 Hari) */}
         <div
-          className={`bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs flex flex-col justify-between card-hover-elevation col-span-2 sm:col-span-1 ${
-            isInitial ? 'animate-kpi-reveal' : ''
-          }`}
-          style={{ animationDelay: isInitial ? '320ms' : '0ms' }}
+          className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs flex flex-col justify-between card-hover-elevation col-span-2 sm:col-span-1 animate-kpi-reveal"
+          style={{ animationDelay: '240ms' }}
         >
           <div>
             <div className="flex items-center justify-between">
@@ -398,14 +374,14 @@ export function SalesOverviewTab({
                 endDot={{ cx: 27, cy: pendingCommissionVal > 0 ? 2 : 12 }}
                 color="#8B5CF6"
                 gradientId="sparkline-purple"
-                delay={isInitial ? 320 : 0}
+                delay={240}
               />
             </div>
             <div className="mt-3 text-xl lg:text-2xl font-black text-slate-900 tracking-tight font-sans">
               <AnimatedNumber
                 value={pendingCommissionVal}
                 prefix="Rp "
-                delay={isInitial ? 320 : 0}
+                delay={240}
                 className="font-sans font-black text-slate-900"
               />
             </div>

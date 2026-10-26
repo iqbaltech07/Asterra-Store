@@ -46,8 +46,7 @@ export function isReducedMotion(): boolean {
   try {
     const stored = localStorage.getItem('asterra_reduce_motion');
     if (stored === 'true') return true;
-    if (stored === 'false') return false;
-    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    return false;
   } catch {
     return false;
   }

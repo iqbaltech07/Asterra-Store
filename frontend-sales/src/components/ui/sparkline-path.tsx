@@ -49,13 +49,14 @@ export function SparklinePath({
       }
     }
 
+    setIsDrawn(false);
     // Trigger drawing after a brief frame
     const timer = setTimeout(() => {
       setIsDrawn(true);
     }, 40);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [path]);
 
   const reduced = isReducedMotion();
 

@@ -462,29 +462,7 @@ body {
   }
 }
 
-/* Controlled Reduced Motion (only if user explicitly opts in via settings or OS) */
-@media (prefers-reduced-motion: reduce) {
-  .animate-kpi-reveal,
-  .animate-metallic-sheen,
-  .animate-page-enter,
-  .animate-tab-glide,
-  .animate-text-smooth,
-  .animate-faq-open,
-  .animate-scale-pop,
-  .animate-shimmer,
-  .animate-highlight-fade,
-  .motion-card-interactive,
-  .motion-btn-interactive,
-  .card-hover-elevation {
-    animation: none !important;
-    transition: none !important;
-    opacity: 1 !important;
-    transform: none !important;
-  }
-  .card-hover-elevation::after {
-    display: none !important;
-  }
-}
+/* Controlled Reduced Motion (only if user explicitly opts in via settings class) */
 
 .user-reduce-motion .animate-kpi-reveal,
 .user-reduce-motion .animate-metallic-sheen,
