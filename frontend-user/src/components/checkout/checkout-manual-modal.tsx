@@ -16,6 +16,10 @@ import {
   faArrowUpRightFromSquare,
   faArrowRight,
   faReceipt,
+  faExpand,
+  faDownload,
+  faMagnifyingGlassPlus,
+  faMagnifyingGlassMinus,
 } from '@fortawesome/free-solid-svg-icons';
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
 
@@ -72,6 +76,19 @@ export function CheckoutManualModal({
   const [isPaidSuccess, setIsPaidSuccess] = useState(false);
   const [redirectCountdown, setRedirectCountdown] = useState(3);
   const [paidStatusLabel, setPaidStatusLabel] = useState('Sedang Diproses');
+  const [isQrisExpanded, setIsQrisExpanded] = useState(false);
+  const [isZoomedIn, setIsZoomedIn] = useState(false);
+
+  // Close expanded QRIS lightbox on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isQrisExpanded) {
+        setIsQrisExpanded(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isQrisExpanded]);
 
   // Handle seamless redirect to personal order tracking page (/order)
   const handleRedirectToOrder = useCallback(() => {
@@ -454,13 +471,17 @@ export function CheckoutManualModal({
 
             {data.method === 'manual_qris' && (
               <div className="p-4 bg-surface-raised rounded-xl border border-border text-center space-y-3">
-                <div className="w-56 h-56 bg-white p-3 rounded-xl mx-auto flex items-center justify-center border border-border shadow-sm overflow-hidden relative">
+                <div
+                  onClick={() => setIsQrisExpanded(true)}
+                  className="w-64 h-64 sm:w-72 sm:h-72 bg-white p-3.5 rounded-2xl mx-auto flex items-center justify-center border border-border shadow-md overflow-hidden relative cursor-zoom-in group transition-all duration-200 hover:shadow-xl hover:border-primary/40 select-none"
+                  title="Klik untuk membuka & memperbesar barcode QRIS"
+                >
                   {paymentConfig?.qris?.image_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={paymentConfig.qris.image_url}
                       alt={paymentConfig.qris.merchant_name || 'ASTERRA STORE QRIS'}
-                      className="w-full h-full object-contain rounded-lg"
+                      className="w-full h-full object-contain rounded-xl group-hover:scale-[1.02] transition-transform duration-200"
                       onError={(e) => {
                         const target = e.currentTarget;
                         target.style.display = 'none';
@@ -470,7 +491,7 @@ export function CheckoutManualModal({
                     />
                   ) : null}
                   <div
-                    className={`w-full h-full border-2 border-zinc-900 border-dashed rounded-lg flex flex-col items-center justify-center p-2 text-zinc-900 ${
+                    className={`w-full h-full border-2 border-zinc-900 border-dashed rounded-xl flex flex-col items-center justify-center p-2 text-zinc-900 ${
                       paymentConfig?.qris?.image_url ? 'hidden' : 'flex'
                     }`}
                   >
@@ -479,24 +500,50 @@ export function CheckoutManualModal({
                       {paymentConfig?.qris?.merchant_name || 'ASTERRA STORE QRIS'}
                     </span>
                   </div>
+
+                  {/* Hover Overlay Badge */}
+                  {paymentConfig?.qris?.image_url && (
+                    <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1.5 text-white backdrop-blur-[2px] rounded-2xl">
+                      <span className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-white shadow-sm">
+                        <FontAwesomeIcon icon={faExpand} className="w-4 h-4" />
+                      </span>
+                      <span className="text-[11px] font-bold px-3 py-1 rounded-full bg-black/60 text-white shadow-sm">
+                        Klik untuk Perbesar Barcode
+                      </span>
+                    </div>
+                  )}
                 </div>
-                <div className="space-y-1">
+
+                <div className="space-y-1.5">
                   <span className="text-xs font-bold text-foreground block">
                     {paymentConfig?.qris?.merchant_name || 'ASTERRA STORE QRIS'}
                   </span>
                   <p className="text-[11px] text-foreground-muted max-w-xs mx-auto">
                     Scan barcode di atas menggunakan GoPay, OVO, Dana, ShopeePay, atau BCA Mobile.
                   </p>
+
                   {paymentConfig?.qris?.image_url && (
-                    <a
-                      href={paymentConfig.qris.image_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-[11px] text-primary hover:underline font-medium pt-1"
-                    >
-                      <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="w-3 h-3" />
-                      <span>Buka Gambar QRIS Penuh</span>
-                    </a>
+                    <div className="pt-1.5 flex flex-wrap items-center justify-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setIsQrisExpanded(true)}
+                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary border border-primary/25 text-xs font-semibold transition-all cursor-pointer shadow-xs active:scale-95"
+                      >
+                        <FontAwesomeIcon icon={faExpand} className="w-3.5 h-3.5" />
+                        <span>Perbesar Barcode (Layar Lebar)</span>
+                      </button>
+
+                      <a
+                        href={paymentConfig.qris.image_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-surface hover:bg-surface-raised text-foreground-muted hover:text-foreground border border-border text-xs transition-colors"
+                        title="Buka file gambar di tab baru"
+                      >
+                        <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="w-3 h-3" />
+                        <span>Tab Baru</span>
+                      </a>
+                    </div>
                   )}
                 </div>
               </div>
@@ -571,6 +618,132 @@ export function CheckoutManualModal({
           </>
         )}
       </div>
+
+      {/* ========================================================= */}
+      {/* EXPANDED QRIS LIGHTBOX (Full screen wide barcode view)    */}
+      {/* ========================================================= */}
+      {isQrisExpanded && paymentConfig?.qris?.image_url && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Tampilan Barcode QRIS Layar Penuh"
+          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md animate-in fade-in duration-200"
+          onClick={() => setIsQrisExpanded(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-w-md sm:max-w-lg md:max-w-xl bg-surface border border-border/80 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh] animate-in zoom-in-95 duration-200"
+          >
+            {/* Lightbox Header */}
+            <div className="flex items-center justify-between p-4 border-b border-border bg-surface-raised/80">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                  <FontAwesomeIcon icon={faQrcode} className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-foreground">
+                    Barcode QRIS Resmi Toko
+                  </h4>
+                  <span className="text-[11px] text-foreground-muted block">
+                    {paymentConfig?.qris?.merchant_name || 'ASTERRA STORE QRIS'}
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsQrisExpanded(false)}
+                className="w-8 h-8 rounded-lg text-foreground-muted hover:text-foreground hover:bg-surface flex items-center justify-center transition-colors cursor-pointer"
+                title="Tutup (Esc)"
+              >
+                <FontAwesomeIcon icon={faXmark} className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Lightbox Body with Transfer Amount Bar */}
+            <div className="p-4 sm:p-5 space-y-4 overflow-y-auto flex-1 flex flex-col items-center">
+              {/* Transfer amount reminder box */}
+              <div className="w-full flex items-center justify-between p-3 rounded-xl bg-primary/10 border border-primary/20 text-xs">
+                <div>
+                  <span className="text-[11px] text-foreground-muted block">
+                    Total Nominal Wajib Ditransfer:
+                  </span>
+                  <span className="text-lg font-extrabold text-primary font-mono">
+                    Rp {formattedAmount}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => onCopy(String(amountNumber), 'amount', 'Nominal transfer tepat')}
+                  className="px-2.5 py-1.5 rounded-lg bg-primary text-white hover:bg-primary/90 text-xs font-semibold flex items-center gap-1.5 cursor-pointer shadow-xs"
+                >
+                  {copiedKey === 'amount' ? (
+                    <FontAwesomeIcon icon={faCheck} className="w-3.5 h-3.5" />
+                  ) : (
+                    <FontAwesomeIcon icon={faCopy} className="w-3.5 h-3.5" />
+                  )}
+                  <span>{copiedKey === 'amount' ? 'Tersalin' : 'Salin'}</span>
+                </button>
+              </div>
+
+              {/* The Big High-Res QRIS Canvas Card */}
+              <div
+                onClick={() => setIsZoomedIn(!isZoomedIn)}
+                className={`w-full bg-white p-4 sm:p-6 rounded-2xl border border-zinc-200 shadow-md flex items-center justify-center overflow-auto transition-all ${
+                  isZoomedIn ? 'cursor-zoom-out' : 'cursor-zoom-in'
+                }`}
+                title={isZoomedIn ? "Klik untuk memperkecil" : "Klik untuk memperbesar lebih lanjut"}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={paymentConfig.qris.image_url}
+                  alt={paymentConfig.qris.merchant_name || 'ASTERRA STORE QRIS'}
+                  className={`w-auto object-contain rounded-lg transition-transform duration-200 select-none ${
+                    isZoomedIn ? 'scale-125 max-h-[75vh]' : 'max-h-[55vh] max-w-full'
+                  }`}
+                />
+              </div>
+
+              <p className="text-[11px] text-foreground-muted text-center max-w-sm">
+                Arahkan kamera aplikasi bank/e-wallet Anda ke barcode di atas atau simpan gambar ke galeri untuk scan dari aplikasi pembayaran.
+              </p>
+            </div>
+
+            {/* Lightbox Footer Actions */}
+            <div className="p-3 sm:p-4 border-t border-border bg-surface-raised flex flex-col sm:flex-row items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setIsZoomedIn(!isZoomedIn)}
+                className="w-full sm:w-auto px-3.5 py-2.5 rounded-xl bg-surface hover:bg-surface-raised text-foreground border border-border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+              >
+                <FontAwesomeIcon
+                  icon={isZoomedIn ? faMagnifyingGlassMinus : faMagnifyingGlassPlus}
+                  className="w-3.5 h-3.5 text-primary"
+                />
+                <span>{isZoomedIn ? 'Zoom Normal' : 'Perbesar Zoom'}</span>
+              </button>
+
+              <a
+                href={paymentConfig.qris.image_url}
+                download={`QRIS-${data.orderId}.png`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full sm:w-auto px-3.5 py-2.5 rounded-xl bg-surface hover:bg-surface-raised text-foreground border border-border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+              >
+                <FontAwesomeIcon icon={faDownload} className="w-3.5 h-3.5 text-primary" />
+                <span>Simpan Gambar</span>
+              </a>
+
+              <Button
+                type="button"
+                onClick={() => setIsQrisExpanded(false)}
+                className="w-full sm:flex-1 py-2.5 h-10 rounded-xl bg-primary hover:bg-primary/90 text-white text-xs font-bold transition-all cursor-pointer shadow-md"
+              >
+                <span>Selesai & Kembali</span>
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
