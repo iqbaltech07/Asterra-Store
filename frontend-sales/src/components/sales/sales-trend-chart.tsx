@@ -46,41 +46,33 @@ const BAR_COLORS = [
   '#38BDF8', // 7. Soft cyan sky (for 7-day view)
 ];
 
-// Reference Benchmark Datasets for each period
-const BENCHMARK_DAILY: SalesDataPoint[] = [
-  { label: '08:00', orders: 2, revenue: 42350, periodDescription: '00:00 - 08:59 WIB' },
-  { label: '11:00', orders: 1, revenue: 12800, periodDescription: '09:00 - 11:59 WIB' },
-  { label: '14:00', orders: 1, revenue: 9560, periodDescription: '12:00 - 14:59 WIB' },
-  { label: '17:00', orders: 1, revenue: 8750, periodDescription: '15:00 - 17:59 WIB' },
-  { label: '20:00', orders: 1, revenue: 7420, periodDescription: '18:00 - 20:59 WIB' },
-  { label: '23:00', orders: 1, revenue: 6230, periodDescription: '21:00 - 23:59 WIB' },
+// Default 6 time intervals for daily view
+const DAILY_BUCKETS = [
+  { label: '08:00', periodDescription: '00:00 - 08:59 WIB' },
+  { label: '11:00', periodDescription: '09:00 - 11:59 WIB' },
+  { label: '14:00', periodDescription: '12:00 - 14:59 WIB' },
+  { label: '17:00', periodDescription: '15:00 - 17:59 WIB' },
+  { label: '20:00', periodDescription: '18:00 - 20:59 WIB' },
+  { label: '23:00', periodDescription: '21:00 - 23:59 WIB' },
 ];
 
-const BENCHMARK_WEEKLY: SalesDataPoint[] = [
-  { label: '19 Okt', orders: 4, revenue: 68500, periodDescription: 'Senin, 19 Okt 2026' },
-  { label: '20 Okt', orders: 3, revenue: 45200, periodDescription: 'Selasa, 20 Okt 2026' },
-  { label: '21 Okt', orders: 6, revenue: 94000, periodDescription: 'Rabu, 21 Okt 2026' },
-  { label: '22 Okt', orders: 8, revenue: 112500, periodDescription: 'Kamis, 22 Okt 2026' },
-  { label: '23 Okt', orders: 5, revenue: 87400, periodDescription: 'Jumat, 23 Okt 2026' },
-  { label: '24 Okt', orders: 9, revenue: 145000, periodDescription: 'Sabtu, 24 Okt 2026' },
-  { label: '25 Okt', orders: 7, revenue: 87110, periodDescription: 'Minggu, 25 Okt 2026 (Hari Ini)' },
-];
-
-const BENCHMARK_MONTHLY: SalesDataPoint[] = [
-  { label: '26-30 Sep', orders: 18, revenue: 280000, periodDescription: 'Periode 26 - 30 Sep 2026' },
-  { label: '01-05 Okt', orders: 24, revenue: 410500, periodDescription: 'Periode 01 - 05 Okt 2026' },
-  { label: '06-10 Okt', orders: 22, revenue: 375000, periodDescription: 'Periode 06 - 10 Okt 2026' },
-  { label: '11-15 Okt', orders: 31, revenue: 520000, periodDescription: 'Periode 11 - 15 Okt 2026' },
-  { label: '16-20 Okt', orders: 28, revenue: 490500, periodDescription: 'Periode 16 - 20 Okt 2026' },
-  { label: '21-25 Okt', orders: 36, revenue: 640000, periodDescription: 'Periode 21 - 25 Okt 2026 (Berjalan)' },
-];
+/**
+ * Formats a local date to YYYY-MM-DD string
+ */
+function toLocalDateString(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
 
 /**
  * Calculates optimal dynamic Y-axis maximum & 6 tick intervals
  */
 function calculateYAxisTicks(maxValue: number): { maxAxisValue: number; yTicks: number[] } {
   let ceiling = 50000;
-  if (maxValue <= 10000) ceiling = 10000;
+  if (maxValue === 0) ceiling = 50000;
+  else if (maxValue <= 10000) ceiling = 10000;
   else if (maxValue <= 25000) ceiling = 25000;
   else if (maxValue <= 50000) ceiling = 50000;
   else if (maxValue <= 100000) ceiling = 100000;
@@ -154,120 +146,120 @@ export function SalesTrendChart({
     if (onPeriodChange) onPeriodChange(period);
   };
 
-  // Compute active dataset based on period & real orders
+  // Compute active dataset based on selected period & actual partner orders
   const activeData: SalesDataPoint[] = useMemo(() => {
-    // 1. If explicit salesData provided and matches, use it
-    if (salesData && salesData.length > 0 && salesData.some((d) => d.revenue > 0)) {
+    // 1. If explicit salesData provided and contains values, use it
+    if (salesData && salesData.length > 0) {
       return salesData;
     }
 
-    // 2. Real Orders Aggregation (if partner has real recorded orders)
-    if (orders && orders.length > 0) {
-      const now = new Date();
+    const now = new Date();
 
-      if (currentPeriod === 'daily') {
-        const todayStr = now.toISOString().slice(0, 10);
-        const todayOrders = orders.filter((o) => (o.createdAt || '').slice(0, 10) === todayStr);
+    // 2. Daily View: 6 time buckets for today
+    if (currentPeriod === 'daily') {
+      const todayStr = toLocalDateString(now);
+      const buckets: SalesDataPoint[] = DAILY_BUCKETS.map((b) => ({
+        label: b.label,
+        orders: 0,
+        revenue: 0,
+        periodDescription: b.periodDescription,
+      }));
 
-        if (todayOrders.length > 0) {
-          const buckets: SalesDataPoint[] = [
-            { label: '08:00', orders: 0, revenue: 0, periodDescription: '00:00 - 08:59 WIB' },
-            { label: '11:00', orders: 0, revenue: 0, periodDescription: '09:00 - 11:59 WIB' },
-            { label: '14:00', orders: 0, revenue: 0, periodDescription: '12:00 - 14:59 WIB' },
-            { label: '17:00', orders: 0, revenue: 0, periodDescription: '15:00 - 17:59 WIB' },
-            { label: '20:00', orders: 0, revenue: 0, periodDescription: '18:00 - 20:59 WIB' },
-            { label: '23:00', orders: 0, revenue: 0, periodDescription: '21:00 - 23:59 WIB' },
-          ];
+      if (orders && orders.length > 0) {
+        const todayOrders = orders.filter((o) => {
+          if (!o.createdAt) return false;
+          const oDate = new Date(o.createdAt);
+          return toLocalDateString(oDate) === todayStr;
+        });
 
-          todayOrders.forEach((o) => {
-            const date = new Date(o.createdAt);
-            const hour = date.getHours();
-            const comm = o.commission || Math.round((o.totalAmount || 0) * (partnerRate / 100));
+        todayOrders.forEach((o) => {
+          const date = new Date(o.createdAt);
+          const hour = date.getHours();
+          const comm = o.commission || Math.round((o.totalAmount || 0) * (partnerRate / 100));
 
-            let bIndex = 0;
-            if (hour < 9) bIndex = 0;
-            else if (hour < 12) bIndex = 1;
-            else if (hour < 15) bIndex = 2;
-            else if (hour < 18) bIndex = 3;
-            else if (hour < 21) bIndex = 4;
-            else bIndex = 5;
+          let bIndex = 0;
+          if (hour < 9) bIndex = 0;
+          else if (hour < 12) bIndex = 1;
+          else if (hour < 15) bIndex = 2;
+          else if (hour < 18) bIndex = 3;
+          else if (hour < 21) bIndex = 4;
+          else bIndex = 5;
 
-            buckets[bIndex].orders += 1;
-            buckets[bIndex].revenue += comm;
-          });
-
-          return buckets;
-        }
-      } else if (currentPeriod === 'weekly') {
-        // Last 7 days
-        const days: SalesDataPoint[] = [];
-        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
-
-        for (let i = 6; i >= 0; i--) {
-          const d = new Date(now);
-          d.setDate(d.getDate() - i);
-          const dStr = d.toISOString().slice(0, 10);
-          const dLabel = `${d.getDate()} ${monthNames[d.getMonth()]}`;
-
-          const matchedOrders = orders.filter((o) => (o.createdAt || '').slice(0, 10) === dStr);
-          const totalComm = matchedOrders.reduce((sum, o) => {
-            return sum + (o.commission || Math.round((o.totalAmount || 0) * (partnerRate / 100)));
-          }, 0);
-
-          days.push({
-            label: dLabel,
-            orders: matchedOrders.length,
-            revenue: totalComm,
-            periodDescription: `${dLabel} 2026`,
-          });
-        }
-
-        if (days.some((d) => d.revenue > 0)) {
-          return days;
-        }
-      } else if (currentPeriod === 'monthly') {
-        // 6 intervals across 30 days
-        const intervals: SalesDataPoint[] = [];
-        for (let i = 5; i >= 0; i--) {
-          const startDaysAgo = (i + 1) * 5;
-          const endDaysAgo = i * 5;
-          const dStart = new Date(now);
-          dStart.setDate(dStart.getDate() - startDaysAgo);
-          const dEnd = new Date(now);
-          dEnd.setDate(dEnd.getDate() - endDaysAgo);
-
-          const matchedOrders = orders.filter((o) => {
-            const oDate = new Date(o.createdAt);
-            return oDate >= dStart && oDate <= dEnd;
-          });
-
-          const totalComm = matchedOrders.reduce((sum, o) => {
-            return sum + (o.commission || Math.round((o.totalAmount || 0) * (partnerRate / 100)));
-          }, 0);
-
-          const label = `${dStart.getDate()} - ${dEnd.getDate()} ${dEnd.toLocaleString('id-ID', { month: 'short' })}`;
-          intervals.push({
-            label,
-            orders: matchedOrders.length,
-            revenue: totalComm,
-            periodDescription: `Rentang ${label}`,
-          });
-        }
-
-        if (intervals.some((d) => d.revenue > 0)) {
-          return intervals;
-        }
+          buckets[bIndex].orders += 1;
+          buckets[bIndex].revenue += comm;
+        });
       }
+
+      return buckets;
     }
 
-    // 3. Fallback Benchmark Data (when partner has no orders yet in database)
+    // 3. Weekly View: Last 7 days
     if (currentPeriod === 'weekly') {
-      return BENCHMARK_WEEKLY;
+      const days: SalesDataPoint[] = [];
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(now);
+        d.setDate(d.getDate() - i);
+        const dStr = toLocalDateString(d);
+        const dLabel = `${d.getDate()} ${monthNames[d.getMonth()]}`;
+
+        const matchedOrders = (orders || []).filter((o) => {
+          if (!o.createdAt) return false;
+          const oDate = new Date(o.createdAt);
+          return toLocalDateString(oDate) === dStr;
+        });
+
+        const totalComm = matchedOrders.reduce((sum, o) => {
+          return sum + (o.commission || Math.round((o.totalAmount || 0) * (partnerRate / 100)));
+        }, 0);
+
+        days.push({
+          label: dLabel,
+          orders: matchedOrders.length,
+          revenue: totalComm,
+          periodDescription: `${dLabel} ${d.getFullYear()}${i === 0 ? ' (Hari Ini)' : ''}`,
+        });
+      }
+
+      return days;
     }
-    if (currentPeriod === 'monthly') {
-      return BENCHMARK_MONTHLY;
+
+    // 4. Monthly View: 6 intervals across 30 days
+    const intervals: SalesDataPoint[] = [];
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+
+    for (let i = 5; i >= 0; i--) {
+      const startDaysAgo = (i + 1) * 5;
+      const endDaysAgo = i * 5;
+      const dStart = new Date(now);
+      dStart.setDate(dStart.getDate() - startDaysAgo);
+      dStart.setHours(0, 0, 0, 0);
+
+      const dEnd = new Date(now);
+      dEnd.setDate(dEnd.getDate() - endDaysAgo);
+      dEnd.setHours(23, 59, 59, 999);
+
+      const matchedOrders = (orders || []).filter((o) => {
+        if (!o.createdAt) return false;
+        const oDate = new Date(o.createdAt);
+        return oDate >= dStart && oDate <= dEnd;
+      });
+
+      const totalComm = matchedOrders.reduce((sum, o) => {
+        return sum + (o.commission || Math.round((o.totalAmount || 0) * (partnerRate / 100)));
+      }, 0);
+
+      const label = `${dStart.getDate()} - ${dEnd.getDate()} ${monthNames[dEnd.getMonth()]}`;
+      intervals.push({
+        label,
+        orders: matchedOrders.length,
+        revenue: totalComm,
+        periodDescription: `Rentang ${label} ${dEnd.getFullYear()}`,
+      });
     }
-    return BENCHMARK_DAILY;
+
+    return intervals;
   }, [salesData, orders, currentPeriod, partnerRate]);
 
   // Aggregate statistics for active period
@@ -371,15 +363,29 @@ export function SalesTrendChart({
           ))}
         </div>
 
+        {/* Subtle Zero-Activity Notification Banner */}
+        {totalPeriodOrders === 0 && (
+          <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 z-20 flex flex-col items-center justify-center text-center px-4 pointer-events-none">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/95 border border-slate-200/90 text-slate-700 text-xs font-semibold shadow-xs mb-1 backdrop-blur-xs">
+              <BarChart3 className="w-3.5 h-3.5 text-slate-400" />
+              <span>Belum ada aktivitas penjualan pada periode ini</span>
+            </div>
+            <p className="text-[11px] text-slate-400 max-w-sm">
+              Bagikan tautan referral atau kupon Anda untuk mulai mencatat pesanan dan komisi.
+            </p>
+          </div>
+        )}
+
         {/* Bar Container with Unified Admin Motion Engine */}
         <div className="relative z-10 pl-12 pr-2 h-56 flex items-end justify-between gap-1.5 sm:gap-3">
           {activeData.map((item, idx) => {
-            const heightRatio = Math.min(1, Math.max(0.04, item.revenue / maxAxisValue));
+            const hasRevenue = item.revenue > 0;
+            const heightRatio = hasRevenue ? Math.min(1, Math.max(0.06, item.revenue / maxAxisValue)) : 0;
             const barColor = BAR_COLORS[idx % BAR_COLORS.length];
             const isHovered = hoveredIndex === idx;
 
             // Staggered motion delay matching admin motion tokens
-            const transitionDelayMs = !reducedMotion && mounted ? idx * MOTION_STAGGER.chartBar : 0;
+            const transitionDelayMs = !reducedMotion && mounted && hasRevenue ? idx * MOTION_STAGGER.chartBar : 0;
 
             return (
               <div
@@ -404,23 +410,29 @@ export function SalesTrendChart({
                 )}
 
                 {/* Animated Revenue Label with Count-Up Motion */}
-                <AnimatedBarRevenue value={item.revenue} isHovered={isHovered} />
+                {hasRevenue ? (
+                  <AnimatedBarRevenue value={item.revenue} isHovered={isHovered} />
+                ) : (
+                  <span className="text-[10px] sm:text-[11px] font-mono mb-1.5 tabular-nums text-center text-slate-300 select-none">
+                    -
+                  </span>
+                )}
 
                 {/* Scaled Bar Track with Staggered Height Animation matching Admin */}
                 <div className="w-full h-full flex items-end justify-center">
                   <div
                     className="w-full max-w-[48px] rounded-t-md"
                     style={{
-                      height: mounted ? `${Math.round(heightRatio * 100)}%` : '0%',
-                      backgroundColor: barColor,
+                      height: mounted && hasRevenue ? `${Math.round(heightRatio * 100)}%` : '2px',
+                      backgroundColor: hasRevenue ? barColor : '#E2E8F0',
                       transition: reducedMotion
                         ? 'none'
                         : `height ${MOTION_DURATION.chart}ms ${MOTION_EASING.editorial}, opacity 300ms ease, transform 200ms ${MOTION_EASING.springPop}`,
                       transitionDelay: `${transitionDelayMs}ms`,
                       opacity: hoveredIndex !== null && !isHovered ? 0.45 : 1,
-                      transform: isHovered ? 'scaleY(1.025)' : 'scaleY(1)',
+                      transform: isHovered && hasRevenue ? 'scaleY(1.025)' : 'scaleY(1)',
                       transformOrigin: 'bottom',
-                      boxShadow: isHovered ? `0 4px 14px ${barColor}50` : 'none',
+                      boxShadow: isHovered && hasRevenue ? `0 4px 14px ${barColor}50` : 'none',
                     }}
                   />
                 </div>

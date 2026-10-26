@@ -94,52 +94,26 @@ export function SalesOverviewTab({
   const totalSalesAmountVal = partner?.totalSalesAmount ?? 0;
   const paidCommissionVal = partner?.paidCommission ?? 0;
 
-  // Recent referral orders fallback if list is empty
-  const sampleReferralOrders = [
-    {
-      id: 'AST-ORD-20261024-9692',
-      customer: 'Pembeli',
-      time: '24 Okt 2026, 14:16',
-      product: 'Netflix Premium Shared 30 Hari',
-      method: 'QRIS',
-      total: 17000,
-      commission: 1700,
-      status: 'Selesai',
-    },
-    {
-      id: 'AST-ORD-20261023-9398',
-      customer: 'Pembeli',
-      time: '23 Okt 2026, 20:10',
-      product: 'Google Gemini Pro Anggota 1 Tahun',
-      method: 'QRIS',
-      total: 95700,
-      commission: 9570,
-      status: 'Selesai',
-    },
-    {
-      id: 'AST-ORD-20261023-1945',
-      customer: 'Pembeli',
-      time: '23 Okt 2026, 20:04',
-      product: 'CapCut Pro Private 7 Hari',
-      method: 'QRIS',
-      total: 41700,
-      commission: 4170,
-      status: 'Selesai',
-    },
-  ];
-
-  const recentOrders = orders.length > 0
-    ? orders.slice(0, 5).map((o) => ({
-        id: o.id,
-        customer: o.customerName || 'Pembeli',
-        time: o.createdAt || 'Baru saja',
-        product: o.productNames || 'Produk Digital',
-        method: o.paymentStatus || 'QRIS',
-        total: o.totalAmount || 0,
-        commission: o.commission || Math.round((o.totalAmount || 0) * (partnerRate / 100)),
-        status: o.status === 'completed' || o.status === 'success' ? 'Selesai' : 'Diproses',
-      }))
-    : sampleReferralOrders;
+  // Actual recent referral orders for this partner
+  const recentOrders = useMemo(() => {
+    return (orders || []).slice(0, 5).map((o) => ({
+      id: o.id,
+      customer: o.customerName || 'Pembeli',
+      time: o.createdAt
+        ? new Date(o.createdAt).toLocaleString('id-ID', {
+            day: 'numeric',
+            month: 'short',
+            hour: '2-digit',
+            minute: '2-digit',
+          })
+        : 'Baru saja',
+      product: o.productNames || 'Produk Digital',
+      method: o.paymentStatus || 'QRIS',
+      total: o.totalAmount || 0,
+      commission: o.commission || Math.round((o.totalAmount || 0) * (partnerRate / 100)),
+      status: o.status === 'completed' || o.status === 'success' ? 'Selesai' : 'Diproses',
+    }));
+  }, [orders, partnerRate]);
 
   return (
     <div className="space-y-4 sm:space-y-5 animate-fade-up">
@@ -263,9 +237,9 @@ export function SalesOverviewTab({
               </div>
               {/* Animated Emerald Sparkline */}
               <SparklinePath
-                path="M1 14L8 10L15 12L22 4L27 2"
-                arrowPath="M22 2H27V7"
-                endDot={{ cx: 27, cy: 2 }}
+                path={unpaidCommissionVal > 0 ? "M1 14L8 10L15 12L22 4L27 2" : "M1 12L8 12L15 11L21 12L27 12"}
+                arrowPath={unpaidCommissionVal > 0 ? "M22 2H27V7" : undefined}
+                endDot={{ cx: 27, cy: unpaidCommissionVal > 0 ? 2 : 12 }}
                 color="#16A36A"
                 gradientId="sparkline-emerald"
                 delay={isInitial ? 0 : 0}
@@ -281,7 +255,7 @@ export function SalesOverviewTab({
             </div>
           </div>
           <div className="mt-3 pt-2 border-t border-slate-100 flex items-center gap-1 text-[11px] text-[#16A36A] font-medium">
-            <span>↑</span>
+            <span>{unpaidCommissionVal > 0 ? '↑' : '•'}</span>
             <span>Siap ditransfer ke Rekening</span>
           </div>
         </div>
@@ -303,9 +277,9 @@ export function SalesOverviewTab({
               </div>
               {/* Animated Indigo Sparkline */}
               <SparklinePath
-                path="M1 13L8 11L15 13L21 6L27 3"
-                arrowPath="M22 3H27V8"
-                endDot={{ cx: 27, cy: 3 }}
+                path={totalOrdersVal > 0 ? "M1 13L8 11L15 13L21 6L27 3" : "M1 12L8 12L15 11L21 12L27 12"}
+                arrowPath={totalOrdersVal > 0 ? "M22 3H27V8" : undefined}
+                endDot={{ cx: 27, cy: totalOrdersVal > 0 ? 3 : 12 }}
                 color="#6366F1"
                 gradientId="sparkline-indigo"
                 delay={isInitial ? 80 : 0}
@@ -341,9 +315,9 @@ export function SalesOverviewTab({
               </div>
               {/* Animated Sky Blue Sparkline */}
               <SparklinePath
-                path="M1 14L9 11L15 13L21 7L27 2"
-                arrowPath="M22 2H27V7"
-                endDot={{ cx: 27, cy: 2 }}
+                path={totalClicksVal > 0 ? "M1 14L9 11L15 13L21 7L27 2" : "M1 12L8 12L15 11L21 12L27 12"}
+                arrowPath={totalClicksVal > 0 ? "M22 2H27V7" : undefined}
+                endDot={{ cx: 27, cy: totalClicksVal > 0 ? 2 : 12 }}
                 color="#0284C7"
                 gradientId="sparkline-sky"
                 delay={isInitial ? 160 : 0}
@@ -358,7 +332,7 @@ export function SalesOverviewTab({
             </div>
           </div>
           <div className="mt-3 pt-2 border-t border-slate-100 flex items-center gap-1 text-[11px] text-[#0284C7] font-medium">
-            <span>↑</span>
+            <span>{totalClicksVal > 0 ? '↑' : '•'}</span>
             <span>Rasio Konversi: {conversionRate}</span>
           </div>
         </div>
@@ -380,9 +354,9 @@ export function SalesOverviewTab({
               </div>
               {/* Animated Amber Sparkline */}
               <SparklinePath
-                path="M1 14L8 12L15 13L21 8L27 4"
-                arrowPath="M22 4H27V9"
-                endDot={{ cx: 27, cy: 4 }}
+                path={totalCommissionVal > 0 ? "M1 14L8 12L15 13L21 8L27 4" : "M1 12L8 12L15 11L21 12L27 12"}
+                arrowPath={totalCommissionVal > 0 ? "M22 4H27V9" : undefined}
+                endDot={{ cx: 27, cy: totalCommissionVal > 0 ? 4 : 12 }}
                 color="#D97706"
                 gradientId="sparkline-amber"
                 delay={isInitial ? 240 : 0}
@@ -419,9 +393,9 @@ export function SalesOverviewTab({
               </div>
               {/* Animated Purple Sparkline */}
               <SparklinePath
-                path="M1 14L8 11L16 13L22 6L27 2"
-                arrowPath="M22 2H27V7"
-                endDot={{ cx: 27, cy: 2 }}
+                path={pendingCommissionVal > 0 ? "M1 14L8 11L16 13L22 6L27 2" : "M1 12L8 12L15 11L21 12L27 12"}
+                arrowPath={pendingCommissionVal > 0 ? "M22 2H27V7" : undefined}
+                endDot={{ cx: 27, cy: pendingCommissionVal > 0 ? 2 : 12 }}
                 color="#8B5CF6"
                 gradientId="sparkline-purple"
                 delay={isInitial ? 320 : 0}
@@ -496,40 +470,65 @@ export function SalesOverviewTab({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {recentOrders.map((order) => (
-                    <tr key={order.id} className="hover:bg-slate-50/60 transition-colors">
-                      <td className="py-3">
-                        <div className="font-bold text-slate-900 font-mono text-xs">
-                          {order.id}
-                        </div>
-                        <div className="text-[11px] text-slate-400 mt-0.5">
-                          {order.customer} • {order.time}
-                        </div>
-                      </td>
-                      <td className="py-3">
-                        <div className="flex items-center gap-2">
-                          <ProductBrandIcon name={order.product} className="w-6 h-6 rounded-full" />
-                          <div>
-                            <div className="font-semibold text-slate-800 text-xs">
-                              {order.product}
-                            </div>
-                            <div className="text-[10px] text-slate-400">Produk Digital</div>
+                  {recentOrders.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="py-10 text-center">
+                        <div className="flex flex-col items-center justify-center space-y-2.5">
+                          <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400">
+                            <ShoppingBag className="w-5 h-5" />
                           </div>
+                          <div>
+                            <p className="font-bold text-xs text-slate-800">Belum Ada Pesanan Referral</p>
+                            <p className="text-[11px] text-slate-400 max-w-sm mt-0.5">
+                              Tautan referral Anda belum memiliki catatan transaksi. Bagikan link referral Anda untuk mulai menghasilkan komisi!
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => onTabChange && onTabChange('sales-links')}
+                            className="px-3.5 py-1.5 text-xs font-semibold text-white bg-[#2563EB] hover:bg-blue-700 rounded-lg shadow-xs transition-colors cursor-pointer"
+                          >
+                            Bagikan Tautan Promo
+                          </button>
                         </div>
-                      </td>
-                      <td className="py-3 font-semibold text-slate-900 text-xs font-mono">
-                        Rp {order.total.toLocaleString('id-ID')}
-                      </td>
-                      <td className="py-3 font-bold text-emerald-600 text-xs font-mono">
-                        +Rp {order.commission.toLocaleString('id-ID')}
-                      </td>
-                      <td className="py-3 text-right">
-                        <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-600 border border-emerald-200/80">
-                          {order.status}
-                        </span>
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    recentOrders.map((order) => (
+                      <tr key={order.id} className="hover:bg-slate-50/60 transition-colors">
+                        <td className="py-3">
+                          <div className="font-bold text-slate-900 font-mono text-xs">
+                            {order.id}
+                          </div>
+                          <div className="text-[11px] text-slate-400 mt-0.5">
+                            {order.customer} • {order.time}
+                          </div>
+                        </td>
+                        <td className="py-3">
+                          <div className="flex items-center gap-2">
+                            <ProductBrandIcon name={order.product} className="w-6 h-6 rounded-full" />
+                            <div>
+                              <div className="font-semibold text-slate-800 text-xs">
+                                {order.product}
+                              </div>
+                              <div className="text-[10px] text-slate-400">Produk Digital</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-3 font-semibold text-slate-900 text-xs font-mono">
+                          Rp {order.total.toLocaleString('id-ID')}
+                        </td>
+                        <td className="py-3 font-bold text-emerald-600 text-xs font-mono">
+                          +Rp {order.commission.toLocaleString('id-ID')}
+                        </td>
+                        <td className="py-3 text-right">
+                          <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-600 border border-emerald-200/80">
+                            {order.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>

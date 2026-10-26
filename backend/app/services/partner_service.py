@@ -239,7 +239,7 @@ class PartnerService:
                     (p for p in partners if str(p.get("id", "")).lower() == clean_id or str(p.get("code", "")).lower() == clean_id or str(p.get("email", "")).lower() == clean_id),
                     None
                 )
-            if not partner and partners:
+            if not partner and not identifier and partners:
                 partner = partners[0]
 
         if not partner:
@@ -345,10 +345,6 @@ class PartnerService:
         partner = None
         if identifier:
             partner = cls.find_by_email(identifier) or cls.find_by_code(identifier) or cls.find_by_id(identifier)
-        if not partner:
-            partners = cls.load_partners()
-            partner = partners[0] if len(partners) > 0 else None
-
         if not partner:
             return []
 
@@ -520,11 +516,10 @@ class PartnerService:
         partner = None
         if identifier:
             partner = cls.find_by_email(identifier) or cls.find_by_code(identifier) or cls.find_by_id(identifier)
-        if not partner:
-            partners = cls.load_partners()
-            partner = partners[0] if len(partners) > 0 else None
-
         from app.services.partner_network import calculate_partner_network
+        if not partner:
+            return calculate_partner_network(None, [], [])
+
         return calculate_partner_network(partner, cls.load_partners(), cls.load_orders())
 
 
@@ -898,8 +893,6 @@ class PartnerService:
                 (p for p in partners if p.get("id") == partner_id or p.get("code") == partner_id or p.get("email") == partner_id),
                 None
             )
-            if not partner and len(partners) > 0:
-                partner = partners[0]
 
         if not partner:
             return {"success": False, "message": "Akun mitra sales tidak ditemukan atau belum terdaftar."}
