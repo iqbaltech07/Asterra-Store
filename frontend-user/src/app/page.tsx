@@ -37,7 +37,6 @@ import { QuickViewModal, QuickViewProductData } from '@/components/products/quic
 import { getRecentlyViewed, RecentlyViewedItem } from '@/lib/services/recently-viewed';
 import { ProductItem } from '@/lib/products-data';
 import { HeroBannerSwiper } from '@/components/home/hero-banner-swiper';
-import { AppBrandBadge } from '@/components/home/app-brand-badge';
 import {
   ApplicationGroupItem,
   FeaturedGridCard,

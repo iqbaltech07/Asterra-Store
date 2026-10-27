@@ -492,7 +492,7 @@ function GlobalOrdersContent() {
                     className="bg-surface border border-border rounded-xl p-4 sm:p-5 transition-all duration-150 hover:border-primary/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
                   >
                     <div className="flex items-start gap-3.5">
-                      <ProductBrandIcon name={order.product_name} className="w-10 h-10 rounded-xl" />
+                      <ProductBrandIcon name={order.product_name} className="w-10 h-10 rounded-full" />
                       <div data-gsap="order-info" className="space-y-1">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="font-mono font-bold text-sm text-foreground">

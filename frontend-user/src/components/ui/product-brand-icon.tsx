@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { Package, Gamepad2 } from 'lucide-react';
+import { Package, Gamepad2, Tv } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 /**
  * Brandfetch CDN Logo Registry
@@ -52,6 +53,28 @@ export function resolveBrandLogo(name: string = '', fallbackUrl: string = ''): s
   return fallbackUrl || '';
 }
 
+/**
+ * Returns true if the logo asset is a standalone glyph on a transparent / white background
+ * that needs inner padding so the glyph doesn't touch the circular border.
+ * Logos with official solid/gradient backgrounds (Canva, CapCut, iQIYI, Netflix, Spotify, Disney, etc.)
+ * return false so they can fill the circular avatar edge-to-edge without exposing square asset corners.
+ */
+export function isPaddedBrand(name: string): boolean {
+  const n = (name || '').toLowerCase();
+  return (
+    n.includes('chatgpt') ||
+    n.includes('openai') ||
+    n.includes('gemini') ||
+    n.includes('google') ||
+    n.includes('youtube') ||
+    n.includes('vidio') ||
+    n.includes('viu') ||
+    n.includes('wetv') ||
+    n.includes('midjourney') ||
+    n.includes('grammarly')
+  );
+}
+
 export function ProductBrandIcon({
   name,
   imageUrl,
@@ -64,24 +87,59 @@ export function ProductBrandIcon({
   const [hasError, setHasError] = React.useState(false);
   const n = (name || '').toLowerCase();
 
-  // Game items: jangan di-fetch dulu, gunakan icon Gamepad
+  // Strip accidental squircle/corner radius classes to guarantee a circular avatar
+  const sanitizedClassName = (className || '')
+    .replace(/\brounded-(?:none|xs|sm|md|lg|xl|2xl|3xl)\b/g, '')
+    .trim();
+
+  // Game items: gunakan icon Gamepad
   if (n.includes('mobile legend') || n.includes('mlbb') || n.includes('pubg')) {
-    const containerClass = className || 'w-8 h-8 rounded-full border border-amber-500/20 shadow-2xs flex items-center justify-center shrink-0 overflow-hidden bg-amber-500/10 text-amber-500';
+    const gameClass = cn(
+      'relative aspect-square shrink-0 rounded-full overflow-hidden flex items-center justify-center border border-amber-500/20 shadow-2xs bg-amber-500/10 text-amber-500 select-none',
+      !sanitizedClassName.includes('w-') && 'w-8 h-8',
+      sanitizedClassName,
+      'rounded-full'
+    );
     return (
-      <div className={containerClass}>
-        <Gamepad2 className="w-4 h-4" />
+      <div className={gameClass}>
+        <Gamepad2 className="w-1/2 h-1/2" />
       </div>
     );
   }
 
-  const resolvedUrl = (imageUrl && (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')))
-    ? imageUrl
-    : resolveBrandLogo(name, imageUrl || '');
+  // TV items: gunakan icon TV
+  if (n.includes('k-vision') || n.includes('nex') || n.includes('vision') || n.includes('orange tv')) {
+    const tvClass = cn(
+      'relative aspect-square shrink-0 rounded-full overflow-hidden flex items-center justify-center border border-slate-800 shadow-2xs bg-[#121A2A] text-[#C96F55] select-none',
+      !sanitizedClassName.includes('w-') && 'w-8 h-8',
+      sanitizedClassName,
+      'rounded-full'
+    );
+    return (
+      <div className={tvClass}>
+        <Tv className="w-1/2 h-1/2" />
+      </div>
+    );
+  }
 
-  const containerClass = className || 'w-8 h-8 rounded-full border border-slate-200/80 shadow-2xs flex items-center justify-center shrink-0 overflow-hidden bg-white';
+  const resolvedUrl =
+    imageUrl && (imageUrl.startsWith('http://') || imageUrl.startsWith('https://'))
+      ? imageUrl
+      : resolveBrandLogo(name, imageUrl || '');
+
+  const isDark = n.includes('netflix');
+  const baseTheme = isDark ? 'bg-black border-slate-800' : 'bg-white border-slate-200/80';
+
+  const containerClass = cn(
+    'relative aspect-square shrink-0 rounded-full overflow-hidden flex items-center justify-center border shadow-2xs select-none',
+    !sanitizedClassName.includes('w-') && 'w-8 h-8',
+    baseTheme,
+    sanitizedClassName,
+    'rounded-full'
+  );
 
   if (resolvedUrl && !hasError) {
-    const isTransparentLogo = n.includes('chatgpt') || n.includes('openai') || n.includes('gemini') || n.includes('google') || n.includes('youtube');
+    const isPadded = isPaddedBrand(n);
 
     return (
       <div className={containerClass}>
@@ -89,7 +147,11 @@ export function ProductBrandIcon({
         <img
           src={resolvedUrl}
           alt={name}
-          className={`w-full h-full ${isTransparentLogo ? 'object-contain p-1.5' : 'object-cover'}`}
+          draggable={false}
+          className={cn(
+            'w-full h-full block transition-transform',
+            isPadded ? 'object-contain p-1.5' : 'object-cover p-0'
+          )}
           loading="lazy"
           onError={() => setHasError(true)}
         />
@@ -97,9 +159,27 @@ export function ProductBrandIcon({
     );
   }
 
+  const initials = (name || '')
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() || '')
+    .join('');
+
   return (
-    <div className={containerClass}>
-      <Package className="w-4 h-4 text-slate-400" />
+    <div
+      className={cn(
+        'relative aspect-square shrink-0 rounded-full overflow-hidden flex items-center justify-center border border-slate-200/80 bg-slate-100 text-slate-500 font-bold shadow-2xs select-none',
+        !sanitizedClassName.includes('w-') && 'w-8 h-8',
+        sanitizedClassName,
+        'rounded-full'
+      )}
+    >
+      {initials ? (
+        <span className="text-[11px] font-black tracking-tight select-none">{initials}</span>
+      ) : (
+        <Package className="w-1/2 h-1/2 text-slate-400" />
+      )}
     </div>
   );
 }

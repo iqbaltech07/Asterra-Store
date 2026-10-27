@@ -52,7 +52,7 @@ export function FeaturedGridCardSkeleton() {
     <div className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-2.5 sm:p-3.5 flex flex-col justify-between w-full h-[155px] sm:h-[165px] animate-pulse select-none">
       <div>
         <div className="flex items-start gap-2 sm:gap-2.5">
-          <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-[#121A2A]/8 shrink-0" />
+          <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-[#121A2A]/8 shrink-0" />
           <div className="min-w-0 flex-1 space-y-2 pt-0.5">
             <div className="h-3.5 bg-[#121A2A]/10 rounded-md w-3/4" />
             <div className="h-2.5 bg-[#121A2A]/6 rounded-md w-1/2" />
@@ -77,7 +77,7 @@ export function ShowcaseLoopingCardSkeleton() {
     <div className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl sm:rounded-2xl p-3 sm:p-3.5 flex flex-col justify-between shrink-0 flex-none w-[230px] sm:w-[260px] lg:w-[280px] h-[150px] sm:h-[158px] mr-3 sm:mr-4 animate-pulse select-none">
       <div>
         <div className="flex items-start gap-2.5 sm:gap-3">
-          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-[#121A2A]/8 shrink-0" />
+          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#121A2A]/8 shrink-0" />
           <div className="min-w-0 flex-1 space-y-2 pt-0.5">
             <div className="h-3.5 bg-[#121A2A]/10 rounded-md w-3/4" />
             <div className="h-2.5 bg-[#121A2A]/6 rounded-md w-1/2" />
@@ -123,7 +123,7 @@ export function FeaturedGridCard({
           <Link
             href={`/products/${app.slug}`}
             data-gsap="product-image"
-            className="w-9 h-9 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-[#121A2A]/5 border border-[rgba(18,26,42,0.08)] flex items-center justify-center overflow-hidden shrink-0 group-hover:scale-105 transition-transform"
+            className="w-9 h-9 sm:w-11 sm:h-11 rounded-full flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform"
           >
             <AppBrandBadge name={app.name} />
           </Link>
@@ -255,7 +255,7 @@ export function ShowcaseLoopingCard({
         <div className="flex items-start gap-2.5 sm:gap-3">
           <Link
             href={`/products/${app.slug}`}
-            className="w-10 h-10 sm:w-11 sm:h-11 rounded-lg sm:rounded-xl bg-[#121A2A]/5 border border-[rgba(18,26,42,0.08)] flex items-center justify-center overflow-hidden shrink-0 group-hover:scale-105 transition-transform"
+            className="w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform"
           >
             <AppBrandBadge name={app.name} />
           </Link>

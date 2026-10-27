@@ -1033,7 +1033,7 @@ function PrivateOrderContent() {
                           className="py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs"
                         >
                           <div className="flex items-center gap-3">
-                            <ProductBrandIcon name={pName} className="w-8 h-8 rounded-lg" />
+                            <ProductBrandIcon name={pName} className="w-8 h-8 rounded-full" />
                             <div className="space-y-0.5">
                               <h4 className="font-medium text-foreground">
                                 {pName}
