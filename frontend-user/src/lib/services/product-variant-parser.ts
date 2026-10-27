@@ -1,4 +1,4 @@
-import { ProductItem } from '@/lib/products-data';
+import { ProductItem, isProductOutOfStock } from '@/lib/products-data';
 import { BRAND_ICONS_MAP } from '@/components/ui/product-brand-icon';
 
 export interface ParsedVariant {
@@ -439,10 +439,7 @@ export function parseProductVariant(
     paket = base || 'Standard';
   }
 
-  const isOutOfStock =
-    (p.stock !== undefined && p.stock <= 0) ||
-    p.providerStatus === 'empty' ||
-    p.status === 'out_of_stock';
+  const isOutOfStock = isProductOutOfStock(p);
 
   return {
     id,

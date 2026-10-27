@@ -26,3 +26,21 @@ export interface ProductItem {
 }
 
 export const PRODUCTS_CATALOG: ProductItem[] = [];
+
+/**
+ * Authoritative helper to check if a catalog product or variant is out of stock.
+ * Checks stock <= 0, providerStatus === 'empty', or status === 'out_of_stock'.
+ */
+export function isProductOutOfStock(product?: {
+  stock?: number;
+  providerStatus?: string;
+  status?: string;
+} | null): boolean {
+  if (!product) return false;
+  return (
+    (product.stock !== undefined && product.stock <= 0) ||
+    product.providerStatus === 'empty' ||
+    product.status === 'out_of_stock'
+  );
+}
+

@@ -26,6 +26,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { useActiveCampaigns } from '@/lib/hooks/use-active-campaigns';
 import { calculateCampaignPrice, getCampaignCountdown } from '@/lib/utils/promo-pricing';
+import { isProductOutOfStock } from '@/lib/products-data';
 import { ParsedVariant } from '@/lib/services/product-variant-parser';
 import { saveRecentlyViewed } from '@/lib/services/recently-viewed';
 import { animateProductDetailPage } from '@/lib/animations/gsap-utils';
@@ -354,9 +355,7 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
   }, [campaignPrice.hasPromo, campaignPrice.endsAt, campaignPrice.startsAt, queryClient]);
 
   const isOutOfStock =
-    (product?.stock !== undefined && product.stock <= 0) ||
-    product?.providerStatus === 'empty' ||
-    product?.status === 'out_of_stock' ||
+    isProductOutOfStock(product) ||
     (activeVariant !== null && activeVariant.isOutOfStock);
 
   const showNotification = (msg: string) => {

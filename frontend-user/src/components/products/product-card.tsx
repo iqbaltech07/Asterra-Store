@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
-import { ProductItem } from '@/lib/products-data';
+import { ProductItem, isProductOutOfStock } from '@/lib/products-data';
 import { calculateCampaignPrice, getCampaignCountdown, ActiveCampaign } from '@/lib/utils/promo-pricing';
 import { useActiveCampaigns } from '@/lib/hooks/use-active-campaigns';
 
@@ -63,10 +63,7 @@ export function ProductCard({
   priorityImage = false,
   activeCampaigns: propCampaigns,
 }: ProductCardProps) {
-  const isOutOfStock =
-    (product.stock !== undefined && product.stock <= 0) ||
-    product.providerStatus === 'empty' ||
-    product.status === 'out_of_stock';
+  const isOutOfStock = isProductOutOfStock(product);
 
   const { campaigns: sharedCampaigns } = useActiveCampaigns({ enabled: !propCampaigns });
   const activeCampaigns = propCampaigns || sharedCampaigns;

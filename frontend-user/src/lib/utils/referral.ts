@@ -32,6 +32,39 @@ export function clearReferralSession(): void {
   } catch {}
 }
 
+export function clearCampaignSession(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.removeItem('asterra_campaign');
+    localStorage.removeItem('asterra_utm_campaign');
+    document.cookie = 'asterra_campaign=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+    document.cookie = 'asterra_utm_campaign=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+  } catch {}
+}
+
+export function removeCampaignUrlParams(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const currentUrl = new URL(window.location.href);
+    let changed = false;
+    if (currentUrl.searchParams.has('campaign')) {
+      currentUrl.searchParams.delete('campaign');
+      changed = true;
+    }
+    if (currentUrl.searchParams.has('utm_campaign')) {
+      currentUrl.searchParams.delete('utm_campaign');
+      changed = true;
+    }
+    if (changed) {
+      window.history.replaceState(
+        window.history.state,
+        '',
+        currentUrl.pathname + currentUrl.search + currentUrl.hash
+      );
+    }
+  } catch {}
+}
+
 export function getActiveReferralParams(): Record<string, string> {
   const params: Record<string, string> = {};
   if (typeof window === 'undefined') return params;
@@ -42,13 +75,6 @@ export function getActiveReferralParams(): Record<string, string> {
     const urlCamp = urlParams.get('campaign') || urlParams.get('utm_campaign');
     const urlSource = urlParams.get('utm_source');
     const urlMedium = urlParams.get('utm_medium');
-
-    const isRefClaimed = localStorage.getItem('asterra_ref_claimed') === 'true';
-    const storedCamp =
-      localStorage.getItem('asterra_campaign') ||
-      localStorage.getItem('asterra_utm_campaign') ||
-      '';
-    const hasCampaign = Boolean(urlCamp || storedCamp);
 
     // 1. Store ref parameter in localStorage & cookies for sales attribution
     if (urlRef && urlRef.trim()) {

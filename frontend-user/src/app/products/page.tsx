@@ -23,7 +23,7 @@ import {
 import { useSession } from '@/lib/auth-client';
 import { useAuthStore } from '@/store/use-auth-store';
 import { AuthRequiredModal } from '@/components/auth/auth-required-modal';
-import { ProductItem } from '@/lib/products-data';
+import { isProductOutOfStock } from '@/lib/products-data';
 import { ProductCard, ProductPromoCountdownBadge } from '@/components/products/product-card';
 import {
   Select,
@@ -416,10 +416,7 @@ function ProductsContent() {
         {!isLoading && !error && products.length > 0 && viewMode === 'list' && (
           <div key={`list-${selectedCategory}-${sortBy}`} className="space-y-4">
             {products.map((product, idx) => {
-              const isOutOfStock =
-                (product.stock !== undefined && product.stock <= 0) ||
-                product.providerStatus === 'empty' ||
-                product.status === 'out_of_stock';
+              const isOutOfStock = isProductOutOfStock(product);
               const promoCalc = calculateCampaignPrice(product.price, product, activeCampaigns);
 
               return (

@@ -11,6 +11,7 @@ import { PublicPaymentConfig } from '@/types/payment';
 import { OrdersApi, PromosApi, PaymentConfigApi } from '@/lib/api-client';
 import { usePaymentConfig } from '@/lib/hooks/use-payment-config';
 import { calculateCampaignPrice, ActiveCampaign } from '@/lib/utils/promo-pricing';
+import { clearCampaignSession, removeCampaignUrlParams } from '@/lib/utils/referral';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faLock, faCheck } from '@fortawesome/free-solid-svg-icons';
 import { CheckoutEmptyState } from '@/components/checkout/checkout-empty-state';
@@ -168,11 +169,9 @@ function CheckoutPageContent() {
     // Detect campaign parameter
     const urlCamp = searchParams.get('campaign') || searchParams.get('utm_campaign');
     let campVal = urlCamp;
-    let isRefClaimed = false;
 
     if (typeof window !== 'undefined') {
       try {
-        isRefClaimed = localStorage.getItem('asterra_ref_claimed') === 'true';
         if (!campVal) {
           campVal =
             localStorage.getItem('asterra_campaign') ||
@@ -180,8 +179,6 @@ function CheckoutPageContent() {
         }
       } catch (_) {}
     }
-
-    const hasCampaign = Boolean(campVal && campVal.trim());
 
     if (campVal && campVal.trim()) {
       const cleanCamp = campVal.trim();
@@ -275,31 +272,8 @@ function CheckoutPageContent() {
       if (!isStillActive) {
         // Campaign has ended, inactive, or was deleted! Clean up immediately
         setActiveCampaignSlug('');
-        if (typeof window !== 'undefined') {
-          try {
-            localStorage.removeItem('asterra_campaign');
-            localStorage.removeItem('asterra_utm_campaign');
-            document.cookie = 'asterra_campaign=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-            document.cookie = 'asterra_utm_campaign=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-          } catch {}
-          const currentUrl = new URL(window.location.href);
-          let changed = false;
-          if (currentUrl.searchParams.has('campaign')) {
-            currentUrl.searchParams.delete('campaign');
-            changed = true;
-          }
-          if (currentUrl.searchParams.has('utm_campaign')) {
-            currentUrl.searchParams.delete('utm_campaign');
-            changed = true;
-          }
-          if (changed) {
-            window.history.replaceState(
-              window.history.state,
-              '',
-              currentUrl.pathname + currentUrl.search + currentUrl.hash
-            );
-          }
-        }
+        clearCampaignSession();
+        removeCampaignUrlParams();
       }
     }
   }, [activeCampaignsData, activeCampaignSlug, activeCampaigns]);

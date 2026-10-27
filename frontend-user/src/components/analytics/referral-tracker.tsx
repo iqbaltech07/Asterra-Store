@@ -3,6 +3,7 @@
 import { useEffect, Suspense } from 'react';
 import { useSearchParams, usePathname } from 'next/navigation';
 import { fetchActiveCampaigns } from '@/lib/hooks/use-active-campaigns';
+import { clearCampaignSession, removeCampaignUrlParams } from '@/lib/utils/referral';
 
 function ReferralTrackerInner() {
   const searchParams = useSearchParams();
@@ -139,32 +140,8 @@ function ReferralTrackerInner() {
 
               // If campaign is no longer running / has ended / deleted, clean it up
               if (!isStillActive) {
-                try {
-                  localStorage.removeItem('asterra_campaign');
-                  localStorage.removeItem('asterra_utm_campaign');
-                  document.cookie = 'asterra_campaign=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-                  document.cookie = 'asterra_utm_campaign=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-                } catch {}
-
-                const currentUrl = new URL(window.location.href);
-                let changed = false;
-
-                if (currentUrl.searchParams.has('campaign')) {
-                  currentUrl.searchParams.delete('campaign');
-                  changed = true;
-                }
-                if (currentUrl.searchParams.has('utm_campaign')) {
-                  currentUrl.searchParams.delete('utm_campaign');
-                  changed = true;
-                }
-
-                if (changed) {
-                  window.history.replaceState(
-                    window.history.state,
-                    '',
-                    currentUrl.pathname + currentUrl.search + currentUrl.hash
-                  );
-                }
+                clearCampaignSession();
+                removeCampaignUrlParams();
               } else {
                 // If campaign is verified active, preserve in URL if missing
                 const currentUrl = new URL(window.location.href);
