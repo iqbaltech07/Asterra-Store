@@ -29,6 +29,9 @@ export interface CreateOrderPayload {
   campaign_slug?: string;
   campaign_discount?: number;
   utm_campaign?: string;
+  is_preorder?: boolean;
+  isPreorder?: boolean;
+  order_type?: string;
   customer_contact?: {
     name: string;
     email: string;
@@ -129,6 +132,7 @@ async function requestJson<T>(
       const data = await res.json();
       if (!res.ok || (data && data.success === false)) {
         const errorMsg =
+          (typeof data?.detail === 'string' ? data?.detail : data?.detail?.message) ||
           data?.error ||
           data?.message ||
           data?.data?.error ||
@@ -309,5 +313,48 @@ export const ProductsApi = {
     return requestJson<{ success: boolean; data: ProductItem & { durations?: Array<Record<string, unknown>> } }>(
       `/api/v1/products/${id}`
     );
+  },
+};
+
+/**
+ * Store Operating Hours API
+ */
+export interface WeeklyScheduleDay {
+  is_open: boolean;
+  open_time: string;
+  close_time: string;
+}
+
+export type WeeklySchedule = Record<string, WeeklyScheduleDay>;
+
+export interface StoreOperatingHoursStatus {
+  status: 'open' | 'closed';
+  isOpen: boolean;
+  is_open: boolean;
+  mode: 'auto' | 'manual_open' | 'manual_closed';
+  statusLabel: string;
+  currentTimeWIB: string;
+  currentDay: string;
+  currentDayID: string;
+  nextOpenAt: string | null;
+  nextOpenDisplay: string | null;
+  next_open_display: string | null;
+  nextCloseAt: string | null;
+  nextCloseDisplay: string | null;
+  bannerMessage: string | null;
+  banner_message: string | null;
+  allowPreorder: boolean;
+  allow_preorder: boolean;
+  weeklySchedule: WeeklySchedule;
+  manualCloseReason: string | null;
+  reopenEstimate: string | null;
+  timezone: string;
+  updatedAt: string | null;
+  updatedBy: string | null;
+}
+
+export const StoreHoursApi = {
+  async getStatus(): Promise<{ success: boolean; data: StoreOperatingHoursStatus }> {
+    return requestJson<{ success: boolean; data: StoreOperatingHoursStatus }>('/api/v1/store/operating-hours');
   },
 };

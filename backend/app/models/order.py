@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Column, String, Integer, DateTime, Text, ForeignKey
+from sqlalchemy import Column, String, Integer, DateTime, Text, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 
@@ -65,6 +65,7 @@ class Order(Base):
     provider_trxid = Column(String, nullable=True)
     provider_status = Column(String, nullable=True)
     provider_note = Column(Text, nullable=True)
+    is_preorder = Column(Boolean, default=False, nullable=True)
     expires_at = Column(DateTime, nullable=True)
     paid_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -129,6 +130,8 @@ class Order(Base):
             "customer_name": self.customer_name,
             "customer_whatsapp": self.customer_whatsapp,
             "customer_notes": self.customer_notes,
+            "is_preorder": bool(self.is_preorder),
+            "isPreorder": bool(self.is_preorder),
             "order_status": self.status,
             "items": [it.to_dict() for it in self.items] if self.items else [],
         }

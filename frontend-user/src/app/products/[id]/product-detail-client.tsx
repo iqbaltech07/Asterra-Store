@@ -44,6 +44,8 @@ import { ProductDetailTabs } from '@/components/products/product-detail/product-
 import { ProductDetailSpecs } from '@/components/products/product-detail/product-detail-specs';
 import { ProductDetailFaqs } from '@/components/products/product-detail/product-detail-faqs';
 import { ProductDetailRelated } from '@/components/products/product-detail/product-detail-related';
+import { useStoreOperatingHours } from '@/lib/hooks/use-store-operating-hours';
+import { PreorderModal } from '@/components/products/preorder-modal';
 
 export type {
   DurationOption,
@@ -66,6 +68,9 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
   const [activeTab, setActiveTab] = useState<'benefit' | 'garansi' | 'deskripsi'>('deskripsi');
   const [isMounted, setIsMounted] = useState<boolean>(false);
   const [countdownText, setCountdownText] = useState<string>('');
+  const [isPreorderModalOpen, setIsPreorderModalOpen] = useState<boolean>(false);
+
+  const { isClosed, nextOpenDisplay, bannerMessage } = useStoreOperatingHours();
 
   useEffect(() => {
     setIsMounted(true);
@@ -366,17 +371,10 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
   };
 
 
-  const handleBuyNow = () => {
-    if (!isAuthenticated) {
-      setIsAuthModalOpen(true);
-      return;
-    }
-    if (!product || isOutOfStock) {
-      showNotification(`Maaf, stok produk ${variantDetails.title} saat ini habis.`);
-      return;
-    }
+  const proceedToCheckout = (asPreorder: boolean = false) => {
     clearCart();
-    const finalId = activeVariant ? activeVariant.id : product.id;
+    const finalId = activeVariant ? activeVariant.id : product?.id;
+    if (!finalId || !product) return;
     for (let i = 0; i < quantity; i++) {
       addItem({
         id: finalId,
@@ -388,7 +386,24 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
         isOutOfStock: false,
       });
     }
-    router.push(appendReferralParams('/checkout'));
+    const checkoutPath = asPreorder ? '/checkout?mode=preorder' : '/checkout';
+    router.push(appendReferralParams(checkoutPath));
+  };
+
+  const handleBuyNow = () => {
+    if (!isAuthenticated) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+    if (!product || isOutOfStock) {
+      showNotification(`Maaf, stok produk ${variantDetails.title} saat ini habis.`);
+      return;
+    }
+    if (isClosed) {
+      setIsPreorderModalOpen(true);
+      return;
+    }
+    proceedToCheckout(false);
   };
 
   const handleShare = () => {
@@ -866,13 +881,19 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
 
                   {/* Order Actions */}
                   <div data-gsap="product-cta" className="pt-1">
+                    {isClosed && (
+                      <div className="mb-2 p-2.5 rounded-lg bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.25)] flex items-center gap-2 text-[11px] text-[#121A2A]">
+                        <FontAwesomeIcon icon={faClock} className="w-3.5 h-3.5 text-[#C96F55] shrink-0" />
+                        <span>Toko sedang tutup. Buka kembali: <strong>{nextOpenDisplay || 'segera'}</strong>. Mode Pre-Order aktif.</span>
+                      </div>
+                    )}
                     <Button
                       type="button"
                       onClick={handleBuyNow}
                       disabled={isOutOfStock}
                       className="w-full text-xs sm:text-sm font-bold py-3.5 h-auto rounded-xl bg-[#C96F55] hover:bg-[#B86047] text-[#F7F5EF] shadow-sm active:scale-98 transition-all gap-2 cursor-pointer"
                     >
-                      <span>{isOutOfStock ? 'Stok Habis' : 'Beli Sekarang (Langsung Checkout)'}</span>
+                      <span>{isOutOfStock ? 'Stok Habis' : isClosed ? 'Pre Order (Pesanan Terjadwal)' : 'Beli Sekarang (Langsung Checkout)'}</span>
                       <FontAwesomeIcon icon={faArrowRight} className="w-4 h-4" />
                     </Button>
                   </div>
@@ -946,12 +967,28 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
               disabled={isOutOfStock}
               className="px-5 py-2.5 rounded-xl bg-[#C96F55] hover:bg-[#B86047] text-white text-xs sm:text-sm font-bold active:scale-98 transition-transform cursor-pointer shadow-xs flex items-center gap-2 disabled:opacity-50"
             >
-              <span>{isOutOfStock ? 'Stok Habis' : 'Beli Sekarang'}</span>
+              <span>{isOutOfStock ? 'Stok Habis' : isClosed ? 'Pre Order' : 'Beli Sekarang'}</span>
               <FontAwesomeIcon icon={faArrowRight} className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
       )}
+
+      {/* Pre-order Confirmation Modal */}
+      <PreorderModal
+        isOpen={isPreorderModalOpen}
+        onClose={() => setIsPreorderModalOpen(false)}
+        onConfirm={() => {
+          setIsPreorderModalOpen(false);
+          proceedToCheckout(true);
+        }}
+        productName={product?.name || ''}
+        variantTitle={variantDetails.title}
+        priceFormatted={`Rp ${totalPrice.toLocaleString('id-ID')}`}
+        quantity={quantity}
+        nextOpenDisplay={nextOpenDisplay}
+        bannerMessage={bannerMessage}
+      />
 
       {/* Guest Authentication Modal */}
       <AuthRequiredModal

@@ -13,7 +13,9 @@ import { usePaymentConfig } from '@/lib/hooks/use-payment-config';
 import { calculateCampaignPrice, ActiveCampaign } from '@/lib/utils/promo-pricing';
 import { clearCampaignSession, removeCampaignUrlParams } from '@/lib/utils/referral';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faLock, faCheck } from '@fortawesome/free-solid-svg-icons';
+import { faLock, faCheck, faDoorClosed, faClock, faArrowRight } from '@fortawesome/free-solid-svg-icons';
+import { Button } from '@/components/ui/button';
+import { useStoreOperatingHours } from '@/lib/hooks/use-store-operating-hours';
 import { CheckoutEmptyState } from '@/components/checkout/checkout-empty-state';
 import { CheckoutCustomerForm } from '@/components/checkout/checkout-customer-form';
 import {
@@ -69,6 +71,16 @@ function CheckoutPageContent() {
   const { user: legacyUser } = useAuthStore();
   const isAuthenticated = Boolean(session?.user || legacyUser);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
+  const { isClosed, isLoaded, nextOpenDisplay, bannerMessage, allowPreorder } = useStoreOperatingHours();
+  const urlMode = searchParams.get('mode');
+  const [isPreorderMode, setIsPreorderMode] = useState<boolean>(urlMode === 'preorder');
+
+  useEffect(() => {
+    if (urlMode === 'preorder') {
+      setIsPreorderMode(true);
+    }
+  }, [urlMode]);
 
   // Form states with immediate storage hydration to eliminate visual flickers
   const [customerName, setCustomerName] = useState<string>(() => {
@@ -830,6 +842,11 @@ function CheckoutPageContent() {
       return;
     }
 
+    if (isClosed && !isPreorderMode) {
+      showNotification('Toko sedang tutup. Pemesanan reguler tidak dapat diproses. Silakan beralih ke mode Pre-Order.');
+      return;
+    }
+
     const effectiveTarget = targetValue.trim();
     const effectiveTargetEmail = targetRequirement.type === 'email' ? effectiveTarget : (targetEmail.trim() || undefined);
     const effectiveTargetPhone = targetRequirement.type === 'phone' ? effectiveTarget : undefined;
@@ -858,7 +875,12 @@ function CheckoutPageContent() {
           phone: effectiveTargetPhone || buyerPhone,
         },
       })),
-      customer_notes: customerNotes.trim(),
+      is_preorder: isPreorderMode,
+      isPreorder: isPreorderMode,
+      order_type: isPreorderMode ? 'preorder' : 'standard',
+      customer_notes: isPreorderMode
+        ? (customerNotes.trim() ? `[PRE-ORDER] ${customerNotes.trim()}` : '[PRE-ORDER] Pesanan terjadwal saat toko tutup')
+        : customerNotes.trim(),
       payment_method: selectedMethod,
       promo_code: appliedPromo?.code || undefined,
       referral_code: referralPartner?.code || (referralCode.trim() ? referralCode.trim() : undefined),
@@ -914,6 +936,67 @@ function CheckoutPageContent() {
             <div className="w-10 h-10 border-4 border-[#C96F55] border-t-transparent rounded-full animate-spin mb-4" />
             <p className="text-sm font-medium text-foreground-muted">Memuat keranjang belanja Anda...</p>
           </div>
+        ) : isLoaded && isClosed && !isPreorderMode && !activeManualModal ? (
+          /* DEDICATED STORE CLOSED STATE WHEN DIRECTLY ACCESSING /checkout */
+          <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center space-y-6">
+            <div className="w-16 h-16 rounded-2xl bg-[#121A2A] text-white flex items-center justify-center mx-auto shadow-md">
+              <FontAwesomeIcon icon={faDoorClosed} className="w-8 h-8 text-[#C96F55]" />
+            </div>
+
+            <div className="space-y-2">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[rgba(201,111,85,0.12)] text-[#C96F55] text-xs font-bold uppercase tracking-wider border border-[rgba(201,111,85,0.3)]">
+                Jam Operasional Toko
+              </span>
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-[#121A2A] tracking-tight">
+                Toko Sedang Tutup
+              </h1>
+              <p className="text-sm text-[#121A2A]/75 max-w-md mx-auto leading-relaxed">
+                {bannerMessage || (
+                  nextOpenDisplay
+                    ? `Pemesanan normal ditutup sementara. Toko akan kembali buka pada pukul ${nextOpenDisplay}.`
+                    : 'Pemesanan reguler saat ini sedang berada di luar jam operasional toko.'
+                )}
+              </p>
+            </div>
+
+            {allowPreorder && items.length > 0 && (
+              <div className="p-4 rounded-2xl bg-[#F8FAFC] border border-[rgba(18,26,42,0.08)] max-w-md mx-auto text-left text-xs space-y-2">
+                <div className="flex items-center gap-2 font-bold text-[#121A2A]">
+                  <FontAwesomeIcon icon={faClock} className="w-4 h-4 text-[#C96F55]" />
+                  <span>Layanan Pre-Order Tersedia:</span>
+                </div>
+                <p className="text-[#121A2A]/70 leading-relaxed">
+                  Anda tetap dapat melanjutkan pesanan di keranjang Anda ({items.length} item) sebagai <strong>Pre-Order</strong>. Pesanan Anda akan dijadwalkan dan diproses segera setelah toko buka kembali.
+                </p>
+              </div>
+            )}
+
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+              {allowPreorder && items.length > 0 && (
+                <Button
+                  type="button"
+                  onClick={() => {
+                    setIsPreorderMode(true);
+                    router.replace('/checkout?mode=preorder');
+                  }}
+                  className="w-full sm:w-auto h-11 px-6 rounded-xl bg-[#C96F55] hover:bg-[#B86047] text-white font-bold text-xs sm:text-sm gap-2 shadow-sm cursor-pointer"
+                >
+                  <span>Lanjutkan sebagai Pre-Order</span>
+                  <FontAwesomeIcon icon={faArrowRight} className="w-3.5 h-3.5" />
+                </Button>
+              )}
+
+              <Link href="/" className="w-full sm:w-auto">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full sm:w-auto h-11 px-6 rounded-xl border-[rgba(18,26,42,0.15)] text-[#121A2A] hover:bg-slate-50 font-semibold text-xs sm:text-sm cursor-pointer"
+                >
+                  Kembali ke Beranda
+                </Button>
+              </Link>
+            </div>
+          </div>
         ) : items.length === 0 && !activeManualModal ? (
           <CheckoutEmptyState />
         ) : (
@@ -928,7 +1011,9 @@ function CheckoutPageContent() {
                 Katalog
               </Link>
               <span className="shrink-0">/</span>
-              <span className="text-foreground font-medium truncate max-w-[160px] sm:max-w-none">Checkout Instan</span>
+              <span className="text-foreground font-medium truncate max-w-[160px] sm:max-w-none">
+                {isPreorderMode ? 'Checkout Pre-Order' : 'Checkout Instan'}
+              </span>
             </nav>
 
             {/* Checkout Main Content */}
@@ -936,10 +1021,12 @@ function CheckoutPageContent() {
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
                 <div>
                   <h1 data-gsap="page-title" className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-                    Checkout & Pembayaran Instan
+                    {isPreorderMode ? 'Checkout Pre-Order Terjadwal' : 'Checkout & Pembayaran Instan'}
                   </h1>
                   <p data-gsap="page-sub" className="text-xs sm:text-sm text-foreground-muted mt-1">
-                    Pastikan informasi akun dan email tujuan sudah benar sebelum melakukan transaksi.
+                    {isPreorderMode
+                      ? 'Toko sedang di luar jam operasional. Pesanan Anda akan dijadwalkan dan diproses prioritas saat toko buka kembali.'
+                      : 'Pastikan informasi akun dan email tujuan sudah benar sebelum melakukan transaksi.'}
                   </p>
                 </div>
                 <div data-gsap="hero-card" className="flex items-center gap-2 text-xs bg-surface-raised border border-border px-3 py-1.5 rounded-lg text-foreground-muted w-fit">
@@ -947,6 +1034,28 @@ function CheckoutPageContent() {
                   <span>Transaksi Terenkripsi SSL 256-Bit</span>
                 </div>
               </div>
+
+              {/* Pre-Order Active Alert Notice */}
+              {isPreorderMode && (
+                <div className="p-4 rounded-2xl bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.3)] flex items-start gap-3.5 text-xs text-[#121A2A]">
+                  <div className="w-9 h-9 rounded-xl bg-[#C96F55] text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
+                    <FontAwesomeIcon icon={faClock} className="w-4 h-4" />
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-xs text-[#C96F55] uppercase tracking-wider">
+                        Mode Pre-Order Aktif
+                      </span>
+                      <span className="text-[10px] bg-[#C96F55]/20 text-[#C96F55] font-bold px-2 py-0.5 rounded-full">
+                        Toko Sedang Tutup
+                      </span>
+                    </div>
+                    <p className="text-[11px] sm:text-xs text-[#121A2A]/80 leading-relaxed font-medium">
+                      Pesanan Anda akan dicatat di sistem sebagai <strong>Pre-Order Terjadwal</strong> dan akan diproses prioritas segera setelah toko buka kembali {nextOpenDisplay ? `pada pukul ${nextOpenDisplay}` : ''}.
+                    </p>
+                  </div>
+                </div>
+              )}
 
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
                 {/* Left Column: Form & Payment Methods (7 Cols) */}

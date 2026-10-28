@@ -34,6 +34,7 @@ import {
   Bell,
   ShieldCheck,
   Store,
+  Clock,
   ChevronDown,
   ChevronRight,
   LogOut,
@@ -72,6 +73,7 @@ export type AdminTab =
   | 'affiliate-performance'
   | 'financial-reports'
   // SISTEM & KONFIGURASI
+  | 'operating-hours'
   | 'payment-settings'
   | 'logs'
   | 'notifications'
@@ -511,6 +513,12 @@ export function AdminSidebar({
         label: 'SISTEM & KONFIGURASI',
         icon: Sliders,
         items: [
+          {
+            id: 'operating-hours',
+            label: 'Jam Operasional Toko',
+            icon: Clock,
+            description: 'Jadwal operasional, buka/tutup, & pre-order',
+          },
           {
             id: 'payment-settings',
             label: 'Metode Pembayaran',

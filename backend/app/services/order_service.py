@@ -487,6 +487,16 @@ class OrderService:
         # 4. Save directly into Supabase PostgreSQL
         saved_to_db = False
         normalized = None
+        is_preorder = bool(
+            payload.get("is_preorder")
+            or payload.get("isPreorder")
+            or payload.get("order_type") == "preorder"
+            or payload.get("orderType") == "preorder"
+        )
+        incoming_notes = str(payload.get("customer_notes") or payload.get("customerNotes") or "").strip()
+        if is_preorder and "[PRE-ORDER]" not in incoming_notes:
+            incoming_notes = f"[PRE-ORDER] {incoming_notes}".strip()
+
         try:
             db = SessionLocal()
             try:
@@ -495,7 +505,8 @@ class OrderService:
                     customer_email=customer_email,
                     customer_whatsapp=customer_phone,
                     customer_name=customer_name,
-                    customer_notes=payload.get("customer_notes") or payload.get("customerNotes") or "",
+                    customer_notes=incoming_notes,
+                    is_preorder=is_preorder,
                     total_amount=total_amount,
                     raw_amount=raw_total,
                     promo_discount=promo_discount,
@@ -594,7 +605,9 @@ class OrderService:
                 "customer_email": customer_email,
                 "customer_whatsapp": customer_phone,
                 "customer_name": customer_name,
-                "customer_notes": payload.get("customer_notes") or payload.get("customerNotes") or "",
+                "customer_notes": incoming_notes,
+                "is_preorder": is_preorder,
+                "isPreorder": is_preorder,
                 "total_amount": total_amount,
                 "raw_amount": raw_total,
                 "promo_discount": promo_discount,

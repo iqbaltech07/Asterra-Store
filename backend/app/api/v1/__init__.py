@@ -7,12 +7,14 @@ from app.api.v1.auth import router as auth_router
 from app.api.v1.realtime import router as realtime_router
 from app.api.v1.brandfetch import router as brandfetch_router
 from app.api.v1.media import router as media_router
+from app.api.v1.store import router as store_router
 
 api_router = APIRouter()
 
 # 1. Mount Modular Domain Routers
 # Note: Mount specific media_router before catalog_router to avoid /media/{media_path:path} catch-all conflict
 api_router.include_router(media_router)
+api_router.include_router(store_router)
 api_router.include_router(catalog_router)
 api_router.include_router(checkout_router)
 api_router.include_router(sales_router)

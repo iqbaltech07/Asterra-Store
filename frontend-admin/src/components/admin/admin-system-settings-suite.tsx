@@ -28,6 +28,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { AdminStoreHoursTab } from '@/components/admin/admin-store-hours-tab';
 
 interface NotificationRule {
   id: string;
@@ -109,7 +110,7 @@ export function AdminSystemSettingsSuite({ activeTab, onNotify }: AdminSystemSet
   const [waSenderNumber, setWaSenderNumber] = useState('6281298765432');
 
   // Store Settings Section State
-  const [settingsSection, setSettingsSection] = useState<'general' | 'contact' | 'checkout' | 'warranty' | 'seo'>('general');
+  const [settingsSection, setSettingsSection] = useState<'hours' | 'general' | 'contact' | 'checkout' | 'warranty' | 'seo'>('hours');
 
   // Store Settings Form States
   const [storeName, setStoreName] = useState('Asterra Store');
@@ -437,11 +438,12 @@ export function AdminSystemSettingsSuite({ activeTab, onNotify }: AdminSystemSet
       {/* Navigation Sub-Tabs */}
       <div className="flex flex-wrap gap-1.5 border-b border-border pb-2 text-xs">
         {[
-          { key: 'general', label: '1. Identitas Brand & Toko' },
-          { key: 'contact', label: '2. Customer Service & CS WA' },
-          { key: 'checkout', label: '3. Aturan Checkout & Invoice' },
-          { key: 'warranty', label: '4. Kebijakan Garansi & Akun' },
-          { key: 'seo', label: '5. SEO & Metadata Dasar' },
+          { key: 'hours', label: '1. Jam Operasional & Status Toko' },
+          { key: 'general', label: '2. Identitas Brand & Toko' },
+          { key: 'contact', label: '3. Customer Service & CS WA' },
+          { key: 'checkout', label: '4. Aturan Checkout & Invoice' },
+          { key: 'warranty', label: '5. Kebijakan Garansi & Akun' },
+          { key: 'seo', label: '6. SEO & Metadata Dasar' },
         ].map((sec) => (
           <button
             key={sec.key}
@@ -459,10 +461,15 @@ export function AdminSystemSettingsSuite({ activeTab, onNotify }: AdminSystemSet
       </div>
 
       {/* Section Content */}
-      <div className="bg-surface border border-border rounded-xl p-6 shadow-xs text-xs space-y-4">
+      <div className="text-xs space-y-4">
+        {/* SECTION 0: STORE OPERATING HOURS */}
+        {settingsSection === 'hours' && (
+          <AdminStoreHoursTab onNotify={onNotify} />
+        )}
+
         {/* SECTION 1: GENERAL IDENTITY */}
         {settingsSection === 'general' && (
-          <div className="space-y-4 max-w-2xl">
+          <div className="bg-surface border border-border rounded-xl p-6 shadow-xs space-y-4 max-w-2xl">
             <h3 className="font-bold text-sm text-foreground">Identitas Brand & Toko Digital</h3>
             <div>
               <label className="font-semibold text-foreground block mb-1">Nama Toko Publik</label>
@@ -497,7 +504,7 @@ export function AdminSystemSettingsSuite({ activeTab, onNotify }: AdminSystemSet
 
         {/* SECTION 2: CONTACT & CS */}
         {settingsSection === 'contact' && (
-          <div className="space-y-4 max-w-2xl">
+          <div className="bg-surface border border-border rounded-xl p-6 shadow-xs space-y-4 max-w-2xl">
             <h3 className="font-bold text-sm text-foreground">Kontak Resmi & Dukungan Pelanggan</h3>
             <div>
               <label className="font-semibold text-foreground block mb-1">Nomor WhatsApp Customer Service</label>
@@ -533,7 +540,7 @@ export function AdminSystemSettingsSuite({ activeTab, onNotify }: AdminSystemSet
 
         {/* SECTION 3: CHECKOUT RULES */}
         {settingsSection === 'checkout' && (
-          <div className="space-y-4 max-w-2xl">
+          <div className="bg-surface border border-border rounded-xl p-6 shadow-xs space-y-4 max-w-2xl">
             <h3 className="font-bold text-sm text-foreground">Aturan Checkout & Pembatalan Otomatis</h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -577,7 +584,7 @@ export function AdminSystemSettingsSuite({ activeTab, onNotify }: AdminSystemSet
 
         {/* SECTION 4: WARRANTY POLICY */}
         {settingsSection === 'warranty' && (
-          <div className="space-y-4 max-w-2xl">
+          <div className="bg-surface border border-border rounded-xl p-6 shadow-xs space-y-4 max-w-2xl">
             <h3 className="font-bold text-sm text-foreground">Ketentuan Garansi Akun & Penggantian</h3>
             <div>
               <label className="font-semibold text-foreground block mb-1">Durasi Garansi Default (Hari)</label>
@@ -602,7 +609,7 @@ export function AdminSystemSettingsSuite({ activeTab, onNotify }: AdminSystemSet
 
         {/* SECTION 5: SEO METADATA */}
         {settingsSection === 'seo' && (
-          <div className="space-y-4 max-w-2xl">
+          <div className="bg-surface border border-border rounded-xl p-6 shadow-xs space-y-4 max-w-2xl">
             <h3 className="font-bold text-sm text-foreground">Pengaturan SEO & OpenGraph Storefront</h3>
             <div>
               <label className="font-semibold text-foreground block mb-1">Judul Meta Default (Browser Title)</label>

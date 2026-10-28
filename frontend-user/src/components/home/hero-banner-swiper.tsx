@@ -6,6 +6,8 @@ import Image from 'next/image';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { useHeroBanners, PromoBannerItem, INITIAL_STOREFRONT_BANNERS } from '@/lib/hooks/use-hero-banners';
+import { useStoreOperatingHours } from '@/lib/hooks/use-store-operating-hours';
+import { StoreClosedBanner } from '@/components/home/store-closed-banner';
 
 export type { PromoBannerItem };
 export { INITIAL_STOREFRONT_BANNERS };
@@ -20,6 +22,7 @@ export const HeroBannerSwiper = memo(function HeroBannerSwiper() {
 
   // Fetch active hero banners from shared query hook
   const { banners } = useHeroBanners();
+  const { isClosed } = useStoreOperatingHours();
 
   const totalBanners = banners.length;
   const hasMultiple = totalBanners >= 2;
@@ -80,6 +83,14 @@ export const HeroBannerSwiper = memo(function HeroBannerSwiper() {
     touchStartXRef.current = null;
     touchEndXRef.current = null;
   };
+
+  if (isClosed) {
+    return (
+      <section aria-label="Banner Jam Operasional Asterra Store" className="w-full">
+        <StoreClosedBanner />
+      </section>
+    );
+  }
 
   if (totalBanners === 0) return null;
 

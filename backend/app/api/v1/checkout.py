@@ -341,6 +341,35 @@ async def create_order(request: Request, background_tasks: BackgroundTasks):
             detail="Permintaan pesanan sedang diproses. Mohon tunggu beberapa detik."
         )
 
+    # Operational Hours Validation: Prevent normal checkout while store is closed
+    from app.services.store_operating_hours_service import StoreOperatingHoursService
+    store_status = StoreOperatingHoursService.get_current_status()
+
+    is_preorder = bool(
+        payload.get("is_preorder")
+        or payload.get("isPreorder")
+        or payload.get("order_type") == "preorder"
+        or payload.get("orderType") == "preorder"
+    )
+
+    if not store_status["is_open"]:
+        if not is_preorder:
+            reopen_msg = store_status.get("banner_message") or (
+                f"Pemesanan akan dibuka kembali pada {store_status.get('next_open_display')}."
+                if store_status.get("next_open_display")
+                else "Pemesanan normal sedang tidak tersedia saat ini."
+            )
+            raise HTTPException(
+                status_code=400,
+                detail=f"Toko sedang tutup. {reopen_msg} Silakan lanjutkan pesanan Anda melalui alur Pre-Order.",
+            )
+        else:
+            if not store_status.get("allow_preorder", True):
+                raise HTTPException(
+                    status_code=400,
+                    detail="Layanan Pre-Order sedang dinonaktifkan sementara oleh toko.",
+                )
+
     order = OrderService.create_order(payload, background_tasks=background_tasks)
     cache.invalidate("orders")
     return {

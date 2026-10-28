@@ -120,6 +120,7 @@ async function requestJson<T>(
       const data = await res.json();
       if (!res.ok || (data && data.success === false)) {
         const errorMsg =
+          (typeof data?.detail === 'string' ? data?.detail : data?.detail?.message) ||
           data?.error ||
           data?.message ||
           data?.data?.error ||
@@ -295,6 +296,87 @@ export const ProductsApi = {
   async getById(id: string) {
     return requestJson<{ success: boolean; data: ProductItem & { durations?: Array<Record<string, unknown>> } }>(
       `/api/v1/products/${id}`
+    );
+  },
+};
+
+/**
+ * Store Operating Hours API
+ */
+export interface WeeklyScheduleDay {
+  is_open: boolean;
+  open_time: string;
+  close_time: string;
+}
+
+export type WeeklySchedule = Record<string, WeeklyScheduleDay>;
+
+export interface StoreOperatingHoursStatus {
+  status: 'open' | 'closed';
+  isOpen: boolean;
+  is_open: boolean;
+  mode: 'auto' | 'manual_open' | 'manual_closed';
+  statusLabel: string;
+  currentTimeWIB: string;
+  currentDay: string;
+  currentDayID: string;
+  nextOpenAt: string | null;
+  nextOpenDisplay: string | null;
+  next_open_display: string | null;
+  nextCloseAt: string | null;
+  nextCloseDisplay: string | null;
+  bannerMessage: string | null;
+  banner_message: string | null;
+  allowPreorder: boolean;
+  allow_preorder: boolean;
+  weeklySchedule: WeeklySchedule;
+  manualCloseReason: string | null;
+  reopenEstimate: string | null;
+  timezone: string;
+  updatedAt: string | null;
+  updatedBy: string | null;
+}
+
+export interface AdminStoreHoursResponse {
+  success: boolean;
+  data: {
+    config: {
+      id: string;
+      mode: 'auto' | 'manual_open' | 'manual_closed';
+      weeklySchedule: WeeklySchedule;
+      manualCloseReason: string | null;
+      reopenEstimate: string | null;
+      allowPreorder: boolean;
+      timezone: string;
+      updatedBy: string | null;
+      updatedAt: string | null;
+    };
+    status: StoreOperatingHoursStatus;
+  };
+}
+
+export const StoreHoursApi = {
+  async getStatus(): Promise<{ success: boolean; data: StoreOperatingHoursStatus }> {
+    return requestJson<{ success: boolean; data: StoreOperatingHoursStatus }>('/api/v1/store/operating-hours');
+  },
+
+  async getAdminConfig(): Promise<AdminStoreHoursResponse> {
+    return requestJson<AdminStoreHoursResponse>('/api/v1/admin/store/operating-hours');
+  },
+
+  async updateConfig(payload: {
+    mode: 'auto' | 'manual_open' | 'manual_closed';
+    weeklySchedule: WeeklySchedule;
+    manualCloseReason?: string | null;
+    reopenEstimate?: string | null;
+    allowPreorder: boolean;
+  }): Promise<{ success: boolean; message: string; data: AdminStoreHoursResponse['data'] }> {
+    return requestJson<{ success: boolean; message: string; data: AdminStoreHoursResponse['data'] }>(
+      '/api/v1/admin/store/operating-hours',
+      {
+        method: 'PUT',
+        body: JSON.stringify(payload),
+      }
     );
   },
 };

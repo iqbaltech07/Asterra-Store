@@ -9,6 +9,7 @@ import { LainnyaSidebar } from '@/components/layout/lainnya-sidebar';
 import { FloatingSupport } from '@/components/layout/floating-support';
 import { PageTransition } from '@/components/layout/page-transition';
 import { clearChunkRecoveryFlag, tryRecoverFromChunkError } from '@/lib/utils/chunk-recovery';
+import { StoreClosedAnnouncementBar } from '@/components/home/store-closed-banner';
 
 interface StorefrontShellProps {
   children: React.ReactNode;
@@ -63,6 +64,9 @@ export function StorefrontShell({ children }: StorefrontShellProps) {
 
   return (
     <div className="flex flex-col min-h-screen w-full bg-background text-foreground selection:bg-[#C96F55]/20 selection:text-[#C96F55]">
+      {/* Store Closed Announcement Notification Bar */}
+      <StoreClosedAnnouncementBar />
+
       {/* Persistent Desktop & Mobile Header Bar */}
       <Header />
 

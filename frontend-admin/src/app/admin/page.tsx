@@ -41,6 +41,7 @@ import {
 import { AdminOrdersTab } from '@/components/admin/admin-orders-tab';
 import { AdminLogsTab } from '@/components/admin/admin-logs-tab';
 import { AdminPaymentSettingsTab } from '@/components/admin/admin-payment-settings-tab';
+import { AdminStoreHoursTab } from '@/components/admin/admin-store-hours-tab';
 import { AdminPromosTab } from '@/components/admin/admin-promos-tab';
 import { AdminUsersTab } from '@/components/admin/admin-users-tab';
 import { AdminSidebar, AdminTab } from '@/components/admin/admin-sidebar';
@@ -123,6 +124,7 @@ const TAB_TITLES: Record<AdminTab, { category: string; title: string }> = {
   'product-performance': { category: 'Analytics & Laporan', title: 'Analisis Performa Produk Terlaris' },
   'affiliate-performance': { category: 'Analytics & Laporan', title: 'Performa Konversi Afiliasi & Sales' },
   'financial-reports': { category: 'Analytics & Laporan', title: 'Laporan Finansial & Rekapitulasi' },
+  'operating-hours': { category: 'Sistem & Konfigurasi', title: 'Jam Operasional Toko' },
   'payment-settings': { category: 'Sistem & Konfigurasi', title: 'Metode Pembayaran & Gateway' },
   logs: { category: 'Sistem & Konfigurasi', title: 'Log Aktivitas & Audit Gateway' },
   notifications: { category: 'Sistem & Konfigurasi', title: 'Notifikasi WhatsApp & Email' },
@@ -2064,6 +2066,13 @@ function AdminPageContent() {
         {visitedTabs.has('logs') && (
           <div className={activeTab === 'logs' ? 'block animate-tab-glide' : 'hidden'}>
             <AdminLogsTab />
+          </div>
+        )}
+
+        {/* TAB: STORE OPERATING HOURS */}
+        {visitedTabs.has('operating-hours') && (
+          <div className={activeTab === 'operating-hours' ? 'block animate-tab-glide' : 'hidden'}>
+            <AdminStoreHoursTab onNotify={showNotification} />
           </div>
         )}
 

@@ -25,6 +25,7 @@ import { useAuthStore } from '@/store/use-auth-store';
 import { AuthRequiredModal } from '@/components/auth/auth-required-modal';
 import { isProductOutOfStock } from '@/lib/products-data';
 import { ProductCard, ProductPromoCountdownBadge } from '@/components/products/product-card';
+import { useStoreOperatingHours } from '@/lib/hooks/use-store-operating-hours';
 import {
   Select,
   SelectContent,
@@ -62,6 +63,7 @@ function ProductsContent() {
 
   const [selectedCategory, setSelectedCategory] = useState<string>(initialCategory);
   const [searchQuery, setSearchQuery] = useState<string>(initialSearch);
+  const { isClosed } = useStoreOperatingHours();
   const [sortBy, setSortBy] = useState<string>('popular');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [notification, setNotification] = useState<string | null>(null);
@@ -514,7 +516,7 @@ function ProductsContent() {
                           className="rounded-lg text-xs font-semibold bg-[#C96F55] hover:bg-[#B86047] text-white gap-1.5 shadow-xs cursor-pointer active:scale-95"
                           disabled={isOutOfStock}
                         >
-                          <span>{isOutOfStock ? 'Stok Habis' : 'Beli Sekarang'}</span>
+                          <span>{isOutOfStock ? 'Stok Habis' : isClosed ? 'Pre Order' : 'Beli Sekarang'}</span>
                           <FontAwesomeIcon icon={faArrowRight} className="w-3 h-3" />
                         </Button>
                       </Link>

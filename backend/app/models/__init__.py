@@ -10,6 +10,7 @@ from app.models.referral_session import ReferralSession
 from app.models.commission import Commission
 from app.models.profit_ledger import ProfitLedger
 from app.models.payout_request import PayoutRequest
+from app.models.store_operating_hours import StoreOperatingHours
 
 from app.models.category import Category
 
@@ -21,6 +22,7 @@ __all__ = [
     "AdminUser",
     "SalesPartner",
     "PaymentSetting",
+    "StoreOperatingHours",
     "PromoCode",
     "PromoBanner",
     "PromoCampaign",

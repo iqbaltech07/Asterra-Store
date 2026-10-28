@@ -119,6 +119,7 @@ class OrderNormalizer:
         cust_name = o.get("customerName") or o.get("customer_name") or ""
         cust_phone = o.get("customerWhatsapp") or o.get("customer_whatsapp") or ""
         cust_notes = o.get("customerNotes") or o.get("customer_notes") or ""
+        is_pre = bool(o.get("is_preorder") or o.get("isPreorder") or False)
 
         o["customerEmail"] = cust_email
         o["customer_email"] = cust_email
@@ -128,6 +129,8 @@ class OrderNormalizer:
         o["customer_whatsapp"] = cust_phone
         o["customerNotes"] = cust_notes
         o["customer_notes"] = cust_notes
+        o["is_preorder"] = is_pre
+        o["isPreorder"] = is_pre
 
         # Public Display Attributes
         from app.services.partner_service import mask_customer_name
