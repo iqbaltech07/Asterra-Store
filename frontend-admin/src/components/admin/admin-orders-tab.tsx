@@ -155,9 +155,18 @@ export function AdminOrdersTab() {
 
       {/* Orders Table & Mobile Cards */}
       {isLoading ? (
-        <div className="bg-surface border border-border rounded-xl overflow-hidden shadow-sm p-12 text-center">
-          <FontAwesomeIcon icon={faArrowsRotate} className="w-8 h-8 animate-spin mx-auto text-primary mb-3" />
-          <p className="text-xs text-foreground-muted">Memuat daftar pesanan pelanggan...</p>
+        <div className="bg-surface border border-border rounded-xl overflow-hidden shadow-sm p-6 space-y-4" aria-busy="true">
+          <div className="h-5 bg-surface-raised rounded w-36 animate-pulse mb-4" />
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="animate-pulse flex flex-col md:flex-row md:items-center justify-between gap-4 py-3.5 border-b border-border/60">
+              <div className="space-y-2 flex-1">
+                <div className="h-4 bg-surface-raised rounded w-48" />
+                <div className="h-3 bg-surface-raised rounded w-64" />
+              </div>
+              <div className="h-5 bg-surface-raised rounded w-24" />
+              <div className="h-6 bg-surface-raised rounded-full w-20" />
+            </div>
+          ))}
         </div>
       ) : orders.length === 0 ? (
         <div className="bg-surface border border-border rounded-xl overflow-hidden shadow-sm p-12 text-center">

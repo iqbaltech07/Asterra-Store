@@ -241,9 +241,16 @@ export function AdminLogsTab() {
       {/* Logs Table */}
       <div className="bg-surface border border-border rounded-xl overflow-hidden shadow-sm">
         {isLoading ? (
-          <div className="p-12 text-center">
-            <FontAwesomeIcon icon={faArrowsRotate} className="w-8 h-8 animate-spin mx-auto text-primary mb-3" />
-            <p className="text-xs text-foreground-muted">Memuat log aktivitas sistem...</p>
+          <div className="p-6 space-y-3" aria-busy="true">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="animate-pulse flex items-center justify-between py-2.5 border-b border-border/50">
+                <div className="space-y-1.5 flex-1">
+                  <div className="h-3.5 bg-surface-raised rounded w-36" />
+                  <div className="h-3 bg-surface-raised rounded w-72" />
+                </div>
+                <div className="h-5 bg-surface-raised rounded w-20" />
+              </div>
+            ))}
           </div>
         ) : logs.length === 0 ? (
           <div className="p-12 text-center">

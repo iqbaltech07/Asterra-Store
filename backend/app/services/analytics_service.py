@@ -86,17 +86,20 @@ class AnalyticsService:
                         daily_buckets[h_key]["orders"] += 1
                         daily_buckets[h_key]["revenue"] += amt
 
-                # 2) Weekly bucket (by day of week)
-                day_name = weekly_day_map.get(created_dt.weekday(), "Senin")
-                weekly_buckets[day_name]["orders"] += 1
-                weekly_buckets[day_name]["revenue"] += amt
+                # 2) Weekly bucket (strictly last 7 days)
+                days_diff = (today_date - created_dt.date()).days
+                if 0 <= days_diff < 7:
+                    day_name = weekly_day_map.get(created_dt.weekday(), "Senin")
+                    weekly_buckets[day_name]["orders"] += 1
+                    weekly_buckets[day_name]["revenue"] += amt
 
-                # 3) Monthly bucket (by week of month 1-4)
-                week_idx = min(4, max(1, (created_dt.day - 1) // 7 + 1))
-                w_key = f"Minggu {week_idx}"
-                if w_key in monthly_buckets:
-                    monthly_buckets[w_key]["orders"] += 1
-                    monthly_buckets[w_key]["revenue"] += amt
+                # 3) Monthly bucket (strictly current calendar month)
+                if created_dt.year == today_date.year and created_dt.month == today_date.month:
+                    week_idx = min(4, max(1, (created_dt.day - 1) // 7 + 1))
+                    w_key = f"Minggu {week_idx}"
+                    if w_key in monthly_buckets:
+                        monthly_buckets[w_key]["orders"] += 1
+                        monthly_buckets[w_key]["revenue"] += amt
 
                 # Product sales aggregation
                 for it in o.get("items", []):

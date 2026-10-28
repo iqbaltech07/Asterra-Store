@@ -8,7 +8,7 @@
     "maxDiscount": 10000,
     "minOrderAmount": 14000,
     "usageLimit": 500,
-    "usedCount": 1,
+    "usedCount": 0,
     "perUserLimit": 1,
     "startDate": "2026-10-05T22:13:48.721000",
     "expiresAt": null,
@@ -25,7 +25,7 @@
     "maxDiscount": 50000,
     "minOrderAmount": 25000,
     "usageLimit": 500,
-    "usedCount": 2,
+    "usedCount": 0,
     "perUserLimit": 1,
     "startDate": "2026-10-06T22:01:35.321000",
     "expiresAt": null,
@@ -42,7 +42,7 @@
     "maxDiscount": 20000,
     "minOrderAmount": 12000,
     "usageLimit": 500,
-    "usedCount": 1,
+    "usedCount": 0,
     "perUserLimit": 1,
     "startDate": "2026-10-07T00:20:20.017000",
     "expiresAt": null,
@@ -59,12 +59,12 @@
     "maxDiscount": null,
     "minOrderAmount": 0,
     "usageLimit": 50,
-    "usedCount": 1,
+    "usedCount": 0,
     "perUserLimit": 1,
     "startDate": "2026-10-07T08:11:18.425000",
     "expiresAt": null,
     "isActive": true,
     "createdAt": "2026-10-07T08:11:18.425000",
-    "updatedAt": "2026-10-07T08:14:28.308000"
+    "updatedAt": "2026-10-23T11:36:29.559000"
   }
 ]

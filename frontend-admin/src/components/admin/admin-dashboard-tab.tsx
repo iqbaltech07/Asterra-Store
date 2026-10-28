@@ -90,41 +90,20 @@ export function AdminDashboardTab({
     [...liveAffiliates].sort((a: any, b: any) => (b.totalRevenue || 0) - (a.totalRevenue || 0))[0];
 
   const salesData =
-    (dashboardOverview?.salesData && dashboardOverview.salesData[salesPeriod]) || [
-      { label: '08:00', orders: 2, revenue: 42350 },
-      { label: '11:00', orders: 1, revenue: 12800 },
-      { label: '14:00', orders: 1, revenue: 9560 },
-      { label: '17:00', orders: 1, revenue: 8750 },
-      { label: '20:00', orders: 1, revenue: 7420 },
-      { label: '23:00', orders: 1, revenue: 6230 },
-    ];
+    (dashboardOverview?.salesData && dashboardOverview.salesData[salesPeriod]) || [];
 
   const topProducts = dashboardOverview?.topProducts || [];
-  const sampleTopProducts = [
-    { name: 'Google Gemini Pro Anggota 1 Tahun (5 TB ...', unitsSold: 3, category: 'Produk Digital', revenue: 95700 },
-    { name: 'CapCut Pro Private 7 Hari (Garansi 5 Hari)', unitsSold: 3, category: 'Produk Digital', revenue: 41700 },
-    { name: 'YouTube Premium Family Anggota 1 Bulan...', unitsSold: 1, category: 'Produk Digital', revenue: 18800 },
-  ];
-  const displayProducts = topProducts.length > 0 ? topProducts.slice(0, 3) : sampleTopProducts;
+  const displayProducts = topProducts.slice(0, 3);
 
-  const sampleTransactions = [
-    {
-      id: 'AST-ORD-20261022-7223',
-      customer: 'Pelanggan',
-      time: '22 Okt 2026, 08:42',
-      product: 'Google Gemini Pro Anggota 1 Tahun',
-      paymentMethod: 'QRIS',
-      amount: 95700,
-      status: 'completed',
-    },
-  ];
-  const displayTransactions = liveOrders.length > 0 ? liveOrders.slice(0, 5) : sampleTransactions;
+  const displayTransactions = (
+    liveOrders.length > 0 ? liveOrders : (dashboardOverview?.recentTransactions || [])
+  ).slice(0, 5);
 
   // Numeric count-up transitions for KPI metrics
-  const targetRevenue = dashboardOverview?.kpi?.totalRevenue ?? liveOrderMetrics?.totalRevenue ?? 132090;
-  const targetOrders = dashboardOverview?.kpi?.totalOrders ?? liveOrderMetrics?.total ?? 10;
-  const targetCustomers = dashboardOverview?.kpi?.totalCustomers ?? 4;
-  const targetProfit = dashboardOverview?.kpi?.grossProfit ?? 64590;
+  const targetRevenue = dashboardOverview?.kpi?.totalRevenue ?? liveOrderMetrics?.totalRevenue ?? 0;
+  const targetOrders = dashboardOverview?.kpi?.totalOrders ?? liveOrderMetrics?.total ?? 0;
+  const targetCustomers = dashboardOverview?.kpi?.totalCustomers ?? 0;
+  const targetProfit = dashboardOverview?.kpi?.grossProfit ?? 0;
   const targetPending = dashboardOverview?.kpi?.pendingOrders ?? liveOrderMetrics?.pending ?? 0;
 
   const displayRevenue = useCountUp(targetRevenue, {
@@ -433,45 +412,53 @@ export function AdminDashboardTab({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {displayTransactions.map((tx: any) => {
-                    const id = tx.id || tx.orderId || 'AST-ORD-20261022-7223';
-                    const customer = tx.customer || tx.customerName || 'Pelanggan';
-                    const product = tx.product || (tx.items?.[0]?.productName) || 'Google Gemini Pro Anggota 1 Tahun';
-                    const paymentMethod = tx.paymentMethod || 'QRIS';
-                    const amount = typeof tx.amount === 'number' ? tx.amount : (tx.totalAmount || 95700);
-                    const time = tx.time || (tx.createdAt ? new Date(tx.createdAt).toLocaleDateString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '22 Okt 2026, 08:42');
+                  {displayTransactions.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="py-8 text-center text-slate-400">
+                        Belum ada transaksi penjualan
+                      </td>
+                    </tr>
+                  ) : (
+                    displayTransactions.map((tx: any) => {
+                      const id = tx.id || tx.orderId || '-';
+                      const customer = tx.customer || tx.customerName || 'Pelanggan';
+                      const product = tx.product || (tx.items?.[0]?.productName) || 'Layanan Digital';
+                      const paymentMethod = tx.paymentMethod || 'QRIS';
+                      const amount = typeof tx.amount === 'number' ? tx.amount : (tx.totalAmount || 0);
+                      const time = tx.time || (tx.createdAt ? new Date(tx.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '-');
 
-                    return (
-                      <tr key={id} className="hover:bg-slate-50/70 transition-colors">
-                        <td className="py-3 px-3">
-                          <span className="font-bold text-slate-900 block font-mono text-xs">{id}</span>
-                          <span className="text-[11px] text-slate-400">{customer} - {time}</span>
-                        </td>
-                        <td className="py-3 px-3">
-                          <div className="flex items-center gap-2.5">
-                            <ProductBrandIcon name={product} />
-                            <div className="min-w-0">
-                              <span className="font-medium text-slate-900 block truncate text-xs">
-                                {product}
-                              </span>
-                              <span className="text-[11px] text-slate-400">Produk Digital</span>
+                      return (
+                        <tr key={id} className="hover:bg-slate-50/70 transition-colors">
+                          <td className="py-3 px-3">
+                            <span className="font-bold text-slate-900 block font-mono text-xs">{id}</span>
+                            <span className="text-[11px] text-slate-400">{customer} - {time}</span>
+                          </td>
+                          <td className="py-3 px-3">
+                            <div className="flex items-center gap-2.5">
+                              <ProductBrandIcon name={product} />
+                              <div className="min-w-0">
+                                <span className="font-medium text-slate-900 block truncate text-xs">
+                                  {product}
+                                </span>
+                                <span className="text-[11px] text-slate-400">Produk Digital</span>
+                              </div>
                             </div>
-                          </div>
-                        </td>
-                        <td className="py-3 px-3 font-medium text-slate-700 text-xs">
-                          {paymentMethod}
-                        </td>
-                        <td className="py-3 px-3 font-bold text-slate-900 font-mono text-xs">
-                          Rp {amount.toLocaleString('id-ID')}
-                        </td>
-                        <td className="py-3 px-3 text-right">
-                          <span className="inline-block px-3 py-0.5 rounded-full text-xs font-semibold bg-[#DCFCE7] text-[#15803D]">
-                            Selesai
-                          </span>
-                        </td>
-                      </tr>
-                    );
-                  })}
+                          </td>
+                          <td className="py-3 px-3 font-medium text-slate-700 text-xs">
+                            {paymentMethod}
+                          </td>
+                          <td className="py-3 px-3 font-bold text-slate-900 font-mono text-xs">
+                            Rp {amount.toLocaleString('id-ID')}
+                          </td>
+                          <td className="py-3 px-3 text-right">
+                            <span className="inline-block px-3 py-0.5 rounded-full text-xs font-semibold bg-[#DCFCE7] text-[#15803D]">
+                              Selesai
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
                 </tbody>
               </table>
             </div>
@@ -500,30 +487,36 @@ export function AdminDashboardTab({
             </div>
 
             <div className="space-y-3">
-              {displayProducts.map((p: any, idx: number) => (
-                <div
-                  key={idx}
-                  className="flex items-center justify-between gap-3 py-1"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-6 h-6 rounded-full bg-slate-100 text-slate-600 font-semibold text-xs flex items-center justify-center shrink-0">
-                      {idx + 1}
-                    </div>
-                    <ProductBrandIcon name={p.name} />
-                    <div className="min-w-0">
-                      <span className="font-medium text-slate-900 block truncate text-xs">
-                        {p.name}
-                      </span>
-                      <span className="text-[11px] text-slate-400">
-                        {p.unitsSold || (idx === 2 ? 1 : 3)} unit terjual • {p.category || 'Produk Digital'}
-                      </span>
-                    </div>
-                  </div>
-                  <span className="font-bold text-slate-900 shrink-0 text-xs font-mono">
-                    Rp {Number(p.revenue || 0).toLocaleString('id-ID')}
-                  </span>
+              {displayProducts.length === 0 ? (
+                <div className="py-6 text-center text-xs text-slate-400">
+                  Belum ada produk terjual
                 </div>
-              ))}
+              ) : (
+                displayProducts.map((p: any, idx: number) => (
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between gap-3 py-1"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-6 h-6 rounded-full bg-slate-100 text-slate-600 font-semibold text-xs flex items-center justify-center shrink-0">
+                        {idx + 1}
+                      </div>
+                      <ProductBrandIcon name={p.name} />
+                      <div className="min-w-0">
+                        <span className="font-medium text-slate-900 block truncate text-xs">
+                          {p.name}
+                        </span>
+                        <span className="text-[11px] text-slate-400">
+                          {p.unitsSold ?? 0} unit terjual • {p.category || 'Produk Digital'}
+                        </span>
+                      </div>
+                    </div>
+                    <span className="font-bold text-slate-900 shrink-0 text-xs font-mono">
+                      Rp {Number(p.revenue || 0).toLocaleString('id-ID')}
+                    </span>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
@@ -538,7 +531,7 @@ export function AdminDashboardTab({
                 <span>Performa Affiliate Sales</span>
               </h3>
               <Badge className="bg-[#DCFCE7] text-[#15803D] border border-emerald-200/80 text-xs font-semibold px-2.5 py-0.5 rounded-full">
-                {liveAffiliates.length || 7} Mitra
+                {liveAffiliates.length} Mitra
               </Badge>
             </div>
 
@@ -546,19 +539,21 @@ export function AdminDashboardTab({
               <div className="flex items-center justify-between">
                 <span className="text-slate-500">Omzet via Referral</span>
                 <span className="font-bold text-slate-900 font-mono">
-                  Rp {(totalReferralRevenue || 15300).toLocaleString('id-ID')}
+                  Rp {(totalReferralRevenue ?? 0).toLocaleString('id-ID')}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-slate-500">Komisi Terbayar</span>
                 <span className="font-bold text-[#15803D] font-mono">
-                  Rp {(totalPaidReferralCommission || 0).toLocaleString('id-ID')}
+                  Rp {(totalPaidReferralCommission ?? 0).toLocaleString('id-ID')}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-slate-500">Top Mitra Sales</span>
                 <span className="font-medium text-slate-700 truncate max-w-[170px] text-right">
-                  {topPartner ? `${topPartner.name} (${topPartner.code})` : 'Iqbal Sales Pro Max (A...'}
+                  {topPartner && (topPartner.totalRevenue > 0 || topPartner.totalOrders > 0)
+                    ? `${topPartner.name} (${topPartner.code})`
+                    : 'Belum Ada Penjualan'}
                 </span>
               </div>
             </div>

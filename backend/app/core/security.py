@@ -28,8 +28,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     sha256_hash = hashlib.sha256(plain_password.encode("utf-8")).hexdigest()
     if secrets.compare_digest(sha256_hash, hashed_password):
         return True
-    # 3. Plaintext fallback (if legacy or test config)
-    return secrets.compare_digest(plain_password, hashed_password)
+    return False
 
 def get_password_hash(password: str) -> str:
     if bcrypt:

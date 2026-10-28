@@ -116,7 +116,7 @@ async def admin_auth_login(request: Request):
             },
         )
 
-    # 4. Password verification
+    # 4. Strict password verification against stored database hash
     stored_hash = ""
     if admin_match:
         stored_hash = admin_match.get("passwordHash") or admin_match.get("password_hash") or ""
@@ -126,17 +126,6 @@ async def admin_auth_login(request: Request):
     is_valid = False
     if stored_hash:
         is_valid = verify_password(password, stored_hash)
-
-    # Fallback to defaults only if hash not yet saved or matching root config
-    if not is_valid:
-        if admin_match and clean in ["admin", settings.ADMIN_EMAIL.lower()] and settings.ADMIN_PASSWORD:
-            if password == settings.ADMIN_PASSWORD:
-                is_valid = True
-        elif not stored_hash and partner_match:
-            partner_code = str(partner_match.get("code", "")).strip().upper()
-            partner_wa = str(partner_match.get("whatsapp", "")).strip()
-            if password in [partner_code, partner_wa, "AsterraSales#2026", settings.ADMIN_PASSWORD]:
-                is_valid = True
 
     if not is_valid:
         return JSONResponse(

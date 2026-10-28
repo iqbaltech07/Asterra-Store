@@ -35,14 +35,29 @@ const BAR_COLORS = [
   '#F472B6', // 23:00 - Soft rose pink
 ];
 
-const DEFAULT_SALES_DATA: SalesDataPoint[] = [
-  { label: '08:00', orders: 2, revenue: 42350 },
-  { label: '11:00', orders: 1, revenue: 12800 },
-  { label: '14:00', orders: 1, revenue: 9560 },
-  { label: '17:00', orders: 1, revenue: 8750 },
-  { label: '20:00', orders: 1, revenue: 7420 },
-  { label: '23:00', orders: 1, revenue: 6230 },
-];
+function calculateYAxisTicks(maxValue: number): { maxAxisValue: number; yTicks: number[] } {
+  let ceiling = 50000;
+  if (maxValue === 0) ceiling = 50000;
+  else if (maxValue <= 10000) ceiling = 10000;
+  else if (maxValue <= 25000) ceiling = 25000;
+  else if (maxValue <= 50000) ceiling = 50000;
+  else if (maxValue <= 100000) ceiling = 100000;
+  else if (maxValue <= 200000) ceiling = 200000;
+  else if (maxValue <= 500000) ceiling = 500000;
+  else if (maxValue <= 1000000) ceiling = 1000000;
+  else ceiling = Math.ceil(maxValue / 200000) * 200000;
+
+  const yTicks = [
+    ceiling,
+    Math.round(ceiling * 0.8),
+    Math.round(ceiling * 0.6),
+    Math.round(ceiling * 0.4),
+    Math.round(ceiling * 0.2),
+    0,
+  ];
+
+  return { maxAxisValue: ceiling, yTicks };
+}
 
 export function SalesTrendChart({
   salesData,
@@ -61,17 +76,28 @@ export function SalesTrendChart({
     return () => clearTimeout(timer);
   }, []);
 
-  // Use provided salesData or fallback to reference defaults if empty
+  // Use provided salesData or fallback to empty buckets
   const activeData = useMemo(() => {
-    if (salesData && salesData.length > 0 && salesData.some((d) => d.revenue > 0)) {
+    if (salesData && salesData.length > 0) {
       return salesData;
     }
-    return DEFAULT_SALES_DATA;
+    return [
+      { label: '08:00', orders: 0, revenue: 0 },
+      { label: '11:00', orders: 0, revenue: 0 },
+      { label: '14:00', orders: 0, revenue: 0 },
+      { label: '17:00', orders: 0, revenue: 0 },
+      { label: '20:00', orders: 0, revenue: 0 },
+      { label: '23:00', orders: 0, revenue: 0 },
+    ];
   }, [salesData]);
 
-  // Y-axis tick values: 50K, 40K, 30K, 20K, 10K, 0
-  const yTicks = [50000, 40000, 30000, 20000, 10000, 0];
-  const maxAxisValue = 50000;
+  const maxRevenue = useMemo(() => {
+    return Math.max(...activeData.map((d) => d.revenue || 0), 0);
+  }, [activeData]);
+
+  const { maxAxisValue, yTicks } = useMemo(() => {
+    return calculateYAxisTicks(maxRevenue);
+  }, [maxRevenue]);
 
   return (
     <div
@@ -114,7 +140,7 @@ export function SalesTrendChart({
           {yTicks.map((tickVal, i) => (
             <div key={i} className="flex items-center gap-3 w-full">
               <span className="text-[11px] font-sans font-medium text-slate-400 w-8 text-right shrink-0">
-                {tickVal === 0 ? '0' : `${tickVal / 1000}K`}
+                {tickVal === 0 ? '0' : tickVal >= 1000000 ? `${(tickVal / 1000000).toFixed(1)}M` : `${Math.round(tickVal / 1000)}K`}
               </span>
               <div className="flex-1 border-b border-slate-100" />
             </div>
@@ -124,7 +150,7 @@ export function SalesTrendChart({
         {/* Bar Container with Unified Motion Engine matching Sales */}
         <div className="relative z-10 pl-11 pr-2 h-56 flex items-end justify-between gap-2 sm:gap-4">
           {activeData.map((item, idx) => {
-            const heightRatio = Math.min(1, Math.max(0.04, item.revenue / maxAxisValue));
+            const heightRatio = item.revenue > 0 ? Math.min(1, Math.max(0.04, item.revenue / maxAxisValue)) : 0;
             const barColor = BAR_COLORS[idx % BAR_COLORS.length];
             const isHovered = hoveredIndex === idx;
             const transitionDelayMs = mounted ? idx * MOTION_STAGGER.chartBar : 0;

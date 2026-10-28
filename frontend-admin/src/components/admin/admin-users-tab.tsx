@@ -458,11 +458,24 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
             </thead>
             <tbody className="divide-y divide-border">
               {isLoading ? (
-                <tr>
-                  <td colSpan={6} className="py-10 text-center text-foreground-muted">
-                    Memuat data {isSales ? 'tim sales' : 'administrator'}...
-                  </td>
-                </tr>
+                [1, 2, 3].map((i) => (
+                  <tr key={i} className="animate-pulse">
+                    <td className="py-3.5 px-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-surface-raised" />
+                        <div className="space-y-1.5">
+                          <div className="h-3.5 bg-surface-raised rounded w-28" />
+                          <div className="h-2.5 bg-surface-raised rounded w-20" />
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-3.5 px-4"><div className="h-3.5 bg-surface-raised rounded w-36" /></td>
+                    <td className="py-3.5 px-4"><div className="h-6 bg-surface-raised rounded w-20" /></td>
+                    <td className="py-3.5 px-4"><div className="h-5 bg-surface-raised rounded-full w-16" /></td>
+                    <td className="py-3.5 px-4 hidden md:table-cell"><div className="h-3.5 bg-surface-raised rounded w-24" /></td>
+                    <td className="py-3.5 px-4 text-right"><div className="h-6 bg-surface-raised rounded w-16 ml-auto" /></td>
+                  </tr>
+                ))
               ) : userList.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="py-10 text-center text-foreground-muted">
