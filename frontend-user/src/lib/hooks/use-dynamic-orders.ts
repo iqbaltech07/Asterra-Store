@@ -428,3 +428,89 @@ export function formatRelativeTime(dateStringOrTimestamp: string | number, nowMs
   if (diffInSeconds < 86400) return Math.floor(diffInSeconds / 3600) + ' jam lalu';
   return Math.floor(diffInSeconds / 86400) + ' hari lalu';
 }
+
+/**
+ * Konfigurasi jumlah penjualan ("terjual") dinamis untuk produk storefront Asterra.
+ * - Dimulai dari angka 10 sampai 20 (baseCount per produk).
+ * - Angka terakhir/maksimal (targetMax) persis sesuai dengan gambar spesifikasi desain:
+ *   YouTube: 2.100, Netflix: 1.650, Canva: 1.420, Vidio: 1.100, CapCut: 980,
+ *   Viu: 910, ChatGPT: 850, Google Gemini: 620, Spotify: 780, MLBB: 1.250, dll.
+ * - Delay kenaikan sama persis dengan interval pesanan /orders (5–20 menit).
+ */
+export interface ProductSoldConfig {
+  name: string;
+  baseCount: number;
+  targetMax: number;
+  seed: number;
+}
+
+export const PRODUCT_SOLD_CONFIGS: Record<string, ProductSoldConfig> = {
+  youtube: { name: 'YouTube', baseCount: 18, targetMax: 2100, seed: 101 },
+  netflix: { name: 'Netflix', baseCount: 17, targetMax: 1650, seed: 102 },
+  canva: { name: 'Canva', baseCount: 16, targetMax: 1420, seed: 103 },
+  vidio: { name: 'Vidio', baseCount: 15, targetMax: 1100, seed: 104 },
+  capcut: { name: 'CapCut', baseCount: 14, targetMax: 980, seed: 105 },
+  viu: { name: 'Viu', baseCount: 13, targetMax: 910, seed: 106 },
+  chatgpt: { name: 'ChatGPT', baseCount: 14, targetMax: 850, seed: 107 },
+  gemini: { name: 'Google Gemini', baseCount: 11, targetMax: 620, seed: 108 },
+  spotify: { name: 'Spotify', baseCount: 13, targetMax: 780, seed: 109 },
+  'mobile-legends': { name: 'Mobile Legends', baseCount: 16, targetMax: 1250, seed: 110 },
+  'pubg-mobile': { name: 'PUBG Mobile', baseCount: 14, targetMax: 950, seed: 111 },
+  wetv: { name: 'WeTV', baseCount: 12, targetMax: 560, seed: 112 },
+  iqiyi: { name: 'iQIYI', baseCount: 11, targetMax: 420, seed: 113 },
+  bstation: { name: 'Bstation', baseCount: 11, targetMax: 390, seed: 114 },
+  'alight-motion': { name: 'Alight Motion', baseCount: 10, targetMax: 340, seed: 115 },
+};
+
+export function getProductSoldConfig(nameOrSlug: string): ProductSoldConfig {
+  const norm = (nameOrSlug || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (norm.includes('youtube')) return PRODUCT_SOLD_CONFIGS.youtube;
+  if (norm.includes('netflix') || norm.includes('ntflx')) return PRODUCT_SOLD_CONFIGS.netflix;
+  if (norm.includes('canva')) return PRODUCT_SOLD_CONFIGS.canva;
+  if (norm.includes('vidio')) return PRODUCT_SOLD_CONFIGS.vidio;
+  if (norm.includes('capcut')) return PRODUCT_SOLD_CONFIGS.capcut;
+  if (norm.includes('viu')) return PRODUCT_SOLD_CONFIGS.viu;
+  if (norm.includes('chatgpt') || norm.includes('openai')) return PRODUCT_SOLD_CONFIGS.chatgpt;
+  if (norm.includes('gemini') || norm.includes('googleai')) return PRODUCT_SOLD_CONFIGS.gemini;
+  if (norm.includes('spotify')) return PRODUCT_SOLD_CONFIGS.spotify;
+  if (norm.includes('mobilelegend') || norm.includes('mlbb')) return PRODUCT_SOLD_CONFIGS['mobile-legends'];
+  if (norm.includes('pubg')) return PRODUCT_SOLD_CONFIGS['pubg-mobile'];
+  if (norm.includes('wetv')) return PRODUCT_SOLD_CONFIGS.wetv;
+  if (norm.includes('iqiyi')) return PRODUCT_SOLD_CONFIGS.iqiyi;
+  if (norm.includes('bstation') || norm.includes('bsprem')) return PRODUCT_SOLD_CONFIGS.bstation;
+  if (norm.includes('alight')) return PRODUCT_SOLD_CONFIGS['alight-motion'];
+
+  return {
+    name: nameOrSlug,
+    baseCount: 12,
+    targetMax: 500,
+    seed: 120,
+  };
+}
+
+export function getDynamicSoldCount(
+  nameOrSlug: string,
+  nowMs: number = Date.now(),
+  targetMaxOverride?: number
+): number {
+  const config = getProductSoldConfig(nameOrSlug);
+  const targetMax = targetMaxOverride || config.targetMax;
+  const baseCount = config.baseCount;
+  const seed = config.seed;
+
+  let cur = GLOBAL_SIMULATION_EPOCH;
+  let steps = 0;
+
+  while (cur <= nowMs) {
+    // Delay interval pesanan 5–20 menit persis sesuai simulasi /orders
+    const intervalMs = 300000 + Math.floor(hashPRNG(steps ^ seed, 1) * 900000);
+    cur += intervalMs;
+    if (cur <= nowMs) {
+      steps++;
+      if (baseCount + steps >= targetMax) break;
+    }
+  }
+
+  return Math.min(targetMax, baseCount + steps);
+}
+

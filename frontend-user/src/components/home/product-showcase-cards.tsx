@@ -28,6 +28,7 @@ export interface ApplicationGroupItem {
   categoryTag: 'ai' | 'design' | 'video' | 'streaming' | 'other';
   minPrice: number;
   soldCount?: number;
+  targetMax?: number;
   rating?: string;
   badgeLabel?: string;
   isPromo?: boolean;
@@ -273,7 +274,7 @@ export function ShowcaseLoopingCard({
               <FontAwesomeIcon icon={faStar} className="w-3 h-3 text-amber-500 shrink-0" />
               <span className="font-semibold text-[#121A2A]">{app.rating || '5.0'}</span>
               <span className="text-[#121A2A]/45 truncate">
-                (Terjual {app.soldCount ? app.soldCount.toLocaleString('id-ID') : (app.items.length * 20).toLocaleString('id-ID')})
+                ({app.soldCount ? `${app.soldCount.toLocaleString('id-ID')} terjual` : (isOutOfStock ? 'Stok Habis' : 'Ready')})
               </span>
             </div>
           </div>

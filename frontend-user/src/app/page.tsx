@@ -45,6 +45,7 @@ import {
   ShowcaseLoopingCardSkeleton,
   FeaturedSectionCountdownBadge,
 } from '@/components/home/product-showcase-cards';
+import { getDynamicSoldCount } from '@/lib/hooks/use-dynamic-orders';
 
 
 export default function HomePage() {
@@ -71,6 +72,16 @@ export default function HomePage() {
   const { data: catalogResponse, isLoading: isCatalogLoadingQuery } = useCatalogProducts();
   const { data: sectionsResponse, isLoading: isSectionsLoading } = useHomepageSections();
 
+  // Reference timestamp to update dynamic sold counts matching /orders delay (5–20m interval)
+  const [now, setNow] = useState<number>(() => Date.now());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNow(Date.now());
+    }, 10000);
+    return () => clearInterval(timer);
+  }, []);
+
   const isCatalogLoading = (isCatalogLoadingQuery || isSectionsLoading) && !sectionsResponse?.sections && !catalogResponse?.data;
 
   const allProducts = useMemo(
@@ -86,7 +97,8 @@ export default function HomePage() {
         match: (t: string) => t.includes('gemini') || t.includes('google ai'),
         cat: 'AI Assistant & Cloud',
         tag: 'ai' as const,
-        soldCount: 620,
+        soldCount: getDynamicSoldCount('Google Gemini', now, 620),
+        targetMax: 620,
         rating: '5.0',
         isPromo: true,
         isTerlaris: false,
@@ -97,7 +109,8 @@ export default function HomePage() {
         match: (t: string) => t.includes('canva'),
         cat: 'Design & Kreatif',
         tag: 'design' as const,
-        soldCount: 1420,
+        soldCount: getDynamicSoldCount('Canva', now, 1420),
+        targetMax: 1420,
         rating: '5.0',
         isPromo: true,
         isTerlaris: true,
@@ -108,7 +121,8 @@ export default function HomePage() {
         match: (t: string) => t.includes('capcut'),
         cat: 'Video Editing & Content',
         tag: 'video' as const,
-        soldCount: 980,
+        soldCount: getDynamicSoldCount('CapCut', now, 980),
+        targetMax: 980,
         rating: '4.9',
         isPromo: true,
         isTerlaris: true,
@@ -119,7 +133,8 @@ export default function HomePage() {
         match: (t: string) => t.includes('chatgpt') || t.includes('chat gpt') || t.includes('plus plan'),
         cat: 'AI Assistant & Writing',
         tag: 'ai' as const,
-        soldCount: 850,
+        soldCount: getDynamicSoldCount('ChatGPT', now, 850),
+        targetMax: 850,
         rating: '5.0',
         isPromo: true,
         isTerlaris: true,
@@ -130,7 +145,8 @@ export default function HomePage() {
         match: (t: string) => t.includes('alightmotion') || t.includes('alight motion'),
         cat: 'Motion Graphic & VFX',
         tag: 'video' as const,
-        soldCount: 340,
+        soldCount: getDynamicSoldCount('Alight Motion', now, 340),
+        targetMax: 340,
         rating: '4.8',
         isPromo: false,
         isTerlaris: false,
@@ -141,7 +157,8 @@ export default function HomePage() {
         match: (t: string) => t.includes('youtube'),
         cat: 'Streaming & Video',
         tag: 'streaming' as const,
-        soldCount: 2100,
+        soldCount: getDynamicSoldCount('YouTube', now, 2100),
+        targetMax: 2100,
         rating: '5.0',
         isPromo: true,
         isTerlaris: true,
@@ -152,7 +169,8 @@ export default function HomePage() {
         match: (t: string) => t.includes('spotify'),
         cat: 'Music & Podcast',
         tag: 'streaming' as const,
-        soldCount: 780,
+        soldCount: getDynamicSoldCount('Spotify', now, 780),
+        targetMax: 780,
         rating: '5.0',
         isPromo: false,
         isTerlaris: true,
@@ -163,7 +181,8 @@ export default function HomePage() {
         match: (t: string) => t.includes('netflix'),
         cat: 'Movie & Series HD',
         tag: 'streaming' as const,
-        soldCount: 1650,
+        soldCount: getDynamicSoldCount('Netflix', now, 1650),
+        targetMax: 1650,
         rating: '5.0',
         isPromo: true,
         isTerlaris: true,
@@ -174,7 +193,8 @@ export default function HomePage() {
         match: (t: string) => t.includes('vidio'),
         cat: 'Live Sports & Premier',
         tag: 'streaming' as const,
-        soldCount: 1100,
+        soldCount: getDynamicSoldCount('Vidio', now, 1100),
+        targetMax: 1100,
         rating: '4.9',
         isPromo: false,
         isTerlaris: true,
@@ -185,7 +205,8 @@ export default function HomePage() {
         match: (t: string) => t.includes('wetv'),
         cat: 'Asian Drama VIP',
         tag: 'streaming' as const,
-        soldCount: 560,
+        soldCount: getDynamicSoldCount('WeTV', now, 560),
+        targetMax: 560,
         rating: '4.8',
         isPromo: false,
         isTerlaris: false,
@@ -196,7 +217,8 @@ export default function HomePage() {
         match: (t: string) => t.includes('iqiyi'),
         cat: 'Anime & Drama HD',
         tag: 'streaming' as const,
-        soldCount: 420,
+        soldCount: getDynamicSoldCount('iQIYI', now, 420),
+        targetMax: 420,
         rating: '4.8',
         isPromo: true,
         isTerlaris: false,
@@ -207,7 +229,8 @@ export default function HomePage() {
         match: (t: string) => t.includes('bstation'),
         cat: 'Anime & Pop Culture',
         tag: 'streaming' as const,
-        soldCount: 390,
+        soldCount: getDynamicSoldCount('Bstation', now, 390),
+        targetMax: 390,
         rating: '4.8',
         isPromo: false,
         isTerlaris: false,
@@ -218,7 +241,8 @@ export default function HomePage() {
         match: (t: string) => t.includes('viu'),
         cat: 'Asian Drama & Variety',
         tag: 'streaming' as const,
-        soldCount: 910,
+        soldCount: getDynamicSoldCount('Viu', now, 910),
+        targetMax: 910,
         rating: '4.9',
         isPromo: false,
         isTerlaris: true,
@@ -229,7 +253,8 @@ export default function HomePage() {
         match: (t: string) => t.includes('mobile legend') || t.includes('mlbb') || t.includes('diamond'),
         cat: 'Top Up Game & Diamond',
         tag: 'other' as const,
-        soldCount: 1250,
+        soldCount: getDynamicSoldCount('Mobile Legends', now, 1250),
+        targetMax: 1250,
         rating: '5.0',
         isPromo: true,
         isTerlaris: true,
@@ -240,14 +265,15 @@ export default function HomePage() {
         match: (t: string) => t.includes('pubg') || t.includes('uc'),
         cat: 'Top Up Game & UC',
         tag: 'other' as const,
-        soldCount: 950,
+        soldCount: getDynamicSoldCount('PUBG Mobile', now, 950),
+        targetMax: 950,
         rating: '5.0',
         isPromo: true,
         isTerlaris: true,
         isTerbaru: true,
       },
     ];
-  }, []);
+  }, [now]);
 
   // Map to Featured Products (authoritative backend data with 8-product guarantee & resilient fallback)
   const featuredApps = useMemo(() => {
@@ -277,6 +303,7 @@ export default function HomePage() {
         category: target.cat,
         categoryTag: target.tag,
         soldCount: target.soldCount,
+        targetMax: target.targetMax,
         rating: target.rating,
         badgeLabel:
           activeCategory === 'promo'
@@ -385,7 +412,7 @@ export default function HomePage() {
 
       // Maximum 8 popular products, sorted by popularity (soldCount descending)
       return promoMatching
-        .sort((a, b) => (b.soldCount || 0) - (a.soldCount || 0))
+        .sort((a, b) => (b.targetMax || b.soldCount || 0) - (a.targetMax || a.soldCount || 0))
         .slice(0, 8);
     }
 
@@ -393,7 +420,7 @@ export default function HomePage() {
       const terlarisConfigNames = new Set(appConfigurations.filter((a) => a.isTerlaris).map((a) => a.name));
       return allMapped
         .filter((app) => terlarisConfigNames.has(app.name))
-        .sort((a, b) => (b.soldCount || 0) - (a.soldCount || 0))
+        .sort((a, b) => (b.targetMax || b.soldCount || 0) - (a.targetMax || a.soldCount || 0))
         .slice(0, 8);
     }
 
@@ -423,7 +450,7 @@ export default function HomePage() {
         match: (t: string) => t.includes(name.toLowerCase()),
         cat: 'Digital Product',
         tag: 'other' as const,
-        soldCount: 500,
+        soldCount: getDynamicSoldCount(name, now),
         rating: '5.0',
       };
 
@@ -459,7 +486,7 @@ export default function HomePage() {
 
     // Only include applications that have real items
     return mapped.filter((app) => app.items.length > 0 && app.minPrice > 0);
-  }, [allProducts, appConfigurations]);
+  }, [allProducts, appConfigurations, now]);
 
   const handleOpenQuickView = (app: ApplicationGroupItem) => {
     const minPrice = app.minPrice;

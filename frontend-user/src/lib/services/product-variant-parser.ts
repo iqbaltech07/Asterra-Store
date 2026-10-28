@@ -1,5 +1,6 @@
 import { ProductItem, isProductOutOfStock } from '@/lib/products-data';
 import { BRAND_ICONS_MAP } from '@/components/ui/product-brand-icon';
+import { getDynamicSoldCount } from '@/lib/hooks/use-dynamic-orders';
 
 export interface ParsedVariant {
   id: string; // SKU id, e.g. vip-chatgptgo1thngar6b-s1
@@ -189,7 +190,7 @@ export const KNOWN_APPS: AppDefinition[] = [
     category: { id: 'cat-apps-streaming', name: 'Movies & Series' },
     imageUrl: BRAND_ICONS_MAP.netflix,
     rating: '4.9',
-    soldCount: 760,
+    soldCount: 1650,
     description:
       'Streaming film blockbuster, serial original Netflix, anime, dan dokumenter favorit dalam resolusi Ultra HD 4K dengan audio spasial.',
     features: [
@@ -208,7 +209,7 @@ export const KNOWN_APPS: AppDefinition[] = [
     category: { id: 'cat-apps-streaming', name: 'Sports & TV Streaming' },
     imageUrl: BRAND_ICONS_MAP.vidio,
     rating: '4.9',
-    soldCount: 1150,
+    soldCount: 1100,
     description:
       'Nonton siaran langsung olahraga terlengkap: Liga Inggris (EPL), BRI Liga 1, UCL, NBA, serta ribuan serial Vidio Original eksklusif.',
     features: [
@@ -249,7 +250,7 @@ export const KNOWN_APPS: AppDefinition[] = [
     category: { id: 'cat-apps-streaming', name: 'Music Streaming' },
     imageUrl: BRAND_ICONS_MAP.spotify,
     rating: '4.9',
-    soldCount: 1280,
+    soldCount: 780,
     description:
       'Dengarkan jutaan lagu dan podcast favorit tanpa jeda iklan, kualitas audio bitrate tertinggi, serta lewati trek musik tanpa batas.',
     features: [
@@ -272,7 +273,7 @@ export const KNOWN_APPS: AppDefinition[] = [
     category: { id: 'cat-apps-streaming', name: 'Streaming & Video' },
     imageUrl: BRAND_ICONS_MAP.youtube,
     rating: '5.0',
-    soldCount: 1890,
+    soldCount: 2100,
     description:
       'Nonton jutaan video YouTube tanpa iklan, putar di latar belakang saat layar mati, dan nikmati akses penuh ke YouTube Music Premium.',
     features: [
@@ -294,7 +295,7 @@ export const KNOWN_APPS: AppDefinition[] = [
     category: { id: 'cat-apps-streaming', name: 'Anime & Creators' },
     imageUrl: BRAND_ICONS_MAP.bstation,
     rating: '4.9',
-    soldCount: 480,
+    soldCount: 390,
     description:
       'Platform anime legal terbesar di Asia Tenggara. Nonton anime musim terbaru kualitas Full HD hingga 4K, video kreator pop culture, dan game ACG.',
     features: [
@@ -313,7 +314,7 @@ export const KNOWN_APPS: AppDefinition[] = [
     category: { id: 'cat-apps-streaming', name: 'Drama & Anime' },
     imageUrl: BRAND_ICONS_MAP.iqiyi,
     rating: '4.9',
-    soldCount: 520,
+    soldCount: 420,
     description:
       'Platform streaming drama China (C-Drama), serial romantis, variety show, dan anime favorit dengan fitur VIP eksklusif.',
     features: [
@@ -332,7 +333,7 @@ export const KNOWN_APPS: AppDefinition[] = [
     category: { id: 'cat-apps-streaming', name: 'Asian Drama & Anime' },
     imageUrl: BRAND_ICONS_MAP.wetv,
     rating: '4.9',
-    soldCount: 460,
+    soldCount: 560,
     description:
       'Nonton serial original WeTV Indonesia yang viral, drama Asia terbaik, dan anime populer dengan subtitle resmi.',
     features: [
@@ -499,7 +500,7 @@ export function resolveProductFamily(
         category: matchedApp.category,
         imageUrl: matchedApp.imageUrl,
         rating: matchedApp.rating,
-        soldCount: matchedApp.soldCount,
+        soldCount: getDynamicSoldCount(matchedApp.name, Date.now(), matchedApp.soldCount),
         description: matchedApp.description,
         features: matchedApp.features,
         variants,
@@ -533,7 +534,7 @@ export function resolveProductFamily(
         category: parentApp.category,
         imageUrl: parentApp.imageUrl,
         rating: parentApp.rating,
-        soldCount: parentApp.soldCount,
+        soldCount: getDynamicSoldCount(parentApp.name, Date.now(), parentApp.soldCount),
         description: parentApp.description,
         features: parentApp.features,
         variants,
@@ -549,7 +550,7 @@ export function resolveProductFamily(
       category: directProduct.category,
       imageUrl: directProduct.imageUrl || '/images/default-product-banner.png',
       rating: '4.9',
-      soldCount: 150,
+      soldCount: getDynamicSoldCount(directProduct.name, Date.now(), 150),
       description: cleanHtmlContent(directProduct.description) || 'Layanan digital resmi bergaransi.',
       features: (directProduct.features && directProduct.features.length > 0)
         ? directProduct.features.map(cleanHtmlContent).filter(Boolean)
@@ -576,7 +577,7 @@ export function resolveProductFamily(
       category: baseP.category,
       imageUrl: baseP.imageUrl || '/images/default-product-banner.png',
       rating: '4.9',
-      soldCount: 200,
+      soldCount: getDynamicSoldCount(baseP.name, Date.now(), 200),
       description: baseP.description || 'Layanan digital resmi bergaransi di Asterra Store.',
       features: baseP.features || ['Garansi Penggantian Penuh', 'Aktivasi Instan Otomatis'],
       variants,
