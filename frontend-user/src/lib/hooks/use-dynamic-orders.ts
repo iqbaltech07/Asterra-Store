@@ -1,5 +1,3 @@
-'use client';
-
 export interface PublicOrder {
   id: string;
   raw_id: string;
