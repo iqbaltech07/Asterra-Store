@@ -524,12 +524,17 @@ function GlobalOrdersContent() {
                     <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-border">
                       {order.order_status === 'processing' ? (
                         <div className="flex items-center gap-1.5 text-[11px] text-foreground-muted">
-                          <span>{order.process_estimate || 'Estimasi 10-30 Menit'}</span>
+                          <span>{order.process_estimate || 'Estimasi 1-10 Menit'}</span>
                         </div>
                       ) : order.order_status === 'completed' ? (
                         <div className="flex items-center gap-1.5 text-[11px] text-foreground-muted">
                           <FontAwesomeIcon icon={faShieldHalved} className="w-3 h-3 text-status-success" />
                           <span>{order.warranty_info || 'Garansi Resmi'}</span>
+                        </div>
+                      ) : order.order_status === 'pending' ? (
+                        <div className="flex items-center gap-1.5 text-[11px] text-foreground-muted">
+                          <FontAwesomeIcon icon={faClock} className="w-3 h-3 text-status-warning" />
+                          <span>Menunggu Transfer</span>
                         </div>
                       ) : null}
                       {getStatusBadge(order.order_status)}

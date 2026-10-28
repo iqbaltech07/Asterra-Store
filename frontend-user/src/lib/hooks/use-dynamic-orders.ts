@@ -173,9 +173,12 @@ export function getDeterministicSimulationOrders(
     customer_display: string;
     product_sku: string;
     warranty: string | null;
+    is_cancelled: boolean;
+    process_estimate: string;
     _orderTime: number;
     _processingStartTime: number;
     _completedStartTime: number;
+    _cancelTime: number;
   }
 
   const rawCandidates: RawOrderCandidate[] = [];
@@ -185,14 +188,34 @@ export function getDeterministicSimulationOrders(
     const intervalMs = 300000 + Math.floor(hashPRNG(orderIdx, 1) * 900000);
     curTime += intervalMs;
 
-    // Transisi status realistis:
-    // Menunggu Pembayaran -> Processing: 1–3 menit
-    const pendingDurationMs = 60000 + Math.floor(hashPRNG(orderIdx, 2) * 120000);
-    // Processing -> Sukses: 8–20 menit
-    const processingDurationMs = 480000 + Math.floor(hashPRNG(orderIdx, 3) * 720000);
+    // Status batal terjadi sangat sedikit (~1% dari seluruh pesanan)
+    const isCancelled = hashPRNG(orderIdx, 7) < 0.01;
+
+    // Tahap 1: Menunggu Pembayaran (Pending)
+    // Berlangsung 1 - 3 menit sebelum dibayar (atau 2 - 8 menit sebelum kedaluwarsa jika batal)
+    const pendingDurationMs = isCancelled
+      ? 120000 + Math.floor(hashPRNG(orderIdx, 2) * 360000)
+      : 60000 + Math.floor(hashPRNG(orderIdx, 2) * 120000);
+
+    // Tahap 2: Di Proses (Processing) -> (jeda 1 menit - 35 menit)
+    // Jeda di atas 10 menit jarang terjadi (hanya ~2% dari data)
+    const isRareLongProcessing = hashPRNG(orderIdx, 8) < 0.02;
+    let processingDurationMs: number;
+    let processEstimate: string;
+
+    if (isRareLongProcessing) {
+      // 2% kasus: jeda 10 menit hingga 35 menit (600.000 ms - 2.100.000 ms)
+      processingDurationMs = 600000 + Math.floor(hashPRNG(orderIdx, 3) * 1500000);
+      processEstimate = 'Estimasi 10-35 Menit';
+    } else {
+      // 98% kasus: jeda cepat 1 menit hingga 10 menit (60.000 ms - 600.000 ms)
+      processingDurationMs = 60000 + Math.floor(hashPRNG(orderIdx, 3) * 540000);
+      processEstimate = 'Estimasi 1-10 Menit';
+    }
 
     const processingStartTime = curTime + pendingDurationMs;
     const completedStartTime = processingStartTime + processingDurationMs;
+    const cancelTime = curTime + pendingDurationMs;
 
     // Format tanggal WIB (UTC+7)
     const wibDate = new Date(curTime + 7 * 3600000);
@@ -228,9 +251,12 @@ export function getDeterministicSimulationOrders(
       customer_display,
       product_sku: product.sku,
       warranty: product.warranty,
+      is_cancelled: isCancelled,
+      process_estimate: processEstimate,
       _orderTime: curTime,
       _processingStartTime: processingStartTime,
       _completedStartTime: completedStartTime,
+      _cancelTime: cancelTime,
     });
 
     orderIdx++;
@@ -242,10 +268,23 @@ export function getDeterministicSimulationOrders(
   for (const candidate of rawCandidates) {
     if (candidate._orderTime <= now) {
       let status: PublicOrder['order_status'] = 'completed';
-      if (now < candidate._processingStartTime) {
-        status = 'pending';
-      } else if (now < candidate._completedStartTime) {
-        status = 'processing';
+
+      if (candidate.is_cancelled) {
+        // Melalui tahap pending (menunggu pembayaran) sebelum akhirnya batal
+        if (now < candidate._cancelTime) {
+          status = 'pending';
+        } else {
+          status = 'cancelled';
+        }
+      } else {
+        // Alur normal: Menunggu Pembayaran -> Di Proses -> Selesai
+        if (now < candidate._processingStartTime) {
+          status = 'pending';
+        } else if (now < candidate._completedStartTime) {
+          status = 'processing';
+        } else {
+          status = 'completed';
+        }
       }
 
       appearedOrders.push({
@@ -261,7 +300,7 @@ export function getDeterministicSimulationOrders(
         createdAt: candidate.createdAt,
         customer_display: candidate.customer_display,
         product_sku: candidate.product_sku,
-        process_estimate: status === 'processing' ? 'Estimasi 5-15 Menit' : undefined,
+        process_estimate: status === 'processing' ? candidate.process_estimate : undefined,
         warranty_info: status === 'completed' ? candidate.warranty : null,
       });
     }
