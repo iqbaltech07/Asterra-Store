@@ -108,33 +108,44 @@ export const ACTIVE_CATALOG_PRODUCTS = [
 ];
 
 /**
- * Daftar nama pelanggan samaran Indonesia yang bervariasi dengan pola M***u, D***s, A***a.
+ * Pool nama depan dan belakang Indonesia yang kaya untuk generator nama tersamar dinamis.
+ */
+export const INDONESIAN_FIRST_NAMES = [
+  'Ahmad', 'Aditya', 'Agus', 'Aldi', 'Alvin', 'Andi', 'Andre', 'Angga', 'Anisa', 'Arif',
+  'Arya', 'Ayu', 'Bagus', 'Bambang', 'Bayu', 'Bima', 'Budi', 'Chandra', 'Citra', 'Danang',
+  'Dedi', 'Denny', 'Devi', 'Dewi', 'Dian', 'Diki', 'Dimas', 'Dina', 'Doni', 'Dwi',
+  'Eka', 'Eko', 'Fajar', 'Fandi', 'Farhan', 'Fauzan', 'Febri', 'Fikri', 'Galih', 'Gilang',
+  'Gita', 'Hadi', 'Hafiz', 'Hendra', 'Hesti', 'Ilham', 'Indah', 'Indra', 'Intan', 'Irfan',
+  'Kurnia', 'Lestari', 'Lukman', 'Mega', 'Maya', 'Maulana', 'Mita', 'Muhammad', 'Nabila', 'Nanda',
+  'Novita', 'Nugroho', 'Nur', 'Panji', 'Permana', 'Pratama', 'Putra', 'Putri', 'Raden', 'Rafi',
+  'Rahma', 'Rahmat', 'Rama', 'Randi', 'Rangga', 'Reza', 'Rian', 'Rifki', 'Riko', 'Rio',
+  'Riri', 'Riska', 'Rizky', 'Roni', 'Ryan', 'Sandi', 'Satria', 'Septian', 'Sinta', 'Siti',
+  'Surya', 'Taufik', 'Teguh', 'Tiara', 'Tri', 'Wahyu', 'Wawan', 'Widia', 'Winda', 'Yoga',
+  'Yogi', 'Yuda', 'Yudi', 'Yulia', 'Yusuf', 'Zaki', 'Zahra', 'Zul',
+];
+
+export const INDONESIAN_LAST_NAMES = [
+  'Abadi', 'Akbar', 'Alamsyah', 'Anggoro', 'Anshori', 'Ardiansyah', 'Arianto', 'Ariyanto', 'Ashari', 'Asyari',
+  'Budiman', 'Cahyono', 'Darmawan', 'Effendi', 'Fachrezi', 'Fadillah', 'Fauzi', 'Firmansyah', 'Gunawan', 'Hakim',
+  'Hamzah', 'Handayani', 'Hardiansyah', 'Hartanto', 'Hasan', 'Hasanah', 'Hasibuan', 'Hidayat', 'Hidayatullah', 'Ibrahim',
+  'Irawan', 'Iskandar', 'Jaelani', 'Kamil', 'Kurniawan', 'Kusuma', 'Laksamana', 'Lubis', 'Mahardika', 'Mahendra',
+  'Mansyur', 'Marpaung', 'Maulana', 'Mubarok', 'Mulyadi', 'Munandar', 'Nasution', 'Nugraha', 'Nugroho', 'Nurcahyo',
+  'Pambudi', 'Pamungkas', 'Pangestu', 'Pasaribu', 'Permana', 'Pradana', 'Prakoso', 'Prasetya', 'Prasetyo', 'Pratama',
+  'Prayoga', 'Purnomo', 'Purwanto', 'Puspasari', 'Putra', 'Putri', 'Qodir', 'Rachman', 'Raditya', 'Rahardjo',
+  'Rahman', 'Ramadhan', 'Rasyid', 'Ridwan', 'Riyadi', 'Rosadi', 'Rusli', 'Safitri', 'Saleh', 'Santoso',
+  'Saputra', 'Saputri', 'Sari', 'Sasmita', 'Setiawan', 'Sihombing', 'Siregar', 'Subagyo', 'Sudrajat', 'Sugeng',
+  'Suharto', 'Sukoco', 'Sulaiman', 'Sumantri', 'Supriyadi', 'Suryadi', 'Susanto', 'Sutanto', 'Sutrisno', 'Syahputra',
+  'Tanoto', 'Tanjung', 'Tarigan', 'Triyono', 'Utama', 'Utami', 'Wardhana', 'Wibawa', 'Wibowo', 'Wicaksono',
+  'Widagdo', 'Widodo', 'Wijaya', 'Winata', 'Wirawan', 'Wulandari', 'Yudha', 'Yulianto', 'Yunani', 'Zulkarnain',
+];
+
+/**
+ * Kompatibilitas mundur dengan daftar nama legacy
  */
 export const MASKED_CUSTOMER_NAMES = [
-  'D***s',
-  'A***a',
-  'F***n',
-  'K***a',
-  'S***a',
-  'B***i',
-  'M***y',
-  'E***o',
-  'T***o',
-  'N***a',
-  'Z***i',
-  'R***n',
-  'I***l',
-  'P***a',
-  'H***a',
-  'V***o',
-  'W***i',
-  'Y***u',
-  'L***a',
-  'G***a',
-  'O***n',
-  'J***o',
-  'C***a',
-  'U***r',
+  'D***s', 'A***a', 'F***n', 'K***a', 'S***a', 'B***i', 'M***y', 'E***o', 'T***o', 'N***a',
+  'Z***i', 'R***n', 'I***l', 'P***a', 'H***a', 'V***o', 'W***i', 'Y***u', 'L***a', 'G***a',
+  'O***n', 'J***o', 'C***a', 'U***r',
 ];
 
 /**
@@ -146,6 +157,57 @@ export function hashPRNG(seed: number, stream: number): number {
   h = Math.imul(h ^ (h >>> 15), 0x7feb352d);
   h = Math.imul(h ^ (h >>> 13), 0x846ca68b);
   return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+}
+
+/**
+ * Menghasilkan nama pelanggan tersamar yang sepenuhnya dinamis, natural, dan variatif
+ * dengan kombinasi >100.000 kemungkinan gaya dan format tanpa pola berulang monoton.
+ */
+export function generateMaskedCustomerName(seed: number): string {
+  const fIdx = Math.floor(hashPRNG(seed, 101) * INDONESIAN_FIRST_NAMES.length);
+  const lIdx = Math.floor(hashPRNG(seed, 102) * INDONESIAN_LAST_NAMES.length);
+  const firstName = INDONESIAN_FIRST_NAMES[fIdx];
+  const lastName = INDONESIAN_LAST_NAMES[lIdx];
+  const style = Math.floor(hashPRNG(seed, 103) * 10);
+
+  switch (style) {
+    case 0:
+      // Misal: "Dimas P***"
+      return `${firstName} ${lastName.charAt(0)}***`;
+    case 1:
+      // Misal: "D*** Pratama"
+      return `${firstName.charAt(0)}*** ${lastName}`;
+    case 2:
+      // Misal: "Dimas P."
+      return `${firstName} ${lastName.charAt(0)}.`;
+    case 3:
+      // Misal: "D. Pratama"
+      return `${firstName.charAt(0)}. ${lastName}`;
+    case 4:
+      // Misal: "Dim*** P***"
+      return `${firstName.slice(0, 3)}*** ${lastName.charAt(0)}***`;
+    case 5:
+      // Misal: "D***s P***a"
+      return `${firstName.charAt(0)}***${firstName.slice(-1)} ${lastName.charAt(0)}***${lastName.slice(-1)}`;
+    case 6:
+      // Misal: "Dimas P***a"
+      return `${firstName} ${lastName.charAt(0)}***${lastName.slice(-1)}`;
+    case 7:
+      // Misal: "D*** Pra***"
+      return `${firstName.charAt(0)}*** ${lastName.slice(0, 3)}***`;
+    case 8:
+      // Misal: "Dimas***"
+      return `${firstName}***`;
+    case 9:
+    default: {
+      // Misal: "dimas_***28" atau "dimas***82"
+      const num = 10 + Math.floor(hashPRNG(seed, 104) * 89);
+      const isUnderscore = hashPRNG(seed, 105) > 0.5;
+      return isUnderscore
+        ? `${firstName.toLowerCase()}_***${num}`
+        : `${firstName.toLowerCase()}***${num}`;
+    }
+  }
 }
 
 /**
@@ -229,9 +291,8 @@ export function getDeterministicSimulationOrders(
     if (orderNum === 7615) orderNum = 7616;
     const id = `AST-ORD-${dateKey}-${orderNum}`;
 
-    // Nama pelanggan samaran Indonesia realistis
-    const customerIdx = Math.floor(hashPRNG(orderIdx, 5) * MASKED_CUSTOMER_NAMES.length);
-    const customer_display = MASKED_CUSTOMER_NAMES[customerIdx];
+    // Nama pelanggan samaran Indonesia yang dinamis dan bervariasi acak (tanpa pola konstan berulang)
+    const customer_display = generateMaskedCustomerName(orderIdx);
 
     // Produk aktif dari katalog Asterra
     const productIdx = Math.floor(hashPRNG(orderIdx, 6) * ACTIVE_CATALOG_PRODUCTS.length);
