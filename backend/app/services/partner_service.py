@@ -168,23 +168,46 @@ class PartnerService:
         return enriched
 
     @classmethod
-    def find_by_code(cls, code: str) -> Optional[Dict[str, Any]]:
-        clean = code.strip().upper()
+    def find_by_identifier(cls, identifier: str) -> Optional[Dict[str, Any]]:
+        clean = identifier.strip().lower()
+        clean_upper = clean.upper()
+        clean_stripped = clean.replace("-", "")
         try:
-            db = SessionLocal()
-            try:
-                p_obj = db.query(SalesPartner).filter(SalesPartner.code.ilike(clean)).first()
-                if p_obj:
-                    p_dict = p_obj.to_dict()
-                    db_payouts = db.query(PayoutRequest).filter(PayoutRequest.partner_id == p_obj.id).order_by(PayoutRequest.created_at.desc()).all()
-                    p_dict["payoutRequests"] = [pr.to_dict() for pr in db_payouts]
-                    return p_dict
-            finally:
-                db.close()
-        except Exception:
-            pass
+            db = SessionLocal() if SessionLocal else None
+            if db:
+                try:
+                    p_obj = db.query(SalesPartner).filter(
+                        (SalesPartner.email.ilike(clean))
+                        | (SalesPartner.code.ilike(clean_upper))
+                        | (SalesPartner.code.ilike(clean))
+                        | (SalesPartner.code.ilike(f"AST-{clean_upper}"))
+                        | (SalesPartner.code.ilike(f"AST-{clean_upper.replace('AST', '').lstrip('-')}"))
+                    ).first()
+                    if p_obj:
+                        p_dict = p_obj.to_dict()
+                        db_payouts = db.query(PayoutRequest).filter(PayoutRequest.partner_id == p_obj.id).order_by(PayoutRequest.created_at.desc()).all()
+                        p_dict["payoutRequests"] = [pr.to_dict() for pr in db_payouts]
+                        return p_dict
+                finally:
+                    db.close()
+        except Exception as e:
+            print(f"[PartnerService] DB find_by_identifier note: {e}")
+
         partners = cls.load_partners(force_reload=True)
-        return next((p for p in partners if str(p.get("code", "")).upper() == clean), None)
+        return next(
+            (
+                p for p in partners
+                if str(p.get("email", "")).lower() == clean
+                or str(p.get("code", "")).upper() == clean_upper
+                or str(p.get("code", "")).lower() == clean
+                or str(p.get("code", "")).upper().replace("-", "") == clean_stripped.upper()
+            ),
+            None,
+        )
+
+    @classmethod
+    def find_by_code(cls, code: str) -> Optional[Dict[str, Any]]:
+        return cls.find_by_identifier(code)
 
     @classmethod
     def find_by_email(cls, email: str) -> Optional[Dict[str, Any]]:
@@ -884,6 +907,20 @@ class PartnerService:
                         db.add(new_sales_user)
                         db.commit()
                         synced_count += 1
+                    else:
+                        needs_repair = False
+                        if not existing.password_hash or len(existing.password_hash) < 10:
+                            existing.password_hash = get_password_hash("AsterraSales#2026")
+                            needs_repair = True
+                        if not existing.is_active:
+                            existing.is_active = True
+                            needs_repair = True
+                        if existing.role != "sales":
+                            existing.role = "sales"
+                            needs_repair = True
+                        if needs_repair:
+                            db.commit()
+                            synced_count += 1
             finally:
                 db.close()
         except Exception as e:

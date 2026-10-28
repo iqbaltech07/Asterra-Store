@@ -40,6 +40,19 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"[Lifespan] HomepageSection init note: {e}")
 
+    # Ensure database root superadmin and sales admin accounts on boot
+    try:
+        from app.services.admin_user_service import AdminUserService
+        AdminUserService.ensure_root_admin()
+    except Exception as e:
+        print(f"[Lifespan] Admin init note: {e}")
+
+    try:
+        from app.services.partner_service import PartnerService
+        PartnerService.sync_missing_sales_admins()
+    except Exception as e:
+        print(f"[Lifespan] Partner sales sync note: {e}")
+
     try:
         from app.services.catalog_service import CatalogService
         CatalogService.load_products()

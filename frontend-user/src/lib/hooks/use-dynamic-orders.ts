@@ -19,11 +19,11 @@ export interface PublicOrder {
 }
 
 /**
- * Global Reference Epoch: Kamis, 15 Oktober 2026 00:00:00 WIB (14 Oktober 17:00:00 UTC)
+ * Global Reference Epoch: Rabu, 28 Oktober 2026 00:00:00 WIB (27 Oktober 17:00:00 UTC)
  * Digunakan sebagai patokan waktu absolut agar seluruh browser (normal & incognito)
  * menghasilkan timeline simulasi yang 100% identik tanpa ketergantungan waktu mount.
  */
-export const GLOBAL_SIMULATION_EPOCH = new Date('2026-10-15T00:00:00+07:00').getTime();
+export const GLOBAL_SIMULATION_EPOCH = new Date('2026-10-28T00:00:00+07:00').getTime();
 
 /**
  * Katalog produk aktif AsterraStore yang diaudit langsung dari backend/data/active-catalog.json.

@@ -57,22 +57,96 @@ class AdminUserService:
         return clean
 
     @classmethod
-    def find_by_email(cls, email: str) -> Optional[Dict[str, Any]]:
-        clean_email = email.strip().lower()
-        # Query DB directly for instant fresh authentication
+    def ensure_root_admin(cls) -> None:
+        """
+        Ensures the root superadmin account exists in the database and has an active, valid password hash.
+        Synchronizes with settings.ADMIN_EMAIL and settings.ADMIN_PASSWORD seamlessly.
+        """
+        from app.config import settings
+        from app.core.security import verify_password, get_password_hash
+        admin_email = (settings.ADMIN_EMAIL or "admin@asterra.store").strip().lower()
+        admin_pass = settings.ADMIN_PASSWORD or "AsterraAdmin#2026"
+
         try:
-            db = SessionLocal()
+            db = SessionLocal() if SessionLocal else None
+            if not db:
+                return
             try:
-                admin_obj = db.query(AdminUser).filter(AdminUser.email.ilike(clean_email)).first()
-                if admin_obj:
-                    return admin_obj.to_dict(include_hash=True)
+                root_admin = db.query(AdminUser).filter(
+                    (AdminUser.email.ilike(admin_email)) | (AdminUser.username == "admin")
+                ).first()
+
+                if not root_admin:
+                    new_hash = get_password_hash(admin_pass)
+                    root_admin = AdminUser(
+                        id="admin-root",
+                        username="admin",
+                        email=admin_email,
+                        name="Super Admin Asterra",
+                        password_hash=new_hash,
+                        role="superadmin",
+                        is_active=True,
+                    )
+                    db.add(root_admin)
+                    db.commit()
+                else:
+                    needs_update = False
+                    if not verify_password(admin_pass, root_admin.password_hash):
+                        root_admin.password_hash = get_password_hash(admin_pass)
+                        needs_update = True
+                    if not root_admin.is_active:
+                        root_admin.is_active = True
+                        needs_update = True
+                    if root_admin.role != "superadmin":
+                        root_admin.role = "superadmin"
+                        needs_update = True
+                    if needs_update:
+                        root_admin.updated_at = datetime.utcnow()
+                        db.commit()
             finally:
                 db.close()
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"[AdminUserService] Note: ensure_root_admin check: {e}")
+
+    @classmethod
+    def find_by_identifier(cls, identifier: str) -> Optional[Dict[str, Any]]:
+        clean = identifier.strip().lower()
+        clean_stripped = clean.replace("-", "")
+        # Query DB directly for instant fresh authentication
+        try:
+            db = SessionLocal() if SessionLocal else None
+            if db:
+                try:
+                    admin_obj = db.query(AdminUser).filter(
+                        (AdminUser.email.ilike(clean))
+                        | (AdminUser.username.ilike(clean))
+                        | (AdminUser.username.ilike(clean_stripped))
+                        | (AdminUser.username.ilike(f"sales-{clean_stripped}"))
+                        | (AdminUser.username.ilike(f"sales-{clean}"))
+                    ).first()
+                    if admin_obj:
+                        return admin_obj.to_dict(include_hash=True)
+                finally:
+                    db.close()
+        except Exception as e:
+            print(f"[AdminUserService] Warning: Supabase find_by_identifier failed: {e}")
 
         admins = cls.load_admins()
-        return next((a for a in admins if str(a.get("email", "")).lower() == clean_email), None)
+        return next(
+            (
+                a for a in admins
+                if str(a.get("email", "")).lower() == clean
+                or str(a.get("username", "")).lower() == clean
+                or str(a.get("username", "")).lower().replace("-", "") == clean_stripped
+                or str(a.get("username", "")).lower() == f"sales-{clean_stripped}"
+                or str(a.get("username", "")).lower() == f"sales-{clean}"
+            ),
+            None,
+        )
+
+    @classmethod
+    def find_by_email(cls, email: str) -> Optional[Dict[str, Any]]:
+        return cls.find_by_identifier(email)
 
     @classmethod
     def find_by_id(cls, admin_id: str) -> Optional[Dict[str, Any]]:
