@@ -20,9 +20,9 @@ Asterra Store mengimplementasikan sistem pembagian laba dan referral yang secara
    - **COO**: 40% (CEO === COO strictly equal)
    - **Modal Usaha**: 20%
 3. **Skema Tier Komisi Otomatis (Progressive Milestone)**:
-   - **Standard Sales (1 - 49 Order)**: Komisi **10% dari Profit Transaksi**.
-   - **VIP Sales (≥ 50 Order)**: Otomatis naik ke **15% dari Profit Transaksi**.
-   - Seluruh komisi tetap dihitung murni dari Profit Transaksi, menjamin Asterra selalu memegang 83% - 90% profit bersih.
+   - **Standard Sales (1 - 49 Order)**: Komisi **15% dari Profit Transaksi**.
+   - **VIP Sales (≥ 50 Order)**: Otomatis naik ke **20% dari Profit Transaksi**.
+   - Seluruh komisi tetap dihitung murni dari Profit Transaksi, menjamin Asterra selalu memegang 78% - 85% profit bersih.
 4. **Bonus Rekrutmen 1-Level (Direct Recruiter Only)**:
    Rekruter langsung mitra sales menerima **2% dari Profit Transaksi**, maksimal 1 tingkat vertikal. Tingkat di atasnya menerima Rp 0 (bukan skema piramida/multi-level).
 4. **Diskon Customer Referral 1-Kali**:

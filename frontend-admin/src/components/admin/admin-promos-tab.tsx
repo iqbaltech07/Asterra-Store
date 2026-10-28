@@ -70,38 +70,59 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
     onNotifyRef.current = onNotify;
   }, [onNotify]);
 
-  // Fetch Promo Codes from API
-  const fetchPromos = useCallback(async (silent = false) => {
-    if (!silent) setIsLoading(true);
-    try {
-      const res = await fetchWithRetry('/api/v1/admin/promos');
-      if (!res.ok) throw new Error('Gagal mengambil data promo');
-      const json = await res.json();
-      if (json.success) {
-        setPromos(json.data || []);
-        if (json.metrics) setMetrics(json.metrics);
-      }
-    } catch {
-      if (!silent) onNotifyRef.current('Gagal memuat daftar kode promo.');
-    } finally {
-      if (!silent) setIsLoading(false);
-    }
-  }, []);
+  const isFetchingRef = useRef(false);
 
-  // Event-driven auto-sync: only refresh on initial load or when promo:updated SSE event fires
+  // Fetch Promo Codes from API - Event-driven & Silent Background Updates
+  const fetchPromos = useCallback(
+    async (isSilent = false) => {
+      // Prevent concurrent duplicate requests
+      if (isFetchingRef.current) return;
+      isFetchingRef.current = true;
+
+      if (!isSilent) {
+        setIsLoading(true);
+      }
+
+      try {
+        const res = await fetchWithRetry('/api/v1/admin/promos');
+        if (!res.ok) throw new Error('Gagal mengambil data promo');
+        const json = await res.json();
+        if (json.success) {
+          setPromos(json.data || []);
+          if (json.metrics) setMetrics(json.metrics);
+        }
+      } catch {
+        if (!isSilent) {
+          onNotifyRef.current('Gagal memuat daftar kode promo.');
+        }
+      } finally {
+        if (!isSilent) setIsLoading(false);
+        isFetchingRef.current = false;
+      }
+    },
+    []
+  );
+
   useEffect(() => {
+    // Initial fetch on mount
     fetchPromos(false);
 
-    const handleAutoSync = () => {
+    // Event-driven listener triggered strictly when data actually changes (SSE promo:updated -> admin:refresh-promos)
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    const handleEventDrivenRefresh = () => {
       // Don't disturb active modal
       if (isCreateModalOpenRef.current) return;
-      fetchPromos(true);
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        fetchPromos(true);
+      }, 300);
     };
 
-    window.addEventListener('admin:refresh-promos', handleAutoSync);
+    window.addEventListener('admin:refresh-promos', handleEventDrivenRefresh);
 
     return () => {
-      window.removeEventListener('admin:refresh-promos', handleAutoSync);
+      if (debounceTimer) clearTimeout(debounceTimer);
+      window.removeEventListener('admin:refresh-promos', handleEventDrivenRefresh);
     };
   }, [fetchPromos]);
 
@@ -135,7 +156,7 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
         throw new Error(json.error || 'Gagal mengubah status');
       }
       onNotify(json.message || `Status "${code}" diperbarui.`);
-      fetchPromos();
+      fetchPromos(true);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Terjadi kesalahan sistem.';
       onNotify(msg);
@@ -156,7 +177,7 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
         throw new Error(json.error || 'Gagal menghapus promo');
       }
       onNotify(`Kode promo "${code}" berhasil dihapus.`);
-      fetchPromos();
+      fetchPromos(true);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Gagal menghapus promo.';
       onNotify(msg);
@@ -210,7 +231,7 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
       setFormMinOrderAmount(0);
       setFormUsageLimit('500');
       setFormExpiresAt('');
-      fetchPromos();
+      fetchPromos(true);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Gagal membuat kode promo.';
       onNotify(msg);
@@ -260,7 +281,7 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => fetchPromos()}
+            onClick={() => fetchPromos(false)}
             disabled={isLoading}
             className="text-xs border-border gap-1.5 h-9 px-3.5 rounded-xl font-semibold"
           >

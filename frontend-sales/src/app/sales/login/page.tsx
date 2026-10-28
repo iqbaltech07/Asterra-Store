@@ -27,7 +27,7 @@ import {
   faCircleCheck,
 } from '@fortawesome/free-solid-svg-icons';
 import { AsterraLogo } from '@/components/ui/asterra-logo';
-import { getAdminBaseUrl } from '@/lib/utils/url';
+import { getAdminBaseUrl, getStoreBaseUrl } from '@/lib/utils/url';
 import { Suspense } from 'react';
 
 function SalesLoginContent() {
@@ -169,13 +169,13 @@ function SalesLoginContent() {
     <div className="min-h-screen bg-background text-foreground flex flex-col justify-center items-center px-4 py-12 selection:bg-primary/20 selection:text-primary">
       {/* Back to Home Link */}
       <div className="w-full max-w-md mb-6 flex items-center justify-between">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-2 text-xs font-medium text-foreground-muted hover:text-foreground transition-colors group"
+        <a
+          href={getStoreBaseUrl()}
+          className="inline-flex items-center gap-2 text-xs font-medium text-foreground-muted hover:text-foreground transition-colors group cursor-pointer"
         >
           <FontAwesomeIcon icon={faArrowLeft} className="text-xs group-hover:-translate-x-1 transition-transform" />
           <span>Kembali ke Beranda</span>
-        </Link>
+        </a>
         <Link
           href="/daftar-sales"
           className="text-xs font-semibold text-primary hover:underline flex items-center gap-1"

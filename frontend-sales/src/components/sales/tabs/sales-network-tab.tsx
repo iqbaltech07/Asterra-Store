@@ -127,7 +127,7 @@ export function SalesNetworkTab({
               <ShareButton
                 url={inviteSalesUrl}
                 title="Ayo Gabung Jadi Mitra Sales Asterra Store"
-                text="Ayo gabung jadi Mitra Sales resmi Asterra Store! Dapatkan komisi profit bersih 10% hingga 15% dari setiap penjualan produk digital bergaransi:"
+                text="Ayo gabung jadi Mitra Sales resmi Asterra Store! Dapatkan komisi profit bersih 15% hingga 20% dari setiap penjualan produk digital bergaransi:"
                 variant="purple"
                 className="h-10 text-xs font-semibold"
               />
@@ -393,7 +393,7 @@ export function SalesNetworkTab({
                       </span>
                     </div>
                     <div className="text-right">
-                      <span className="text-[10px] text-foreground-muted block">Bonus 2% Profit</span>
+                      <span className="text-[10px] text-foreground-muted block">Bonus Referral</span>
                       <span className="font-mono font-bold text-xs text-emerald-600">
                         + Rp {log.bonusAmount.toLocaleString('id-ID')}
                       </span>
@@ -412,8 +412,8 @@ export function SalesNetworkTab({
                     <th className="py-3 px-4 font-semibold">Dari Mitra</th>
                     <th className="py-3 px-4 font-semibold">ID Pesanan</th>
                     <th className="py-3 px-4 font-semibold">Total Nilai</th>
-                    <th className="py-3 px-4 font-semibold">Profit Bersih</th>
-                    <th className="py-3 px-4 font-semibold">Bonus Anda (2%)</th>
+                    <th className="py-3 px-4 font-semibold">Skema Bonus</th>
+                    <th className="py-3 px-4 font-semibold">Bonus Anda</th>
                     <th className="py-3 px-4 font-semibold">Status & Masa Garansi</th>
                   </tr>
                 </thead>
@@ -434,12 +434,9 @@ export function SalesNetworkTab({
                         Rp {log.orderTotal.toLocaleString('id-ID')}
                       </td>
                       <td className="py-3 px-4 font-mono font-semibold text-primary">
-                        Rp {(typeof log.transactionProfit === 'number' ? log.transactionProfit : 0).toLocaleString('id-ID')}
-                        {log.transactionProfit === 0 && (
-                          <span className="block text-[10px] text-foreground-muted font-normal">
-                            (Margin tergerus promo)
-                          </span>
-                        )}
+                        <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold">
+                          2% Referral
+                        </span>
                       </td>
                       <td className="py-3 px-4 font-bold text-emerald-600 font-mono">
                         + Rp {log.bonusAmount.toLocaleString('id-ID')}

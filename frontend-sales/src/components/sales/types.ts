@@ -49,6 +49,7 @@ export interface ProductItem {
   priceFormatted: string;
   status: string;
   imageUrl?: string;
+  baseCommission?: number;
   profitMargin?: number;
   profitPercentage?: number;
 }

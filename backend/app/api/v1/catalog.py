@@ -31,6 +31,23 @@ from app.services.realtime_broadcaster import RealtimeBroadcaster
 # ------------------------------------------
 # 1. Product Catalog Endpoints (Storefront & Admin)
 # ------------------------------------------
+SENSITIVE_INTERNAL_FIELDS = {
+    "providerPrice",
+    "profitMargin",
+    "profitPercentage",
+    "provider",
+    "providerCode",
+    "providerName",
+    "providerStatus",
+    "lastProviderCheck",
+}
+
+def sanitize_public_product(product: Dict[str, Any]) -> Dict[str, Any]:
+    """Strips internal provider pricing, margins, and supplier codes from public responses."""
+    if not isinstance(product, dict):
+        return product
+    return {k: v for k, v in product.items() if k not in SENSITIVE_INTERNAL_FIELDS}
+
 @router.get("/products", tags=["Catalog"])
 def get_products(
     request: Request,
@@ -47,11 +64,12 @@ def get_products(
     if cached_data is None:
         # On cache miss (e.g. after admin mutation bumped version), query PostgreSQL freshly
         products = CatalogService.get_products(category=category, search=search, force_reload=True)
+        sanitized_products = [sanitize_public_product(p) for p in products]
         cached_data = {
             "success": True,
             "message": "Products retrieved successfully",
-            "data": products,
-            "total": len(products),
+            "data": sanitized_products,
+            "total": len(sanitized_products),
             "timestamp": datetime.utcnow().isoformat(),
         }
         cache.set("catalog", cache_key, cached_data, ttl=120)
@@ -71,7 +89,7 @@ def get_product_by_id(product_id: str, request: Request, response: Response):
         product = CatalogService.get_product_by_id(product_id)
         if not product:
             raise HTTPException(status_code=404, detail="Produk tidak ditemukan")
-        cached_prod = product
+        cached_prod = sanitize_public_product(product)
         cache.set("catalog", cache_key, cached_prod, ttl=120)
 
     cache.apply_headers(response, etag=etag, mode="revalidate")

@@ -20,7 +20,7 @@ import { SalesLinksTab } from './tabs/sales-links-tab';
 import { SalesOrdersTab } from './tabs/sales-orders-tab';
 import { SalesNetworkTab } from './tabs/sales-network-tab';
 import { SalesWalletTab } from './tabs/sales-wallet-tab';
-import { SalesAcademyTab } from './tabs/sales-academy-tab';
+import { SalesGuidebookTab } from './tabs/sales-guidebook-tab';
 
 export type {
   NetworkMember,
@@ -50,7 +50,7 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
 
   const partner = profileRes?.data;
   const partnerCode = partner?.code || 'AST-SALES';
-  const partnerRate = partner?.rate || 10;
+  const partnerRate = partner?.rate || 15;
 
   // 2. Fetch Products for Catalog Tab
   const { data: productsRes, isLoading: isProductsLoading } = useQuery<{
@@ -132,7 +132,7 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
 
   const inviteWaMessage = encodeURIComponent(
     `Halo! Mau dapat penghasilan tambahan tanpa modal? Yuk gabung jadi Mitra Sales resmi di Asterra Store!\n\n` +
-      `✅ Komisi penjualan langsung 10% – 15% (naik 15% setelah 50 order) dari Profit Transaksi bersih\n` +
+      `✅ Komisi penjualan langsung 15% – 20% (naik 20% setelah 50 order) dari Profit Transaksi bersih\n` +
       `✅ Bonus rekrutmen mitra sales 2% dari Profit Transaksi (1-Level resmi)\n` +
       `✅ Produk digital terlaris (Canva Pro, ChatGPT, Gemini, Netflix, Spotify, dll)\n` +
       `✅ Disediakan link affiliate, banner & materi promosi siap pakai\n` +
@@ -219,8 +219,14 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
         />
       )}
 
-      {/* 7. SALES ACADEMY & GUIDELINES TAB */}
-      {activeTab === 'sales-academy' && <SalesAcademyTab />}
+      {/* 7. SALES GUIDEBOOK / PANDUAN SALES TAB */}
+      {(activeTab === 'sales-guidebook' || activeTab === 'sales-academy') && (
+        <SalesGuidebookTab
+          partnerCode={partnerCode}
+          partnerRate={partnerRate}
+          onTabChange={onTabChange}
+        />
+      )}
     </div>
   );
 }

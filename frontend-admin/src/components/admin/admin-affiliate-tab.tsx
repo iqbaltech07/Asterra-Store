@@ -49,7 +49,7 @@ interface AffiliatePartner {
   email: string;
   whatsapp: string;
   code: string;
-  tier: 'Standard (10%)' | 'VIP Sales (15%)' | 'Executive (20%)';
+  tier: string;
   rate: number;
   totalClicks: number;
   totalOrders: number;
@@ -103,8 +103,8 @@ export function AdminAffiliateTab({ onNotify }: AdminAffiliateTabProps) {
             email: p.email,
             whatsapp: p.whatsapp || '-',
             code: p.code,
-            tier: p.tier || 'Standard (10%)',
-            rate: p.rate || 10,
+            tier: p.tier || 'Standard (15%)',
+            rate: p.rate || 15,
             totalClicks: p.totalClicks || 0,
             totalOrders: p.totalOrders ?? (p._count?.orders || 0),
             status: p.status || 'active',

@@ -16,6 +16,23 @@ PARTNERS_FILE = DATA_DIR / "supabase-partners.json"
 ORDERS_FILE = DATA_DIR / "supabase-orders.json"
 ADMINS_FILE = DATA_DIR / "supabase-admins.json"
 
+def mask_customer_name(name: Optional[str]) -> str:
+    """
+    Asterra Store customer privacy masking:
+    - "Marchelino Kurniawan" -> "Mar***no"
+    - "Andi" -> "A***"
+    - "Bo" -> "B***"
+    - None / "" -> ""
+    """
+    if not name or not str(name).strip():
+        return ""
+    clean = str(name).strip()
+    words = clean.split()
+    first_word = words[0] if words else clean
+    if len(first_word) <= 4:
+        return first_word[0] + "***"
+    return first_word[:3] + "***" + first_word[-2:]
+
 class PartnerService:
     _partners: Optional[List[Dict[str, Any]]] = None
     _last_loaded: Optional[datetime] = None
@@ -154,16 +171,27 @@ class PartnerService:
             available_unpaid = max(0.0, (final_comm + final_net) - paid_commission - pending_payouts)
             total_pending = pending_comm + pending_net
 
+            total_orders_count = len(partner_orders)
+            raw_tier = str(p.get("tier", "")).strip().lower()
+            if total_orders_count >= 50 or "vip" in raw_tier or p.get("rate") == 20:
+                eff_tier = "VIP (20%)"
+                eff_rate = 20
+            else:
+                eff_tier = "Standard (15%)"
+                eff_rate = max(15, int(p.get("rate", 15) or 15))
+
             enriched.append({
                 **p,
-                "totalOrders": len(partner_orders),
+                "tier": eff_tier,
+                "rate": eff_rate,
+                "totalOrders": total_orders_count,
                 "totalRevenue": total_revenue,
                 "unpaidCommission": available_unpaid,
                 "pendingCommission": total_pending,
                 "paidCommission": paid_commission,
                 "pendingPayouts": pending_payouts,
                 "networkCommission": net_comm,
-                "_count": {"orders": len(partner_orders)},
+                "_count": {"orders": total_orders_count},
             })
 
         return enriched
@@ -315,16 +343,29 @@ class PartnerService:
         available_unpaid = max(0.0, (final_comm + final_net) - paid_comm - pending_payouts)
         total_pending = pending_comm + pending_net
 
+        total_orders_count = len(partner_orders)
+        if total_orders_count >= 50:
+            effective_tier = "VIP (20%)"
+            effective_rate = 20
+        else:
+            raw_tier = str(partner.get("tier", "")).strip()
+            if "vip" in raw_tier.lower() or raw_tier.startswith("VIP"):
+                effective_tier = "VIP (20%)"
+                effective_rate = 20
+            else:
+                effective_tier = "Standard (15%)"
+                effective_rate = 20 if partner.get("rate") == 20 else max(15, int(partner.get("rate", 15) or 15))
+
         return {
             "id": partner.get("id"),
             "code": partner.get("code"),
             "name": partner.get("name"),
             "email": partner.get("email"),
             "whatsapp": partner.get("whatsapp"),
-            "tier": partner.get("tier", "Standard (10%)"),
-            "rate": partner.get("rate", 10),
+            "tier": effective_tier,
+            "rate": effective_rate,
             "totalClicks": partner.get("totalClicks", 0),
-            "totalOrders": len(partner_orders),
+            "totalOrders": total_orders_count,
             "totalRevenue": total_revenue,
             "unpaidCommission": available_unpaid,
             "pendingCommission": total_pending,
@@ -399,10 +440,14 @@ class PartnerService:
 
         for o in matched:
             clean_id = str(o.get("id", "")).strip().upper()
-            email = o.get("customerEmail") or o.get("customer_email") or "buyer@asterra.store"
-            masked_email = email[:2] + "***@" + email.split("@")[1] if "@" in email else "Pelanggan"
-            cust_name = o.get("customerName") or o.get("customer_name") or "Pelanggan"
-            masked_name = cust_name[0] + "***" if len(cust_name) > 1 else cust_name
+            email = str(o.get("customerEmail") or o.get("customer_email") or "").strip()
+            if "@" in email:
+                local_part, domain_part = email.split("@", 1)
+                masked_email = (local_part[:2] if len(local_part) >= 2 else local_part[0]) + "***@" + domain_part
+            else:
+                masked_email = ""
+            cust_name = o.get("customerName") or o.get("customer_name") or ""
+            masked_name = mask_customer_name(cust_name)
 
             items = o.get("items", [])
             prod_names = ", ".join(i.get("productName") or i.get("product_name") or "Layanan" for i in items) or "Produk Digital"
@@ -454,7 +499,8 @@ class PartnerService:
                 campaign_name = camp_meta.get("name") or o.get("campaignName") or (f"Promo Campaign ({camp_key})" if camp_key else "Promo Campaign Spesial")
             else:
                 campaign_rate = None
-                commission_rate = float(comm_rec.commission_rate if (comm_rec and comm_rec.commission_rate) else partner.get("rate", 10.0))
+                fallback_rate = 20.0 if (partner.get("rate") == 20 or len(matched) >= 50) else 15.0
+                commission_rate = float(comm_rec.commission_rate if (comm_rec and comm_rec.commission_rate) else partner.get("rate", fallback_rate))
                 campaign_name = None
 
             trans_profit = int(comm_rec.transaction_profit) if (comm_rec and comm_rec.transaction_profit is not None) else max(0, round(total * 0.35))
@@ -494,7 +540,6 @@ class PartnerService:
                 "customerEmail": masked_email,
                 "customerName": masked_name,
                 "totalAmount": total,
-                "transactionProfit": trans_profit,
                 "status": o.get("status", "completed"),
                 "paymentStatus": o.get("paymentStatus", "PAID"),
                 "commission": commission,
@@ -737,8 +782,8 @@ class PartnerService:
             "email": email,
             "whatsapp": whatsapp,
             "code": custom_code,
-            "tier": "Standard (10%)",
-            "rate": 10,
+            "tier": "Standard (15%)",
+            "rate": 15,
             "totalClicks": 0,
             "bankName": payload.get("bankName") or "Bank Central Asia (BCA)",
             "bankAccount": payload.get("bankAccount") or "-",
@@ -770,8 +815,8 @@ class PartnerService:
                         email=email,
                         whatsapp=whatsapp,
                         code=custom_code,
-                        tier="Standard (10%)",
-                        rate=10,
+                        tier="Standard (15%)",
+                        rate=15,
                         total_clicks=0,
                         bank_name=new_partner["bankName"],
                         bank_account=new_partner["bankAccount"],

@@ -606,34 +606,52 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
 
                   {/* Promo Callout Banner for Discounted Products */}
                   {campaignPrice.hasPromo && (
-                    <div className="bg-gradient-to-br from-[#FFF5F3] via-[#FEF2F2] to-white border border-[#DC2626]/25 rounded-2xl p-3.5 sm:p-4 mb-3 space-y-2.5 shadow-xs select-none">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="space-y-0.5">
-                          <div className="flex items-center gap-2">
-                            <span className="text-base sm:text-lg">🔥</span>
-                            <span className="text-sm sm:text-base font-black text-[#121A2A] tracking-tight">
+                    <div className="rounded-2xl border border-[#DC2626]/20 bg-gradient-to-br from-[#FFF8F6] via-[#FEF2F2]/60 to-white p-3.5 sm:p-4 mb-3 space-y-3 shadow-xs select-none">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#DC2626]/10 text-[#DC2626] border border-[#DC2626]/20">
+                              <span>🔥</span>
+                              <span>Promo Spesial</span>
+                            </span>
+                            <span className="text-xs sm:text-sm font-bold text-[#121A2A] tracking-tight">
                               {campaignPrice.campaignName || 'Promo Spesial Asterra'}
                             </span>
                           </div>
-                          <p className="text-[11px] sm:text-xs text-[#121A2A]/70">
-                            Diskon khusus <strong className="text-[#DC2626]">{campaignPrice.discountBadge}</strong> berlaku untuk seluruh pesanan yang memenuhi syarat.
+                          <p className="text-[11px] sm:text-xs text-[#121A2A]/70 leading-relaxed">
+                            Diskon khusus <strong className="text-[#DC2626]">{campaignPrice.discountBadge}</strong> otomatis diterapkan untuk seluruh pesanan yang memenuhi syarat.
                           </p>
                         </div>
-                        <span className="text-[10px] sm:text-xs font-black text-white bg-gradient-to-r from-[#DC2626] to-[#C96F55] px-2.5 py-1 rounded-lg shadow-2xs shrink-0">
-                          {campaignPrice.discountBadge}
-                        </span>
+
+                        {/* Refined, measured discount badge */}
+                        <div className="shrink-0 self-start sm:self-auto">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-[#DC2626] text-white shadow-2xs">
+                            Hemat {campaignPrice.discountBadge}
+                          </span>
+                        </div>
                       </div>
 
-                      <div className="pt-2 border-t border-[rgba(220,38,38,0.12)] flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px]">
+                      {/* Clean divider separating details from period & countdown */}
+                      <div className="border-t border-[#DC2626]/15" />
+
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px]">
                         {campaignPrice.periodFormatted && (
                           <div className="flex items-center gap-1.5 text-[#121A2A]/75">
-                            <FontAwesomeIcon icon={faClock} className="w-3 h-3 text-[#C96F55]" />
-                            <span>Periode promo: <strong className="text-[#121A2A] font-semibold">{campaignPrice.periodFormatted}</strong></span>
+                            <FontAwesomeIcon icon={faClock} className="w-3 h-3 text-[#DC2626] shrink-0" />
+                            <span>
+                              Periode promo:{' '}
+                              <strong className="text-[#121A2A] font-semibold">
+                                {campaignPrice.periodFormatted}
+                              </strong>
+                            </span>
                           </div>
                         )}
                         {isMounted && countdownText && (
-                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#DC2626]/10 text-[#DC2626] font-semibold text-[11px] border border-[#DC2626]/20">
-                            <span className="font-mono font-bold tracking-tight">⏳ {countdownText}</span>
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-[#DC2626]/20 text-[#DC2626] font-medium text-[11px] shadow-2xs shrink-0 self-start sm:self-auto">
+                            <span>Sisa waktu:</span>
+                            <span className="font-mono font-bold tracking-tight">
+                              ⏳ {countdownText}
+                            </span>
                           </div>
                         )}
                       </div>

@@ -16,6 +16,7 @@ import { AdminTab } from '@/components/admin/admin-sidebar';
 import { SalesOrder } from '../types';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { ProductBrandIcon } from '@/components/ui/product-brand-icon';
+import { maskCustomerName, maskEmail } from '@/lib/utils/masking';
 
 interface SalesOrdersTabProps {
   partnerCode: string;
@@ -132,7 +133,7 @@ export function SalesOrdersTab({
                           {o.productNames || 'Produk Digital'}
                         </h4>
                         <div className="flex items-center justify-between text-[11px] text-foreground-muted mt-0.5">
-                          <span className="font-mono">{o.customerEmail}</span>
+                          <span className="font-mono">{maskCustomerName(o.customerName) || maskEmail(o.customerEmail) || '-'}</span>
                           <span>
                             {new Date(o.createdAt).toLocaleDateString('id-ID', {
                               day: 'numeric',
@@ -221,8 +222,15 @@ export function SalesOrdersTab({
                             <span className="truncate">{o.productNames || 'Produk Digital'}</span>
                           </div>
                         </td>
-                        <td className="py-3 px-4 font-mono text-foreground-muted text-[11px]">
-                          {o.customerEmail}
+                        <td className="py-3 px-4 text-foreground-muted text-[11px]">
+                          <div className="font-medium text-foreground">
+                            {maskCustomerName(o.customerName) || '-'}
+                          </div>
+                          {maskEmail(o.customerEmail) && (
+                            <div className="font-mono text-[10px] text-foreground-muted mt-0.5">
+                              {maskEmail(o.customerEmail)}
+                            </div>
+                          )}
                         </td>
                         <td className="py-3 px-4 font-bold text-foreground font-mono">
                           Rp {o.totalAmount.toLocaleString('id-ID')}
@@ -336,7 +344,7 @@ export function SalesOrdersTab({
                           {o.productNames || 'Produk Digital'}
                         </h4>
                         <div className="flex items-center justify-between text-[11px] text-foreground-muted mt-0.5">
-                          <span className="font-mono">{o.customerEmail}</span>
+                          <span className="font-mono">{maskCustomerName(o.customerName) || maskEmail(o.customerEmail) || '-'}</span>
                           <span>
                             {new Date(o.createdAt).toLocaleDateString('id-ID', {
                               day: 'numeric',
@@ -391,8 +399,8 @@ export function SalesOrdersTab({
                       <th className="py-3 px-4 font-semibold">Produk</th>
                       <th className="py-3 px-4 font-semibold">Pelanggan</th>
                       <th className="py-3 px-4 font-semibold">Total Nilai</th>
-                      <th className="py-3 px-4 font-semibold">Profit Transaksi</th>
-                      <th className="py-3 px-4 font-semibold">Komisi Saya ({partnerRate}%)</th>
+                      <th className="py-3 px-4 font-semibold">Tingkat Komisi</th>
+                      <th className="py-3 px-4 font-semibold">Komisi Saya</th>
                       <th className="py-3 px-4 font-semibold">Status</th>
                     </tr>
                   </thead>
@@ -419,19 +427,23 @@ export function SalesOrdersTab({
                             <span className="truncate">{o.productNames || 'Produk Digital'}</span>
                           </div>
                         </td>
-                        <td className="py-3 px-4 font-mono text-foreground-muted text-[11px]">
-                          {o.customerEmail}
+                        <td className="py-3 px-4 text-foreground-muted text-[11px]">
+                          <div className="font-medium text-foreground">
+                            {maskCustomerName(o.customerName) || '-'}
+                          </div>
+                          {maskEmail(o.customerEmail) && (
+                            <div className="font-mono text-[10px] text-foreground-muted mt-0.5">
+                              {maskEmail(o.customerEmail)}
+                            </div>
+                          )}
                         </td>
                         <td className="py-3 px-4 font-bold text-foreground font-mono">
                           Rp {o.totalAmount.toLocaleString('id-ID')}
                         </td>
                         <td className="py-3 px-4 font-mono font-semibold text-primary">
-                          Rp {(typeof o.transactionProfit === 'number' ? o.transactionProfit : 0).toLocaleString('id-ID')}
-                          {o.transactionProfit === 0 && (
-                            <span className="block text-[10px] text-foreground-muted font-normal">
-                              (Margin tergerus promo)
-                            </span>
-                          )}
+                          <span className="px-2 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-xs">
+                            {o.commissionRate || partnerRate}%
+                          </span>
                         </td>
                         <td className="py-3 px-4">
                           <div className="font-bold text-[#16A36A] font-mono">

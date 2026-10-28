@@ -20,8 +20,9 @@ class ReferralProfitService:
     - Complete Idempotent Persistence into PostgreSQL tables: `commissions` and `profit_ledgers`
     """
 
-    DIRECT_RATE_DEFAULT = 10.0  # 10%
-    SPONSOR_RATE_DEFAULT = 2.0  # 2% of transaction profit
+    DIRECT_RATE_DEFAULT = 15.0  # 15% (Sales Pemula baseline)
+    DIRECT_RATE_VIP = 20.0      # 20% (Sales VIP / Milestone >= 50 orders)
+    SPONSOR_RATE_DEFAULT = 2.0  # 2% of transaction profit (untouched)
     HOLDING_DAYS = 3            # 3 days warranty holding guarantee
 
     @staticmethod
@@ -135,8 +136,17 @@ class ReferralProfitService:
                     if recruiter:
                         recruiter_id = recruiter.id
 
-                # 3. Determine Campaign Booster Rate or Partner Default Rate
-                commission_rate = float(partner.rate if partner else cls.DIRECT_RATE_DEFAULT)
+                # 3. Determine Sales Commission Rate (Sales Pemula: 15%, Sales VIP >= 50 orders: 20%)
+                partner_rate_val = float(partner.rate) if (partner and partner.rate) else cls.DIRECT_RATE_DEFAULT
+                if partner:
+                    order_count = int(getattr(partner, "total_orders", 0) or 0)
+                    partner_tier = str(getattr(partner, "tier", "") or "").lower()
+                    if order_count >= 50 or "vip" in partner_tier:
+                        partner_rate_val = max(partner_rate_val, cls.DIRECT_RATE_VIP)
+                    else:
+                        partner_rate_val = max(partner_rate_val, cls.DIRECT_RATE_DEFAULT)
+
+                commission_rate = partner_rate_val
                 is_campaign_sale = False
                 camp_obj = None
 
@@ -158,7 +168,7 @@ class ReferralProfitService:
                         pass
                 elif (order.campaign_discount or 0) > 0:
                     is_campaign_sale = True
-                    commission_rate = max(commission_rate, 15.0)
+                    commission_rate = max(commission_rate, cls.DIRECT_RATE_VIP)
 
                 # 4. Compute Cost of Goods (COG) from actual product provider_price
                 items = order.items or []

@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   Boxes,
   Package,
+  BookOpen,
   FolderTree,
   DownloadCloud,
   Server,
@@ -79,7 +80,8 @@ export type AdminTab =
   | 'sales-orders'
   | 'sales-network'
   | 'sales-wallet'
-  | 'sales-academy';
+  | 'sales-academy'
+  | 'sales-guidebook';
 
 interface NavSubItem {
   id: AdminTab;
@@ -179,10 +181,10 @@ export function AdminSidebar({
               description: 'Saldo siap tarik & pengajuan penarikan dana',
             },
             {
-              id: 'sales-academy',
-              label: 'Panduan & Edukasi',
-              icon: Award,
-              description: 'Pedoman promosi, FAQ komisi, & bantuan admin',
+              id: 'sales-guidebook',
+              label: 'Panduan Sales',
+              icon: BookOpen,
+              description: 'Buku panduan penggunaan portal, penjualan, & komisi',
             },
           ],
         },

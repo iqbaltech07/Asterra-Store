@@ -22,6 +22,7 @@ import { AnimatedNumber } from '@/components/ui/animated-number';
 import { AnimatedProgressBar } from '@/components/ui/animated-progress-bar';
 import { SparklinePath } from '@/components/ui/sparkline-path';
 import { CopyButton } from '@/components/ui/copy-button';
+import { maskCustomerName, maskEmail } from '@/lib/utils/masking';
 import type { SalesProfileData, NetworkDataResponse, SalesOrder, ProductItem } from '../types';
 
 export interface CampaignTeaserItem {
@@ -84,7 +85,7 @@ export function SalesOverviewTab({
   const recentOrders = useMemo(() => {
     return (orders || []).slice(0, 5).map((o) => ({
       id: o.id,
-      customer: o.customerName || 'Pembeli',
+      customer: maskCustomerName(o.customerName) || maskEmail(o.customerEmail) || '-',
       time: o.createdAt
         ? new Date(o.createdAt).toLocaleString('id-ID', {
             day: 'numeric',

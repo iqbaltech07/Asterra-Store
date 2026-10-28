@@ -164,11 +164,12 @@ export function SalesCatalogTab({
             const productUrl = `${getStoreBaseUrl()}/products/${p.id}?ref=${partnerCode}`;
             const catName = p.categoryName || p.category?.name || 'Digital';
 
-            const estimatedProfit =
-              p.profitMargin && p.profitMargin > 0
-                ? p.profitMargin
-                : Math.max(5000, Math.round(p.price * 0.25));
-            const commissionRp = Math.round((estimatedProfit * partnerRate) / 100);
+            // Safe commission calculation without exposing store profit margins
+            const commissionRp = p.baseCommission
+              ? Math.round(p.baseCommission * (partnerRate / 15))
+              : (p.profitMargin && p.profitMargin > 0
+                  ? Math.round((p.profitMargin * partnerRate) / 100)
+                  : Math.max(750, Math.round(p.price * 0.075)));
 
             return (
               <div
@@ -204,9 +205,9 @@ export function SalesCatalogTab({
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-foreground-muted text-[11px]">Estimasi Profit:</span>
-                      <span className="font-medium text-foreground-muted font-mono">
-                        Rp {estimatedProfit.toLocaleString('id-ID')}
+                      <span className="text-foreground-muted text-[11px]">Komisi per Unit:</span>
+                      <span className="font-bold text-[#16A36A] font-mono">
+                        Rp {commissionRp.toLocaleString('id-ID')}
                       </span>
                     </div>
                     <div className="pt-2 border-t border-border flex items-center justify-between">

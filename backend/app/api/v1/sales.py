@@ -334,7 +334,7 @@ def validate_referral(
         "data": {
             "code": partner["code"],
             "partnerName": partner["name"],
-            "tier": partner.get("tier", "Standard (10%)"),
+            "tier": partner.get("tier", "Standard (15%)"),
             "discountEligible": discount_eligible,
             "discountAmount": discount_amount,
             "discountReason": discount_reason,
@@ -342,7 +342,7 @@ def validate_referral(
         "partner": {
             "code": partner["code"],
             "name": partner["name"],
-            "rate": partner.get("rate", 10),
+            "rate": partner.get("rate", 15),
         },
         "message": (
             f"Kode referral valid! Diundang oleh mitra {partner['name']} ({partner['code']})"
@@ -621,3 +621,179 @@ def get_sales_campaigns(request: Request):
         "partnerCode": partner_code,
         "total": len(enriched_campaigns),
     }
+
+
+# ------------------------------------------
+# 5. Public & Sales Protected Simulation Endpoints
+# ------------------------------------------
+@router.get("/sales/simulation-catalog", tags=["Sales Simulator"])
+@router.get("/affiliate/simulation-catalog", tags=["Sales Simulator"])
+def get_simulation_catalog(
+    rate: float = Query(15.0, description="Tingkat komisi (15% atau 20%)")
+):
+    """
+    Returns authentic catalog products formatted safely for commission and reseller simulator.
+    PROTECTED: Strictly omits provider modal costs, provider names, and internal profit margins.
+    Provides verified base commission per unit for secure calculations.
+    """
+    try:
+        from app.services.catalog_service import CatalogService
+        products = CatalogService.load_products()
+    except Exception as e:
+        print(f"[SimulationCatalog] Error loading products: {e}")
+        products = []
+
+    clean_rate = 20.0 if rate >= 20.0 else 15.0
+    sanitized = []
+
+    for p in products:
+        if str(p.get("status", "active")).lower() != "active":
+            continue
+
+        price = int(p.get("price") or 0)
+        provider_price = int(p.get("providerPrice") or p.get("provider_price") or 0)
+        profit_margin = int(p.get("profitMargin") or max(0, price - provider_price))
+
+        # Calculate standard 15% base commission (Sales Pemula) and selected rate commission
+        base_comm = round(profit_margin * 0.15) if profit_margin > 0 else max(750, round(price * 0.075))
+        unit_comm = round(profit_margin * (clean_rate / 100.0)) if profit_margin > 0 else round(base_comm * (clean_rate / 15.0))
+
+        cat_obj = p.get("category")
+        cat_name = p.get("categoryName") or (cat_obj.get("name") if isinstance(cat_obj, dict) else str(cat_obj or "Digital"))
+
+        sanitized.append({
+            "id": p.get("id"),
+            "name": p.get("name"),
+            "category": cat_name,
+            "price": price,
+            "baseCommission": base_comm,
+            "commissionPerUnit": unit_comm,
+            "brand": p.get("brand"),
+            "popular": bool(p.get("popular")),
+            "isCommissionEligible": True,
+        })
+
+    return {
+        "success": True,
+        "data": sanitized,
+        "total": len(sanitized),
+    }
+
+
+@router.post("/sales/simulate", tags=["Sales Simulator"])
+@router.post("/affiliate/simulate", tags=["Sales Simulator"])
+async def simulate_calculation(request: Request):
+    """
+    Server-side simulation engine for Sales Commission & Reseller Selling Price.
+    Zero leakage of internal profit margins or provider modal costs.
+    """
+    payload = await request.json()
+    mode = payload.get("mode", "sales")
+
+    if mode == "reseller":
+        product_id = payload.get("productId")
+        asterra_price = float(payload.get("asterraPrice") or 0)
+        reseller_price = float(payload.get("resellerPrice") or 0)
+        quantity = max(0, int(payload.get("quantity") or 0))
+        is_eligible = bool(payload.get("isCommissionEligible", False))
+        commission_per_unit = float(payload.get("commissionPerUnit") or 0)
+        referral_count = max(0, int(payload.get("referralCount") or 0))
+
+        # If product_id supplied, ensure authentic asterra price & commission
+        if product_id:
+            try:
+                from app.services.catalog_service import CatalogService
+                for p in CatalogService.load_products():
+                    if str(p.get("id")) == str(product_id):
+                        if asterra_price <= 0:
+                            asterra_price = float(p.get("price") or 0)
+                        if commission_per_unit <= 0:
+                            p_cost = float(p.get("providerPrice") or p.get("provider_price") or 0)
+                            p_profit = float(p.get("profitMargin") or max(0, asterra_price - p_cost))
+                            commission_per_unit = round(p_profit * 0.15)
+                        break
+            except Exception:
+                pass
+
+        unit_markup = round(reseller_price - asterra_price)
+        total_markup = round(unit_markup * quantity)
+        unit_commission = round(commission_per_unit) if is_eligible else 0
+        total_commission = round(unit_commission * quantity)
+        referral_bonus = round(commission_per_unit * (2.0 / 15.0) * referral_count * quantity) if (is_eligible and referral_count > 0) else 0
+        total_potential_earnings = total_markup + total_commission + referral_bonus
+        has_loss = reseller_price < asterra_price
+
+        return {
+            "success": True,
+            "mode": "reseller",
+            "data": {
+                "asterraPrice": asterra_price,
+                "resellerPrice": reseller_price,
+                "unitMarkup": unit_markup,
+                "quantity": quantity,
+                "totalMarkup": total_markup,
+                "commissionPerUnit": unit_commission,
+                "totalCommission": total_commission,
+                "referralBonus": referral_bonus,
+                "totalPotentialEarnings": total_potential_earnings,
+                "hasLoss": has_loss,
+                "lossWarning": (
+                    f"Peringatan Potensi Kerugian: Harga jual kepada pelanggan lebih rendah daripada harga produk AsterraStore. Selisih harga per unit bernilai negatif (-Rp {abs(unit_markup):,})."
+                    if has_loss else None
+                ),
+                "isCommissionEligible": is_eligible,
+            }
+        }
+
+    # Sales mode simulation
+    items = payload.get("items", [])
+    personal_rate = 20.0 if float(payload.get("personalRate") or 15.0) >= 20.0 else 15.0
+    referral_count = max(0, int(payload.get("referralCount") or 0))
+
+    total_units = 0
+    total_commission = 0
+    calculated_items = []
+
+    for it in items:
+        p_id = it.get("productId")
+        qty = max(0, int(it.get("quantity") or 0))
+        unit_comm = float(it.get("commissionPerUnit") or 0)
+
+        if p_id and unit_comm <= 0:
+            try:
+                from app.services.catalog_service import CatalogService
+                for p in CatalogService.load_products():
+                    if str(p.get("id")) == str(p_id):
+                        p_price = float(p.get("price") or 0)
+                        p_cost = float(p.get("providerPrice") or p.get("provider_price") or 0)
+                        p_profit = float(p.get("profitMargin") or max(0, p_price - p_cost))
+                        unit_comm = round(p_profit * (personal_rate / 100.0))
+                        break
+            except Exception:
+                pass
+
+        subtotal_comm = round(unit_comm * qty)
+        total_units += qty
+        total_commission += subtotal_comm
+        calculated_items.append({
+            "productId": p_id,
+            "quantity": qty,
+            "commissionPerUnit": unit_comm,
+            "subtotalCommission": subtotal_comm,
+        })
+
+    referral_bonus = round(total_commission * (2.0 / personal_rate) * referral_count) if (referral_count > 0 and personal_rate > 0) else 0
+    total_earnings = total_commission + referral_bonus
+
+    return {
+        "success": True,
+        "mode": "sales",
+        "data": {
+            "totalUnits": total_units,
+            "personalCommission": total_commission,
+            "referralBonus": referral_bonus,
+            "totalEarnings": total_earnings,
+            "items": calculated_items,
+        }
+    }
+

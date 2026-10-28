@@ -13,7 +13,6 @@ import {
   faCheck,
   faShieldHalved,
   faCoins,
-  faCalculator,
   faArrowRight,
   faCircleQuestion,
   faComments,
@@ -32,6 +31,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { getStoreBaseUrl } from '@/lib/utils/url';
+import { CommissionSimulator } from '@/components/sales/commission-simulator';
+import { ActivePromoCard } from '@/components/promo/active-promo-card';
 
 interface PartnerResult {
   id: string;
@@ -78,9 +79,6 @@ function DaftarSalesContent() {
   const [refValidationMessage, setRefValidationMessage] = useState<string | null>(null);
   const [isRefValid, setIsRefValid] = useState<boolean | null>(null);
   const [sponsorData, setSponsorData] = useState<{ code: string; partnerName: string; tier?: string } | null>(null);
-
-  // Commission Simulator State
-  const [estimatedSales, setEstimatedSales] = useState(40);
 
   // Auto-detect referral code from localStorage if not in URL query
   useEffect(() => {
@@ -518,7 +516,7 @@ function DaftarSalesContent() {
               </h1>
               <p className="text-xs sm:text-sm text-foreground-muted leading-relaxed">
                 Anda kini resmi menjadi bagian dari Tim Sales & Mitra Afiliasi Asterra Store dengan skema bagi hasil{' '}
-                <strong className="text-status-success font-semibold">10% – 15% dari Profit Transaksi</strong>.
+                <strong className="text-status-success font-semibold">15% – 20% dari Profit Transaksi</strong>.
               </p>
             </div>
 
@@ -567,7 +565,7 @@ function DaftarSalesContent() {
                   <span>Cara Kerja Penghasilan Anda:</span>
                 </p>
                 <p className="text-[11px] text-foreground-muted leading-relaxed">
-                  Setiap transaksi dari pembeli yang membuka website Asterra Store menggunakan link referral Anda akan otomatis tercatat. Komisi sebesar 10% hingga 15% (sesuai performa) dari Profit Bersih Transaksi akan otomatis dialokasikan ke akun Anda (dengan masa holding garansi 3 hari).
+                  Setiap transaksi dari pembeli yang membuka website Asterra Store menggunakan link referral Anda akan otomatis tercatat. Komisi sebesar 15% hingga 20% (sesuai performa) dari Profit Bersih Transaksi akan otomatis dialokasikan ke akun Anda (dengan masa holding garansi 3 hari).
                 </p>
               </div>
             </div>
@@ -604,181 +602,237 @@ function DaftarSalesContent() {
           /* ================================================================= */
           /* REGISTRATION FORM & HERO */
           /* ================================================================= */
-          <div className="space-y-12">
-            {/* Hero Section */}
-            <div className="text-center space-y-4 max-w-2xl mx-auto">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/25 text-primary text-xs font-semibold">
+          <div className="space-y-12 sm:space-y-16">
+            {/* 1. Hero Section */}
+            <div className="text-center space-y-4 max-w-3xl mx-auto px-2">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/10 border border-primary/25 text-primary text-xs font-bold">
                 <FontAwesomeIcon icon={faGift} className="text-xs" />
-                <span>Program Kemitraan Sales & Affiliate Resmi</span>
+                <span>Program Kemitraan Sales & Affiliate Resmi Asterra Store</span>
               </div>
-              <h1 data-gsap="daftar-title" className="text-3xl sm:text-4xl font-extrabold text-foreground tracking-tight leading-tight">
+              <h1
+                data-gsap="daftar-title"
+                className="text-3xl sm:text-4xl lg:text-5xl font-black text-foreground tracking-tight leading-tight"
+              >
                 Daftar Jadi Mitra Sales Asterra Store
               </h1>
-              <p data-gsap="daftar-desc" className="text-xs sm:text-sm text-foreground-muted leading-relaxed">
-                Dapatkan komisi <strong className="text-foreground">10% hingga 15% per transaksi</strong> hanya dengan membagikan link produk digital bergaransi kami ke teman, komunitas, atau media sosial Anda.
+              <p
+                data-gsap="daftar-desc"
+                className="text-xs sm:text-sm md:text-base text-foreground-muted leading-relaxed max-w-2xl mx-auto"
+              >
+                Dapatkan bagi hasil komisi transparan <strong className="text-foreground">15% hingga 20% dari Profit Bersih</strong> setiap penjualan produk digital bergaransi kami, plus <strong className="text-primary">2% bonus rekrutmen tim</strong> tanpa repot stok dan pengiriman.
               </p>
             </div>
 
-            {/* 3 Benefit Feature Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div data-gsap="daftar-feature-card" className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-2.5">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold">
-                  <FontAwesomeIcon icon={faPercent} className="text-base" />
+            {/* 2. Three Benefit Feature Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 lg:gap-6">
+              <div
+                data-gsap="daftar-feature-card"
+                className="bg-surface border border-border rounded-2xl p-6 shadow-xs hover:shadow-md transition-all space-y-3"
+              >
+                <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold text-lg">
+                  <FontAwesomeIcon icon={faPercent} className="text-lg" />
                 </div>
-                <h3 className="font-bold text-sm text-foreground">Komisi Menarik 10% – 15%</h3>
-                <p className="text-xs text-foreground-muted leading-relaxed">
-                  Bagi hasil transparan dari setiap penjualan akun Canva Pro, Gemini AI, Netflix, dan Spotify.
-                </p>
+                <div className="space-y-1">
+                  <h3 className="font-extrabold text-base text-foreground">
+                    Komisi Transparan 15% – 20%
+                  </h3>
+                  <p className="text-xs sm:text-sm text-foreground-muted leading-relaxed">
+                    Bagi hasil dihitung murni dari Profit Transaksi bersih penjualan akun Canva Pro, Gemini AI, ChatGPT, Netflix, dan Spotify.
+                  </p>
+                </div>
               </div>
 
-              <div data-gsap="daftar-feature-card" className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-2.5">
-                <div className="w-10 h-10 rounded-lg bg-status-success/10 text-status-success flex items-center justify-center font-bold">
-                  <FontAwesomeIcon icon={faWallet} className="text-base" />
+              <div
+                data-gsap="daftar-feature-card"
+                className="bg-surface border border-border rounded-2xl p-6 shadow-xs hover:shadow-md transition-all space-y-3"
+              >
+                <div className="w-12 h-12 rounded-xl bg-status-success/10 text-status-success flex items-center justify-center font-bold text-lg">
+                  <FontAwesomeIcon icon={faWallet} className="text-lg" />
                 </div>
-                <h3 className="font-bold text-sm text-foreground">Pencairan Dana Cepat</h3>
-                <p className="text-xs text-foreground-muted leading-relaxed">
-                  Minimal payout hanya Rp 50.000. Komisi bisa langsung ditarik ke rekening bank (BCA, Mandiri, BNI, BRI) atau E-Wallet.
-                </p>
+                <div className="space-y-1">
+                  <h3 className="font-extrabold text-base text-foreground">
+                    Pencairan Dana Fleksibel
+                  </h3>
+                  <p className="text-xs sm:text-sm text-foreground-muted leading-relaxed">
+                    Minimal payout hanya Rp 50.000. Komisi dapat langsung dicairkan ke rekening bank (BCA, Mandiri, BNI, BRI) atau E-Wallet (DANA, GoPay, OVO).
+                  </p>
+                </div>
               </div>
 
-              <div data-gsap="daftar-feature-card" className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-2.5">
-                <div className="w-10 h-10 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center font-bold">
-                  <FontAwesomeIcon icon={faShieldHalved} className="text-base" />
+              <div
+                data-gsap="daftar-feature-card"
+                className="bg-surface border border-border rounded-2xl p-6 shadow-xs hover:shadow-md transition-all space-y-3"
+              >
+                <div className="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center font-bold text-lg">
+                  <FontAwesomeIcon icon={faShieldHalved} className="text-lg" />
                 </div>
-                <h3 className="font-bold text-sm text-foreground">Produk Resmi & Bergaransi</h3>
-                <p className="text-xs text-foreground-muted leading-relaxed">
-                  Semua akun memiliki garansi penuh penggantian akun 100%, sehingga pembeli Anda percaya dan repeat order tinggi.
-                </p>
+                <div className="space-y-1">
+                  <h3 className="font-extrabold text-base text-foreground">
+                    Produk Resmi & Bergaransi
+                  </h3>
+                  <p className="text-xs sm:text-sm text-foreground-muted leading-relaxed">
+                    Semua akun bergaransi penggantian penuh 100%, dikirim otomatis dalam hitungan menit sehingga repeat order dan kepercayaan pembeli sangat tinggi.
+                  </p>
+                </div>
               </div>
             </div>
 
-            {/* Registration Form Card */}
-            <div data-gsap="daftar-form" className="bg-surface border border-border rounded-2xl p-6 sm:p-10 shadow-sm max-w-xl mx-auto space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-border pb-4 gap-2">
+            {/* 3. Active Promo Callout Card (Redesign 3: Highlight active 15% promo campaign) */}
+            <div className="max-w-4xl mx-auto w-full">
+              <ActivePromoCard
+                onCtaClick={() => {
+                  const el = document.getElementById('kalkulator-sales');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }}
+              />
+            </div>
+
+            {/* 4. Registration Form Card (Redesign 1: Spacious, balanced, responsive 2-column on desktop) */}
+            <div
+              data-gsap="daftar-form"
+              className="bg-surface border border-border rounded-2xl sm:rounded-3xl p-6 sm:p-10 shadow-sm max-w-4xl mx-auto space-y-6"
+            >
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-border pb-5 gap-3">
                 <div className="space-y-1">
-                  <h2 className="text-lg font-bold text-foreground">Formulir Pendaftaran Mitra Sales</h2>
-                  <p className="text-xs text-foreground-muted">
-                    Lengkapi data diri Anda di bawah ini untuk mengaktifkan akun & kode referral.
+                  <h2 className="text-xl sm:text-2xl font-black text-foreground tracking-tight">
+                    Formulir Pendaftaran Mitra Sales
+                  </h2>
+                  <p className="text-xs sm:text-sm text-foreground-muted">
+                    Lengkapi data diri Anda di bawah ini untuk mengaktifkan akun dan kode referral resmi.
                   </p>
                 </div>
                 <Link href="/sales/login">
-                  <Badge variant="outline" className="text-[11px] font-semibold text-primary border-primary/30 hover:bg-primary/10 transition-colors py-1 px-2.5 shrink-0 self-start sm:self-auto cursor-pointer">
-                    Sudah Punya Akun? Login &rarr;
+                  <Badge
+                    variant="outline"
+                    className="text-xs font-semibold text-primary border-primary/30 hover:bg-primary/10 transition-colors py-1.5 px-3.5 shrink-0 self-start sm:self-auto cursor-pointer"
+                  >
+                    Sudah Punya Akun? Masuk Portal &rarr;
                   </Badge>
                 </Link>
               </div>
 
               {errorMessage && (
-                <div className="p-3.5 rounded-lg bg-status-error/15 border border-status-error/30 text-status-error text-xs flex items-center gap-2.5 animate-in fade-in">
-                  <FontAwesomeIcon icon={faCircleExclamation} className="text-sm shrink-0" />
+                <div className="p-4 rounded-xl bg-status-error/15 border border-status-error/30 text-status-error text-xs sm:text-sm flex items-center gap-3 animate-in fade-in">
+                  <FontAwesomeIcon icon={faCircleExclamation} className="text-base shrink-0" />
                   <span>{errorMessage}</span>
                 </div>
               )}
 
-              <form onSubmit={handleSubmit} className="space-y-4 text-xs">
-                {/* 1. Nama Lengkap */}
-                <div>
-                  <label className="font-semibold text-foreground block mb-1">
-                    Nama Lengkap <span className="text-status-error">*</span>
-                  </label>
-                  <Input
-                    type="text"
-                    required
-                    placeholder="Contoh: Andi Pratama"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="bg-surface-raised border-border text-xs h-10"
-                  />
-                  <span className="text-[11px] text-foreground-muted mt-1 block">
-                    Gunakan nama asli untuk verifikasi pencairan komisi bank.
-                  </span>
-                </div>
+              <form onSubmit={handleSubmit} className="space-y-5 text-xs sm:text-sm">
+                {/* 2-Column Grid on Tablet/Desktop for Form Controls */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+                  {/* 1. Nama Lengkap */}
+                  <div className="space-y-1.5">
+                    <label className="font-bold text-foreground block text-xs sm:text-sm">
+                      Nama Lengkap <span className="text-status-error">*</span>
+                    </label>
+                    <Input
+                      type="text"
+                      required
+                      placeholder="Contoh: Andi Pratama"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="bg-surface-raised border-border text-xs sm:text-sm h-11 px-3.5"
+                    />
+                    <span className="text-[11px] text-foreground-muted block leading-tight">
+                      Gunakan nama asli untuk verifikasi pencairan komisi bank.
+                    </span>
+                  </div>
 
-                {/* 2. Alamat Email */}
-                <div>
-                  <label className="font-semibold text-foreground block mb-1">
-                    Alamat Email Aktif <span className="text-status-error">*</span>
-                  </label>
-                  <Input
-                    type="email"
-                    required
-                    placeholder="nama@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="bg-surface-raised border-border text-xs h-10"
-                  />
-                  <span className="text-[11px] text-foreground-muted mt-1 block">
-                    Email ini digunakan untuk login ke portal sales & menerima notifikasi komisi.
-                  </span>
-                </div>
+                  {/* 2. Alamat Email */}
+                  <div className="space-y-1.5">
+                    <label className="font-bold text-foreground block text-xs sm:text-sm">
+                      Alamat Email Aktif <span className="text-status-error">*</span>
+                    </label>
+                    <Input
+                      type="email"
+                      required
+                      placeholder="nama@email.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="bg-surface-raised border-border text-xs sm:text-sm h-11 px-3.5"
+                    />
+                    <span className="text-[11px] text-foreground-muted block leading-tight">
+                      Digunakan untuk login ke portal sales & menerima kode OTP.
+                    </span>
+                  </div>
 
-                {/* 3. Nomor WhatsApp */}
-                <div>
-                  <label className="font-semibold text-foreground block mb-1">
-                    Nomor WhatsApp Aktif <span className="text-status-error">*</span>
-                  </label>
-                  <div className="relative">
+                  {/* 3. Nomor WhatsApp */}
+                  <div className="space-y-1.5">
+                    <label className="font-bold text-foreground block text-xs sm:text-sm">
+                      Nomor WhatsApp Aktif <span className="text-status-error">*</span>
+                    </label>
                     <Input
                       type="tel"
                       required
                       placeholder="081234567890 atau 6281234567890"
                       value={whatsapp}
                       onChange={(e) => setWhatsapp(e.target.value)}
-                      className="bg-surface-raised border-border text-xs font-mono h-10"
+                      className="bg-surface-raised border-border text-xs sm:text-sm font-mono h-11 px-3.5"
                     />
+                    <span className="text-[11px] text-foreground-muted block leading-tight">
+                      Digunakan untuk konfirmasi pencairan dana dan koordinasi CS.
+                    </span>
                   </div>
-                  <span className="text-[11px] text-foreground-muted mt-1 block">
-                    Digunakan untuk koordinasi promosi dan konfirmasi pencairan dana via CS WhatsApp.
-                  </span>
-                </div>
 
-                {/* 3b. Kata Sandi Akun Sales */}
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <label htmlFor="sales-password" className="font-semibold text-foreground flex items-center gap-1.5">
-                      <FontAwesomeIcon icon={faLock} className="text-xs text-primary" />
-                      <span>Kata Sandi Akun Sales</span>
-                      <span className="text-status-error">*</span>
+                  {/* 4. Kustomisasi Kode Referral Sendiri (Opsional) */}
+                  <div className="space-y-1.5">
+                    <label className="font-bold text-foreground flex items-center justify-between text-xs sm:text-sm">
+                      <span>Kode Referral Pilihan Anda</span>
+                      <span className="text-[11px] text-foreground-muted font-normal">(Opsional)</span>
                     </label>
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="text-[11px] text-primary hover:underline flex items-center gap-1 font-medium cursor-pointer"
-                    >
-                      {showPassword ? (
-                        <FontAwesomeIcon icon={faEyeSlash} className="text-xs" />
-                      ) : (
-                        <FontAwesomeIcon icon={faEye} className="text-xs" />
-                      )}
-                      <span>{showPassword ? 'Sembunyikan' : 'Lihat Sandi'}</span>
-                    </button>
+                    <Input
+                      type="text"
+                      placeholder="Contoh: ANDI-STORE"
+                      value={customCode}
+                      onChange={(e) => setCustomCode(e.target.value.toUpperCase())}
+                      className="bg-surface-raised border-border text-xs sm:text-sm font-mono uppercase h-11 px-3.5"
+                    />
+                    <span className="text-[11px] text-foreground-muted block leading-tight">
+                      Sistem akan otomatis memberi awalan AST- (misal: AST-ANDI-STORE).
+                    </span>
                   </div>
-                  <div className="relative">
+
+                  {/* 5a. Kata Sandi Akun Sales */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label htmlFor="sales-password" className="font-bold text-foreground flex items-center gap-1.5 text-xs sm:text-sm">
+                        <FontAwesomeIcon icon={faLock} className="text-xs text-primary" />
+                        <span>Kata Sandi Akun</span>
+                        <span className="text-status-error">*</span>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="text-[11px] text-primary hover:underline flex items-center gap-1 font-medium cursor-pointer"
+                      >
+                        <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} className="text-xs" />
+                        <span>{showPassword ? 'Sembunyikan' : 'Lihat Sandi'}</span>
+                      </button>
+                    </div>
                     <Input
                       id="sales-password"
                       name="password"
                       type={showPassword ? 'text' : 'password'}
                       required
                       autoComplete="new-password"
-                      placeholder="Minimal 6 karakter untuk login"
+                      placeholder="Minimal 6 karakter"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="bg-surface-raised border-border text-xs h-10 pr-10"
+                      className="bg-surface-raised border-border text-xs sm:text-sm h-11 px-3.5"
                     />
+                    <span className="text-[11px] text-foreground-muted block leading-tight">
+                      Digunakan untuk login langsung ke Portal Sales Anda.
+                    </span>
                   </div>
-                  <span className="text-[11px] text-foreground-muted block">
-                    Digunakan untuk login langsung ke Portal Mitra Sales Asterra Store Anda.
-                  </span>
-                </div>
 
-                {/* 3c. Konfirmasi Kata Sandi */}
-                <div className="space-y-1.5">
-                  <label htmlFor="sales-confirm-password" className="font-semibold text-foreground flex items-center gap-1.5">
-                    <FontAwesomeIcon icon={faLock} className="text-xs text-primary" />
-                    <span>Konfirmasi Kata Sandi</span>
-                    <span className="text-status-error">*</span>
-                  </label>
-                  <div className="relative">
+                  {/* 5b. Konfirmasi Kata Sandi */}
+                  <div className="space-y-1.5">
+                    <label htmlFor="sales-confirm-password" className="font-bold text-foreground flex items-center gap-1.5 text-xs sm:text-sm">
+                      <FontAwesomeIcon icon={faLock} className="text-xs text-primary" />
+                      <span>Konfirmasi Kata Sandi</span>
+                      <span className="text-status-error">*</span>
+                    </label>
                     <Input
                       id="sales-confirm-password"
                       name="confirmPassword"
@@ -788,21 +842,25 @@ function DaftarSalesContent() {
                       placeholder="Ulangi kata sandi yang sama"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="bg-surface-raised border-border text-xs h-10"
+                      className="bg-surface-raised border-border text-xs sm:text-sm h-11 px-3.5"
                     />
+                    {password && confirmPassword && password !== confirmPassword ? (
+                      <span className="text-[11px] text-status-error block font-medium leading-tight">
+                        Kata sandi dan konfirmasi belum cocok.
+                      </span>
+                    ) : (
+                      <span className="text-[11px] text-foreground-muted block leading-tight">
+                        Pastikan kedua kata sandi sama persis.
+                      </span>
+                    )}
                   </div>
-                  {password && confirmPassword && password !== confirmPassword && (
-                    <span className="text-[11px] text-status-error block font-medium">
-                      Kata sandi dan konfirmasi belum cocok.
-                    </span>
-                  )}
                 </div>
 
-                {/* 4. Kode Referral Jika Punya */}
-                <div className="pt-2 border-t border-border/70">
-                  <label className="font-semibold text-foreground flex items-center justify-between mb-1">
-                    <span>Kode Referral Pengajak (Jika Punya)</span>
-                    <span className="text-[10px] text-foreground-muted font-normal">(Opsional)</span>
+                {/* 6. Kode Referral Pengajak (Full Width Row) */}
+                <div className="pt-3 border-t border-border">
+                  <label className="font-bold text-foreground flex items-center justify-between mb-1.5 text-xs sm:text-sm">
+                    <span>Kode Referral Pengajak (Jika Ada)</span>
+                    <span className="text-[11px] text-foreground-muted font-normal">(Opsional)</span>
                   </label>
                   <div className="relative">
                     <Input
@@ -812,35 +870,36 @@ function DaftarSalesContent() {
                       placeholder="Contoh: AST-IQBAL"
                       value={referralCode}
                       onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
-                      className={`bg-surface-raised text-xs font-mono uppercase h-10 pr-28 transition-colors ${
+                      className={`bg-surface-raised text-xs sm:text-sm font-mono uppercase h-11 px-3.5 pr-28 transition-colors ${
                         isRefValid === true
-                          ? 'border-status-success focus-visible:ring-status-success text-status-success font-semibold'
+                          ? 'border-status-success focus-visible:ring-status-success text-status-success font-bold'
                           : isRefValid === false
                           ? 'border-status-error focus-visible:ring-status-error text-status-error'
                           : 'border-border'
                       }`}
                     />
                     {validatingRef && (
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-foreground-muted animate-pulse">
+                      <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-foreground-muted animate-pulse">
                         Memeriksa...
                       </span>
                     )}
                     {isRefValid === true && !validatingRef && (
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-status-success flex items-center gap-1">
+                      <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-status-success flex items-center gap-1.5">
                         <FontAwesomeIcon icon={faCheck} className="text-xs" />
                         <span>Valid</span>
                       </span>
                     )}
                     {isRefValid === false && !validatingRef && (
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-status-error flex items-center gap-1">
+                      <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-status-error flex items-center gap-1.5">
                         <FontAwesomeIcon icon={faXmark} className="text-xs" />
                         <span>Tidak Valid</span>
                       </span>
                     )}
                   </div>
+
                   {refValidationMessage && (
                     <span
-                      className={`text-[11px] mt-1.5 block font-medium ${
+                      className={`text-xs mt-1.5 block font-medium ${
                         isRefValid === true
                           ? 'text-status-success'
                           : isRefValid === false
@@ -854,78 +913,58 @@ function DaftarSalesContent() {
 
                   {/* Sponsor Confirmation Card */}
                   {isRefValid === true && sponsorData && (
-                    <div className="mt-2.5 p-3 rounded-lg border border-status-success/30 bg-status-success/5 flex flex-col gap-1.5 animate-in fade-in duration-200">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-start gap-2.5">
-                          <div className="w-7 h-7 rounded-full bg-status-success/20 flex items-center justify-center text-status-success shrink-0 mt-0.5">
-                            <FontAwesomeIcon icon={faUsers} className="text-xs" />
-                          </div>
-                          <div>
-                            <p className="text-xs font-semibold text-foreground">
-                              Mitra Pengajak:{' '}
-                              <span className="text-status-success">{sponsorData.partnerName}</span>{' '}
-                              <span className="font-mono text-foreground-muted">({sponsorData.code})</span>
-                            </p>
-                            <p className="text-[11px] text-foreground-muted leading-tight mt-0.5">
-                              Anda mendaftar di bawah bimbingan mitra ini. Hak komisi penjualan langsung Anda tetap 100% utuh (10% – 15%).
-                            </p>
-                          </div>
+                    <div className="mt-3 p-3.5 rounded-xl border border-status-success/30 bg-status-success/5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 animate-in fade-in duration-200">
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-full bg-status-success/20 flex items-center justify-center text-status-success shrink-0 mt-0.5">
+                          <FontAwesomeIcon icon={faUsers} className="text-xs" />
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setReferralCode('');
-                            setIsRefValid(null);
-                            setSponsorData(null);
-                            setRefValidationMessage(null);
-                            try {
-                              localStorage.removeItem('asterra_ref');
-                            } catch (_) {}
-                          }}
-                          className="text-[10px] text-status-error hover:underline font-medium shrink-0 ml-1 py-0.5 px-1.5 rounded hover:bg-status-error/10 transition-colors"
-                        >
-                          Hapus / Mandiri
-                        </button>
+                        <div>
+                          <p className="text-xs sm:text-sm font-bold text-foreground">
+                            Mitra Pengajak:{' '}
+                            <span className="text-status-success">{sponsorData.partnerName}</span>{' '}
+                            <span className="font-mono text-foreground-muted">({sponsorData.code})</span>
+                          </p>
+                          <p className="text-xs text-foreground-muted leading-relaxed mt-0.5">
+                            Anda mendaftar di bawah bimbingan mitra ini. Hak komisi penjualan langsung Anda tetap 100% utuh (15% – 20%).
+                          </p>
+                        </div>
                       </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setReferralCode('');
+                          setIsRefValid(null);
+                          setSponsorData(null);
+                          setRefValidationMessage(null);
+                          try {
+                            localStorage.removeItem('asterra_ref');
+                          } catch (_) {}
+                        }}
+                        className="text-xs text-status-error hover:underline font-medium shrink-0 self-start sm:self-auto py-1 px-2 rounded hover:bg-status-error/10 transition-colors"
+                      >
+                        Hapus / Mandiri
+                      </button>
                     </div>
                   )}
 
                   {!referralCode && (
-                    <span className="text-[10px] text-foreground-muted mt-1 block">
+                    <span className="text-[11px] text-foreground-muted mt-1.5 block">
                       Masukkan kode mitra yang mengajak Anda jika ada. Kosongkan jika Anda mendaftar mandiri.
                     </span>
                   )}
                 </div>
 
-                {/* 5. Kustomisasi Kode Referral Sendiri (Opsional) */}
-                <div>
-                  <label className="font-semibold text-foreground flex items-center justify-between mb-1">
-                    <span>Permintaan Kode Referral Unik Anda</span>
-                    <span className="text-[10px] text-foreground-muted font-normal">(Opsional)</span>
-                  </label>
-                  <Input
-                    type="text"
-                    placeholder="Contoh: ANDI-STORE (Kosongkan untuk otomatis)"
-                    value={customCode}
-                    onChange={(e) => setCustomCode(e.target.value.toUpperCase())}
-                    className="bg-surface-raised border-border text-xs font-mono uppercase h-10"
-                  />
-                  <span className="text-[10px] text-foreground-muted mt-1 block">
-                    Sistem akan otomatis memberi awalan AST- (misal: AST-ANDI-STORE).
-                  </span>
-                </div>
-
                 {/* Checkbox Syarat & Ketentuan */}
                 <div className="pt-2">
-                  <label className="flex items-start gap-2.5 cursor-pointer">
+                  <label className="flex items-start gap-3 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={agreeTerms}
                       onChange={(e) => setAgreeTerms(e.target.checked)}
-                      className="mt-0.5 rounded border-border text-primary focus:ring-primary w-4 h-4"
+                      className="mt-1 rounded border-border text-primary focus:ring-primary w-4 h-4 cursor-pointer"
                     />
-                    <span className="text-[11px] text-foreground-muted leading-relaxed">
-                      Saya menyetujui <span className="text-foreground font-medium">Syarat & Ketentuan Mitra Sales</span> Asterra Store, bersedia menjaga etika promosi resmi, dan tidak melakukan spamming.
+                    <span className="text-xs sm:text-sm text-foreground-muted leading-relaxed">
+                      Saya menyetujui <span className="text-foreground font-semibold">Syarat & Ketentuan Mitra Sales</span> Asterra Store, bersedia menjaga etika promosi resmi, dan tidak melakukan spamming.
                     </span>
                   </label>
                 </div>
@@ -935,7 +974,7 @@ function DaftarSalesContent() {
                   type="submit"
                   data-gsap="daftar-button"
                   disabled={registerMutation.isPending}
-                  className="w-full text-xs font-bold h-11 gap-2 shadow-md mt-2"
+                  className="w-full text-xs sm:text-sm font-bold h-12 gap-2 shadow-md mt-3 cursor-pointer"
                 >
                   {registerMutation.isPending ? (
                     <span>Mendaftarkan Akun Sales...</span>
@@ -947,7 +986,7 @@ function DaftarSalesContent() {
                   )}
                 </Button>
 
-                <div className="pt-2 text-center text-xs text-foreground-muted">
+                <div className="pt-2 text-center text-xs sm:text-sm text-foreground-muted">
                   Sudah terdaftar sebagai mitra sales?{' '}
                   <Link href="/sales/login" className="text-primary font-bold hover:underline">
                     Masuk ke Portal Sales di sini
@@ -956,84 +995,57 @@ function DaftarSalesContent() {
               </form>
             </div>
 
-            {/* Interactive Commission Simulator */}
-            <div className="bg-surface border border-border rounded-2xl p-6 sm:p-8 shadow-xs max-w-xl mx-auto space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-bold text-sm text-foreground flex items-center gap-1.5">
-                    <FontAwesomeIcon icon={faCalculator} className="text-xs text-primary" />
-                    <span>Kalkulator Estimasi Penghasilan Sales</span>
-                  </h3>
-                  <p className="text-xs text-foreground-muted">
-                    Geser slider untuk melihat proyeksi komisi bulanan Anda.
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-3 pt-2">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-foreground-muted">Perkiraan Akun Terjual:</span>
-                  <span className="font-bold font-mono text-foreground text-sm">{estimatedSales} Akun / Bulan</span>
-                </div>
-                <input
-                  type="range"
-                  min="5"
-                  max="150"
-                  step="5"
-                  value={estimatedSales}
-                  onChange={(e) => setEstimatedSales(Number(e.target.value))}
-                  className="w-full h-2 bg-surface-raised rounded-lg appearance-none cursor-pointer accent-primary"
-                />
-              </div>
-
-              <div className="p-4 rounded-xl bg-status-success/10 border border-status-success/30 flex items-center justify-between text-xs">
-                <div>
-                  <span className="text-foreground-muted block text-[11px]">Proyeksi Komisi Bulanan Anda:</span>
-                  <span className="text-lg sm:text-xl font-extrabold text-status-success font-mono">
-                    Rp {(estimatedSales * 1000).toLocaleString('id-ID')}
-                  </span>
-                  <span className="text-[10px] text-foreground-muted block mt-0.5">
-                    (Estimasi profit rata-rata Rp 10.000 / transaksi)
-                  </span>
-                </div>
-                <Badge variant="outline" className="text-[10px] text-status-success border-status-success/40 bg-status-success/15 font-semibold">
-                  10% – 15% dari Profit Transaksi
-                </Badge>
-              </div>
+            {/* 5. Interactive Commission Simulator (Redesign 2) */}
+            <div className="max-w-5xl mx-auto w-full">
+              <CommissionSimulator />
             </div>
 
-            {/* FAQ Section */}
-            <div className="bg-surface border border-border rounded-2xl p-6 sm:p-8 shadow-xs max-w-xl mx-auto space-y-4">
-              <h3 className="font-bold text-sm text-foreground flex items-center gap-1.5">
-                <FontAwesomeIcon icon={faCircleQuestion} className="text-xs text-foreground-muted" />
-                <span>Pertanyaan Umum (FAQ) Program Sales</span>
-              </h3>
+            {/* 6. FAQ Section */}
+            <div className="bg-surface border border-border rounded-2xl sm:rounded-3xl p-6 sm:p-10 shadow-xs max-w-4xl mx-auto space-y-5">
+              <div className="space-y-1">
+                <h3 className="font-extrabold text-base sm:text-lg text-foreground flex items-center gap-2">
+                  <FontAwesomeIcon icon={faCircleQuestion} className="text-sm text-primary" />
+                  <span>Pertanyaan Umum (FAQ) Program Sales</span>
+                </h3>
+                <p className="text-xs sm:text-sm text-foreground-muted">
+                  Hal-hal penting yang sering ditanyakan seputar pendaftaran, pencairan, dan komisi kemitraan.
+                </p>
+              </div>
 
-              <div className="space-y-3 text-xs">
-                <div className="p-3 rounded-lg bg-surface-raised border border-border space-y-1">
-                  <span className="font-semibold text-foreground block">
+              <div className="space-y-3.5 text-xs sm:text-sm">
+                <div className="p-4 rounded-xl bg-surface-raised border border-border space-y-1.5">
+                  <span className="font-bold text-foreground block">
                     1. Apakah ada biaya untuk mendaftar jadi sales?
                   </span>
-                  <p className="text-[11px] text-foreground-muted leading-relaxed">
-                    Sama sekali tidak ada biaya (100% Gratis). Siapa saja bisa mendaftar dan langsung mendapatkan link referral resmi.
+                  <p className="text-xs text-foreground-muted leading-relaxed">
+                    Sama sekali tidak ada biaya (100% Gratis). Siapa saja bisa mendaftar, mendapatkan akun portal mandiri, dan langsung memperoleh kode referral resmi tanpa modal awal stok barang.
                   </p>
                 </div>
 
-                <div className="p-3 rounded-lg bg-surface-raised border border-border space-y-1">
-                  <span className="font-semibold text-foreground block">
+                <div className="p-4 rounded-xl bg-surface-raised border border-border space-y-1.5">
+                  <span className="font-bold text-foreground block">
                     2. Kapan komisi penjualan bisa dicairkan?
                   </span>
-                  <p className="text-[11px] text-foreground-muted leading-relaxed">
-                    Komisi bisa diajukan pencairan kapan saja dengan batas saldo minimal Rp 50.000 ke rekening bank atau e-wallet Anda.
+                  <p className="text-xs text-foreground-muted leading-relaxed">
+                    Komisi bisa diajukan pencairan kapan saja dengan batas saldo minimal Rp 50.000 ke rekening bank lokal (BCA, Mandiri, BNI, BRI) atau dompet digital (DANA, OVO, GoPay) Anda.
                   </p>
                 </div>
 
-                <div className="p-3 rounded-lg bg-surface-raised border border-border space-y-1">
-                  <span className="font-semibold text-foreground block">
-                    3. Bagaimana cara mempromosikan produk?
+                <div className="p-4 rounded-xl bg-surface-raised border border-border space-y-1.5">
+                  <span className="font-bold text-foreground block">
+                    3. Dari mana komisi dihitung dan bagaimana sistem bonus referralnya?
                   </span>
-                  <p className="text-[11px] text-foreground-muted leading-relaxed">
-                    Cukup bagikan link referral Anda ke calon pembeli. Pembeli akan diarahkan ke katalog toko kami dan sistem otomatis mencatat pesanan atas nama Anda.
+                  <p className="text-xs text-foreground-muted leading-relaxed">
+                    Komisi dihitung transparan dari Profit Bersih Transaksi (15% hingga 20% sesuai milestone performa). Jika Anda mengajak rekan sales lain dengan kode Anda, Anda berhak atas bonus rekrutmen 2% dari profit transaksi rekan Anda (maksimal 1 tingkat langsung).
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-xl bg-surface-raised border border-border space-y-1.5">
+                  <span className="font-bold text-foreground block">
+                    4. Bagaimana cara mempromosikan produk?
+                  </span>
+                  <p className="text-xs text-foreground-muted leading-relaxed">
+                    Cukup bagikan link referral Anda ke calon pembeli via WhatsApp, Telegram, atau media sosial. Pembeli diarahkan ke katalog toko kami dan sistem otomatis mencatat pesanan atas nama Anda.
                   </p>
                 </div>
               </div>
