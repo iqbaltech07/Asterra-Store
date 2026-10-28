@@ -6,6 +6,7 @@ import { findRelevantProducts } from '@/lib/services/product-relevance';
 import { resolveProductFamily } from '@/lib/services/product-variant-parser';
 import { ProductDetailClient, ProductDetailData } from './product-detail-client';
 import { ProductItem } from '@/lib/products-data';
+import { getStoreOperatingHoursServer } from '@/lib/server/store-operating-hours';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || process.env.BACKEND_URL || 'http://localhost:8000';
 
@@ -144,7 +145,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function ProductDetailPage({ params }: PageProps) {
   const { id } = await params;
-  const activeProducts = await fetchActiveProducts();
+  const [activeProducts, storeStatus] = await Promise.all([
+    fetchActiveProducts(),
+    getStoreOperatingHoursServer(),
+  ]);
   const familyData = resolveProductFamily(id, activeProducts);
   const baseProduct = await fetchProductById(id, activeProducts);
 
@@ -325,7 +329,11 @@ export default async function ProductDetailPage({ params }: PageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
-      <ProductDetailClient id={id} initialData={initialData} />
+      <ProductDetailClient
+        id={id}
+        initialData={initialData}
+        initialStoreStatus={storeStatus}
+      />
     </>
   );
 }

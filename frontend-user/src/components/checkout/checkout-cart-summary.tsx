@@ -9,6 +9,7 @@ import {
   faShieldHalved,
   faCircleExclamation,
   faTrashCan,
+  faClock,
 } from '@fortawesome/free-solid-svg-icons';
 import { CheckoutVoucherSection } from './checkout-voucher-section';
 
@@ -46,6 +47,7 @@ interface CheckoutCartSummaryProps {
   } | null;
   finalTotal: number;
   isManualMode: boolean;
+  isPreorder?: boolean;
   enableUniqueCode?: boolean;
   isSubmitting: boolean;
   hasOutOfStockItems?: boolean;
@@ -76,6 +78,7 @@ export function CheckoutCartSummary({
   activeCampaign = null,
   finalTotal,
   isManualMode,
+  isPreorder = false,
   isSubmitting,
   hasOutOfStockItems,
   promoCode,
@@ -232,6 +235,11 @@ export function CheckoutCartSummary({
           >
             {isSubmitting ? (
               <span>Memproses Pesanan...</span>
+            ) : isPreorder ? (
+              <>
+                <FontAwesomeIcon icon={faClock} className="w-4 h-4" />
+                <span>{`Kirim Pre-Order (Rp ${finalTotal.toLocaleString('id-ID')})`}</span>
+              </>
             ) : (
               <>
                 <FontAwesomeIcon icon={faCreditCard} className="w-4 h-4" />
@@ -247,14 +255,16 @@ export function CheckoutCartSummary({
                 <AlertDialog.Header className="space-y-2">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.25)] flex items-center justify-center text-[#C96F55] shrink-0">
-                      <FontAwesomeIcon icon={faCreditCard} className="w-5 h-5" />
+                      <FontAwesomeIcon icon={isPreorder ? faClock : faCreditCard} className="w-5 h-5" />
                     </div>
                     <div>
                       <AlertDialog.Heading className="text-base font-bold text-[#121A2A]">
-                        Konfirmasi Pembayaran
+                        {isPreorder ? 'Konfirmasi Pre-Order' : 'Konfirmasi Pembayaran'}
                       </AlertDialog.Heading>
                       <p className="text-xs text-[#121A2A]/60">
-                        Periksa kembali ringkasan pesanan sebelum melanjutkan.
+                        {isPreorder
+                          ? 'Pesanan dicatat di antrean pre-order saat toko tutup.'
+                          : 'Periksa kembali ringkasan pesanan sebelum melanjutkan.'}
                       </p>
                     </div>
                   </div>
@@ -281,7 +291,11 @@ export function CheckoutCartSummary({
                   </div>
                   <div className="p-2.5 rounded-lg bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.25)] flex items-start gap-2 text-[11px] text-[#121A2A]">
                     <FontAwesomeIcon icon={faCircleExclamation} className="w-4 h-4 text-[#C96F55] shrink-0 mt-0.5" />
-                    <span>Pastikan email penerima lisensi dan nomor WhatsApp Anda telah terisi dengan benar.</span>
+                    <span>
+                      {isPreorder
+                        ? 'Pesanan akan masuk antrean pre-order. Cek kembali ketika toko buka untuk melanjutkan ke pembayaran.'
+                        : 'Pastikan email penerima lisensi dan nomor WhatsApp Anda telah terisi dengan benar.'}
+                    </span>
                   </div>
                 </AlertDialog.Body>
 
@@ -302,7 +316,7 @@ export function CheckoutCartSummary({
                     onClick={handleConfirmPayment}
                     className="rounded-lg text-xs font-bold bg-[#C96F55] hover:bg-[#B86047] text-[#F7F5EF]"
                   >
-                    {isSubmitting ? 'Memproses...' : 'Ya, Lanjutkan Pembayaran'}
+                    {isSubmitting ? 'Memproses...' : (isPreorder ? 'Ya, Kirim Pre-Order' : 'Ya, Lanjutkan Pembayaran')}
                   </Button>
                 </AlertDialog.Footer>
               </AlertDialog.Dialog>

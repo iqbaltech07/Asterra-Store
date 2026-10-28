@@ -38,13 +38,16 @@ export function StoreClosedBanner() {
             TOKO SEDANG TUTUP
           </h2>
 
+          {/* Sleeping Admin Notice */}
+          <p className="text-sm sm:text-base text-[#F7F5EF] font-semibold leading-snug">
+            Pemesanan akan diproses kembali ketika admin sudah bangun dari tidurnya 😴
+          </p>
+
           {/* Reopening Message */}
-          <p className="text-xs sm:text-sm md:text-base text-white/90 leading-relaxed font-medium">
-            {bannerMessage || (
-              nextOpenDisplay
-                ? `Pemesanan akan dibuka kembali pada pukul ${nextOpenDisplay}.`
-                : 'Pemesanan reguler saat ini sedang berada di luar jam operasional toko.'
-            )}
+          <p className="text-xs sm:text-sm text-white/80 leading-relaxed font-normal">
+            {nextOpenDisplay
+              ? `Pemesanan normal akan dibuka kembali pada ${nextOpenDisplay}.`
+              : (bannerMessage || 'Pemesanan reguler saat ini sedang berada di luar jam operasional toko.')}
           </p>
 
           {/* Pre-order Explanation */}
@@ -78,16 +81,16 @@ export function StoreClosedBanner() {
  * Persistent Top Announcement Bar for Store Closed Status across all storefront pages
  */
 export function StoreClosedAnnouncementBar() {
-  const { isClosed, isLoaded, nextOpenDisplay, bannerMessage } = useStoreOperatingHours();
+  const { isClosed, isLoaded, nextOpenDisplay } = useStoreOperatingHours();
 
   if (!isLoaded || !isClosed) return null;
 
   return (
-    <div className="w-full bg-[#121A2A] text-white border-b border-[#C96F55]/30 px-3 sm:px-6 py-1.5 text-center text-[11px] sm:text-xs font-medium flex items-center justify-center gap-2 select-none shadow-xs">
+    <div className="w-full bg-[#121A2A] text-white border-b border-[#C96F55]/30 px-3 sm:px-6 py-2 text-center text-[11px] sm:text-xs font-medium flex items-center justify-center gap-2 select-none shadow-xs">
       <span className="w-2 h-2 rounded-full bg-[#C96F55] animate-pulse shrink-0" />
       <span className="font-bold text-[#C96F55] uppercase tracking-wider">Toko Sedang Tutup:</span>
-      <span className="text-white/90 truncate">
-        {nextOpenDisplay ? `Pemesanan dibuka kembali pada pukul ${nextOpenDisplay}.` : (bannerMessage || 'Pemesanan reguler tutup sementara.')}
+      <span className="text-white/95">
+        Pemesanan akan diproses kembali ketika admin sudah bangun dari tidurnya 😴 {nextOpenDisplay ? `(Buka kembali ${nextOpenDisplay})` : ''}
       </span>
       <span className="hidden sm:inline-block text-white/60">• Mode Pre-Order Tersedia</span>
     </div>

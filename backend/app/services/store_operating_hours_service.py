@@ -248,6 +248,8 @@ class StoreOperatingHoursService:
                         break
 
         # ----------------------------------------------------
+        SLEEPING_ADMIN_NOTE = "Pemesanan akan diproses kembali ketika admin sudah bangun dari tidurnya 😴"
+
         # 2. Apply Mode Priority (Manual Override vs Auto)
         # ----------------------------------------------------
         if mode == "manual_open":
@@ -265,14 +267,14 @@ class StoreOperatingHoursService:
             final_next_close_display = None
             if reopen_est:
                 final_next_open_display = reopen_est
-                banner_message = f"Pemesanan akan dibuka kembali pada {reopen_est}."
+                banner_message = f"{SLEEPING_ADMIN_NOTE} Pemesanan akan dibuka kembali pada {reopen_est}."
             elif sched_next_open_display:
                 # Provide scheduled opening time as helpful reference
                 final_next_open_display = sched_next_open_display
-                banner_message = manual_reason or f"Pemesanan akan dibuka kembali pada {sched_next_open_display}."
+                banner_message = f"{SLEEPING_ADMIN_NOTE} Pemesanan akan dibuka kembali pada {sched_next_open_display}."
             else:
                 final_next_open_display = None
-                banner_message = manual_reason or "Toko sedang tutup sementara oleh Admin. Pemesanan akan segera dibuka kembali."
+                banner_message = f"{SLEEPING_ADMIN_NOTE} (Toko sedang tutup sementara oleh Admin)." if not manual_reason else f"{SLEEPING_ADMIN_NOTE} ({manual_reason})"
             status_label = "Tutup (Manual Override)"
         else:
             # Auto Mode
@@ -286,9 +288,9 @@ class StoreOperatingHoursService:
                 banner_message = None
             else:
                 if final_next_open_display:
-                    banner_message = f"Pemesanan akan dibuka kembali pada {final_next_open_display}."
+                    banner_message = f"{SLEEPING_ADMIN_NOTE} Pemesanan akan dibuka kembali pada {final_next_open_display}."
                 else:
-                    banner_message = "Pemesanan sedang di luar jam operasional toko."
+                    banner_message = f"{SLEEPING_ADMIN_NOTE} Pemesanan sedang di luar jam operasional toko."
 
         return {
             "status": "open" if final_is_open else "closed",
@@ -306,6 +308,7 @@ class StoreOperatingHoursService:
             "nextCloseDisplay": final_next_close_display,
             "bannerMessage": banner_message,
             "banner_message": banner_message,
+            "sleepingAdminNote": SLEEPING_ADMIN_NOTE if not final_is_open else None,
             "allowPreorder": allow_preorder,
             "allow_preorder": allow_preorder,
             "weeklySchedule": schedule,

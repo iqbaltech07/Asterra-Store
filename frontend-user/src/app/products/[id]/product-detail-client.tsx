@@ -57,7 +57,7 @@ export type {
   VariantDetails,
 };
 
-export function ProductDetailClient({ id, initialData }: ProductDetailClientProps) {
+export function ProductDetailClient({ id, initialData, initialStoreStatus }: ProductDetailClientProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
 
@@ -70,7 +70,9 @@ export function ProductDetailClient({ id, initialData }: ProductDetailClientProp
   const [countdownText, setCountdownText] = useState<string>('');
   const [isPreorderModalOpen, setIsPreorderModalOpen] = useState<boolean>(false);
 
-  const { isClosed, nextOpenDisplay, bannerMessage } = useStoreOperatingHours();
+  const { isClosed, nextOpenDisplay, bannerMessage } = useStoreOperatingHours({
+    initialStatus: initialStoreStatus,
+  });
 
   useEffect(() => {
     setIsMounted(true);

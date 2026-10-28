@@ -80,6 +80,9 @@ export function PreorderModal({
               <FontAwesomeIcon icon={faDoorClosed} className="w-3.5 h-3.5" />
               <span>Toko Sedang Tutup</span>
             </div>
+            <p className="text-[11px] sm:text-xs text-[#121A2A] font-semibold leading-snug">
+              Pemesanan akan diproses kembali ketika admin sudah bangun dari tidurnya 😴
+            </p>
             <p className="text-[11px] sm:text-xs text-[#121A2A]/80 leading-relaxed font-medium">
               {nextOpenDisplay ? (
                 <>Pemesanan normal akan kembali dibuka pada pukul <strong>{nextOpenDisplay}</strong>.</>

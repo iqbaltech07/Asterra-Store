@@ -348,6 +348,7 @@ export interface StoreOperatingHoursStatus {
   weeklySchedule: WeeklySchedule;
   manualCloseReason: string | null;
   reopenEstimate: string | null;
+  sleepingAdminNote?: string | null;
   timezone: string;
   updatedAt: string | null;
   updatedBy: string | null;

@@ -27,6 +27,10 @@ import {
   CheckoutManualModal,
   ManualPaymentModalData,
 } from '@/components/checkout/checkout-manual-modal';
+import {
+  CheckoutPreorderModal,
+  PreorderSuccessModalData,
+} from '@/components/checkout/checkout-preorder-modal';
 import { AuthRequiredModal } from '@/components/auth/auth-required-modal';
 import {
   getProductTargetRequirement,
@@ -72,9 +76,10 @@ function CheckoutPageContent() {
   const isAuthenticated = Boolean(session?.user || legacyUser);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
-  const { isClosed, isLoaded, nextOpenDisplay, bannerMessage, allowPreorder } = useStoreOperatingHours();
+  const { isClosed, isLoaded, nextOpenDisplay, reopenEstimate, bannerMessage, allowPreorder } = useStoreOperatingHours();
   const urlMode = searchParams.get('mode');
   const [isPreorderMode, setIsPreorderMode] = useState<boolean>(urlMode === 'preorder');
+  const [activePreorderModal, setActivePreorderModal] = useState<PreorderSuccessModalData | null>(null);
 
   useEffect(() => {
     if (urlMode === 'preorder') {
@@ -797,6 +802,25 @@ function CheckoutPageContent() {
         (createdOrder as unknown as { paymentMode?: string }).paymentMode === 'manual' ||
         selectedMethod.startsWith('manual_');
 
+      const isPreorderOrder =
+        isPreorderMode ||
+        Boolean(createdOrder.is_preorder) ||
+        Boolean((createdOrder as unknown as { isPreorder?: boolean }).isPreorder);
+
+      if (isPreorderOrder) {
+        showNotification('Pesanan berhasil masuk ke antrean Pre-Order! 📋');
+        setActivePreorderModal({
+          orderId: createdOrder.id,
+          totalAmount: orderTotal,
+          customerName: customerName.trim(),
+          customerWhatsapp: phoneNumber.trim(),
+          customerEmail: invoiceEmail,
+          itemsCount: items.length,
+          itemsSummary: items.map((i) => `${i.name} (x${i.quantity})`).join(', '),
+        });
+        return;
+      }
+
       if (isOrderManual) {
         setActiveManualModal({
           orderId: createdOrder.id,
@@ -950,6 +974,9 @@ function CheckoutPageContent() {
               <h1 className="text-2xl sm:text-3xl font-extrabold text-[#121A2A] tracking-tight">
                 Toko Sedang Tutup
               </h1>
+              <p className="text-sm sm:text-base text-[#121A2A] font-semibold">
+                Pemesanan akan diproses kembali ketika admin sudah bangun dari tidurnya 😴
+              </p>
               <p className="text-sm text-[#121A2A]/75 max-w-md mx-auto leading-relaxed">
                 {bannerMessage || (
                   nextOpenDisplay
@@ -1053,6 +1080,9 @@ function CheckoutPageContent() {
                     <p className="text-[11px] sm:text-xs text-[#121A2A]/80 leading-relaxed font-medium">
                       Pesanan Anda akan dicatat di sistem sebagai <strong>Pre-Order Terjadwal</strong> dan akan diproses prioritas segera setelah toko buka kembali {nextOpenDisplay ? `pada pukul ${nextOpenDisplay}` : ''}.
                     </p>
+                    <p className="text-[11px] sm:text-xs text-[#C96F55] font-semibold pt-0.5">
+                      Pemesanan akan diproses kembali ketika admin sudah bangun dari tidurnya 😴
+                    </p>
                   </div>
                 </div>
               )}
@@ -1103,6 +1133,7 @@ function CheckoutPageContent() {
                     activeCampaign={matchingCampaign}
                     finalTotal={finalTotal}
                     isManualMode={isManualMode}
+                    isPreorder={isPreorderMode}
                     enableUniqueCode={Boolean(paymentConfig.enable_unique_code)}
                     isSubmitting={createOrderMutation.isPending}
                     hasOutOfStockItems={hasOutOfStockItems}
@@ -1141,6 +1172,14 @@ function CheckoutPageContent() {
         onCopy={handleCopy}
         copiedKey={copiedKey}
         getMethodName={getMethodName}
+      />
+
+      {/* Dedicated Pre-order Success Modal */}
+      <CheckoutPreorderModal
+        data={activePreorderModal}
+        nextOpenDisplay={nextOpenDisplay}
+        reopenEstimate={reopenEstimate}
+        onClose={() => setActivePreorderModal(null)}
       />
 
       {/* Guest Authentication Modal */}

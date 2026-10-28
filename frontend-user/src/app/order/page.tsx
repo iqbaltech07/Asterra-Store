@@ -937,6 +937,29 @@ function PrivateOrderContent() {
                     </div>
                   </div>
 
+                  {/* Pre-Order Specific Notice Card */}
+                  {Boolean(rawOrder.is_preorder || rawOrder.isPreorder) && (
+                    <div className="rounded-lg border border-[rgba(201,111,85,0.3)] bg-[rgba(201,111,85,0.08)] px-4 py-3 flex items-start gap-3 text-xs">
+                      <span className="text-base leading-none shrink-0 mt-0.5">📋</span>
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-[#C96F55] uppercase tracking-wider text-[11px]">
+                            Pesanan Pre-Order
+                          </span>
+                          <span className="bg-[#C96F55]/20 text-[#C96F55] text-[10px] font-bold px-2 py-0.5 rounded-full">
+                            Tercatat di Antrean
+                          </span>
+                        </div>
+                        <p className="text-[#121A2A] font-medium leading-relaxed">
+                          Pesanan telah masuk ke pre order, cek kembali ketika toko buka untuk melanjutkan ke pembayaran.
+                        </p>
+                        <p className="text-[11px] text-[#C96F55] font-semibold">
+                          Pemesanan akan diproses kembali ketika admin sudah bangun dari tidurnya 😴
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Fulfillment Status Section */}
                   {isCancelled ? (
                     <div className="rounded-md border border-[#fecdd3] bg-[#ffedea]/60 px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">

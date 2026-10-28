@@ -6,6 +6,8 @@ import { QueryProvider } from '@/providers/query-provider';
 import { StorefrontShell } from '@/components/layout/storefront-shell';
 import { ReferralTracker } from '@/components/analytics/referral-tracker';
 import { GsapProvider } from '@/providers/gsap-provider';
+import { StoreOperatingHoursProvider } from '@/lib/hooks/use-store-operating-hours';
+import { getStoreOperatingHoursServer } from '@/lib/server/store-operating-hours';
 import './globals.css';
 
 config.autoAddCss = false;
@@ -67,11 +69,13 @@ const organizationJsonLd = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const initialStoreStatus = await getStoreOperatingHoursServer();
+
   return (
     <html lang="id" className={plusJakartaSans.variable}>
       <head>
@@ -82,12 +86,14 @@ export default function RootLayout({
       </head>
       <body className="bg-background text-foreground antialiased min-h-screen">
         <QueryProvider>
-          <ReferralTracker />
-          <GsapProvider>
-            <StorefrontShell>
-              {children}
-            </StorefrontShell>
-          </GsapProvider>
+          <StoreOperatingHoursProvider initialStatus={initialStoreStatus}>
+            <ReferralTracker />
+            <GsapProvider>
+              <StorefrontShell>
+                {children}
+              </StorefrontShell>
+            </GsapProvider>
+          </StoreOperatingHoursProvider>
         </QueryProvider>
       </body>
     </html>

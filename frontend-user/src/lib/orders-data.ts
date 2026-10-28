@@ -37,6 +37,8 @@ export interface Order {
   raw_amount?: number;
   unique_code?: number;
   payment_mode?: 'gateway' | 'manual';
+  is_preorder?: boolean;
+  isPreorder?: boolean;
   order_status: 'pending' | 'processing' | 'completed' | 'cancelled';
   order_date: string;
   paid_at?: string;

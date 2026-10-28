@@ -66,6 +66,7 @@ export interface ProductDetailData {
 export interface ProductDetailClientProps {
   id: string;
   initialData?: ProductDetailData | null;
+  initialStoreStatus?: import('@/lib/api-client').StoreOperatingHoursStatus | null;
 }
 
 export interface VariantDetails {
