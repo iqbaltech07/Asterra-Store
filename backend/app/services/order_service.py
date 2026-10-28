@@ -11,10 +11,6 @@ from app.models.order import Order, OrderItem
 from app.services.order_normalizer import OrderNormalizer
 from app.services.order_tasks import OrderPostTasks
 
-DATA_DIR = pathlib.Path(__file__).resolve().parent.parent.parent / "data"
-ORDERS_FILE = DATA_DIR / "supabase-orders.json"
-LEGACY_ORDERS_FILE = DATA_DIR / "orders.json"
-
 class OrderService:
     _orders: Optional[List[Dict[str, Any]]] = None
     _last_loaded: Optional[datetime] = None
@@ -31,7 +27,6 @@ class OrderService:
     def load_orders(cls, force_reload: bool = False) -> List[Dict[str, Any]]:
         """
         Loads orders directly from Supabase PostgreSQL database.
-        Falls back to local clean JSON files if Supabase is offline.
         """
         now = datetime.utcnow()
         if (
@@ -42,56 +37,29 @@ class OrderService:
         ):
             return cls._orders
 
-        # 1. Try querying Supabase PostgreSQL
+        # Query Supabase PostgreSQL
         try:
-            db = SessionLocal()
-            try:
-                db_orders = db.query(Order).options(joinedload(Order.items)).order_by(Order.created_at.desc()).all()
-                if db_orders is not None:
-                    normalized = [cls._normalize_order(o.to_dict()) for o in db_orders]
-                    cls._orders = normalized
-                    cls._last_loaded = datetime.utcnow()
-                    return normalized
-            finally:
-                db.close()
+            db = SessionLocal() if SessionLocal else None
+            if db:
+                try:
+                    db_orders = db.query(Order).options(joinedload(Order.items)).order_by(Order.created_at.desc()).all()
+                    if db_orders is not None:
+                        normalized = [cls._normalize_order(o.to_dict()) for o in db_orders]
+                        cls._orders = normalized
+                        cls._last_loaded = datetime.utcnow()
+                        return normalized
+                finally:
+                    db.close()
         except Exception as e:
-            print(f"[OrderService] Warning: Supabase orders query failed, using local fallback: {e}")
-
-        # 2. Priority 1 Fallback: Supabase orders JSON
-        if ORDERS_FILE.exists():
-            try:
-                data = json.loads(ORDERS_FILE.read_text(encoding="utf-8"))
-                if isinstance(data, list) and len(data) > 0:
-                    cls._orders = [cls._normalize_order(o) for o in data]
-                    return cls._orders
-            except Exception as e:
-                print(f"[OrderService] Error loading supabase-orders.json: {e}")
-
-        # Priority 2 Fallback: Legacy orders file
-        if LEGACY_ORDERS_FILE.exists():
-            try:
-                data = json.loads(LEGACY_ORDERS_FILE.read_text(encoding="utf-8"))
-                if isinstance(data, list) and len(data) > 0:
-                    cls._orders = [cls._normalize_order(o) for o in data]
-                    return cls._orders
-            except Exception as e:
-                print(f"[OrderService] Error loading orders.json: {e}")
+            print(f"[OrderService] Warning: Supabase orders query failed: {e}")
 
         cls._orders = []
         return []
 
     @classmethod
     def save_orders(cls) -> bool:
-        """Saves current orders state to local backup cache."""
-        try:
-            if cls._orders is not None:
-                ORDERS_FILE.parent.mkdir(parents=True, exist_ok=True)
-                ORDERS_FILE.write_text(json.dumps(cls._orders, indent=2, ensure_ascii=False), encoding="utf-8")
-                LEGACY_ORDERS_FILE.write_text(json.dumps(cls._orders, indent=2, ensure_ascii=False), encoding="utf-8")
-                return True
-        except Exception as e:
-            print(f"[OrderService] Error saving backup orders: {e}")
-        return False
+        """In-memory cache management - no JSON file persistence."""
+        return True
 
     @classmethod
     def get_orders(
@@ -411,9 +379,12 @@ class OrderService:
         if promo_code:
             try:
                 from app.services.promo_service import PromoService
-                val_res = PromoService.validate_promo(promo_code, raw_total)
+                val_res = PromoService.validate_promo(promo_code, raw_total, items=items)
                 if val_res.get("valid"):
                     promo_discount = int(val_res.get("discountAmount", 0))
+                else:
+                    print(f"[OrderService] Promo voucher '{promo_code}' rejected on server: {val_res.get('error')}")
+                    promo_discount = 0
             except Exception as e:
                 print(f"[OrderService] Promo voucher validate note: {e}")
 

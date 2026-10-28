@@ -436,6 +436,9 @@ function CheckoutPageContent() {
     code: string;
     discount: number;
     description?: string;
+    targetScope?: 'all' | 'specific_product';
+    targetProductId?: string | null;
+    targetProductName?: string | null;
   } | null>(null);
   const [promoFeedback, setPromoFeedback] = useState<{
     type: 'success' | 'error';
@@ -561,7 +564,13 @@ function CheckoutPageContent() {
         code,
         getTotalAmount(),
         targetEmail.trim() || undefined,
-        items.map((i) => ({ product_id: i.id, quantity: i.quantity, price: i.priceNumeric })),
+        items.map((i) => ({
+          id: i.id,
+          product_id: i.id,
+          quantity: i.quantity,
+          price: i.priceNumeric,
+          unit_price: i.priceNumeric,
+        })),
         referralDiscount
       );
     },
@@ -575,6 +584,9 @@ function CheckoutPageContent() {
         code: res.code || code,
         discount: res.discountAmount || 0,
         description: res.description,
+        targetScope: res.targetScope,
+        targetProductId: res.targetProductId,
+        targetProductName: res.targetProductName,
       });
       showPromoFeedback('success', res.message || `Kode voucher ${res.code || code} berhasil digunakan!`);
     },
@@ -599,6 +611,22 @@ function CheckoutPageContent() {
     setPromoCode('');
     showPromoFeedback('success', 'Penggunaan voucher dibatalkan.');
   };
+
+  // Reactive watcher: Auto-revoke product-specific voucher if target product is removed from cart
+  useEffect(() => {
+    if (appliedPromo && (appliedPromo.targetScope === 'specific_product' || appliedPromo.targetProductId)) {
+      const targetId = appliedPromo.targetProductId;
+      if (targetId) {
+        const stillInCart = items.some((item) => item.id === targetId);
+        if (!stillInCart) {
+          setAppliedPromo(null);
+          showNotification(
+            `Voucher ${appliedPromo.code} otomatis dicabut karena produk ${appliedPromo.targetProductName || 'terkait'} telah dihapus dari keranjang.`
+          );
+        }
+      }
+    }
+  }, [items, appliedPromo]);
 
   const subtotal = getTotalAmount();
   const discountAmount = appliedPromo ? appliedPromo.discount : 0;

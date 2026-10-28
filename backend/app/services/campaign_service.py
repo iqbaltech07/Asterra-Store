@@ -11,9 +11,6 @@ from app.core.database import SessionLocal, engine, Base
 from app.models.campaign import PromoCampaign
 from app.core.cache import cache
 
-DATA_DIR = pathlib.Path(__file__).resolve().parent.parent.parent / "data"
-CAMPAIGNS_FILE = DATA_DIR / "supabase-campaigns.json"
-
 WIB = timezone(timedelta(hours=7))
 
 
@@ -85,12 +82,11 @@ class CampaignService:
     def load_campaigns(cls, force_reload: bool = False) -> List[Dict[str, Any]]:
         """
         Loads campaigns from Supabase/PostgreSQL promo_campaigns table.
-        Falls back to local JSON cache if DB is offline.
         """
         if cls._campaigns is not None and not force_reload:
             return cls._campaigns
 
-        # 1. Query Database
+        # Query Database
         try:
             cls.ensure_table()
             db = SessionLocal() if SessionLocal else None
@@ -103,39 +99,19 @@ class CampaignService:
                     )
                     data = [c.to_dict() for c in db_items]
                     cls._campaigns = data
-                    cls.save_campaigns()
                     return cls._campaigns
                 finally:
                     db.close()
         except Exception as e:
             print(f"[CampaignService] Database load note: {e}")
 
-        # 2. Fallback to JSON cache
-        if CAMPAIGNS_FILE.exists():
-            try:
-                raw = CAMPAIGNS_FILE.read_text(encoding="utf-8")
-                cls._campaigns = json.loads(raw)
-                return cls._campaigns
-            except Exception as e:
-                print(f"[CampaignService] Fallback read error: {e}")
-
         cls._campaigns = []
         return cls._campaigns
 
     @classmethod
     def save_campaigns(cls) -> bool:
-        """Saves in-memory cache to local JSON file for instant offline fallback."""
-        try:
-            if cls._campaigns is not None:
-                DATA_DIR.mkdir(parents=True, exist_ok=True)
-                CAMPAIGNS_FILE.write_text(
-                    json.dumps(cls._campaigns, indent=2, ensure_ascii=False),
-                    encoding="utf-8",
-                )
-                return True
-        except Exception as e:
-            print(f"[CampaignService] Error saving campaigns cache: {e}")
-        return False
+        """In-memory cache management - no JSON file persistence."""
+        return True
 
     @classmethod
     def get_all_campaigns(cls, filter_status: Optional[str] = None) -> List[Dict[str, Any]]:

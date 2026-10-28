@@ -18,12 +18,15 @@ import {
   faBagShopping,
   faXmark,
   faClock,
+  faBox,
+  faGlobe,
 } from '@fortawesome/free-solid-svg-icons';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { PromoCode } from '@/types/promo';
 import { fetchWithRetry } from '@/lib/api-client';
+import { useCatalogProducts } from '@/lib/hooks/use-catalog-products';
 
 interface AdminPromosTabProps {
   onNotify: (msg: string) => void;
@@ -58,6 +61,24 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
   const [formPerUserLimit, setFormPerUserLimit] = useState<number>(1);
   const [formExpiresAt, setFormExpiresAt] = useState<string>('');
   const [formIsActive, setFormIsActive] = useState<boolean>(true);
+  const [formTargetScope, setFormTargetScope] = useState<'all' | 'specific_product'>('all');
+  const [formTargetProductId, setFormTargetProductId] = useState<string>('');
+  const [formTargetProductName, setFormTargetProductName] = useState<string>('');
+  const [productSearch, setProductSearch] = useState<string>('');
+
+  const { data: catalogData, isLoading: isCatalogLoading } = useCatalogProducts();
+  const catalogProducts = catalogData?.data || [];
+
+  const filteredCatalogProducts = catalogProducts.filter((p) => {
+    if (!productSearch.trim()) return true;
+    const q = productSearch.toLowerCase();
+    const catName = typeof p.category === 'object' && p.category !== null ? p.category.name : '';
+    return (
+      p.name.toLowerCase().includes(q) ||
+      (p.brand && p.brand.toLowerCase().includes(q)) ||
+      (catName && catName.toLowerCase().includes(q))
+    );
+  });
 
   // Track modal open state via ref for safe access inside auto-sync intervals and events
   const isCreateModalOpenRef = useRef(isCreateModalOpen);
@@ -121,8 +142,8 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
     window.addEventListener('admin:refresh-promos', handleEventDrivenRefresh);
 
     return () => {
-      if (debounceTimer) clearTimeout(debounceTimer);
       window.removeEventListener('admin:refresh-promos', handleEventDrivenRefresh);
+      if (debounceTimer) clearTimeout(debounceTimer);
     };
   }, [fetchPromos]);
 
@@ -156,7 +177,7 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
         throw new Error(json.error || 'Gagal mengubah status');
       }
       onNotify(json.message || `Status "${code}" diperbarui.`);
-      fetchPromos(true);
+      fetchPromos();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Terjadi kesalahan sistem.';
       onNotify(msg);
@@ -177,7 +198,7 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
         throw new Error(json.error || 'Gagal menghapus promo');
       }
       onNotify(`Kode promo "${code}" berhasil dihapus.`);
-      fetchPromos(true);
+      fetchPromos();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Gagal menghapus promo.';
       onNotify(msg);
@@ -197,6 +218,11 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
       return;
     }
 
+    if (formTargetScope === 'specific_product' && !formTargetProductId) {
+      onNotify('Silakan pilih produk yang ditargetkan untuk voucher ini.');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const payload = {
@@ -210,6 +236,9 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
         perUserLimit: Number(formPerUserLimit) || 1,
         expiresAt: formExpiresAt ? new Date(formExpiresAt).toISOString() : null,
         isActive: formIsActive,
+        targetScope: formTargetScope,
+        targetProductId: formTargetScope === 'specific_product' ? formTargetProductId : null,
+        targetProductName: formTargetScope === 'specific_product' ? formTargetProductName : null,
       };
 
       const res = await fetch('/api/v1/admin/promos', {
@@ -231,7 +260,11 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
       setFormMinOrderAmount(0);
       setFormUsageLimit('500');
       setFormExpiresAt('');
-      fetchPromos(true);
+      setFormTargetScope('all');
+      setFormTargetProductId('');
+      setFormTargetProductName('');
+      setProductSearch('');
+      fetchPromos();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Gagal membuat kode promo.';
       onNotify(msg);
@@ -281,7 +314,7 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => fetchPromos(false)}
+            onClick={() => fetchPromos()}
             disabled={isLoading}
             className="text-xs border-border gap-1.5 h-9 px-3.5 rounded-xl font-semibold"
           >
@@ -481,6 +514,18 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
                     </div>
                   </div>
 
+                  {p.targetScope === 'specific_product' || p.targetProductId ? (
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-50 border border-indigo-200/60 text-indigo-700 text-[11px] font-medium">
+                      <FontAwesomeIcon icon={faBox} className="w-3 h-3 shrink-0 text-indigo-500" />
+                      <span className="truncate">Khusus: {p.targetProductName || p.targetProductId}</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-surface-raised border border-border text-foreground-muted text-[11px]">
+                      <FontAwesomeIcon icon={faGlobe} className="w-3 h-3 shrink-0 opacity-60" />
+                      <span>Semua Produk</span>
+                    </div>
+                  )}
+
                   <p className="text-xs text-foreground-muted leading-relaxed line-clamp-2">
                     {p.description || 'Tidak ada deskripsi tambahan.'}
                   </p>
@@ -654,6 +699,103 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
                   className="text-xs bg-surface-raised border-border rounded-xl h-10"
                 />
               </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-foreground">Cakupan Voucher *</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormTargetScope('all');
+                      setFormTargetProductId('');
+                      setFormTargetProductName('');
+                    }}
+                    className={`p-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
+                      formTargetScope === 'all'
+                        ? 'bg-primary/10 border-primary text-primary shadow-xs'
+                        : 'bg-surface-raised border-border text-foreground-muted hover:text-foreground'
+                    }`}
+                  >
+                    <FontAwesomeIcon icon={faGlobe} className="w-3.5 h-3.5" />
+                    <span>Semua Produk</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setFormTargetScope('specific_product')}
+                    className={`p-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
+                      formTargetScope === 'specific_product'
+                        ? 'bg-primary/10 border-primary text-primary shadow-xs'
+                        : 'bg-surface-raised border-border text-foreground-muted hover:text-foreground'
+                    }`}
+                  >
+                    <FontAwesomeIcon icon={faBox} className="w-3.5 h-3.5" />
+                    <span>Khusus Produk Tertentu</span>
+                  </button>
+                </div>
+              </div>
+
+              {formTargetScope === 'specific_product' && (
+                <div className="p-3 bg-indigo-50/50 border border-indigo-200/60 rounded-xl space-y-2 animate-in fade-in">
+                  <label className="text-xs font-semibold text-indigo-900 flex items-center justify-between">
+                    <span>Pilih Produk Target Promo *</span>
+                    {formTargetProductName && (
+                      <span className="text-[11px] font-normal text-indigo-600 truncate max-w-[200px]">
+                        Terpilih: {formTargetProductName}
+                      </span>
+                    )}
+                  </label>
+                  <div className="relative">
+                    <FontAwesomeIcon icon={faMagnifyingGlass} className="w-3 h-3 text-foreground-muted absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <Input
+                      type="text"
+                      placeholder="Cari nama atau brand produk..."
+                      value={productSearch}
+                      onChange={(e) => setProductSearch(e.target.value)}
+                      className="pl-8 text-xs bg-white border-border rounded-lg h-8"
+                    />
+                  </div>
+                  <div className="max-h-40 overflow-y-auto space-y-1 border border-border/80 rounded-lg bg-white p-1">
+                    {isCatalogLoading ? (
+                      <p className="text-[11px] text-foreground-muted p-2 text-center">Memuat produk katalog...</p>
+                    ) : filteredCatalogProducts.length === 0 ? (
+                      <p className="text-[11px] text-foreground-muted p-2 text-center">Tidak ada produk yang cocok.</p>
+                    ) : (
+                      filteredCatalogProducts.map((prod) => {
+                        const isSelected = formTargetProductId === prod.id;
+                        return (
+                          <button
+                            key={prod.id}
+                            type="button"
+                            onClick={() => {
+                              setFormTargetProductId(prod.id);
+                              setFormTargetProductName(prod.name);
+                            }}
+                            className={`w-full text-left p-2 rounded-lg text-xs flex items-center justify-between transition-colors ${
+                              isSelected
+                                ? 'bg-indigo-600 text-white font-semibold'
+                                : 'hover:bg-slate-50 text-foreground'
+                            }`}
+                          >
+                            <div className="min-w-0 flex-1 pr-2">
+                              <span className="block truncate font-medium">{prod.name}</span>
+                              <span className={`text-[10px] block ${isSelected ? 'text-indigo-200' : 'text-foreground-muted'}`}>
+                                {prod.brand || prod.category?.name} • Rp {Number(prod.price || 0).toLocaleString('id-ID')}
+                              </span>
+                            </div>
+                            {isSelected && <FontAwesomeIcon icon={faCheck} className="w-3.5 h-3.5 shrink-0" />}
+                          </button>
+                        );
+                      })
+                    )}
+                  </div>
+                  {!formTargetProductId && (
+                    <p className="text-[10px] text-rose-500 font-medium">
+                      * Wajib memilih satu produk untuk voucher khusus.
+                    </p>
+                  )}
+                </div>
+              )}
 
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-foreground">Tipe Diskon *</label>

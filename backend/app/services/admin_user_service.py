@@ -5,9 +5,6 @@ from typing import Dict, Any, List, Optional
 from app.core.database import SessionLocal
 from app.models.admin_user import AdminUser
 
-DATA_DIR = pathlib.Path(__file__).resolve().parent.parent.parent / "data"
-ADMINS_FILE = DATA_DIR / "supabase-admins.json"
-
 class AdminUserService:
     _admins: Optional[List[Dict[str, Any]]] = None
 
@@ -15,51 +12,32 @@ class AdminUserService:
     def load_admins(cls, force_reload: bool = False) -> List[Dict[str, Any]]:
         """
         Load admins directly from Supabase PostgreSQL database (admin_users table).
-        Falls back to local clean JSON if database connection is unreachable.
         """
         if cls._admins is not None and not force_reload:
             return cls._admins
 
-        # 1. Try querying Supabase PostgreSQL
+        # Query Supabase PostgreSQL
         try:
-            db = SessionLocal()
-            try:
-                db_admins = db.query(AdminUser).order_by(AdminUser.created_at.asc()).all()
-                if db_admins is not None:
-                    admins_data = [a.to_dict(include_hash=True) for a in db_admins]
-                    cls._admins = admins_data
-                    # Sync to disk as local backup cache
-                    cls.save_admins()
-                    return admins_data
-            finally:
-                db.close()
+            db = SessionLocal() if SessionLocal else None
+            if db:
+                try:
+                    db_admins = db.query(AdminUser).order_by(AdminUser.created_at.asc()).all()
+                    if db_admins is not None:
+                        admins_data = [a.to_dict(include_hash=True) for a in db_admins]
+                        cls._admins = admins_data
+                        return admins_data
+                finally:
+                    db.close()
         except Exception as e:
-            print(f"[AdminUserService] Warning: Supabase query failed, using local cache: {e}")
-
-        # 2. Fallback to local snapshot file
-        if ADMINS_FILE.exists():
-            try:
-                data = json.loads(ADMINS_FILE.read_text(encoding="utf-8"))
-                if isinstance(data, list):
-                    cls._admins = data
-                    return data
-            except Exception as e:
-                print(f"[AdminUserService] Error loading fallback admins: {e}")
+            print(f"[AdminUserService] Warning: Supabase query failed: {e}")
 
         cls._admins = []
         return []
 
     @classmethod
     def save_admins(cls) -> bool:
-        """Saves current memory state to local disk backup cache."""
-        try:
-            if cls._admins is not None:
-                ADMINS_FILE.parent.mkdir(parents=True, exist_ok=True)
-                ADMINS_FILE.write_text(json.dumps(cls._admins, indent=2, ensure_ascii=False), encoding="utf-8")
-                return True
-        except Exception as e:
-            print(f"[AdminUserService] Error saving backup admins: {e}")
-        return False
+        """In-memory state management - no JSON file persistence."""
+        return True
 
     @classmethod
     def get_clean_admins(cls) -> List[Dict[str, Any]]:

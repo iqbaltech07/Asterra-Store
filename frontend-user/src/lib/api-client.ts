@@ -46,6 +46,9 @@ export interface PromoValidationResponse {
   finalTotal?: number;
   minOrderAmount?: number;
   maxDiscount?: number | null;
+  targetScope?: 'all' | 'specific_product';
+  targetProductId?: string | null;
+  targetProductName?: string | null;
   message?: string;
   error?: string;
 }

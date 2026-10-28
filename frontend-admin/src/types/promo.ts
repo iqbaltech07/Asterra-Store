@@ -12,6 +12,9 @@ export interface PromoCode {
   startDate: string;
   expiresAt: string | null;
   isActive: boolean;
+  targetScope?: 'all' | 'specific_product';
+  targetProductId?: string | null;
+  targetProductName?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -35,6 +38,9 @@ export interface PromoValidationResult {
   finalTotal?: number;
   minOrderAmount?: number;
   maxDiscount?: number | null;
+  targetScope?: 'all' | 'specific_product';
+  targetProductId?: string | null;
+  targetProductName?: string | null;
   message?: string;
   error?: string;
 }

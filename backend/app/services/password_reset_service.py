@@ -14,10 +14,6 @@ from app.services.admin_user_service import AdminUserService
 from app.services.partner_service import PartnerService
 from app.services.email_service import EmailService
 
-DATA_DIR = pathlib.Path(__file__).resolve().parent.parent.parent / "data"
-RESETS_FILE = DATA_DIR / "pending-password-resets.json"
-TOKENS_FILE = DATA_DIR / "pending-password-reset-tokens.json"
-
 class PasswordResetService:
     _pending_resets: Dict[str, Dict[str, Any]] = {}
     _pending_tokens: Dict[str, Dict[str, Any]] = {}
@@ -26,29 +22,14 @@ class PasswordResetService:
     @classmethod
     def _load_token_store(cls) -> Dict[str, Dict[str, Any]]:
         now = time.time()
-        res = dict(cls._pending_tokens)
-        if TOKENS_FILE.exists():
-            try:
-                file_data = json.loads(TOKENS_FILE.read_text(encoding="utf-8"))
-                if isinstance(file_data, dict):
-                    for k, v in file_data.items():
-                        if isinstance(v, dict) and v.get("expiresAt", 0) > now and not v.get("used", False):
-                            res[k] = v
-            except Exception:
-                pass
-        # Clean expired or used
-        res = {k: v for k, v in res.items() if v.get("expiresAt", 0) > now and not v.get("used", False)}
+        # Clean expired or used from in-memory store
+        res = {k: v for k, v in cls._pending_tokens.items() if v.get("expiresAt", 0) > now and not v.get("used", False)}
         cls._pending_tokens = res
         return res
 
     @classmethod
     def _save_token_store(cls, store: Dict[str, Dict[str, Any]]) -> None:
         cls._pending_tokens = store
-        try:
-            TOKENS_FILE.parent.mkdir(parents=True, exist_ok=True)
-            TOKENS_FILE.write_text(json.dumps(store, indent=2, ensure_ascii=False), encoding="utf-8")
-        except Exception as e:
-            print(f"[PasswordResetService] Warning: Failed to write tokens file: {e}")
 
     @classmethod
     def request_reset_link(cls, email: str, portal: str = "admin") -> Dict[str, Any]:
@@ -384,29 +365,14 @@ class PasswordResetService:
     @classmethod
     def _load_store(cls) -> Dict[str, Dict[str, Any]]:
         now = time.time()
-        res = dict(cls._pending_resets)
-        if RESETS_FILE.exists():
-            try:
-                file_data = json.loads(RESETS_FILE.read_text(encoding="utf-8"))
-                if isinstance(file_data, dict):
-                    for k, v in file_data.items():
-                        if isinstance(v, dict) and v.get("expiresAt", 0) > now:
-                            res[k] = v
-            except Exception:
-                pass
-        # Clean expired
-        res = {k: v for k, v in res.items() if v.get("expiresAt", 0) > now}
+        # Clean expired from in-memory store
+        res = {k: v for k, v in cls._pending_resets.items() if v.get("expiresAt", 0) > now}
         cls._pending_resets = res
         return res
 
     @classmethod
     def _save_store(cls, store: Dict[str, Dict[str, Any]]) -> None:
         cls._pending_resets = store
-        try:
-            RESETS_FILE.parent.mkdir(parents=True, exist_ok=True)
-            RESETS_FILE.write_text(json.dumps(store, indent=2, ensure_ascii=False), encoding="utf-8")
-        except Exception as e:
-            print(f"[PasswordResetService] Warning: Failed to write resets file: {e}")
 
     @classmethod
     def request_reset_otp(cls, email: str) -> Dict[str, Any]:

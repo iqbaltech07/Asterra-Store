@@ -11,11 +11,6 @@ from app.models.commission import Commission
 from app.models.profit_ledger import ProfitLedger
 from app.models.payout_request import PayoutRequest
 
-DATA_DIR = pathlib.Path(__file__).resolve().parent.parent.parent / "data"
-PARTNERS_FILE = DATA_DIR / "supabase-partners.json"
-ORDERS_FILE = DATA_DIR / "supabase-orders.json"
-ADMINS_FILE = DATA_DIR / "supabase-admins.json"
-
 def mask_customer_name(name: Optional[str]) -> str:
     """
     Asterra Store customer privacy masking:
@@ -42,7 +37,6 @@ class PartnerService:
     def load_partners(cls, force_reload: bool = False) -> List[Dict[str, Any]]:
         """
         Loads partners directly from Supabase PostgreSQL sales_partners table.
-        Falls back to local clean JSON file if offline.
         """
         now = datetime.utcnow()
         if (
@@ -53,55 +47,38 @@ class PartnerService:
         ):
             return cls._partners
 
-        # 1. Try querying Supabase PostgreSQL
+        # Query Supabase PostgreSQL
         try:
-            db = SessionLocal()
-            try:
-                db_partners = db.query(SalesPartner).order_by(SalesPartner.created_at.asc()).all()
-                db_payouts = db.query(PayoutRequest).order_by(PayoutRequest.created_at.desc()).all()
-                payouts_by_partner: Dict[str, List[Dict[str, Any]]] = {}
-                for pr in db_payouts:
-                    payouts_by_partner.setdefault(pr.partner_id, []).append(pr.to_dict())
+            db = SessionLocal() if SessionLocal else None
+            if db:
+                try:
+                    db_partners = db.query(SalesPartner).order_by(SalesPartner.created_at.asc()).all()
+                    db_payouts = db.query(PayoutRequest).order_by(PayoutRequest.created_at.desc()).all()
+                    payouts_by_partner: Dict[str, List[Dict[str, Any]]] = {}
+                    for pr in db_payouts:
+                        payouts_by_partner.setdefault(pr.partner_id, []).append(pr.to_dict())
 
-                if db_partners is not None:
-                    data = []
-                    for p in db_partners:
-                        p_dict = p.to_dict()
-                        p_dict["payoutRequests"] = payouts_by_partner.get(p.id, [])
-                        data.append(p_dict)
-                    cls._partners = data
-                    cls._last_loaded = datetime.utcnow()
-                    cls.save_partners()
-                    return data
-            finally:
-                db.close()
+                    if db_partners is not None:
+                        data = []
+                        for p in db_partners:
+                            p_dict = p.to_dict()
+                            p_dict["payoutRequests"] = payouts_by_partner.get(p.id, [])
+                            data.append(p_dict)
+                        cls._partners = data
+                        cls._last_loaded = datetime.utcnow()
+                        return data
+                finally:
+                    db.close()
         except Exception as e:
-            print(f"[PartnerService] Warning: Supabase query failed, using local fallback: {e}")
-
-        # 2. Fallback to local file
-        if PARTNERS_FILE.exists():
-            try:
-                data = json.loads(PARTNERS_FILE.read_text(encoding="utf-8"))
-                if isinstance(data, list):
-                    cls._partners = data
-                    cls._last_loaded = datetime.utcnow()
-                    return data
-            except Exception as e:
-                print(f"[PartnerService] Error loading partners fallback: {e}")
+            print(f"[PartnerService] Warning: Supabase query failed: {e}")
 
         cls._partners = []
         return []
 
     @classmethod
     def save_partners(cls) -> bool:
-        try:
-            if cls._partners is not None:
-                PARTNERS_FILE.parent.mkdir(parents=True, exist_ok=True)
-                PARTNERS_FILE.write_text(json.dumps(cls._partners, indent=2, ensure_ascii=False), encoding="utf-8")
-                return True
-        except Exception as e:
-            print(f"[PartnerService] Error saving partners: {e}")
-        return False
+        """In-memory cache management - no JSON file persistence."""
+        return True
 
     @classmethod
     def load_orders(cls) -> List[Dict[str, Any]]:
@@ -109,13 +86,7 @@ class PartnerService:
             from app.services.order_service import OrderService
             return OrderService.load_orders()
         except Exception:
-            pass
-        if ORDERS_FILE.exists():
-            try:
-                return json.loads(ORDERS_FILE.read_text(encoding="utf-8"))
-            except Exception:
-                pass
-        return []
+            return []
 
     @classmethod
     def get_all_partners(cls) -> List[Dict[str, Any]]:
@@ -540,6 +511,7 @@ class PartnerService:
                 "customerEmail": masked_email,
                 "customerName": masked_name,
                 "totalAmount": total,
+                "transactionProfit": trans_profit,
                 "status": o.get("status", "completed"),
                 "paymentStatus": o.get("paymentStatus", "PAID"),
                 "commission": commission,

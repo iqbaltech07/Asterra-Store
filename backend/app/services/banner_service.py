@@ -12,8 +12,6 @@ from app.config import settings
 from app.core.database import SessionLocal, engine, Base
 from app.models.banner import PromoBanner
 
-DATA_DIR = pathlib.Path(__file__).resolve().parent.parent.parent / "data"
-BANNERS_FILE = DATA_DIR / "supabase-banners.json"
 ALLOWED_MIME_TYPES = [
     "image/jpeg",
     "image/png",
@@ -92,11 +90,8 @@ class BannerService:
     @classmethod
     def load_banners(cls, force_reload: bool = False) -> List[Dict[str, Any]]:
         """
-        Loads banners from Supabase/Postgres promo_banners table.
-        Always queries database if connected to ensure real-time synchronization with Admin Console.
-        Falls back to local clean JSON if DB is offline.
+        Loads banners from Supabase/PostgreSQL promo_banners table.
         """
-        # 1. Query Database first if available
         try:
             cls.ensure_table()
             db = SessionLocal() if SessionLocal else None
@@ -111,7 +106,6 @@ class BannerService:
                         data = [b.to_dict() for b in db_banners]
                         cls._banners = data
                         cls.check_and_deactivate_expired()
-                        cls.save_banners()
                         return cls._banners
                 finally:
                     db.close()
@@ -122,34 +116,13 @@ class BannerService:
             cls.check_and_deactivate_expired()
             return cls._banners
 
-        # 2. Fallback to JSON file
-        if BANNERS_FILE.exists():
-            try:
-                data = json.loads(BANNERS_FILE.read_text(encoding="utf-8"))
-                if isinstance(data, list):
-                    cls._banners = data
-                    cls.check_and_deactivate_expired()
-                    return cls._banners
-            except Exception as e:
-                print(f"[BannerService] Error loading banners JSON fallback: {e}")
-
         cls._banners = []
         return []
 
     @classmethod
     def save_banners(cls) -> bool:
-        """Persists banner cache to local backup JSON file."""
-        try:
-            if cls._banners is not None:
-                BANNERS_FILE.parent.mkdir(parents=True, exist_ok=True)
-                BANNERS_FILE.write_text(
-                    json.dumps(cls._banners, indent=2, ensure_ascii=False),
-                    encoding="utf-8",
-                )
-                return True
-        except Exception as e:
-            print(f"[BannerService] Error saving banners fallback: {e}")
-        return False
+        """In-memory state management - no JSON file persistence."""
+        return True
 
     @classmethod
     def get_banners(

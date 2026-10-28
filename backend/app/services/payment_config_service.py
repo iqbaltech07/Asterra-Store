@@ -1,12 +1,6 @@
-import json
-import pathlib
 from typing import Dict, Any
 from app.core.database import SessionLocal
 from app.models.payment_setting import PaymentSetting
-
-DATA_DIR = pathlib.Path(__file__).resolve().parent.parent.parent / "data"
-PAYMENT_SETTINGS_FILE = DATA_DIR / "supabase-payment-settings.json"
-LEGACY_CONFIG_FILE = DATA_DIR / "payment-config.json"
 
 DEFAULT_CONFIG: Dict[str, Any] = {
     "mode": "manual",
@@ -80,16 +74,6 @@ class PaymentConfigService:
                 db.close()
         except Exception as e:
             print(f"[PaymentConfigService] Warning: Supabase query failed: {e}")
-
-        if not raw_data and PAYMENT_SETTINGS_FILE.exists():
-            try:
-                data = json.loads(PAYMENT_SETTINGS_FILE.read_text(encoding="utf-8"))
-                if isinstance(data, list) and len(data) > 0:
-                    raw_data = data[0]
-                elif isinstance(data, dict):
-                    raw_data = data
-            except Exception as e:
-                print(f"[PaymentConfigService] Error reading supabase-payment-settings: {e}")
 
         merged = {**DEFAULT_CONFIG, **raw_data}
 
@@ -258,11 +242,5 @@ class PaymentConfigService:
         # Merge updated payload into config
         for k, v in payload.items():
             cls._config[k] = v
-
-        try:
-            PAYMENT_SETTINGS_FILE.parent.mkdir(parents=True, exist_ok=True)
-            PAYMENT_SETTINGS_FILE.write_text(json.dumps([cls._config], indent=2, ensure_ascii=False), encoding="utf-8")
-        except Exception:
-            pass
 
         return cls._config

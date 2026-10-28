@@ -18,6 +18,9 @@ class PromoCode(Base):
     start_date = Column(DateTime, nullable=True)
     expires_at = Column(DateTime, nullable=True)
     is_active = Column(Boolean, default=True)
+    target_scope = Column(String, default="all")  # 'all' | 'specific_product'
+    target_product_id = Column(String, nullable=True)
+    target_product_name = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -36,6 +39,9 @@ class PromoCode(Base):
             "startDate": self.start_date.isoformat() if self.start_date else None,
             "expiresAt": self.expires_at.isoformat() if self.expires_at else None,
             "isActive": self.is_active,
+            "targetScope": self.target_scope or "all",
+            "targetProductId": self.target_product_id,
+            "targetProductName": self.target_product_name,
             "createdAt": self.created_at.isoformat() if self.created_at else None,
             "updatedAt": self.updated_at.isoformat() if self.updated_at else None,
         }

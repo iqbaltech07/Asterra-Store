@@ -45,10 +45,10 @@ next-env.d.ts
 .DS_Store
 Thumbs.db
 
-# Heavy local dumps (use database or active-catalog.json instead)
-data/
-data/managed-catalog.json
+# Local data dumps & json fallbacks (direct Supabase PostgreSQL SSOT only)
+backend/data/*.json
 !backend/data/brand-logos-cache.json
+data/
 
 # Local scratch, certificates & temp media
 scratch/

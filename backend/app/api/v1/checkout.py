@@ -246,7 +246,8 @@ async def validate_promo(request: Request):
     payload = await request.json()
     code = payload.get("code", "")
     subtotal = float(payload.get("subtotal", 0))
-    result = PromoService.validate_promo(code, subtotal)
+    items = payload.get("items") or []
+    result = PromoService.validate_promo(code, subtotal, items=items)
     return {
         "success": True,
         "valid": result.get("valid", False),

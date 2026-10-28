@@ -237,14 +237,6 @@ class VipService:
                 "description": item.get("description") or item.get("note") or "",
             })
 
-        import json, pathlib
-        data_dir = pathlib.Path(__file__).resolve().parent.parent.parent / "data"
-        managed_path = data_dir / "managed-catalog.json"
-        try:
-            managed_path.write_text(json.dumps(normalized, ensure_ascii=False, indent=2), encoding="utf-8")
-        except Exception as e:
-            print(f"[VipService] Error saving managed catalog: {e}")
-
         from app.services.catalog_service import CatalogService
         CatalogService._cached_vip_services = normalized
 

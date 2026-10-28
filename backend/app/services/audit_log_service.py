@@ -1,12 +1,6 @@
-import json
-import pathlib
 import uuid
 from datetime import datetime
 from typing import Dict, Any, List, Optional
-
-DATA_DIR = pathlib.Path(__file__).resolve().parent.parent.parent / "data"
-LOGS_FILE = DATA_DIR / "supabase-logs.json"
-ORDERS_FILE = DATA_DIR / "supabase-orders.json"
 
 class AuditLogService:
     _logs: Optional[List[Dict[str, Any]]] = None
@@ -25,27 +19,36 @@ class AuditLogService:
         if cls._logs is not None:
             return cls._logs
 
-        if LOGS_FILE.exists():
-            try:
-                data = json.loads(LOGS_FILE.read_text(encoding="utf-8"))
-                if isinstance(data, list):
-                    cls._logs = data
-                    return cls._logs
-            except Exception as e:
-                print(f"[AuditLogService] Error reading supabase-logs.json: {e}")
+        bootstrapped: List[Dict[str, Any]] = [
+            {
+                "id": "log-sys-boot",
+                "order_id": "-",
+                "orderId": "-",
+                "customer_name": "Sistem",
+                "customer_email": "system@asterra.store",
+                "actor": "system",
+                "action": "system_boot",
+                "previous_status": None,
+                "new_status": "active",
+                "notes": "Backend service active with real Supabase synchronized dataset.",
+                "created_at": "2026-10-09T08:00:00.000Z",
+                "createdAt": "2026-10-09T08:00:00.000Z",
+            }
+        ]
 
-        # Bootstrap initial logs from orders if logs file doesn't exist yet
-        bootstrapped: List[Dict[str, Any]] = []
-        if ORDERS_FILE.exists():
+        try:
+            from app.core.database import SessionLocal
+            from app.models.order import Order
+            db = SessionLocal()
             try:
-                orders = json.loads(ORDERS_FILE.read_text(encoding="utf-8"))
+                orders = db.query(Order).order_by(Order.created_at.desc()).limit(50).all()
                 for idx, o in enumerate(orders):
-                    oid = o.get("id") or o.get("orderId") or f"ORD-{idx}"
-                    created = cls._normalize_iso_date(o.get("createdAt") or o.get("created_at"))
-                    c_name = o.get("customerName") or o.get("customer_name") or "Pelanggan"
-                    c_email = o.get("customerEmail") or o.get("customer_email") or "buyer@asterra.store"
-                    st = o.get("status", "pending")
-                    tot = float(o.get("totalAmount") or o.get("total_amount") or 0)
+                    oid = o.id or f"ORD-{idx}"
+                    created = cls._normalize_iso_date(o.created_at.isoformat() if hasattr(o.created_at, "isoformat") else str(o.created_at))
+                    c_name = o.customer_name or "Pelanggan"
+                    c_email = o.customer_email or "buyer@asterra.store"
+                    st = o.status or "pending"
+                    tot = float(o.total_amount or 0)
 
                     bootstrapped.append({
                         "id": f"log-order-created-{idx}",
@@ -61,58 +64,17 @@ class AuditLogService:
                         "created_at": created,
                         "createdAt": created,
                     })
-
-                    if st in ["completed", "paid", "settlement"]:
-                        paid_at = cls._normalize_iso_date(o.get("paidAt") or o.get("paid_at") or created)
-                        pay_method = o.get("paymentMethod") or o.get("payment_method") or "manual"
-                        is_gateway = not str(pay_method).startswith("manual_")
-                        bootstrapped.append({
-                            "id": f"log-order-paid-{idx}",
-                            "order_id": oid,
-                            "orderId": oid,
-                            "customer_name": c_name,
-                            "customer_email": c_email,
-                            "actor": "tripay_webhook" if is_gateway else "admin",
-                            "action": "payment_received",
-                            "previous_status": "pending",
-                            "new_status": "completed",
-                            "notes": f"Pembayaran pesanan {oid} terkonfirmasi lunas via {pay_method}.",
-                            "created_at": paid_at,
-                            "createdAt": paid_at,
-                        })
-            except Exception as e:
-                print(f"[AuditLogService] Error bootstrapping initial logs: {e}")
-
-        # System boot log
-        bootstrapped.append({
-            "id": "log-sys-boot",
-            "order_id": "-",
-            "orderId": "-",
-            "customer_name": "Sistem",
-            "customer_email": "system@asterra.store",
-            "actor": "system",
-            "action": "system_boot",
-            "previous_status": None,
-            "new_status": "active",
-            "notes": "Backend service active on port 8000 with real Supabase synchronized dataset.",
-            "created_at": "2026-10-09T08:00:00.000Z",
-            "createdAt": "2026-10-09T08:00:00.000Z",
-        })
+            finally:
+                db.close()
+        except Exception:
+            pass
 
         cls._logs = bootstrapped
-        cls._save_logs()
         return cls._logs
 
     @classmethod
     def _save_logs(cls) -> bool:
-        try:
-            if cls._logs is not None:
-                LOGS_FILE.parent.mkdir(parents=True, exist_ok=True)
-                LOGS_FILE.write_text(json.dumps(cls._logs, indent=2, ensure_ascii=False), encoding="utf-8")
-                return True
-        except Exception as e:
-            print(f"[AuditLogService] Error saving supabase-logs.json: {e}")
-        return False
+        return True
 
     @classmethod
     def record_log(

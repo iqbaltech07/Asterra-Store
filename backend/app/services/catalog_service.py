@@ -6,10 +6,6 @@ from typing import List, Dict, Any, Optional, Tuple
 from app.core.database import SessionLocal
 from app.models.product import Product
 
-DATA_DIR = pathlib.Path(__file__).resolve().parent.parent.parent / "data"
-CATALOG_PATH = DATA_DIR / "active-catalog.json"
-MANAGED_PATH = DATA_DIR / "managed-catalog.json"
-
 class CatalogService:
     _cached_products: Optional[List[Dict[str, Any]]] = None
     _cached_vip_services: Optional[List[Dict[str, Any]]] = None
@@ -86,71 +82,36 @@ class CatalogService:
     def load_products(cls, force_reload: bool = False) -> List[Dict[str, Any]]:
         """
         Loads products directly from Supabase PostgreSQL database.
-        Falls back to local clean JSON files if Supabase is offline.
         """
         if cls._cached_products is not None and not force_reload:
             return cls._cached_products
 
-        # 1. Try querying Supabase PostgreSQL
+        # Query Supabase PostgreSQL
         try:
-            db = SessionLocal()
-            try:
-                db_prods = db.query(Product).order_by(Product.created_at.desc()).all()
-                if db_prods is not None:
-                    normalized = [cls._normalize_product(p.to_dict()) for p in db_prods]
-                    cls._cached_products = normalized
-                    cls.save_products()
-                    return normalized
-            finally:
-                db.close()
+            db = SessionLocal() if SessionLocal else None
+            if db:
+                try:
+                    db_prods = db.query(Product).order_by(Product.created_at.desc()).all()
+                    if db_prods is not None:
+                        normalized = [cls._normalize_product(p.to_dict()) for p in db_prods]
+                        cls._cached_products = normalized
+                        return normalized
+                finally:
+                    db.close()
         except Exception as e:
-            print(f"[CatalogService] Warning: Supabase products query failed, using local fallback: {e}")
-
-        # 2. Fallback to local files
-        try:
-            if CATALOG_PATH.exists():
-                data = json.loads(CATALOG_PATH.read_text(encoding="utf-8"))
-                normalized = [cls._normalize_product(p) for p in data]
-                cls._cached_products = normalized
-                return normalized
-            elif MANAGED_PATH.exists():
-                all_products = json.loads(MANAGED_PATH.read_text(encoding="utf-8"))
-                active = [cls._normalize_product(p) for p in all_products if p.get("status") == "active"]
-                cls._cached_products = active
-                return active
-        except Exception as e:
-            print(f"[CatalogService] Error loading catalog fallback: {e}")
+            print(f"[CatalogService] Warning: Supabase products query failed: {e}")
 
         cls._cached_products = []
         return []
 
     @classmethod
     def save_products(cls) -> bool:
-        """Saves current products state to local backup cache."""
-        try:
-            if cls._cached_products is not None:
-                CATALOG_PATH.parent.mkdir(parents=True, exist_ok=True)
-                CATALOG_PATH.write_text(json.dumps(cls._cached_products, indent=2, ensure_ascii=False), encoding="utf-8")
-                return True
-        except Exception as e:
-            print(f"[CatalogService] Error saving backup catalog: {e}")
-        return False
+        """In-memory cache management - no JSON file persistence."""
+        return True
 
     @classmethod
     def load_vip_services(cls) -> List[Dict[str, Any]]:
-        if cls._cached_vip_services is not None:
-            return cls._cached_vip_services
-
-        try:
-            if MANAGED_PATH.exists():
-                data = json.loads(MANAGED_PATH.read_text(encoding="utf-8"))
-                cls._cached_vip_services = data
-                return data
-        except Exception as e:
-            print(f"[CatalogService] Error loading managed catalog: {e}")
-
-        cls._cached_vip_services = []
-        return []
+        return cls.load_products()
 
     @classmethod
     def get_products(

@@ -92,6 +92,40 @@ class TestPromoValidation(unittest.TestCase):
                 "expiresAt": next_week,
                 "isActive": True,
             },
+            {
+                "id": "promo-product-x",
+                "code": "PROMOTARGETX",
+                "description": "Promo Khusus Produk X 20%",
+                "discountType": "percentage",
+                "discountValue": 20,
+                "maxDiscount": 50000,
+                "minOrderAmount": 15000,
+                "usageLimit": 100,
+                "usedCount": 0,
+                "startDate": last_week,
+                "expiresAt": next_week,
+                "isActive": True,
+                "targetScope": "specific_product",
+                "targetProductId": "prod-x",
+                "targetProductName": "Produk X Spesial",
+            },
+            {
+                "id": "promo-fixed-product-x",
+                "code": "PROMOFIXEDX",
+                "description": "Promo Potongan Tetap Rp 25.000 Khusus Produk X",
+                "discountType": "fixed",
+                "discountValue": 25000,
+                "maxDiscount": None,
+                "minOrderAmount": 0,
+                "usageLimit": 100,
+                "usedCount": 0,
+                "startDate": last_week,
+                "expiresAt": next_week,
+                "isActive": True,
+                "targetScope": "specific_product",
+                "targetProductId": "prod-x",
+                "targetProductName": "Produk X Spesial",
+            },
         ]
 
     def tearDown(self):
@@ -167,7 +201,89 @@ class TestPromoValidation(unittest.TestCase):
     def test_11_api_endpoint_valid_promo_returns_success(self):
         response = client.post("/api/v1/promos/validate", json={"code": "PROMOAKTIF", "subtotal": 50000})
         self.assertEqual(response.status_code, 200)
+        self.assertTrue(data.get("success") if "data" in locals() else response.json().get("success"))
+        data = response.json()
+        self.assertTrue(data.get("valid"))
+        self.assertEqual(data["data"]["discountAmount"], 5000)
+
+    def test_12_product_specific_promo_success(self):
+        # Valid when prod-x is in items
+        items = [
+            {"product_id": "prod-x", "unit_price": 30000, "quantity": 1}
+        ]
+        res = PromoService.validate_promo("PROMOTARGETX", 30000, items=items)
+        self.assertTrue(res["valid"])
+        self.assertEqual(res["code"], "PROMOTARGETX")
+        # 20% of 30,000 = 6,000
+        self.assertEqual(res["discountAmount"], 6000)
+        self.assertEqual(res["finalTotal"], 24000)
+        self.assertEqual(res["targetProductId"], "prod-x")
+        self.assertIn("khusus", res["message"].lower())
+
+    def test_13_product_specific_promo_rejected_when_product_absent(self):
+        # Cart only has prod-y
+        items = [
+            {"product_id": "prod-y", "unit_price": 50000, "quantity": 1}
+        ]
+        res = PromoService.validate_promo("PROMOTARGETX", 50000, items=items)
+        self.assertFalse(res["valid"])
+        self.assertIn("khusus untuk produk 'Produk X Spesial'", res["error"])
+        self.assertIn("tidak dapat digunakan", res["error"])
+
+    def test_14_product_specific_promo_rejected_when_no_items(self):
+        # Cart items list empty or None
+        res = PromoService.validate_promo("PROMOTARGETX", 50000, items=[])
+        self.assertFalse(res["valid"])
+        self.assertIn("khusus untuk produk", res["error"])
+
+    def test_15_product_specific_promo_multi_item_isolation(self):
+        # Cart has prod-x (Rp 20.000) and expensive prod-y (Rp 100.000). Total: Rp 120.000
+        items = [
+            {"product_id": "prod-x", "unit_price": 20000, "quantity": 1},
+            {"product_id": "prod-y", "unit_price": 100000, "quantity": 1},
+        ]
+        res = PromoService.validate_promo("PROMOTARGETX", 120000, items=items)
+        self.assertTrue(res["valid"])
+        # 20% of prod-x (20.000) = 4,000 (NOT 20% of 120.000 = 24.000!)
+        self.assertEqual(res["discountAmount"], 4000)
+        self.assertEqual(res["finalTotal"], 116000)
+
+    def test_16_product_specific_fixed_discount_capped_at_product_price(self):
+        # PROMOFIXEDX gives Rp 25.000 fixed discount, but prod-x price is only Rp 10.000
+        items = [
+            {"product_id": "prod-x", "unit_price": 10000, "quantity": 1},
+            {"product_id": "prod-y", "unit_price": 50000, "quantity": 1},
+        ]
+        res = PromoService.validate_promo("PROMOFIXEDX", 60000, items=items)
+        self.assertTrue(res["valid"])
+        # Fixed discount must be capped at eligible_subtotal (10.000), not full 25.000!
+        self.assertEqual(res["discountAmount"], 10000)
+        self.assertEqual(res["finalTotal"], 50000)
+
+    def test_17_product_specific_min_order_checked_on_target_product_only(self):
+        # PROMOTARGETX has minOrderAmount = 15.000.
+        # Total cart is 100.000, but prod-x is only 10.000
+        items = [
+            {"product_id": "prod-x", "unit_price": 10000, "quantity": 1},
+            {"product_id": "prod-y", "unit_price": 90000, "quantity": 1},
+        ]
+        res = PromoService.validate_promo("PROMOTARGETX", 100000, items=items)
+        self.assertFalse(res["valid"])
+        self.assertIn("Minimal pembelian untuk produk 'Produk X Spesial'", res["error"])
+
+    def test_18_api_endpoint_product_specific_promo_with_items(self):
+        # Test API endpoint POST /api/v1/promos/validate
+        payload = {
+            "code": "PROMOTARGETX",
+            "subtotal": 60000,
+            "items": [
+                {"product_id": "prod-x", "unit_price": 30000, "quantity": 1},
+                {"product_id": "prod-z", "unit_price": 30000, "quantity": 1},
+            ]
+        }
+        response = client.post("/api/v1/promos/validate", json=payload)
+        self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertTrue(data.get("success"))
         self.assertTrue(data.get("valid"))
-        self.assertEqual(data["data"]["discountAmount"], 5000)
+        self.assertEqual(data["data"]["discountAmount"], 6000)

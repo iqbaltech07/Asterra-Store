@@ -11,9 +11,6 @@ from app.services.campaign_service import CampaignService
 from app.services.realtime_broadcaster import RealtimeBroadcaster
 from app.core.cache import cache
 
-DATA_DIR = pathlib.Path(__file__).resolve().parent.parent.parent / "data"
-SECTIONS_FILE = DATA_DIR / "homepage-sections.json"
-
 VALID_SECTIONS = ["promo", "terlaris", "terbaru"]
 
 DEFAULT_CONFIG: Dict[str, Dict[str, Any]] = {
@@ -88,18 +85,7 @@ class HomepageSectionService:
                 finally:
                     db.close()
         except Exception as e:
-            print(f"[HomepageSectionService] DB load fallback to JSON: {e}")
-
-        # 2. Try JSON file fallback
-        if SECTIONS_FILE.exists():
-            try:
-                data = json.loads(SECTIONS_FILE.read_text(encoding="utf-8"))
-                for k, v in data.items():
-                    if k in VALID_SECTIONS:
-                        configs[k] = v
-                return configs
-            except Exception as e:
-                print(f"[HomepageSectionService] JSON load error: {e}")
+            print(f"[HomepageSectionService] DB load note: {e}")
 
         return configs
 
@@ -161,21 +147,7 @@ class HomepageSectionService:
         except Exception as e:
             print(f"[HomepageSectionService] DB save note: {e}")
 
-        # 2. Save to local JSON backup
-        try:
-            current_json = {}
-            if SECTIONS_FILE.exists():
-                try:
-                    current_json = json.loads(SECTIONS_FILE.read_text(encoding="utf-8"))
-                except Exception:
-                    pass
-            current_json[section_key] = result_dict
-            SECTIONS_FILE.parent.mkdir(parents=True, exist_ok=True)
-            SECTIONS_FILE.write_text(json.dumps(current_json, indent=2, ensure_ascii=False), encoding="utf-8")
-        except Exception as e:
-            print(f"[HomepageSectionService] JSON backup write note: {e}")
-
-        # 3. Invalidate caches and broadcast SSE event
+        # Invalidate caches and broadcast SSE event
         cache.invalidate("homepage_sections", "catalog")
         RealtimeBroadcaster.broadcast(
             "homepage:sections_updated",
