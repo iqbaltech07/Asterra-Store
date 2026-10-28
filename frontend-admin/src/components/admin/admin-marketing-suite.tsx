@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Plus,
   Calendar,
@@ -184,8 +184,14 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
   }, []);
 
   // Load Campaigns from Backend API (Directly from real database)
-  const loadCampaignsFromApi = useCallback(async () => {
-    setIsLoadingCampaigns(true);
+  const isMarketingModalOpen = isCampaignModalOpen || Boolean(editingCampaign) || isBannerModalOpen || Boolean(editingBanner);
+  const isMarketingModalOpenRef = useRef(isMarketingModalOpen);
+  useEffect(() => {
+    isMarketingModalOpenRef.current = isMarketingModalOpen;
+  }, [isMarketingModalOpen]);
+
+  const loadCampaignsFromApi = useCallback(async (silent = false) => {
+    if (!silent) setIsLoadingCampaigns(true);
     try {
       const res = await fetch('/api/v1/admin/campaigns', {
         headers: getAuthHeaders(false),
@@ -204,30 +210,23 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
       console.warn('Backend campaigns fetch error:', err);
       setCampaigns([]);
     } finally {
-      setIsLoadingCampaigns(false);
+      if (!silent) setIsLoadingCampaigns(false);
     }
   }, [getAuthHeaders]);
 
   useEffect(() => {
-    loadCampaignsFromApi();
+    loadCampaignsFromApi(false);
 
     const handleAutoSync = () => {
-      loadCampaignsFromApi();
+      // Don't disrupt active campaign or banner editing modal
+      if (isMarketingModalOpenRef.current) return;
+      loadCampaignsFromApi(true);
     };
 
-    window.addEventListener('focus', handleAutoSync);
     window.addEventListener('admin:refresh-campaigns', handleAutoSync);
 
-    const timer = setInterval(() => {
-      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
-        handleAutoSync();
-      }
-    }, 30000);
-
     return () => {
-      window.removeEventListener('focus', handleAutoSync);
       window.removeEventListener('admin:refresh-campaigns', handleAutoSync);
-      clearInterval(timer);
     };
   }, [loadCampaignsFromApi]);
 

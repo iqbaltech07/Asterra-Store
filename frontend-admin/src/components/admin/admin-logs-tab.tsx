@@ -47,10 +47,10 @@ export function AdminLogsTab() {
       if (!res.ok) throw new Error('Gagal memuat log aktivitas');
       return res.json();
     },
-    staleTime: 5000,
-    refetchInterval: 15000,
-    refetchOnWindowFocus: true,
-    refetchOnReconnect: true,
+    staleTime: 60000,
+    refetchInterval: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
     refetchIntervalInBackground: false,
   });
 

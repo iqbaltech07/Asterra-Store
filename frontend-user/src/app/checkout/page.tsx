@@ -568,7 +568,7 @@ function CheckoutPageContent() {
     onSuccess: (res, code) => {
       if (!res || !res.valid) {
         setAppliedPromo(null);
-        showPromoFeedback('error', res?.error || 'Kode promo tidak valid atau syarat tidak terpenuhi.');
+        showPromoFeedback('error', res?.error || res?.message || 'Kode promo tidak valid atau syarat tidak terpenuhi.');
         return;
       }
       setAppliedPromo({

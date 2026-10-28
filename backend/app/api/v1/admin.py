@@ -6,6 +6,7 @@ from app.services.finance_service import FinanceService
 from app.services.analytics_service import AnalyticsService
 from app.services.admin_user_service import AdminUserService
 from app.services.audit_log_service import AuditLogService
+from app.services.realtime_broadcaster import RealtimeBroadcaster
 
 router = APIRouter()
 
@@ -66,6 +67,11 @@ async def create_admin_user(request: Request):
     res = AdminUserService.create_admin(payload)
     if not res.get("success"):
         return JSONResponse(status_code=400, content=res)
+    RealtimeBroadcaster.broadcast(
+        "admin_users:updated",
+        {"action": "create", "admin": res.get("admin")},
+        target_role="admin",
+    )
     return res
 
 @router.patch("/admin/users/{admin_id}", tags=["Admin Users"])
@@ -74,6 +80,11 @@ async def update_admin_user(admin_id: str, request: Request):
     updated = AdminUserService.update_admin(admin_id, payload)
     if not updated:
         raise HTTPException(status_code=404, detail="Administrator tidak ditemukan.")
+    RealtimeBroadcaster.broadcast(
+        "admin_users:updated",
+        {"action": "update", "admin_id": admin_id},
+        target_role="admin",
+    )
     return {
         "success": True,
         "message": "Akun administrator berhasil diperbarui.",
@@ -85,6 +96,11 @@ def delete_admin_user(admin_id: str):
     deleted = AdminUserService.delete_admin(admin_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Administrator tidak ditemukan.")
+    RealtimeBroadcaster.broadcast(
+        "admin_users:updated",
+        {"action": "delete", "admin_id": admin_id},
+        target_role="admin",
+    )
     return {
         "success": True,
         "message": "Akun administrator berhasil dihapus.",

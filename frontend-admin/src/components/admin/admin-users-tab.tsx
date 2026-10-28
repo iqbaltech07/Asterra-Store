@@ -94,9 +94,20 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
     return headers;
   }, []);
 
+  const isAnyUserModalOpen = isCreateModalOpen || Boolean(editModalAdmin) || Boolean(editingAdmin) || isSubmitting || isSavingEdit || isResettingPassword || isDeleting;
+  const isAnyUserModalOpenRef = useRef(isAnyUserModalOpen);
+  useEffect(() => {
+    isAnyUserModalOpenRef.current = isAnyUserModalOpen;
+  }, [isAnyUserModalOpen]);
+
+  const onNotifyRef = useRef(onNotify);
+  useEffect(() => {
+    onNotifyRef.current = onNotify;
+  }, [onNotify]);
+
   // Fetch all admins
-  const fetchAdmins = useCallback(async () => {
-    setIsLoading(true);
+  const fetchAdmins = useCallback(async (silent = false) => {
+    if (!silent) setIsLoading(true);
     try {
       const res = await fetch('/api/v1/admin/users', {
         headers: getAdminHeaders(),
@@ -108,35 +119,30 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
         setAdmins(data.admins || []);
       }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      onNotify(`Error: ${msg}`);
+      if (!silent) {
+        const msg = err instanceof Error ? err.message : String(err);
+        onNotifyRef.current(`Error: ${msg}`);
+      }
     } finally {
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
     }
-  }, [getAdminHeaders, onNotify]);
+  }, [getAdminHeaders]);
 
+  // Event-driven auto-sync: only refresh on initial load or when admin_users:updated SSE event fires
   useEffect(() => {
-    fetchAdmins();
+    fetchAdmins(false);
 
     const handleAutoSync = () => {
-      if (!isSubmitting && !isSavingEdit && !isResettingPassword && !isDeleting) {
-        fetchAdmins();
-      }
+      if (isAnyUserModalOpenRef.current) return;
+      fetchAdmins(true);
     };
 
-    window.addEventListener('focus', handleAutoSync);
-
-    const timer = setInterval(() => {
-      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
-        handleAutoSync();
-      }
-    }, 60000);
+    window.addEventListener('admin:refresh-users', handleAutoSync);
 
     return () => {
-      window.removeEventListener('focus', handleAutoSync);
-      clearInterval(timer);
+      window.removeEventListener('admin:refresh-users', handleAutoSync);
     };
-  }, [fetchAdmins, isSubmitting, isSavingEdit, isResettingPassword, isDeleting]);
+  }, [fetchAdmins]);
 
   // Open Create Modal for specific type
   const openCreateModal = (type: 'admin' | 'sales') => {
@@ -777,7 +783,7 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
             <Button
               variant="outline"
               size="sm"
-              onClick={fetchAdmins}
+              onClick={() => fetchAdmins()}
               disabled={isLoading}
               className="h-8 text-xs gap-1.5 border-border hover:bg-surface-hover"
             >

@@ -119,7 +119,12 @@ async function requestJson<T>(
 
       const data = await res.json();
       if (!res.ok || (data && data.success === false)) {
-        const errorMsg = data?.error || data?.message || `Request failed with status ${res.status}`;
+        const errorMsg =
+          data?.error ||
+          data?.message ||
+          data?.data?.error ||
+          data?.data?.message ||
+          `Request failed with status ${res.status}`;
         throw new Error(errorMsg);
       }
 

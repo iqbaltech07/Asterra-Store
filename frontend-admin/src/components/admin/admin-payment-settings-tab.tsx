@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faCreditCard,
@@ -60,6 +60,11 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
     'Transfer sesuai nominal tepat hingga 3 digit kode unik terakhir untuk verifikasi instan mutasi rekening.'
   );
 
+  const onNotifyRef = useRef(onNotify);
+  useEffect(() => {
+    onNotifyRef.current = onNotify;
+  }, [onNotify]);
+
   // Fetch current payment settings from API
   const fetchSettings = useCallback(async (isInitial = false) => {
     if (isInitial) {
@@ -99,14 +104,14 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
     } catch (err) {
       console.error(err);
       if (isInitial) {
-        onNotify('Gagal memuat pengaturan pembayaran dari server.');
+        onNotifyRef.current('Gagal memuat pengaturan pembayaran dari server.');
       }
     } finally {
       if (isInitial) {
         setIsLoading(false);
       }
     }
-  }, [onNotify]);
+  }, []);
 
   useEffect(() => {
     setCurrentBaseUrl(getAppBaseUrl());

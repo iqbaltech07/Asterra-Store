@@ -59,9 +59,20 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
   const [formExpiresAt, setFormExpiresAt] = useState<string>('');
   const [formIsActive, setFormIsActive] = useState<boolean>(true);
 
+  // Track modal open state via ref for safe access inside auto-sync intervals and events
+  const isCreateModalOpenRef = useRef(isCreateModalOpen);
+  useEffect(() => {
+    isCreateModalOpenRef.current = isCreateModalOpen;
+  }, [isCreateModalOpen]);
+
+  const onNotifyRef = useRef(onNotify);
+  useEffect(() => {
+    onNotifyRef.current = onNotify;
+  }, [onNotify]);
+
   // Fetch Promo Codes from API
-  const fetchPromos = useCallback(async () => {
-    setIsLoading(true);
+  const fetchPromos = useCallback(async (silent = false) => {
+    if (!silent) setIsLoading(true);
     try {
       const res = await fetchWithRetry('/api/v1/admin/promos');
       if (!res.ok) throw new Error('Gagal mengambil data promo');
@@ -71,32 +82,26 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
         if (json.metrics) setMetrics(json.metrics);
       }
     } catch {
-      onNotify('Gagal memuat daftar kode promo.');
+      if (!silent) onNotifyRef.current('Gagal memuat daftar kode promo.');
     } finally {
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
     }
-  }, [onNotify]);
+  }, []);
 
+  // Event-driven auto-sync: only refresh on initial load or when promo:updated SSE event fires
   useEffect(() => {
-    fetchPromos();
+    fetchPromos(false);
 
     const handleAutoSync = () => {
-      fetchPromos();
+      // Don't disturb active modal
+      if (isCreateModalOpenRef.current) return;
+      fetchPromos(true);
     };
 
-    window.addEventListener('focus', handleAutoSync);
     window.addEventListener('admin:refresh-promos', handleAutoSync);
 
-    const timer = setInterval(() => {
-      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
-        handleAutoSync();
-      }
-    }, 30000);
-
     return () => {
-      window.removeEventListener('focus', handleAutoSync);
       window.removeEventListener('admin:refresh-promos', handleAutoSync);
-      clearInterval(timer);
     };
   }, [fetchPromos]);
 
@@ -255,7 +260,7 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
           <Button
             variant="outline"
             size="sm"
-            onClick={fetchPromos}
+            onClick={() => fetchPromos()}
             disabled={isLoading}
             className="text-xs border-border gap-1.5 h-9 px-3.5 rounded-xl font-semibold"
           >

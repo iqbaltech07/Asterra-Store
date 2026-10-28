@@ -178,11 +178,11 @@ export function AdminAnalyticsSuite({ activeTab, onNotify }: AdminAnalyticsSuite
       if (!res.ok) throw new Error('Failed to fetch analytics suite data');
       return res.json();
     },
-    staleTime: 10000,
+    staleTime: 5 * 60 * 1000,
     gcTime: 15 * 60 * 1000,
-    refetchOnWindowFocus: true,
-    refetchOnReconnect: true,
-    refetchInterval: 45000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchInterval: false,
     refetchIntervalInBackground: false,
   });
 

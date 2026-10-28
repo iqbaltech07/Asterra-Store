@@ -84,9 +84,15 @@ export function AdminAffiliateTab({ onNotify }: AdminAffiliateTabProps) {
   const [payoutActionType, setPayoutActionType] = useState<'approve' | 'reject'>('approve');
   const [rejectionNotes, setRejectionNotes] = useState('');
 
-  const fetchAffiliates = async () => {
+  const isAffiliateModalOpen = isAddModalOpen || Boolean(selectedPartnerForPayout) || Boolean(selectedPayoutForAction);
+  const isAffiliateModalOpenRef = useRef(isAffiliateModalOpen);
+  useEffect(() => {
+    isAffiliateModalOpenRef.current = isAffiliateModalOpen;
+  }, [isAffiliateModalOpen]);
+
+  const fetchAffiliates = async (silent = false) => {
     try {
-      setIsLoading(true);
+      if (!silent) setIsLoading(true);
       const res = await fetchWithRetry('/api/v1/admin/affiliates', { cache: 'no-store' });
       if (res.ok) {
         const json = await res.json();
@@ -118,13 +124,13 @@ export function AdminAffiliateTab({ onNotify }: AdminAffiliateTabProps) {
     } catch (err) {
       console.error('Error fetching affiliates:', err);
     } finally {
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
     }
   };
 
-  const fetchPayoutRequests = async () => {
+  const fetchPayoutRequests = async (silent = false) => {
     try {
-      setIsLoadingPayouts(true);
+      if (!silent) setIsLoadingPayouts(true);
       const res = await fetchWithRetry('/api/v1/admin/affiliates/payout-requests', { cache: 'no-store' });
       if (res.ok) {
         const json = await res.json();
@@ -135,32 +141,25 @@ export function AdminAffiliateTab({ onNotify }: AdminAffiliateTabProps) {
     } catch (err) {
       console.error('Error fetching payout requests:', err);
     } finally {
-      setIsLoadingPayouts(false);
+      if (!silent) setIsLoadingPayouts(false);
     }
   };
 
   useEffect(() => {
-    fetchAffiliates();
-    fetchPayoutRequests();
+    fetchAffiliates(false);
+    fetchPayoutRequests(false);
 
     const handleAutoSync = () => {
-      fetchAffiliates();
-      fetchPayoutRequests();
+      // Don't disturb active modal
+      if (isAffiliateModalOpenRef.current) return;
+      fetchAffiliates(true);
+      fetchPayoutRequests(true);
     };
 
-    window.addEventListener('focus', handleAutoSync);
     window.addEventListener('admin:refresh-affiliates', handleAutoSync);
 
-    const timer = setInterval(() => {
-      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
-        handleAutoSync();
-      }
-    }, 30000);
-
     return () => {
-      window.removeEventListener('focus', handleAutoSync);
       window.removeEventListener('admin:refresh-affiliates', handleAutoSync);
-      clearInterval(timer);
     };
   }, []);
 

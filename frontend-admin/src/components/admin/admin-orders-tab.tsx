@@ -61,10 +61,10 @@ export function AdminOrdersTab() {
         status: statusFilter,
         search: searchQuery,
       }),
-    staleTime: 2000, // 2s freshness: window focus immediately checks for latest data
-    refetchOnWindowFocus: true, // Immediate background refetch on tab focus
-    refetchOnReconnect: true, // Immediate refetch upon network reconnection
-    refetchInterval: sseConnected ? 15000 : 5000, // 15s safety poll when SSE alive, 5s active poll fallback when SSE reconnecting
+    staleTime: 60000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchInterval: false,
     refetchIntervalInBackground: false,
   });
 

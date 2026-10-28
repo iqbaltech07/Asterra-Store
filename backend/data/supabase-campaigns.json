@@ -21,12 +21,12 @@
     "minOrderAmount": 0.0,
     "affiliateBonusPercent": 15.0,
     "affiliateCommissionOverride": 15.0,
-    "status": "running",
-    "isActive": true,
+    "status": "ended",
+    "isActive": false,
     "totalOrders": 0,
     "revenue": 0.0,
     "conversionRate": 0.0,
     "createdAt": "2026-10-23T07:44:02.490770",
-    "updatedAt": "2026-10-27T17:25:21.867517"
+    "updatedAt": "2026-10-28T08:25:29.275054"
   }
 ]

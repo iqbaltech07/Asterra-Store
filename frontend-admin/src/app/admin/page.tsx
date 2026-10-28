@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useMemo, useEffect, useCallback, Suspense } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useQuery, useMutation, useQueryClient, useIsFetching } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -410,19 +410,25 @@ function AdminPageContent() {
   const [isBulkDeleteModalOpen, setIsBulkDeleteModalOpen] = useState(false);
 
   // Toast feedback
-  const showNotification = (msg: string) => {
+  // Toast feedback with stable reference to prevent child effect churn
+  const showNotification = useCallback((msg: string) => {
     setNotification(msg);
     setTimeout(() => {
       setNotification((curr) => (curr === msg ? null : curr));
     }, 4000);
-  };
+  }, []);
 
-  // Global Auto-Sync & Real-time State
-  const isGlobalFetching = useIsFetching();
+  // Track if any product edit or creation modal is open
+  const isEditingOrCreatingProduct = Boolean(editingProduct || isCreateModalOpen || importingService);
+  const isEditingProductRef = useRef(isEditingOrCreatingProduct);
+  useEffect(() => {
+    isEditingProductRef.current = isEditingOrCreatingProduct;
+  }, [isEditingOrCreatingProduct]);
+
+  // Global Real-time SSE State
   const [sseConnected, setSseConnected] = useState<boolean>(false);
-  const [lastSyncTime, setLastSyncTime] = useState<Date>(() => new Date());
 
-  // Global SSE listener with Auto-Reconnect for real-time invalidations across all tabs
+  // Global SSE listener with Auto-Reconnect for event-driven invalidations across all tabs
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
@@ -447,7 +453,6 @@ function AdminPageContent() {
         eventSource.onopen = () => {
           if (!isSubscribed) return;
           setSseConnected(true);
-          setLastSyncTime(new Date());
           retryAttempt = 0;
         };
 
@@ -460,7 +465,6 @@ function AdminPageContent() {
           queryClient.invalidateQueries({ queryKey: ['admin-dashboard-orders'] });
           queryClient.invalidateQueries({ queryKey: ['admin-customers'] });
           queryClient.invalidateQueries({ queryKey: ['admin-analytics-suite'] });
-          setLastSyncTime(new Date());
           window.dispatchEvent(new CustomEvent('admin:data-updated'));
         };
 
@@ -471,18 +475,24 @@ function AdminPageContent() {
 
         eventSource.addEventListener('catalog:updated', () => {
           if (!isSubscribed) return;
-          queryClient.invalidateQueries({ queryKey: ['admin-products'] });
+          const isBusy = isEditingProductRef.current;
+          queryClient.invalidateQueries({
+            queryKey: ['admin-products'],
+            refetchType: isBusy ? 'none' : 'active',
+          });
           queryClient.invalidateQueries({ queryKey: ['admin-dashboard-overview'] });
           queryClient.invalidateQueries({ queryKey: ['admin-analytics-suite'] });
-          setLastSyncTime(new Date());
           window.dispatchEvent(new CustomEvent('admin:data-updated'));
         });
 
         eventSource.addEventListener('vip:status_updated', () => {
           if (!isSubscribed) return;
+          const isBusy = isEditingProductRef.current;
           queryClient.invalidateQueries({ queryKey: ['admin-vip-services'] });
-          queryClient.invalidateQueries({ queryKey: ['admin-products'] });
-          setLastSyncTime(new Date());
+          queryClient.invalidateQueries({
+            queryKey: ['admin-products'],
+            refetchType: isBusy ? 'none' : 'active',
+          });
         });
 
         eventSource.addEventListener('promo:updated', () => {
@@ -490,27 +500,29 @@ function AdminPageContent() {
           queryClient.invalidateQueries({ queryKey: ['admin-promos'] });
           queryClient.invalidateQueries({ queryKey: ['promos'] });
           window.dispatchEvent(new CustomEvent('admin:refresh-promos'));
-          setLastSyncTime(new Date());
         });
 
         eventSource.addEventListener('affiliate:updated', () => {
           if (!isSubscribed) return;
           queryClient.invalidateQueries({ queryKey: ['admin-dashboard-affiliates'] });
           window.dispatchEvent(new CustomEvent('admin:refresh-affiliates'));
-          setLastSyncTime(new Date());
         });
 
         eventSource.addEventListener('campaign:updated', () => {
           if (!isSubscribed) return;
           window.dispatchEvent(new CustomEvent('admin:refresh-campaigns'));
-          setLastSyncTime(new Date());
         });
 
         eventSource.addEventListener('payment_config:updated', () => {
           if (!isSubscribed) return;
           queryClient.invalidateQueries({ queryKey: ['admin-payment-config'] });
           window.dispatchEvent(new CustomEvent('admin:refresh-payment-config'));
-          setLastSyncTime(new Date());
+        });
+
+        eventSource.addEventListener('admin_users:updated', () => {
+          if (!isSubscribed) return;
+          queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+          window.dispatchEvent(new CustomEvent('admin:refresh-users'));
         });
 
         eventSource.onerror = () => {
@@ -550,12 +562,6 @@ function AdminPageContent() {
     };
   }, [queryClient]);
 
-  useEffect(() => {
-    if (isGlobalFetching === 0) {
-      setLastSyncTime(new Date());
-    }
-  }, [isGlobalFetching]);
-
   // Fetch payment configuration for admin global actions (e.g. WhatsApp contact)
   const { data: paymentConfigData } = useQuery<{ success: boolean; data: PaymentConfig }>({
     queryKey: ['admin-payment-config'],
@@ -582,10 +588,10 @@ function AdminPageContent() {
       if (!res.ok) throw new Error('Gagal memuat produk admin');
       return res.json();
     },
-    staleTime: 10000,
-    refetchOnWindowFocus: true,
-    refetchOnReconnect: true,
-    refetchInterval: sseConnected ? 30000 : 10000,
+    staleTime: 60000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchInterval: false,
     refetchIntervalInBackground: false,
   });
 
@@ -599,7 +605,8 @@ function AdminPageContent() {
       if (!res.ok) return { success: false, data: [] };
       return res.json();
     },
-    staleTime: 30000,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
   const publicCategories = categoriesData?.data || [];
 
@@ -629,11 +636,11 @@ function AdminPageContent() {
       return data;
     },
     enabled: activeTab === 'vip-explorer',
-    staleTime: 30000,
+    staleTime: 5 * 60 * 1000,
     gcTime: 15 * 60 * 1000,
-    refetchOnWindowFocus: true,
-    refetchOnReconnect: true,
-    refetchInterval: activeTab === 'vip-explorer' ? 60000 : false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchInterval: false,
     refetchIntervalInBackground: false,
   });
 

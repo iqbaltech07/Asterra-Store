@@ -1,6 +1,6 @@
 import json
 import pathlib
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
 
 from app.core.database import SessionLocal
@@ -62,6 +62,13 @@ class PromoService:
 
     @classmethod
     def validate_promo(cls, code: str, subtotal: float) -> Dict[str, Any]:
+        if not code or not isinstance(code, str) or not code.strip():
+            return {
+                "valid": False,
+                "error": "Silakan masukkan kode promo yang valid.",
+                "message": "Silakan masukkan kode promo yang valid.",
+            }
+
         clean_code = code.strip().upper()
         promos = cls.load_promos()
         promo = next((p for p in promos if p.get("code", "").upper() == clean_code), None)
@@ -69,27 +76,31 @@ class PromoService:
         if not promo:
             return {
                 "valid": False,
-                "error": f"Kode promo '{code}' tidak valid atau telah kedaluwarsa.",
-                "message": f"Kode promo '{code}' tidak ditemukan.",
+                "error": f"Kode promo '{clean_code}' tidak ditemukan atau tidak terdaftar.",
+                "message": f"Kode promo '{clean_code}' tidak ditemukan atau tidak terdaftar.",
             }
 
         if not promo.get("isActive", True):
             return {
                 "valid": False,
                 "error": f"Kode promo '{clean_code}' sudah tidak aktif.",
-                "message": "Kode promo tidak aktif.",
+                "message": f"Kode promo '{clean_code}' sudah tidak aktif.",
             }
+
+        now_utc = datetime.now(timezone.utc)
 
         # Check start_date
         start_date_str = promo.get("startDate") or promo.get("start_date")
         if start_date_str:
             try:
                 start_dt = datetime.fromisoformat(str(start_date_str).replace("Z", "+00:00"))
-                if datetime.utcnow().timestamp() < start_dt.timestamp():
+                if start_dt.tzinfo is None:
+                    start_dt = start_dt.replace(tzinfo=timezone.utc)
+                if now_utc < start_dt:
                     return {
                         "valid": False,
                         "error": f"Kode promo '{clean_code}' baru dapat digunakan mulai {start_dt.strftime('%d-%m-%Y')}.",
-                        "message": "Kode promo belum aktif.",
+                        "message": f"Kode promo '{clean_code}' belum aktif.",
                     }
             except Exception:
                 pass
@@ -99,11 +110,13 @@ class PromoService:
         if expires_at_str:
             try:
                 exp_dt = datetime.fromisoformat(str(expires_at_str).replace("Z", "+00:00"))
-                if datetime.utcnow().timestamp() > exp_dt.timestamp():
+                if exp_dt.tzinfo is None:
+                    exp_dt = exp_dt.replace(tzinfo=timezone.utc)
+                if now_utc > exp_dt:
                     return {
                         "valid": False,
                         "error": f"Kode promo '{clean_code}' telah kedaluwarsa.",
-                        "message": "Kode promo telah kedaluwarsa.",
+                        "message": f"Kode promo '{clean_code}' telah kedaluwarsa.",
                     }
             except Exception:
                 pass
@@ -115,7 +128,7 @@ class PromoService:
             return {
                 "valid": False,
                 "error": f"Batas kuota penggunaan kode promo '{clean_code}' telah habis.",
-                "message": "Kuota promo telah habis.",
+                "message": f"Batas kuota penggunaan kode promo '{clean_code}' telah habis.",
             }
 
         min_order = float(promo.get("minOrderAmount") or 0)
@@ -123,7 +136,7 @@ class PromoService:
             return {
                 "valid": False,
                 "error": f"Minimal transaksi untuk kupon ini adalah Rp {min_order:,.0f}.".replace(",", "."),
-                "message": f"Minimal pembelian Rp {min_order:,.0f}".replace(",", "."),
+                "message": f"Minimal pembelian Rp {min_order:,.0f}.".replace(",", "."),
             }
 
         dtype = promo.get("discountType", "percentage")

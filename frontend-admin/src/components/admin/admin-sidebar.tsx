@@ -161,12 +161,13 @@ export function AdminSidebar({
 }: AdminSidebarProps) {
   const userRole = (adminUser?.role || 'admin').toLowerCase();
 
-  // Live Query: Pending/Processing Orders requiring admin action
+  // Live Query: Pending/Processing Orders requiring admin action (Event-driven via SSE)
   const { data: ordersData } = useQuery({
     queryKey: ['admin-orders'],
     queryFn: () => OrdersApi.getAll({ limit: 100 }),
-    staleTime: 10000,
-    refetchInterval: 15000,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchInterval: false,
     enabled: userRole !== 'sales' && propPendingOrdersCount === undefined,
   });
 
@@ -176,7 +177,7 @@ export function AdminSidebar({
     return (ordersData.metrics.processing || 0) + (ordersData.metrics.pending || 0);
   }, [propPendingOrdersCount, ordersData?.metrics]);
 
-  // Live Query: Pending Affiliate Payout Requests requiring admin verification
+  // Live Query: Pending Affiliate Payout Requests requiring admin verification (Event-driven via SSE)
   const { data: payoutsData } = useQuery({
     queryKey: ['admin-payout-requests'],
     queryFn: async () => {
@@ -186,8 +187,9 @@ export function AdminSidebar({
       if (!res.ok) return { success: false, data: [], total: 0 };
       return res.json();
     },
-    staleTime: 10000,
-    refetchInterval: 15000,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchInterval: false,
     enabled: propPendingPayoutsCount === undefined,
   });
 

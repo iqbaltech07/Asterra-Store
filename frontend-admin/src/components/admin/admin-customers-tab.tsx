@@ -59,10 +59,10 @@ export function AdminCustomersTab({ onNotify }: AdminCustomersTabProps) {
       const json = await res.json();
       return json.success && Array.isArray(json.data) ? json.data : [];
     },
-    staleTime: 10000,
-    refetchInterval: 30000,
-    refetchOnWindowFocus: true,
-    refetchOnReconnect: true,
+    staleTime: 60000,
+    refetchInterval: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
     refetchIntervalInBackground: false,
   });
 

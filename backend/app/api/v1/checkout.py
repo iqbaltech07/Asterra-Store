@@ -248,8 +248,11 @@ async def validate_promo(request: Request):
     subtotal = float(payload.get("subtotal", 0))
     result = PromoService.validate_promo(code, subtotal)
     return {
-        "success": result.get("valid", False),
+        "success": True,
+        "valid": result.get("valid", False),
         "data": result,
+        "error": result.get("error") if not result.get("valid") else None,
+        "message": result.get("message") or result.get("error"),
     }
 
 @router.get("/admin/promos", tags=["Admin Promos"])

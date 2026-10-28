@@ -7,8 +7,8 @@
     "isActive": true,
     "role": "superadmin",
     "createdAt": "2026-09-30T04:28:20.125000",
-    "updatedAt": "2026-10-25T14:34:45.113000",
-    "passwordHash": "$2b$10$kzfa/ronlVttUQVWrnH6Oe7A8TSS/hw.qCIB7Os9bpASvI6BnY1oO"
+    "updatedAt": "2026-10-28T10:19:31.402000",
+    "passwordHash": "$2b$12$T8omxITRJFvEbXo0r8iLC.1ypy3adbya97kM6kMfDZAFd00.i.fBO"
   },
   {
     "id": "adm-sales-1792904044-AST-",
@@ -51,8 +51,8 @@
     "isActive": true,
     "role": "sales",
     "createdAt": "2026-10-25T04:54:09.992000",
-    "updatedAt": "2026-10-25T14:35:05.101000",
-    "passwordHash": "$2b$12$TuQ7WIFAfc7aqxNQjUt3yej1dWJkqIep9.zxl9sDWZxhuISwUA5/G"
+    "updatedAt": "2026-10-28T10:07:37.928000",
+    "passwordHash": "$2b$12$.AJVQ3MpTk2bt32oFCQ8ZOgdvECG.sCVZ/eLImPd5L0/VHq4.Tucy"
   },
   {
     "id": "adm-sales-1792904051-AST-",
@@ -97,5 +97,27 @@
     "createdAt": "2026-10-25T05:10:17.195000",
     "updatedAt": "2026-10-25T05:10:17.195000",
     "passwordHash": "$2b$12$JXzopu0HsqjeD32sSO5nAeoyn9n0a5KuzLO.IgXCDHhG.jbwwikVu"
+  },
+  {
+    "id": "adm-sales-1793000832",
+    "username": "sales-astiqbal",
+    "email": "iqbalasli07@gmail.com",
+    "name": "iqbalferdiansyah",
+    "isActive": true,
+    "role": "sales",
+    "createdAt": "2026-10-26T07:47:12.170000",
+    "updatedAt": "2026-10-26T07:49:30.333000",
+    "passwordHash": "$2b$12$3eh0JhfhTlqGn7dMFt/x3O1wox0/D/AqmdJZADLmvJO1PVT5CAUwe"
+  },
+  {
+    "id": "adm-sales-1793121604",
+    "username": "sales-astitschlzjago",
+    "email": "acelinokurniawan316@gmail.com",
+    "name": "acelinooo",
+    "isActive": true,
+    "role": "sales",
+    "createdAt": "2026-10-27T17:20:04.681000",
+    "updatedAt": "2026-10-27T17:35:13.875000",
+    "passwordHash": "$2b$12$SZjdDa6rTMZDYcfe5Ew36uu7Hn72hI7L7FrNQCo3AxkEe7TCH7JI6"
   }
 ]

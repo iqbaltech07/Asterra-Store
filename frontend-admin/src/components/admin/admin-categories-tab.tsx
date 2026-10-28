@@ -51,6 +51,8 @@ export function AdminCategoriesTab({ onNotify, onFilterCategoryInProducts }: Adm
   const [formOrder, setFormOrder] = useState(1);
   const [formStatus, setFormStatus] = useState<'active' | 'inactive'>('active');
 
+  const isModalOpen = isAddModalOpen || Boolean(editingCategory) || Boolean(deletingCategory);
+
   // Real API Query
   const { data: categories = [], isLoading, isFetching, refetch } = useQuery<CategoryItem[]>({
     queryKey: ['admin-categories'],
@@ -60,6 +62,8 @@ export function AdminCategoriesTab({ onNotify, onFilterCategoryInProducts }: Adm
       const json = await res.json();
       return json.data || [];
     },
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   // Create Mutation
