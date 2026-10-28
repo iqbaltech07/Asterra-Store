@@ -149,19 +149,133 @@ export function hashPRNG(seed: number, stream: number): number {
 }
 
 /**
- * Generator timeline simulasi deterministik global.
- * Menghitung gelombang pesanan (setiap 3–8 menit), pesanan dalam gelombang (jarak 1–10 menit),
- * serta siklus status independen dengan pembatasan maksimal 3 pesanan Processing:
- * - Menunggu Pembayaran -> Processing setelah 1–3 menit
- * - Processing -> Sukses setelah 10–30 menit sejak masuk Processing, ATAU dipercepat menjadi Sukses
- *   ketika slot Processing (maksimal 3) penuh dan ada pesanan baru yang masuk ke Processing.
+ * Visual Social-Proof Order Generator (Khusus /orders di frontend-user untuk menambah trust customer).
+ * - Tidak dicatat ke database dan tidak mempengaruhi keuangan/laporan penjualan admin.
+ * - Interval pesanan baru konsisten setiap 5–20 menit.
+ * - Bersifat 100% deterministik global berbasis GLOBAL_SIMULATION_EPOCH.
  */
 export function getDeterministicSimulationOrders(
-  _now?: number,
-  _maxOrders?: number
+  now: number = Date.now(),
+  maxOrders: number = 150
 ): PublicOrder[] {
-  // Hardcoded simulation deactivated. Real database orders are the single source of truth.
-  return [];
+  let curTime = GLOBAL_SIMULATION_EPOCH;
+  let orderIdx = 0;
+
+  interface RawOrderCandidate {
+    id: string;
+    raw_id: string;
+    product_name: string;
+    items_summary: string;
+    items_count: number;
+    order_date: string;
+    created_at: string;
+    createdAt: string;
+    customer_display: string;
+    product_sku: string;
+    warranty: string | null;
+    _orderTime: number;
+    _processingStartTime: number;
+    _completedStartTime: number;
+  }
+
+  const rawCandidates: RawOrderCandidate[] = [];
+
+  while (curTime <= now + 600000) {
+    // Interval pesanan baru acak antara 5–20 menit (300.000 ms hingga 1.200.000 ms)
+    const intervalMs = 300000 + Math.floor(hashPRNG(orderIdx, 1) * 900000);
+    curTime += intervalMs;
+
+    // Transisi status realistis:
+    // Menunggu Pembayaran -> Processing: 1–3 menit
+    const pendingDurationMs = 60000 + Math.floor(hashPRNG(orderIdx, 2) * 120000);
+    // Processing -> Sukses: 8–20 menit
+    const processingDurationMs = 480000 + Math.floor(hashPRNG(orderIdx, 3) * 720000);
+
+    const processingStartTime = curTime + pendingDurationMs;
+    const completedStartTime = processingStartTime + processingDurationMs;
+
+    // Format tanggal WIB (UTC+7)
+    const wibDate = new Date(curTime + 7 * 3600000);
+    const yyyy = wibDate.getUTCFullYear();
+    const mm = String(wibDate.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(wibDate.getUTCDate()).padStart(2, '0');
+    const dateKey = `${yyyy}${mm}${dd}`;
+
+    // ID unik visual format AST-ORD-YYYYMMDD-NNNN (cegah tabrakan dengan pesanan riil 7615)
+    let orderNum = 1000 + Math.floor(hashPRNG(orderIdx, 4) * 8990);
+    if (orderNum === 7615) orderNum = 7616;
+    const id = `AST-ORD-${dateKey}-${orderNum}`;
+
+    // Nama pelanggan samaran Indonesia realistis
+    const customerIdx = Math.floor(hashPRNG(orderIdx, 5) * MASKED_CUSTOMER_NAMES.length);
+    const customer_display = MASKED_CUSTOMER_NAMES[customerIdx];
+
+    // Produk aktif dari katalog Asterra
+    const productIdx = Math.floor(hashPRNG(orderIdx, 6) * ACTIVE_CATALOG_PRODUCTS.length);
+    const product = ACTIVE_CATALOG_PRODUCTS[productIdx];
+
+    const dateIso = new Date(curTime).toISOString();
+
+    rawCandidates.push({
+      id,
+      raw_id: `vis-${orderIdx}`,
+      product_name: product.name,
+      items_summary: product.name,
+      items_count: 1,
+      order_date: dateIso,
+      created_at: dateIso,
+      createdAt: dateIso,
+      customer_display,
+      product_sku: product.sku,
+      warranty: product.warranty,
+      _orderTime: curTime,
+      _processingStartTime: processingStartTime,
+      _completedStartTime: completedStartTime,
+    });
+
+    orderIdx++;
+  }
+
+  // Filter pesanan yang sudah tercatat hingga saat ini (curTime <= now)
+  const appearedOrders: PublicOrder[] = [];
+
+  for (const candidate of rawCandidates) {
+    if (candidate._orderTime <= now) {
+      let status: PublicOrder['order_status'] = 'completed';
+      if (now < candidate._processingStartTime) {
+        status = 'pending';
+      } else if (now < candidate._completedStartTime) {
+        status = 'processing';
+      }
+
+      appearedOrders.push({
+        id: candidate.id,
+        raw_id: candidate.raw_id,
+        product_name: candidate.product_name,
+        items_summary: candidate.items_summary,
+        items_count: candidate.items_count,
+        order_status: status,
+        status,
+        order_date: candidate.order_date,
+        created_at: candidate.created_at,
+        createdAt: candidate.createdAt,
+        customer_display: candidate.customer_display,
+        product_sku: candidate.product_sku,
+        process_estimate: status === 'processing' ? 'Estimasi 5-15 Menit' : undefined,
+        warranty_info: status === 'completed' ? candidate.warranty : null,
+      });
+    }
+  }
+
+  // Urutkan dari pesanan yang paling baru ke terlama
+  appearedOrders.sort((a, b) => {
+    const timeA = new Date(a.order_date).getTime();
+    const timeB = new Date(b.order_date).getTime();
+    return timeB - timeA;
+  });
+
+  // Batasi maxOrders untuk riwayat pagination
+  return appearedOrders.slice(0, maxOrders);
 }
 
 const LEGACY_STORAGE_KEYS = [

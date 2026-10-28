@@ -25,6 +25,7 @@ import {
   formatRelativeTime,
   parseSafeDate,
   clearLegacySyntheticTimelineStorage,
+  getDeterministicSimulationOrders,
 } from '@/lib/hooks/use-dynamic-orders';
 import { useCatalogProducts } from '@/lib/hooks/use-catalog-products';
 import { ProductCard } from '@/components/products/product-card';
@@ -217,15 +218,19 @@ function GlobalOrdersContent() {
     refetchInterval: 15000, // Background sync every 15s keeps list updated across all browsers
   });
 
-  // Ambil transaksi asli langsung dari database (Single Source of Truth)
+  // Gabungkan transaksi nyata dari database dengan pesanan visual dinamis untuk trust customer
   const allOrders = useMemo<PublicOrder[]>(() => {
     const realOrders = data?.data || [];
-    return [...realOrders].sort((a, b) => {
+    const visualOrders = getDeterministicSimulationOrders(now, 150);
+    const realIds = new Set(realOrders.map((o) => o.id));
+    const dedupedVisual = visualOrders.filter((o) => !realIds.has(o.id));
+    const combined = [...realOrders, ...dedupedVisual];
+    return combined.sort((a, b) => {
       const dateA = new Date(a.order_date || a.created_at || a.createdAt || '').getTime() || 0;
       const dateB = new Date(b.order_date || b.created_at || b.createdAt || '').getTime() || 0;
       return dateB - dateA;
     });
-  }, [data?.data]);
+  }, [data?.data, now]);
 
   // Filter status dan pencarian
   const filteredOrders = useMemo<PublicOrder[]>(() => {
