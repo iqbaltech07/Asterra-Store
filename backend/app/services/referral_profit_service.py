@@ -32,6 +32,115 @@ class ReferralProfitService:
         return profit
 
     @classmethod
+    def calculate_profit_allocation(
+        cls,
+        transaction_profit: float,
+        successful_orders_count: int = 0,
+        is_vip: bool = False,
+        has_sales_partner: bool = True,
+        has_recruiter: bool = False,
+        campaign_rate_override: Optional[float] = None,
+    ) -> Dict[str, Any]:
+        """
+        Canonical Asterra Profit Waterfall & Split Engine:
+        | Penerima | Di bawah 50 transaksi sukses | Minimal 50 transaksi sukses |
+        |---|---:|---:|
+        | CEO | 35% | 32,5% |
+        | COO | 35% | 32,5% |
+        | Sales | 15% | 20% |
+        | Reserve | 15% | 15% |
+        | Total | 100% | 100% |
+
+        Ketentuan:
+        - Komisi dasar Sales: 15%.
+        - Setelah mencapai minimal 50 transaksi sukses, komisi otomatis menjadi 20%.
+        - Tambahan 5 poin persentase Sales berasal dari pengurangan CEO 2,5 poin dan COO 2,5 poin.
+        - Reserve tetap 15% (jika ada recruiter 2%, sponsor mendapat 2% dan reserve menjadi 13%, total tetap 15%).
+        - Total seluruh alokasi strictly 100% dari transaction_profit (zero leakage/loss).
+        - Strict 50:50 parity antara CEO dan COO.
+        """
+        tx_profit = int(round(transaction_profit))
+        if tx_profit <= 0:
+            return {
+                "sales_commission": 0,
+                "sales_commission_rate": 0.0,
+                "recruitment_bonus": 0,
+                "recruitment_bonus_rate": 0.0,
+                "ceo_share": 0,
+                "ceo_share_rate": 0.0,
+                "coo_share": 0,
+                "coo_share_rate": 0.0,
+                "business_reserve": 0,
+                "business_reserve_rate": 0.0,
+                "profit_distribution": 0,
+                "is_vip": False,
+                "total": 0,
+            }
+
+        is_vip_effective = is_vip or (successful_orders_count >= 50)
+
+        if not has_sales_partner:
+            reserve = int(round(tx_profit * 0.15))
+            retained = tx_profit - reserve
+            ceo = retained // 2
+            coo = retained - ceo
+            return {
+                "sales_commission": 0,
+                "sales_commission_rate": 0.0,
+                "recruitment_bonus": 0,
+                "recruitment_bonus_rate": 0.0,
+                "ceo_share": ceo,
+                "ceo_share_rate": 42.5,
+                "coo_share": coo,
+                "coo_share_rate": 42.5,
+                "business_reserve": reserve,
+                "business_reserve_rate": 15.0,
+                "profit_distribution": tx_profit,
+                "is_vip": False,
+                "total": ceo + coo + reserve,
+            }
+
+        # Sales Rate calculation
+        if campaign_rate_override and campaign_rate_override > (cls.DIRECT_RATE_VIP if is_vip_effective else cls.DIRECT_RATE_DEFAULT):
+            sales_rate = campaign_rate_override / 100.0
+            founder_pool = max(0.0, 0.85 - sales_rate)
+            ceo_rate = founder_pool / 2.0
+            coo_rate = founder_pool / 2.0
+        elif is_vip_effective:
+            sales_rate = 0.20
+            ceo_rate = 0.325
+            coo_rate = 0.325
+        else:
+            sales_rate = 0.15
+            ceo_rate = 0.35
+            coo_rate = 0.35
+
+        sales_comm = int(round(tx_profit * sales_rate))
+        sponsor_bonus = int(round(tx_profit * 0.02)) if has_recruiter else 0
+        ceo_share = int(round(tx_profit * ceo_rate))
+        coo_share = int(round(tx_profit * coo_rate))
+        # Reserve absorbs any integer rounding difference so sum is strictly 100% of tx_profit
+        reserve = tx_profit - sales_comm - sponsor_bonus - ceo_share - coo_share
+        distributable = max(0, tx_profit - sales_comm - sponsor_bonus)
+
+        return {
+            "sales_commission": sales_comm,
+            "sales_commission_rate": round(sales_rate * 100.0, 1),
+            "recruitment_bonus": sponsor_bonus,
+            "recruitment_bonus_rate": 2.0 if has_recruiter else 0.0,
+            "ceo_share": ceo_share,
+            "ceo_share_rate": round(ceo_rate * 100.0, 1),
+            "coo_share": coo_share,
+            "coo_share_rate": round(coo_rate * 100.0, 1),
+            "business_reserve": reserve,
+            "business_reserve_rate": 15.0 if not has_recruiter else 13.0,
+            "profit_distribution": distributable,
+            "is_vip": is_vip_effective,
+            "total": sales_comm + sponsor_bonus + ceo_share + coo_share + reserve,
+            "total_allocated": sales_comm + sponsor_bonus + ceo_share + coo_share + reserve,
+        }
+
+    @classmethod
     def allocate_waterfall(
         cls,
         order_id: str,
@@ -42,48 +151,45 @@ class ReferralProfitService:
         campaign_id: Optional[str] = None,
         campaign_booster_rate: Optional[float] = None,
     ) -> Dict[str, Any]:
-        direct_rate = direct_partner_rate if direct_partner_rate is not None else cls.DIRECT_RATE_DEFAULT
-
-        # Apply campaign booster override if provided or active
-        if campaign_booster_rate is not None and campaign_booster_rate > direct_rate:
-            direct_rate = campaign_booster_rate
-        elif campaign_id:
+        booster_rate = campaign_booster_rate
+        if not booster_rate and campaign_id:
             try:
                 from app.services.campaign_service import CampaignService
                 active_camps = CampaignService.get_active_campaigns()
                 for c in active_camps:
                     if c.get("id") == campaign_id or c.get("slug") == campaign_id:
                         override = float(c.get("affiliateBonusPercent") or c.get("affiliateCommissionOverride") or 0)
-                        if override > direct_rate:
-                            direct_rate = override
+                        if override > 0:
+                            booster_rate = override
                         break
             except Exception:
                 pass
 
-        sponsor_rate = cls.SPONSOR_RATE_DEFAULT
+        is_vip = bool(direct_partner_rate is not None and direct_partner_rate >= cls.DIRECT_RATE_VIP)
+        alloc = cls.calculate_profit_allocation(
+            transaction_profit=transaction_profit,
+            successful_orders_count=50 if is_vip else 0,
+            is_vip=is_vip,
+            has_sales_partner=bool(direct_partner_code),
+            has_recruiter=bool(sponsor_partner_code),
+            campaign_rate_override=booster_rate,
+        )
 
-        direct_commission = 0.0
-        sponsor_bonus = 0.0
-
-        if direct_partner_code and transaction_profit > 0:
-            direct_commission = round((transaction_profit * direct_rate) / 100.0)
-
-        if sponsor_partner_code and transaction_profit > 0:
-            sponsor_bonus = round((transaction_profit * sponsor_rate) / 100.0)
-
-        company_retained_profit = max(0.0, transaction_profit - direct_commission - sponsor_bonus)
         holding_until = datetime.utcnow() + timedelta(days=cls.HOLDING_DAYS)
 
         return {
             "order_id": order_id,
             "transaction_profit": transaction_profit,
             "direct_partner_code": direct_partner_code,
-            "direct_commission": direct_commission,
-            "direct_rate_applied": direct_rate,
+            "direct_commission": float(alloc["sales_commission"]),
+            "direct_rate_applied": float(alloc["sales_commission_rate"]),
             "sponsor_partner_code": sponsor_partner_code,
-            "sponsor_bonus": sponsor_bonus,
-            "sponsor_rate_applied": sponsor_rate,
-            "company_retained_profit": company_retained_profit,
+            "sponsor_bonus": float(alloc["recruitment_bonus"]),
+            "sponsor_rate_applied": float(alloc["recruitment_bonus_rate"]),
+            "company_retained_profit": float(alloc["profit_distribution"]),
+            "ceo_share": float(alloc["ceo_share"]),
+            "coo_share": float(alloc["coo_share"]),
+            "business_reserve": float(alloc["business_reserve"]),
             "holding_until": holding_until.isoformat(),
             "status": "pending",
         }
@@ -136,20 +242,23 @@ class ReferralProfitService:
                     if recruiter:
                         recruiter_id = recruiter.id
 
-                # 3. Determine Sales Commission Rate (Sales Pemula: 15%, Sales VIP >= 50 orders: 20%)
-                partner_rate_val = float(partner.rate) if (partner and partner.rate) else cls.DIRECT_RATE_DEFAULT
+                # 3. Determine Sales Commission Rate & VIP Status (Sales Pemula: 15%, Sales VIP >= 50 unique successful orders: 20%)
+                successful_orders_count = 0
+                is_vip_partner = False
                 if partner:
-                    order_count = int(getattr(partner, "total_orders", 0) or 0)
+                    try:
+                        from app.models.order import Order
+                        successful_orders_count = db.query(Order.id).filter(
+                            Order.sales_partner_id == partner.id,
+                            Order.status.in_(["completed", "paid", "settlement", "selesai", "done"])
+                        ).distinct().count()
+                    except Exception:
+                        successful_orders_count = int(getattr(partner, "total_orders", 0) or 0)
+
                     partner_tier = str(getattr(partner, "tier", "") or "").lower()
-                    if order_count >= 50 or "vip" in partner_tier:
-                        partner_rate_val = max(partner_rate_val, cls.DIRECT_RATE_VIP)
-                    else:
-                        partner_rate_val = max(partner_rate_val, cls.DIRECT_RATE_DEFAULT)
+                    is_vip_partner = (successful_orders_count >= 50 or "vip" in partner_tier or getattr(partner, "rate", 0) == 20)
 
-                commission_rate = partner_rate_val
-                is_campaign_sale = False
-                camp_obj = None
-
+                campaign_booster_rate = None
                 camp_id_val = order.campaign_id or ""
                 if camp_id_val:
                     try:
@@ -158,17 +267,14 @@ class ReferralProfitService:
                             c_id = str(c.get("id") or "").strip()
                             c_slug = str(c.get("slug") or "").strip().lower()
                             if c_id == camp_id_val or c_slug == camp_id_val.lower():
-                                camp_obj = c
                                 override = float(c.get("affiliateBonusPercent") or c.get("affiliateCommissionOverride") or 0)
                                 if override > 0:
-                                    commission_rate = override
-                                is_campaign_sale = True
+                                    campaign_booster_rate = override
                                 break
                     except Exception:
                         pass
                 elif (order.campaign_discount or 0) > 0:
-                    is_campaign_sale = True
-                    commission_rate = max(commission_rate, cls.DIRECT_RATE_VIP)
+                    campaign_booster_rate = cls.DIRECT_RATE_VIP
 
                 # 4. Compute Cost of Goods (COG) from actual product provider_price
                 items = order.items or []
@@ -220,18 +326,23 @@ class ReferralProfitService:
                 direct_transaction_cost = total_cog + payment_fee
                 transaction_profit = max(0, net_revenue - direct_transaction_cost)
 
-                # Sales Commission: percentage of transaction profit for partner (Strict Asterra Profit Model)
-                sales_comm_amount = round(float(transaction_profit) * (commission_rate / 100.0)) if (partner and transaction_profit > 0) else 0
+                alloc = cls.calculate_profit_allocation(
+                    transaction_profit=transaction_profit,
+                    successful_orders_count=successful_orders_count,
+                    is_vip=is_vip_partner,
+                    has_sales_partner=bool(partner),
+                    has_recruiter=bool(recruiter_id),
+                    campaign_rate_override=campaign_booster_rate,
+                )
 
-                # Sponsor Recruiter Bonus: strictly 2% of net transaction profit
-                sponsor_rate = cls.SPONSOR_RATE_DEFAULT if recruiter_id else 0.0
-                sponsor_bonus_amount = round((transaction_profit * 0.02)) if (recruiter_id and transaction_profit > 0) else 0
-
-                # Profit Distribution for Store Reserves (40% CEO, 40% COO, 20% Reserve - 50:50 Founder Parity)
-                distributable_profit = max(0, transaction_profit - sales_comm_amount - sponsor_bonus_amount)
-                ceo_share = round(distributable_profit * 0.40)
-                coo_share = round(distributable_profit * 0.40)
-                business_reserve = distributable_profit - ceo_share - coo_share
+                sales_comm_amount = alloc["sales_commission"]
+                commission_rate = alloc["sales_commission_rate"]
+                sponsor_rate = alloc["recruitment_bonus_rate"]
+                sponsor_bonus_amount = alloc["recruitment_bonus"]
+                distributable_profit = alloc["profit_distribution"]
+                ceo_share = alloc["ceo_share"]
+                coo_share = alloc["coo_share"]
+                business_reserve = alloc["business_reserve"]
 
                 # 6. Status & Holding Warranty Window
                 order_created_at = order.created_at or now
@@ -253,6 +364,16 @@ class ReferralProfitService:
 
                 # Check if commission was already finalized or manually released
                 is_already_final = (comm_record and comm_record.status == "final") or (ledger_record and ledger_record.status in ["available", "withdrawn"])
+
+                # Preserve historical values for finalized records to protect audit integrity
+                if is_already_final and ledger_record:
+                    sales_comm_amount = comm_record.commission_amount if comm_record else ledger_record.sales_commission
+                    commission_rate = float(comm_record.commission_rate) if comm_record else (ledger_record.sale_commission_rate * 100.0)
+                    sponsor_bonus_amount = comm_record.bonus_amount if comm_record else ledger_record.recruitment_bonus
+                    distributable_profit = ledger_record.profit_distribution
+                    ceo_share = ledger_record.ceo_share
+                    coo_share = ledger_record.coo_share
+                    business_reserve = ledger_record.business_reserve
 
                 if status_to_eval in ["cancelled", "expired", "refunded"]:
                     comm_status = "reversed"

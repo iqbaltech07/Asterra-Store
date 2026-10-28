@@ -98,7 +98,7 @@ export function LainnyaSidebar() {
     },
     {
       title: 'Program Affiliate',
-      subtitle: 'Komisi 10% – 15% + 2%',
+      subtitle: 'Komisi 15% – 20% + 2%',
       href: '/affiliate',
       icon: faHandshake,
       isExternal: false,

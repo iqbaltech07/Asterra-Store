@@ -15,6 +15,7 @@ import {
 import { AdminTab } from '@/components/admin/admin-sidebar';
 import { SalesOrder } from '../types';
 import { StatusBadge } from '@/components/ui/status-badge';
+import { maskCustomerName, maskEmail } from '@/lib/utils/masking';
 
 interface SalesOrdersTabProps {
   partnerCode: string;
@@ -129,7 +130,7 @@ export function SalesOrdersTab({
                         {o.productNames || 'Produk Digital'}
                       </h4>
                       <div className="flex items-center justify-between text-[11px] text-foreground-muted mt-0.5">
-                        <span className="font-mono">{o.customerEmail}</span>
+                        <span className="font-mono">{maskCustomerName(o.customerName) || maskEmail(o.customerEmail) || '-'}</span>
                         <span>
                           {new Date(o.createdAt).toLocaleDateString('id-ID', {
                             day: 'numeric',
@@ -215,7 +216,7 @@ export function SalesOrdersTab({
                           {o.productNames || 'Produk Digital'}
                         </td>
                         <td className="py-3 px-4 font-mono text-foreground-muted text-[11px]">
-                          {o.customerEmail}
+                          {maskCustomerName(o.customerName) || maskEmail(o.customerEmail) || '-'}
                         </td>
                         <td className="py-3 px-4 font-bold text-foreground font-mono">
                           Rp {o.totalAmount.toLocaleString('id-ID')}
@@ -327,7 +328,7 @@ export function SalesOrdersTab({
                         {o.productNames || 'Produk Digital'}
                       </h4>
                       <div className="flex items-center justify-between text-[11px] text-foreground-muted mt-0.5">
-                        <span className="font-mono">{o.customerEmail}</span>
+                        <span className="font-mono">{maskCustomerName(o.customerName) || maskEmail(o.customerEmail) || '-'}</span>
                         <span>
                           {new Date(o.createdAt).toLocaleDateString('id-ID', {
                             day: 'numeric',
@@ -407,7 +408,7 @@ export function SalesOrdersTab({
                           {o.productNames || 'Produk Digital'}
                         </td>
                         <td className="py-3 px-4 font-mono text-foreground-muted text-[11px]">
-                          {o.customerEmail}
+                          {maskCustomerName(o.customerName) || maskEmail(o.customerEmail) || '-'}
                         </td>
                         <td className="py-3 px-4 font-bold text-foreground font-mono">
                           Rp {o.totalAmount.toLocaleString('id-ID')}

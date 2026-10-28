@@ -92,7 +92,7 @@ export function SalesNetworkTab({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 text-xs text-foreground-muted">
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>Komisi teman 100% utuh (10% – 15% Profit)</span>
+                <span>Komisi teman 100% utuh (15% – 20% Profit)</span>
               </div>
               <div className="flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-primary shrink-0" />

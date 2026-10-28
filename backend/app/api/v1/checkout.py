@@ -47,13 +47,14 @@ def mask_order_for_public(order: dict, is_owner_or_admin: bool, is_admin: bool =
     name = str(o.get("customerName") or o.get("customer_name") or "")
     email = str(o.get("customerEmail") or o.get("customer_email") or "")
 
+    from app.services.partner_service import mask_customer_name
     masked_phone = f"{phone[:3]}****{phone[-4:]}" if len(phone) > 6 else phone
-    masked_name = f"{name[0]}***{name[-1]}" if len(name) > 2 else (name or "Pelanggan Asterra")
+    masked_name = mask_customer_name(name)
     masked_email = f"{email.split('@')[0][:2]}***@{email.split('@')[1]}" if ("@" in email and len(email.split('@')[0]) > 2) else email
 
     # Build customer_display
     # In public view, NEVER show full phone or full email; show clean masked name
-    if masked_name and masked_name != "Pelanggan Asterra":
+    if masked_name:
         customer_display = masked_name
     elif masked_email and "@" in masked_email:
         customer_display = masked_email

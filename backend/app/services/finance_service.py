@@ -39,6 +39,24 @@ class FinanceService:
 
         entries = []
 
+        # Precompute unique successful orders per partner from authoritative orders list
+        partner_success_counts = {}
+        for o in orders:
+            st = str(o.get("status", "")).lower()
+            if st in ["completed", "paid", "settlement", "selesai", "done"]:
+                p_ref = str(o.get("referralCode") or o.get("referral_code") or "").strip().upper()
+                p_id_str = str(o.get("salesPartnerId") or o.get("sales_partner_id") or "").strip().upper()
+                oid = str(o.get("id") or o.get("order_id") or "").strip().upper()
+                if oid:
+                    if p_ref:
+                        if p_ref not in partner_success_counts:
+                            partner_success_counts[p_ref] = set()
+                        partner_success_counts[p_ref].add(oid)
+                    if p_id_str:
+                        if p_id_str not in partner_success_counts:
+                            partner_success_counts[p_id_str] = set()
+                        partner_success_counts[p_id_str].add(oid)
+
         for idx, o in enumerate(orders):
             st = str(o.get("status", "")).lower()
             is_settled = st in ["completed", "paid", "settlement"]
@@ -89,23 +107,40 @@ class FinanceService:
                 coo_share = 0.0
                 reserve = 0.0
                 entry_status = "reversed"
+                comm_rate = 0.0
             else:
                 tx_profit = max(0.0, net_rev - cog - fee)
 
-                # Referral commission: 10% of profit (or campaign rate override), NOT omzet
+                from app.services.referral_profit_service import ReferralProfitService
+
                 has_ref = bool(o.get("referralCode") or o.get("referral_code") or o.get("salesPartnerId") or o.get("sales_partner_id"))
-                comm_rate = float(o.get("commissionRate") or o.get("commission_rate") or (15.0 if camp_disc > 0 else 10.0))
-                sales_comm = round(tx_profit * (comm_rate / 100.0)) if has_ref else 0.0
-                
+                p_ref = str(o.get("referralCode") or o.get("referral_code") or "").strip().upper()
+                p_id_str = str(o.get("salesPartnerId") or o.get("sales_partner_id") or "").strip().upper()
+                p_succ_orders = max(
+                    len(partner_success_counts.get(p_ref, set())),
+                    len(partner_success_counts.get(p_id_str, set()))
+                )
+                is_vip_partner = (p_succ_orders >= 50 or float(o.get("commissionRate") or 0) >= 20.0)
+
+                campaign_override = float(o.get("campaignRate") or 0) if (o.get("campaignRate") or camp_disc > 0) else None
                 has_recruiter = bool(o.get("recruiterPartnerId") or o.get("recruiter_partner_id"))
-                recruit_bonus = round(tx_profit * 0.02) if (has_ref and has_recruiter) else 0.0
 
-                distributable = max(0.0, tx_profit - sales_comm - recruit_bonus)
+                alloc = ReferralProfitService.calculate_profit_allocation(
+                    transaction_profit=tx_profit,
+                    successful_orders_count=p_succ_orders,
+                    is_vip=is_vip_partner,
+                    has_sales_partner=has_ref,
+                    has_recruiter=has_recruiter,
+                    campaign_rate_override=campaign_override,
+                )
 
-                # Canonical Asterra Model: 40% CEO + 40% COO + 20% Modal Usaha (50:50 Founder Parity)
-                ceo_share = round(distributable * 0.40)
-                coo_share = round(distributable * 0.40)
-                reserve = distributable - ceo_share - coo_share
+                sales_comm = float(alloc["sales_commission"])
+                comm_rate = float(alloc["sales_commission_rate"])
+                recruit_bonus = float(alloc["recruitment_bonus"])
+                distributable = float(alloc["profit_distribution"])
+                ceo_share = float(alloc["ceo_share"])
+                coo_share = float(alloc["coo_share"])
+                reserve = float(alloc["business_reserve"])
 
                 entry_status = "available" if is_settled else "pending"
 
@@ -136,11 +171,14 @@ class FinanceService:
 
             direct_cost = cog + fee
 
+            from app.services.partner_service import mask_customer_name
+            c_raw = o.get("customerName") or o.get("customer_name")
+            c_name_masked = mask_customer_name(c_raw) if c_raw else "Pelanggan"
             entries.append({
                 "id": f"ledg-{o.get('id', str(idx))}",
                 "orderId": o.get("id"),
                 "customerEmail": o.get("customerEmail") or o.get("customer_email") or "buyer@asterra.store",
-                "customerName": o.get("customerName") or o.get("customer_name") or "Pelanggan",
+                "customerName": c_name_masked,
                 "productId": first_product_id,
                 "productNames": product_names,
                 "sellingPrice": selling_price,

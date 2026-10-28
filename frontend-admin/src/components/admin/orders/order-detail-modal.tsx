@@ -27,6 +27,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { OrderStatusBadge, OrderActorBadge } from './order-badges';
 import { formatWhatsAppUrl, generateOrderValidationText } from '@/lib/utils/format';
+import { maskCustomerName } from '@/lib/utils/masking';
 
 interface OrderDetailModalProps {
   order: Order | null;
@@ -243,7 +244,7 @@ export function OrderDetailModal({
                   Nama Lengkap Customer:
                 </span>
                 <span className="font-bold text-[#0F172A] text-xs sm:text-sm truncate block mt-0.5">
-                  {order.customer_name || 'Pelanggan Toko'}
+                  {maskCustomerName(order.customer_name) || 'Pelanggan Toko'}
                 </span>
               </div>
 

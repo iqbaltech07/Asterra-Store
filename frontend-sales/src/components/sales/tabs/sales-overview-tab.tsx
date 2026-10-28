@@ -81,6 +81,30 @@ export function SalesOverviewTab({
   const totalSalesAmountVal = partner?.totalSalesAmount ?? 0;
   const paidCommissionVal = partner?.paidCommission ?? 0;
 
+  // Count only authentic successful / completed orders for milestone progress (unique order ID deduplication)
+  const successfulOrdersCount = useMemo(() => {
+    if (orders && orders.length > 0) {
+      const validOrders = orders.filter((o) => {
+        const st = (o.status || '').toLowerCase();
+        return ['completed', 'success', 'paid', 'settlement', 'selesai', 'done'].includes(st);
+      });
+      const uniqueOrderIds = new Set(validOrders.map((o) => o.id).filter(Boolean));
+      if (uniqueOrderIds.size > 0) {
+        return uniqueOrderIds.size;
+      }
+    }
+    if (partner?.tierProgress?.currentOrders !== undefined) {
+      return partner.tierProgress.currentOrders;
+    }
+    return partner?.totalOrders ?? 0;
+  }, [partner, orders]);
+
+  const isVip = useMemo(() => {
+    return partnerRate >= 20 || successfulOrdersCount >= 50 || (partner?.tier || '').toLowerCase().includes('vip');
+  }, [partnerRate, successfulOrdersCount, partner?.tier]);
+
+  const activeRate = isVip ? 20 : (partnerRate || 15);
+
   // Actual recent referral orders for this partner
   const recentOrders = useMemo(() => {
     return (orders || []).slice(0, 5).map((o) => ({
@@ -97,10 +121,10 @@ export function SalesOverviewTab({
       product: o.productNames || 'Produk Digital',
       method: o.paymentStatus || 'QRIS',
       total: o.totalAmount || 0,
-      commission: o.commission || Math.round((o.totalAmount || 0) * (partnerRate / 100)),
+      commission: o.commission || Math.round((o.totalAmount || 0) * (activeRate / 100)),
       status: o.status === 'completed' || o.status === 'success' ? 'Selesai' : 'Diproses',
     }));
-  }, [orders, partnerRate]);
+  }, [orders, activeRate]);
 
   return (
     <div className="space-y-4 sm:space-y-5 animate-fade-up">
@@ -131,13 +155,20 @@ export function SalesOverviewTab({
               <Award className="w-5 h-5 text-amber-400 stroke-[1.8]" />
             </div>
             <div>
-              <h4 className="text-xs sm:text-sm font-bold text-white tracking-tight">
-                Program Kemitraan Sales — Komisi {partnerRate}% Per Transaksi
-              </h4>
+              <div className="flex items-center gap-2 mb-0.5">
+                <h4 className="text-xs sm:text-sm font-bold text-white tracking-tight">
+                  Program Kemitraan Sales — Komisi {activeRate}% Per Transaksi
+                </h4>
+                {isVip && (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-400 text-slate-950 shadow-2xs">
+                    VIP (20%)
+                  </span>
+                )}
+              </div>
               <p className="text-[11px] sm:text-xs text-slate-200 mt-0.5 leading-tight">
                 Bagikan link referral Anda{' '}
                 <strong className="text-white font-bold">{partnerCode}</strong> untuk
-                mendapatkan bagi hasil komisi {partnerRate}% otomatis dari setiap pesanan sukses.
+                mendapatkan bagi hasil komisi {activeRate}% otomatis dari profit setiap pesanan sukses.
               </p>
             </div>
           </div>
@@ -163,33 +194,55 @@ export function SalesOverviewTab({
           </div>
         </div>
 
-        {/* Banner 2: Soft Rose Milestone Tier Booster Banner with Animated Progress */}
-        <div className="rounded-2xl bg-[#FFF1F2] border border-rose-200/90 p-3.5 sm:px-5 sm:py-3.5 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        {/* Banner 2: Milestone Tier VIP Progress Banner */}
+        <div className={`rounded-2xl border p-3.5 sm:px-5 sm:py-3.5 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+          isVip ? 'bg-amber-500/10 border-amber-500/30 text-amber-950' : 'bg-[#FFF1F2] border-rose-200/90'
+        }`}>
           <div className="flex items-center gap-3 min-w-0 flex-1">
-            <div className="w-9 h-9 rounded-xl bg-white text-rose-500 flex items-center justify-center shrink-0 border border-rose-200 shadow-2xs">
-              <Package className="w-5 h-5" />
+            <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border shadow-2xs ${
+              isVip ? 'bg-amber-500 text-white border-amber-600' : 'bg-white text-rose-500 border-rose-200'
+            }`}>
+              {isVip ? <Award className="w-5 h-5" /> : <Package className="w-5 h-5" />}
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center justify-between gap-2">
-                <h4 className="text-xs sm:text-sm font-bold text-slate-900 tracking-tight">
-                  Target Milestone Tier VIP — Komisi Naik ke 15%
-                </h4>
-                <span className="text-[11px] font-mono font-bold text-rose-600 shrink-0">
-                  {partner?.tierProgress?.currentOrders || totalOrdersVal}/50 Order
+                <div className="flex items-center gap-2">
+                  <h4 className="text-xs sm:text-sm font-bold text-slate-900 tracking-tight">
+                    {isVip ? 'VIP — Komisi 20%' : 'Target Milestone Tier VIP'}
+                  </h4>
+                  {isVip && (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500 text-white">
+                      Aktif Otomatis
+                    </span>
+                  )}
+                </div>
+                <span className={`text-[11px] font-mono font-bold shrink-0 ${isVip ? 'text-amber-700' : 'text-rose-600'}`}>
+                  {isVip ? `${Math.max(50, successfulOrdersCount)}/50 transaksi sukses` : `${successfulOrdersCount}/50 transaksi sukses`}
                 </span>
               </div>
               <p className="text-[11px] sm:text-xs text-slate-600 mt-0.5 leading-tight">
-                Tingkatkan omzet referral Anda! Capai target 50 transaksi sukses untuk otomatis menaikkan komisi dari {partnerRate}% menjadi{' '}
-                <strong className="text-rose-600 font-bold">15% Profit Transaksi</strong>.
+                {isVip
+                  ? 'Selamat! Anda telah mencapai 50 transaksi sukses. Peningkatan komisi 20% dari profit transaksi aktif otomatis untuk setiap transaksi berikutnya.'
+                  : 'Capai 50 transaksi sukses untuk meningkatkan komisi dari 15% menjadi 20% dari profit transaksi.'}
               </p>
+              {!isVip && (
+                <p className="text-[10px] text-rose-600 font-medium mt-0.5">
+                  Membutuhkan {Math.max(0, 50 - successfulOrdersCount)} transaksi sukses lagi untuk mencapai komisi 20% otomatis.
+                </p>
+              )}
+              {isVip && (
+                <p className="text-[10px] text-amber-700 font-medium mt-0.5">
+                  Komisi aktif: 20% dari profit transaksi. Peningkatan komisi aktif otomatis.
+                </p>
+              )}
               {/* Animated Progress Bar */}
               <div className="mt-2 max-w-sm">
                 <AnimatedProgressBar
-                  value={partner?.tierProgress?.currentOrders || totalOrdersVal}
+                  value={isVip ? Math.max(50, successfulOrdersCount) : successfulOrdersCount}
                   max={50}
                   showShimmer
-                  className="h-1.5 bg-rose-100 border-none"
-                  barClassName="bg-rose-500"
+                  className={`h-1.5 border-none ${isVip ? 'bg-amber-100' : 'bg-rose-100'}`}
+                  barClassName={isVip ? 'bg-amber-500' : 'bg-rose-500'}
                 />
               </div>
             </div>
@@ -197,7 +250,11 @@ export function SalesOverviewTab({
           <button
             type="button"
             onClick={() => onTabChange && onTabChange('sales-catalog')}
-            className="px-3.5 py-1.5 rounded-full bg-white hover:bg-rose-50 active:scale-95 text-rose-600 font-semibold text-xs border border-rose-300 transition-all flex items-center gap-1.5 self-start sm:self-auto shrink-0 shadow-2xs cursor-pointer"
+            className={`px-3.5 py-1.5 rounded-full font-semibold text-xs border transition-all flex items-center gap-1.5 self-start sm:self-auto shrink-0 shadow-2xs cursor-pointer ${
+              isVip
+                ? 'bg-white hover:bg-amber-50 active:scale-95 text-amber-800 border-amber-300'
+                : 'bg-white hover:bg-rose-50 active:scale-95 text-rose-600 border-rose-300'
+            }`}
           >
             <span>Katalog Promosi ({products.length || 230}+)</span>
             <span className="text-[10px]">→</span>
@@ -403,7 +460,7 @@ export function SalesOverviewTab({
             subtitle="Pergerakan omzet referral dan estimasi komisi Anda berdasarkan periode waktu"
             legendLabel="Komisi Referral Terverifikasi"
             orders={orders}
-            partnerRate={partnerRate}
+            partnerRate={activeRate}
             totalCommission={totalCommissionVal}
             onNavigateAnalytics={() => onTabChange && onTabChange('sales-orders')}
           />
@@ -624,7 +681,7 @@ export function SalesOverviewTab({
               <div className="flex items-center justify-between text-slate-500">
                 <span>Tingkat Komisi Anda</span>
                 <span className="font-bold text-indigo-600 font-mono">
-                  {partnerRate}% Profit Bersih
+                  {activeRate}% Profit Bersih
                 </span>
               </div>
             </div>

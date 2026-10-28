@@ -162,11 +162,13 @@ class AnalyticsService:
             amt = float(o.get("totalAmount") or o.get("rawAmount") or 0.0)
             items = o.get("items") or []
             prod_name = items[0].get("productName") or items[0].get("product_name") if items else "Layanan Digital"
-            created_str = o.get("createdAt") or o.get("created_at") or ""
+            from app.services.partner_service import mask_customer_name
+            c_raw = o.get("customerName") or o.get("customer_name")
+            c_display = mask_customer_name(c_raw) if c_raw else "Pelanggan"
             recent_txs.append({
                 "id": o.get("id"),
                 "orderId": o.get("id"),
-                "customer": o.get("customerName") or o.get("customer_name") or "Pelanggan",
+                "customer": c_display,
                 "customerEmail": o.get("customerEmail") or o.get("customer_email") or "",
                 "whatsapp": o.get("customerWhatsapp") or o.get("customer_whatsapp") or "",
                 "product": prod_name,
@@ -524,8 +526,8 @@ class AnalyticsService:
         aff_matrix = []
         for a in partners:
             clicks = int(a.get("totalClicks") or 0)
-            orders_count = int(a.get("totalOrders", 0))
-            conv_rate = round((orders_count / clicks * 100), 1) if clicks > 0 else 0.0
+            succ_orders = int(a.get("successfulOrders") if a.get("successfulOrders") is not None else a.get("totalOrders", 0))
+            conv_rate = round((succ_orders / clicks * 100), 1) if clicks > 0 else 0.0
             rev = float(a.get("totalRevenue", 0))
             comm = float(a.get("paidCommission", 0) + a.get("unpaidCommission", 0))
 
@@ -533,11 +535,11 @@ class AnalyticsService:
                 "code": a.get("code"),
                 "partnerName": a.get("name"),
                 "clicks": clicks,
-                "referralOrders": orders_count,
+                "referralOrders": succ_orders,
                 "conversionRate": conv_rate,
                 "generatedRevenue": rev,
                 "commissionEarned": comm,
-                "activeStatus": "Aktif" if a.get("status") == "active" else "Nonaktif",
+                "activeStatus": a.get("tier", "Standard (15%)"),
             })
 
         # 4. Formal Income Statement (P&L)
@@ -550,9 +552,9 @@ class AnalyticsService:
         commissions = profit_summary.get("totalSalesCommission", 0.0) + profit_summary.get("totalRecruitmentBonus", 0.0)
         transaction_profit = profit_summary.get("totalTransactionProfit", max(0.0, gross_profit - pg_fees))
         profit_distribution = profit_summary.get("totalProfitDistribution", max(0.0, transaction_profit - commissions))
-        ceo_share = profit_summary.get("totalCeoShare", round(profit_distribution * 0.40))
-        coo_share = profit_summary.get("totalCooShare", round(profit_distribution * 0.40))
-        business_reserve = profit_summary.get("totalBusinessReserve", round(profit_distribution * 0.20))
+        ceo_share = profit_summary.get("totalCeoShare", round(profit_distribution * 0.35))
+        coo_share = profit_summary.get("totalCooShare", round(profit_distribution * 0.35))
+        business_reserve = profit_summary.get("totalBusinessReserve", profit_distribution - ceo_share - coo_share)
 
         return {
             "period": active_period,

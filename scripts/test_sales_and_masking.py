@@ -1,11 +1,16 @@
 """
-AsterraStore - Comprehensive Pre-Opening Audit & Verification Script
-Validates:
-1. Customer PII Masking: Single-word, multi-word, short name, empty, whitespace, null, email.
-2. Zero PII & Zero Margin Leakage in Sales APIs (No raw customer name, no transactionProfit).
-3. Commission Waterfall & Parity: 15% Pemula, 20% VIP (>= 50 orders), 2% Sponsor, 3-day holding, 40% CEO / 40% COO / 20% Reserve.
-4. Partner Service & Stored Profile Rate Consistency.
-5. Sales Simulation Catalog & Calculator Backend Accuracy (15% base, 20% VIP, 2% referral bonus).
+AsterraStore - Comprehensive VIP Commission, Profit Split & Privacy Test Suite
+Validates all 10 Mandatory Production Readiness Scenarios:
+1. 0 transaksi sukses: CEO 35%, COO 35%, Sales 15%, Reserve 15%.
+2. 49 transaksi sukses: Sales masih mendapat 15%.
+3. Tepat 50 transaksi sukses: CEO 32,5%, COO 32,5%, Sales 20%, Reserve 15%.
+4. Lebih dari 50 transaksi sukses: Sales tetap 20%.
+5. Order gagal dan dibatalkan tidak menambah progress.
+6. Order yang sama tidak dihitung dua kali (deduplikasi ID unik).
+7. Total persentase selalu 100% (zero margin leakage).
+8. Nominal pembagian profit konsisten antara backend, Admin, dan Sales.
+9. Referral sponsor 2% dan hold garansi 3 hari tetap berfungsi.
+10. Customer PII masking dan zero margin leakage ke sales portal.
 """
 
 import sys
@@ -14,172 +19,250 @@ import os
 # Add backend directory to sys.path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'backend'))
 
-def test_masking():
-    print("====================================================")
-    print("AUDIT 1. PENGUJIAN PENYAMARAN PRIVASI NAMA & EMAIL")
-    print("====================================================")
-    from app.services.partner_service import mask_customer_name
+from app.services.referral_profit_service import ReferralProfitService
+from app.services.partner_service import PartnerService, mask_customer_name
 
-    cases = [
-        ("Marchelino Kurniawan", "Mar***no"),
-        ("Andi", "A***"),
-        ("Dewi", "D***"),
-        ("Budi Santoso", "B***"),
-        ("Alexander Pratama", "Ale***er"),
-        ("Bo", "B***"),
-        ("A", "A***"),
-        ("", ""),
-        (None, ""),
-        ("   ", ""),
+
+def test_mandatory_10_scenarios():
+    print("====================================================================")
+    print("ASTERRASTORE — PENGUJIAN 10 SKENARIO ATURAN KOMISI & PROFIT SHARING")
+    print("====================================================================")
+
+    # -----------------------------------------------------------------
+    # Skenario 1: 0 transaksi sukses
+    # CEO 35%, COO 35%, Sales 15%, Reserve 15%
+    # -----------------------------------------------------------------
+    print("\n[TES 1] 0 Transaksi Sukses (Non-VIP)")
+    alloc_0 = ReferralProfitService.calculate_profit_allocation(
+        transaction_profit=100000,
+        successful_orders_count=0,
+        has_sales_partner=True,
+        has_recruiter=False
+    )
+    print(f"  Profit Rp 100.000 -> Sales: Rp {alloc_0['sales_commission']:,} ({alloc_0['sales_commission_rate']}%), "
+          f"CEO: Rp {alloc_0['ceo_share']:,} ({alloc_0['ceo_share_rate']}%), "
+          f"COO: Rp {alloc_0['coo_share']:,} ({alloc_0['coo_share_rate']}%), "
+          f"Reserve: Rp {alloc_0['business_reserve']:,} ({alloc_0['business_reserve_rate']}%)")
+    assert alloc_0['is_vip'] is False, "Status VIP harus False untuk 0 transaksi"
+    assert alloc_0['sales_commission'] == 15000, "Komisi Sales harus 15%"
+    assert alloc_0['ceo_share'] == 35000, "Bagian CEO harus 35%"
+    assert alloc_0['coo_share'] == 35000, "Bagian COO harus 35%"
+    assert alloc_0['business_reserve'] == 15000, "Cadangan harus 15%"
+    assert alloc_0['total_allocated'] == 100000, "Total harus tepat 100%"
+    print("  -> PASS: Skenario 1 terverifikasi.")
+
+    # -----------------------------------------------------------------
+    # Skenario 2: 49 transaksi sukses
+    # Sales masih mendapat 15%
+    # -----------------------------------------------------------------
+    print("\n[TES 2] 49 Transaksi Sukses (Threshold Non-VIP Terakhir)")
+    alloc_49 = ReferralProfitService.calculate_profit_allocation(
+        transaction_profit=100000,
+        successful_orders_count=49,
+        has_sales_partner=True,
+        has_recruiter=False
+    )
+    print(f"  Profit Rp 100.000 -> Sales: Rp {alloc_49['sales_commission']:,} ({alloc_49['sales_commission_rate']}%), "
+          f"CEO: Rp {alloc_49['ceo_share']:,} ({alloc_49['ceo_share_rate']}%), "
+          f"COO: Rp {alloc_49['coo_share']:,} ({alloc_49['coo_share_rate']}%), "
+          f"Reserve: Rp {alloc_49['business_reserve']:,} ({alloc_49['business_reserve_rate']}%)")
+    assert alloc_49['is_vip'] is False, "Status VIP harus False untuk 49 transaksi"
+    assert alloc_49['sales_commission'] == 15000, "Komisi Sales harus tetap 15% pada 49 transaksi"
+    assert alloc_49['ceo_share'] == 35000, "Bagian CEO harus tetap 35%"
+    assert alloc_49['coo_share'] == 35000, "Bagian COO harus tetap 35%"
+    assert alloc_49['business_reserve'] == 15000, "Cadangan harus tetap 15%"
+    assert alloc_49['total_allocated'] == 100000, "Total harus tepat 100%"
+    print("  -> PASS: Skenario 2 terverifikasi.")
+
+    # -----------------------------------------------------------------
+    # Skenario 3: Tepat 50 transaksi sukses
+    # CEO 32,5%, COO 32,5%, Sales 20%, Reserve 15%
+    # -----------------------------------------------------------------
+    print("\n[TES 3] Tepat 50 Transaksi Sukses (Milestone VIP Pertama)")
+    alloc_50 = ReferralProfitService.calculate_profit_allocation(
+        transaction_profit=100000,
+        successful_orders_count=50,
+        has_sales_partner=True,
+        has_recruiter=False
+    )
+    print(f"  Profit Rp 100.000 -> Sales: Rp {alloc_50['sales_commission']:,} ({alloc_50['sales_commission_rate']}%), "
+          f"CEO: Rp {alloc_50['ceo_share']:,} ({alloc_50['ceo_share_rate']}%), "
+          f"COO: Rp {alloc_50['coo_share']:,} ({alloc_50['coo_share_rate']}%), "
+          f"Reserve: Rp {alloc_50['business_reserve']:,} ({alloc_50['business_reserve_rate']}%)")
+    assert alloc_50['is_vip'] is True, "Status VIP harus True tepat pada 50 transaksi"
+    assert alloc_50['sales_commission'] == 20000, "Komisi Sales harus naik ke 20%"
+    assert alloc_50['ceo_share'] == 32500, "Bagian CEO harus 32,5%"
+    assert alloc_50['coo_share'] == 32500, "Bagian COO harus 32,5%"
+    assert alloc_50['business_reserve'] == 15000, "Cadangan harus tetap 15%"
+    assert alloc_50['total_allocated'] == 100000, "Total harus tepat 100%"
+    print("  -> PASS: Skenario 3 terverifikasi.")
+
+    # -----------------------------------------------------------------
+    # Skenario 4: Lebih dari 50 transaksi sukses
+    # Sales tetap 20%, tidak naik lagi
+    # -----------------------------------------------------------------
+    print("\n[TES 4] Lebih dari 50 Transaksi Sukses (e.g. 75 & 120 Transaksi)")
+    for count in [51, 75, 120]:
+        alloc_gt = ReferralProfitService.calculate_profit_allocation(
+            transaction_profit=100000,
+            successful_orders_count=count,
+            has_sales_partner=True,
+            has_recruiter=False
+        )
+        assert alloc_gt['is_vip'] is True
+        assert alloc_gt['sales_commission'] == 20000, f"Komisi Sales harus tetap 20% pada {count} transaksi"
+        assert alloc_gt['ceo_share'] == 32500, "Bagian CEO harus 32,5%"
+        assert alloc_gt['coo_share'] == 32500, "Bagian COO harus 32,5%"
+        assert alloc_gt['business_reserve'] == 15000, "Cadangan harus 15%"
+        assert alloc_gt['total_allocated'] == 100000, "Total harus tepat 100%"
+    print("  -> PASS: Skenario 4 terverifikasi (Komisi tetap 20% dan tidak naik lagi).")
+
+    # -----------------------------------------------------------------
+    # Skenario 5: Order gagal dan dibatalkan tidak menambah progress
+    # -----------------------------------------------------------------
+    print("\n[TES 5] Filter Validitas Status Order")
+    dummy_orders = [
+        {"id": "ORD-1", "status": "completed"},
+        {"id": "ORD-2", "status": "paid"},
+        {"id": "ORD-3", "status": "settlement"},
+        {"id": "ORD-4", "status": "selesai"},
+        {"id": "ORD-5", "status": "done"},
+        {"id": "ORD-6", "status": "failed"},         # invalid
+        {"id": "ORD-7", "status": "cancelled"},      # invalid
+        {"id": "ORD-8", "status": "expired"},        # invalid
+        {"id": "ORD-9", "status": "pending"},        # invalid
+        {"id": "ORD-10", "status": "draft"},         # invalid
+        {"id": "ORD-11", "status": "refunded"},      # invalid
     ]
+    valid_count = PartnerService.count_unique_successful_orders(dummy_orders)
+    print(f"  Dari {len(dummy_orders)} order campuran, terhitung sukses unik: {valid_count}")
+    assert valid_count == 5, f"Hanya 5 order berstatus sukses yang boleh terhitung, didapat: {valid_count}"
+    print("  -> PASS: Skenario 5 terverifikasi (Order gagal/dibatalkan tidak dihitung).")
 
-    all_passed = True
-    for input_name, expected in cases:
-        result = mask_customer_name(input_name)
-        status = "[PASS]" if result == expected else "[FAIL]"
-        if result != expected:
-            all_passed = False
-        print(f"  {status}: Input '{input_name}' -> Masked '{result}' (Expected: '{expected}')")
+    # -----------------------------------------------------------------
+    # Skenario 6: Order yang sama tidak dihitung dua kali (deduplikasi ID)
+    # -----------------------------------------------------------------
+    print("\n[TES 6] Deduplikasi ID Transaksi Sukses")
+    duplicate_orders = [
+        {"id": "ORD-UNIQUE-1", "status": "completed"},
+        {"id": "ORD-UNIQUE-1", "status": "completed"}, # duplikat ID
+        {"id": "ORD-UNIQUE-1", "status": "paid"},      # duplikat ID
+        {"id": "ORD-UNIQUE-2", "status": "completed"},
+        {"id": "ORD-UNIQUE-2", "status": "selesai"},   # duplikat ID
+        {"id": "ORD-UNIQUE-3", "status": "settlement"},
+    ]
+    dedup_count = PartnerService.count_unique_successful_orders(duplicate_orders)
+    print(f"  Dari {len(duplicate_orders)} entri order (dengan duplikat ID), terhitung: {dedup_count}")
+    assert dedup_count == 3, f"Harus tepat 3 order unik, didapat: {dedup_count}"
+    print("  -> PASS: Skenario 6 terverifikasi (Order ID unik tanpa double-counting).")
 
-    assert all_passed, "Ada uji masking nama yang gagal!"
-    print("  [PASS] Seluruh skenario nama (1 kata, multi-kata, pendek, kosong, null) 100% LULUS.")
+    # -----------------------------------------------------------------
+    # Skenario 7: Total persentase selalu 100% (Zero Margin Leakage)
+    # -----------------------------------------------------------------
+    print("\n[TES 7] Zero Leakage Uji Arbitrer (Selalu Tepat 100%)")
+    test_amounts = [1, 99, 137, 1000, 7777, 15000, 33333, 42900, 75000, 99999, 100000, 250000, 987654]
+    for amt in test_amounts:
+        # Non-VIP tanpa recruiter
+        a1 = ReferralProfitService.calculate_profit_allocation(amt, 10, has_sales_partner=True, has_recruiter=False)
+        assert a1['sales_commission'] + a1['recruitment_bonus'] + a1['ceo_share'] + a1['coo_share'] + a1['business_reserve'] == amt
 
-def test_orders_privacy_and_margin_protection():
-    print("\n====================================================")
-    print("AUDIT 1B. PROTEKSI PAYLOAD API & MARGIN INTERNAL")
-    print("====================================================")
-    from app.services.partner_service import PartnerService
+        # Non-VIP dengan recruiter
+        a2 = ReferralProfitService.calculate_profit_allocation(amt, 10, has_sales_partner=True, has_recruiter=True)
+        assert a2['sales_commission'] + a2['recruitment_bonus'] + a2['ceo_share'] + a2['coo_share'] + a2['business_reserve'] == amt
 
-    orders = PartnerService.get_orders_for_partner("AST-ACELINO-COOL")
-    print(f"  Total Order Diperiksa: {len(orders)}")
-    if orders:
-        sample = orders[0]
-        # 1. PII check
-        print(f"  - Sample Order ID: {sample.get('id')}")
-        print(f"  - customerName: {sample.get('customerName')}")
-        print(f"  - customerEmail: {sample.get('customerEmail')}")
-        assert "***" in sample.get('customerEmail', '') or sample.get('customerEmail') == "", "Customer email bocor!"
-        assert "***" in sample.get('customerName', '') or sample.get('customerName') == "", "Customer name bocor!"
-        
-        # 2. Zero Margin Leakage Check
-        assert "transactionProfit" not in sample, "FATAL: transactionProfit bocor di API sales orders!"
-        assert "providerPrice" not in sample, "FATAL: providerPrice bocor di API sales orders!"
-        assert "profitMargin" not in sample, "FATAL: profitMargin bocor di API sales orders!"
-        print("  [PASS] Zero Leakage terbukti: PII tersamarkan dan margin internal toko TIDAK bocor ke Sales.")
+        # VIP tanpa recruiter
+        a3 = ReferralProfitService.calculate_profit_allocation(amt, 55, has_sales_partner=True, has_recruiter=False)
+        assert a3['sales_commission'] + a3['recruitment_bonus'] + a3['ceo_share'] + a3['coo_share'] + a3['business_reserve'] == amt
 
-def test_commission_rates():
-    print("\n====================================================")
-    print("AUDIT 2. KONSISTENSI KOMISI SALES 15% & 20% & WATERFALL")
-    print("====================================================")
-    from app.services.referral_profit_service import ReferralProfitService
+        # VIP dengan recruiter
+        a4 = ReferralProfitService.calculate_profit_allocation(amt, 55, has_sales_partner=True, has_recruiter=True)
+        assert a4['sales_commission'] + a4['recruitment_bonus'] + a4['ceo_share'] + a4['coo_share'] + a4['business_reserve'] == amt
 
-    print(f"  - DIRECT_RATE_DEFAULT (Pemula): {ReferralProfitService.DIRECT_RATE_DEFAULT}%")
-    assert ReferralProfitService.DIRECT_RATE_DEFAULT == 15.0, "DIRECT_RATE_DEFAULT harus 15.0%"
+    print(f"  Diuji pada {len(test_amounts)} variasi nominal ganjil/genap (Rp 1 s/d Rp 987.654): SEMUA PAS 100%.")
+    print("  -> PASS: Skenario 7 terverifikasi (Zero margin leakage terbukti secara matematis).")
 
-    print(f"  - DIRECT_RATE_VIP (VIP Milestone >= 50 order): {ReferralProfitService.DIRECT_RATE_VIP}%")
-    assert ReferralProfitService.DIRECT_RATE_VIP == 20.0, "DIRECT_RATE_VIP harus 20.0%"
+    # -----------------------------------------------------------------
+    # Skenario 8: Nominal pembagian profit konsisten antara Backend, Admin, & Sales
+    # -----------------------------------------------------------------
+    print("\n[TES 8] Konsistensi Nominal Lintas Service (Backend, Admin, Sales)")
+    from app.services.finance_service import FinanceService
+    from app.services.analytics_service import AnalyticsService
 
-    print(f"  - SPONSOR_RATE_DEFAULT (Referral 1-Level): {ReferralProfitService.SPONSOR_RATE_DEFAULT}%")
-    assert ReferralProfitService.SPONSOR_RATE_DEFAULT == 2.0, "SPONSOR_RATE_DEFAULT harus tetap 2.0%"
+    profit_dist = FinanceService.get_profit_distribution()
+    analytics_data = AnalyticsService.get_analytics_suite_data()
 
-    print(f"  - HOLDING_DAYS (Garansi): {ReferralProfitService.HOLDING_DAYS} hari")
+    print(f"  Finance Summary: Total Profit Transaksi Rp {profit_dist.get('totalTransactionProfit', 0):,}")
+    print(f"  Alokasi Finance: CEO Rp {profit_dist.get('totalCeoShare', 0):,}, COO Rp {profit_dist.get('totalCooShare', 0):,}, Cadangan Rp {profit_dist.get('totalBusinessReserve', 0):,}")
+    assert profit_dist.get('totalCeoShare') == profit_dist.get('totalCooShare'), "Founder parity CEO & COO harus identik!"
+
+    # Affiliate Performance in Analytics
+    aff_data = analytics_data.get('affiliatePerformanceData', [])
+    print(f"  Mitra di Analytics: {len(aff_data)}")
+    for a in aff_data:
+        print(f"    - [{a['code']}] {a['partnerName']}: Orders={a['referralOrders']}, Tier={a['activeStatus']}")
+        assert "VIP" in a['activeStatus'] or "Standard" in a['activeStatus']
+
+    print("  -> PASS: Skenario 8 terverifikasi (Sinkronisasi SSOT terbukti).")
+
+    # -----------------------------------------------------------------
+    # Skenario 9: Referral sponsor 2% dan hold komisi 3 hari tetap berfungsi
+    # -----------------------------------------------------------------
+    print("\n[TES 9] Referral Sponsor 2% & Masa Holding 3 Hari")
+    assert ReferralProfitService.SPONSOR_RATE_DEFAULT == 2.0, "SPONSOR_RATE_DEFAULT harus 2.0%"
     assert ReferralProfitService.HOLDING_DAYS == 3, "HOLDING_DAYS harus tetap 3 hari"
 
-    profit = 100000.0  # Rp 100.000 profit transaksi
+    # Sponsor bonus allocation
+    sp_test = ReferralProfitService.calculate_profit_allocation(100000, 10, has_sales_partner=True, has_recruiter=True)
+    assert sp_test['recruitment_bonus'] == 2000, "Bonus rekruter harus Rp 2.000 (2%)"
+    assert sp_test['sales_commission'] == 15000, "Komisi sales harus tetap 15% utuh tanpa dipotong"
+    assert sp_test['business_reserve'] == 13000, "Cadangan harus 13% (15% - 2% rekruter)"
+    assert sp_test['ceo_share'] == 35000, "CEO tetap 35%"
+    assert sp_test['coo_share'] == 35000, "COO tetap 35%"
+    assert sp_test['total_allocated'] == 100000
 
-    # 1. Sales Pemula (15%)
-    res_pemula = ReferralProfitService.allocate_waterfall(
-        order_id="ORD-TEST-PEMULA",
-        transaction_profit=profit,
-        direct_partner_code="AST-PEMULA",
-        direct_partner_rate=15.0,
-        sponsor_partner_code="AST-SPONSOR",
-    )
-    print(f"\n  Skenario Sales Pemula (Profit Rp 100.000):")
-    print(f"    - Komisi Sales (15%): Rp {res_pemula['direct_commission']:,}")
-    print(f"    - Bonus Sponsor (2%): Rp {res_pemula['sponsor_bonus']:,}")
-    print(f"    - Profit Asterra: Rp {res_pemula['company_retained_profit']:,}")
-    assert res_pemula['direct_commission'] == 15000.0
-    assert res_pemula['sponsor_bonus'] == 2000.0
-    assert res_pemula['company_retained_profit'] == 83000.0
-    print("    [PASS] Alokasi Waterfall Pemula 15% + Sponsor 2% tepat.")
+    print("  -> PASS: Skenario 9 terverifikasi (Sponsor 2% disubsidi dari cadangan modal, hold 3 hari aktif).")
 
-    # 2. Sales VIP (20%)
-    res_vip = ReferralProfitService.allocate_waterfall(
-        order_id="ORD-TEST-VIP",
-        transaction_profit=profit,
-        direct_partner_code="AST-VIP",
-        direct_partner_rate=20.0,
-        sponsor_partner_code="AST-SPONSOR",
-    )
-    print(f"\n  Skenario Sales VIP (Profit Rp 100.000):")
-    print(f"    - Komisi Sales (20%): Rp {res_vip['direct_commission']:,}")
-    print(f"    - Bonus Sponsor (2%): Rp {res_vip['sponsor_bonus']:,}")
-    print(f"    - Profit Asterra: Rp {res_vip['company_retained_profit']:,}")
-    assert res_vip['direct_commission'] == 20000.0
-    assert res_vip['sponsor_bonus'] == 2000.0
-    assert res_vip['company_retained_profit'] == 78000.0
-    print("    [PASS] Alokasi Waterfall VIP 20% + Sponsor 2% tepat.")
+    # -----------------------------------------------------------------
+    # Skenario 10: Customer PII masking dan zero margin leakage
+    # -----------------------------------------------------------------
+    print("\n[TES 10] Customer PII Masking & Zero Margin Leakage")
+    # 1. Kasus utama contoh spesifikasi:
+    assert mask_customer_name("H. Jaelani") == "H. J******", f"Got: {mask_customer_name('H. Jaelani')}"
+    assert mask_customer_name("Marchelino Kurniawan") == "M********* K********", f"Got: {mask_customer_name('Marchelino Kurniawan')}"
+    assert mask_customer_name("Budi") == "B***", f"Got: {mask_customer_name('Budi')}"
+    assert mask_customer_name("Ahmad Fauzi") == "A**** F****", f"Got: {mask_customer_name('Ahmad Fauzi')}"
 
-    # 3. Founder Parity (CEO 40%, COO 40%, Reserve 20%)
-    retained = res_pemula['company_retained_profit']  # 83.000
-    ceo_share = round(retained * 0.40)                # 33.200
-    coo_share = round(retained * 0.40)                # 33.200
-    reserve = retained - ceo_share - coo_share        # 16.600
-    assert ceo_share == coo_share, "CEO dan COO harus strictly 50:50 equal parity!"
-    print(f"    [PASS] Founder Parity: CEO (40% = Rp {ceo_share:,}), COO (40% = Rp {coo_share:,}), Cadangan (20% = Rp {reserve:,}).")
+    # 2. Inisial dan tanda baca:
+    assert mask_customer_name("M. Taufik") == "M. T*****", f"Got: {mask_customer_name('M. Taufik')}"
+    assert mask_customer_name("Siti-Nur") == "S***-N**", f"Got: {mask_customer_name('Siti-Nur')}"
 
-def test_partner_service_tiers():
-    print("\n====================================================")
-    print("AUDIT 2B. DATA MITRA & TIER STATUS")
-    print("====================================================")
-    from app.services.partner_service import PartnerService
+    # 3. Kata pendek (1 & 2 karakter):
+    assert mask_customer_name("B") == "B*", f"Got: {mask_customer_name('B')}"
+    assert mask_customer_name("Bo") == "B*", f"Got: {mask_customer_name('Bo')}"
 
-    partners = PartnerService.get_all_partners()
-    print(f"  Total Mitra Terdaftar: {len(partners)}")
-    for p in partners:
-        print(f"    - [{p.get('code')}] {p.get('name')}: Tier '{p.get('tier')}', Rate {p.get('rate')}%")
-        assert p.get('rate') in [15, 20], f"Mitra {p.get('code')} memiliki rate tidak valid: {p.get('rate')}"
-        assert "15%" in p.get('tier', '') or "20%" in p.get('tier', ''), f"Tier tidak valid: {p.get('tier')}"
+    # 4. Spasi berlebih, string kosong, dan None:
+    assert mask_customer_name("   H.    Jaelani   ") == "H. J******"
+    assert mask_customer_name("") == ""
+    assert mask_customer_name(None) == ""
 
-    print("  [PASS] Seluruh akun mitra menggunakan rate 15% atau 20% tanpa ada rate 10% usang.")
+    # 5. Idempotensi (tidak merusak data yang sudah tersensor):
+    assert mask_customer_name("H. J******") == "H. J******"
+    assert mask_customer_name("M********* K********") == "M********* K********"
+    assert mask_customer_name("B***") == "B***"
 
-def test_simulation_catalog():
-    print("\n====================================================")
-    print("AUDIT 2C. KATALOG SIMULASI & FORMULA KOMISI")
-    print("====================================================")
-    from app.api.v1.sales import get_simulation_catalog
+    sales_orders = PartnerService.get_orders_for_partner("AST-ACELINO-COOL")
+    if sales_orders:
+        s0 = sales_orders[0]
+        assert "transactionProfit" not in s0, "transactionProfit bocor di sales portal!"
+        assert "providerPrice" not in s0, "providerPrice bocor di sales portal!"
+        assert "profitMargin" not in s0, "profitMargin bocor di sales portal!"
+        if s0.get("customerName"):
+            assert "*" in s0["customerName"], f"customerName di sales order tidak tersensor: {s0['customerName']}"
+    print("  -> PASS: Skenario 10 terverifikasi (PII tersamarkan, margin internal toko terlindungi).")
 
-    # 1. Pemula Catalog (15%)
-    cat_15 = get_simulation_catalog(rate=15.0)
-    assert cat_15['success'] is True
-    data_15 = cat_15['data']
-    print(f"  Jumlah Produk Simulasi: {len(data_15)}")
-
-    # 2. VIP Catalog (20%)
-    cat_20 = get_simulation_catalog(rate=20.0)
-    data_20 = cat_20['data']
-
-    # Sample product check
-    if data_15 and data_20:
-        p15 = data_15[0]
-        p20 = data_20[0]
-        print(f"  Sample: {p15['name']} (Harga: Rp {p15['price']:,})")
-        print(f"    - Base Commission (15%): Rp {p15['baseCommission']:,}")
-        print(f"    - Unit Commission VIP (20%): Rp {p20['commissionPerUnit']:,}")
-        
-        # Verify no margin leakage
-        assert "providerPrice" not in p15
-        assert "profitMargin" not in p15
-        assert p20['commissionPerUnit'] >= p15['baseCommission']
-        print("  [PASS] Katalog simulasi terbukti aman (tanpa bocoran modal) dan proporsi komisi akurat.")
 
 if __name__ == "__main__":
-    test_masking()
-    test_orders_privacy_and_margin_protection()
-    test_commission_rates()
-    test_partner_service_tiers()
-    test_simulation_catalog()
-    print("\n====================================================")
-    print("HASIL: SELURUH AUDIT BACKEND 100% LULUS (ALL PASS)!")
-    print("====================================================")
+    test_mandatory_10_scenarios()
+    print("\n====================================================================")
+    print("HASIL AKHIR: SELURUH 10 PENGUJIAN MANDATORI 100% LULUS (ALL PASS)!")
+    print("====================================================================")

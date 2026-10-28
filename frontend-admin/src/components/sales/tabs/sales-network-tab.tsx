@@ -104,7 +104,7 @@ export function SalesNetworkTab({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 text-xs text-foreground-muted">
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>Komisi teman 100% utuh (10% Profit)</span>
+                <span>Komisi teman 100% utuh (15% Profit)</span>
               </div>
               <div className="flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-primary shrink-0" />
@@ -153,7 +153,7 @@ export function SalesNetworkTab({
                   handleShare(
                     inviteSalesUrl,
                     'Ayo Gabung Jadi Mitra Sales Asterra Store',
-                    'Ayo gabung jadi Mitra Sales resmi Asterra Store! Dapatkan komisi profit bersih 10% dari setiap penjualan produk digital bergaransi:'
+                    'Ayo gabung jadi Mitra Sales resmi Asterra Store! Dapatkan komisi profit bersih 15% dari setiap penjualan produk digital bergaransi:'
                   )
                 }
                 className="inline-flex items-center justify-center gap-1.5 h-10 px-3 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs shadow-xs transition-colors cursor-pointer"

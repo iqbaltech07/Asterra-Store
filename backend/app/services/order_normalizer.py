@@ -130,8 +130,10 @@ class OrderNormalizer:
         o["customer_notes"] = cust_notes
 
         # Public Display Attributes
-        if cust_name and len(cust_name) > 2:
-            o["customer_display"] = f"{cust_name[0]}***{cust_name[-1]}"
+        from app.services.partner_service import mask_customer_name
+        masked_cname = mask_customer_name(cust_name)
+        if masked_cname:
+            o["customer_display"] = masked_cname
         elif cust_email and "@" in cust_email:
             parts = cust_email.split("@")
             o["customer_display"] = f"{parts[0][:2]}***@{parts[1]}"

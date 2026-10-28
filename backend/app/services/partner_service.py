@@ -13,20 +13,46 @@ from app.models.payout_request import PayoutRequest
 
 def mask_customer_name(name: Optional[str]) -> str:
     """
-    Asterra Store customer privacy masking:
-    - "Marchelino Kurniawan" -> "Mar***no"
-    - "Andi" -> "A***"
-    - "Bo" -> "B***"
-    - None / "" -> ""
+    Asterra Store customer privacy masking (SSOT):
+    - "H. Jaelani" -> "H. J******"
+    - "Marchelino Kurniawan" -> "M********* K********"
+    - "Budi" -> "B***"
+    - "Ahmad Fauzi" -> "A**** F****"
+    - Empty / None / invalid -> ""
+    - Idempotent: already masked names containing '*' are preserved without corruption.
     """
-    if not name or not str(name).strip():
+    if name is None:
         return ""
     clean = str(name).strip()
+    if not clean:
+        return ""
+    if "*" in clean:
+        return clean
+
     words = clean.split()
-    first_word = words[0] if words else clean
-    if len(first_word) <= 4:
-        return first_word[0] + "***"
-    return first_word[:3] + "***" + first_word[-2:]
+    if not words:
+        return ""
+
+    import re
+    masked_words = []
+    for word in words:
+        # Preserve initials with period, e.g. "H." or "Dr." or "M."
+        if re.match(r"^[A-Za-z]{1,2}\.$", word):
+            masked_words.append(word)
+        elif "-" in word:
+            parts = [
+                (sub[0] + "*" * (len(sub) - 1)) if len(sub) > 1 else (sub + "*")
+                for sub in word.split("-")
+                if sub
+            ]
+            masked_words.append("-".join(parts))
+        elif len(word) == 1:
+            masked_words.append(word + "*")
+        else:
+            masked_words.append(word[0] + "*" * (len(word) - 1))
+
+    return " ".join(masked_words)
+
 
 class PartnerService:
     _partners: Optional[List[Dict[str, Any]]] = None
@@ -88,6 +114,19 @@ class PartnerService:
         except Exception:
             return []
 
+    SUCCESSFUL_ORDER_STATUSES = {"completed", "paid", "settlement", "selesai", "done"}
+
+    @classmethod
+    def count_unique_successful_orders(cls, orders_list: List[Dict[str, Any]]) -> int:
+        seen = set()
+        for o in orders_list:
+            st = str(o.get("status") or o.get("order_status") or "").strip().lower()
+            if st in cls.SUCCESSFUL_ORDER_STATUSES:
+                oid = str(o.get("id") or o.get("order_id") or "").strip().upper()
+                if oid:
+                    seen.add(oid)
+        return len(seen)
+
     @classmethod
     def get_all_partners(cls) -> List[Dict[str, Any]]:
         partners = cls.load_partners()
@@ -142,9 +181,10 @@ class PartnerService:
             available_unpaid = max(0.0, (final_comm + final_net) - paid_commission - pending_payouts)
             total_pending = pending_comm + pending_net
 
+            successful_orders_count = cls.count_unique_successful_orders(partner_orders)
             total_orders_count = len(partner_orders)
             raw_tier = str(p.get("tier", "")).strip().lower()
-            if total_orders_count >= 50 or "vip" in raw_tier or p.get("rate") == 20:
+            if successful_orders_count >= 50 or "vip" in raw_tier or p.get("rate") == 20:
                 eff_tier = "VIP (20%)"
                 eff_rate = 20
             else:
@@ -155,6 +195,7 @@ class PartnerService:
                 **p,
                 "tier": eff_tier,
                 "rate": eff_rate,
+                "successfulOrders": successful_orders_count,
                 "totalOrders": total_orders_count,
                 "totalRevenue": total_revenue,
                 "unpaidCommission": available_unpaid,
@@ -162,6 +203,10 @@ class PartnerService:
                 "paidCommission": paid_commission,
                 "pendingPayouts": pending_payouts,
                 "networkCommission": net_comm,
+                "tierProgress": {
+                    "currentOrders": successful_orders_count,
+                    "targetOrders": 50,
+                },
                 "_count": {"orders": total_orders_count},
             })
 
@@ -337,18 +382,15 @@ class PartnerService:
         available_unpaid = max(0.0, (final_comm + final_net) - paid_comm - pending_payouts)
         total_pending = pending_comm + pending_net
 
+        successful_orders_count = cls.count_unique_successful_orders(partner_orders)
         total_orders_count = len(partner_orders)
-        if total_orders_count >= 50:
+        raw_tier = str(partner.get("tier", "")).strip().lower()
+        if successful_orders_count >= 50 or "vip" in raw_tier or partner.get("rate") == 20:
             effective_tier = "VIP (20%)"
             effective_rate = 20
         else:
-            raw_tier = str(partner.get("tier", "")).strip()
-            if "vip" in raw_tier.lower() or raw_tier.startswith("VIP"):
-                effective_tier = "VIP (20%)"
-                effective_rate = 20
-            else:
-                effective_tier = "Standard (15%)"
-                effective_rate = 20 if partner.get("rate") == 20 else max(15, int(partner.get("rate", 15) or 15))
+            effective_tier = "Standard (15%)"
+            effective_rate = 20 if partner.get("rate") == 20 else max(15, int(partner.get("rate", 15) or 15))
 
         return {
             "id": partner.get("id"),
@@ -358,8 +400,13 @@ class PartnerService:
             "whatsapp": partner.get("whatsapp"),
             "tier": effective_tier,
             "rate": effective_rate,
+            "successfulOrders": successful_orders_count,
             "totalClicks": partner.get("totalClicks", 0),
             "totalOrders": total_orders_count,
+            "tierProgress": {
+                "currentOrders": successful_orders_count,
+                "targetOrders": 50,
+            },
             "totalRevenue": total_revenue,
             "unpaidCommission": available_unpaid,
             "pendingCommission": total_pending,
@@ -493,7 +540,9 @@ class PartnerService:
                 campaign_name = camp_meta.get("name") or o.get("campaignName") or (f"Promo Campaign ({camp_key})" if camp_key else "Promo Campaign Spesial")
             else:
                 campaign_rate = None
-                fallback_rate = 20.0 if (partner.get("rate") == 20 or len(matched) >= 50) else 15.0
+                matched_successful_count = cls.count_unique_successful_orders(matched)
+                is_vip_matched = bool(partner.get("rate") == 20 or matched_successful_count >= 50 or "vip" in str(partner.get("tier", "")).lower())
+                fallback_rate = 20.0 if is_vip_matched else 15.0
                 commission_rate = float(comm_rec.commission_rate if (comm_rec and comm_rec.commission_rate) else partner.get("rate", fallback_rate))
                 campaign_name = None
 

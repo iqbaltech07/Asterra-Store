@@ -27,6 +27,7 @@ import {
   clearLegacySyntheticTimelineStorage,
   getDeterministicSimulationOrders,
 } from '@/lib/hooks/use-dynamic-orders';
+import { maskCustomerName } from '@/lib/utils/masking';
 import { useCatalogProducts } from '@/lib/hooks/use-catalog-products';
 import { ProductCard } from '@/components/products/product-card';
 import { ProductBrandIcon } from '@/components/ui/product-brand-icon';
@@ -503,7 +504,7 @@ function GlobalOrdersContent() {
                           <span className="text-foreground-muted text-xs">—</span>
                           <span className="text-xs text-foreground font-medium inline-flex items-center gap-1">
                             <FontAwesomeIcon icon={faUserCheck} className="w-3 h-3 text-foreground-muted" />
-                            <span>{order.customer_display}</span>
+                            <span>{maskCustomerName(order.customer_display) || 'Pelanggan'}</span>
                           </span>
                         </div>
                         <p className="text-xs font-semibold text-foreground">

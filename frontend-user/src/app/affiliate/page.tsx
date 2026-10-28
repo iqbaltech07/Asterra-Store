@@ -23,11 +23,11 @@ export const revalidate = 0;
 export const metadata: Metadata = {
   title: 'Program Mitra Affiliate | Asterra Store',
   description:
-    'Rekomendasikan 200+ produk digital terpopuler dan dapatkan komisi langsung 10% – 15% per transaksi serta bonus sponsor 2%. Tanpa modal stok dan tanpa repot pengiriman.',
+    'Rekomendasikan 200+ produk digital terpopuler dan dapatkan komisi langsung 15% – 20% dari profit transaksi serta bonus sponsor 2%. Tanpa modal stok dan tanpa repot pengiriman.',
   openGraph: {
     title: 'Program Mitra Affiliate - Asterra Store',
     description:
-      'Dapatkan komisi langsung 10% – 15% plus bonus sponsor 2% dari setiap penjualan produk digital bergaransi. Daftar gratis dan kelola referral di Portal Sales.',
+      'Dapatkan komisi langsung 15% – 20% plus bonus sponsor 2% dari profit transaksi penjualan produk digital bergaransi. Daftar gratis dan kelola referral di Portal Sales.',
     images: ['/images/banners/hero-banner-seller.webp'],
   },
 };
@@ -46,12 +46,12 @@ export default function AffiliatePage() {
             href={registerUrl}
             target="_blank"
             rel="noopener noreferrer"
-            title="Daftar Program Mitra Affiliate Asterra Store - Dapatkan Komisi 10% – 15% plus 2% Bonus Sponsor"
+            title="Daftar Program Mitra Affiliate Asterra Store - Dapatkan Komisi 15% – 20% plus 2% Bonus Sponsor"
             className="group block relative w-full overflow-hidden rounded-xl sm:rounded-2xl md:rounded-3xl border border-[rgba(18,26,42,0.08)] shadow-xs hover:shadow-md transition-shadow aspect-[1024/254]"
           >
             <Image
               src="/images/banners/hero-banner-seller.webp"
-              alt="Program Affiliate Asterra Store - Dapatkan Komisi 10% – 15% plus 2% Bonus Sponsor dari Setiap Transaksi Produk Digital"
+              alt="Program Affiliate Asterra Store - Dapatkan Komisi 15% – 20% plus 2% Bonus Sponsor dari Setiap Transaksi Produk Digital"
               width={2048}
               height={508}
               priority
@@ -73,10 +73,10 @@ export default function AffiliatePage() {
               <span>Program Kemitraan Affiliate</span>
             </div>
             <h2 data-gsap="seller-title" className="text-base sm:text-xl font-bold text-[#121A2A] leading-snug">
-              Rekomendasikan Produk Digital, Dapatkan Komisi 10% – 15% + 2%
+              Rekomendasikan Produk Digital, Dapatkan Komisi 15% – 20% + 2%
             </h2>
             <p data-gsap="seller-desc" className="text-xs sm:text-sm text-[#121A2A]/70 leading-relaxed max-w-2xl">
-              Tanpa modal stok dan tanpa repot pengiriman. Komisi dasar 10% dan otomatis naik hingga 15% saat target tercapai, plus bonus sponsor 2%.
+              Tanpa modal stok dan tanpa repot pengiriman. Komisi pemula 15% dan otomatis naik menjadi 20% dari profit transaksi setelah 50 transaksi sukses, plus bonus sponsor 2%.
             </p>
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 w-full sm:w-auto shrink-0">
@@ -137,7 +137,7 @@ export default function AffiliatePage() {
               </div>
               <ul className="text-xs text-amber-900/80 space-y-1.5 list-disc list-inside leading-relaxed">
                 <li>
-                  <strong className="text-amber-950">10% – 15% Komisi Langsung</strong> dari margin profit bersih setiap pesanan (komisi dasar 10% dan dapat naik hingga 15% saat target penjualan tercapai).
+                  <strong className="text-amber-950">15% – 20% Komisi Langsung</strong> dari profit transaksi setiap pesanan (komisi pemula 15% dan otomatis naik ke 20% VIP setelah mencapai 50 transaksi sukses).
                 </li>
                 <li>
                   <strong className="text-amber-950">2% Bonus Sponsor</strong> setiap kali mitra affiliate baru yang Anda undang berhasil melakukan penjualan.
@@ -152,9 +152,9 @@ export default function AffiliatePage() {
               <div className="w-9 h-9 rounded-xl bg-[#C96F55]/10 text-[#C96F55] flex items-center justify-center">
                 <FontAwesomeIcon icon={faWallet} className="w-4 h-4" />
               </div>
-              <h3 className="font-bold text-sm text-[#121A2A]">Komisi 10% – 15% Langsung</h3>
+              <h3 className="font-bold text-sm text-[#121A2A]">Komisi 15% – 20% Langsung</h3>
               <p className="text-xs text-[#121A2A]/65 leading-relaxed">
-                Komisi dasar 10% dan otomatis naik hingga 15% saat target tercapai, dihitung transparan dari profit bersih setiap transaksi valid.
+                Komisi pemula 15% dan otomatis naik menjadi 20% VIP setelah mencapai 50 transaksi sukses, dihitung transparan dari profit transaksi setiap pesanan valid.
               </p>
             </div>
 

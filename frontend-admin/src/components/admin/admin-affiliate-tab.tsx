@@ -169,7 +169,7 @@ export function AdminAffiliateTab({ onNotify }: AdminAffiliateTabProps) {
   const [newPassword, setNewPassword] = useState('');
   const [newWhatsapp, setNewWhatsapp] = useState('');
   const [newCode, setNewCode] = useState('');
-  const [newRate, setNewRate] = useState(10);
+  const [newRate, setNewRate] = useState(15);
   const [newBank, setNewBank] = useState('BCA');
   const [newAccount, setNewAccount] = useState('');
 

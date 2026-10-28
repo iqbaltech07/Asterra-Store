@@ -124,7 +124,7 @@ export function SalesOverviewTab({
               <span>
                 Status Akun:{' '}
                 {partner?.status === 'active'
-                  ? `Mitra Aktif (${partner?.tier || 'Standard 10%'})`
+                  ? `Mitra Aktif (${partner?.tier || 'Standard 15%'})`
                   : partner?.status === 'suspended'
                   ? 'Ditangguhkan (Suspended)'
                   : partner?.status === 'pending'
@@ -137,7 +137,7 @@ export function SalesOverviewTab({
             </h2>
             <p className="text-xs sm:text-sm text-foreground-muted leading-relaxed">
               Bagikan link referral Anda untuk mendapatkan bagi hasil komisi{' '}
-              <strong className="text-foreground font-semibold">{partnerRate}% dari Profit Transaksi</strong> bersih (otomatis naik ke 15% setelah 50 transaksi tercapai).
+              <strong className="text-foreground font-semibold">{partnerRate}% dari Profit Transaksi</strong> bersih (otomatis naik ke 20% setelah 50 transaksi tercapai).
             </p>
           </div>
 
@@ -404,7 +404,7 @@ export function SalesOverviewTab({
               </div>
               <div className="flex items-center justify-between text-foreground-muted pt-0.5">
                 <span>Bonus Tier Berikutnya:</span>
-                <span className="font-semibold text-[#D97706]">Naik ke 15%</span>
+                <span className="font-semibold text-[#D97706]">{partnerRate >= 20 ? 'Tier Maksimal (20%)' : 'Naik ke 20% (VIP)'}</span>
               </div>
             </div>
           </div>
@@ -428,7 +428,7 @@ export function SalesOverviewTab({
               Ajak Teman Jadi Mitra Sales & Dapatkan Bonus 2% Profit!
             </h4>
             <p className="text-xs text-foreground-muted mt-0.5 max-w-2xl">
-              Dapatkan bonus 2% dari Profit Transaksi teman langsung Anda tanpa memotong komisi penjualan mereka (teman tetap menerima 10% utuh).
+              Dapatkan bonus 2% dari Profit Transaksi teman langsung Anda tanpa memotong komisi penjualan mereka (teman tetap menerima 15% utuh).
             </p>
           </div>
         </div>
@@ -457,7 +457,7 @@ export function SalesOverviewTab({
               handleShare(
                 inviteSalesUrl,
                 'Gabung Mitra Sales Asterra Store',
-                'Ayo gabung jadi Mitra Sales Asterra Store! Dapatkan komisi 10% profit dari setiap penjualan produk digital bergaransi:'
+                'Ayo gabung jadi Mitra Sales Asterra Store! Dapatkan komisi 15% profit dari setiap penjualan produk digital bergaransi:'
               )
             }
             className="h-9 px-3 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"

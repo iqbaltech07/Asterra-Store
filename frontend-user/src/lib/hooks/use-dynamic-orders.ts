@@ -1,3 +1,4 @@
+import { maskCustomerName } from '@/lib/utils/masking';
 export interface PublicOrder {
   id: string;
   raw_id: string;
@@ -159,53 +160,49 @@ export function hashPRNG(seed: number, stream: number): number {
 
 /**
  * Menghasilkan nama pelanggan tersamar yang sepenuhnya dinamis, natural, dan variatif
- * dengan kombinasi >100.000 kemungkinan gaya dan format tanpa pola berulang monoton.
+ * dengan jaminan 100% tersensor mengikuti standar kanonikal AsterraStore:
+ * - "H. Jaelani" -> "H. J******"
+ * - "Marchelino Kurniawan" -> "M********* K********"
+ * - "Budi" -> "B***"
+ * - "Ahmad Fauzi" -> "A**** F****"
  */
 export function generateMaskedCustomerName(seed: number): string {
   const fIdx = Math.floor(hashPRNG(seed, 101) * INDONESIAN_FIRST_NAMES.length);
   const lIdx = Math.floor(hashPRNG(seed, 102) * INDONESIAN_LAST_NAMES.length);
   const firstName = INDONESIAN_FIRST_NAMES[fIdx];
   const lastName = INDONESIAN_LAST_NAMES[lIdx];
-  const style = Math.floor(hashPRNG(seed, 103) * 10);
+  const style = Math.floor(hashPRNG(seed, 103) * 6);
 
+  let rawCandidate = '';
   switch (style) {
     case 0:
-      // Misal: "Dimas P***"
-      return `${firstName} ${lastName.charAt(0)}***`;
+      // Inisial gelar/depan + nama belakang, misal: "H. Jaelani" -> tersensor menjadi "H. J******"
+      rawCandidate = `${firstName.charAt(0)}. ${lastName}`;
+      break;
     case 1:
-      // Misal: "D*** Pratama"
-      return `${firstName.charAt(0)}*** ${lastName}`;
+      // Dua nama lengkap, misal: "Marchelino Kurniawan" -> "M********* K********"
+      rawCandidate = `${firstName} ${lastName}`;
+      break;
     case 2:
-      // Misal: "Dimas P."
-      return `${firstName} ${lastName.charAt(0)}.`;
+      // Inisial tengah, misal: "Ahmad F. Kurniawan" -> "A**** F. K********"
+      rawCandidate = `${firstName} ${lastName.charAt(0)}. ${INDONESIAN_LAST_NAMES[(lIdx + 5) % INDONESIAN_LAST_NAMES.length]}`;
+      break;
     case 3:
-      // Misal: "D. Pratama"
-      return `${firstName.charAt(0)}. ${lastName}`;
+      // Satu nama depan saja, misal: "Budi" -> "B***"
+      rawCandidate = firstName;
+      break;
     case 4:
-      // Misal: "Dim*** P***"
-      return `${firstName.slice(0, 3)}*** ${lastName.charAt(0)}***`;
+      // Nama belakang saja, misal: "Santoso" -> "S******"
+      rawCandidate = lastName;
+      break;
     case 5:
-      // Misal: "D***s P***a"
-      return `${firstName.charAt(0)}***${firstName.slice(-1)} ${lastName.charAt(0)}***${lastName.slice(-1)}`;
-    case 6:
-      // Misal: "Dimas P***a"
-      return `${firstName} ${lastName.charAt(0)}***${lastName.slice(-1)}`;
-    case 7:
-      // Misal: "D*** Pra***"
-      return `${firstName.charAt(0)}*** ${lastName.slice(0, 3)}***`;
-    case 8:
-      // Misal: "Dimas***"
-      return `${firstName}***`;
-    case 9:
-    default: {
-      // Misal: "dimas_***28" atau "dimas***82"
-      const num = 10 + Math.floor(hashPRNG(seed, 104) * 89);
-      const isUnderscore = hashPRNG(seed, 105) > 0.5;
-      return isUnderscore
-        ? `${firstName.toLowerCase()}_***${num}`
-        : `${firstName.toLowerCase()}***${num}`;
-    }
+    default:
+      // Dua kata standar, misal: "Ahmad Fauzi" -> "A**** F****"
+      rawCandidate = `${firstName} ${lastName}`;
+      break;
   }
+
+  return maskCustomerName(rawCandidate);
 }
 
 /**

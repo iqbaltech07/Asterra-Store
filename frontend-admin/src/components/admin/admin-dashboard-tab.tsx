@@ -22,6 +22,7 @@ import { useCountUp } from '@/lib/hooks/use-count-up';
 import { SalesTrendChart } from './sales-trend-chart';
 import { AdminTab } from './admin-sidebar';
 import { ProductBrandIcon } from '@/components/ui/product-brand-icon';
+import { maskCustomerName } from '@/lib/utils/masking';
 
 interface AdminDashboardTabProps {
   metrics?: {
@@ -424,7 +425,7 @@ export function AdminDashboardTab({
                   ) : (
                     displayTransactions.map((tx: any) => {
                       const id = tx.id || tx.orderId || '-';
-                      const customer = tx.customer || tx.customerName || 'Pelanggan';
+                      const customer = maskCustomerName(tx.customer || tx.customerName) || 'Pelanggan';
                       const product = tx.product || (tx.items?.[0]?.productName) || 'Layanan Digital';
                       const paymentMethod = tx.paymentMethod || 'QRIS';
                       const amount = typeof tx.amount === 'number' ? tx.amount : (tx.totalAmount || 0);

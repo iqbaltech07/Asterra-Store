@@ -514,7 +514,7 @@ export function AdminFinanceSuite({ activeTab, metrics, onNotify }: AdminFinance
               Buku Besar Distribusi Laba & Audit Finansial
             </h2>
             <p className="text-xs text-foreground-muted mt-0.5">
-              Perhitungan murni dari Profit Transaksi (Net Revenue − Biaya Langsung). Pembagian: 40% CEO, 40% COO (Strict Equality), 20% Modal Usaha.
+              Perhitungan murni dari Profit Transaksi (Net Revenue − Biaya Langsung). Pembagian: Non-VIP: 35% CEO, 35% COO, 15% Sales, 15% Cadangan | VIP: 32,5% CEO, 32,5% COO, 20% Sales, 15% Cadangan.
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -548,14 +548,14 @@ export function AdminFinanceSuite({ activeTab, metrics, onNotify }: AdminFinance
                 <span>Bagian CEO (Chief Executive Officer)</span>
               </div>
               <Badge variant="outline" className="text-primary border-primary/30 text-[10px] font-mono font-bold">
-                40%
+                35% / 32,5% VIP
               </Badge>
             </div>
             <div className="text-2xl font-bold text-foreground font-mono">
               Rp {ceoShare.toLocaleString('id-ID')}
             </div>
             <div className="flex items-center justify-between text-[11px] text-foreground-muted pt-1 border-t border-border/60">
-              <span>Formula: 40% × Profit Distribusi</span>
+              <span>Formula: 35% (32,5% VIP) × Profit Transaksi</span>
               <span className="text-status-success font-medium flex items-center gap-1">
                 <Check className="w-3 h-3" /> Sama Rata COO
               </span>
@@ -570,14 +570,14 @@ export function AdminFinanceSuite({ activeTab, metrics, onNotify }: AdminFinance
                 <span>Bagian COO (Chief Operating Officer)</span>
               </div>
               <Badge variant="outline" className="text-primary border-primary/30 text-[10px] font-mono font-bold">
-                40%
+                35% / 32,5% VIP
               </Badge>
             </div>
             <div className="text-2xl font-bold text-foreground font-mono">
               Rp {cooShare.toLocaleString('id-ID')}
             </div>
             <div className="flex items-center justify-between text-[11px] text-foreground-muted pt-1 border-t border-border/60">
-              <span>Formula: 40% × Profit Distribusi</span>
+              <span>Formula: 35% (32,5% VIP) × Profit Transaksi</span>
               <span className="text-status-success font-medium flex items-center gap-1">
                 <Check className="w-3 h-3" /> Sama Rata CEO
               </span>
@@ -592,14 +592,14 @@ export function AdminFinanceSuite({ activeTab, metrics, onNotify }: AdminFinance
                 <span>Cadangan Modal Usaha</span>
               </div>
               <Badge variant="outline" className="text-status-warning border-status-warning/30 text-[10px] font-mono font-bold">
-                20%
+                15%
               </Badge>
             </div>
             <div className="text-2xl font-bold text-foreground font-mono">
               Rp {businessReserve.toLocaleString('id-ID')}
             </div>
             <div className="text-[11px] text-foreground-muted pt-1 border-t border-border/60">
-              Operasional, deposit supplier, marketing, & buffer refund
+              Formula: 15% Cadangan Operasional & Garansi
             </div>
           </div>
         </div>
@@ -668,8 +668,8 @@ export function AdminFinanceSuite({ activeTab, metrics, onNotify }: AdminFinance
 
             <div className="p-3 rounded-lg bg-surface-raised border border-border flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="text-foreground-muted">(-) Komisi Direct Sales (10% dari Profit Transaksi)</span>
-                <Badge variant="outline" className="text-[10px] border-border">10% Profit</Badge>
+                <span className="text-foreground-muted">(-) Komisi Direct Sales (15% Standar / 20% VIP dari Profit Transaksi)</span>
+                <Badge variant="outline" className="text-[10px] border-border">15% / 20% Profit</Badge>
               </div>
               <span className="text-status-error font-mono font-bold">
                 -Rp {salesCommission.toLocaleString('id-ID')}
@@ -690,7 +690,7 @@ export function AdminFinanceSuite({ activeTab, metrics, onNotify }: AdminFinance
               <div>
                 <span className="text-primary font-bold text-base">(=) TOTAL PROFIT DISTRIBUSI</span>
                 <span className="text-[11px] text-foreground-muted block font-normal">
-                  Dialokasikan: 40% CEO (Rp {ceoShare.toLocaleString('id-ID')}) + 40% COO (Rp {cooShare.toLocaleString('id-ID')}) + 20% Modal Usaha (Rp {businessReserve.toLocaleString('id-ID')})
+                  Dialokasikan: CEO (35% / 32,5% VIP: Rp {ceoShare.toLocaleString('id-ID')}) + COO (35% / 32,5% VIP: Rp {cooShare.toLocaleString('id-ID')}) + Cadangan Modal (15%: Rp {businessReserve.toLocaleString('id-ID')})
                 </span>
               </div>
               <span className="text-primary font-mono text-lg">
@@ -738,7 +738,7 @@ export function AdminFinanceSuite({ activeTab, metrics, onNotify }: AdminFinance
                 <span>Buku Besar Transaksi (Audit Trail Section 8)</span>
               </h3>
               <p className="text-foreground-muted text-[11px] mt-0.5">
-                Audit riil per transaksi: Net Revenue, COGS, Profit, Komisi Sales (10%), Rekrutmen (2%), dan Distribusi.
+                Audit riil per transaksi: Net Revenue, COGS, Profit, Komisi Sales (15% / 20%), Rekrutmen (2%), dan Distribusi.
               </p>
             </div>
 
@@ -779,9 +779,9 @@ export function AdminFinanceSuite({ activeTab, metrics, onNotify }: AdminFinance
                     <th className="py-3 px-3 text-right">Net Revenue</th>
                     <th className="py-3 px-3 text-right">Biaya Langsung</th>
                     <th className="py-3 px-3 text-right">Profit Transaksi</th>
-                    <th className="py-3 px-3 text-right">Komisi (10% + 2%)</th>
+                    <th className="py-3 px-3 text-right">Komisi (15%/20% + 2%)</th>
                     <th className="py-3 px-3 text-right">Profit Distribusi</th>
-                    <th className="py-3 px-3 text-right">CEO / COO / Modal</th>
+                    <th className="py-3 px-3 text-right">CEO / COO / Cadangan</th>
                     <th className="py-3 px-3 text-center">Status</th>
                   </tr>
                 </thead>
@@ -879,9 +879,9 @@ export function AdminFinanceSuite({ activeTab, metrics, onNotify }: AdminFinance
                         </td>
 
                         <td className="py-3 px-3 text-right font-mono text-[10px] text-foreground-muted">
-                          <div>CEO (40%): Rp {(e.ceoShare ?? 0).toLocaleString('id-ID')}</div>
-                          <div>COO (40%): Rp {(e.cooShare ?? 0).toLocaleString('id-ID')}</div>
-                          <div>Modal (20%): Rp {(e.businessReserve ?? 0).toLocaleString('id-ID')}</div>
+                          <div>CEO (35%/32,5%): Rp {(e.ceoShare ?? 0).toLocaleString('id-ID')}</div>
+                          <div>COO (35%/32,5%): Rp {(e.cooShare ?? 0).toLocaleString('id-ID')}</div>
+                          <div>Cadangan (15%): Rp {(e.businessReserve ?? 0).toLocaleString('id-ID')}</div>
                         </td>
 
                         <td className="py-3 px-3 text-center">

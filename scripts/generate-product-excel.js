@@ -1,5 +1,10 @@
 const { PrismaClient } = require('@prisma/client');
-const ExcelJS = require('exceljs');
+let ExcelJS;
+try {
+  ExcelJS = require('exceljs');
+} catch {
+  ExcelJS = require(require.resolve('exceljs', { paths: ['./frontend-sales', './'] }));
+}
 const fs = require('fs');
 const path = require('path');
 
@@ -103,32 +108,52 @@ const STYLES = {
 
 async function generateExcel() {
   console.log('Fetching all products from DB...');
-  const dbAllProducts = await prisma.product.findMany({
-    orderBy: [{ status: 'asc' }, { categoryName: 'asc' }, { name: 'asc' }],
-  });
+  let dbAllProducts = [];
+  try {
+    dbAllProducts = await prisma.product.findMany({
+      orderBy: [{ status: 'asc' }, { categoryName: 'asc' }, { name: 'asc' }],
+    });
+  } catch (err) {
+    console.warn('Prisma DB fetch warning (using fallback catalog if needed):', err.message);
+  }
   const dbActiveProducts = dbAllProducts.filter((p) => p.status === 'active');
   console.log(`Found ${dbAllProducts.length} total products in DB (${dbActiveProducts.length} active).`);
 
   let fallbackProducts = [];
-  const fallbackPath = path.resolve(__dirname, '../data/active-catalog.json');
-  if (fs.existsSync(fallbackPath)) {
-    try {
-      fallbackProducts = JSON.parse(fs.readFileSync(fallbackPath, 'utf8'));
-      console.log(`Loaded ${fallbackProducts.length} fallback products.`);
-    } catch (e) {
-      console.warn('Fallback catalog read error:', e.message);
+  const fallbackCandidates = [
+    path.resolve(__dirname, '../data/active-catalog.json'),
+    path.resolve(__dirname, '../backend/data/active-catalog.json'),
+    path.resolve(process.cwd(), 'data/active-catalog.json'),
+    path.resolve(process.cwd(), 'backend/data/active-catalog.json'),
+  ];
+  for (const fp of fallbackCandidates) {
+    if (fs.existsSync(fp)) {
+      try {
+        fallbackProducts = JSON.parse(fs.readFileSync(fp, 'utf8'));
+        console.log(`Loaded ${fallbackProducts.length} fallback products from ${fp}`);
+        break;
+      } catch (e) {
+        console.warn('Fallback catalog read error:', e.message);
+      }
     }
   }
 
   // Load pricing strategy data
-  const stratPath = path.resolve(__dirname, '../data/pricing-strategy-milestone-50.json');
+  const stratCandidates = [
+    path.resolve(__dirname, '../backend/data/pricing-strategy-milestone-50.json'),
+    path.resolve(__dirname, '../data/pricing-strategy-milestone-50.json'),
+    path.resolve(process.cwd(), 'backend/data/pricing-strategy-milestone-50.json'),
+  ];
   let strategyProducts = [];
-  if (fs.existsSync(stratPath)) {
-    try {
-      strategyProducts = JSON.parse(fs.readFileSync(stratPath, 'utf8'));
-      console.log(`Loaded ${strategyProducts.length} items from pricing strategy JSON.`);
-    } catch (e) {
-      console.warn('Strategy read error:', e.message);
+  for (const sp of stratCandidates) {
+    if (fs.existsSync(sp)) {
+      try {
+        strategyProducts = JSON.parse(fs.readFileSync(sp, 'utf8'));
+        console.log(`Loaded ${strategyProducts.length} items from pricing strategy JSON at ${sp}`);
+        break;
+      } catch (e) {
+        console.warn('Strategy read error:', e.message);
+      }
     }
   }
 
@@ -694,7 +719,7 @@ async function generateExcel() {
 
     wsStrat.mergeCells('A2:U2');
     const subStrat = wsStrat.getCell('A2');
-    subStrat.value = 'Harga final dirancang agar komisi Sales naik ke 15% mulai order ke-50 tanpa menurunkan profit Asterra per 50 order.';
+    subStrat.value = 'Harga final dirancang agar komisi Sales naik ke 20% mulai order ke-50 tanpa menurunkan profit Asterra per 50 order.';
     subStrat.font = { name: 'Segoe UI', size: 9.5, italic: true, color: { argb: 'FF475569' } };
     subStrat.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
     subStrat.alignment = { vertical: 'middle', horizontal: 'center' };
@@ -718,7 +743,7 @@ async function generateExcel() {
 
     wsStrat.mergeCells('P4:U4');
     const card3Head = wsStrat.getCell('P4');
-    card3Head.value = 'SIMULASI 50 ORDER — KOMISI 15% MULAI ORDER KE-50';
+    card3Head.value = 'SIMULASI 50 ORDER — KOMISI 20% (VIP) MULAI ORDER KE-50';
     card3Head.fill = STYLES.indigoHeaderFill;
     card3Head.font = STYLES.headerFont;
     card3Head.alignment = { vertical: 'middle', horizontal: 'center' };
@@ -729,11 +754,11 @@ async function generateExcel() {
     r5.getCell(1).value = 'Referral Discount (1x Customer Baru)';
     r5.getCell(2).value = 1000;
     r5.getCell(3).value = 'Sales Milestone Rate (Order #50+)';
-    r5.getCell(4).value = 0.15;
+    r5.getCell(4).value = 0.20;
     r5.getCell(5).value = 'Recruiter Bonus (1 Level)';
     r5.getCell(6).value = 0.02;
     r5.getCell(7).value = 'Internal Share (CEO & COO)';
-    r5.getCell(8).value = 0.40;
+    r5.getCell(8).value = 0.35;
     r5.getCell(10).value = 'Baseline listed total (old)';
     r5.getCell(11).value = 1511300;
     r5.getCell(12).value = 'Final listed total';
@@ -741,8 +766,8 @@ async function generateExcel() {
     r5.getCell(14).value = 'Δ Uplift';
     r5.getCell(15).value = { formula: 'M5-K5' };
     r5.getCell(16).value = 'Metric';
-    r5.getCell(17).value = 'Baseline (10%)';
-    r5.getCell(18).value = 'Milestone (15%)';
+    r5.getCell(17).value = 'Baseline (15%)';
+    r5.getCell(18).value = 'Milestone VIP (20%)';
     r5.getCell(19).value = 'Δ Selisih';
     r5.getCell(20).value = 'Δ %';
     r5.getCell(21).value = 'Catatan';
@@ -750,7 +775,7 @@ async function generateExcel() {
     const r6 = wsStrat.getRow(6);
     r6.height = 22;
     r6.getCell(3).value = 'Sales Baseline Rate (Order #1–49)';
-    r6.getCell(4).value = 0.10;
+    r6.getCell(4).value = 0.15;
     r6.getCell(10).value = 'Baseline gross profit (old)';
     r6.getCell(11).value = 728200;
     r6.getCell(12).value = 'Final gross profit';
@@ -762,13 +787,13 @@ async function generateExcel() {
     r6.getCell(18).value = { formula: '49*($M$7/37)*(1-$D$6-$F$5)+1*($M$7/37)*(1-$D$5-$F$5)' };
     r6.getCell(19).value = { formula: 'R6-Q6' };
     r6.getCell(20).value = { formula: 'S6/Q6' };
-    r6.getCell(21).value = 'Order #1–49 @10%, order #50 @15%';
+    r6.getCell(21).value = 'Order #1–49 @15%, order #50 @20%';
 
     const r7 = wsStrat.getRow(7);
     r7.height = 22;
     r7.getCell(3).value = 'Target Commission Uplift';
-    r7.getCell(4).value = 0.15;
-    r7.getCell(10).value = 'Baseline referral profit @10% (old)';
+    r7.getCell(4).value = 0.20;
+    r7.getCell(10).value = 'Baseline referral profit @15% (old)';
     r7.getCell(11).value = 691200;
     r7.getCell(12).value = 'Final referral profit @pricing';
     r7.getCell(13).value = { formula: 'H49' };
@@ -779,13 +804,13 @@ async function generateExcel() {
     r7.getCell(18).value = { formula: '49*($M$7/37)*$D$6+1*($M$7/37)*$D$5' };
     r7.getCell(19).value = { formula: 'R7-Q7' };
     r7.getCell(20).value = { formula: 'S7/Q7' };
-    r7.getCell(21).value = 'Order #1–49 @10%, order #50 @15%';
+    r7.getCell(21).value = 'Order #1–49 @15%, order #50 @20%';
 
     const r8 = wsStrat.getRow(8);
     r8.height = 22;
-    r8.getCell(10).value = 'Baseline Asterra distribution @10%';
+    r8.getCell(10).value = 'Baseline Asterra distribution @15%';
     r8.getCell(11).value = 608256;
-    r8.getCell(12).value = 'Final Asterra distribution @15%';
+    r8.getCell(12).value = 'Final Asterra distribution @20%';
     r8.getCell(13).value = { formula: 'K49' };
     r8.getCell(14).value = 'Uplift';
     r8.getCell(15).value = { formula: 'M8-K8' };
@@ -794,7 +819,7 @@ async function generateExcel() {
     r8.getCell(18).value = { formula: '($M$7/37)*(1-$D$5-$F$5)' };
     r8.getCell(19).value = { formula: 'R8-Q8' };
     r8.getCell(20).value = { formula: 'S8/Q8' };
-    r8.getCell(21).value = 'Mulai order #50 seterusnya @15%';
+    r8.getCell(21).value = 'Mulai order #50 seterusnya @20%';
 
     const r9 = wsStrat.getRow(9);
     r9.height = 22;
@@ -803,7 +828,7 @@ async function generateExcel() {
     r9.getCell(18).value = { formula: '($M$7/37)*$D$5' };
     r9.getCell(19).value = { formula: 'R9-Q9' };
     r9.getCell(20).value = { formula: 'S9/Q9' };
-    r9.getCell(21).value = 'Mulai order #50 seterusnya @15% (+50% komisi)';
+    r9.getCell(21).value = 'Mulai order #50 seterusnya @20% (+33.3% komisi)';
 
     for (let r = 5; r <= 9; r++) {
       const row = wsStrat.getRow(r);
@@ -878,9 +903,9 @@ async function generateExcel() {
       'Sales 15%*',
       'Recruiter 2%*',
       'Profit Distribusi*',
-      'CEO 40%*',
-      'COO 40%*',
-      'Modal 20%*',
+      'CEO 35%*',
+      'COO 35%*',
+      'Cadangan 15%*',
       'Strategi Psikologi',
     ];
 
@@ -915,10 +940,10 @@ async function generateExcel() {
       row.getCell(8).value = { formula: `G${rowNum}-C${rowNum}` };
       row.getCell(9).value = { formula: `ROUND(H${rowNum}*0.15,0)` };
       row.getCell(10).value = { formula: `ROUND(H${rowNum}*0.02,0)` };
-      row.getCell(11).value = { formula: `H${rowNum}-I${rowNum}-J${rowNum}` };
-      row.getCell(12).value = { formula: `ROUND(K${rowNum}*0.4,0)` };
-      row.getCell(13).value = { formula: `ROUND(K${rowNum}*0.4,0)` };
-      row.getCell(14).value = { formula: `K${rowNum}-L${rowNum}-M${rowNum}` };
+      row.getCell(11).value = { formula: `H${rowNum}-I${rowNum}` };
+      row.getCell(12).value = { formula: `ROUND(H${rowNum}*0.35,0)` };
+      row.getCell(13).value = { formula: `ROUND(H${rowNum}*0.35,0)` };
+      row.getCell(14).value = { formula: `H${rowNum}-I${rowNum}-L${rowNum}-M${rowNum}` };
       row.getCell(15).value = p.stratPsych;
 
       const isZebra = idx % 2 === 1;
@@ -1000,11 +1025,11 @@ async function generateExcel() {
     const noteCell = wsStrat.getCell('A51');
     noteCell.value =
       'CATATAN STRATEGIS & KETENTUAN OPERASIONAL MILESTONE:\n' +
-      '1. Model Milestone: Komisi Sales = 10% dari Profit Transaksi untuk order #1–49. Mulai order ke-50, komisi Sales otomatis naik menjadi 15% (naik +50% per transaksi).\n' +
-      '2. Kenaikan 15% TIDAK retroaktif (order masa lalu tetap menggunakan komisi 10% saat transaksi dicatat).\n' +
+      '1. Model Milestone: Komisi Sales = 15% dari Profit Transaksi untuk order #1–49. Mulai order ke-50, komisi Sales otomatis naik menjadi 20% (VIP Tier).\n' +
+      '2. Kenaikan 20% TIDAK retroaktif (order masa lalu tetap menggunakan komisi 15% saat transaksi dicatat).\n' +
       '3. Bonus Recruiter tetap flat 2% dari Profit Transaksi (direct recruiter, 1 level saja, tidak bertingkat).\n' +
       '4. Diskon Referral Customer sebesar Rp 1.000 berlaku 1x transaksi pertama customer baru dan dipotong sebelum menghitung Profit Transaksi.\n' +
-      '5. Harga final pada katalog ini dirancang terstruktur sehingga setelah komisi Sales naik ke 15%, profit yang diterima Asterra tetap bertumbuh (+7.8% per order).';
+      '5. Harga final pada katalog ini dirancang terstruktur sehingga setelah komisi Sales naik ke 20%, profit yang diterima Asterra tetap bertumbuh (+7.8% per order).';
     noteCell.font = { name: 'Segoe UI', size: 9, italic: true, color: { argb: 'FF334155' } };
     noteCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
     noteCell.alignment = { vertical: 'top', horizontal: 'left', wrapText: true };
@@ -1016,6 +1041,319 @@ async function generateExcel() {
     };
   }
 
+  // =========================================================================
+  // SHEET 5: ATURAN KOMISI (OFFICIAL MATRIX & BUSINESS RULES)
+  // =========================================================================
+  const wsRules = workbook.addWorksheet('Aturan Komisi', {
+    properties: { tabColor: { argb: 'FF2563EB' } },
+    views: [{ showGridLines: true }],
+  });
+
+  wsRules.columns = [
+    { key: 'A', width: 6 },
+    { key: 'B', width: 34 },
+    { key: 'C', width: 34 },
+    { key: 'D', width: 34 },
+    { key: 'E', width: 48 },
+  ];
+
+  wsRules.mergeCells('A1:E1');
+  const titleRules = wsRules.getCell('A1');
+  titleRules.value = 'ASTERRA STORE — ATURAN RESMI KOMISI SALES & ALOKASI PROFIT';
+  titleRules.font = { name: 'Segoe UI', size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
+  titleRules.fill = STYLES.accentFill;
+  titleRules.alignment = { vertical: 'middle', horizontal: 'center' };
+  wsRules.getRow(1).height = 36;
+
+  wsRules.mergeCells('A2:E2');
+  const subRules = wsRules.getCell('A2');
+  subRules.value = 'Sumber kebenaran resmi (SSOT) pembagian profit transaksi, milestone tier VIP, bonus referral 2%, dan cadangan modal.';
+  subRules.font = { name: 'Segoe UI', size: 9.5, italic: true, color: { argb: 'FF475569' } };
+  subRules.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
+  subRules.alignment = { vertical: 'middle', horizontal: 'center' };
+  wsRules.getRow(2).height = 24;
+
+  wsRules.getRow(3).height = 10;
+
+  const ruleHeaders = ['No', 'Penerima Alokasi', 'Di Bawah 50 Transaksi Sukses (< 50)', 'Minimal 50 Transaksi Sukses (>= 50 VIP)', 'Ketentuan & Mekanisme'];
+  const ruleHeaderRow = wsRules.getRow(4);
+  ruleHeaderRow.height = 28;
+  ruleHeaders.forEach((h, idx) => {
+    const cell = ruleHeaderRow.getCell(idx + 1);
+    cell.value = h;
+    cell.fill = STYLES.headerFill;
+    cell.font = STYLES.headerFont;
+    cell.alignment = { vertical: 'middle', horizontal: idx === 1 || idx === 4 ? 'left' : 'center' };
+    cell.border = STYLES.borderThin;
+  });
+
+  const ruleData = [
+    { no: 1, recipient: 'CEO (Chief Executive Officer)', nonVip: 0.35, vip: 0.325, note: 'Bagi hasil founder (-2,5% dialihkan ke Sales saat mitra mencapai VIP)' },
+    { no: 2, recipient: 'COO (Chief Operating Officer)', nonVip: 0.35, vip: 0.325, note: 'Bagi hasil founder (-2,5% dialihkan ke Sales saat mitra mencapai VIP)' },
+    { no: 3, recipient: 'Mitra Sales (Direct Partner)', nonVip: 0.15, vip: 0.20, note: 'Komisi penjualan langsung (+5,0% otomatis aktif mulai order ke-50+)' },
+    { no: 4, recipient: 'Cadangan Modal Usaha (Reserve)', nonVip: 0.15, vip: 0.15, note: 'Dana pengembangan, subsidi proteksi transaksi & bonus rekruter' },
+  ];
+
+  ruleData.forEach((r, idx) => {
+    const row = wsRules.getRow(5 + idx);
+    row.height = 24;
+    row.getCell(1).value = r.no;
+    row.getCell(2).value = r.recipient;
+    row.getCell(3).value = r.nonVip;
+    row.getCell(4).value = r.vip;
+    row.getCell(5).value = r.note;
+
+    for (let c = 1; c <= 5; c++) {
+      const cell = row.getCell(c);
+      cell.border = STYLES.borderThin;
+      cell.font = { name: 'Segoe UI', size: 9.5 };
+      cell.fill = idx % 2 === 1 ? STYLES.zebraFill : STYLES.whiteFill;
+      if (c === 1) cell.alignment = { vertical: 'middle', horizontal: 'center' };
+      if (c === 2) {
+        cell.alignment = { vertical: 'middle', horizontal: 'left' };
+        cell.font = { name: 'Segoe UI', size: 9.5, bold: true };
+      }
+      if (c === 3 || c === 4) {
+        cell.alignment = { vertical: 'middle', horizontal: 'right' };
+        cell.numFmt = '0.0%';
+        cell.font = { name: 'Segoe UI', size: 10, bold: true, color: { argb: c === 4 && r.no === 3 ? 'FF7C3AED' : 'FF0F172A' } };
+      }
+      if (c === 5) {
+        cell.alignment = { vertical: 'middle', horizontal: 'left' };
+        cell.font = { name: 'Segoe UI', size: 9, italic: true, color: { argb: 'FF475569' } };
+      }
+    }
+  });
+
+  const ruleTotalRow = wsRules.getRow(9);
+  ruleTotalRow.height = 26;
+  ruleTotalRow.getCell(1).value = '';
+  ruleTotalRow.getCell(2).value = 'TOTAL ALOKASI (ZERO LEAKAGE)';
+  ruleTotalRow.getCell(3).value = { formula: 'SUM(C5:C8)' };
+  ruleTotalRow.getCell(4).value = { formula: 'SUM(D5:D8)' };
+  ruleTotalRow.getCell(5).value = 'Alokasi tepat 100% tanpa kebocoran marjin';
+  for (let c = 1; c <= 5; c++) {
+    const cell = ruleTotalRow.getCell(c);
+    cell.fill = STYLES.totalFill;
+    cell.font = { name: 'Segoe UI', size: 10, bold: true, color: { argb: 'FF0F172A' } };
+    cell.border = {
+      top: { style: 'double', color: { argb: 'FF0F172A' } },
+      bottom: { style: 'medium', color: { argb: 'FF0F172A' } },
+      left: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+      right: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+    };
+    if (c === 2) cell.alignment = { vertical: 'middle', horizontal: 'left' };
+    if (c === 3 || c === 4) {
+      cell.alignment = { vertical: 'middle', horizontal: 'right' };
+      cell.numFmt = '0.0%';
+    }
+    if (c === 5) {
+      cell.alignment = { vertical: 'middle', horizontal: 'left' };
+      cell.font = { name: 'Segoe UI', size: 9, italic: true };
+    }
+  }
+
+  // Guidelines Notes Box in Sheet 5
+  wsRules.mergeCells('A11:E17');
+  const ruleNoteBox = wsRules.getCell('A11');
+  ruleNoteBox.value =
+    'KETENTUAN OPERASIONAL & ATURAN BISNIS KOMISI ASTERRA STORE:\n' +
+    '1. Profit Transaksi: Seluruh komisi dihitung dari Profit Transaksi riil (Net Revenue − Biaya Langsung / COGS), BUKAN dari omzet kotor.\n' +
+    '2. Milestone 50 Order: Kualifikasi VIP didasarkan pada minimal 50 transaksi unik berstatus sukses (completed, paid, settlement, selesai, done).\n' +
+    '3. Filter Validasi: Order yang dibatalkan, kadaluwarsa, refund, atau gagal bayar TIDAK dihitung dalam progress milestone.\n' +
+    '4. Non-Retroaktif: Transaksi sebelum mencapai 50 order tetap menggunakan komisi 15%. Kenaikan 20% berlaku mulai order ke-50 dan seterusnya (flat 20%, tidak naik lagi).\n' +
+    '5. Rekruter 1-Level (2%): Bonus rekruter 2% disubsidi dari Cadangan Modal Usaha (Reserve 15% -> 13% cadangan + 2% rekruter = 15%). Komisi sales teman tetap utuh 100%.\n' +
+    '6. Holding Garansi 3 Hari: Komisi masuk masa holding selama 3 hari masa garansi untuk melindungi dari risiko refund/fraud, lalu otomatis pindah ke Saldo Siap Ditarik.';
+  ruleNoteBox.font = { name: 'Segoe UI', size: 9, color: { argb: 'FF1E293B' } };
+  ruleNoteBox.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
+  ruleNoteBox.alignment = { vertical: 'top', horizontal: 'left', wrapText: true };
+  ruleNoteBox.border = STYLES.borderThin;
+
+  // =========================================================================
+  // SHEET 6: SIMULASI KOMISI (PRODUCT LEVEL SIMULATION)
+  // =========================================================================
+  const wsSim = workbook.addWorksheet('Simulasi Komisi', {
+    properties: { tabColor: { argb: 'FF10B981' } },
+    views: [{ state: 'frozen', xSplit: 0, ySplit: 5, showGridLines: true }],
+  });
+
+  wsSim.columns = [
+    { key: 'A', width: 6 },
+    { key: 'B', width: 22 },
+    { key: 'C', width: 44 },
+    { key: 'D', width: 14 },
+    { key: 'E', width: 14 },
+    { key: 'F', width: 14 },
+    { key: 'G', width: 14 },
+    { key: 'H', width: 14 },
+    { key: 'I', width: 14 },
+    { key: 'J', width: 14 },
+    { key: 'K', width: 14 },
+    { key: 'L', width: 14 },
+    { key: 'M', width: 14 },
+    { key: 'N', width: 14 },
+    { key: 'O', width: 14 },
+  ];
+
+  wsSim.mergeCells('A1:O1');
+  const titleSim = wsSim.getCell('A1');
+  titleSim.value = 'ASTERRA STORE — SIMULASI KOMISI STANDAR & VIP PER PRODUK';
+  titleSim.font = { name: 'Segoe UI', size: 14, bold: true, color: { argb: 'FFFFFFFF' } };
+  titleSim.fill = STYLES.accentFill;
+  titleSim.alignment = { vertical: 'middle', horizontal: 'center' };
+  wsSim.getRow(1).height = 36;
+
+  wsSim.mergeCells('A2:O2');
+  const subSim = wsSim.getCell('A2');
+  subSim.value = 'Simulasi proyeksi pembagian profit per produk: Non-VIP (Sales 15%, CEO 35%, COO 35%, Reserve 15%) vs VIP (Sales 20%, CEO 32,5%, COO 32,5%, Reserve 15%).';
+  subSim.font = { name: 'Segoe UI', size: 9.5, italic: true, color: { argb: 'FF475569' } };
+  subSim.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
+  subSim.alignment = { vertical: 'middle', horizontal: 'center' };
+  wsSim.getRow(2).height = 24;
+
+  wsSim.mergeCells('G4:J4');
+  const groupNonVip = wsSim.getCell('G4');
+  groupNonVip.value = 'SIMULASI NON-VIP (< 50 ORDER)';
+  groupNonVip.fill = STYLES.tealHeaderFill;
+  groupNonVip.font = STYLES.headerFont;
+  groupNonVip.alignment = { vertical: 'middle', horizontal: 'center' };
+
+  wsSim.mergeCells('K4:O4');
+  const groupVip = wsSim.getCell('K4');
+  groupVip.value = 'SIMULASI VIP (≥ 50 ORDER)';
+  groupVip.fill = STYLES.indigoHeaderFill;
+  groupVip.font = STYLES.headerFont;
+  groupVip.alignment = { vertical: 'middle', horizontal: 'center' };
+  wsSim.getRow(4).height = 24;
+
+  const simHeaders = [
+    'No',
+    'Kode Produk',
+    'Nama Produk',
+    'Modal Upstream',
+    'Harga Normal',
+    'Gross Margin (Profit)',
+    'Sales 15%',
+    'CEO 35%',
+    'COO 35%',
+    'Reserve 15%',
+    'Sales 20%',
+    'CEO 32,5%',
+    'COO 32,5%',
+    'Reserve 15%',
+    'Rekruter (2%)',
+  ];
+
+  const headerRowSim = wsSim.getRow(5);
+  headerRowSim.height = 30;
+  simHeaders.forEach((h, idx) => {
+    const cell = headerRowSim.getCell(idx + 1);
+    cell.value = h;
+    cell.fill = STYLES.headerFill;
+    cell.font = STYLES.headerFont;
+    cell.alignment = {
+      vertical: 'middle',
+      horizontal: idx === 1 || idx === 2 ? 'left' : 'right',
+      wrapText: true,
+    };
+    cell.border = STYLES.borderThin;
+  });
+
+  const simProducts = strategyProducts.length > 0 ? strategyProducts : fallbackProducts;
+  const startSimRow = 6;
+  simProducts.forEach((p, idx) => {
+    const rNum = startSimRow + idx;
+    const row = wsSim.getRow(rNum);
+    row.height = 22;
+
+    const modalVal = p.modal || p.priceOriginal || p.costPrice || 0;
+    const priceVal = p.hargaFinal || p.priceDiscount || p.price || 0;
+
+    row.getCell(1).value = idx + 1;
+    row.getCell(2).value = p.code || p.providerCode || p.id || '-';
+    row.getCell(3).value = p.name || '-';
+    row.getCell(4).value = modalVal;
+    row.getCell(5).value = priceVal;
+    row.getCell(6).value = { formula: `E${rNum}-D${rNum}` };
+    // Non-VIP: 15% Sales, 35% CEO, 35% COO, 15% Reserve
+    row.getCell(7).value = { formula: `ROUND(F${rNum}*0.15,0)` };
+    row.getCell(8).value = { formula: `ROUND(F${rNum}*0.35,0)` };
+    row.getCell(9).value = { formula: `ROUND(F${rNum}*0.35,0)` };
+    row.getCell(10).value = { formula: `F${rNum}-G${rNum}-H${rNum}-I${rNum}` };
+    // VIP: 20% Sales, 32.5% CEO, 32.5% COO, 15% Reserve
+    row.getCell(11).value = { formula: `ROUND(F${rNum}*0.20,0)` };
+    row.getCell(12).value = { formula: `ROUND(F${rNum}*0.325,0)` };
+    row.getCell(13).value = { formula: `ROUND(F${rNum}*0.325,0)` };
+    row.getCell(14).value = { formula: `F${rNum}-K${rNum}-L${rNum}-M${rNum}` };
+    row.getCell(15).value = { formula: `ROUND(F${rNum}*0.02,0)` };
+
+    const isZebra = idx % 2 === 1;
+    for (let c = 1; c <= 15; c++) {
+      const cell = row.getCell(c);
+      cell.border = STYLES.borderThin;
+      cell.font = { name: 'Segoe UI', size: 9 };
+      cell.fill = isZebra ? STYLES.zebraFill : STYLES.whiteFill;
+      if (c === 1) cell.alignment = { vertical: 'middle', horizontal: 'center' };
+      if (c === 2 || c === 3) {
+        cell.alignment = { vertical: 'middle', horizontal: 'left' };
+        if (c === 3) cell.font = { name: 'Segoe UI', size: 9.5, bold: true };
+      }
+      if (c >= 4 && c <= 15) {
+        cell.alignment = { vertical: 'middle', horizontal: 'right' };
+        cell.numFmt = STYLES.currencyFmt;
+        if (c === 6) cell.font = { name: 'Segoe UI', size: 9.5, bold: true, color: { argb: 'FF0D9488' } };
+        if (c === 7 || c === 11) cell.font = { name: 'Segoe UI', size: 9.5, bold: true, color: { argb: 'FF7C3AED' } };
+      }
+    }
+  });
+
+  const lastSimRow = startSimRow + simProducts.length - 1;
+  const totalSimRow = wsSim.getRow(lastSimRow + 1);
+  totalSimRow.height = 28;
+  totalSimRow.getCell(1).value = '';
+  totalSimRow.getCell(2).value = '';
+  totalSimRow.getCell(3).value = `TOTAL PORTFOLIO (${simProducts.length} PRODUK)`;
+  for (let c = 4; c <= 15; c++) {
+    const colLetter = String.fromCharCode(64 + c);
+    totalSimRow.getCell(c).value = { formula: `SUM(${colLetter}${startSimRow}:${colLetter}${lastSimRow})` };
+  }
+  for (let c = 1; c <= 15; c++) {
+    const cell = totalSimRow.getCell(c);
+    cell.fill = STYLES.totalFill;
+    cell.font = { name: 'Segoe UI', size: 9.5, bold: true, color: { argb: 'FF0F172A' } };
+    cell.border = {
+      top: { style: 'double', color: { argb: 'FF0F172A' } },
+      bottom: { style: 'medium', color: { argb: 'FF0F172A' } },
+      left: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+      right: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+    };
+    if (c === 3) cell.alignment = { vertical: 'middle', horizontal: 'left' };
+    if (c >= 4 && c <= 15) {
+      cell.alignment = { vertical: 'middle', horizontal: 'right' };
+      cell.numFmt = STYLES.currencyFmt;
+    }
+  }
+
+  // Footer Disclaimer in Sheet 6
+  const disclRow = lastSimRow + 3;
+  wsSim.mergeCells(`A${disclRow}:O${disclRow + 3}`);
+  const disclCell = wsSim.getCell(`A${disclRow}`);
+  disclCell.value =
+    'DISCLAIMER & CATATAN KONSISTENSI SISTEM:\n' +
+    '1. Workbook ini merupakan lembar simulasi produk; margin harga jual normal dikurangi modal upstream digunakan sebagai ilustrasi profit transaksi.\n' +
+    '2. Komisi dan alokasi bagi hasil aktual Asterra Store dihitung oleh backend SSOT berdasarkan Profit Transaksi riil (Net Revenue − Biaya Langsung / COGS) setiap order berhasil.\n' +
+    '3. Angka-angka simulasi di lembar kerja ini tidak diimpor sebagai transaksi atau saldo riil pengguna.\n' +
+    '4. Seluruh persentase pembagian (Non-VIP: 35/35/15/15, VIP: 32,5/32,5/20/15) terjamin 100% konsisten antara backend, portal Admin, dan portal Sales.';
+  disclCell.font = { name: 'Segoe UI', size: 9, italic: true, color: { argb: 'FF334155' } };
+  disclCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8FAFC' } };
+  disclCell.alignment = { vertical: 'top', horizontal: 'left', wrapText: true };
+  disclCell.border = STYLES.borderThin;
+
+  wsSim.autoFilter = {
+    from: { row: 5, column: 1 },
+    to: { row: lastSimRow, column: 15 },
+  };
+
   const outputPath = path.resolve(process.cwd(), 'Data_Produk_Aktif_Asterra_Store.xlsx');
   await workbook.xlsx.writeFile(outputPath);
   console.log(`Excel file successfully created at: ${outputPath}`);
@@ -1024,7 +1362,13 @@ async function generateExcel() {
   await workbook.xlsx.writeFile(milestonePath);
   console.log(`Also synchronized final milestone export: ${milestonePath}`);
 
-  await prisma.$disconnect();
+  const latestCommissionPath = path.resolve(process.cwd(), 'Data_Produk_Aktif_Asterra_Store_Komisi_Terbaru.xlsx');
+  await workbook.xlsx.writeFile(latestCommissionPath);
+  console.log(`Also synchronized latest commission export: ${latestCommissionPath}`);
+
+  try {
+    await prisma.$disconnect();
+  } catch {}
 }
 
 generateExcel().catch((err) => {

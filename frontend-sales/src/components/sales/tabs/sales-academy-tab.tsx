@@ -36,7 +36,7 @@ export function SalesAcademyTab() {
             <li className="flex items-start gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
               <span>
-                <strong className="text-foreground">Kalkulasi Berbasis Profit Transaksi:</strong> Komisi direct sales (10% – 15%) dan bonus rekrutmen (2%) selalu dihitung dari Profit Transaksi (Net Revenue dikurangi modal produk & biaya langsung), bukan dari omzet kotor.
+                <strong className="text-foreground">Kalkulasi Berbasis Profit Transaksi:</strong> Komisi direct sales (15% – 20%) dan bonus rekrutmen (2%) selalu dihitung dari Profit Transaksi (Net Revenue dikurangi modal produk & biaya langsung), bukan dari omzet kotor.
               </span>
             </li>
             <li className="flex items-start gap-2">
@@ -78,7 +78,7 @@ export function SalesAcademyTab() {
               className="rounded-xl border border-border bg-surface-raised overflow-hidden"
             >
               <div className="p-3.5 text-[11px] text-foreground-muted leading-relaxed border-t border-border/70">
-                Bonus rekrutmen 2% dihitung dari Profit Transaksi yang dihasilkan oleh teman langsung Anda. Komisi penjualan teman Anda tetap utuh 100% (10% – 15% dari Profit Transaksi) tanpa ada potongan.
+                Bonus rekrutmen 2% dihitung dari Profit Transaksi yang dihasilkan oleh teman langsung Anda. Komisi penjualan teman Anda tetap utuh 100% (15% – 20% dari Profit Transaksi) tanpa ada potongan.
               </div>
             </AccordionItem>
 

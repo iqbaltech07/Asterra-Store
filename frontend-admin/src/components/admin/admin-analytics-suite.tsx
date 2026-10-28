@@ -267,9 +267,9 @@ export function AdminAnalyticsSuite({ activeTab, onNotify }: AdminAnalyticsSuite
       ['Komisi Afiliasi & Sales', financialReport?.commissions || 0, 'Hak Komisi Mitra'],
       ['Total Beban Operasional', financialReport?.totalOpex || 0, 'Gateway + Komisi'],
       ['Laba Bersih Operasional', financialReport?.netOperatingProfit || 0, 'Gross Profit - Beban Operasional'],
-      ['Alokasi CEO Share (40%)', financialReport?.ceoShare || 0, 'Bagi Hasil CEO'],
-      ['Alokasi COO Share (40%)', financialReport?.cooShare || 0, 'Bagi Hasil COO'],
-      ['Cadangan Usaha (20%)', financialReport?.businessReserve || 0, 'Dana Cadangan Asterra'],
+      ['Alokasi CEO Share (35% / 32,5% VIP)', financialReport?.ceoShare || 0, 'Bagi Hasil CEO'],
+      ['Alokasi COO Share (35% / 32,5% VIP)', financialReport?.cooShare || 0, 'Bagi Hasil COO'],
+      ['Cadangan Usaha (15%)', financialReport?.businessReserve || 0, 'Dana Cadangan Asterra'],
     ];
     triggerCsvDownload(`laporan-keuangan-asterra-${new Date().toISOString().slice(0, 10)}.csv`, headers, rows);
     onNotify?.('Laporan keuangan resmi Asterra berhasil diekspor.');
@@ -942,7 +942,14 @@ export function AdminAnalyticsSuite({ activeTab, onNotify }: AdminAnalyticsSuite
                         Rp {aff.commissionEarned.toLocaleString('id-ID')}
                       </td>
                       <td className="py-3.5 px-4 text-center">
-                        <Badge variant="outline" className="text-[10px] text-status-success border-status-success/30 font-semibold">
+                        <Badge
+                          variant="outline"
+                          className={`text-[10px] font-semibold ${
+                            aff.activeStatus?.includes('VIP')
+                              ? 'text-amber-500 border-amber-500/30 bg-amber-500/10'
+                              : 'text-status-success border-status-success/30'
+                          }`}
+                        >
                           {aff.activeStatus}
                         </Badge>
                       </td>
@@ -1119,19 +1126,19 @@ export function AdminAnalyticsSuite({ activeTab, onNotify }: AdminAnalyticsSuite
             </div>
             <div className="grid grid-cols-3 gap-2 pt-1 text-center font-mono">
               <div className="p-2 rounded bg-surface border border-border">
-                <span className="text-[10px] text-foreground-muted block">CEO Share (40%)</span>
+                <span className="text-[10px] text-foreground-muted block">CEO Share (35% / 32,5% VIP)</span>
                 <span className="font-bold text-primary">
                   Rp {(financialReport?.ceoShare ?? 0).toLocaleString('id-ID')}
                 </span>
               </div>
               <div className="p-2 rounded bg-surface border border-border">
-                <span className="text-[10px] text-foreground-muted block">COO Share (40%)</span>
+                <span className="text-[10px] text-foreground-muted block">COO Share (35% / 32,5% VIP)</span>
                 <span className="font-bold text-primary">
                   Rp {(financialReport?.cooShare ?? 0).toLocaleString('id-ID')}
                 </span>
               </div>
               <div className="p-2 rounded bg-surface border border-border">
-                <span className="text-[10px] text-foreground-muted block">Cadangan Usaha (20%)</span>
+                <span className="text-[10px] text-foreground-muted block">Cadangan Usaha (15%)</span>
                 <span className="font-bold text-status-success">
                   Rp {(financialReport?.businessReserve ?? 0).toLocaleString('id-ID')}
                 </span>
