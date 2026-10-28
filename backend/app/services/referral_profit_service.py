@@ -247,7 +247,6 @@ class ReferralProfitService:
                 is_vip_partner = False
                 if partner:
                     try:
-                        from app.models.order import Order
                         successful_orders_count = db.query(Order.id).filter(
                             Order.sales_partner_id == partner.id,
                             Order.status.in_(["completed", "paid", "settlement", "selesai", "done"])
