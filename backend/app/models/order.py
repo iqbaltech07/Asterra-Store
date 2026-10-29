@@ -1,7 +1,16 @@
 from datetime import datetime
-from sqlalchemy import Column, String, Integer, DateTime, Text, ForeignKey, Boolean
+from sqlalchemy import Column, String, Integer, DateTime, Text, ForeignKey, Boolean, Numeric
 from sqlalchemy.orm import relationship
 from app.core.database import Base
+
+def _num(val):
+    if val is None:
+        return None
+    try:
+        f = float(val)
+        return int(f) if f.is_integer() else f
+    except (ValueError, TypeError):
+        return val
 
 class OrderItem(Base):
     __tablename__ = "order_items"
@@ -10,7 +19,7 @@ class OrderItem(Base):
     order_id = Column(String, ForeignKey("orders.id"), nullable=False)
     product_id = Column(String, nullable=False)
     product_name = Column(String, nullable=False)
-    price = Column(Integer, nullable=False)
+    price = Column(Numeric(15, 2), nullable=False)
     quantity = Column(Integer, default=1)
     duration = Column(String, nullable=True)
     target_email = Column(String, nullable=True)
@@ -26,7 +35,7 @@ class OrderItem(Base):
             "orderId": self.order_id,
             "productId": self.product_id,
             "productName": self.product_name,
-            "price": self.price,
+            "price": _num(self.price),
             "quantity": self.quantity,
             "duration": self.duration,
             "targetEmail": self.target_email,
@@ -44,8 +53,8 @@ class Order(Base):
     customer_email = Column(String, nullable=False)
     customer_whatsapp = Column(String, nullable=True)
     customer_name = Column(String, nullable=True)
-    total_amount = Column(Integer, nullable=False)
-    raw_amount = Column(Integer, nullable=True)
+    total_amount = Column(Numeric(15, 2), nullable=False)
+    raw_amount = Column(Numeric(15, 2), nullable=True)
     unique_code = Column(Integer, nullable=True)
     status = Column(String, default="pending")
     payment_method = Column(String, nullable=True)
@@ -57,10 +66,10 @@ class Order(Base):
     referral_session_id = Column(String, nullable=True)
     sales_partner_id = Column(String, nullable=True)
     recruiter_partner_id = Column(String, nullable=True)
-    promo_discount = Column(Integer, default=0)
-    referral_discount = Column(Integer, default=0)
+    promo_discount = Column(Numeric(15, 2), default=0)
+    referral_discount = Column(Numeric(15, 2), default=0)
     campaign_id = Column(String, nullable=True)
-    campaign_discount = Column(Integer, default=0)
+    campaign_discount = Column(Numeric(15, 2), default=0)
     provider = Column(String, nullable=True)
     provider_trxid = Column(String, nullable=True)
     provider_status = Column(String, nullable=True)
@@ -88,8 +97,8 @@ class Order(Base):
             "customerEmail": self.customer_email,
             "customerWhatsapp": self.customer_whatsapp,
             "customerName": self.customer_name,
-            "totalAmount": self.total_amount,
-            "rawAmount": self.raw_amount,
+            "totalAmount": _num(self.total_amount),
+            "rawAmount": _num(self.raw_amount),
             "uniqueCode": self.unique_code,
             "status": self.status,
             "paymentMethod": self.payment_method,
@@ -101,10 +110,10 @@ class Order(Base):
             "referralSessionId": self.referral_session_id,
             "salesPartnerId": self.sales_partner_id,
             "recruiterPartnerId": self.recruiter_partner_id,
-            "promoDiscount": self.promo_discount,
-            "referralDiscount": self.referral_discount,
+            "promoDiscount": _num(self.promo_discount),
+            "referralDiscount": _num(self.referral_discount),
             "campaignId": self.campaign_id,
-            "campaignDiscount": self.campaign_discount,
+            "campaignDiscount": _num(self.campaign_discount),
             "provider": self.provider,
             "providerTrxId": self.provider_trxid,
             "provider_trxid": self.provider_trxid,
@@ -124,13 +133,13 @@ class Order(Base):
             "referral_session_id": self.referral_session_id,
             "sales_partner_id": self.sales_partner_id,
             "recruiter_partner_id": self.recruiter_partner_id,
-            "promo_discount": self.promo_discount,
-            "referral_discount": self.referral_discount,
+            "promo_discount": _num(self.promo_discount),
+            "referral_discount": _num(self.referral_discount),
             "campaign_id": self.campaign_id,
-            "campaign_discount": self.campaign_discount,
+            "campaign_discount": _num(self.campaign_discount),
             "unique_code": self.unique_code,
-            "raw_amount": self.raw_amount,
-            "total_amount": self.total_amount,
+            "raw_amount": _num(self.raw_amount),
+            "total_amount": _num(self.total_amount),
             "payment_mode": self.payment_mode,
             "payment_method": self.payment_method,
             "payment_status": self.payment_status,

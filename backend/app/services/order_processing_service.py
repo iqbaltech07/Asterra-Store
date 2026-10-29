@@ -442,6 +442,13 @@ class OrderProcessingService:
             except Exception as comm_err:
                 print(f"[OrderProcessingService] Referral sync note: {comm_err}")
 
+            # Synchronize Campaign Metrics from Completed Orders
+            try:
+                from app.services.campaign_service import CampaignService
+                CampaignService.sync_campaign_metrics_from_orders()
+            except Exception as camp_err:
+                print(f"[OrderProcessingService] Campaign sync note: {camp_err}")
+
             # 6. Decoupled Email Dispatch: Failure does not revert order completion
             email_sent = False
             email_error_msg = None

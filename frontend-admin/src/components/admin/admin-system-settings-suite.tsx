@@ -122,7 +122,7 @@ export function AdminSystemSettingsSuite({ activeTab, onNotify }: AdminSystemSet
   const [csHours, setCsHours] = useState('Senin – Minggu: 08:00 – 23:00 WIB');
   const [autoCancelHours, setAutoCancelHours] = useState(24);
   const [invoicePrefix, setInvoicePrefix] = useState('AST-');
-  const [minCheckoutAmount, setMinCheckoutAmount] = useState(10000);
+  const [minCheckoutAmount, setMinCheckoutAmount] = useState<string>('10000');
   const [warrantyDays, setWarrantyDays] = useState(30);
   const [defaultMetaTitle, setDefaultMetaTitle] = useState('Asterra Store — Beli Akun Digital & Lisensi Resmi');
   const [defaultMetaDesc, setDefaultMetaDesc] = useState(
@@ -572,10 +572,15 @@ export function AdminSystemSettingsSuite({ activeTab, onNotify }: AdminSystemSet
             <div>
               <label className="font-semibold text-foreground block mb-1">Minimal Nilai Transaksi Checkout (Rp)</label>
               <Input
-                type="number"
-                step="1000"
+                type="text"
+                inputMode="decimal"
                 value={minCheckoutAmount}
-                onChange={(e) => setMinCheckoutAmount(Number(e.target.value))}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/,/g, '.');
+                  if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                    setMinCheckoutAmount(val);
+                  }
+                }}
                 className="bg-surface-raised border-border text-xs font-mono font-bold"
               />
             </div>

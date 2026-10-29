@@ -54,9 +54,9 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
   const [formCode, setFormCode] = useState('');
   const [formDescription, setFormDescription] = useState('');
   const [formDiscountType, setFormDiscountType] = useState<'percentage' | 'fixed'>('percentage');
-  const [formDiscountValue, setFormDiscountValue] = useState<number>(10);
+  const [formDiscountValue, setFormDiscountValue] = useState<string>('10');
   const [formMaxDiscount, setFormMaxDiscount] = useState<string>('50000');
-  const [formMinOrderAmount, setFormMinOrderAmount] = useState<number>(0);
+  const [formMinOrderAmount, setFormMinOrderAmount] = useState<string>('0');
   const [formUsageLimit, setFormUsageLimit] = useState<string>('500');
   const [formPerUserLimit, setFormPerUserLimit] = useState<number>(1);
   const [formExpiresAt, setFormExpiresAt] = useState<string>('');
@@ -213,7 +213,8 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
       return;
     }
 
-    if (formDiscountValue <= 0) {
+    const numDiscountValue = parseFloat(String(formDiscountValue).replace(/,/g, '.')) || 0;
+    if (numDiscountValue <= 0) {
       onNotify('Nilai diskon harus lebih besar dari 0.');
       return;
     }
@@ -229,9 +230,9 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
         code: formCode.trim().toUpperCase(),
         description: formDescription.trim() || undefined,
         discountType: formDiscountType,
-        discountValue: formDiscountValue,
-        maxDiscount: formDiscountType === 'percentage' && formMaxDiscount ? Number(formMaxDiscount) : null,
-        minOrderAmount: Number(formMinOrderAmount) || 0,
+        discountValue: numDiscountValue,
+        maxDiscount: formDiscountType === 'percentage' && formMaxDiscount ? (parseFloat(String(formMaxDiscount).replace(/,/g, '.')) || null) : null,
+        minOrderAmount: parseFloat(String(formMinOrderAmount).replace(/,/g, '.')) || 0,
         usageLimit: formUsageLimit ? Number(formUsageLimit) : null,
         perUserLimit: Number(formPerUserLimit) || 1,
         expiresAt: formExpiresAt ? new Date(formExpiresAt).toISOString() : null,
@@ -256,8 +257,8 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
       setIsCreateModalOpen(false);
       setFormCode('');
       setFormDescription('');
-      setFormDiscountValue(10);
-      setFormMinOrderAmount(0);
+      setFormDiscountValue('10');
+      setFormMinOrderAmount('0');
       setFormUsageLimit('500');
       setFormExpiresAt('');
       setFormTargetScope('all');
@@ -834,12 +835,17 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
                     {formDiscountType === 'percentage' ? 'Nilai Persentase (%) *' : 'Nominal Potongan (Rp) *'}
                   </label>
                   <Input
-                    type="number"
-                    min="1"
-                    max={formDiscountType === 'percentage' ? 100 : 10000000}
+                    type="text"
+                    inputMode="decimal"
                     required
                     value={formDiscountValue}
-                    onChange={(e) => setFormDiscountValue(Number(e.target.value))}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/,/g, '.');
+                      if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                        setFormDiscountValue(val);
+                      }
+                    }}
+                    placeholder={formDiscountType === 'percentage' ? '10' : '15000'}
                     className="text-xs font-mono bg-surface-raised border-border rounded-xl h-10"
                   />
                 </div>
@@ -848,10 +854,16 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
                   <div className="space-y-1.5">
                     <label className="text-xs font-semibold text-foreground">Maks. Potongan (Rp)</label>
                     <Input
-                      type="number"
+                      type="text"
+                      inputMode="decimal"
                       placeholder="contoh: 50000"
                       value={formMaxDiscount}
-                      onChange={(e) => setFormMaxDiscount(e.target.value)}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/,/g, '.');
+                        if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                          setFormMaxDiscount(val);
+                        }
+                      }}
                       className="text-xs font-mono bg-surface-raised border-border rounded-xl h-10"
                     />
                   </div>
@@ -873,11 +885,16 @@ export function AdminPromosTab({ onNotify }: AdminPromosTabProps) {
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-foreground">Minimal Belanja (Rp)</label>
                   <Input
-                    type="number"
-                    min="0"
+                    type="text"
+                    inputMode="decimal"
                     placeholder="0 = tanpa syarat"
                     value={formMinOrderAmount}
-                    onChange={(e) => setFormMinOrderAmount(Number(e.target.value))}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/,/g, '.');
+                      if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                        setFormMinOrderAmount(val);
+                      }
+                    }}
                     className="text-xs font-mono bg-surface-raised border-border rounded-xl h-10"
                   />
                 </div>

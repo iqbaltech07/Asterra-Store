@@ -35,7 +35,7 @@ export function SalesWalletTab({ partner, onRefetchProfile }: SalesWalletTabProp
   const payoutMutation = useMutation({
     mutationFn: async () => {
       // 1. Client-side input validation
-      const numAmount = Number(payoutAmount);
+      const numAmount = parseFloat(String(payoutAmount).replace(/,/g, '.'));
       if (isNaN(numAmount) || numAmount < 50000) {
         throw new Error('Minimal penarikan saldo komisi adalah Rp 50.000.');
       }
@@ -275,13 +275,17 @@ export function SalesWalletTab({ partner, onRefetchProfile }: SalesWalletTabProp
               <div>
                 <label className="font-semibold text-foreground block mb-1.5">Nominal Penarikan (Rp):</label>
                 <Input
-                  type="number"
+                  type="text"
+                  inputMode="decimal"
                   required
-                  min={50000}
-                  max={partner?.unpaidCommission || 0}
                   placeholder="Contoh: 100000"
                   value={payoutAmount}
-                  onChange={(e) => setPayoutAmount(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/,/g, '.');
+                    if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                      setPayoutAmount(val);
+                    }
+                  }}
                   className="bg-surface-raised border-border text-xs h-10 font-mono rounded-xl"
                 />
                 {/* Quick Nominal Chips for fast 1-tap mobile entry */}

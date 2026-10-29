@@ -148,7 +148,7 @@ class PartnerService:
                 )
                 for o in partner_orders
                 if str(o.get("status") or o.get("order_status") or "").lower() in [
-                    "completed", "paid", "settlement", "processing", "process", "diproses", "selesai", "done"
+                    "completed", "selesai", "done"
                 ]
             )
 
@@ -351,7 +351,7 @@ class PartnerService:
 
         total_revenue = sum(
             float(o.get("totalAmount", 0)) for o in partner_orders
-            if str(o.get("status", "")).lower() in ["completed", "paid", "settlement"]
+            if str(o.get("status", "")).lower() in ["completed", "selesai", "done"]
         )
 
         pending_comm = sum(

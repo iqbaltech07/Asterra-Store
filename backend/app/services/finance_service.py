@@ -21,7 +21,11 @@ class FinanceService:
         except Exception as e:
             print(f"[FinanceService] Note loading catalog products: {e}")
 
-        total_orders = len(orders)
+        total_orders = sum(
+            1 for o in orders 
+            if str(o.get("status", "")).lower() in ["completed", "selesai", "done"]
+            and str(o.get("id") or o.get("order_id") or "").strip().upper() != "AST-ORD-20261015-7615"
+        )
         total_gross_revenue = 0.0
         total_discounts = 0.0
         total_net_revenue = 0.0
@@ -43,11 +47,11 @@ class FinanceService:
         partner_success_counts = {}
         for o in orders:
             st = str(o.get("status", "")).lower()
-            if st in ["completed", "paid", "settlement", "selesai", "done"]:
+            if st in ["completed", "selesai", "done"]:
                 p_ref = str(o.get("referralCode") or o.get("referral_code") or "").strip().upper()
                 p_id_str = str(o.get("salesPartnerId") or o.get("sales_partner_id") or "").strip().upper()
                 oid = str(o.get("id") or o.get("order_id") or "").strip().upper()
-                if oid:
+                if oid and oid != "AST-ORD-20261015-7615":
                     if p_ref:
                         if p_ref not in partner_success_counts:
                             partner_success_counts[p_ref] = set()
@@ -58,10 +62,18 @@ class FinanceService:
                         partner_success_counts[p_id_str].add(oid)
 
         for idx, o in enumerate(orders):
+            clean_oid = str(o.get("id") or o.get("order_id") or "").strip().upper()
+            if clean_oid == "AST-ORD-20261015-7615":
+                # User instruction: AST-ORD-20261015-7615 profit is corrupt (profit 0), do not include in finance calculations
+                continue
+
             st = str(o.get("status", "")).lower()
-            is_settled = st in ["completed", "paid", "settlement"]
-            is_processing = st == "processing"
-            is_cancelled = st in ["cancelled", "expired", "failed"]
+            is_completed = st in ["completed", "selesai", "done"]
+            is_cancelled = st in ["cancelled", "expired", "failed", "batal"]
+
+            # STRICT RULE: Orders that are not yet completed (pending, processing) DO NOT enter keuangan!
+            if not is_completed and not is_cancelled:
+                continue
 
             raw_val = o.get("rawAmount") if o.get("rawAmount") is not None else o.get("raw_amount")
             tot_val = o.get("totalAmount") if o.get("totalAmount") is not None else o.get("total_amount")
@@ -142,10 +154,9 @@ class FinanceService:
                 coo_share = float(alloc["coo_share"])
                 reserve = float(alloc["business_reserve"])
 
-                entry_status = "available" if is_settled else "pending"
+                entry_status = "available"
 
-            # Accumulate realized metrics for settled / processing transactions
-            if is_settled or is_processing:
+                # Realized metrics ONLY accumulated for completed orders:
                 total_gross_revenue += selling_price
                 total_discounts += discount
                 total_net_revenue += net_rev
@@ -158,11 +169,7 @@ class FinanceService:
                 total_ceo_share += ceo_share
                 total_coo_share += coo_share
                 total_business_reserve += reserve
-
-                if entry_status == "pending":
-                    pending_commission_total += sales_comm + recruit_bonus
-                else:
-                    available_commission_total += sales_comm + recruit_bonus
+                available_commission_total += sales_comm + recruit_bonus
 
             product_names = ", ".join([str(it.get("productName") or it.get("product_name") or "") for it in items if (it.get("productName") or it.get("product_name"))])
             if not product_names:

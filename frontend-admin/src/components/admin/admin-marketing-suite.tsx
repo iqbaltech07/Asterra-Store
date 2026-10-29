@@ -132,7 +132,7 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
   const [campEndDate, setCampEndDate] = useState('2026-10-20');
   const [campCategory, setCampCategory] = useState('Semua Kategori');
   const [campDiscountType, setCampDiscountType] = useState<'percentage' | 'fixed'>('percentage');
-  const [campDiscountValue, setCampDiscountValue] = useState(15);
+  const [campDiscountValue, setCampDiscountValue] = useState<string>('15');
   const [campMinPurchase, setCampMinPurchase] = useState(0);
   const [campAffiliateBonus, setCampAffiliateBonus] = useState(5);
 
@@ -241,7 +241,7 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
     setCampEndDate(future);
     setCampCategory('Semua Kategori');
     setCampDiscountType('percentage');
-    setCampDiscountValue(15);
+    setCampDiscountValue('15');
     setCampMinPurchase(0);
     setCampAffiliateBonus(15);
     setIsCampaignModalOpen(true);
@@ -263,7 +263,7 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
         targetScope: campCategory === 'Semua Kategori' ? 'all' : 'category',
         targetCategories: campCategory === 'Semua Kategori' ? [] : [campCategory],
         discountType: campDiscountType,
-        discountValue: Number(campDiscountValue) || 15,
+        discountValue: parseFloat(String(campDiscountValue).replace(/,/g, '.')) || 15,
         minPurchase: Number(campMinPurchase) || 0,
         affiliateBonusPercent: Number(campAffiliateBonus) || 10,
         affiliateCommissionOverride: Number(campAffiliateBonus) || 10,
@@ -759,7 +759,7 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
                       setCampEndDate(camp.endDate);
                       setCampCategory(camp.targetCategory);
                       setCampDiscountType(camp.discountType);
-                      setCampDiscountValue(camp.discountValue);
+                      setCampDiscountValue(String(camp.discountValue ?? 15));
                       setCampMinPurchase(camp.minPurchase);
                       setCampAffiliateBonus(camp.affiliateBonusPercent);
                       setIsCampaignModalOpen(true);
@@ -875,11 +875,16 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
                           Nilai Diskon ({campDiscountType === 'percentage' ? '%' : 'Rp'})
                         </label>
                         <Input
-                          type="number"
+                          type="text"
+                          inputMode="decimal"
                           required
-                          min="1"
                           value={campDiscountValue}
-                          onChange={(e) => setCampDiscountValue(Number(e.target.value))}
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/,/g, '.');
+                            if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                              setCampDiscountValue(val);
+                            }
+                          }}
                           className="bg-white border-[#E2E8F0] text-xs font-mono font-bold text-[#0F172A] rounded-lg h-9 px-3 focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
                         />
                       </div>

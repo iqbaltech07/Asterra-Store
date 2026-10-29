@@ -391,8 +391,8 @@ function AdminPageContent() {
   const [formCategory, setFormCategory] = useState('AI Tools');
   const [formCategoryId, setFormCategoryId] = useState('cat-ai-tools');
   const [isCustomCategory, setIsCustomCategory] = useState(false);
-  const [formPrice, setFormPrice] = useState<number>(0);
-  const [formProviderPrice, setFormProviderPrice] = useState<number>(0);
+  const [formPrice, setFormPrice] = useState<string>('0');
+  const [formProviderPrice, setFormProviderPrice] = useState<string>('0');
   const [formStock, setFormStock] = useState<number>(100);
   const [formStatus, setFormStatus] = useState<'active' | 'archived'>('active');
   const [formDescription, setFormDescription] = useState('');
@@ -751,8 +751,8 @@ function AdminPageContent() {
         },
         categoryId: resolvedCatId,
         categoryName: formCategory,
-        price: formPrice,
-        providerPrice: formProviderPrice,
+        price: parseFloat(String(formPrice).replace(/,/g, '.')) || 0,
+        providerPrice: parseFloat(String(formProviderPrice).replace(/,/g, '.')) || 0,
         stock: formStock,
         status: formStatus,
         description: formDescription,
@@ -814,8 +814,8 @@ function AdminPageContent() {
         body: JSON.stringify({
           code: importingService.code,
           name: formName,
-          price: formPrice,
-          providerPrice: formProviderPrice,
+          price: parseFloat(String(formPrice).replace(/,/g, '.')) || 0,
+          providerPrice: parseFloat(String(formProviderPrice).replace(/,/g, '.')) || 0,
           stock: formStock,
           categoryName: formCategory,
           description: formDescription,
@@ -887,8 +887,8 @@ function AdminPageContent() {
     setFormCategory(p.category.name);
     setFormCategoryId(p.category.id || `cat-${p.category.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`);
     setIsCustomCategory(false);
-    setFormPrice(p.price);
-    setFormProviderPrice(p.providerPrice || 0);
+    setFormPrice(p.price != null ? String(p.price) : '0');
+    setFormProviderPrice(p.providerPrice != null ? String(p.providerPrice) : '0');
     setFormStock(p.stock !== undefined ? p.stock : p.providerStatus === 'empty' ? 0 : 100);
     setFormStatus(p.status);
     setFormDescription(p.description);
@@ -915,8 +915,8 @@ function AdminPageContent() {
     setFormCategory(firstCat);
     setFormCategoryId(firstCatId);
     setIsCustomCategory(false);
-    setFormPrice(50000);
-    setFormProviderPrice(0);
+    setFormPrice('50000');
+    setFormProviderPrice('0');
     setFormStock(100);
     setFormStatus('active');
     setFormDescription('');
@@ -941,8 +941,8 @@ function AdminPageContent() {
     setFormCategory(p.category.name);
     setFormCategoryId(p.category.id || `cat-${p.category.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`);
     setIsCustomCategory(false);
-    setFormPrice(p.price);
-    setFormProviderPrice(p.providerPrice || 0);
+    setFormPrice(p.price != null ? String(p.price) : '0');
+    setFormProviderPrice(p.providerPrice != null ? String(p.providerPrice) : '0');
     setFormStock(p.stock !== undefined ? p.stock : 100);
     setFormStatus('archived');
     setFormDescription(p.description);
@@ -974,8 +974,8 @@ function AdminPageContent() {
 
     // Default suggested selling price: base + 10% rounded to 1000
     const suggestedPrice = Math.ceil((base * 1.1 + 2500) / 1000) * 1000;
-    setFormPrice(suggestedPrice);
-    setFormProviderPrice(base);
+    setFormPrice(String(suggestedPrice));
+    setFormProviderPrice(String(base));
     setFormStock(service.status === 'available' ? 100 : 0);
 
     // Category mapping: AI Tools, Apps & Streaming, Games, etc.
@@ -2595,14 +2595,18 @@ function AdminPageContent() {
                     Harga Jual Retail (Rp) <span className="text-primary">*Ditentukan Admin</span>
                   </label>
                   <Input
-                    type="number"
+                    type="text"
+                    inputMode="decimal"
                     required
-                    min="0"
-                    step="500"
                     value={formPrice}
-                    onChange={(e) => setFormPrice(Number(e.target.value))}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/,/g, '.');
+                      if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                        setFormPrice(val);
+                      }
+                    }}
                     className="bg-surface-raised border-border text-xs font-mono font-bold"
-                    placeholder="Contoh: 50000"
+                    placeholder="Contoh: 50000 atau 15500.5"
                   />
                 </div>
 
@@ -2611,11 +2615,15 @@ function AdminPageContent() {
                     Harga Supplier / Modal (Rp) <span className="text-foreground-muted text-[10px]">(Bisa diubah)</span>
                   </label>
                   <Input
-                    type="number"
-                    min="0"
-                    step="500"
+                    type="text"
+                    inputMode="decimal"
                     value={formProviderPrice}
-                    onChange={(e) => setFormProviderPrice(Number(e.target.value))}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/,/g, '.');
+                      if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                        setFormProviderPrice(val);
+                      }
+                    }}
                     className="bg-surface-raised border-border text-xs font-mono font-bold"
                     placeholder="Harga supply / modal dasar"
                   />
@@ -2632,32 +2640,32 @@ function AdminPageContent() {
                 <div>
                   <span className="text-foreground-muted block">Harga Modal:</span>
                   <span className="font-bold text-foreground font-mono">
-                    Rp {formProviderPrice.toLocaleString('id-ID')}
+                    Rp {(parseFloat(String(formProviderPrice)) || 0).toLocaleString('id-ID')}
                   </span>
                 </div>
                 <div className="text-right">
                   <span className="text-foreground-muted block">Estimasi Keuntungan:</span>
-                  {formPrice - formProviderPrice > 0 ? (
-                    <span className="font-bold text-status-success font-mono">
-                      +Rp {(formPrice - formProviderPrice).toLocaleString('id-ID')} (
-                      {formProviderPrice > 0
-                        ? Math.round(((formPrice - formProviderPrice) / formProviderPrice) * 100)
-                        : 100}
-                      %)
-                    </span>
-                  ) : formPrice - formProviderPrice < 0 ? (
-                    <span className="font-bold text-status-error font-mono">
-                      -Rp {Math.abs(formPrice - formProviderPrice).toLocaleString('id-ID')} (
-                      {formProviderPrice > 0
-                        ? Math.round(((formPrice - formProviderPrice) / formProviderPrice) * 100)
-                        : 0}
-                      %)
-                    </span>
-                  ) : (
-                    <span className="font-bold text-foreground-muted font-mono">
-                      Rp 0 (0%)
-                    </span>
-                  )}
+                  {(() => {
+                    const pVal = parseFloat(String(formPrice)) || 0;
+                    const cVal = parseFloat(String(formProviderPrice)) || 0;
+                    const diff = pVal - cVal;
+                    if (diff > 0) {
+                      const pct = cVal > 0 ? ((diff / cVal) * 100).toFixed(1).replace(/\.0$/, '') : '100';
+                      return (
+                        <span className="font-bold text-status-success font-mono">
+                          +Rp {diff.toLocaleString('id-ID')} ({pct}%)
+                        </span>
+                      );
+                    } else if (diff < 0) {
+                      const pct = cVal > 0 ? ((diff / cVal) * 100).toFixed(1).replace(/\.0$/, '') : '0';
+                      return (
+                        <span className="font-bold text-status-error font-mono">
+                          -Rp {Math.abs(diff).toLocaleString('id-ID')} ({pct}%)
+                        </span>
+                      );
+                    }
+                    return <span className="font-bold text-foreground-muted font-mono">Rp 0 (0%)</span>;
+                  })()}
                 </div>
               </div>
 
@@ -3133,13 +3141,18 @@ function AdminPageContent() {
                     Harga Jual Retail (Rp) <span className="text-primary">*Ditentukan Anda</span>
                   </label>
                   <Input
-                    type="number"
+                    type="text"
+                    inputMode="decimal"
                     required
-                    min="0"
-                    step="500"
                     value={formPrice}
-                    onChange={(e) => setFormPrice(Number(e.target.value))}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/,/g, '.');
+                      if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                        setFormPrice(val);
+                      }
+                    }}
                     className="bg-surface-raised border-border text-xs font-mono font-bold"
+                    placeholder="Contoh: 50000 atau 15500.5"
                   />
                 </div>
 
@@ -3148,12 +3161,17 @@ function AdminPageContent() {
                     Harga Modal Supplier (Rp) <span className="text-foreground-muted text-[10px]">(Bisa diubah)</span>
                   </label>
                   <Input
-                    type="number"
-                    min="0"
-                    step="500"
+                    type="text"
+                    inputMode="decimal"
                     value={formProviderPrice}
-                    onChange={(e) => setFormProviderPrice(Number(e.target.value))}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/,/g, '.');
+                      if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                        setFormProviderPrice(val);
+                      }
+                    }}
                     className="bg-surface-raised border-border text-xs font-mono font-bold"
+                    placeholder="Harga supply / modal dasar"
                   />
                 </div>
               </div>

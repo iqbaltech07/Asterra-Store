@@ -83,7 +83,8 @@ class ReferralProfitService:
             reserve = int(round(tx_profit * 0.15))
             retained = tx_profit - reserve
             ceo = retained // 2
-            coo = retained - ceo
+            coo = ceo
+            reserve = tx_profit - (ceo + coo)
             return {
                 "sales_commission": 0,
                 "sales_commission_rate": 0.0,

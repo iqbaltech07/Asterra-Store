@@ -69,10 +69,10 @@ class AnalyticsService:
                 cust = customer_map[email]
                 cust["orders"] += 1
                 cust["lastOrder"] = max(cust["lastOrder"], created_dt)
-                if status in ["completed", "paid", "settlement"]:
+                if status in ["completed", "selesai", "done"]:
                     cust["spent"] += amt
 
-            if status in ["completed", "paid", "settlement"]:
+            if status in ["completed", "selesai", "done"]:
                 completed_orders += 1
                 total_revenue += amt
 
@@ -118,10 +118,10 @@ class AnalyticsService:
 
             elif status == "pending":
                 pending_orders += 1
-            elif status == "processing":
+            elif status in ["processing", "process", "diproses"]:
                 processing_orders += 1
-                total_revenue += amt
-            elif status in ["cancelled", "expired", "failed"]:
+                # STRICT: Do not add to total_revenue until order status is completed/selesai!
+            elif status in ["cancelled", "expired", "failed", "batal"]:
                 cancelled_orders += 1
 
         sales_chart_data = {
@@ -229,7 +229,7 @@ class AnalyticsService:
         parsed_orders = []
         for o in orders:
             status = str(o.get("status", "")).lower()
-            if status in ["completed", "paid", "settlement"]:
+            if status in ["completed", "selesai", "done"]:
                 created_str = o.get("createdAt") or o.get("created_at") or now_wib.isoformat()
                 try:
                     if "Z" in created_str:
@@ -591,8 +591,12 @@ class AnalyticsService:
         summary = profit_data.get("summary", {})
         ledger_entries = profit_data.get("entries", [])
 
-        # 1. Wallets
-        completed_orders = [o for o in orders if str(o.get("status")).lower() in ["completed", "paid", "settlement"]]
+        # 1. Wallets (Strictly completed/selesai orders, excluding corrupt zero-profit order AST-ORD-20261015-7615)
+        completed_orders = [
+            o for o in orders 
+            if str(o.get("status")).lower() in ["completed", "selesai", "done"]
+            and str(o.get("id") or o.get("order_id") or "").strip().upper() != "AST-ORD-20261015-7615"
+        ]
         tripay_settled = sum(
             float(o.get("totalAmount") or o.get("rawAmount") or 0.0)
             for o in completed_orders

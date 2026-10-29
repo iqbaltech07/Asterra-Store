@@ -56,6 +56,7 @@ def get_campaign_sort_key(c: Dict[str, Any]):
 
 class CampaignService:
     _campaigns: Optional[List[Dict[str, Any]]] = None
+    _last_loaded: Optional[datetime] = None
     _table_ensured: bool = False
 
     @classmethod
@@ -83,7 +84,13 @@ class CampaignService:
         """
         Loads campaigns from Supabase/PostgreSQL promo_campaigns table.
         """
-        if cls._campaigns is not None and not force_reload:
+        now = datetime.utcnow()
+        if (
+            cls._campaigns is not None
+            and not force_reload
+            and cls._last_loaded is not None
+            and (now - cls._last_loaded).total_seconds() < 5
+        ):
             return cls._campaigns
 
         # Query Database
@@ -99,6 +106,7 @@ class CampaignService:
                     )
                     data = [c.to_dict() for c in db_items]
                     cls._campaigns = data
+                    cls._last_loaded = datetime.utcnow()
                     return cls._campaigns
                 finally:
                     db.close()
@@ -107,6 +115,41 @@ class CampaignService:
 
         cls._campaigns = []
         return cls._campaigns
+
+    @classmethod
+    def sync_campaign_metrics_from_orders(cls) -> None:
+        """Recalculates total_orders_count and total_revenue_generated directly from orders table."""
+        try:
+            db = SessionLocal() if SessionLocal else None
+            if db:
+                try:
+                    from app.models.order import Order
+                    from sqlalchemy import func
+                    results = (
+                        db.query(
+                            Order.campaign_id,
+                            func.count(Order.id).label("order_count"),
+                            func.sum(Order.total_amount).label("sum_amount")
+                        )
+                        .filter(
+                            Order.campaign_id.isnot(None),
+                            (Order.status == "completed") | (Order.payment_status == "paid")
+                        )
+                        .group_by(Order.campaign_id)
+                        .all()
+                    )
+                    camp_map = {r[0]: (int(r[1]), float(r[2])) for r in results if r[0]}
+                    all_camps = db.query(PromoCampaign).all()
+                    for c in all_camps:
+                        cnt, rev = camp_map.get(c.id, (0, 0.0))
+                        c.total_orders_count = cnt
+                        c.total_revenue_generated = rev
+                    db.commit()
+                    cls.load_campaigns(force_reload=True)
+                finally:
+                    db.close()
+        except Exception as e:
+            print(f"[CampaignService] sync_campaign_metrics note: {e}")
 
     @classmethod
     def save_campaigns(cls) -> bool:

@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Column, String, Integer, Boolean, DateTime, Text
+from sqlalchemy import Column, String, Integer, Boolean, DateTime, Text, Numeric
 from sqlalchemy.dialects.postgresql import ARRAY
 from app.core.database import Base
 
@@ -11,7 +11,7 @@ class Product(Base):
     category_id = Column(String, nullable=False)
     category_name = Column(String, nullable=False)
     brand = Column(String, nullable=False, default="Digital")
-    price = Column(Integer, nullable=False)
+    price = Column(Numeric(15, 2), nullable=False)
     price_formatted = Column(String, nullable=False)
     description = Column(Text, nullable=True)
     features = Column(ARRAY(String), default=[])
@@ -22,11 +22,11 @@ class Product(Base):
     provider = Column(String, default="vip-reseller")
     provider_code = Column(String, nullable=True)
     provider_name = Column(String, nullable=True)
-    provider_price = Column(Integer, nullable=True)
+    provider_price = Column(Numeric(15, 2), nullable=True)
     provider_status = Column(String, nullable=True)
     last_provider_check = Column(DateTime, nullable=True)
-    profit_margin = Column(Integer, nullable=True)
-    profit_percentage = Column(Integer, nullable=True)
+    profit_margin = Column(Numeric(15, 2), nullable=True)
+    profit_percentage = Column(Numeric(10, 2), nullable=True)
 
     guarantee_title = Column(String, nullable=True, default="Garansi Penuh")
     guarantee_desc = Column(String, nullable=True, default="Jaminan ganti akun 100%")
@@ -39,6 +39,15 @@ class Product(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     def to_dict(self):
+        def _num(val):
+            if val is None:
+                return None
+            try:
+                f = float(val)
+                return int(f) if f.is_integer() else f
+            except (ValueError, TypeError):
+                return val
+
         return {
             "id": self.id,
             "name": self.name,
@@ -49,7 +58,7 @@ class Product(Base):
             "categoryId": self.category_id,
             "categoryName": self.category_name,
             "brand": self.brand,
-            "price": self.price,
+            "price": _num(self.price),
             "priceFormatted": self.price_formatted,
             "description": self.description,
             "features": list(self.features) if self.features else [],
@@ -60,11 +69,11 @@ class Product(Base):
             "provider": self.provider,
             "providerCode": self.provider_code,
             "providerName": self.provider_name,
-            "providerPrice": self.provider_price,
+            "providerPrice": _num(self.provider_price),
             "providerStatus": self.provider_status,
             "lastProviderCheck": self.last_provider_check.isoformat() if self.last_provider_check else None,
-            "profitMargin": self.profit_margin,
-            "profitPercentage": self.profit_percentage,
+            "profitMargin": _num(self.profit_margin),
+            "profitPercentage": _num(self.profit_percentage),
             "guaranteeTitle": self.guarantee_title,
             "guaranteeDesc": self.guarantee_desc,
             "processTitle": self.process_title,

@@ -301,12 +301,26 @@ class CatalogService:
         return new_cat.id, new_cat.name
 
     @classmethod
+    def format_price_idr(cls, amount: Any) -> str:
+        if amount is None:
+            return "Rp 0"
+        try:
+            f = float(amount)
+            if f.is_integer():
+                return f"Rp {int(f):,}".replace(",", ".")
+            s = f"{f:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+            cleaned = s.rstrip("0").rstrip(",") if "," in s else s
+            return f"Rp {cleaned}"
+        except Exception:
+            return f"Rp {amount}"
+
+    @classmethod
     def create_product(cls, payload: Dict[str, Any]) -> Dict[str, Any]:
         product_id = payload.get("id") or f"prod-{int(datetime.utcnow().timestamp() * 1000)}"
-        price = int(payload.get("price", 0))
-        provider_price = int(payload.get("providerPrice", 0))
+        price = float(payload.get("price", 0))
+        provider_price = float(payload.get("providerPrice", 0))
         margin = price - provider_price if provider_price > 0 else 0
-        pct = round((margin / provider_price) * 100) if provider_price > 0 else 0
+        pct = round((margin / provider_price) * 100, 2) if provider_price > 0 else 0
 
         cat = payload.get("category") or {}
         raw_cat_id = cat.get("id") or payload.get("categoryId")
@@ -324,7 +338,7 @@ class CatalogService:
                     category_name=cat_name,
                     brand=payload.get("brand", "Digital"),
                     price=price,
-                    price_formatted=f"Rp {price:,.0f}".replace(",", "."),
+                    price_formatted=cls.format_price_idr(price),
                     description=payload.get("description", ""),
                     features=payload.get("features", []),
                     status=payload.get("status", "active"),
@@ -373,10 +387,10 @@ class CatalogService:
                     if "name" in payload and payload["name"] is not None:
                         prod.name = payload["name"]
                     if "price" in payload and payload["price"] is not None:
-                        prod.price = int(payload["price"])
-                        prod.price_formatted = f"Rp {prod.price:,.0f}".replace(",", ".")
+                        prod.price = float(payload["price"])
+                        prod.price_formatted = cls.format_price_idr(prod.price)
                     if "providerPrice" in payload and payload["providerPrice"] is not None:
-                        prod.provider_price = int(payload["providerPrice"])
+                        prod.provider_price = float(payload["providerPrice"])
                     if "stock" in payload and payload["stock"] is not None:
                         prod.stock = int(payload["stock"])
                     if "status" in payload and payload["status"] is not None:
@@ -411,9 +425,9 @@ class CatalogService:
                         prod.privacy_desc = payload["privacyDesc"]
 
                     # Recalculate margins
-                    if prod.provider_price and prod.provider_price > 0:
-                        prod.profit_margin = prod.price - prod.provider_price
-                        prod.profit_percentage = round((prod.profit_margin / prod.provider_price) * 100)
+                    if prod.provider_price and float(prod.provider_price) > 0:
+                        prod.profit_margin = float(prod.price) - float(prod.provider_price)
+                        prod.profit_percentage = round((float(prod.profit_margin) / float(prod.provider_price)) * 100, 2)
 
                     prod.updated_at = datetime.utcnow()
                     db.commit()
@@ -602,8 +616,8 @@ class CatalogService:
     def import_vip_service(cls, payload: Dict[str, Any]) -> Dict[str, Any]:
         code = str(payload.get("code") or payload.get("providerCode") or "").strip()
         name = payload.get("name", "").strip()
-        price = int(payload.get("price", 0))
-        provider_price = int(payload.get("providerPrice", 0))
+        price = float(payload.get("price", 0))
+        provider_price = float(payload.get("providerPrice", 0))
         stock = int(payload.get("stock", 100))
         category_name = payload.get("categoryName", "Digital Services")
         description = payload.get("description", "")
@@ -611,7 +625,7 @@ class CatalogService:
         image_url = payload.get("imageUrl") or "/images/default-product-banner.png"
 
         margin = price - provider_price if provider_price > 0 else 0
-        pct = round((margin / provider_price) * 100) if provider_price > 0 else 0
+        pct = round((margin / provider_price) * 100, 2) if provider_price > 0 else 0
         prod_id = f"vip-{code.lower().replace(' ', '-')}"
 
         try:
@@ -624,7 +638,7 @@ class CatalogService:
                     existing.category_id = resolved_cat_id
                     existing.category_name = resolved_cat_name
                     existing.price = price or existing.price
-                    existing.price_formatted = f"Rp {existing.price:,.0f}".replace(",", ".")
+                    existing.price_formatted = cls.format_price_idr(existing.price)
                     existing.provider_price = provider_price or existing.provider_price
                     existing.profit_margin = margin
                     existing.profit_percentage = pct
@@ -644,7 +658,7 @@ class CatalogService:
                         category_name=resolved_cat_name,
                         brand="VIP Reseller",
                         price=price,
-                        price_formatted=f"Rp {price:,.0f}".replace(",", "."),
+                        price_formatted=cls.format_price_idr(price),
                         provider_price=provider_price,
                         stock=stock,
                         status=status,
