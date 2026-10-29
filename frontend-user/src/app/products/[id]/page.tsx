@@ -89,10 +89,18 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params;
-  const [activeProducts, cardData] = await Promise.all([
+  const [activeProducts, initialCardData] = await Promise.all([
     fetchActiveProducts(),
     fetchCardByIdOrSlug(id),
   ]);
+  const baseProduct = await fetchProductById(id, activeProducts);
+
+  let cardData = initialCardData;
+  if (!cardData && baseProduct && ((baseProduct as any).cardId || (baseProduct as any).card_id)) {
+    const parentCardId = (baseProduct as any).cardId || (baseProduct as any).card_id;
+    cardData = await fetchCardByIdOrSlug(parentCardId);
+  }
+
   let familyData = cardData && Array.isArray(cardData.catalogs) && cardData.catalogs.length > 0
     ? {
         name: cardData.name,
@@ -103,7 +111,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         id: cardData.id,
       }
     : resolveProductFamily(id, activeProducts);
-  const baseProduct = await fetchProductById(id, activeProducts);
 
   const product = familyData
     ? {
@@ -174,18 +181,26 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function ProductDetailPage({ params }: PageProps) {
   const { id } = await params;
-  const [activeProducts, storeStatus, cardData] = await Promise.all([
+  const [activeProducts, storeStatus, initialCardData] = await Promise.all([
     fetchActiveProducts(),
     getStoreOperatingHoursServer(),
     fetchCardByIdOrSlug(id),
   ]);
+  const baseProduct = await fetchProductById(id, activeProducts);
+
+  let cardData = initialCardData;
+  if (!cardData && baseProduct && ((baseProduct as any).cardId || (baseProduct as any).card_id)) {
+    const parentCardId = (baseProduct as any).cardId || (baseProduct as any).card_id;
+    cardData = await fetchCardByIdOrSlug(parentCardId);
+  }
 
   let familyData: any = null;
   if (cardData && Array.isArray(cardData.catalogs) && cardData.catalogs.length > 0) {
     const activeCatalogs = (cardData.catalogs || []).filter((c: any) => c.status === 'active');
     const parsedVariants = activeCatalogs.map((c: any) => parseProductVariant(c));
     parsedVariants.sort((a: any, b: any) => a.price - b.price);
-    const selectedVariant = parsedVariants.find((v: any) => !v.isOutOfStock) || parsedVariants[0];
+    const matchingVariant = parsedVariants.find((v: any) => v.id === id || (baseProduct && v.id === baseProduct.id));
+    const selectedVariant = matchingVariant || parsedVariants.find((v: any) => !v.isOutOfStock) || parsedVariants[0];
 
     familyData = {
       slug: cardData.slug,
@@ -202,7 +217,6 @@ export default async function ProductDetailPage({ params }: PageProps) {
   } else {
     familyData = resolveProductFamily(id, activeProducts);
   }
-  const baseProduct = await fetchProductById(id, activeProducts);
 
   if (!familyData && (!baseProduct || baseProduct.status === 'archived')) {
     notFound();

@@ -21,6 +21,7 @@ class ProductCard(Base):
     sections = Column(Text, default='["promo"]')  # JSON list of section keys e.g. ["promo", "terlaris", "terbaru"]
     rating = Column(String(10), default="5.0", nullable=False)
     badge_label = Column(String(100), nullable=True)
+    base_sold_count = Column(Integer, default=0, nullable=False)
 
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -55,6 +56,7 @@ class ProductCard(Base):
                     break
 
         stock_status = "ready" if (self.status == "active" and active_catalogs and has_ready_stock) else "out_of_stock"
+        total_sold = int((self.base_sold_count or 0) + sold_count)
 
         res = {
             "id": self.id,
@@ -81,7 +83,9 @@ class ProductCard(Base):
             "isOutOfStock": stock_status == "out_of_stock",
             "catalogCount": len(self.catalogs) if self.catalogs is not None else 0,
             "activeCatalogCount": len(active_catalogs),
-            "soldCount": sold_count,
+            "baseSoldCount": self.base_sold_count or 0,
+            "orderSoldCount": sold_count,
+            "soldCount": total_sold,
             "createdAt": self.created_at.isoformat() if self.created_at else None,
             "updatedAt": self.updated_at.isoformat() if self.updated_at else None,
         }

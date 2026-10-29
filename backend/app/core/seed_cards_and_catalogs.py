@@ -348,17 +348,8 @@ def seed_data():
                 existing_cards[c_id] = new_card
                 card_inserted += 1
             else:
-                card = existing_cards[c_id]
-                card.name = card_def["name"]
-                card.slug = card_def["slug"]
-                card.logo_url = card_def["logo_url"]
-                card.description = card_def["description"]
-                card.category_id = card_def["category_id"]
-                card.category_name = card_def["category_name"]
-                card.display_order = card_def["display_order"]
-                card.is_featured = card_def["is_featured"]
-                card.sections = card_def["sections"]
-                card.badge_label = card_def["badge_label"]
+                # Card already exists in database - preserve admin-customized metadata
+                pass
 
         db.commit()
         print(f"[Seed] ProductCards seeded: {len(existing_cards)} (New: {card_inserted})")
@@ -375,7 +366,7 @@ def seed_data():
                     matched_card_id = card_def["id"]
                     break
 
-            if matched_card_id:
+            if matched_card_id and prod.card_id is None:
                 prod.card_id = matched_card_id
                 linked_count += 1
 

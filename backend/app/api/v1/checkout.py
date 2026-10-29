@@ -375,7 +375,13 @@ async def create_order(request: Request, background_tasks: BackgroundTasks):
                     detail="Layanan Pre-Order sedang dinonaktifkan sementara oleh toko.",
                 )
 
-    order = OrderService.create_order(payload, background_tasks=background_tasks)
+    try:
+        order = OrderService.create_order(payload, background_tasks=background_tasks)
+    except ValueError as ve:
+        raise HTTPException(
+            status_code=400,
+            detail=str(ve)
+        )
     cache.invalidate("orders")
     return {
         "success": True,

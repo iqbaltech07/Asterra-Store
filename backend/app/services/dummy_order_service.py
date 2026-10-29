@@ -199,6 +199,7 @@ class DummyOrderService:
                 order_id=order_id,
                 product_id=prod_check.id,
                 product_name=prod_check.name,
+                card_id=prod_check.card_id,
                 price=int(prod_check.price),
                 quantity=1,
                 duration="1 Bulan",

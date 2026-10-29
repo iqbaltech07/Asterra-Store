@@ -1,23 +1,12 @@
-import logging
 from sqlalchemy import text
-from app.core.database import engine, Base
-
-logger = logging.getLogger(__name__)
+from app.core.database import engine
 
 def run_migrations():
     """
-    Safely and idempotently creates new tables and columns required for:
-    - ProductCard (Card Produk)
-    - ProductAttribute (Atribut Dinamis)
-    - ProductVariant (Kombinasi Varian)
-    - card_id on products table
-    - is_dummy on orders table
-    - auto_close_time and manual toggles on store_operating_hours table
+    Applies idempotent migrations to the Supabase PostgreSQL database
+    supporting the separation of Product Cards, dynamic Catalog variants,
+    dummy order tracking, and store operating hours.
     """
-    if engine is None:
-        logger.warning("[Migration] Engine is None, skipping migrations.")
-        return False
-
     statements = [
         # 1. Product Cards table
         """
@@ -92,6 +81,23 @@ def run_migrations():
         "ALTER TABLE store_operating_hours ADD COLUMN IF NOT EXISTS auto_close_time VARCHAR(20) DEFAULT '21:00';",
         "ALTER TABLE store_operating_hours ADD COLUMN IF NOT EXISTS last_manual_opened_at TIMESTAMP WITHOUT TIME ZONE;",
         "ALTER TABLE store_operating_hours ADD COLUMN IF NOT EXISTS last_manual_closed_at TIMESTAMP WITHOUT TIME ZONE;",
+
+        # 7. Add card_id to order_items for immutable historical sales association
+        "ALTER TABLE order_items ADD COLUMN IF NOT EXISTS card_id VARCHAR(100);",
+        "CREATE INDEX IF NOT EXISTS idx_order_items_card_id ON order_items(card_id);",
+
+        # 8. Add base_sold_count to product_cards
+        "ALTER TABLE product_cards ADD COLUMN IF NOT EXISTS base_sold_count INTEGER DEFAULT 0 NOT NULL;",
+
+        # 9. Backfill existing order_items.card_id from products.card_id
+        """
+        UPDATE order_items oi
+        SET card_id = p.card_id
+        FROM products p
+        WHERE oi.product_id = p.id
+          AND oi.card_id IS NULL
+          AND p.card_id IS NOT NULL;
+        """,
     ]
 
     try:

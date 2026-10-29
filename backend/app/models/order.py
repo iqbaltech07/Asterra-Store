@@ -26,6 +26,7 @@ class OrderItem(Base):
     target_phone = Column(String, nullable=True)
     target_id = Column(String, nullable=True)
     target_zone = Column(String, nullable=True)
+    card_id = Column(String, nullable=True, index=True)
 
     order = relationship("Order", back_populates="items")
 
@@ -35,6 +36,8 @@ class OrderItem(Base):
             "orderId": self.order_id,
             "productId": self.product_id,
             "productName": self.product_name,
+            "cardId": self.card_id,
+            "card_id": self.card_id,
             "price": _num(self.price),
             "quantity": self.quantity,
             "duration": self.duration,

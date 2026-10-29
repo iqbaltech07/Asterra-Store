@@ -16,11 +16,11 @@ class CardService:
     def get_real_sold_counts(cls) -> Dict[str, int]:
         """
         Idempotent SQL aggregation computing actual units sold for each Card Produk
-        and each individual Catalog Product from real successful transactions.
-        Phase 6 Source of Truth:
-        - Only orders where is_dummy is False (or NULL)
+        and each individual Catalog Product from orders shown on /orders.
+        Phase 5 & 6 Source of Truth:
         - Only orders with status IN ('completed', 'paid', 'settlement', 'processing')
-        - Sum of OrderItem.quantity (consistent unit metric)
+        - Sum of OrderItem.quantity (consistent unit metric across all successful transactions)
+        - Historical snapshot uses oi.card_id or falls back to p.card_id
         """
         card_sales: Dict[str, int] = {}
         catalog_sales: Dict[str, int] = {}
@@ -31,15 +31,14 @@ class CardService:
                 # 1. Sales aggregated by Card Produk
                 card_query = text("""
                     SELECT 
-                        p.card_id,
+                        COALESCE(oi.card_id, p.card_id) AS card_id,
                         COALESCE(SUM(oi.quantity), 0) AS total_units
                     FROM order_items oi
                     JOIN orders o ON oi.order_id = o.id
-                    JOIN products p ON oi.product_id = p.id
-                    WHERE (o.is_dummy IS FALSE OR o.is_dummy IS NULL)
-                      AND LOWER(o.status) IN ('completed', 'paid', 'settlement', 'processing')
-                      AND p.card_id IS NOT NULL
-                    GROUP BY p.card_id;
+                    LEFT JOIN products p ON oi.product_id = p.id
+                    WHERE LOWER(o.status) IN ('completed', 'paid', 'settlement', 'processing')
+                      AND COALESCE(oi.card_id, p.card_id) IS NOT NULL
+                    GROUP BY COALESCE(oi.card_id, p.card_id);
                 """)
                 rows = db.execute(card_query).fetchall()
                 for r in rows:
@@ -53,8 +52,7 @@ class CardService:
                         COALESCE(SUM(oi.quantity), 0) AS total_units
                     FROM order_items oi
                     JOIN orders o ON oi.order_id = o.id
-                    WHERE (o.is_dummy IS FALSE OR o.is_dummy IS NULL)
-                      AND LOWER(o.status) IN ('completed', 'paid', 'settlement', 'processing')
+                    WHERE LOWER(o.status) IN ('completed', 'paid', 'settlement', 'processing')
                     GROUP BY oi.product_id;
                 """)
                 cat_rows = db.execute(cat_query).fetchall()
@@ -178,6 +176,8 @@ class CardService:
             else:
                 sections_json = json.dumps([s.strip() for s in str(raw_sections).split(",") if s.strip()])
 
+            base_sold = int(payload.get("baseSoldCount") or payload.get("base_sold_count") or 0)
+
             new_card = ProductCard(
                 id=card_id,
                 name=name,
@@ -192,6 +192,7 @@ class CardService:
                 sections=sections_json,
                 rating=str(payload.get("rating", "5.0")),
                 badge_label=payload.get("badgeLabel") or payload.get("badge_label"),
+                base_sold_count=base_sold,
             )
             db.add(new_card)
 
@@ -264,8 +265,12 @@ class CardService:
                     card.sections = json.dumps(raw_sec)
                 else:
                     card.sections = json.dumps([s.strip() for s in str(raw_sec).split(",") if s.strip()])
+            if "rating" in payload and payload["rating"] is not None:
+                card.rating = str(payload["rating"])
             if "badgeLabel" in payload or "badge_label" in payload:
                 card.badge_label = payload.get("badgeLabel") or payload.get("badge_label")
+            if "baseSoldCount" in payload or "base_sold_count" in payload:
+                card.base_sold_count = int(payload.get("baseSoldCount") or payload.get("base_sold_count") or 0)
 
             # Update catalog linkages if provided
             if "catalogIds" in payload or "catalog_ids" in payload:
