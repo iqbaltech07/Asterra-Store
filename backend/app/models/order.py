@@ -75,6 +75,7 @@ class Order(Base):
     provider_status = Column(String, nullable=True)
     provider_note = Column(Text, nullable=True)
     is_preorder = Column(Boolean, default=False, nullable=True)
+    is_dummy = Column(Boolean, default=False, nullable=True)
     # Order Fulfillment & Credential Delivery fields
     fulfillment_mode = Column(String, default="manual", nullable=True)  # 'manual' | 'automatic'
     fulfillment_credentials = Column(Text, nullable=True)  # JSON-formatted credentials list
@@ -149,6 +150,8 @@ class Order(Base):
             "customer_notes": self.customer_notes,
             "is_preorder": bool(self.is_preorder),
             "isPreorder": bool(self.is_preorder),
+            "is_dummy": bool(self.is_dummy),
+            "isDummy": bool(self.is_dummy),
             "order_status": self.status,
             "fulfillmentMode": self.fulfillment_mode or "manual",
             "fulfillment_mode": self.fulfillment_mode or "manual",

@@ -47,6 +47,7 @@ export type AdminTab =
   // OVERVIEW
   | 'dashboard'
   // KATALOG & LAYANAN
+  | 'cards'
   | 'products'
   | 'homepage-ordering'
   | 'categories'
@@ -217,6 +218,14 @@ export function AdminSidebar({
           icon: Boxes,
           items: [
             {
+              id: 'cards',
+              label: 'Card Produk',
+              icon: Boxes,
+              badge: '15',
+              badgeVariant: 'primary',
+              description: 'Kelola identitas produk & varian homepage',
+            },
+            {
               id: 'products',
               label: 'Katalog Produk',
               icon: Package,
@@ -356,6 +365,14 @@ export function AdminSidebar({
         label: 'KATALOG & LAYANAN',
         icon: Boxes,
         items: [
+          {
+            id: 'cards',
+            label: 'Card Produk',
+            icon: Boxes,
+            badge: '15',
+            badgeVariant: 'primary',
+            description: 'Kelola identitas produk & varian homepage',
+          },
           {
             id: 'products',
             label: 'Katalog Produk',

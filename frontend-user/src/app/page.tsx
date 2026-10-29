@@ -23,6 +23,7 @@ import {
   faClock,
 } from '@fortawesome/free-solid-svg-icons';
 import { useCatalogProducts } from '@/lib/hooks/use-catalog-products';
+import { useProductCards } from '@/lib/hooks/use-product-cards';
 import { useActiveCampaigns } from '@/lib/hooks/use-active-campaigns';
 import { useHomepageSections } from '@/lib/hooks/use-homepage-sections';
 import {
@@ -68,9 +69,10 @@ export default function HomePage() {
     setRecentlyViewed(getRecentlyViewed());
   }, []);
 
-  // Dynamic products fetched from catalog API (cached via shared query)
+  // Dynamic products and Product Cards fetched from catalog API (cached via shared query)
   const { data: catalogResponse, isLoading: isCatalogLoadingQuery } = useCatalogProducts();
   const { data: sectionsResponse, isLoading: isSectionsLoading } = useHomepageSections();
+  const { data: cardsResponse } = useProductCards();
 
   // Reference timestamp to update dynamic sold counts matching /orders delay (5–20m interval)
   const [now, setNow] = useState<number>(() => Date.now());
@@ -277,46 +279,92 @@ export default function HomePage() {
 
   // Map to Featured Products (authoritative backend data with 8-product guarantee & resilient fallback)
   const featuredApps = useMemo(() => {
-    // 1. Map all Product application groups to their catalog items
-    const allMapped = appConfigurations.map((target) => {
-      const items = allProducts.filter((p) => {
-        const text = `${p.name} ${(p as unknown as { id?: string }).id || ''} ${(p as unknown as { providerCode?: string }).providerCode || ''}`.toLowerCase();
-        if (text.includes('lisensi')) return false;
-        return target.match(text);
-      });
+    // 1. Map Card Produk dynamically from database or fallback to app configurations
+    const dbCards = cardsResponse?.data || [];
+    const allMapped = dbCards.length > 0
+      ? dbCards.map((card) => {
+          const items = allProducts.filter((p) => {
+            if ((p as any).cardId === card.id || (p as any).card_id === card.id) return true;
+            const text = `${p.name} ${(p as unknown as { id?: string }).id || ''}`.toLowerCase();
+            return text.includes(card.slug.replace(/-/g, ' ')) || text.includes(card.name.toLowerCase());
+          });
 
-      const activePrices = items.map((p) => p.price).filter((p) => p > 0);
-      const minPrice = activePrices.length > 0 ? Math.min(...activePrices) : 0;
+          const activePrices = items.map((p) => p.price).filter((p) => p > 0);
+          const minPrice = card.minPrice > 0 ? card.minPrice : (activePrices.length > 0 ? Math.min(...activePrices) : 0);
+          const isOutOfStock = card.stockStatus === 'out_of_stock' || card.isOutOfStock || minPrice <= 0;
 
-      const isOutOfStock =
-        items.length === 0 ||
-        items.every((p) => {
-          const isZeroStock = p.stock !== undefined && p.stock <= 0;
-          const isEmpty = p.providerStatus === 'empty';
-          const isUnavailable = p.status === 'out_of_stock' || p.status === 'archived';
-          return isZeroStock || isEmpty || isUnavailable;
-        });
+          const catNameLower = (card.categoryName || '').toLowerCase();
+          const categoryTag: 'ai' | 'design' | 'video' | 'streaming' | 'other' =
+            catNameLower.includes('ai') ? 'ai' :
+            catNameLower.includes('design') ? 'design' :
+            catNameLower.includes('video') ? 'video' :
+            catNameLower.includes('stream') ? 'streaming' : 'other';
 
-      return {
-        name: target.name,
-        slug: target.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
-        category: target.cat,
-        categoryTag: target.tag,
-        soldCount: target.soldCount,
-        targetMax: target.targetMax,
-        rating: target.rating,
-        badgeLabel:
-          activeCategory === 'promo'
-            ? '🔥 Promo'
-            : activeCategory === 'terlaris'
-            ? 'Terlaris'
-            : 'Baru',
-        isPromo: target.isPromo,
-        items,
-        minPrice,
-        isOutOfStock,
-      };
-    }).filter((app) => app.items.length > 0 && app.minPrice > 0);
+          return {
+            id: card.id,
+            name: card.name,
+            slug: card.slug,
+            category: card.categoryName || 'Layanan Digital',
+            categoryTag,
+            soldCount: card.soldCount ?? 0,
+            targetMax: card.soldCount ?? 0,
+            rating: String(card.rating || '5.0'),
+            badgeLabel:
+              activeCategory === 'promo'
+                ? '🔥 Promo'
+                : activeCategory === 'terlaris'
+                ? 'Terlaris'
+                : 'Baru',
+            isPromo: card.sections?.includes('promo') ?? true,
+            isTerlaris: card.sections?.includes('terlaris') ?? true,
+            isTerbaru: card.sections?.includes('terbaru') ?? true,
+            items,
+            minPrice,
+            isOutOfStock,
+          };
+        }).filter((app) => app.minPrice > 0)
+      : appConfigurations.map((target) => {
+          const items = allProducts.filter((p) => {
+            const text = `${p.name} ${(p as unknown as { id?: string }).id || ''} ${(p as unknown as { providerCode?: string }).providerCode || ''}`.toLowerCase();
+            if (text.includes('lisensi')) return false;
+            return target.match(text);
+          });
+
+          const activePrices = items.map((p) => p.price).filter((p) => p > 0);
+          const minPrice = activePrices.length > 0 ? Math.min(...activePrices) : 0;
+
+          const isOutOfStock =
+            items.length === 0 ||
+            items.every((p) => {
+              const isZeroStock = p.stock !== undefined && p.stock <= 0;
+              const isEmpty = p.providerStatus === 'empty';
+              const isUnavailable = p.status === 'out_of_stock' || p.status === 'archived';
+              return isZeroStock || isEmpty || isUnavailable;
+            });
+
+          return {
+            id: target.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+            name: target.name,
+            slug: target.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+            category: target.cat,
+            categoryTag: target.tag,
+            soldCount: target.soldCount,
+            targetMax: target.targetMax,
+            rating: target.rating,
+            badgeLabel:
+              activeCategory === 'promo'
+                ? '🔥 Promo'
+                : activeCategory === 'terlaris'
+                ? 'Terlaris'
+                : 'Baru',
+            isPromo: target.isPromo,
+            isTerlaris: target.isTerlaris,
+            isTerbaru: target.isTerbaru,
+            items,
+            minPrice,
+            isOutOfStock,
+          };
+        }).filter((app) => app.items.length > 0 && app.minPrice > 0);
 
     // Rule: If Promo tab is active but no campaign is running, show no promo products!
     if (activeCategory === 'promo' && (!activeCampaigns || activeCampaigns.length === 0)) {
@@ -419,7 +467,7 @@ export default function HomePage() {
     if (activeCategory === 'terlaris') {
       const terlarisConfigNames = new Set(appConfigurations.filter((a) => a.isTerlaris).map((a) => a.name));
       return allMapped
-        .filter((app) => terlarisConfigNames.has(app.name))
+        .filter((app) => (app as any).isTerlaris !== undefined ? (app as any).isTerlaris : terlarisConfigNames.has(app.name))
         .sort((a, b) => (b.targetMax || b.soldCount || 0) - (a.targetMax || a.soldCount || 0))
         .slice(0, 8);
     }
@@ -427,12 +475,12 @@ export default function HomePage() {
     if (activeCategory === 'terbaru') {
       const terbaruConfigNames = new Set(appConfigurations.filter((a) => a.isTerbaru).map((a) => a.name));
       return allMapped
-        .filter((app) => terbaruConfigNames.has(app.name))
+        .filter((app) => (app as any).isTerbaru !== undefined ? (app as any).isTerbaru : terbaruConfigNames.has(app.name))
         .slice(0, 8);
     }
 
     return allMapped.slice(0, 8);
-  }, [sectionsResponse, allProducts, appConfigurations, activeCategory, activeCampaigns]);
+  }, [sectionsResponse, allProducts, appConfigurations, activeCategory, activeCampaigns, cardsResponse]);
 
   // Client-mounted tracking
   const [isMounted, setIsMounted] = useState<boolean>(false);

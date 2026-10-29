@@ -26,7 +26,13 @@ from app.api.v1 import api_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Preload caches and ensure DB tables on boot
+    # Preload caches, run migrations and ensure DB tables on boot
+    try:
+        from app.core.db_migration import run_migrations
+        run_migrations()
+    except Exception as e:
+        print(f"[Lifespan] Migration note: {e}")
+
     try:
         from app.services.campaign_service import CampaignService
         CampaignService.ensure_table()
@@ -126,14 +132,42 @@ async def lifespan(app: FastAPI):
             except asyncio.CancelledError:
                 break
 
-    worker_task = asyncio.create_task(periodic_vip_stock_sync_worker())
+    # Launch autonomous background worker for periodic dummy orders (Phase 7 & Phase 9)
+    async def periodic_dummy_order_worker():
+        """
+        Autonomous background worker for Phase 7 & Phase 9.
+        Generates dummy orders selecting strictly eligible active products.
+        Interval dynamically doubles when store is closed (interval_tutup = interval_normal * 2).
+        """
+        import asyncio
+        from app.services.dummy_order_service import DummyOrderService
+        await asyncio.sleep(15)  # initial delay on boot
+
+        while True:
+            try:
+                await asyncio.to_thread(DummyOrderService.generate_and_save_dummy_order)
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                print(f"[PeriodicDummyOrderWorker] Note: {e}")
+
+            try:
+                sleep_sec = await asyncio.to_thread(DummyOrderService.get_next_sleep_seconds)
+                await asyncio.sleep(sleep_sec)
+            except asyncio.CancelledError:
+                break
+
+    vip_worker_task = asyncio.create_task(periodic_vip_stock_sync_worker())
+    dummy_worker_task = asyncio.create_task(periodic_dummy_order_worker())
 
     yield
 
-    worker_task.cancel()
+    vip_worker_task.cancel()
+    dummy_worker_task.cancel()
     try:
-        await worker_task
-    except asyncio.CancelledError:
+        import asyncio
+        await asyncio.gather(vip_worker_task, dummy_worker_task, return_exceptions=True)
+    except Exception:
         pass
 
 app = FastAPI(

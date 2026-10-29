@@ -83,6 +83,9 @@ class OrderService:
         cancelled_count = 0
 
         for o in all_orders:
+            # Exclude dummy orders from real business revenue and order counts
+            if o.get("is_dummy") is True or o.get("isDummy") is True:
+                continue
             st = str(o.get("status", "")).lower()
             amt = float(o.get("totalAmount", 0))
 
@@ -514,6 +517,7 @@ class OrderService:
                     customer_name=customer_name,
                     customer_notes=incoming_notes,
                     is_preorder=is_preorder,
+                    is_dummy=False,
                     fulfillment_mode=order_fulfillment_mode,
                     provider=initial_provider,
                     email_delivery_status="pending",

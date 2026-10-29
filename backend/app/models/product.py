@@ -1,12 +1,14 @@
 from datetime import datetime
-from sqlalchemy import Column, String, Integer, Boolean, DateTime, Text, Numeric
+from sqlalchemy import Column, String, Integer, Boolean, DateTime, Text, Numeric, ForeignKey
 from sqlalchemy.dialects.postgresql import ARRAY
+from sqlalchemy.orm import relationship
 from app.core.database import Base
 
 class Product(Base):
     __tablename__ = "products"
 
     id = Column(String, primary_key=True)
+    card_id = Column(String, ForeignKey("product_cards.id", ondelete="SET NULL"), nullable=True, index=True)
     name = Column(String, nullable=False)
     category_id = Column(String, nullable=False)
     category_name = Column(String, nullable=False)
@@ -38,6 +40,11 @@ class Product(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+    # Relationships
+    card = relationship("ProductCard", back_populates="catalogs", foreign_keys=[card_id])
+    attributes = relationship("ProductAttribute", back_populates="catalog", cascade="all, delete-orphan", foreign_keys="ProductAttribute.catalog_id")
+    variants = relationship("ProductVariant", back_populates="catalog", cascade="all, delete-orphan", foreign_keys="ProductVariant.catalog_id")
+
     def to_dict(self):
         def _num(val):
             if val is None:
@@ -50,6 +57,9 @@ class Product(Base):
 
         return {
             "id": self.id,
+            "cardId": self.card_id,
+            "cardName": self.card.name if self.card else None,
+            "cardSlug": self.card.slug if self.card else None,
             "name": self.name,
             "category": {
                 "id": self.category_id,

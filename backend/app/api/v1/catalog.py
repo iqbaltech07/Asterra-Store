@@ -833,3 +833,210 @@ def delete_admin_category(category_id: str):
 
 
 
+
+
+# ------------------------------------------
+# Product Card & Dynamic Variant Endpoints (Storefront & Admin)
+# ------------------------------------------
+from app.services.card_service import CardService
+
+@router.get("/cards", tags=["Product Cards"])
+def get_cards(
+    section: Optional[str] = None,
+    category: Optional[str] = None,
+    search: Optional[str] = None,
+):
+    cards = CardService.get_cards(
+        status="active",
+        section=section,
+        category=category,
+        search=search,
+        include_catalogs=False,
+    )
+    return {
+        "success": True,
+        "data": cards,
+        "total": len(cards),
+    }
+
+@router.get("/cards/{id_or_slug}", tags=["Product Cards"])
+def get_card_by_id_or_slug(id_or_slug: str):
+    card = CardService.get_card_by_id_or_slug(id_or_slug, include_catalogs=True)
+    if not card:
+        raise HTTPException(status_code=404, detail="Card Produk tidak ditemukan.")
+    return {
+        "success": True,
+        "data": card,
+    }
+
+@router.get("/cards/{id_or_slug}/attributes", tags=["Product Cards"])
+def get_card_attributes(id_or_slug: str):
+    card = CardService.get_card_by_id_or_slug(id_or_slug, include_catalogs=False)
+    if not card:
+        raise HTTPException(status_code=404, detail="Card Produk tidak ditemukan.")
+    attrs = CardService.get_attributes(card["id"])
+    return {
+        "success": True,
+        "data": attrs,
+    }
+
+@router.get("/cards/{id_or_slug}/variants", tags=["Product Cards"])
+def get_card_variants(id_or_slug: str):
+    card = CardService.get_card_by_id_or_slug(id_or_slug, include_catalogs=False)
+    if not card:
+        raise HTTPException(status_code=404, detail="Card Produk tidak ditemukan.")
+    variants = CardService.get_variants(card["id"])
+    return {
+        "success": True,
+        "data": variants,
+    }
+
+# Admin Card CRUD
+@router.get("/admin/cards", tags=["Admin Product Cards"])
+def get_admin_cards(
+    status: Optional[str] = None,
+    category: Optional[str] = None,
+    search: Optional[str] = None,
+):
+    cards = CardService.get_cards(
+        status=status,
+        category=category,
+        search=search,
+        include_catalogs=True,
+    )
+    return {
+        "success": True,
+        "data": cards,
+        "total": len(cards),
+    }
+
+@router.post("/admin/cards", tags=["Admin Product Cards"])
+async def create_admin_card(request: Request):
+    payload = await request.json()
+    try:
+        card = CardService.create_card(payload)
+        cache.invalidate("catalog")
+        RealtimeBroadcaster.broadcast("cards:updated", {"action": "created", "id": card["id"]}, target_role="all")
+        return {
+            "success": True,
+            "message": f"Card Produk '{card['name']}' berhasil dibuat.",
+            "data": card,
+        }
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Gagal membuat Card Produk: {str(e)}")
+
+@router.patch("/admin/cards/{card_id}", tags=["Admin Product Cards"])
+@router.put("/admin/cards/{card_id}", tags=["Admin Product Cards"])
+async def update_admin_card(card_id: str, request: Request):
+    payload = await request.json()
+    try:
+        card = CardService.update_card(card_id, payload)
+        cache.invalidate("catalog")
+        RealtimeBroadcaster.broadcast("cards:updated", {"action": "updated", "id": card_id}, target_role="all")
+        return {
+            "success": True,
+            "message": f"Card Produk '{card['name']}' berhasil diperbarui.",
+            "data": card,
+        }
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Gagal memperbarui Card Produk: {str(e)}")
+
+@router.delete("/admin/cards/{card_id}", tags=["Admin Product Cards"])
+def delete_admin_card(card_id: str):
+    try:
+        res = CardService.delete_card(card_id)
+        cache.invalidate("catalog")
+        RealtimeBroadcaster.broadcast("cards:updated", {"action": "deleted", "id": card_id}, target_role="all")
+        return res
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Gagal menghapus Card Produk: {str(e)}")
+
+@router.post("/admin/cards/{card_id}/toggle-status", tags=["Admin Product Cards"])
+def toggle_admin_card_status(card_id: str):
+    try:
+        res = CardService.toggle_status(card_id)
+        cache.invalidate("catalog")
+        RealtimeBroadcaster.broadcast("cards:updated", {"action": "toggled", "id": card_id}, target_role="all")
+        return {
+            "success": True,
+            "message": f"Status Card Produk berhasil diubah menjadi {res['status']}.",
+            "status": res["status"],
+        }
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/admin/cards/{card_id}/link-catalog", tags=["Admin Product Cards"])
+async def link_catalog_to_card(card_id: str, request: Request):
+    payload = await request.json()
+    catalog_id = payload.get("catalogId") or payload.get("catalog_id")
+    target_card_id = payload.get("cardId") if "cardId" in payload else card_id
+    if not catalog_id:
+        raise HTTPException(status_code=400, detail="catalogId wajib diisi.")
+    try:
+        res = CardService.link_catalog_to_card(catalog_id, target_card_id)
+        cache.invalidate("catalog")
+        RealtimeBroadcaster.broadcast("catalog:updated", {"action": "linked", "catalogId": catalog_id, "cardId": target_card_id}, target_role="all")
+        return {
+            "success": True,
+            "message": "Relasi katalog berhasil diperbarui.",
+            "data": res,
+        }
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+
+# Admin Dynamic Attributes & Variants
+@router.get("/admin/cards/{card_id}/attributes", tags=["Admin Attributes"])
+def get_admin_card_attributes(card_id: str):
+    attrs = CardService.get_attributes(card_id)
+    return {"success": True, "data": attrs}
+
+@router.post("/admin/cards/{card_id}/attributes", tags=["Admin Attributes"])
+async def save_admin_card_attribute(card_id: str, request: Request):
+    payload = await request.json()
+    try:
+        attr = CardService.save_attribute(card_id, payload)
+        cache.invalidate("catalog")
+        return {"success": True, "message": "Atribut berhasil disimpan.", "data": attr}
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+
+@router.delete("/admin/cards/{card_id}/attributes/{attr_id}", tags=["Admin Attributes"])
+def delete_admin_card_attribute(card_id: str, attr_id: str):
+    try:
+        res = CardService.delete_attribute(attr_id)
+        cache.invalidate("catalog")
+        return res
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+
+@router.get("/admin/cards/{card_id}/variants", tags=["Admin Variants"])
+def get_admin_card_variants(card_id: str):
+    variants = CardService.get_variants(card_id)
+    return {"success": True, "data": variants}
+
+@router.post("/admin/cards/{card_id}/variants", tags=["Admin Variants"])
+async def save_admin_card_variant(card_id: str, request: Request):
+    payload = await request.json()
+    try:
+        var = CardService.save_variant(card_id, payload)
+        cache.invalidate("catalog")
+        return {"success": True, "message": "Kombinasi varian berhasil disimpan.", "data": var}
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+
+@router.delete("/admin/cards/{card_id}/variants/{variant_id}", tags=["Admin Variants"])
+def delete_admin_card_variant(card_id: str, variant_id: str):
+    try:
+        res = CardService.delete_variant(variant_id)
+        cache.invalidate("catalog")
+        return res
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))

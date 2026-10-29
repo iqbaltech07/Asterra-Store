@@ -45,6 +45,7 @@ import { AdminStoreHoursTab } from '@/components/admin/admin-store-hours-tab';
 import { AdminPromosTab } from '@/components/admin/admin-promos-tab';
 import { AdminUsersTab } from '@/components/admin/admin-users-tab';
 import { AdminSidebar, AdminTab } from '@/components/admin/admin-sidebar';
+import { AdminCardsTab } from '@/components/admin/admin-cards-tab';
 import { AdminHomepageOrdering } from '@/components/admin/admin-homepage-ordering';
 import { AdminDashboardTab } from '@/components/admin/admin-dashboard-tab';
 import { AdminAffiliateTab } from '@/components/admin/admin-affiliate-tab';
@@ -104,6 +105,7 @@ interface VipServicesResponse {
 
 const TAB_TITLES: Record<AdminTab, { category: string; title: string }> = {
   dashboard: { category: 'Overview', title: 'Dashboard Eksekutif' },
+  cards: { category: 'Katalog & Layanan', title: 'Manajemen Card Produk' },
   products: { category: 'Katalog & Layanan', title: 'Manajemen Katalog & Produk' },
   'homepage-ordering': { category: 'Katalog & Layanan', title: 'Pengaturan Urutan Produk Homepage' },
   categories: { category: 'Katalog & Layanan', title: 'Kategori Layanan' },
@@ -386,6 +388,23 @@ function AdminPageContent() {
   const [importingService, setImportingService] = useState<VipRawService | null>(null);
 
   // Form states for Create/Edit product
+  const [formCardId, setFormCardId] = useState('');
+
+  const { data: adminCardsData } = useQuery({
+    queryKey: ['admin-cards-list'],
+    queryFn: async () => {
+      try {
+        const res = await fetch('/api/v1/admin/cards');
+        if (!res.ok) return [];
+        const json = await res.json();
+        return json.data || [];
+      } catch {
+        return [];
+      }
+    },
+    staleTime: 60 * 1000,
+  });
+
   const [formName, setFormName] = useState('');
   const [formBrand, setFormBrand] = useState('');
   const [formCategory, setFormCategory] = useState('AI Tools');
@@ -769,6 +788,7 @@ function AdminPageContent() {
         processDesc: formProcessDesc,
         privacyTitle: formPrivacyTitle,
         privacyDesc: formPrivacyDesc,
+        cardId: formCardId ? formCardId : null,
       };
 
       if (editingProduct) {
@@ -882,6 +902,7 @@ function AdminPageContent() {
   // Open Edit Modal
   const handleOpenEdit = (p: ManagedProductItem) => {
     setEditingProduct(p);
+    setFormCardId((p as any).cardId || (p as any).card_id || '');
     setFormName(p.name);
     setFormBrand(p.brand || '');
     setFormCategory(p.category.name);
@@ -908,6 +929,7 @@ function AdminPageContent() {
   // Open Create Modal
   const handleOpenCreate = () => {
     setEditingProduct(null);
+    setFormCardId('');
     setFormName('');
     setFormBrand('');
     const firstCat = publicCategories[0]?.name || 'AI Tools';
@@ -1375,9 +1397,16 @@ function AdminPageContent() {
             </div>
           )}
 
+          {/* TAB: CARD PRODUK */}
+          {visitedTabs.has('cards') && (
+            <div className={activeTab === 'cards' ? 'block animate-tab-glide' : 'hidden'}>
+              <AdminCardsTab />
+            </div>
+          )}
+
           {/* TAB 1: MANAGED PRODUCTS */}
           {visitedTabs.has('products') && (
-          <div className={activeTab === 'products' ? 'block animate-tab-glide' : 'hidden'}>
+            <div className={activeTab === 'products' ? 'block animate-tab-glide' : 'hidden'}>
           <div className="space-y-6">
             {/* Quick Banner: Homepage Product Ordering */}
             <div className="bg-gradient-to-r from-primary/10 via-amber-500/10 to-primary/5 border border-primary/20 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
@@ -1659,6 +1688,15 @@ function AdminPageContent() {
                                     {p.popular && (
                                       <Badge className="text-[9px] py-0 px-1 bg-primary text-white shrink-0 font-medium mt-0.5">
                                         Populer
+                                      </Badge>
+                                    )}
+                                    {((p as any).cardName || (p as any).card_name || (p as any).cardId || (p as any).card_id) ? (
+                                      <Badge variant="outline" className="text-[9px] py-0 px-1 border-primary/30 text-primary bg-primary/10 shrink-0 font-medium mt-0.5">
+                                        Card: {(p as any).cardName || (p as any).card_name || 'Terhubung'}
+                                      </Badge>
+                                    ) : (
+                                      <Badge variant="outline" className="text-[9px] py-0 px-1 border-border text-foreground-muted bg-surface-raised shrink-0 font-medium mt-0.5">
+                                        Standalone
                                       </Badge>
                                     )}
                                   </div>
@@ -2523,6 +2561,27 @@ function AdminPageContent() {
                   className="bg-surface-raised border-border text-xs"
                   placeholder="Contoh: Canva Pro 1 Bulan Private"
                 />
+              </div>
+
+              <div>
+                <label className="font-semibold text-foreground block mb-1">
+                  Hubungkan ke Card Produk <span className="text-foreground-muted text-[10px] font-normal">(Opsional — pilih jika varian/durasi Card Homepage)</span>
+                </label>
+                <select
+                  value={formCardId}
+                  onChange={(e) => setFormCardId(e.target.value)}
+                  className="w-full bg-surface-raised border border-border text-xs rounded-xl h-10 px-3 text-foreground font-medium focus:ring-1 focus:ring-primary focus:outline-none"
+                >
+                  <option value="">-- Tidak Terhubung (Produk Standalone) --</option>
+                  {(adminCardsData || []).map((c: any) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} ({c.slug})
+                    </option>
+                  ))}
+                </select>
+                <p className="text-[10px] text-foreground-muted mt-1">
+                  Jika dihubungkan, produk ini otomatis menjadi pilihan durasi/paket pada Card Produk bersangkutan di homepage.
+                </p>
               </div>
 
               <div>

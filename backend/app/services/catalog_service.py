@@ -331,7 +331,9 @@ class CatalogService:
             db = SessionLocal()
             try:
                 cat_id, cat_name = cls._ensure_category_exists(db, raw_cat_id, raw_cat_name)
+                card_id_val = payload.get("cardId") if "cardId" in payload else payload.get("card_id")
                 new_prod = Product(
+                    card_id=card_id_val if card_id_val else None,
                     id=product_id,
                     name=payload.get("name", ""),
                     category_id=cat_id,
@@ -423,6 +425,9 @@ class CatalogService:
                         prod.privacy_title = payload["privacyTitle"]
                     if "privacyDesc" in payload and payload["privacyDesc"] is not None:
                         prod.privacy_desc = payload["privacyDesc"]
+                    if "cardId" in payload or "card_id" in payload:
+                        raw_card_id = payload.get("cardId") if "cardId" in payload else payload.get("card_id")
+                        prod.card_id = str(raw_card_id).strip() if raw_card_id and str(raw_card_id).strip() not in ["", "none", "null"] else None
 
                     # Recalculate margins
                     if prod.provider_price and float(prod.provider_price) > 0:
