@@ -24,7 +24,12 @@ import {
   faRotateLeft,
   faChevronDown,
   faChevronUp,
+  faKey,
+  faPaperPlane,
+  faPlus,
+  faTrash,
 } from '@fortawesome/free-solid-svg-icons';
+import { OrdersApi } from '@/lib/api-client';
 import { OrderStatusBadge, OrderActorBadge } from './order-badges';
 import { formatWhatsAppUrl, generateOrderValidationText } from '@/lib/utils/format';
 import { maskCustomerName } from '@/lib/utils/masking';
@@ -54,6 +59,41 @@ export function OrderDetailModal({
   const [isFulfillingVip, setIsFulfillingVip] = useState<boolean>(false);
   const [showLogs, setShowLogs] = useState<boolean>(false);
 
+  // Manual Credential Modal states
+  const [isCredentialModalOpen, setIsCredentialModalOpen] = useState<boolean>(false);
+  const [credentialFields, setCredentialFields] = useState<Array<{ label: string; value: string }>>([
+    { label: 'Email / Akun', value: '' },
+    { label: 'Kata Sandi', value: '' },
+  ]);
+  const [isCompletingManual, setIsCompletingManual] = useState<boolean>(false);
+  const [isResendingEmail, setIsResendingEmail] = useState<boolean>(false);
+
+  const isManual = (order?.fulfillment_mode || order?.fulfillmentMode || 'manual') === 'manual';
+
+  // Parse structured credentials if already saved
+  const parsedCredentials = React.useMemo(() => {
+    const raw = order?.fulfillment_credentials || order?.fulfillmentCredentials;
+    if (raw) {
+      try {
+        const loaded = typeof raw === 'string' ? JSON.parse(raw) : raw;
+        if (Array.isArray(loaded)) return loaded;
+      } catch {
+        // fallback
+      }
+    }
+    if (order?.provider_note) {
+      const parts = order.provider_note.split('|').map((p) => p.trim()).filter(Boolean);
+      return parts.map((p) => {
+        if (p.includes(':')) {
+          const [k, v] = p.split(':', 2);
+          return { label: k.trim(), value: v.trim() };
+        }
+        return { label: 'Informasi Akun', value: p };
+      });
+    }
+    return [];
+  }, [order?.fulfillment_credentials, order?.fulfillmentCredentials, order?.provider_note]);
+
   // Mount detection for Next.js SSR-safe React Portal
   useEffect(() => {
     setMounted(true);
@@ -66,6 +106,11 @@ export function OrderDetailModal({
       setStatusNotes('');
       setIsMutationVerified(false);
       setShowLogs(false);
+      setIsCredentialModalOpen(false);
+      setCredentialFields([
+        { label: 'Email / Akun', value: '' },
+        { label: 'Kata Sandi', value: '' },
+      ]);
     }
   }, [order]);
 
@@ -159,12 +204,72 @@ export function OrderDetailModal({
 
   const handleSave = () => {
     if (!order) return;
+    const isManual = (order.fulfillment_mode || order.fulfillmentMode || 'manual') === 'manual';
+    if (newStatus === 'completed' && order.order_status !== 'completed' && isManual) {
+      setIsCredentialModalOpen(true);
+      return;
+    }
     if (isAntiFraudRequired && !isMutationVerified) {
       onShowNotification('Harap centang verifikasi mutasi rekening riil terlebih dahulu!');
       return;
     }
     onSaveStatus(newStatus, statusNotes);
     onClose();
+  };
+
+  const handleConfirmManualCompletion = async () => {
+    if (!order) return;
+    const validCreds = credentialFields.filter((f) => f.value.trim().length > 0);
+    if (validCreds.length === 0) {
+      onShowNotification('Harap masukkan setidaknya satu kredensial akun pelanggan (Email/Password)!');
+      return;
+    }
+    if (isAntiFraudRequired && !isMutationVerified) {
+      onShowNotification('Harap centang verifikasi mutasi rekening riil terlebih dahulu!');
+      return;
+    }
+
+    setIsCompletingManual(true);
+    try {
+      const res = await OrdersApi.completeManual(order.id, {
+        credentials: validCreds,
+        notes: statusNotes,
+      });
+      if (res.success) {
+        onShowNotification(`Pesanan #${order.id} berhasil diselesaikan dengan kredensial.`);
+        if (res.email_status === 'failed') {
+          onShowNotification('Catatan: Pengiriman email gagal. Anda dapat mencoba tombol Kirim Ulang Email.');
+        }
+        setIsCredentialModalOpen(false);
+        onSaveStatus('completed', statusNotes);
+        onClose();
+      } else {
+        onShowNotification(res.message || 'Gagal menyelesaikan pesanan.');
+      }
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      onShowNotification(errorMsg);
+    } finally {
+      setIsCompletingManual(false);
+    }
+  };
+
+  const handleResendEmail = async () => {
+    if (!order) return;
+    setIsResendingEmail(true);
+    try {
+      const res = await OrdersApi.resendCompletionEmail(order.id);
+      if (res.success) {
+        onShowNotification('Email kredensial berhasil dikirim ulang ke pelanggan!');
+      } else {
+        onShowNotification(`Gagal mengirim email: ${res.email_error || res.message}`);
+      }
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      onShowNotification(`Error: ${errorMsg}`);
+    } finally {
+      setIsResendingEmail(false);
+    }
   };
 
   if (!isOpen || !order || !mounted || typeof document === 'undefined') {
@@ -195,14 +300,57 @@ export function OrderDetailModal({
                 Detail Pesanan #{order.id}
               </h3>
               <OrderStatusBadge status={order.order_status} />
+              <span
+                className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-bold uppercase ${
+                  (order.fulfillment_mode || order.fulfillmentMode || 'manual') === 'manual'
+                    ? 'bg-amber-500/15 text-amber-700 border border-amber-300'
+                    : 'bg-emerald-500/15 text-emerald-700 border border-emerald-300'
+                }`}
+              >
+                Mode {(order.fulfillment_mode || order.fulfillmentMode || 'manual').toUpperCase()}
+              </span>
             </div>
-            <p className="text-[11px] text-[#64748B] mt-0.5">
-              Dibuat pada{' '}
-              {new Date(order.order_date).toLocaleString('id-ID', {
-                dateStyle: 'medium',
-                timeStyle: 'short',
-              })}
-            </p>
+            <div className="flex items-center gap-3 mt-1 flex-wrap">
+              <p className="text-[11px] text-[#64748B]">
+                Dibuat pada{' '}
+                {new Date(order.order_date).toLocaleString('id-ID', {
+                  dateStyle: 'medium',
+                  timeStyle: 'short',
+                })}
+              </p>
+              {order.order_status === 'completed' && (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] text-[#64748B]">Email:</span>
+                  {(order.email_delivery_status || order.emailDeliveryStatus) === 'sent' ? (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      <FontAwesomeIcon icon={faCheck} className="w-2.5 h-2.5" />
+                      <span>TERKIRIM</span>
+                    </span>
+                  ) : (order.email_delivery_status || order.emailDeliveryStatus) === 'failed' ? (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-rose-50 text-rose-700 border border-rose-200">
+                      <FontAwesomeIcon icon={faBan} className="w-2.5 h-2.5" />
+                      <span>GAGAL</span>
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 border border-slate-200">
+                      <span>PENDING</span>
+                    </span>
+                  )}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={isResendingEmail}
+                    onClick={handleResendEmail}
+                    className="h-6 text-[10px] px-2 gap-1 border-[#CBD5E1] hover:bg-[#F8FAFC] text-[#2563EB]"
+                    title="Kirim ulang email kredensial ke pelanggan"
+                  >
+                    <FontAwesomeIcon icon={faPaperPlane} className={`w-2.5 h-2.5 ${isResendingEmail ? 'animate-spin' : ''}`} />
+                    <span>{isResendingEmail ? 'Mengirim...' : 'Kirim Ulang'}</span>
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
           <Button
             variant="ghost"
@@ -458,6 +606,54 @@ export function OrderDetailModal({
             </div>
           </div>
 
+          {/* Section: Kredensial Pelanggan Tersimpan */}
+          {parsedCredentials.length > 0 && (
+            <div className="bg-white border border-emerald-300 rounded-xl p-3.5 sm:p-4 shadow-2xs space-y-2.5">
+              <div className="flex items-center justify-between pb-2 border-b border-emerald-100">
+                <h4 className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider flex items-center gap-1.5">
+                  <FontAwesomeIcon icon={faKey} className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Kredensial Akun / Lisensi Pelanggan</span>
+                </h4>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold">
+                  TERSIMPAN & TERHUBUNG
+                </span>
+              </div>
+
+              <div className="space-y-1.5">
+                {parsedCredentials.map((c: any, cIdx: number) => (
+                  <div
+                    key={cIdx}
+                    className="p-2.5 bg-emerald-50/50 rounded-lg border border-emerald-100 flex items-center justify-between gap-3 text-xs"
+                  >
+                    <div className="min-w-0">
+                      <span className="text-[10px] uppercase font-bold text-emerald-700 block">
+                        {c.label}:
+                      </span>
+                      <span className="font-mono font-bold text-[#0F172A] text-xs sm:text-sm select-all break-all block mt-0.5">
+                        {c.value}
+                      </span>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        if (typeof navigator !== 'undefined' && navigator.clipboard) {
+                          navigator.clipboard.writeText(c.value);
+                          onShowNotification(`${c.label} disalin!`);
+                        }
+                      }}
+                      className="h-7 text-[10px] px-2 gap-1 border-emerald-200 bg-white hover:bg-emerald-50 text-emerald-700 shrink-0 cursor-pointer"
+                    >
+                      <FontAwesomeIcon icon={faCopy} className="w-2.5 h-2.5" />
+                      <span>Salin</span>
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Section C: Ubah Status Pesanan Manual - CLEAN LIGHT MODE */}
           <div className="bg-white border border-[#E2E8F0] rounded-xl p-3.5 sm:p-4 shadow-2xs space-y-3">
             <div className="flex items-center justify-between">
@@ -469,6 +665,26 @@ export function OrderDetailModal({
                 Hak Akses Admin
               </span>
             </div>
+
+            {/* Quick action: Selesaikan Pesanan with Credentials for Manual Orders */}
+            {isManual && order.order_status !== 'completed' && order.order_status !== 'cancelled' && (
+              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <span className="font-bold text-emerald-900 block text-xs">Penuhi Pesanan Manual</span>
+                  <p className="text-[11px] text-emerald-700 mt-0.5">
+                    Masukkan akun / kredensial untuk pelanggan dan selesaikan pesanan secara resmi.
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  onClick={() => setIsCredentialModalOpen(true)}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs h-8.5 px-3.5 rounded-lg shrink-0 gap-1.5 cursor-pointer shadow-xs"
+                >
+                  <FontAwesomeIcon icon={faKey} className="w-3.5 h-3.5" />
+                  <span>Selesaikan Pesanan</span>
+                </Button>
+              </div>
+            )}
 
             {/* 4 Status Choice Buttons - Light Mode Consistent */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
@@ -503,7 +719,13 @@ export function OrderDetailModal({
               {/* 3. Selesai (Hijau) */}
               <button
                 type="button"
-                onClick={() => setNewStatus('completed')}
+                onClick={() => {
+                  setNewStatus('completed');
+                  const isManual = (order.fulfillment_mode || order.fulfillmentMode || 'manual') === 'manual';
+                  if (isManual && order.order_status !== 'completed') {
+                    setIsCredentialModalOpen(true);
+                  }
+                }}
                 className={`py-3 px-3 rounded-xl border text-center transition-all text-xs sm:text-sm font-semibold flex flex-col items-center justify-center gap-1.5 cursor-pointer ${
                   newStatus === 'completed'
                     ? 'border-[#16A34A] bg-[#F0FDF4] text-[#16A34A] font-bold ring-2 ring-[#16A34A]/30 shadow-xs'
@@ -738,6 +960,194 @@ export function OrderDetailModal({
           </div>
         </div>
       </div>
+
+      {/* NESTED MODAL: "Silakan masukkan kredensial akun pelanggan" */}
+      {isCredentialModalOpen && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-xs">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="credential-modal-title"
+            className="bg-white rounded-2xl border border-[#CBD5E1] shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-150"
+          >
+            {/* Modal Header */}
+            <div className="px-5 py-4 border-b border-[#E2E8F0] flex items-start justify-between gap-3 bg-gradient-to-r from-emerald-50 via-white to-blue-50/40">
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 mt-0.5">
+                  <FontAwesomeIcon icon={faKey} className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 id="credential-modal-title" className="text-sm sm:text-base font-bold text-[#0F172A] leading-tight">
+                    Silakan masukkan kredensial akun pelanggan
+                  </h3>
+                  <p className="text-[11px] text-[#64748B] mt-0.5">
+                    Pesanan #{order.id} · {maskCustomerName(order.customer_name)} ({order.customer_email || 'Tanpa email'})
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsCredentialModalOpen(false)}
+                disabled={isCompletingManual}
+                className="text-[#64748B] hover:text-[#0F172A] p-1.5 rounded-lg hover:bg-[#F1F5F9] transition-colors cursor-pointer"
+                title="Tutup dialog"
+              >
+                <FontAwesomeIcon icon={faXmark} className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-5 overflow-y-auto space-y-4 text-xs">
+              {/* Product Info Reminder */}
+              {order.items && order.items.length > 0 && (
+                <div className="p-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl flex items-center justify-between text-[11px]">
+                  <span className="text-[#64748B]">Produk Dipesan:</span>
+                  <span className="font-semibold text-[#0F172A] truncate max-w-[260px]">
+                    {order.items.map((it: any) => `${it.product_name} (${it.quantity}x)`).join(', ')}
+                  </span>
+                </div>
+              )}
+
+              <div className="p-3 bg-blue-50 border border-blue-200/80 rounded-xl text-blue-900 text-[11px] leading-relaxed">
+                <span className="font-bold block mb-0.5">Notifikasi Pelanggan:</span>
+                Kredensial berikut akan disimpan terhubung dengan pesanan ini dan otomatis dikirimkan ke email pelanggan (<strong>{order.customer_email || 'email pesanan'}</strong>).
+              </div>
+
+              {/* Dynamic Label-Value Rows */}
+              <div className="space-y-2.5">
+                <label className="text-[11px] font-bold text-[#0F172A] uppercase tracking-wider block">
+                  Pasangan Label & Nilai Kredensial:
+                </label>
+                {credentialFields.map((field, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <div className="w-1/3">
+                      <Input
+                        type="text"
+                        placeholder="Label (e.g. Email / PIN)"
+                        value={field.label}
+                        onChange={(e) => {
+                          const next = [...credentialFields];
+                          next[index].label = e.target.value;
+                          setCredentialFields(next);
+                        }}
+                        className="h-9 text-xs bg-[#F8FAFC] border-[#CBD5E1] text-[#0F172A] focus:bg-white"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <Input
+                        type="text"
+                        placeholder="Nilai Kredensial / Password / Token"
+                        value={field.value}
+                        onChange={(e) => {
+                          const next = [...credentialFields];
+                          next[index].value = e.target.value;
+                          setCredentialFields(next);
+                        }}
+                        className="h-9 text-xs bg-white border-[#CBD5E1] font-mono text-[#0F172A]"
+                      />
+                    </div>
+                    {credentialFields.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCredentialFields(credentialFields.filter((_, i) => i !== index));
+                        }}
+                        className="w-8 h-8 rounded-lg flex items-center justify-center text-[#94A3B8] hover:text-red-600 hover:bg-red-50 transition-colors shrink-0 cursor-pointer"
+                        title="Hapus baris"
+                      >
+                        <FontAwesomeIcon icon={faTrash} className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setCredentialFields([...credentialFields, { label: 'Catatan / PIN Tambahan', value: '' }]);
+                  }}
+                  className="mt-1 text-xs border-dashed border-[#CBD5E1] text-[#2563EB] hover:border-[#2563EB] hover:bg-[#EFF6FF] w-full h-8 cursor-pointer font-medium"
+                >
+                  <FontAwesomeIcon icon={faPlus} className="w-3 h-3 mr-1.5" />
+                  <span>Tambah Baris Kredensial / Catatan</span>
+                </Button>
+              </div>
+
+              {/* Catatan Status Audit Optional */}
+              <div>
+                <label className="text-[10px] uppercase font-semibold text-[#64748B] block mb-1">
+                  Catatan Admin (Tercatat di Audit Log):
+                </label>
+                <Input
+                  type="text"
+                  placeholder="Contoh: Kredensial sudah dites login dan aktif"
+                  value={statusNotes}
+                  onChange={(e) => setStatusNotes(e.target.value)}
+                  className="text-xs bg-white border-[#CBD5E1] h-8.5 px-3 rounded-lg"
+                />
+              </div>
+
+              {/* Anti-Fraud Verification Checklist Box */}
+              {isAntiFraudRequired && (
+                <div className="p-3 bg-[#FFFBEB] border border-[#FDE68A] rounded-xl space-y-2">
+                  <div className="flex items-center gap-2 text-[#D97706] font-semibold text-[11px]">
+                    <FontAwesomeIcon icon={faShieldHalved} className="w-3.5 h-3.5" />
+                    <span>Verifikasi Mutasi Rekening Anti-Fraud</span>
+                  </div>
+                  <label className="flex items-start gap-2 cursor-pointer bg-white p-2.5 rounded-lg border border-[#FDE68A]">
+                    <input
+                      type="checkbox"
+                      checked={isMutationVerified}
+                      onChange={(e) => setIsMutationVerified(e.target.checked)}
+                      className="w-4 h-4 accent-[#2563EB] mt-0.5 cursor-pointer"
+                    />
+                    <span className="text-[11px] font-medium text-[#0F172A] leading-snug">
+                      Saya telah memeriksa mutasi riil sebesar{' '}
+                      <strong className="text-[#2563EB] font-mono">
+                        Rp {order.total_amount.toLocaleString('id-ID')}
+                      </strong>{' '}
+                      di m-Banking/DANA, bukan hanya screenshot WhatsApp.
+                    </span>
+                  </label>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-5 py-3 border-t border-[#E2E8F0] bg-[#F8FAFC] flex items-center justify-end gap-2.5">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsCredentialModalOpen(false)}
+                disabled={isCompletingManual}
+                className="text-xs h-9 px-4 rounded-xl border-[#CBD5E1] text-[#475569] hover:bg-white cursor-pointer font-medium"
+              >
+                Batal
+              </Button>
+              <Button
+                type="button"
+                onClick={handleConfirmManualCompletion}
+                disabled={isCompletingManual || (isAntiFraudRequired && !isMutationVerified)}
+                className="text-xs h-9 px-5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold flex items-center gap-2 shadow-xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isCompletingManual ? (
+                  <>
+                    <FontAwesomeIcon icon={faRotateLeft} className="w-3.5 h-3.5 animate-spin" />
+                    <span>Menyimpan & Mengirim Email...</span>
+                  </>
+                ) : (
+                  <>
+                    <FontAwesomeIcon icon={faCheck} className="w-3.5 h-3.5" />
+                    <span>Simpan Kredensial & Selesaikan Pesanan</span>
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 

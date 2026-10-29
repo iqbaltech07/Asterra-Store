@@ -54,6 +54,20 @@ export interface Order {
   provider_trxid?: string;
   provider_status?: string;
   provider_note?: string;
+  fulfillment_mode?: 'manual' | 'automatic';
+  fulfillmentMode?: 'manual' | 'automatic';
+  fulfillment_credentials?: string;
+  fulfillmentCredentials?: string;
+  fulfillment_admin_id?: string;
+  fulfillmentAdminId?: string;
+  fulfilled_at?: string;
+  fulfilledAt?: string;
+  email_delivery_status?: 'pending' | 'sent' | 'failed';
+  emailDeliveryStatus?: 'pending' | 'sent' | 'failed';
+  email_delivery_error?: string;
+  emailDeliveryError?: string;
+  email_last_sent_at?: string;
+  emailLastSentAt?: string;
   logs?: OrderLog[];
   payment?: {
     id: string;

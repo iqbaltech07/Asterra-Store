@@ -128,3 +128,69 @@ def get_admin_logs(
             "items_per_page": result["limit"],
         },
     }
+
+# ------------------------------------------
+# 4. Order Processing & Reseller API Configuration
+# ------------------------------------------
+from app.services.order_processing_service import OrderProcessingService
+from app.core.auth import get_current_admin
+
+@router.get("/admin/config/order-processing", tags=["Admin System Configuration"])
+def get_order_processing_config(request: Request):
+    get_current_admin(request)
+    cfg = OrderProcessingService.get_order_mode_config()
+    return {
+        "success": True,
+        "data": cfg,
+    }
+
+@router.patch("/admin/config/order-processing", tags=["Admin System Configuration"])
+async def update_order_processing_config(request: Request):
+    admin = get_current_admin(request)
+    payload = await request.json()
+    try:
+        updated = OrderProcessingService.update_order_mode_config(payload, admin)
+        return {
+            "success": True,
+            "message": "Konfigurasi pemrosesan pesanan berhasil diperbarui.",
+            "data": updated,
+        }
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Gagal memperbarui konfigurasi: {str(e)}")
+
+@router.get("/admin/config/reseller-api", tags=["Admin System Configuration"])
+def get_reseller_api_configs(request: Request):
+    get_current_admin(request)
+    configs = OrderProcessingService.get_reseller_configs()
+    return {
+        "success": True,
+        "data": configs,
+    }
+
+@router.patch("/admin/config/reseller-api/{provider_id}", tags=["Admin System Configuration"])
+async def update_reseller_api_config(provider_id: str, request: Request):
+    admin = get_current_admin(request)
+    payload = await request.json()
+    try:
+        updated = OrderProcessingService.update_reseller_config(provider_id, payload, admin)
+        return {
+            "success": True,
+            "message": f"Konfigurasi API reseller '{provider_id}' berhasil diperbarui.",
+            "data": updated,
+        }
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Gagal memperbarui konfigurasi reseller: {str(e)}")
+
+@router.post("/admin/config/reseller-api/{provider_id}/test-connection", tags=["Admin System Configuration"])
+def test_reseller_api_connection(provider_id: str, request: Request):
+    get_current_admin(request)
+    result = OrderProcessingService.test_reseller_connection(provider_id)
+    return {
+        "success": result.get("success", False),
+        "data": result,
+        "message": result.get("message", "Uji koneksi selesai."),
+    }

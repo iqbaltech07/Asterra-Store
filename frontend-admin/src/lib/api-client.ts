@@ -204,6 +204,37 @@ export const OrdersApi = {
     );
   },
 
+  async completeManual(
+    orderId: string,
+    payload: {
+      credentials: Array<{ label: string; value: string }>;
+      notes?: string;
+    }
+  ) {
+    return requestJson<{
+      success: boolean;
+      message: string;
+      email_sent: boolean;
+      email_status: 'sent' | 'failed' | 'pending';
+      order: Order;
+    }>(`/api/v1/admin/orders/${orderId}/complete-manual`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async resendCompletionEmail(orderId: string) {
+    return requestJson<{
+      success: boolean;
+      message: string;
+      email_status: 'sent' | 'failed' | 'pending';
+      email_error?: string;
+      order: Order;
+    }>(`/api/v1/admin/orders/${orderId}/resend-completion-email`, {
+      method: 'POST',
+    });
+  },
+
   async pay(orderId: string, paymentMethod?: string) {
     return requestJson<{
       success: boolean;
@@ -379,5 +410,117 @@ export const StoreHoursApi = {
         body: JSON.stringify(payload),
       }
     );
+  },
+};
+
+/**
+ * System Order Processing & Reseller API Configuration
+ */
+export interface OrderProcessingConfig {
+  id: string;
+  orderMode: 'manual' | 'automatic';
+  order_mode: 'manual' | 'automatic';
+  activeReseller: string;
+  active_reseller: string;
+  autoFulfillOnPayment: boolean;
+  auto_fulfill_on_payment: boolean;
+  notifyAdminOnManualOrder: boolean;
+  notify_admin_on_manual_order: boolean;
+  updatedBy?: string;
+  updated_by?: string;
+  updatedAt?: string;
+  updated_at?: string;
+}
+
+export interface ResellerConfigItem {
+  id: string;
+  name: string;
+  baseUrl?: string;
+  base_url?: string;
+  isActive?: boolean;
+  is_active?: boolean;
+  environment?: string;
+  hasApiKey?: boolean;
+  has_api_key?: boolean;
+  hasApiSign?: boolean;
+  has_api_sign?: boolean;
+  maskedApiKey?: string;
+  masked_api_key?: string;
+  maskedApiSign?: string;
+  masked_api_sign?: string;
+  isSupported?: boolean;
+  is_supported?: boolean;
+  isProductionReady?: boolean;
+  is_production_ready?: boolean;
+  readiness?: 'ready' | 'unsupported';
+  isConnected?: boolean;
+  is_connected?: boolean;
+  balance?: number | null;
+  username?: string | null;
+  capabilities?: {
+    supports_balance?: boolean;
+    supports_status_check?: boolean;
+    supports_webhook?: boolean;
+    supports_stock_sync?: boolean;
+    is_production_ready?: boolean;
+    documentation?: string;
+    notes?: string;
+  };
+}
+
+export const ConfigApi = {
+  async getOrderProcessing() {
+    return requestJson<{ success: boolean; data: OrderProcessingConfig }>('/api/v1/admin/config/order-processing');
+  },
+
+  async updateOrderProcessing(payload: {
+    orderMode: 'manual' | 'automatic';
+    activeReseller?: string;
+    autoFulfillOnPayment?: boolean;
+    notifyAdminOnManualOrder?: boolean;
+  }) {
+    return requestJson<{ success: boolean; message: string; data: OrderProcessingConfig }>(
+      '/api/v1/admin/config/order-processing',
+      {
+        method: 'PATCH',
+        body: JSON.stringify(payload),
+      }
+    );
+  },
+
+  async getResellerConfigs() {
+    return requestJson<{ success: boolean; data: ResellerConfigItem[] }>('/api/v1/admin/config/reseller-api');
+  },
+
+  async updateResellerConfig(providerId: string, payload: {
+    baseUrl?: string;
+    apiKey?: string;
+    apiSign?: string;
+    isActive?: boolean;
+    environment?: string;
+  }) {
+    return requestJson<{ success: boolean; message: string; data: ResellerConfigItem }>(
+      `/api/v1/admin/config/reseller-api/${providerId}`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(payload),
+      }
+    );
+  },
+
+  async testResellerConnection(providerId: string) {
+    return requestJson<{
+      success: boolean;
+      message: string;
+      data: {
+        connected: boolean;
+        latency_ms?: number;
+        balance?: number;
+        username?: string;
+        message?: string;
+      };
+    }>(`/api/v1/admin/config/reseller-api/${providerId}/test-connection`, {
+      method: 'POST',
+    });
   },
 };

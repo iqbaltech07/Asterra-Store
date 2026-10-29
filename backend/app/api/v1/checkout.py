@@ -162,6 +162,11 @@ def mask_order_for_public(order: dict, is_owner_or_admin: bool, is_admin: bool =
             o["provider_note"] = None
             o["providerNote"] = None
 
+        o["fulfillment_admin_id"] = None
+        o["fulfillmentAdminId"] = None
+        o["email_delivery_error"] = None
+        o["emailDeliveryError"] = None
+
         # Clean customer notes from internal admin transition logs
         raw_cust_notes = str(o.get("customer_notes") or o.get("customerNotes") or "").strip()
         if raw_cust_notes:
@@ -666,10 +671,15 @@ def admin_fulfill_order_vip(order_id: str):
 
 @router.patch("/admin/orders/{order_id}/status", tags=["Admin Orders"])
 async def update_admin_order_status(order_id: str, request: Request):
+    from app.core.auth import get_current_admin
+    get_current_admin(request)
     payload = await request.json()
     new_status = payload.get("status", "completed")
     notes = payload.get("notes")
-    updated = OrderService.update_status(order_id, new_status, notes=notes)
+    try:
+        updated = OrderService.update_status(order_id, new_status, notes=notes)
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
     if not updated:
         raise HTTPException(status_code=404, detail="Pesanan tidak ditemukan")
     return {
@@ -677,6 +687,40 @@ async def update_admin_order_status(order_id: str, request: Request):
         "data": updated,
         "message": f"Status pesanan {order_id} berhasil diubah menjadi {new_status}.",
     }
+
+@router.post("/admin/orders/{order_id}/complete-manual", tags=["Admin Orders"])
+async def complete_admin_manual_order(order_id: str, request: Request):
+    """
+    Completes an order manually with customer credentials validation.
+    Mandatory in Manual Mode.
+    """
+    from app.core.auth import get_current_admin
+    admin = get_current_admin(request)
+    payload = await request.json()
+    from app.services.order_processing_service import OrderProcessingService
+    try:
+        res = OrderProcessingService.complete_manual_order(order_id, payload, admin)
+        return res
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Gagal menyelesaikan pesanan: {str(e)}")
+
+@router.post("/admin/orders/{order_id}/resend-completion-email", tags=["Admin Orders"])
+def resend_admin_completion_email(order_id: str, request: Request):
+    """
+    Idempotent re-dispatch of completion email with credentials.
+    """
+    from app.core.auth import get_current_admin
+    admin = get_current_admin(request)
+    from app.services.order_processing_service import OrderProcessingService
+    try:
+        res = OrderProcessingService.resend_completion_email(order_id, admin)
+        return res
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Gagal mengirim ulang email: {str(e)}")
 
 # ------------------------------------------
 # 6. Internal Automated Webhooks (QStash Cron & Asynchronous Workers)

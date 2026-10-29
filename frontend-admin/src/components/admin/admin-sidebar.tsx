@@ -73,6 +73,7 @@ export type AdminTab =
   | 'affiliate-performance'
   | 'financial-reports'
   // SISTEM & KONFIGURASI
+  | 'order-processing'
   | 'operating-hours'
   | 'payment-settings'
   | 'logs'
@@ -332,6 +333,19 @@ export function AdminSidebar({
             },
           ],
         },
+        {
+          id: 'settings',
+          label: 'SISTEM & KONFIGURASI',
+          icon: Sliders,
+          items: [
+            {
+              id: 'order-processing',
+              label: 'Pemrosesan Pesanan',
+              icon: Sliders,
+              description: 'Mode Manual vs Otomatis & aturan order',
+            },
+          ],
+        },
       ];
     }
 
@@ -513,6 +527,12 @@ export function AdminSidebar({
         label: 'SISTEM & KONFIGURASI',
         icon: Sliders,
         items: [
+          {
+            id: 'order-processing',
+            label: 'Pemrosesan Pesanan',
+            icon: Sliders,
+            description: 'Mode Manual vs Otomatis & aturan order',
+          },
           {
             id: 'operating-hours',
             label: 'Jam Operasional Toko',

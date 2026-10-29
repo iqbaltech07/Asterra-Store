@@ -1,3 +1,4 @@
+import json
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 import httpx
@@ -495,9 +496,23 @@ class EmailService:
             first_item = items[0]
             primary_product = first_item.get("productName") or first_item.get("product_name") or primary_product
 
-        # Parse credentials
+        # Parse credentials (prioritize structured fulfillment_credentials, fallback to providerNote)
+        parsed_creds = []
+        raw_creds_json = order.get("fulfillment_credentials") or order.get("fulfillmentCredentials")
+        if raw_creds_json:
+            try:
+                loaded = json.loads(raw_creds_json) if isinstance(raw_creds_json, str) else raw_creds_json
+                if isinstance(loaded, list):
+                    parsed_creds = [
+                        {"label": str(it.get("label", "Informasi Akun")), "value": str(it.get("value", ""))}
+                        for it in loaded if it.get("value")
+                    ]
+            except Exception:
+                pass
+
         raw_note = order.get("providerNote") or order.get("provider_note") or order.get("customerNotes") or order.get("customer_notes") or ""
-        parsed_creds = cls._parse_credentials(raw_note)
+        if not parsed_creds:
+            parsed_creds = cls._parse_credentials(raw_note)
 
         # Build credentials HTML table/cards
         creds_html = ""

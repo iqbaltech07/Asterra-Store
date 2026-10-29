@@ -66,6 +66,14 @@ class Order(Base):
     provider_status = Column(String, nullable=True)
     provider_note = Column(Text, nullable=True)
     is_preorder = Column(Boolean, default=False, nullable=True)
+    # Order Fulfillment & Credential Delivery fields
+    fulfillment_mode = Column(String, default="manual", nullable=True)  # 'manual' | 'automatic'
+    fulfillment_credentials = Column(Text, nullable=True)  # JSON-formatted credentials list
+    fulfillment_admin_id = Column(String, nullable=True)  # Admin user id who completed manual fulfillment
+    fulfilled_at = Column(DateTime, nullable=True)
+    email_delivery_status = Column(String, default="pending", nullable=True)  # 'pending' | 'sent' | 'failed'
+    email_delivery_error = Column(Text, nullable=True)
+    email_last_sent_at = Column(DateTime, nullable=True)
     expires_at = Column(DateTime, nullable=True)
     paid_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -133,5 +141,19 @@ class Order(Base):
             "is_preorder": bool(self.is_preorder),
             "isPreorder": bool(self.is_preorder),
             "order_status": self.status,
+            "fulfillmentMode": self.fulfillment_mode or "manual",
+            "fulfillment_mode": self.fulfillment_mode or "manual",
+            "fulfillmentCredentials": self.fulfillment_credentials,
+            "fulfillment_credentials": self.fulfillment_credentials,
+            "fulfillmentAdminId": self.fulfillment_admin_id,
+            "fulfillment_admin_id": self.fulfillment_admin_id,
+            "fulfilledAt": (self.fulfilled_at.isoformat() + "Z") if self.fulfilled_at else None,
+            "fulfilled_at": (self.fulfilled_at.isoformat() + "Z") if self.fulfilled_at else None,
+            "emailDeliveryStatus": self.email_delivery_status or "pending",
+            "email_delivery_status": self.email_delivery_status or "pending",
+            "emailDeliveryError": self.email_delivery_error,
+            "email_delivery_error": self.email_delivery_error,
+            "emailLastSentAt": (self.email_last_sent_at.isoformat() + "Z") if self.email_last_sent_at else None,
+            "email_last_sent_at": (self.email_last_sent_at.isoformat() + "Z") if self.email_last_sent_at else None,
             "items": [it.to_dict() for it in self.items] if self.items else [],
         }

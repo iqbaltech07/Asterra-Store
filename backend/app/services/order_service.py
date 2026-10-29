@@ -294,6 +294,13 @@ class OrderService:
         customer_phone = (contact.get("phone") or payload.get("customerWhatsapp") or payload.get("customer_whatsapp") or "081234567890").strip()
         customer_name = (contact.get("name") or payload.get("customerName") or payload.get("customer_name") or "Pelanggan Asterra").strip()
 
+        # Fulfillment mode configuration snapshot (Preserves mode per order at creation time)
+        from app.services.order_processing_service import OrderProcessingService
+        order_mode_cfg = OrderProcessingService.get_order_mode_config()
+        order_fulfillment_mode = str(order_mode_cfg.get("order_mode") or "manual").lower()
+        active_reseller = str(order_mode_cfg.get("active_reseller") or "vip-reseller")
+        initial_provider = active_reseller if order_fulfillment_mode == "automatic" else "internal-manual"
+
         # 1. Payment config settings (unique code toggle & order expiry)
         from app.services.payment_config_service import PaymentConfigService
         pay_cfg = PaymentConfigService.get_config()
@@ -507,6 +514,9 @@ class OrderService:
                     customer_name=customer_name,
                     customer_notes=incoming_notes,
                     is_preorder=is_preorder,
+                    fulfillment_mode=order_fulfillment_mode,
+                    provider=initial_provider,
+                    email_delivery_status="pending",
                     total_amount=total_amount,
                     raw_amount=raw_total,
                     promo_discount=promo_discount,
@@ -608,6 +618,11 @@ class OrderService:
                 "customer_notes": incoming_notes,
                 "is_preorder": is_preorder,
                 "isPreorder": is_preorder,
+                "fulfillment_mode": order_fulfillment_mode,
+                "fulfillmentMode": order_fulfillment_mode,
+                "provider": initial_provider,
+                "email_delivery_status": "pending",
+                "emailDeliveryStatus": "pending",
                 "total_amount": total_amount,
                 "raw_amount": raw_total,
                 "promo_discount": promo_discount,
@@ -728,6 +743,14 @@ class OrderService:
             try:
                 order_obj = db.query(Order).options(joinedload(Order.items)).filter(Order.id == clean_id).first()
                 if order_obj:
+                    # Strict validation: In manual mode, completing order requires customer credentials
+                    is_manual = (order_obj.fulfillment_mode or "manual") == "manual"
+                    if new_status in ["completed", "selesai"] and is_manual:
+                        if not order_obj.fulfillment_credentials and not order_obj.provider_note:
+                            raise ValueError(
+                                "Mode manual mewajibkan pengisian kredensial akun pelanggan sebelum pesanan diselesaikan. Silakan gunakan tombol Selesaikan Pesanan."
+                            )
+
                     prev_st = order_obj.status or "pending"
                     order_cust_name = order_obj.customer_name
                     order_cust_email = order_obj.customer_email
@@ -749,18 +772,22 @@ class OrderService:
                     normalized = cls._normalize_order(order_obj.to_dict())
             finally:
                 db.close()
+        except ValueError:
+            raise
         except Exception as e:
             print(f"[OrderService] Error updating order status in Supabase: {e}")
 
-        # 2. Trigger automated VIP Reseller fulfillment if status transitioned to processing or paid
+        # 2. Trigger automated VIP Reseller fulfillment if status transitioned to processing or paid ONLY if order is in automatic mode
         if new_status in ["processing", "paid"] and normalized:
-            try:
-                from app.services.vip_service import VipService
-                vip_res = VipService.fulfill_order_if_vip(clean_id)
-                if vip_res.get("success") and vip_res.get("order"):
-                    normalized = cls._normalize_order(vip_res["order"])
-            except Exception as e:
-                print(f"[OrderService] VIP fulfillment trigger error: {e}")
+            order_fulfill_mode = str(normalized.get("fulfillment_mode") or normalized.get("fulfillmentMode") or "manual").lower()
+            if order_fulfill_mode == "automatic":
+                try:
+                    from app.services.vip_service import VipService
+                    vip_res = VipService.fulfill_order_if_vip(clean_id)
+                    if vip_res.get("success") and vip_res.get("order"):
+                        normalized = cls._normalize_order(vip_res["order"])
+                except Exception as e:
+                    print(f"[OrderService] VIP fulfillment trigger error: {e}")
 
         # 3. Sync in-memory cache directly (zero full DB query)
         if cls._orders is not None and normalized:

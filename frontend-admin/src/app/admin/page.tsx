@@ -56,6 +56,7 @@ import { AdminFinanceSuite } from '@/components/admin/admin-finance-suite';
 import { AdminMarketingSuite } from '@/components/admin/admin-marketing-suite';
 import { AdminAnalyticsSuite } from '@/components/admin/admin-analytics-suite';
 import { AdminSystemSettingsSuite } from '@/components/admin/admin-system-settings-suite';
+import { AdminOrderProcessingTab } from '@/components/admin/admin-order-processing-tab';
 import { AdminNotificationProvider } from '@/context/admin-notification-context';
 import { ImageUploadDropzone, uploadFileToBlob } from '@/components/admin/image-upload-dropzone';
 import { BrandLogoSelector } from '@/components/admin/brand-logo-selector';
@@ -125,6 +126,7 @@ const TAB_TITLES: Record<AdminTab, { category: string; title: string }> = {
   'affiliate-performance': { category: 'Analytics & Laporan', title: 'Performa Konversi Afiliasi & Sales' },
   'financial-reports': { category: 'Analytics & Laporan', title: 'Laporan Finansial & Rekapitulasi' },
   'operating-hours': { category: 'Sistem & Konfigurasi', title: 'Jam Operasional Toko' },
+  'order-processing': { category: 'Sistem & Konfigurasi', title: 'Pemrosesan Pesanan (Manual vs Otomatis)' },
   'payment-settings': { category: 'Sistem & Konfigurasi', title: 'Metode Pembayaran & Gateway' },
   logs: { category: 'Sistem & Konfigurasi', title: 'Log Aktivitas & Audit Gateway' },
   notifications: { category: 'Sistem & Konfigurasi', title: 'Notifikasi WhatsApp & Email' },
@@ -2448,6 +2450,13 @@ function AdminPageContent() {
               activeTab={activeTab as any}
               onNotify={showNotification}
             />
+          </div>
+        )}
+
+        {/* TAB: SISTEM & KONFIGURASI - PEMROSESAN PESANAN (MANUAL VS OTOMATIS) */}
+        {visitedTabs.has('order-processing') && (
+          <div className={activeTab === 'order-processing' ? 'block animate-tab-glide' : 'hidden'}>
+            <AdminOrderProcessingTab onNotify={showNotification} />
           </div>
         )}
 

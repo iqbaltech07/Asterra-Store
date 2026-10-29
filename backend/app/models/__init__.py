@@ -11,6 +11,7 @@ from app.models.commission import Commission
 from app.models.profit_ledger import ProfitLedger
 from app.models.payout_request import PayoutRequest
 from app.models.store_operating_hours import StoreOperatingHours
+from app.models.order_processing_setting import OrderProcessingSetting, ResellerApiSetting
 
 from app.models.category import Category
 
@@ -23,6 +24,8 @@ __all__ = [
     "SalesPartner",
     "PaymentSetting",
     "StoreOperatingHours",
+    "OrderProcessingSetting",
+    "ResellerApiSetting",
     "PromoCode",
     "PromoBanner",
     "PromoCampaign",

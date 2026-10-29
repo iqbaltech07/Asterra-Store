@@ -46,6 +46,12 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"[Lifespan] StoreOperatingHours init note: {e}")
 
+    try:
+        from app.services.order_processing_service import OrderProcessingService
+        OrderProcessingService.ensure_tables()
+    except Exception as e:
+        print(f"[Lifespan] OrderProcessingService init note: {e}")
+
     # Ensure database root superadmin and sales admin accounts on boot
     try:
         from app.services.admin_user_service import AdminUserService
