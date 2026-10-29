@@ -13,6 +13,10 @@ import {
   faClock,
   faEnvelope,
   faPhone,
+  faChevronLeft,
+  faChevronRight,
+  faAnglesLeft,
+  faAnglesRight,
 } from '@fortawesome/free-solid-svg-icons';
 import { Button } from '@/components/ui/button';
 import { formatDateTimeIndo, formatWhatsAppUrl } from '@/lib/utils/format';
@@ -34,9 +38,11 @@ export function AdminOrdersTab() {
     handleTestSound,
   } = useAdminNotifications();
 
-  // Filters & Modal State
+  // Filters, Pagination & Modal State
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [page, setPage] = useState<number>(1);
+  const [limit, setLimit] = useState<number>(20);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [notification, setNotification] = useState<string | null>(null);
@@ -48,6 +54,16 @@ export function AdminOrdersTab() {
     }, 4000);
   };
 
+  const handleStatusFilterChange = (status: string) => {
+    setStatusFilter(status);
+    setPage(1);
+  };
+
+  const handleSearchQueryChange = (query: string) => {
+    setSearchQuery(query);
+    setPage(1);
+  };
+
   // Fetch orders with React Query via centralized OrdersApi with industry-standard Dual-Channel Auto-Sync
   const {
     data: ordersData,
@@ -55,11 +71,13 @@ export function AdminOrdersTab() {
     isRefetching,
     refetch,
   } = useQuery<OrdersApiResponse>({
-    queryKey: ['admin-orders', statusFilter, searchQuery],
+    queryKey: ['admin-orders', statusFilter, searchQuery, page, limit],
     queryFn: () =>
       OrdersApi.getAll({
         status: statusFilter,
         search: searchQuery,
+        page,
+        limit,
       }),
     staleTime: 60000,
     refetchOnWindowFocus: false,
@@ -70,6 +88,33 @@ export function AdminOrdersTab() {
 
   const orders = ordersData?.data || [];
   const metrics = ordersData?.metrics;
+  const pagination = ordersData?.pagination;
+  const totalItems = pagination?.total_items ?? orders.length;
+  const totalPages = pagination?.total_pages ?? Math.max(1, Math.ceil(totalItems / limit));
+  const currentPage = pagination?.current_page ?? page;
+
+  const startItem = totalItems === 0 ? 0 : (currentPage - 1) * limit + 1;
+  const endItem = Math.min(totalItems, currentPage * limit);
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage < 1 || newPage > totalPages || newPage === currentPage) return;
+    setPage(newPage);
+  };
+
+  const getPageNumbers = (current: number, total: number): (number | string)[] => {
+    if (total <= 5) {
+      return Array.from({ length: total }, (_, i) => i + 1);
+    }
+    if (current <= 3) {
+      return [1, 2, 3, 4, '...', total];
+    }
+    if (current >= total - 2) {
+      return [1, '...', total - 3, total - 2, total - 1, total];
+    }
+    return [1, '...', current - 1, current, current + 1, '...', total];
+  };
+
+  const pageNumbers = getPageNumbers(currentPage, totalPages);
 
   // Mutation: Update Order Status Manually by Admin
   const updateStatusMutation = useMutation({
@@ -140,9 +185,9 @@ export function AdminOrdersTab() {
       {/* Filter, Search & SSE Bar */}
       <OrderFiltersBar
         statusFilter={statusFilter}
-        setStatusFilter={setStatusFilter}
+        setStatusFilter={handleStatusFilterChange}
         searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
+        setSearchQuery={handleSearchQueryChange}
         metrics={metrics}
         isMuted={isMuted}
         audioUnlocked={audioUnlocked}
@@ -290,6 +335,123 @@ export function AdminOrdersTab() {
               );
             })}
           </div>
+
+          {/* Pagination Controls */}
+          {totalItems > 0 && (
+            <div className="bg-surface border border-border rounded-xl p-3.5 sm:p-4 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+              {/* Left: Summary & Per-Page Selector */}
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 w-full sm:w-auto">
+                <span className="text-foreground-muted">
+                  Menampilkan <strong className="text-foreground">{startItem}</strong> -{' '}
+                  <strong className="text-foreground">{endItem}</strong> dari{' '}
+                  <strong className="text-foreground">{totalItems.toLocaleString('id-ID')}</strong> pesanan
+                </span>
+
+                <div className="flex items-center gap-1.5 pl-0 sm:pl-2 sm:border-l border-border text-foreground-muted">
+                  <span className="text-[11px]">Baris:</span>
+                  <select
+                    value={limit}
+                    onChange={(e) => {
+                      setLimit(Number(e.target.value));
+                      setPage(1);
+                    }}
+                    className="h-7 text-xs font-semibold px-2 py-0 rounded-lg bg-surface-raised border border-border text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary cursor-pointer"
+                  >
+                    <option value={10}>10</option>
+                    <option value={20}>20</option>
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Right: Navigation Buttons */}
+              {totalPages > 1 && (
+                <div className="flex items-center gap-1 w-full sm:w-auto justify-center sm:justify-end">
+                  {/* First Page Button */}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={currentPage <= 1 || isLoading}
+                    onClick={() => handlePageChange(1)}
+                    className="h-8 w-8 p-0 border-border text-foreground-muted hover:text-foreground hover:bg-surface-raised disabled:opacity-40 cursor-pointer"
+                    title="Halaman Pertama"
+                  >
+                    <FontAwesomeIcon icon={faAnglesLeft} className="w-3 h-3" />
+                  </Button>
+
+                  {/* Previous Button */}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={currentPage <= 1 || isLoading}
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    className="h-8 px-2.5 gap-1 border-border text-foreground-muted hover:text-foreground hover:bg-surface-raised disabled:opacity-40 cursor-pointer"
+                  >
+                    <FontAwesomeIcon icon={faChevronLeft} className="w-2.5 h-2.5" />
+                    <span className="hidden sm:inline text-xs">Sebelumnya</span>
+                  </Button>
+
+                  {/* Numbered Pages */}
+                  <div className="flex items-center gap-1">
+                    {pageNumbers.map((p, idx) => {
+                      if (p === '...') {
+                        return (
+                          <span key={`dots-${idx}`} className="px-1.5 py-1 text-foreground-muted font-mono text-xs">
+                            ...
+                          </span>
+                        );
+                      }
+                      const isCurrent = p === currentPage;
+                      return (
+                        <button
+                          key={`page-${p}`}
+                          type="button"
+                          onClick={() => handlePageChange(Number(p))}
+                          disabled={isLoading}
+                          className={`h-8 min-w-[32px] px-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+                            isCurrent
+                              ? 'bg-primary text-white shadow-xs font-bold'
+                              : 'bg-surface hover:bg-surface-raised text-foreground border border-border'
+                          }`}
+                        >
+                          {p}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Next Button */}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={currentPage >= totalPages || isLoading}
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    className="h-8 px-2.5 gap-1 border-border text-foreground-muted hover:text-foreground hover:bg-surface-raised disabled:opacity-40 cursor-pointer"
+                  >
+                    <span className="hidden sm:inline text-xs">Berikutnya</span>
+                    <FontAwesomeIcon icon={faChevronRight} className="w-2.5 h-2.5" />
+                  </Button>
+
+                  {/* Last Page Button */}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={currentPage >= totalPages || isLoading}
+                    onClick={() => handlePageChange(totalPages)}
+                    className="h-8 w-8 p-0 border-border text-foreground-muted hover:text-foreground hover:bg-surface-raised disabled:opacity-40 cursor-pointer"
+                    title="Halaman Terakhir"
+                  >
+                    <FontAwesomeIcon icon={faAnglesRight} className="w-3 h-3" />
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 

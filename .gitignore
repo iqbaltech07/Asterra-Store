@@ -66,3 +66,7 @@ Data_Produk_Aktif_Asterra_Store_MILESTONE_50_FINAL.xlsx
 
 # Agent taste skill caches
 .taste-skill/
+
+# Local temporary notes
+note.txt
+dataorderfake.txt

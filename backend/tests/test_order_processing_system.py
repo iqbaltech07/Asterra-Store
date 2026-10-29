@@ -28,7 +28,27 @@ def real_product_id():
     db = SessionLocal()
     try:
         p = db.query(Product).first()
-        return p.id if p else "vip-viu1bln-s1"
+        if not p:
+            p = Product(
+                id="vip-viu1bln-s1",
+                name="Viu Premium 1 Bulan Test",
+                category_id="cat-streaming",
+                category_name="Streaming",
+                brand="Viu",
+                price=15000,
+                price_formatted="Rp 15.000",
+                status="active",
+                stock=100,
+                provider="vip-reseller",
+                provider_code="viu1bln",
+                provider_name="VIP Reseller",
+                provider_price=10000,
+                provider_status="active",
+            )
+            db.add(p)
+            db.commit()
+            db.refresh(p)
+        return p.id
     finally:
         db.close()
 
