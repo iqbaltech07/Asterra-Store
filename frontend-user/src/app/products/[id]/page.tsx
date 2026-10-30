@@ -262,7 +262,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
     familySlug: familyData?.slug,
     familyImageUrl: familyData?.imageUrl || productImageUrl,
     rating: familyData?.rating || '5.0',
-    soldCount: familyData?.soldCount || 850,
+    soldCount: familyData?.soldCount || 30,
     variants: familyData?.variants || [],
     selectedVariant: activeVariant,
     durations,

@@ -5,7 +5,7 @@ def run_migrations():
     """
     Applies idempotent migrations to the Supabase PostgreSQL database
     supporting the separation of Product Cards, dynamic Catalog variants,
-    dummy order tracking, and store operating hours.
+    dummy order tracking, calibrated card sold count, and store operating hours.
     """
     statements = [
         # 1. Product Cards table
@@ -17,61 +17,58 @@ def run_migrations():
             logo_url TEXT,
             description TEXT,
             category_id VARCHAR(100),
-            category_name VARCHAR(100),
-            status VARCHAR(50) DEFAULT 'active' NOT NULL,
-            display_order INTEGER DEFAULT 0 NOT NULL,
-            is_featured BOOLEAN DEFAULT FALSE NOT NULL,
+            category_name VARCHAR(150),
+            status VARCHAR(50) DEFAULT 'active',
+            display_order INTEGER DEFAULT 0,
+            is_featured BOOLEAN DEFAULT FALSE,
             sections TEXT DEFAULT '["promo"]',
-            rating VARCHAR(10) DEFAULT '5.0' NOT NULL,
+            rating VARCHAR(10) DEFAULT '5.0',
             badge_label VARCHAR(100),
-            created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'UTC'),
-            updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'UTC')
+            created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc'),
+            updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc')
         );
         """,
         "CREATE INDEX IF NOT EXISTS idx_product_cards_slug ON product_cards(slug);",
         "CREATE INDEX IF NOT EXISTS idx_product_cards_status ON product_cards(status);",
-        "CREATE INDEX IF NOT EXISTS idx_product_cards_order ON product_cards(display_order);",
 
-        # 2. Add card_id to products
-        "ALTER TABLE products ADD COLUMN IF NOT EXISTS card_id VARCHAR(100);",
+        # 2. Add card_id to products (katalog)
+        "ALTER TABLE products ADD COLUMN IF NOT EXISTS card_id VARCHAR(100) REFERENCES product_cards(id) ON DELETE SET NULL;",
         "CREATE INDEX IF NOT EXISTS idx_products_card_id ON products(card_id);",
 
         # 3. Product Attributes table
         """
         CREATE TABLE IF NOT EXISTS product_attributes (
             id VARCHAR(100) PRIMARY KEY,
-            card_id VARCHAR(100),
-            catalog_id VARCHAR(100),
-            name VARCHAR(100) NOT NULL,
-            display_order INTEGER DEFAULT 0 NOT NULL,
-            is_required BOOLEAN DEFAULT TRUE NOT NULL,
-            is_active BOOLEAN DEFAULT TRUE NOT NULL,
+            card_id VARCHAR(100) NOT NULL REFERENCES product_cards(id) ON DELETE CASCADE,
+            name VARCHAR(150) NOT NULL,
+            display_order INTEGER DEFAULT 0,
+            is_required BOOLEAN DEFAULT TRUE,
+            is_active BOOLEAN DEFAULT TRUE,
             options TEXT DEFAULT '[]',
-            created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'UTC'),
-            updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'UTC')
+            created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc'),
+            updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc')
         );
         """,
-        "CREATE INDEX IF NOT EXISTS idx_product_attributes_card ON product_attributes(card_id);",
-        "CREATE INDEX IF NOT EXISTS idx_product_attributes_catalog ON product_attributes(catalog_id);",
+        "CREATE INDEX IF NOT EXISTS idx_product_attributes_card_id ON product_attributes(card_id);",
 
         # 4. Product Variants table
         """
         CREATE TABLE IF NOT EXISTS product_variants (
             id VARCHAR(100) PRIMARY KEY,
-            card_id VARCHAR(100),
-            catalog_id VARCHAR(100),
+            card_id VARCHAR(100) NOT NULL REFERENCES product_cards(id) ON DELETE CASCADE,
+            catalog_id VARCHAR(100) REFERENCES products(id) ON DELETE SET NULL,
             sku VARCHAR(100),
             combination TEXT DEFAULT '{}',
-            price INTEGER NOT NULL,
+            price NUMERIC(15, 2) DEFAULT 0,
             price_formatted VARCHAR(100),
             stock INTEGER DEFAULT 100,
             status VARCHAR(50) DEFAULT 'active',
-            created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'UTC'),
-            updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'UTC')
+            created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc'),
+            updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc')
         );
         """,
-        "CREATE INDEX IF NOT EXISTS idx_product_variants_card ON product_variants(card_id);",
-        "CREATE INDEX IF NOT EXISTS idx_product_variants_catalog ON product_variants(catalog_id);",
+        "CREATE INDEX IF NOT EXISTS idx_product_variants_card_id ON product_variants(card_id);",
+        "CREATE INDEX IF NOT EXISTS idx_product_variants_catalog_id ON product_variants(catalog_id);",
 
         # 5. Add is_dummy to orders table
         "ALTER TABLE orders ADD COLUMN IF NOT EXISTS is_dummy BOOLEAN DEFAULT FALSE;",
@@ -97,6 +94,28 @@ def run_migrations():
         WHERE oi.product_id = p.id
           AND oi.card_id IS NULL
           AND p.card_id IS NOT NULL;
+        """,
+
+        # 10. Calibrate base_sold_count on product_cards for realistic 20-40 range distribution
+        """
+        UPDATE product_cards SET base_sold_count = CASE
+            WHEN slug = 'netflix' THEN 38
+            WHEN slug = 'spotify' THEN 37
+            WHEN slug = 'google-gemini' THEN 34
+            WHEN slug = 'capcut' THEN 34
+            WHEN slug = 'youtube' THEN 32
+            WHEN slug = 'mobile-legends' THEN 30
+            WHEN slug = 'canva' THEN 29
+            WHEN slug = 'wetv' THEN 27
+            WHEN slug = 'viu' THEN 20
+            WHEN slug = 'pubg-mobile' THEN 26
+            WHEN slug = 'chatgpt' THEN 25
+            WHEN slug = 'bstation' THEN 22
+            WHEN slug = 'vidio' THEN 23
+            WHEN slug = 'iqiyi' THEN 22
+            WHEN slug = 'alight-motion' THEN 21
+            ELSE 22
+        END;
         """,
     ]
 

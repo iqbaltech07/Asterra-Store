@@ -10,6 +10,7 @@ from app.models.product_variant import ProductAttribute, ProductVariant
 INITIAL_CARDS = [
     {
         "id": "card-google-gemini",
+        "base_sold_count": 34,
         "name": "Google Gemini",
         "slug": "google-gemini",
         "category_id": "cat-ai-tools",
@@ -25,6 +26,7 @@ INITIAL_CARDS = [
     },
     {
         "id": "card-canva",
+        "base_sold_count": 29,
         "name": "Canva",
         "slug": "canva",
         "category_id": "cat-apps-streaming",
@@ -55,6 +57,7 @@ INITIAL_CARDS = [
     },
     {
         "id": "card-chatgpt",
+        "base_sold_count": 25,
         "name": "ChatGPT",
         "slug": "chatgpt",
         "category_id": "cat-ai-tools",
@@ -70,6 +73,7 @@ INITIAL_CARDS = [
     },
     {
         "id": "card-alight-motion",
+        "base_sold_count": 21,
         "name": "Alight Motion",
         "slug": "alight-motion",
         "category_id": "cat-apps-streaming",
@@ -85,6 +89,7 @@ INITIAL_CARDS = [
     },
     {
         "id": "card-youtube",
+        "base_sold_count": 32,
         "name": "YouTube",
         "slug": "youtube",
         "category_id": "cat-apps-streaming",
@@ -100,6 +105,7 @@ INITIAL_CARDS = [
     },
     {
         "id": "card-spotify",
+        "base_sold_count": 37,
         "name": "Spotify",
         "slug": "spotify",
         "category_id": "cat-apps-streaming",
@@ -115,6 +121,7 @@ INITIAL_CARDS = [
     },
     {
         "id": "card-netflix",
+        "base_sold_count": 38,
         "name": "Netflix",
         "slug": "netflix",
         "category_id": "cat-apps-streaming",
@@ -130,6 +137,7 @@ INITIAL_CARDS = [
     },
     {
         "id": "card-vidio",
+        "base_sold_count": 23,
         "name": "Vidio",
         "slug": "vidio",
         "category_id": "cat-apps-streaming",
@@ -145,6 +153,7 @@ INITIAL_CARDS = [
     },
     {
         "id": "card-wetv",
+        "base_sold_count": 27,
         "name": "WeTV",
         "slug": "wetv",
         "category_id": "cat-apps-streaming",
@@ -160,6 +169,7 @@ INITIAL_CARDS = [
     },
     {
         "id": "card-iqiyi",
+        "base_sold_count": 22,
         "name": "iQIYI",
         "slug": "iqiyi",
         "category_id": "cat-apps-streaming",
@@ -190,6 +200,7 @@ INITIAL_CARDS = [
     },
     {
         "id": "card-viu",
+        "base_sold_count": 20,
         "name": "Viu",
         "slug": "viu",
         "category_id": "cat-apps-streaming",
@@ -205,6 +216,7 @@ INITIAL_CARDS = [
     },
     {
         "id": "card-mobile-legends",
+        "base_sold_count": 30,
         "name": "Mobile Legends",
         "slug": "mobile-legends",
         "category_id": "cat-games",
@@ -220,6 +232,7 @@ INITIAL_CARDS = [
     },
     {
         "id": "card-pubg-mobile",
+        "base_sold_count": 26,
         "name": "PUBG Mobile",
         "slug": "pubg-mobile",
         "category_id": "cat-games",
@@ -343,6 +356,7 @@ def seed_data():
                     sections=card_def["sections"],
                     rating=card_def["rating"],
                     badge_label=card_def["badge_label"],
+                    base_sold_count=card_def.get("base_sold_count", 25),
                 )
                 db.add(new_card)
                 existing_cards[c_id] = new_card

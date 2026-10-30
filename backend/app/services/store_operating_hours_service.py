@@ -119,6 +119,7 @@ class StoreOperatingHoursService:
         reopen_est = payload.get("reopenEstimate") or payload.get("reopen_estimate")
         allow_preorder = bool(payload.get("allowPreorder", payload.get("allow_preorder", True)))
         auto_close_time = str(payload.get("autoCloseTime") or payload.get("auto_close_time") or "21:00").strip()
+        action = str(payload.get("action") or "").lower()
 
         db = SessionLocal()
         try:
@@ -128,12 +129,15 @@ class StoreOperatingHoursService:
                 db.add(row)
 
             now_utc = datetime.utcnow()
-            if mode == "manual_open":
+            if mode == "manual_open" or action == "open" or payload.get("isOpen") is True or payload.get("is_open") is True:
                 row.last_manual_opened_at = now_utc
-            elif mode == "manual_closed":
+                row.mode = "manual_open"
+            elif mode == "manual_closed" or action == "close" or payload.get("isOpen") is False or payload.get("is_open") is False:
                 row.last_manual_closed_at = now_utc
+                row.mode = "manual_closed"
+            else:
+                row.mode = mode
 
-            row.mode = mode
             row.weekly_schedule = json.dumps(validated_schedule)
             row.manual_close_reason = str(manual_reason).strip() if manual_reason else None
             row.reopen_estimate = str(reopen_est).strip() if reopen_est else None
@@ -151,17 +155,26 @@ class StoreOperatingHoursService:
         return res
 
     @classmethod
+    def open_store_manual(cls, admin_actor: Optional[str] = "admin") -> Dict[str, Any]:
+        """Admin explicit manual action to open the store."""
+        return cls.update_config({"mode": "manual_open", "action": "open"}, admin_actor=admin_actor)
+
+    @classmethod
+    def close_store_manual(cls, reason: Optional[str] = None, admin_actor: Optional[str] = "admin") -> Dict[str, Any]:
+        """Admin explicit manual action to close the store."""
+        return cls.update_config({"mode": "manual_closed", "action": "close", "manualCloseReason": reason}, admin_actor=admin_actor)
+
+    @classmethod
     def get_current_status(cls, ref_time: Optional[datetime] = None) -> Dict[str, Any]:
         """
-        Determines current operational status of the store in Asia/Jakarta timezone.
+        Determines current operational status of the store in Asia/Jakarta (WIB) timezone.
         AsterraStore Operational Rules:
         1. Daily automatic closing at 21:00 WIB (Asia/Jakarta).
-        2. Store does not automatically open at fixed hours; Admin opens manually when ready.
-        3. If opened before 21:00 WIB, store stays open until 21:00 WIB (or manual close).
-        4. When 21:00 WIB arrives, store automatically closes.
-        5. After 21:00 WIB auto-close, Admin may manually reopen on the same evening, and
-           it stays open (not re-closed immediately).
-        6. Persistent storage and idempotent evaluation.
+        2. Store NEVER automatically reopens on schedule, date change, midnight rollover, or server restart.
+        3. Reopening the store is an explicit manual action by the Admin.
+        4. Once automatically closed at 21:00 WIB, the store remains closed until the Admin explicitly reopens it.
+        5. Zero auto-open at 09:00 WIB or any other morning hour.
+        6. Persistent database storage guarantees consistency across server restarts.
         """
         config = cls.get_raw_config()
         mode = config.get("mode", "auto")
@@ -171,7 +184,7 @@ class StoreOperatingHoursService:
         reopen_est = config.get("reopenEstimate")
         auto_close_str = str(config.get("autoCloseTime") or "21:00")
 
-        # Reference time in Asia/Jakarta (WIB)
+        # Reference time in Asia/Jakarta (WIB, UTC+7)
         if ref_time is None:
             now_wib = datetime.now(WIB)
         else:
@@ -181,7 +194,6 @@ class StoreOperatingHoursService:
                 now_wib = ref_time.replace(tzinfo=WIB)
 
         current_day_en = now_wib.strftime("%A").lower()
-        now_time = now_wib.time()
 
         # Parse auto close time (default 21:00)
         try:
@@ -193,7 +205,7 @@ class StoreOperatingHoursService:
 
         # Check last manual opened time
         last_opened_iso = config.get("lastManualOpenedAt")
-        last_opened_wib = None
+        last_opened_wib: Optional[datetime] = None
         if last_opened_iso:
             try:
                 lo_dt = datetime.fromisoformat(last_opened_iso.replace("Z", "+00:00"))
@@ -205,7 +217,7 @@ class StoreOperatingHoursService:
 
         # Check last manual closed time
         last_closed_iso = config.get("lastManualClosedAt")
-        last_closed_wib = None
+        last_closed_wib: Optional[datetime] = None
         if last_closed_iso:
             try:
                 lc_dt = datetime.fromisoformat(last_closed_iso.replace("Z", "+00:00"))
@@ -215,8 +227,14 @@ class StoreOperatingHoursService:
             except Exception:
                 pass
 
-        # Calculate scheduled auto-close datetime
-        today_auto_close_dt = now_wib.replace(hour=auto_close_t.hour, minute=auto_close_t.minute, second=0, microsecond=0)
+        # Calculate scheduled auto-close cutoff datetime for the most recent opening session
+        cutoff_dt: Optional[datetime] = None
+        if last_opened_wib:
+            if last_opened_wib.time() < auto_close_t:
+                cutoff_dt = last_opened_wib.replace(hour=auto_close_t.hour, minute=auto_close_t.minute, second=0, microsecond=0)
+            else:
+                # Admin opened after 21:00 WIB; session extends until 21:00 WIB the next day
+                cutoff_dt = last_opened_wib.replace(hour=auto_close_t.hour, minute=auto_close_t.minute, second=0, microsecond=0) + timedelta(days=1)
 
         # ----------------------------------------------------
         # Operational Decision Logic
@@ -228,78 +246,38 @@ class StoreOperatingHoursService:
         final_next_close_dt = None
         final_next_close_display = None
         final_next_open_display = None
+        banner_message = None
 
-        if mode == "manual_closed":
+        if mode == "manual_closed" or (last_closed_wib and last_opened_wib and last_closed_wib >= last_opened_wib):
+            # Admin explicitly closed the store manually
             final_is_open = False
             status_label = "Tutup (Manual Admin)"
-            final_next_open_display = reopen_est or "ketika Admin membuka toko"
+            final_next_open_display = reopen_est or "ketika Admin membuka toko kembali"
             banner_message = f"{SLEEPING_ADMIN_NOTE} Toko sedang ditutup sementara oleh Admin." if not manual_reason else f"{SLEEPING_ADMIN_NOTE} ({manual_reason})"
 
-        elif mode == "manual_open":
-            # Admin opened store manually
-            # Check if current time is past 21:00 WIB today:
-            if now_time >= auto_close_t:
-                # Was manual open executed today AFTER 21:00 WIB?
-                is_opened_after_21 = False
-                if last_opened_wib:
-                    is_same_day = last_opened_wib.date() == now_wib.date()
-                    if is_same_day and last_opened_wib.time() >= auto_close_t:
-                        is_opened_after_21 = True
+        elif last_opened_wib is None:
+            # Store has never been opened by Admin
+            final_is_open = False
+            status_label = "Tutup (Menunggu Admin Buka)"
+            final_next_open_display = "ketika Admin membuka toko kembali"
+            banner_message = f"{SLEEPING_ADMIN_NOTE} Toko siap menerima pesanan setelah dibuka secara manual oleh Admin."
 
-                if is_opened_after_21:
-                    # Admin intentionally reopened after 21:00 on this day
-                    final_is_open = True
-                    status_label = "Buka (Reopen Khusus)"
-                    tomorrow_close = today_auto_close_dt + timedelta(days=1)
-                    final_next_close_dt = tomorrow_close
-                    final_next_close_display = f"besok pukul {auto_close_str} WIB"
-                    banner_message = None
-                else:
-                    # Admin opened before 21:00, and 21:00 has passed -> automatically CLOSED!
-                    final_is_open = False
-                    status_label = "Tutup Otomatis (21:00 WIB)"
-                    final_next_open_display = "ketika Admin membuka toko esok hari"
-                    banner_message = f"{SLEEPING_ADMIN_NOTE} Toko telah tutup otomatis pukul {auto_close_str} WIB."
-            else:
-                # Before 21:00 WIB today
-                # If last_closed was more recent than last_opened on this day:
-                if last_closed_wib and last_opened_wib and last_closed_wib > last_opened_wib:
-                    final_is_open = False
-                    status_label = "Tutup (Manual Admin)"
-                    banner_message = f"{SLEEPING_ADMIN_NOTE} Toko sedang ditutup oleh Admin."
-                else:
-                    final_is_open = True
-                    status_label = "Buka"
-                    final_next_close_dt = today_auto_close_dt
-                    final_next_close_display = f"pukul {auto_close_str} WIB"
-                    banner_message = None
+        elif cutoff_dt and now_wib >= cutoff_dt:
+            # Reached or passed 21:00 WIB since the store was opened.
+            # Store automatically closes and STAYS closed through midnight, 09:00 WIB, and beyond
+            # until Admin explicitly reopens it.
+            final_is_open = False
+            status_label = f"Tutup Otomatis ({auto_close_str} WIB)"
+            final_next_open_display = "ketika Admin membuka toko kembali"
+            banner_message = f"{SLEEPING_ADMIN_NOTE} Toko telah tutup otomatis pukul {auto_close_str} WIB. Silakan lakukan pemesanan melalui alur Pre-Order."
 
         else:
-            # Mode 'auto':
-            # Store does NOT open automatically in the morning without admin opening!
-            # If admin opened store today before 21:00 WIB and has not closed:
-            opened_today = False
-            if last_opened_wib and last_opened_wib.date() == now_wib.date():
-                if not last_closed_wib or last_opened_wib > last_closed_wib:
-                    opened_today = True
-
-            if opened_today:
-                if now_time < auto_close_t:
-                    final_is_open = True
-                    status_label = "Buka"
-                    final_next_close_dt = today_auto_close_dt
-                    final_next_close_display = f"pukul {auto_close_str} WIB"
-                    banner_message = None
-                else:
-                    final_is_open = False
-                    status_label = "Tutup Otomatis (21:00 WIB)"
-                    final_next_open_display = "ketika Admin membuka toko esok hari"
-                    banner_message = f"{SLEEPING_ADMIN_NOTE} Toko telah tutup otomatis pukul {auto_close_str} WIB."
-            else:
-                final_is_open = False
-                status_label = "Tutup (Menunggu Admin Buka)"
-                final_next_open_display = "ketika Admin siap menerima pesanan"
-                banner_message = f"{SLEEPING_ADMIN_NOTE} Toko siap menerima pesanan setelah dibuka oleh Admin."
+            # Opened by admin and current time is before 21:00 WIB cutoff
+            final_is_open = True
+            status_label = "Buka"
+            final_next_close_dt = cutoff_dt
+            final_next_close_display = f"pukul {auto_close_str} WIB"
+            banner_message = None
 
         return {
             "status": "open" if final_is_open else "closed",

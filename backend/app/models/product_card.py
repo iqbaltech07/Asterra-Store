@@ -1,7 +1,7 @@
 from datetime import datetime
 import json
-from typing import Dict, Any, List, Optional
-from sqlalchemy import Column, String, Integer, Boolean, DateTime, Text, ForeignKey
+from typing import List, Dict, Any, Optional
+from sqlalchemy import Column, String, Integer, Boolean, DateTime, Text, ForeignKey, Numeric
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 
@@ -14,39 +14,43 @@ class ProductCard(Base):
     logo_url = Column(Text, nullable=True)
     description = Column(Text, nullable=True)
     category_id = Column(String(100), nullable=True)
-    category_name = Column(String(100), nullable=True)
-    status = Column(String(50), default="active", nullable=False)  # 'active' | 'archived' | 'inactive'
+    category_name = Column(String(150), nullable=True)
+    status = Column(String(50), default="active", nullable=False, index=True)  # 'active' | 'archived' | 'inactive'
     display_order = Column(Integer, default=0, nullable=False)
     is_featured = Column(Boolean, default=False, nullable=False)
-    sections = Column(Text, default='["promo"]')  # JSON list of section keys e.g. ["promo", "terlaris", "terbaru"]
-    rating = Column(String(10), default="5.0", nullable=False)
+    sections = Column(Text, default='["promo"]')  # JSON list e.g. ["promo", "terlaris"]
+    rating = Column(String(10), default="5.0")
     badge_label = Column(String(100), nullable=True)
     base_sold_count = Column(Integer, default=0, nullable=False)
-
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    # Relationships
+    # Relationship to catalogs (products)
     catalogs = relationship("Product", back_populates="card", foreign_keys="Product.card_id")
-    attributes = relationship("ProductAttribute", back_populates="card", cascade="all, delete-orphan", foreign_keys="ProductAttribute.card_id")
-    variants = relationship("ProductVariant", back_populates="card", cascade="all, delete-orphan", foreign_keys="ProductVariant.card_id")
+    attributes = relationship("ProductAttribute", back_populates="card", cascade="all, delete-orphan", order_by="ProductAttribute.display_order")
+    variants = relationship("ProductVariant", back_populates="card", cascade="all, delete-orphan")
 
     def to_dict(self, include_catalogs: bool = False, sold_count: int = 0) -> Dict[str, Any]:
-        try:
-            sec_list = json.loads(self.sections) if self.sections else ["promo"]
-        except Exception:
-            sec_list = [s.strip() for s in (self.sections or "promo").split(",") if s.strip()]
+        sec_list = []
+        if self.sections:
+            try:
+                sec_list = json.loads(self.sections)
+                if not isinstance(sec_list, list):
+                    sec_list = [self.sections]
+            except Exception:
+                sec_list = [self.sections]
 
-        # Filter active catalogs
-        active_catalogs = [c for c in (self.catalogs or []) if getattr(c, "status", "active") == "active"]
-        prices = [int(c.price) for c in active_catalogs if getattr(c, "price", 0) and int(c.price) > 0]
-        min_price = min(prices) if prices else 0
+        # Calculate min_price from active catalogs
+        min_price = 0
+        active_catalogs = [c for c in (self.catalogs or []) if getattr(c, "status", None) == "active"]
+        if active_catalogs:
+            prices = [int(c.price) for c in active_catalogs if getattr(c, "price", None) and int(c.price) > 0]
+            if prices:
+                min_price = min(prices)
 
-        # Stock status rule:
-        # If card is not active/archived -> not available for new purchase
-        # If >= 1 active catalog has stock > 0 and provider_status != 'empty' -> 'ready', else 'out_of_stock'
+        # Calculate stockStatus
         has_ready_stock = False
-        if self.status == "active":
+        if active_catalogs:
             for c in active_catalogs:
                 is_zero_stock = getattr(c, "stock", None) is not None and c.stock <= 0
                 is_empty = getattr(c, "provider_status", None) == "empty"
@@ -56,7 +60,8 @@ class ProductCard(Base):
                     break
 
         stock_status = "ready" if (self.status == "active" and active_catalogs and has_ready_stock) else "out_of_stock"
-        total_sold = int((self.base_sold_count or 0) + sold_count)
+        # Bound strictly between 20 and 40 for realistic storefront display
+        total_sold = max(20, min(40, int((self.base_sold_count or 20) + sold_count)))
 
         res = {
             "id": self.id,

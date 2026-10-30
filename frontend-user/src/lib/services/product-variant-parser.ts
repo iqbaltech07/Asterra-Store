@@ -73,7 +73,7 @@ export const KNOWN_APPS: AppDefinition[] = [
     category: { id: 'cat-ai-tools', name: 'AI Tools' },
     imageUrl: BRAND_ICONS_MAP.chatgpt,
     rating: '5.0',
-    soldCount: 850,
+    soldCount: 25,
     description:
       'Akses resmi ChatGPT Plus & Business dengan fitur tercanggih OpenAI termasuk GPT-4o, browsing, DALL-E, data analysis, dan voice mode. Aktivasi instan dan bergaransi penuh.',
     features: [
@@ -105,7 +105,7 @@ export const KNOWN_APPS: AppDefinition[] = [
     category: { id: 'cat-ai-tools', name: 'AI Tools' },
     imageUrl: BRAND_ICONS_MAP.gemini,
     rating: '5.0',
-    soldCount: 620,
+    soldCount: 36,
     description:
       'Lisensi resmi Google Gemini AI Pro dengan integrasi Google Workspace, ruang penyimpanan Google Drive ekstra besar (hingga 5 TB), dan video generator Veo 3.',
     features: [
@@ -128,7 +128,7 @@ export const KNOWN_APPS: AppDefinition[] = [
     category: { id: 'cat-apps-streaming', name: 'Design & Creative' },
     imageUrl: BRAND_ICONS_MAP.canva,
     rating: '4.9',
-    soldCount: 1420,
+    soldCount: 29,
     description:
       'Akun resmi Canva Pro & Education untuk desain grafis tanpa batas. Akses 100+ juta foto premium, audio, video, Magic Studio AI, dan hapus background 1 klik.',
     features: [
@@ -152,7 +152,7 @@ export const KNOWN_APPS: AppDefinition[] = [
     category: { id: 'cat-apps-streaming', name: 'Video Editing' },
     imageUrl: BRAND_ICONS_MAP.capcut,
     rating: '4.9',
-    soldCount: 980,
+    soldCount: 34,
     description:
       'Langganan resmi CapCut Pro untuk kreator video TikTok, Reels, dan YouTube Shorts. Buka semua efek pro, teks animasi, filter cinematic, dan transisi tanpa watermark.',
     features: [
@@ -171,7 +171,7 @@ export const KNOWN_APPS: AppDefinition[] = [
     category: { id: 'cat-apps-streaming', name: 'Motion Graphic' },
     imageUrl: BRAND_ICONS_MAP.alight,
     rating: '4.8',
-    soldCount: 340,
+    soldCount: 21,
     description:
       'Aplikasi desain motion graphic profesional pertama di smartphone. Buat animasi visual berkualitas tinggi, visual effects, komposisi video, dan preset editing tanpa watermark.',
     features: [
@@ -190,7 +190,7 @@ export const KNOWN_APPS: AppDefinition[] = [
     category: { id: 'cat-apps-streaming', name: 'Movies & Series' },
     imageUrl: BRAND_ICONS_MAP.netflix,
     rating: '4.9',
-    soldCount: 1650,
+    soldCount: 38,
     description:
       'Streaming film blockbuster, serial original Netflix, anime, dan dokumenter favorit dalam resolusi Ultra HD 4K dengan audio spasial.',
     features: [
@@ -209,7 +209,7 @@ export const KNOWN_APPS: AppDefinition[] = [
     category: { id: 'cat-apps-streaming', name: 'Sports & TV Streaming' },
     imageUrl: BRAND_ICONS_MAP.vidio,
     rating: '4.9',
-    soldCount: 1100,
+    soldCount: 23,
     description:
       'Nonton siaran langsung olahraga terlengkap: Liga Inggris (EPL), BRI Liga 1, UCL, NBA, serta ribuan serial Vidio Original eksklusif.',
     features: [
@@ -231,7 +231,7 @@ export const KNOWN_APPS: AppDefinition[] = [
     category: { id: 'cat-apps-streaming', name: 'Asian Drama & Variety' },
     imageUrl: BRAND_ICONS_MAP.viu,
     rating: '4.9',
-    soldCount: 910,
+    soldCount: 27,
     description:
       'Streaming drama Korea terbaru, variety show, anime, dan drama Asia terpopuler dengan subtitle bahasa Indonesia resmi berkecepatan tayang cepat.',
     features: [
@@ -250,7 +250,7 @@ export const KNOWN_APPS: AppDefinition[] = [
     category: { id: 'cat-apps-streaming', name: 'Music Streaming' },
     imageUrl: BRAND_ICONS_MAP.spotify,
     rating: '4.9',
-    soldCount: 780,
+    soldCount: 37,
     description:
       'Dengarkan jutaan lagu dan podcast favorit tanpa jeda iklan, kualitas audio bitrate tertinggi, serta lewati trek musik tanpa batas.',
     features: [
@@ -273,7 +273,7 @@ export const KNOWN_APPS: AppDefinition[] = [
     category: { id: 'cat-apps-streaming', name: 'Streaming & Video' },
     imageUrl: BRAND_ICONS_MAP.youtube,
     rating: '5.0',
-    soldCount: 2100,
+    soldCount: 32,
     description:
       'Nonton jutaan video YouTube tanpa iklan, putar di latar belakang saat layar mati, dan nikmati akses penuh ke YouTube Music Premium.',
     features: [
@@ -295,7 +295,7 @@ export const KNOWN_APPS: AppDefinition[] = [
     category: { id: 'cat-apps-streaming', name: 'Anime & Creators' },
     imageUrl: BRAND_ICONS_MAP.bstation,
     rating: '4.9',
-    soldCount: 390,
+    soldCount: 24,
     description:
       'Platform anime legal terbesar di Asia Tenggara. Nonton anime musim terbaru kualitas Full HD hingga 4K, video kreator pop culture, dan game ACG.',
     features: [
@@ -314,7 +314,7 @@ export const KNOWN_APPS: AppDefinition[] = [
     category: { id: 'cat-apps-streaming', name: 'Drama & Anime' },
     imageUrl: BRAND_ICONS_MAP.iqiyi,
     rating: '4.9',
-    soldCount: 420,
+    soldCount: 22,
     description:
       'Platform streaming drama China (C-Drama), serial romantis, variety show, dan anime favorit dengan fitur VIP eksklusif.',
     features: [
@@ -333,7 +333,7 @@ export const KNOWN_APPS: AppDefinition[] = [
     category: { id: 'cat-apps-streaming', name: 'Asian Drama & Anime' },
     imageUrl: BRAND_ICONS_MAP.wetv,
     rating: '4.9',
-    soldCount: 560,
+    soldCount: 28,
     description:
       'Nonton serial original WeTV Indonesia yang viral, drama Asia terbaik, dan anime populer dengan subtitle resmi.',
     features: [
@@ -550,7 +550,7 @@ export function resolveProductFamily(
       category: directProduct.category,
       imageUrl: directProduct.imageUrl || '/images/default-product-banner.png',
       rating: '4.9',
-      soldCount: getDynamicSoldCount(directProduct.name, Date.now(), 150),
+      soldCount: getDynamicSoldCount(directProduct.name, Date.now(), 25),
       description: cleanHtmlContent(directProduct.description) || 'Layanan digital resmi bergaransi.',
       features: (directProduct.features && directProduct.features.length > 0)
         ? directProduct.features.map(cleanHtmlContent).filter(Boolean)
@@ -577,7 +577,7 @@ export function resolveProductFamily(
       category: baseP.category,
       imageUrl: baseP.imageUrl || '/images/default-product-banner.png',
       rating: '4.9',
-      soldCount: getDynamicSoldCount(baseP.name, Date.now(), 200),
+      soldCount: getDynamicSoldCount(baseP.name, Date.now(), 24),
       description: baseP.description || 'Layanan digital resmi bergaransi di Asterra Store.',
       features: baseP.features || ['Garansi Penggantian Penuh', 'Aktivasi Instan Otomatis'],
       variants,
