@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { AdminModalPortal } from '@/components/admin/admin-modal-portal';
 import {
   FolderTree,
   Plus,
@@ -369,6 +370,7 @@ export function AdminCategoriesTab({ onNotify, onFilterCategoryInProducts }: Adm
 
       {/* 4. Modal Add / Edit Category */}
       {isAddModalOpen && (
+        <AdminModalPortal>
         <div
           className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200"
           onClick={(e) => {
@@ -488,10 +490,12 @@ export function AdminCategoriesTab({ onNotify, onFilterCategoryInProducts }: Adm
             </div>
           </div>
         </div>
+        </AdminModalPortal>
       )}
 
       {/* 5. Modal Konfirmasi Hapus */}
       {deletingCategory && (
+        <AdminModalPortal>
         <div
           className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200"
           onClick={(e) => {
@@ -568,6 +572,7 @@ export function AdminCategoriesTab({ onNotify, onFilterCategoryInProducts }: Adm
             </div>
           </div>
         </div>
+        </AdminModalPortal>
       )}
     </div>
   );

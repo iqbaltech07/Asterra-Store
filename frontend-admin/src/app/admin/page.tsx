@@ -46,6 +46,7 @@ import { AdminPromosTab } from '@/components/admin/admin-promos-tab';
 import { AdminUsersTab } from '@/components/admin/admin-users-tab';
 import { AdminSidebar, AdminTab } from '@/components/admin/admin-sidebar';
 import { AdminCardsTab } from '@/components/admin/admin-cards-tab';
+import { AdminModalPortal } from '@/components/admin/admin-modal-portal';
 import { AdminHomepageOrdering } from '@/components/admin/admin-homepage-ordering';
 import { AdminDashboardTab } from '@/components/admin/admin-dashboard-tab';
 import { AdminAffiliateTab } from '@/components/admin/admin-affiliate-tab';
@@ -104,7 +105,7 @@ interface VipServicesResponse {
 
 const TAB_TITLES: Record<AdminTab, { category: string; title: string }> = {
   dashboard: { category: 'Overview', title: 'Dashboard Eksekutif' },
-  cards: { category: 'Katalog & Layanan', title: 'Manajemen Card Produk' },
+  cards: { category: 'Katalog & Layanan', title: 'Manajemen Product Group' },
   products: { category: 'Katalog & Layanan', title: 'Manajemen Katalog & Produk' },
   'homepage-ordering': { category: 'Katalog & Layanan', title: 'Pengaturan Urutan Produk Homepage' },
   categories: { category: 'Katalog & Layanan', title: 'Kategori Layanan' },
@@ -180,9 +181,11 @@ function AdminPageContent() {
     if (typeof window !== 'undefined') {
       const sp = new URLSearchParams(window.location.search);
       const t = sp.get('tab');
+      if (t === 'product-groups') return 'cards';
       if (t && t in TAB_TITLES) return t as AdminTab;
     }
     const t = searchParams?.get('tab');
+    if (t === 'product-groups') return 'cards';
     if (t && t in TAB_TITLES) return t as AdminTab;
     return null;
   }, [searchParams]);
@@ -400,6 +403,7 @@ function AdminPageContent() {
   const [importingService, setImportingService] = useState<VipRawService | null>(null);
 
   // Form states for Create/Edit product
+  const [formId, setFormId] = useState('');
   const [formCardId, setFormCardId] = useState('');
 
   const { data: adminCardsData } = useQuery({
@@ -428,6 +432,8 @@ function AdminPageContent() {
   const [formStatus, setFormStatus] = useState<'active' | 'archived'>('active');
   const [formDescription, setFormDescription] = useState('');
   const [formFeatures, setFormFeatures] = useState('');
+  const [benefitItems, setBenefitItems] = useState<string[]>([]);
+  const [newBenefitText, setNewBenefitText] = useState('');
   const [formImageUrl, setFormImageUrl] = useState('');
   const [stagedFile, setStagedFile] = useState<File | null>(null);
   const [isSpecialPromoBanner, setIsSpecialPromoBanner] = useState(false);
@@ -583,7 +589,7 @@ function AdminPageContent() {
       }
     };
 
-    setupConnection();
+    setupConnection()
 
     return () => {
       isSubscribed = false;
@@ -787,7 +793,11 @@ function AdminPageContent() {
         publicCategories.find((c) => c.name.toLowerCase() === formCategory.trim().toLowerCase())?.id ||
         `cat-${formCategory.toLowerCase().replace(/[^a-z0-9]/g, '-')}`;
 
-      const payload = {
+      const resolvedFeatures = benefitItems.length > 0
+        ? benefitItems.map((f) => f.trim()).filter(Boolean)
+        : formFeatures.split('\n').map((f) => f.trim()).filter(Boolean);
+
+      const payload: Record<string, any> = {
         name: formName,
         category: {
           id: resolvedCatId,
@@ -800,10 +810,7 @@ function AdminPageContent() {
         stock: formStock,
         status: formStatus,
         description: formDescription,
-        features: formFeatures
-          .split('\n')
-          .map((f) => f.trim())
-          .filter(Boolean),
+        features: resolvedFeatures,
         imageUrl: finalImageUrl || undefined,
         brand: formBrand || undefined,
         popular: formPopular,
@@ -815,6 +822,10 @@ function AdminPageContent() {
         privacyDesc: formPrivacyDesc,
         cardId: formCardId ? formCardId : null,
       };
+
+      if (!editingProduct && formId.trim()) {
+        payload.id = formId.trim();
+      }
 
       if (editingProduct) {
         const res = await fetch(`/api/v1/admin/products/${editingProduct.id}`, {
@@ -936,6 +947,7 @@ function AdminPageContent() {
   // Open Edit Modal
   const handleOpenEdit = (p: ManagedProductItem) => {
     setEditingProduct(p);
+    setFormId(p.id);
     setFormCardId((p as any).cardId || (p as any).card_id || '');
     setFormName(p.name);
     setFormBrand(p.brand || '');
@@ -948,6 +960,8 @@ function AdminPageContent() {
     setFormStatus(p.status);
     setFormDescription(p.description);
     setFormFeatures(p.features.join('\n'));
+    setBenefitItems(p.features && p.features.length > 0 ? [...p.features] : []);
+    setNewBenefitText('');
     setFormImageUrl(p.imageUrl);
     setStagedFile(null);
     setIsSpecialPromoBanner(false);
@@ -963,6 +977,7 @@ function AdminPageContent() {
   // Open Create Modal
   const handleOpenCreate = () => {
     setEditingProduct(null);
+    setFormId('');
     setFormCardId('');
     setFormName('');
     setFormBrand('');
@@ -977,6 +992,8 @@ function AdminPageContent() {
     setFormStatus('active');
     setFormDescription('');
     setFormFeatures('Akses resmi bergaransi\nProses aktivasi cepat 1-5 menit');
+    setBenefitItems(['Akses resmi bergaransi', 'Proses aktivasi cepat 1-5 menit']);
+    setNewBenefitText('');
     setFormImageUrl('/images/default-product-banner.png');
     setStagedFile(null);
     setIsSpecialPromoBanner(false);
@@ -993,6 +1010,8 @@ function AdminPageContent() {
   // Duplicate Existing Product
   const handleDuplicateProduct = (p: ManagedProductItem) => {
     setEditingProduct(null);
+    setFormId('');
+    setFormCardId((p as any).cardId || (p as any).card_id || '');
     setFormName(`${p.name} (Salinan)`);
     setFormCategory(p.category.name);
     setFormCategoryId(p.category.id || `cat-${p.category.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`);
@@ -1003,8 +1022,11 @@ function AdminPageContent() {
     setFormStatus('archived');
     setFormDescription(p.description);
     setFormFeatures(p.features.join('\n'));
+    setBenefitItems(p.features && p.features.length > 0 ? [...p.features] : []);
+    setNewBenefitText('');
     setFormImageUrl(p.imageUrl);
     setStagedFile(null);
+    setIsSpecialPromoBanner(false);
     setFormPopular(false);
     setFormGuaranteeTitle(p.guaranteeTitle || 'Garansi Penuh');
     setFormGuaranteeDesc(p.guaranteeDesc || 'Jaminan ganti akun 100%');
@@ -1019,6 +1041,7 @@ function AdminPageContent() {
   // Open Import Modal from VIP Service
   const handleOpenImport = (service: VipRawService) => {
     setImportingService(service);
+    setFormId(service.code ? `prod-${service.code}` : '');
     setFormName(service.name);
 
     let base = 0;
@@ -1032,6 +1055,9 @@ function AdminPageContent() {
     const suggestedPrice = Math.ceil((base * 1.1 + 2500) / 1000) * 1000;
     setFormPrice(String(suggestedPrice));
     setFormProviderPrice(String(base));
+    setFormStock(service.status === 'available' ? 100 : 0);
+    setBenefitItems(['Layanan resmi bergaransi', 'Proses aktivasi otomatis']);
+    setNewBenefitText('');
     setFormStock(service.status === 'available' ? 100 : 0);
 
     // Category mapping: AI Tools, Apps & Streaming, Games, etc.
@@ -2283,7 +2309,7 @@ function AdminPageContent() {
             ) : (
               <div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {vipServices.map((service) => {
+                {vipServices.map((service, idx) => {
                   let base = 0;
                   if (typeof service.price === 'object' && service.price !== null) {
                     base = service.price.basic || service.price.premium || 0;
@@ -2291,15 +2317,17 @@ function AdminPageContent() {
                     base = service.price;
                   }
 
+                  const serviceKey = service.code || service.id || `vip-service-${idx}`;
+
                   return (
                     <div
-                      key={service.code}
+                      key={serviceKey}
                       className="bg-surface border border-border rounded-xl p-4 flex flex-col justify-between gap-3 hover:border-primary/40 transition-colors"
                     >
                       <div className="space-y-1.5">
                         <div className="flex items-center justify-between gap-2">
                           <span className="text-[11px] font-mono text-primary font-semibold">
-                            {service.code}
+                            {service.code || service.id}
                           </span>
                           <span
                             className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
@@ -2539,6 +2567,7 @@ function AdminPageContent() {
 
       {/* MODAL 1: EDIT / CREATE MANAGED PRODUCT */}
       {(editingProduct || isCreateModalOpen) && (
+        <AdminModalPortal>
         <div
           className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200"
           onClick={(e) => {
@@ -2587,6 +2616,52 @@ function AdminPageContent() {
             >
               <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3.5 text-xs bg-[#F8FAFC]">
                 <div className="bg-white border border-[#E2E8F0] rounded-xl p-3.5 sm:p-4 shadow-2xs space-y-3.5">
+              {/* 1. ID Produk (Bisa Auto Generate / Isi Sendiri) */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="font-semibold text-foreground block text-xs">
+                    ID Produk <span className="text-foreground-muted text-[10px] font-normal">(Kode unik produk di database)</span>
+                  </label>
+                  {!editingProduct && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (formName.trim()) {
+                          const slug = formName
+                            .toLowerCase()
+                            .replace(/[^a-z0-9]+/g, '-')
+                            .replace(/(^-|-$)/g, '');
+                          const rand = Math.random().toString(36).substring(2, 6);
+                          setFormId(`prod-${slug.slice(0, 24)}-${rand}`);
+                        } else {
+                          setFormId(`prod-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6)}`);
+                        }
+                      }}
+                      className="text-[11px] text-primary hover:underline font-semibold flex items-center gap-1 cursor-pointer"
+                    >
+                      <RefreshCw className="w-3 h-3" />
+                      <span>Auto Generate ID</span>
+                    </button>
+                  )}
+                </div>
+                <Input
+                  type="text"
+                  value={formId}
+                  disabled={Boolean(editingProduct)}
+                  onChange={(e) => setFormId(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ''))}
+                  className={`bg-surface-raised border-border text-xs font-mono ${
+                    editingProduct ? 'opacity-70 cursor-not-allowed bg-slate-50' : ''
+                  }`}
+                  placeholder="Kosongkan untuk otomatis, atau ketik custom ID (misal: canva-pro-1bln)"
+                />
+                <p className="text-[10px] text-foreground-muted mt-1">
+                  {editingProduct
+                    ? 'ID produk bersifat permanen sebagai pengenal unik transaksi dan relasi database.'
+                    : 'Bisa diisi manual atau klik "Auto Generate ID" untuk membuat ID otomatis dari nama produk.'}
+                </p>
+              </div>
+
+              {/* 2. Nama Produk */}
               <div>
                 <label className="font-semibold text-foreground block mb-1">Nama Produk</label>
                 <Input
@@ -2599,27 +2674,29 @@ function AdminPageContent() {
                 />
               </div>
 
+              {/* 3. Group Product */}
               <div>
                 <label className="font-semibold text-foreground block mb-1">
-                  Hubungkan ke Card Produk <span className="text-foreground-muted text-[10px] font-normal">(Opsional — pilih jika varian/durasi Card Homepage)</span>
+                  Group Product <span className="text-foreground-muted text-[10px] font-normal">(Kelompok Brand di Etalase Toko)</span>
                 </label>
                 <select
                   value={formCardId}
                   onChange={(e) => setFormCardId(e.target.value)}
                   className="w-full bg-surface-raised border border-border text-xs rounded-xl h-10 px-3 text-foreground font-medium focus:ring-1 focus:ring-primary focus:outline-none"
                 >
-                  <option value="">-- Tidak Terhubung (Produk Standalone) --</option>
+                  <option value="">-- Standalone (Tidak Terhubung ke Group) --</option>
                   {(adminCardsData || []).map((c: any) => (
                     <option key={c.id} value={c.id}>
-                      {c.name} ({c.slug})
+                      {c.name} ({c.slug}) — {c.categoryName || 'Layanan'}
                     </option>
                   ))}
                 </select>
                 <p className="text-[10px] text-foreground-muted mt-1">
-                  Jika dihubungkan, produk ini otomatis menjadi pilihan durasi/paket pada Card Produk bersangkutan di homepage.
+                  Hubungkan produk ini ke salah satu dari 15 Product Group untuk menampilkannya sebagai varian durasi/paket pada kartu brand di homepage.
                 </p>
               </div>
 
+              {/* 4. Kategori Produk */}
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="font-semibold text-foreground block">Kategori Toko</label>
@@ -2684,6 +2761,7 @@ function AdminPageContent() {
                 )}
               </div>
 
+              {/* 5. Harga Jual dan Harga Modal */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="font-semibold text-foreground block mb-1">
@@ -2707,7 +2785,7 @@ function AdminPageContent() {
 
                 <div>
                   <label className="font-semibold text-foreground block mb-1">
-                    Harga Supplier / Modal (Rp) <span className="text-foreground-muted text-[10px]">(Bisa diubah)</span>
+                    Harga Modal / Supplier (Rp) <span className="text-foreground-muted text-[10px]">(Bisa diubah)</span>
                   </label>
                   <Input
                     type="text"
@@ -2764,7 +2842,7 @@ function AdminPageContent() {
                 </div>
               </div>
 
-              {/* Pengaturan Stok Produk */}
+              {/* 6. Pengaturan Stok Produk */}
               <div>
                 <label className="font-semibold text-foreground block mb-1">
                   Pengaturan Stok Produk (Unit)
@@ -2784,7 +2862,7 @@ function AdminPageContent() {
                       size="sm"
                       variant="outline"
                       onClick={() => setFormStock(100)}
-                      className="text-xs h-9 border-border"
+                      className="text-xs h-9 border-border cursor-pointer"
                     >
                       Tersedia (100)
                     </Button>
@@ -2793,7 +2871,7 @@ function AdminPageContent() {
                       size="sm"
                       variant="outline"
                       onClick={() => setFormStock(0)}
-                      className="text-xs h-9 border-status-error/40 text-status-error hover:bg-status-error/10"
+                      className="text-xs h-9 border-status-error/40 text-status-error hover:bg-status-error/10 cursor-pointer"
                     >
                       Set Habis (0)
                     </Button>
@@ -2813,144 +2891,326 @@ function AdminPageContent() {
                 </div>
               </div>
 
-              <div>
-                <label className="font-semibold text-foreground block mb-1">
-                  Status Visibilitas Katalog
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setFormStatus('active')}
-                    className={`p-2.5 rounded-lg border text-left transition-colors flex items-center gap-2 ${
-                      formStatus === 'active'
-                        ? 'border-status-success bg-status-success/10 text-status-success font-semibold'
-                        : 'border-border bg-surface-raised text-foreground-muted'
-                    }`}
-                  >
-                    <Eye className="w-4 h-4 shrink-0" />
-                    <div>
-                      <span className="block text-xs">Aktif di Katalog</span>
-                      <span className="text-[10px] text-foreground-muted">Muncul di toko publik</span>
-                    </div>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setFormStatus('archived')}
-                    className={`p-2.5 rounded-lg border text-left transition-colors flex items-center gap-2 ${
-                      formStatus === 'archived'
-                        ? 'border-primary bg-primary/10 text-primary font-semibold'
-                        : 'border-border bg-surface-raised text-foreground-muted'
-                    }`}
-                  >
-                    <EyeOff className="w-4 h-4 shrink-0" />
-                    <div>
-                      <span className="block text-xs">Diarsipkan (Draft)</span>
-                      <span className="text-[10px] text-foreground-muted">Sembunyikan dari toko</span>
-                    </div>
-                  </button>
+              {/* 7. Status Visibilitas Katalog (Switch Button) */}
+              <div className="flex items-center justify-between p-3.5 rounded-xl border border-border bg-white shadow-2xs">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-xs text-foreground">
+                      Status Visibilitas Katalog
+                    </span>
+                    {formStatus === 'active' ? (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        Katalog Aktif
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+                        Diarsipkan (Draft)
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-foreground-muted mt-0.5">
+                    {formStatus === 'active'
+                      ? 'Produk tampil aktif di katalog toko dan dapat dicari serta dibeli konsumen.'
+                      : 'Produk disembunyikan sementara dari etalase toko publik (hanya terlihat admin).'}
+                  </p>
                 </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={formStatus === 'active'}
+                  onClick={() => setFormStatus(formStatus === 'active' ? 'archived' : 'active')}
+                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                    formStatus === 'active' ? 'bg-[#16A34A]' : 'bg-[#CBD5E1]'
+                  }`}
+                  title={formStatus === 'active' ? 'Klik untuk mengarsipkan' : 'Klik untuk mengaktifkan'}
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                      formStatus === 'active' ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
               </div>
 
-              {/* Highlight Guarantees / Keunggulan (3 Kartu Atas) */}
-              <div className="p-3 bg-surface-raised/60 border border-border rounded-xl space-y-3">
+              {/* 8. Garansi & Tipe Akun & Masa Aktif Section */}
+              <div className="p-3.5 bg-surface-raised/50 border border-border rounded-xl space-y-3">
                 <div>
                   <h4 className="font-semibold text-xs text-foreground flex items-center gap-1.5">
                     <ShieldCheck className="w-4 h-4 text-primary" />
-                    <span>3 Badge Keunggulan Layanan (Muncul di Halaman Detail)</span>
+                    <span>Garansi, Tipe Akun & Masa Aktif</span>
                   </h4>
                   <p className="text-[11px] text-foreground-muted">
-                    Sesuaikan judul dan keterangan 3 kartu garansi / fitur utama di atas deskripsi produk.
+                    Informasi spesifikasi dan jaminan layanan yang tampil pada halaman detail produk di sisi user.
                   </p>
                 </div>
 
-                <div className="space-y-2.5">
-                  {/* Chip 1 */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-surface p-2.5 rounded-lg border border-border/80">
-                    <div>
-                      <label className="text-[10px] font-semibold text-foreground block mb-0.5">
-                        Badge 1 - Judul (Garansi)
+                <div className="space-y-3">
+                  {/* Garansi */}
+                  <div className="bg-white p-3 rounded-lg border border-border/80 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[11px] font-bold text-foreground">
+                        🛡️ Garansi Layanan
                       </label>
-                      <Input
-                        type="text"
-                        value={formGuaranteeTitle}
-                        onChange={(e) => setFormGuaranteeTitle(e.target.value)}
-                        placeholder="Garansi Penuh"
-                        className="h-8 text-xs bg-surface-raised"
-                      />
+                      <span className="text-[10px] text-foreground-muted">Jaminan penggantian akun</span>
                     </div>
-                    <div>
-                      <label className="text-[10px] font-semibold text-foreground block mb-0.5">
-                        Badge 1 - Keterangan
-                      </label>
-                      <Input
-                        type="text"
-                        value={formGuaranteeDesc}
-                        onChange={(e) => setFormGuaranteeDesc(e.target.value)}
-                        placeholder="Jaminan ganti akun 100%"
-                        className="h-8 text-xs bg-surface-raised"
-                      />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div>
+                        <span className="text-[10px] text-foreground-muted block mb-0.5">Judul Garansi</span>
+                        <Input
+                          type="text"
+                          value={formGuaranteeTitle}
+                          onChange={(e) => setFormGuaranteeTitle(e.target.value)}
+                          placeholder="Contoh: Garansi Penuh"
+                          className="h-8 text-xs bg-surface-raised"
+                        />
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-foreground-muted block mb-0.5">Keterangan Garansi</span>
+                        <Input
+                          type="text"
+                          value={formGuaranteeDesc}
+                          onChange={(e) => setFormGuaranteeDesc(e.target.value)}
+                          placeholder="Contoh: Jaminan ganti akun 100%"
+                          className="h-8 text-xs bg-surface-raised"
+                        />
+                      </div>
                     </div>
-                  </div>
-
-                  {/* Chip 2 */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-surface p-2.5 rounded-lg border border-border/80">
-                    <div>
-                      <label className="text-[10px] font-semibold text-foreground block mb-0.5">
-                        Badge 2 - Judul (Proses)
-                      </label>
-                      <Input
-                        type="text"
-                        value={formProcessTitle}
-                        onChange={(e) => setFormProcessTitle(e.target.value)}
-                        placeholder="Proses Instan"
-                        className="h-8 text-xs bg-surface-raised"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-semibold text-foreground block mb-0.5">
-                        Badge 2 - Keterangan
-                      </label>
-                      <Input
-                        type="text"
-                        value={formProcessDesc}
-                        onChange={(e) => setFormProcessDesc(e.target.value)}
-                        placeholder="1 - 15 menit selesai"
-                        className="h-8 text-xs bg-surface-raised"
-                      />
+                    {/* Chips */}
+                    <div className="flex flex-wrap items-center gap-1 pt-0.5">
+                      <span className="text-[9px] text-foreground-muted mr-1">Pilihan Cepat:</span>
+                      {['Garansi Penuh', 'Garansi 1 Bulan', 'Garansi 7 Hari', 'Garansi 1 Tahun', 'Tanpa Garansi'].map((chip) => (
+                        <button
+                          key={chip}
+                          type="button"
+                          onClick={() => setFormGuaranteeTitle(chip)}
+                          className={`text-[9px] px-2 py-0.5 rounded-full border transition-colors cursor-pointer ${
+                            formGuaranteeTitle === chip
+                              ? 'bg-primary/10 border-primary text-primary font-bold'
+                              : 'bg-surface-raised border-border text-foreground-muted hover:text-foreground'
+                          }`}
+                        >
+                          {chip}
+                        </button>
+                      ))}
                     </div>
                   </div>
 
-                  {/* Chip 3 */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-surface p-2.5 rounded-lg border border-border/80">
-                    <div>
-                      <label className="text-[10px] font-semibold text-foreground block mb-0.5">
-                        Badge 3 - Judul (Tipe Akun)
+                  {/* Tipe Akun */}
+                  <div className="bg-white p-3 rounded-lg border border-border/80 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[11px] font-bold text-foreground">
+                        🔒 Tipe Akun
                       </label>
-                      <Input
-                        type="text"
-                        value={formPrivacyTitle}
-                        onChange={(e) => setFormPrivacyTitle(e.target.value)}
-                        placeholder="Akun Private"
-                        className="h-8 text-xs bg-surface-raised"
-                      />
+                      <span className="text-[10px] text-foreground-muted">Model akses atau kepemilikan</span>
                     </div>
-                    <div>
-                      <label className="text-[10px] font-semibold text-foreground block mb-0.5">
-                        Badge 3 - Keterangan
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div>
+                        <span className="text-[10px] text-foreground-muted block mb-0.5">Judul Tipe</span>
+                        <Input
+                          type="text"
+                          value={formPrivacyTitle}
+                          onChange={(e) => setFormPrivacyTitle(e.target.value)}
+                          placeholder="Contoh: Akun Private"
+                          className="h-8 text-xs bg-surface-raised"
+                        />
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-foreground-muted block mb-0.5">Keterangan Tipe</span>
+                        <Input
+                          type="text"
+                          value={formPrivacyDesc}
+                          onChange={(e) => setFormPrivacyDesc(e.target.value)}
+                          placeholder="Contoh: Ruang kerja aman & personal"
+                          className="h-8 text-xs bg-surface-raised"
+                        />
+                      </div>
+                    </div>
+                    {/* Chips */}
+                    <div className="flex flex-wrap items-center gap-1 pt-0.5">
+                      <span className="text-[9px] text-foreground-muted mr-1">Pilihan Cepat:</span>
+                      {['Akun Private', 'Akun Shared (1 Profile)', 'Invite Email Sendiri', 'Admin / Head', 'Akun Sharing'].map((chip) => (
+                        <button
+                          key={chip}
+                          type="button"
+                          onClick={() => setFormPrivacyTitle(chip)}
+                          className={`text-[9px] px-2 py-0.5 rounded-full border transition-colors cursor-pointer ${
+                            formPrivacyTitle === chip
+                              ? 'bg-primary/10 border-primary text-primary font-bold'
+                              : 'bg-surface-raised border-border text-foreground-muted hover:text-foreground'
+                          }`}
+                        >
+                          {chip}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Masa Aktif & Durasi Proses */}
+                  <div className="bg-white p-3 rounded-lg border border-border/80 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[11px] font-bold text-foreground">
+                        ⚡ Masa Aktif & Proses
                       </label>
-                      <Input
-                        type="text"
-                        value={formPrivacyDesc}
-                        onChange={(e) => setFormPrivacyDesc(e.target.value)}
-                        placeholder="Ruang kerja aman & personal"
-                        className="h-8 text-xs bg-surface-raised"
-                      />
+                      <span className="text-[10px] text-foreground-muted">Durasi aktif dan kecepatan pengiriman</span>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div>
+                        <span className="text-[10px] text-foreground-muted block mb-0.5">Judul Proses / Masa Aktif</span>
+                        <Input
+                          type="text"
+                          value={formProcessTitle}
+                          onChange={(e) => setFormProcessTitle(e.target.value)}
+                          placeholder="Contoh: Proses Instan atau 1 Bulan"
+                          className="h-8 text-xs bg-surface-raised"
+                        />
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-foreground-muted block mb-0.5">Keterangan</span>
+                        <Input
+                          type="text"
+                          value={formProcessDesc}
+                          onChange={(e) => setFormProcessDesc(e.target.value)}
+                          placeholder="Contoh: 1 - 15 menit selesai"
+                          className="h-8 text-xs bg-surface-raised"
+                        />
+                      </div>
+                    </div>
+                    {/* Chips */}
+                    <div className="flex flex-wrap items-center gap-1 pt-0.5">
+                      <span className="text-[9px] text-foreground-muted mr-1">Pilihan Cepat:</span>
+                      {['1 Bulan', '3 Bulan', '6 Bulan', '1 Tahun', 'Lifetime', 'Proses Instan (1-15 Mnt)'].map((chip) => (
+                        <button
+                          key={chip}
+                          type="button"
+                          onClick={() => setFormProcessTitle(chip)}
+                          className={`text-[9px] px-2 py-0.5 rounded-full border transition-colors cursor-pointer ${
+                            formProcessTitle === chip
+                              ? 'bg-primary/10 border-primary text-primary font-bold'
+                              : 'bg-surface-raised border-border text-foreground-muted hover:text-foreground'
+                          }`}
+                        >
+                          {chip}
+                        </button>
+                      ))}
                     </div>
                   </div>
                 </div>
               </div>
 
+              {/* 9. Benefit (List) Dinamis */}
+              <div className="p-3.5 bg-surface-raised/50 border border-border rounded-xl space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="font-semibold text-foreground text-xs block">
+                      Benefit & Fitur Produk (Daftar List)
+                    </label>
+                    <p className="text-[11px] text-foreground-muted">
+                      Daftar benefit spesifik yang didapat konsumen pada varian paket ini.
+                    </p>
+                  </div>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                    {benefitItems.length} Benefit
+                  </span>
+                </div>
+
+                {/* List items */}
+                {benefitItems.length > 0 ? (
+                  <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                    {benefitItems.map((item, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-center justify-between gap-2 p-2 rounded-lg bg-white border border-border/80 text-xs shadow-2xs group"
+                      >
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                          <span className="text-foreground truncate">{item}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setBenefitItems((prev) => prev.filter((_, i) => i !== idx));
+                          }}
+                          className="w-6 h-6 rounded flex items-center justify-center text-foreground-muted hover:text-red-600 hover:bg-red-50 transition-colors shrink-0 cursor-pointer"
+                          title="Hapus Benefit"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-[11px] text-foreground-muted italic py-1">
+                    Belum ada item benefit. Tambahkan benefit menggunakan form di bawah.
+                  </p>
+                )}
+
+                {/* Input Add New Benefit */}
+                <div className="flex items-center gap-2 pt-1">
+                  <Input
+                    type="text"
+                    value={newBenefitText}
+                    onChange={(e) => setNewBenefitText(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (newBenefitText.trim()) {
+                          setBenefitItems((prev) => [...prev, newBenefitText.trim()]);
+                          setNewBenefitText('');
+                        }
+                      }
+                    }}
+                    placeholder="Ketik benefit baru lalu tekan Enter atau klik Tambah..."
+                    className="bg-white border-border text-xs flex-1 h-9"
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => {
+                      if (newBenefitText.trim()) {
+                        setBenefitItems((prev) => [...prev, newBenefitText.trim()]);
+                        setNewBenefitText('');
+                      }
+                    }}
+                    disabled={!newBenefitText.trim()}
+                    className="h-9 px-3 text-xs bg-primary hover:bg-primary/90 text-white font-medium shrink-0 cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5 mr-1" />
+                    <span>Tambah</span>
+                  </Button>
+                </div>
+
+                {/* Quick Preset Chips */}
+                <div className="pt-1">
+                  <span className="text-[10px] font-semibold text-foreground-muted block mb-1">
+                    Preset Cepat (Klik untuk menambah):
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {[
+                      'Garansi Penuh Selama Masa Aktif',
+                      'Proses Cepat 1-15 Menit',
+                      'Akun Private Resmi 100%',
+                      'Dukungan CS Siaga 24 Jam',
+                      'Bebas Akses Semua Fitur Pro',
+                      'Dukungan Multi Perangkat',
+                    ].map((chip) => (
+                      <button
+                        key={chip}
+                        type="button"
+                        onClick={() => {
+                          if (!benefitItems.includes(chip)) {
+                            setBenefitItems((prev) => [...prev, chip]);
+                          }
+                        }}
+                        className="text-[10px] px-2 py-0.5 rounded-full border border-border bg-white text-foreground hover:border-primary hover:text-primary transition-colors cursor-pointer"
+                      >
+                        + {chip}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* 10. Deskripsi Produk */}
               <div>
                 <label className="font-semibold text-foreground block mb-1">Deskripsi Produk</label>
                 <textarea
@@ -2962,20 +3222,7 @@ function AdminPageContent() {
                 />
               </div>
 
-              <div>
-                <label className="font-semibold text-foreground block mb-1">
-                  Fitur & Keunggulan (Satu per baris)
-                </label>
-                <textarea
-                  rows={3}
-                  value={formFeatures}
-                  onChange={(e) => setFormFeatures(e.target.value)}
-                  className="w-full p-2.5 rounded-lg bg-surface-raised border border-border text-xs text-foreground focus:outline-none focus:border-primary"
-                  placeholder="Fitur 1&#10;Fitur 2&#10;Fitur 3"
-                />
-              </div>
-
-              {/* Product Banner Guard & Anti-Redundansi Notice */}
+              {/* 11. Banner Product */}
               {editingProduct &&
                 Boolean(editingProduct.imageUrl && !editingProduct.imageUrl.includes('default-product-banner')) && (
                   <div className="p-3 rounded-lg border border-primary/20 bg-primary/5 space-y-2 text-xs">
@@ -3037,16 +3284,17 @@ function AdminPageContent() {
                 mode="lazy"
               />
 
-              <div className="flex items-center gap-2 pt-2">
+              {/* 12. Checkbox Popular */}
+              <div className="flex items-center gap-2.5 p-3 rounded-xl border border-border bg-white shadow-2xs">
                 <input
                   type="checkbox"
                   id="popular"
                   checked={formPopular}
                   onChange={(e) => setFormPopular(e.target.checked)}
-                  className="rounded text-primary focus:ring-primary w-4 h-4"
+                  className="rounded text-primary focus:ring-primary w-4 h-4 cursor-pointer"
                 />
-                <label htmlFor="popular" className="font-medium text-foreground cursor-pointer">
-                  Tandai sebagai Produk Terpopuler / Rekomendasi
+                <label htmlFor="popular" className="font-semibold text-xs text-foreground cursor-pointer flex items-center gap-1.5">
+                  <span>⭐ Tandai sebagai Produk Populer / Paling Dicari</span>
                 </label>
               </div>
 
@@ -3079,10 +3327,12 @@ function AdminPageContent() {
             </form>
           </div>
         </div>
+        </AdminModalPortal>
       )}
 
       {/* MODAL 2: IMPORT FROM VIP RESELLER */}
       {importingService && (
+        <AdminModalPortal>
         <div
           className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200"
           onClick={(e) => {
@@ -3365,6 +3615,7 @@ function AdminPageContent() {
             </form>
           </div>
         </div>
+        </AdminModalPortal>
       )}
 
       {/* Floating Sticky Bulk Actions Bar (When items are selected while scrolling) */}
@@ -3432,6 +3683,7 @@ function AdminPageContent() {
 
       {/* Single Product Delete Confirmation Modal [T7] */}
       {deletingProductId && (
+        <AdminModalPortal>
         <div
           className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200"
           onClick={(e) => {
@@ -3507,10 +3759,12 @@ function AdminPageContent() {
             </div>
           </div>
         </div>
+        </AdminModalPortal>
       )}
 
       {/* Bulk Delete Confirmation Modal [T7] */}
       {isBulkDeleteModalOpen && (
+        <AdminModalPortal>
         <div
           className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200"
           onClick={(e) => {
@@ -3577,6 +3831,7 @@ function AdminPageContent() {
             </div>
           </div>
         </div>
+        </AdminModalPortal>
       )}
 
       {/* Admin Dedicated Footer */}

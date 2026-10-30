@@ -3,6 +3,7 @@ import pathlib
 import os
 from datetime import datetime
 from typing import List, Dict, Any, Optional, Tuple
+from sqlalchemy.orm import joinedload
 from app.core.database import SessionLocal
 from app.models.product import Product
 
@@ -17,61 +18,58 @@ class CatalogService:
         cat_id = ""
         cat_name = ""
         if isinstance(cat, dict):
-            cat_id = cat.get("id", "")
-            cat_name = cat.get("name", "")
-        elif isinstance(cat, str):
-            cat_name = cat
+            cat_id = str(cat.get("id") or "").strip()
+            cat_name = str(cat.get("name") or "").strip()
+        elif isinstance(cat, str) and cat.strip():
+            cat_name = cat.strip()
             cat_id = f"cat-{cat.lower().replace(' ', '-')}"
         else:
-            cat_id = str(p.get("categoryId") or "")
-            cat_name = str(p.get("categoryName") or "")
+            cat_id = str(p.get("categoryId") or "").strip()
+            cat_name = str(p.get("categoryName") or "").strip()
 
-        name_upper = (p.get("name") or "").upper()
-        code_upper = str(p.get("providerCode") or "").upper()
-        brand_upper = str(p.get("brand") or "").upper()
+        # If product already has an explicit valid category (e.g. from PostgreSQL DB), preserve it!
+        # Do not override deliberate category edits with keyword heuristics.
+        has_valid_category = bool(cat_name and cat_id and cat_name.lower() not in ["", "none", "null", "unclassified"])
 
-        if (
-            "CHATGPT" in code_upper
-            or "GEMINI" in code_upper
-            or "CHATGPT" in name_upper
-            or "GEMINI" in name_upper
-            or "GOOGLE AI" in name_upper
-            or "GOOGLE PRO" in name_upper
-            or "CLAUDE" in name_upper
-            or "OPENAI" in name_upper
-            or "OPENAI" in brand_upper
-            or cat_id == "cat-ai-tools"
-            or cat_name == "AI Tools"
-        ):
-            cat_id = "cat-ai-tools"
-            cat_name = "AI Tools"
-        elif (
-            "NETFLIX" in brand_upper
-            or "YOUTUBE" in brand_upper
-            or "SPOTIFY" in brand_upper
-            or "CANVA" in name_upper
-            or "CAPCUT" in name_upper
-            or "NETFLIX" in name_upper
-            or "YOUTUBE" in name_upper
-            or "SPOTIFY" in name_upper
-            or "VIDIO" in name_upper
-            or "VIU" in name_upper
-            or "WETV" in name_upper
-            or "BSTATION" in name_upper
-            or "IQIYI" in name_upper
-            or "ALIGHT" in name_upper
-            or cat_id == "cat-apps-streaming"
-            or cat_name == "Apps & Streaming"
-        ):
-            cat_id = "cat-apps-streaming"
-            cat_name = "Apps & Streaming"
-        elif (
-            cat_id in ["digital", "cat-digital-services"]
-            or cat_name == "Layanan Digital"
-            or "LAYANAN DIGITAL" in name_upper
-        ):
-            cat_id = "cat-digital-services"
-            cat_name = "Layanan Digital"
+        if not has_valid_category:
+            name_upper = (p.get("name") or "").upper()
+            code_upper = str(p.get("providerCode") or "").upper()
+            brand_upper = str(p.get("brand") or "").upper()
+
+            if (
+                "CHATGPT" in code_upper
+                or "GEMINI" in code_upper
+                or "CHATGPT" in name_upper
+                or "GEMINI" in name_upper
+                or "GOOGLE AI" in name_upper
+                or "GOOGLE PRO" in name_upper
+                or "CLAUDE" in name_upper
+                or "OPENAI" in name_upper
+                or "OPENAI" in brand_upper
+            ):
+                cat_id = "cat-ai-tools"
+                cat_name = "AI Tools"
+            elif (
+                "NETFLIX" in brand_upper
+                or "YOUTUBE" in brand_upper
+                or "SPOTIFY" in brand_upper
+                or "CANVA" in name_upper
+                or "CAPCUT" in name_upper
+                or "NETFLIX" in name_upper
+                or "YOUTUBE" in name_upper
+                or "SPOTIFY" in name_upper
+                or "VIDIO" in name_upper
+                or "VIU" in name_upper
+                or "WETV" in name_upper
+                or "BSTATION" in name_upper
+                or "IQIYI" in name_upper
+                or "ALIGHT" in name_upper
+            ):
+                cat_id = "cat-apps-streaming"
+                cat_name = "Apps & Streaming"
+            else:
+                cat_id = "cat-digital-services"
+                cat_name = "Layanan Digital"
 
         p["category"] = {"id": cat_id, "name": cat_name}
         p["categoryId"] = cat_id
@@ -91,7 +89,7 @@ class CatalogService:
             db = SessionLocal() if SessionLocal else None
             if db:
                 try:
-                    db_prods = db.query(Product).order_by(Product.created_at.desc()).all()
+                    db_prods = db.query(Product).options(joinedload(Product.card)).order_by(Product.created_at.desc()).all()
                     if db_prods is not None:
                         normalized = [cls._normalize_product(p.to_dict()) for p in db_prods]
                         cls._cached_products = normalized
@@ -121,8 +119,12 @@ class CatalogService:
         force_reload: bool = False,
     ) -> List[Dict[str, Any]]:
         products = cls.load_products(force_reload=force_reload)
-        # Public storefront only shows active products
-        filtered = [p for p in products if p.get("status", "active") == "active"]
+        # Public storefront only shows active products whose parent card is also active (if associated)
+        filtered = [
+            p for p in products
+            if p.get("status", "active") == "active"
+            and (p.get("cardStatus") is None or p.get("cardStatus") == "active")
+        ]
 
         if category and category.lower() not in ["semua", "all", "cat-all"]:
             cat_clean = category.lower().strip()
@@ -153,7 +155,7 @@ class CatalogService:
         try:
             db = SessionLocal()
             try:
-                prod = db.query(Product).filter((Product.id == product_id) | (Product.provider_code == product_id)).first()
+                prod = db.query(Product).options(joinedload(Product.card)).filter((Product.id == product_id) | (Product.provider_code == product_id)).first()
                 if prod:
                     return cls._normalize_product(prod.to_dict())
             finally:
@@ -395,7 +397,7 @@ class CatalogService:
         try:
             db = SessionLocal()
             try:
-                prod = db.query(Product).filter((Product.id == product_id) | (Product.provider_code == product_id)).first()
+                prod = db.query(Product).options(joinedload(Product.card)).filter((Product.id == product_id) | (Product.provider_code == product_id)).first()
                 if prod:
                     if "name" in payload and payload["name"] is not None:
                         prod.name = payload["name"]
@@ -479,7 +481,7 @@ class CatalogService:
         try:
             db = SessionLocal()
             try:
-                prod = db.query(Product).filter((Product.id == product_id) | (Product.provider_code == product_id)).first()
+                prod = db.query(Product).options(joinedload(Product.card)).filter((Product.id == product_id) | (Product.provider_code == product_id)).first()
                 if prod:
                     db.delete(prod)
                     db.commit()
@@ -498,7 +500,7 @@ class CatalogService:
         try:
             db = SessionLocal()
             try:
-                prod = db.query(Product).filter((Product.id == product_id) | (Product.provider_code == product_id)).first()
+                prod = db.query(Product).options(joinedload(Product.card)).filter((Product.id == product_id) | (Product.provider_code == product_id)).first()
                 if prod:
                     new_status = "archived" if prod.status == "active" else "active"
                     prod.status = new_status
@@ -626,7 +628,7 @@ class CatalogService:
 
             result_data.append({
                 **s,
-                "code": s.get("code") or s.get("providerCode"),
+                "code": s.get("code") or s.get("providerCode") or s.get("id"),
                 "isImported": is_imported,
                 "isArchived": is_archived,
                 "dbStatus": db_status,

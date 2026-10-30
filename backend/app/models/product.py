@@ -60,6 +60,7 @@ class Product(Base):
             "cardId": self.card_id,
             "cardName": self.card.name if self.card else None,
             "cardSlug": self.card.slug if self.card else None,
+            "cardStatus": self.card.status if self.card else None,
             "name": self.name,
             "category": {
                 "id": self.category_id,

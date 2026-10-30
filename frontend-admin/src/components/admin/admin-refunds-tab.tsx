@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { AdminModalPortal } from '@/components/admin/admin-modal-portal';
 import {
   MessageSquare,
   Check,
@@ -236,6 +237,7 @@ export function AdminRefundsTab({ onNotify }: AdminRefundsTabProps) {
 
       {/* 4. Modal Penanganan Tiket */}
       {selectedTicket && (
+        <AdminModalPortal>
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200">
           <div className="bg-white border border-[#E2E8F0] rounded-2xl w-full max-w-lg max-h-[calc(100dvh-40px)] flex flex-col shadow-2xl overflow-hidden box-border animate-in zoom-in-95 duration-200">
             {/* Sticky Header */}
@@ -329,6 +331,7 @@ export function AdminRefundsTab({ onNotify }: AdminRefundsTabProps) {
             </div>
           </div>
         </div>
+        </AdminModalPortal>
       )}
     </div>
   );

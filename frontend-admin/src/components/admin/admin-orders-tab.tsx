@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Order } from '@/lib/orders-data';
 import { OrdersApi, OrdersApiResponse } from '@/lib/api-client';
@@ -86,7 +86,16 @@ export function AdminOrdersTab() {
     refetchIntervalInBackground: false,
   });
 
-  const orders = ordersData?.data || [];
+  const rawOrders = ordersData?.data || [];
+  // Strict Filter: Ensure fake/dummy orders never appear in admin console
+  const orders = useMemo(() => {
+    return rawOrders.filter((o) => {
+      if ((o as any).is_dummy || (o as any).isDummy) return false;
+      const email = (o.customer_email || (o as any).customerEmail || '').toLowerCase();
+      if (email.endsWith('@customer.id') || email.startsWith('buyer_')) return false;
+      return true;
+    });
+  }, [rawOrders]);
   const metrics = ordersData?.metrics;
   const pagination = ordersData?.pagination;
   const totalItems = pagination?.total_items ?? orders.length;

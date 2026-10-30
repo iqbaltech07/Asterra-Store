@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { AdminModalPortal } from '@/components/admin/admin-modal-portal';
 import {
   Share2,
   Users,
@@ -639,6 +640,7 @@ export function AdminAffiliateTab({ onNotify }: AdminAffiliateTabProps) {
 
       {/* 6. Modal Tambah Mitra Sales */}
       {isAddModalOpen && (
+        <AdminModalPortal>
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200">
           <div className="bg-white border border-[#E2E8F0] rounded-2xl w-full max-w-lg max-h-[calc(100dvh-40px)] flex flex-col shadow-2xl overflow-hidden box-border animate-in zoom-in-95 duration-200">
             {/* Sticky Header */}
@@ -783,10 +785,12 @@ export function AdminAffiliateTab({ onNotify }: AdminAffiliateTabProps) {
             </form>
           </div>
         </div>
+        </AdminModalPortal>
       )}
 
       {/* 7. Modal Konfirmasi Payout Komisi (Partner Level) */}
       {selectedPartnerForPayout && (
+        <AdminModalPortal>
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200">
           <div className="bg-white border border-[#E2E8F0] rounded-2xl w-full max-w-md max-h-[calc(100dvh-40px)] flex flex-col shadow-2xl overflow-hidden box-border animate-in zoom-in-95 duration-200">
             {/* Header */}
@@ -849,10 +853,12 @@ export function AdminAffiliateTab({ onNotify }: AdminAffiliateTabProps) {
             </div>
           </div>
         </div>
+        </AdminModalPortal>
       )}
 
       {/* 8. Modal Approval / Penolakan Payout Spesifik */}
       {selectedPayoutForAction && (
+        <AdminModalPortal>
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200">
           <div className="bg-white border border-[#E2E8F0] rounded-2xl w-full max-w-md max-h-[calc(100dvh-40px)] flex flex-col shadow-2xl overflow-hidden box-border animate-in zoom-in-95 duration-200">
             {/* Header */}
@@ -964,6 +970,7 @@ export function AdminAffiliateTab({ onNotify }: AdminAffiliateTabProps) {
             </div>
           </div>
         </div>
+        </AdminModalPortal>
       )}
     </div>
   );

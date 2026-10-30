@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { AdminModalPortal } from '@/components/admin/admin-modal-portal';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faShieldHalved,
@@ -865,6 +866,7 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
 
       {/* MODAL: Edit Data Administrator */}
       {editModalAdmin && (
+        <AdminModalPortal>
         <div
           className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200"
           onClick={(e) => {
@@ -1032,10 +1034,12 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
             </form>
           </div>
         </div>
+        </AdminModalPortal>
       )}
 
       {/* MODAL: Tambah Admin Baru */}
       {isCreateModalOpen && (
+        <AdminModalPortal>
         <div
           className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in-0"
           onClick={(e) => {
@@ -1219,10 +1223,12 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
             </form>
           </div>
         </div>
+        </AdminModalPortal>
       )}
 
       {/* MODAL: Ganti Kata Sandi */}
       {editingAdmin && (
+        <AdminModalPortal>
         <div
           className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in-0"
           onClick={(e) => {
@@ -1309,10 +1315,12 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
             </form>
           </div>
         </div>
+        </AdminModalPortal>
       )}
 
       {/* MODAL: Konfirmasi Hapus Admin */}
       {deletingAdmin && (
+        <AdminModalPortal>
         <div
           className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in-0"
           onClick={(e) => {
@@ -1384,6 +1392,7 @@ export function AdminUsersTab({ currentAdminEmail, onNotify }: AdminUsersTabProp
             </div>
           </div>
         </div>
+        </AdminModalPortal>
       )}
     </div>
   );

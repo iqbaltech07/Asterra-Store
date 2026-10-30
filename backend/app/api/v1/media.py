@@ -48,10 +48,38 @@ async def get_brand_icon(brand_name: str):
     if redis is None:
         raise HTTPException(status_code=503, detail="Upstash cache service is not configured")
 
-    raw = redis.get(f"brand-icons:{key_name}")
+    raw = None
+    if redis is not None:
+        raw = redis.get(f"brand-icons:{key_name}")
+        if not raw:
+            raw = redis.get(f"brand-icons:{clean_name}")
+
+    # Fallback to local files if not in Redis or Redis unavailable
     if not raw:
-        raw = redis.get(f"brand-icons:{clean_name}")
-    if not raw:
+        from pathlib import Path
+        apps_dir = Path(__file__).resolve().parent.parent.parent.parent / "public" / "images" / "apps"
+        possible_files = [
+            apps_dir / f"{key_name}.webp",
+            apps_dir / f"{key_name}.png",
+            apps_dir / f"{key_name}.svg",
+            apps_dir / f"{clean_name}",
+            apps_dir / f"{key_name.replace('-', '')}.png",
+            apps_dir / f"{key_name.replace('-', '')}.webp",
+        ]
+        for pf in possible_files:
+            if pf.is_file():
+                content = pf.read_bytes()
+                mtype = "image/webp" if pf.suffix == ".webp" else ("image/svg+xml" if pf.suffix == ".svg" else "image/png")
+                etag = f'"{hashlib.md5(content).hexdigest()}"'
+                _MEDIA_CACHE[key_name] = (content, mtype, etag)
+                return Response(
+                    content=content,
+                    media_type=mtype,
+                    headers={
+                        "Cache-Control": "public, max-age=31536000, immutable",
+                        "ETag": etag,
+                    },
+                )
         raise HTTPException(status_code=404, detail="Brand icon not found")
 
     item = json.loads(raw) if isinstance(raw, str) else raw

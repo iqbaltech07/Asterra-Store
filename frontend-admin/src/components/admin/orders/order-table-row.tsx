@@ -105,7 +105,7 @@ export function OrderTableRow({ order, index, onOpenDetail, onCopyEmail }: Order
       <td className="py-3.5 px-4 align-top">
         {firstItem ? (
           <div className="flex items-start gap-2.5">
-            <ProductBrandIcon name={firstItem.product_name} className="w-7 h-7 rounded-lg mt-0.5" />
+            <ProductBrandIcon name={firstItem.product_name} className="w-7 h-7 mt-0.5" />
             <div className="min-w-0">
               <span className="font-medium text-foreground block truncate max-w-[200px]" title={firstItem.product_name}>
                 {firstItem.product_name}

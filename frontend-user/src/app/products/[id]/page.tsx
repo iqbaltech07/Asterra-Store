@@ -8,32 +8,23 @@ import { ProductDetailClient, ProductDetailData } from './product-detail-client'
 import { ProductItem } from '@/lib/products-data';
 import { getStoreOperatingHoursServer } from '@/lib/server/store-operating-hours';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || process.env.BACKEND_URL || 'http://localhost:8000';
 
-// Server-side in-memory micro-cache (5 seconds) for catalog products
-let catalogMemoryCache: { data: ProductItem[]; timestamp: number } | null = null;
-const CATALOG_CACHE_TTL = 5 * 1000;
-
 async function fetchActiveProductsImpl(): Promise<ProductItem[]> {
-  const now = Date.now();
-  if (catalogMemoryCache && now - catalogMemoryCache.timestamp < CATALOG_CACHE_TTL) {
-    return catalogMemoryCache.data;
-  }
   try {
     const res = await fetch(`${BACKEND_URL}/api/v1/products`, {
-      next: { revalidate: 10 },
+      cache: 'no-store',
       signal: AbortSignal.timeout(5000),
     });
-    if (!res.ok) return catalogMemoryCache?.data || [];
+    if (!res.ok) return [];
     const json = await res.json();
-    const products: ProductItem[] = json.data || [];
-    if (products.length > 0) {
-      catalogMemoryCache = { data: products, timestamp: now };
-    }
-    return products;
+    return json.data || [];
   } catch (err) {
     console.error('[Product Detail] Failed to fetch products from backend:', err);
-    return catalogMemoryCache?.data || [];
+    return [];
   }
 }
 
@@ -41,27 +32,29 @@ async function fetchActiveProductsImpl(): Promise<ProductItem[]> {
 const fetchActiveProducts = cache(fetchActiveProductsImpl);
 
 async function fetchProductByIdImpl(id: string, activeProducts?: ProductItem[]): Promise<ProductItem | null> {
-  // Check in-memory active products first to eliminate redundant network roundtrip
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/v1/products/${id}`, {
+      cache: 'no-store',
+      signal: AbortSignal.timeout(5000),
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json && json.success !== false) {
+        return (json.data as ProductItem) || (json.name ? (json as ProductItem) : null);
+      }
+    }
+  } catch (err) {
+    console.error(`[Product Detail] Failed to fetch product ${id} from backend:`, err);
+  }
+
+  // Fallback to activeProducts if direct fetch didn't return
   if (activeProducts && activeProducts.length > 0) {
     const found = activeProducts.find(
       (p) => p.id === id || p.providerCode === id || (p as any).provider_code === id
     );
     if (found) return found;
   }
-
-  try {
-    const res = await fetch(`${BACKEND_URL}/api/v1/products/${id}`, {
-      next: { revalidate: 10 },
-      signal: AbortSignal.timeout(5000),
-    });
-    if (!res.ok) return null;
-    const json = await res.json();
-    if (!json || json.success === false) return null;
-    return (json.data as ProductItem) || (json.name ? (json as ProductItem) : null);
-  } catch (err) {
-    console.error(`[Product Detail] Failed to fetch product ${id} from backend:`, err);
-    return null;
-  }
+  return null;
 }
 
 const fetchProductById = cache(fetchProductByIdImpl);
@@ -69,7 +62,7 @@ const fetchProductById = cache(fetchProductByIdImpl);
 async function fetchCardByIdOrSlugImpl(idOrSlug: string): Promise<any> {
   try {
     const res = await fetch(`${BACKEND_URL}/api/v1/cards/${idOrSlug}`, {
-      next: { revalidate: 10 },
+      cache: 'no-store',
       signal: AbortSignal.timeout(5000),
     });
     if (!res.ok) return null;
@@ -99,6 +92,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!cardData && baseProduct && ((baseProduct as any).cardId || (baseProduct as any).card_id)) {
     const parentCardId = (baseProduct as any).cardId || (baseProduct as any).card_id;
     cardData = await fetchCardByIdOrSlug(parentCardId);
+  }
+
+  // Note 2: If the group is inactive/archived or product's parent group is inactive, hide from user (404)
+  if (cardData && cardData.status && cardData.status !== 'active') {
+    notFound();
+  }
+  if (baseProduct && (baseProduct as any).cardStatus && (baseProduct as any).cardStatus !== 'active') {
+    notFound();
   }
 
   const familyData = cardData && Array.isArray(cardData.catalogs) && cardData.catalogs.length > 0
@@ -194,6 +195,14 @@ export default async function ProductDetailPage({ params }: PageProps) {
     cardData = await fetchCardByIdOrSlug(parentCardId);
   }
 
+  // Note 2: If the group is inactive/archived or product's parent group is inactive, hide from user (404)
+  if (cardData && cardData.status && cardData.status !== 'active') {
+    notFound();
+  }
+  if (baseProduct && (baseProduct as any).cardStatus && (baseProduct as any).cardStatus !== 'active') {
+    notFound();
+  }
+
   let familyData: any = null;
   if (cardData && Array.isArray(cardData.catalogs) && cardData.catalogs.length > 0) {
     const activeCatalogs = (cardData.catalogs || []).filter((c: any) => c.status === 'active');
@@ -201,6 +210,8 @@ export default async function ProductDetailPage({ params }: PageProps) {
     parsedVariants.sort((a: any, b: any) => a.price - b.price);
     const matchingVariant = parsedVariants.find((v: any) => v.id === id || (baseProduct && v.id === baseProduct.id));
     const selectedVariant = matchingVariant || parsedVariants.find((v: any) => !v.isOutOfStock) || parsedVariants[0];
+
+    const fallbackFeatures = ['Garansi Penuh 100% Penggantian', 'Aktivasi Instan 1 - 15 Menit', 'Dukungan CS 24 Jam'];
 
     familyData = {
       slug: cardData.slug,
@@ -210,7 +221,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
       rating: String(cardData.rating || '5.0'),
       soldCount: Math.min(40, Math.max(20, cardData.soldCount || 30)),
       description: cardData.description || `Akses resmi dan bergaransi penuh untuk ${cardData.name} di Asterra Store dengan konfirmasi otomatis dan dukungan CS 24 jam.`,
-      features: ['Garansi Penuh 100% Penggantian', 'Aktivasi Instan 1 - 15 Menit', 'Dukungan CS 24 Jam'],
+      features: (selectedVariant?.features && selectedVariant.features.length > 0) ? selectedVariant.features : fallbackFeatures,
       variants: parsedVariants,
       selectedVariant,
     };
@@ -223,13 +234,26 @@ export default async function ProductDetailPage({ params }: PageProps) {
   }
 
   const activeVariant = familyData?.selectedVariant;
-  const productName = familyData?.name || baseProduct?.name || 'Produk Digital';
-  const productImageUrl = familyData?.imageUrl || baseProduct?.imageUrl || '/images/default-product-banner.png';
-  const productDesc = familyData?.description || baseProduct?.description || '';
-  const productFeatures = familyData?.features || baseProduct?.features || ['Garansi 100% Penggantian', 'Aktivasi Instan'];
+  const productName = activeVariant?.name || familyData?.name || baseProduct?.name || 'Produk Digital';
+  const productImageUrl = activeVariant?.imageUrl || familyData?.imageUrl || baseProduct?.imageUrl || '/images/default-product-banner.png';
+  const productDesc = activeVariant?.description || baseProduct?.description || familyData?.description || '';
+  const productFeatures = (activeVariant?.features && activeVariant.features.length > 0)
+    ? activeVariant.features
+    : (baseProduct?.features && baseProduct.features.length > 0)
+    ? baseProduct.features
+    : (familyData?.features && familyData.features.length > 0)
+    ? familyData.features
+    : ['Garansi 100% Penggantian', 'Aktivasi Instan'];
   const productCategory = familyData?.category || baseProduct?.category || { id: 'cat-digital', name: 'Layanan Digital' };
   const productPrice = activeVariant ? activeVariant.price : (baseProduct?.price || 0);
   const productPriceFormatted = activeVariant ? activeVariant.priceFormatted : (baseProduct?.priceFormatted || `Rp ${productPrice.toLocaleString('id-ID')}`);
+
+  const guaranteeTitle = activeVariant?.guaranteeTitle || (baseProduct as any)?.guaranteeTitle || (baseProduct as any)?.guarantee_title || 'Garansi Penuh';
+  const guaranteeDesc = activeVariant?.guaranteeDesc || (baseProduct as any)?.guaranteeDesc || (baseProduct as any)?.guarantee_desc || 'Jaminan ganti akun 100%';
+  const processTitle = activeVariant?.processTitle || (baseProduct as any)?.processTitle || (baseProduct as any)?.process_title || 'Proses Instan';
+  const processDesc = activeVariant?.processDesc || (baseProduct as any)?.processDesc || (baseProduct as any)?.process_desc || '1 - 15 menit selesai';
+  const privacyTitle = activeVariant?.privacyTitle || (baseProduct as any)?.privacyTitle || (baseProduct as any)?.privacy_title || 'Akun Private';
+  const privacyDesc = activeVariant?.privacyDesc || (baseProduct as any)?.privacyDesc || (baseProduct as any)?.privacy_desc || 'Ruang kerja aman & personal';
 
   const resolvedProduct = baseProduct || {
     id: activeVariant?.id || id,
@@ -239,6 +263,12 @@ export default async function ProductDetailPage({ params }: PageProps) {
     priceFormatted: productPriceFormatted,
     description: productDesc,
     features: productFeatures,
+    guaranteeTitle,
+    guaranteeDesc,
+    processTitle,
+    processDesc,
+    privacyTitle,
+    privacyDesc,
     status: 'active' as const,
     stock: activeVariant?.stock ?? 100,
     imageUrl: productImageUrl,
@@ -258,6 +288,12 @@ export default async function ProductDetailPage({ params }: PageProps) {
     priceFormatted: productPriceFormatted,
     description: productDesc,
     features: productFeatures,
+    guaranteeTitle,
+    guaranteeDesc,
+    processTitle,
+    processDesc,
+    privacyTitle,
+    privacyDesc,
     imageUrl: productImageUrl,
     familySlug: familyData?.slug,
     familyImageUrl: familyData?.imageUrl || productImageUrl,
@@ -269,21 +305,21 @@ export default async function ProductDetailPage({ params }: PageProps) {
     specifications: [
       {
         label: 'Tipe Lisensi',
-        value: activeVariant ? activeVariant.type : 'Akun Private / Akses Resmi Premium',
+        value: privacyTitle,
       },
       {
         label: 'Durasi Masa Aktif',
-        value: activeVariant ? activeVariant.duration : primaryDurationLabel,
+        value: (processTitle && (processTitle.includes('Bulan') || processTitle.includes('Hari') || processTitle.includes('Tahun') || processTitle.includes('Lifetime'))) ? processTitle : (activeVariant ? activeVariant.duration : primaryDurationLabel),
       },
       {
         label: 'Masa Garansi',
-        value: activeVariant ? activeVariant.warranty : warranty,
+        value: guaranteeTitle,
       },
       {
         label: 'Kode Layanan Supplier',
         value: activeVariant?.id || (resolvedProduct as { providerCode?: string }).providerCode || '-',
       },
-      { label: 'Waktu Pengiriman', value: 'Proses Instan (1 - 15 Menit)' },
+      { label: 'Waktu Pengiriman', value: processDesc },
       { label: 'Metode Pengiriman', value: 'Email Terdaftar & Notifikasi WhatsApp CS' },
       { label: 'Kompatibilitas', value: 'Web Browser, Windows, macOS, Android, iOS' },
     ],

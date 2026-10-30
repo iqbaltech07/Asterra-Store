@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { AdminModalPortal } from '@/components/admin/admin-modal-portal';
 import {
   Sliders,
   CheckCircle2,
@@ -368,6 +369,7 @@ export function AdminOrderProcessingTab({ onNotify }: AdminOrderProcessingTabPro
 
       {/* Warning Confirmation Modal */}
       {showWarningModal && (
+        <AdminModalPortal>
         <div
           className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200"
           onClick={(e) => {
@@ -422,6 +424,7 @@ export function AdminOrderProcessingTab({ onNotify }: AdminOrderProcessingTabPro
             </div>
           </div>
         </div>
+        </AdminModalPortal>
       )}
     </div>
   );

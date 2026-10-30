@@ -1,5 +1,5 @@
 import { ProductItem, isProductOutOfStock } from '@/lib/products-data';
-import { BRAND_ICONS_MAP } from '@/components/ui/product-brand-icon';
+import { BRAND_ICONS_MAP } from '@/lib/constants/brand-icons';
 import { getDynamicSoldCount } from '@/lib/hooks/use-dynamic-orders';
 
 export interface ParsedVariant {
@@ -17,6 +17,12 @@ export interface ParsedVariant {
   description?: string;
   features?: string[];
   imageUrl?: string;
+  guaranteeTitle?: string;
+  guaranteeDesc?: string;
+  processTitle?: string;
+  processDesc?: string;
+  privacyTitle?: string;
+  privacyDesc?: string;
 }
 
 export interface ProductFamilyData {
@@ -442,6 +448,23 @@ export function parseProductVariant(
 
   const isOutOfStock = isProductOutOfStock(p);
 
+  const rawGTitle = (p as any).guaranteeTitle || (p as any).guarantee_title;
+  const rawGDesc = (p as any).guaranteeDesc || (p as any).guarantee_desc;
+  const rawPTitle = (p as any).processTitle || (p as any).process_title;
+  const rawPDesc = (p as any).processDesc || (p as any).process_desc;
+  const rawPrivTitle = (p as any).privacyTitle || (p as any).privacy_title;
+  const rawPrivDesc = (p as any).privacyDesc || (p as any).privacy_desc;
+
+  if (rawGTitle) {
+    warranty = rawGTitle.replace(/^garansi\s*/i, '').trim() || rawGTitle;
+  }
+  if (rawPrivTitle) {
+    type = rawPrivTitle.replace(/^akun\s*/i, '').trim() || rawPrivTitle;
+  }
+  if (rawPTitle && (rawPTitle.includes('Bulan') || rawPTitle.includes('Hari') || rawPTitle.includes('Tahun') || rawPTitle.includes('Lifetime'))) {
+    duration = rawPTitle;
+  }
+
   return {
     id,
     name,
@@ -459,6 +482,12 @@ export function parseProductVariant(
     imageUrl: (/capcut/i.test(name) || /capcut/i.test(id))
       ? '/images/banners/capcut-banner.png'
       : p.imageUrl,
+    guaranteeTitle: rawGTitle,
+    guaranteeDesc: rawGDesc,
+    processTitle: rawPTitle,
+    processDesc: rawPDesc,
+    privacyTitle: rawPrivTitle,
+    privacyDesc: rawPrivDesc,
   };
 }
 

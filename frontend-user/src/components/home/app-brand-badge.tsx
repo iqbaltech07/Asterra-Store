@@ -1,8 +1,18 @@
 'use client';
 
 import React from 'react';
-import { ProductBrandIcon } from '@/components/ui/product-brand-icon';
+import { ProductAvatar, ProductAvatarSize } from '@/components/ui/product-avatar';
 
-export function AppBrandBadge({ name, className }: { name: string; className?: string }) {
-  return <ProductBrandIcon name={name} className={className || 'w-full h-full'} />;
+export function AppBrandBadge({
+  name,
+  imageUrl,
+  className,
+  size,
+}: {
+  name: string;
+  imageUrl?: string;
+  className?: string;
+  size?: ProductAvatarSize;
+}) {
+  return <ProductAvatar name={name} imageUrl={imageUrl} className={className} size={size} />;
 }

@@ -25,6 +25,7 @@ export interface ApplicationGroupItem {
   name: string;
   slug: string;
   category: string;
+  categoryId?: string;
   categoryTag: 'ai' | 'design' | 'video' | 'streaming' | 'other';
   minPrice: number;
   soldCount?: number;
@@ -32,7 +33,11 @@ export interface ApplicationGroupItem {
   rating?: string;
   badgeLabel?: string;
   isPromo?: boolean;
+  isTerlaris?: boolean;
+  isTerbaru?: boolean;
+  logoUrl?: string;
   imageUrl?: string;
+  description?: string;
   items: ProductItem[];
   isOutOfStock?: boolean;
 }
@@ -126,7 +131,7 @@ export function FeaturedGridCard({
             data-gsap="product-image"
             className="w-9 h-9 sm:w-11 sm:h-11 rounded-full flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform"
           >
-            <AppBrandBadge name={app.name} />
+            <AppBrandBadge name={app.name} imageUrl={app.logoUrl} />
           </Link>
 
           <div className="min-w-0 flex-1">
@@ -256,9 +261,9 @@ export function ShowcaseLoopingCard({
         <div className="flex items-start gap-2.5 sm:gap-3">
           <Link
             href={`/products/${app.slug}`}
-            className="w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform"
+            className="w-9 h-9 sm:w-11 sm:h-11 rounded-full flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform"
           >
-            <AppBrandBadge name={app.name} />
+            <AppBrandBadge name={app.name} imageUrl={app.logoUrl} />
           </Link>
 
           <div className="min-w-0 flex-1">

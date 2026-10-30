@@ -220,11 +220,11 @@ export function AdminSidebar({
           items: [
             {
               id: 'cards',
-              label: 'Card Produk',
+              label: 'Product Group',
               icon: Boxes,
               badge: '15',
               badgeVariant: 'primary',
-              description: 'Kelola identitas produk & varian homepage',
+              description: 'Kelola pengelompokan produk & brand homepage',
             },
             {
               id: 'products',
@@ -368,11 +368,11 @@ export function AdminSidebar({
         items: [
           {
             id: 'cards',
-            label: 'Card Produk',
+            label: 'Product Group',
             icon: Boxes,
             badge: '15',
             badgeVariant: 'primary',
-            description: 'Kelola identitas produk & varian homepage',
+            description: 'Kelola pengelompokan produk & brand homepage',
           },
           {
             id: 'products',

@@ -25,6 +25,7 @@ import {
   formatRelativeTime,
   parseSafeDate,
   clearLegacySyntheticTimelineStorage,
+  getDeterministicSimulationOrders,
 } from '@/lib/hooks/use-dynamic-orders';
 import { maskCustomerName } from '@/lib/utils/masking';
 import { useCatalogProducts } from '@/lib/hooks/use-catalog-products';
@@ -218,15 +219,41 @@ function GlobalOrdersContent() {
     refetchInterval: 15000, // Background sync every 15s keeps list updated across all browsers
   });
 
-  // Data pesanan publik langsung dari backend (transaksi riil + isolated dummy order terverifikasi)
+  // Data pesanan publik: transaksi riil dari database digabungkan dengan visual social-proof orders (hanya untuk tampilan user)
   const allOrders = useMemo<PublicOrder[]>(() => {
-    const ordersList = data?.data || [];
-    return [...ordersList].sort((a, b) => {
+    const realOrders = (data?.data || []).map((o) => ({
+      ...o,
+      order_status: (o.order_status || o.status || 'completed') as PublicOrder['order_status'],
+    }));
+
+    // Visual social-proof orders (murni simulasi sisi klien untuk visual di user saja, tidak pernah masuk database/admin)
+    const visualOrders = getDeterministicSimulationOrders(now, 100);
+
+    const seenIds = new Set<string>();
+    const combined: PublicOrder[] = [];
+
+    // 1. Prioritaskan pesanan riil dari database
+    for (const ro of realOrders) {
+      if (ro.id && !seenIds.has(ro.id)) {
+        seenIds.add(ro.id);
+        combined.push(ro);
+      }
+    }
+
+    // 2. Tambahkan visual orders
+    for (const vo of visualOrders) {
+      if (vo.id && !seenIds.has(vo.id)) {
+        seenIds.add(vo.id);
+        combined.push(vo);
+      }
+    }
+
+    return combined.sort((a, b) => {
       const dateA = new Date(a.order_date || a.created_at || a.createdAt || '').getTime() || 0;
       const dateB = new Date(b.order_date || b.created_at || b.createdAt || '').getTime() || 0;
       return dateB - dateA;
     });
-  }, [data?.data]);
+  }, [data?.data, now]);
 
   // Filter status dan pencarian
   const filteredOrders = useMemo<PublicOrder[]>(() => {

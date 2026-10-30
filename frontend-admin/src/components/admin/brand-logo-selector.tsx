@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Check, RefreshCw, X, Globe, Sparkles, ExternalLink, ShieldCheck } from 'lucide-react';
+import { Search, Check, RefreshCw, X, Globe, Sparkles, ExternalLink, ShieldCheck, Upload } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -25,20 +25,20 @@ interface BrandLogoSelectorProps {
 }
 
 const POPULAR_BRANDS = [
-  { name: 'Canva', query: 'canva' },
-  { name: 'Netflix', query: 'netflix' },
-  { name: 'Spotify', query: 'spotify' },
-  { name: 'ChatGPT', query: 'chatgpt' },
-  { name: 'Google Gemini', query: 'google' },
-  { name: 'CapCut', query: 'capcut' },
-  { name: 'YouTube', query: 'youtube' },
-  { name: 'Disney+', query: 'disney plus' },
-  { name: 'Vidio', query: 'vidio' },
-  { name: 'Viu', query: 'viu' },
-  { name: 'WeTV', query: 'wetv' },
-  { name: 'Adobe', query: 'adobe' },
-  { name: 'Claude AI', query: 'claude' },
-  { name: 'Midjourney', query: 'midjourney' },
+  { name: 'Canva', url: '/api/v1/media/brand-icons/canva', query: 'canva' },
+  { name: 'Netflix', url: '/api/v1/media/brand-icons/netflix', query: 'netflix' },
+  { name: 'Spotify', url: '/api/v1/media/brand-icons/spotify', query: 'spotify' },
+  { name: 'ChatGPT', url: '/api/v1/media/brand-icons/chatgpt', query: 'chatgpt' },
+  { name: 'Google Gemini', url: '/api/v1/media/brand-icons/gemini', query: 'google' },
+  { name: 'CapCut', url: '/api/v1/media/brand-icons/capcut', query: 'capcut' },
+  { name: 'YouTube', url: '/api/v1/media/brand-icons/youtube', query: 'youtube' },
+  { name: 'Disney+', url: '/api/v1/media/brand-icons/disney', query: 'disney' },
+  { name: 'Vidio', url: '/api/v1/media/brand-icons/vidio', query: 'vidio' },
+  { name: 'Viu', url: '/api/v1/media/brand-icons/viu', query: 'viu' },
+  { name: 'WeTV', url: '/api/v1/media/brand-icons/wetv', query: 'wetv' },
+  { name: 'Adobe', url: '/api/v1/media/brand-icons/adobe', query: 'adobe' },
+  { name: 'Claude AI', url: '/api/v1/media/brand-icons/claude', query: 'claude' },
+  { name: 'Midjourney', url: '/api/v1/media/brand-icons/midjourney', query: 'midjourney' },
 ];
 
 export function BrandLogoSelector({
@@ -54,18 +54,43 @@ export function BrandLogoSelector({
   const [isCustomUrlMode, setIsCustomUrlMode] = useState(false);
   const [customUrl, setCustomUrl] = useState(value || '');
   const [hasSearched, setHasSearched] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const [selectedBrandInfo, setSelectedBrandInfo] = useState<{ name: string; domain?: string } | null>(
     brandName ? { name: brandName } : null
   );
 
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 3 * 1024 * 1024) {
+      alert('Ukuran file maksimal 3MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      if (dataUrl) {
+        onChange(dataUrl, brandName);
+        setCustomUrl(dataUrl);
+        setImageError(false);
+      }
+    };
+    reader.readAsDataURL(file);
+    // Reset file input so re-selecting same file triggers change
+    e.target.value = '';
+  };
 
   // Sync initial customUrl with value prop
   useEffect(() => {
-    if (value && value !== customUrl) {
-      setCustomUrl(value);
+    setCustomUrl(value || '');
+    setImageError(false);
+    if (brandName) {
+      setSelectedBrandInfo({ name: brandName });
     }
-  }, [value]);
+  }, [value, brandName]);
 
   // Initial suggested search based on product name if no value
   useEffect(() => {
@@ -128,8 +153,16 @@ export function BrandLogoSelector({
     onChange(brand.icon, brand.name);
     setSelectedBrandInfo({ name: brand.name, domain: brand.domain });
     setCustomUrl(brand.icon);
+    setImageError(false);
     setResults([]);
     setQuery('');
+  };
+
+  const handleSelectPopularBrand = (b: typeof POPULAR_BRANDS[0]) => {
+    onChange(b.url, b.name);
+    setSelectedBrandInfo({ name: b.name });
+    setCustomUrl(b.url);
+    setImageError(false);
   };
 
   const handleClear = () => {
@@ -138,17 +171,21 @@ export function BrandLogoSelector({
     setCustomUrl('');
     setQuery('');
     setResults([]);
+    setImageError(false);
   };
 
-  const handleCustomUrlSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (customUrl.trim()) {
-      onChange(customUrl.trim());
-      setIsCustomUrlMode(false);
-    }
+  const handleApplyCustomUrl = () => {
+    const trimmed = customUrl.trim();
+    onChange(trimmed);
+    setImageError(false);
+    setIsCustomUrlMode(false);
   };
 
   const isCurrentValueSelected = Boolean(value);
+
+  // Fallback initial
+  const displayTitle = selectedBrandInfo?.name || brandName || productName || 'Logo Terpilih';
+  const displayInitial = displayTitle.slice(0, 2).toUpperCase();
 
   return (
     <div className="space-y-3 bg-slate-50 border border-slate-200/90 rounded-xl p-3.5">
@@ -160,7 +197,7 @@ export function BrandLogoSelector({
           </div>
           <div>
             <label className="text-xs font-bold text-[#0F172A] block">
-              Logo Resmi Brand (Brandfetch API)
+              Logo Resmi Brand (Brandfetch API & Cloud Icons)
             </label>
             <span className="text-[10px] text-[#64748B]">
               Pilih icon resmi resolusi tinggi otomatis tersimpan ke data produk
@@ -168,34 +205,66 @@ export function BrandLogoSelector({
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setIsCustomUrlMode(!isCustomUrlMode)}
-          className="text-[11px] text-primary hover:underline font-medium cursor-pointer"
-        >
-          {isCustomUrlMode ? '← Cari Brandfetch' : 'Input URL Manual'}
-        </button>
+        <div className="flex items-center gap-2">
+          <input
+            type="file"
+            ref={fileInputRef}
+            accept="image/png,image/jpeg,image/webp,image/svg+xml"
+            onChange={handleFileUpload}
+            className="hidden"
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="text-[11px] text-primary hover:underline font-semibold flex items-center gap-1 cursor-pointer bg-primary/10 px-2.5 py-1 rounded-md border border-primary/20"
+          >
+            <Upload className="w-3 h-3" />
+            <span>Upload File</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsCustomUrlMode(!isCustomUrlMode)}
+            className="text-[11px] text-slate-600 hover:text-primary hover:underline font-medium cursor-pointer"
+          >
+            {isCustomUrlMode ? '← Cari Brandfetch' : 'Input URL'}
+          </button>
+        </div>
       </div>
 
       {/* Mode 1: Manual URL */}
       {isCustomUrlMode ? (
-        <form onSubmit={handleCustomUrlSubmit} className="space-y-2 pt-1">
+        <div className="space-y-2 pt-1">
           <div className="flex items-center gap-2">
             <Input
-              type="url"
-              placeholder="https://cdn.brandfetch.io/... atau URL gambar"
+              type="text"
+              placeholder="/api/v1/media/brand-icons/... atau URL gambar"
               value={customUrl}
-              onChange={(e) => setCustomUrl(e.target.value)}
+              onChange={(e) => {
+                setCustomUrl(e.target.value);
+                // Also trigger live change
+                onChange(e.target.value.trim());
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleApplyCustomUrl();
+                }
+              }}
               className="text-xs h-9 bg-white border-slate-300 flex-1 font-mono text-[#0F172A]"
             />
-            <Button type="submit" size="sm" className="h-9 text-xs px-3 font-semibold">
+            <Button
+              type="button"
+              onClick={handleApplyCustomUrl}
+              size="sm"
+              className="h-9 text-xs px-3 font-semibold cursor-pointer"
+            >
               Terapkan
             </Button>
           </div>
           <p className="text-[10px] text-[#64748B]">
-            Format yang didukung: WebP, PNG, SVG (disarankan menggunakan CDN Brandfetch atau path /images/brand/...).
+            Format yang didukung: WebP, PNG, SVG (contoh: <code className="text-[10px] bg-slate-200 px-1 py-0.5 rounded">/api/v1/media/brand-icons/canva</code> atau link CDN).
           </p>
-        </form>
+        </div>
       ) : (
         /* Mode 2: Brandfetch Live Search */
         <div className="space-y-2.5">
@@ -230,18 +299,19 @@ export function BrandLogoSelector({
           {!query && (
             <div className="space-y-1.5">
               <span className="text-[10px] text-[#64748B] font-medium block">
-                Brand Populer Cepat:
+                Brand Populer Cepat (1-Klik Pilih):
               </span>
               <div className="flex flex-wrap gap-1.5">
                 {POPULAR_BRANDS.map((b) => (
                   <button
                     key={b.name}
                     type="button"
-                    onClick={() => {
-                      setQuery(b.query);
-                      performSearch(b.query);
-                    }}
-                    className="px-2.5 py-1 rounded-full text-[10px] font-medium bg-white hover:bg-primary/10 hover:text-primary border border-slate-200 transition-colors text-slate-600 shadow-2xs cursor-pointer"
+                    onClick={() => handleSelectPopularBrand(b)}
+                    className={`px-2.5 py-1 rounded-full text-[10px] font-medium border transition-colors shadow-2xs cursor-pointer ${
+                      value === b.url
+                        ? 'bg-primary text-white border-primary'
+                        : 'bg-white hover:bg-primary/10 hover:text-primary border-slate-200 text-slate-600'
+                    }`}
                   >
                     {b.name}
                   </button>
@@ -335,38 +405,42 @@ export function BrandLogoSelector({
           <div className="flex items-center gap-3 min-w-0">
             {/* Preview on White Base */}
             <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 shadow-2xs p-1.5 flex items-center justify-center shrink-0 overflow-hidden" title="Preview Tampilan Terang">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={value}
-                alt="Selected brand logo"
-                className="w-full h-full object-contain"
-                onError={(e) => {
-                  (e.target as HTMLElement).style.display = 'none';
-                }}
-              />
+              {!imageError ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={value}
+                  alt="Selected brand logo"
+                  className="w-full h-full object-contain"
+                  onError={() => setImageError(true)}
+                />
+              ) : (
+                <span className="text-xs font-black text-primary">{displayInitial}</span>
+              )}
             </div>
 
             {/* Preview on Dark Base */}
             <div className="w-10 h-10 rounded-xl bg-[#0F172A] border border-slate-800 shadow-2xs p-1.5 flex items-center justify-center shrink-0 overflow-hidden hidden sm:flex" title="Preview Tampilan Gelap">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={value}
-                alt="Selected brand logo (dark)"
-                className="w-full h-full object-contain"
-                onError={(e) => {
-                  (e.target as HTMLElement).style.display = 'none';
-                }}
-              />
+              {!imageError ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={value}
+                  alt="Selected brand logo (dark)"
+                  className="w-full h-full object-contain"
+                  onError={() => setImageError(true)}
+                />
+              ) : (
+                <span className="text-xs font-black text-amber-400">{displayInitial}</span>
+              )}
             </div>
 
             <div className="min-w-0 leading-tight">
               <div className="flex items-center gap-1.5">
                 <span className="text-xs font-bold text-[#0F172A] truncate">
-                  {selectedBrandInfo?.name || 'Logo Terpilih'}
+                  {displayTitle}
                 </span>
                 <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 border-[#16A36A]/30 text-[#16A36A] bg-emerald-50">
                   <ShieldCheck className="w-2.5 h-2.5 mr-0.5 inline" />
-                  Brandfetch CDN
+                  Terverifikasi
                 </Badge>
               </div>
               <span className="text-[10px] text-[#64748B] font-mono truncate block mt-0.5 max-w-[240px] sm:max-w-[340px]">
@@ -376,15 +450,17 @@ export function BrandLogoSelector({
           </div>
 
           <div className="flex items-center gap-1 shrink-0">
-            <a
-              href={value}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-1.5 text-[#64748B] hover:text-[#0F172A] hover:bg-slate-100 rounded-md transition-colors"
-              title="Buka URL Logo Asli"
-            >
-              <ExternalLink className="w-3.5 h-3.5" />
-            </a>
+            {value?.startsWith('http') && (
+              <a
+                href={value}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-1.5 text-[#64748B] hover:text-[#0F172A] hover:bg-slate-100 rounded-md transition-colors"
+                title="Buka URL Logo Asli"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            )}
             <button
               type="button"
               onClick={handleClear}

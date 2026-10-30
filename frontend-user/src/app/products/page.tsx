@@ -6,14 +6,13 @@ import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { useCatalogProducts } from '@/lib/hooks/use-catalog-products';
 import { useActiveCampaigns } from '@/lib/hooks/use-active-campaigns';
-import { calculateCampaignPrice, isPromoItem, ActiveCampaign } from '@/lib/utils/promo-pricing';
+import { calculateCampaignPrice } from '@/lib/utils/promo-pricing';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faMagnifyingGlass,
   faCheck,
-  faBolt,
   faRotateLeft,
   faSliders,
   faTableCellsLarge,
@@ -23,9 +22,11 @@ import {
 import { useSession } from '@/lib/auth-client';
 import { useAuthStore } from '@/store/use-auth-store';
 import { AuthRequiredModal } from '@/components/auth/auth-required-modal';
-import { isProductOutOfStock } from '@/lib/products-data';
-import { ProductCard, ProductPromoCountdownBadge } from '@/components/products/product-card';
+import { ProductCard } from '@/components/products/product-card';
 import { useStoreOperatingHours } from '@/lib/hooks/use-store-operating-hours';
+import { useProductCards } from '@/lib/hooks/use-product-cards';
+import { FeaturedGridCard, ApplicationGroupItem } from '@/components/home/product-showcase-cards';
+import { QuickViewModal, QuickViewProductData } from '@/components/products/quick-view-modal';
 import {
   Select,
   SelectContent,
@@ -60,20 +61,29 @@ function ProductsContent() {
 
   const initialSearch = searchParams.get('search') || searchParams.get('brand') || '';
   const initialCategory = resolveCategoryParam(searchParams.get('category'));
+  const initialViewParam = searchParams.get('display') || searchParams.get('view');
 
   const [selectedCategory, setSelectedCategory] = useState<string>(initialCategory);
   const [searchQuery, setSearchQuery] = useState<string>(initialSearch);
   const { isClosed } = useStoreOperatingHours();
   const [sortBy, setSortBy] = useState<string>('popular');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'group'>(
+    initialViewParam === 'group' ? 'group' : 'grid'
+  );
   const [notification, setNotification] = useState<string | null>(null);
   const [visibleCount, setVisibleCount] = useState<number>(24);
+
+  // Quick View Modal state
+  const [quickViewProduct, setQuickViewProduct] = useState<QuickViewProductData | null>(null);
+  const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
 
   useEffect(() => {
     const q = searchParams.get('search') || searchParams.get('brand');
     const cat = searchParams.get('category');
+    const view = searchParams.get('display') || searchParams.get('view');
     if (q !== null) setSearchQuery(q);
     if (cat !== null) setSelectedCategory(resolveCategoryParam(cat));
+    if (view === 'group' || view === 'grid') setViewMode(view);
   }, [searchParams]);
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -141,16 +151,131 @@ function ProductsContent() {
     return list;
   }, [categoriesResponse?.data, allProducts]);
 
-  // Client-side filtering & sorting
+  // Fetch active Product Groups from database
+  const { data: cardsResponse } = useProductCards();
+
+  // Map Product Groups into rich card items (with real prices, stock, ratings, and promo pricing)
+  const groupApps = useMemo(() => {
+    const dbCards = cardsResponse?.data || [];
+    if (dbCards.length === 0) return [];
+
+    let mapped: ApplicationGroupItem[] = dbCards
+      .filter((card) => card.status === 'active')
+      .map((card) => {
+        // Find connected active catalog products
+        const items = allProducts.filter((p) => {
+          if (p.status && p.status !== 'active') return false;
+          const pCardId = (p.cardId || (p as any).card_id || '').toLowerCase();
+          const pCardSlug = (p.cardSlug || (p as any).card_slug || '').toLowerCase();
+          if (pCardId === card.id.toLowerCase() || pCardSlug === card.slug.toLowerCase()) return true;
+          const text = `${p.name} ${(p as any).id || ''}`.toLowerCase();
+          return text.includes(card.slug.replace(/-/g, ' ')) || text.includes(card.name.toLowerCase());
+        });
+
+        const activePrices = items.map((p) => p.price).filter((p) => p > 0);
+        const minPrice = card.minPrice > 0 ? card.minPrice : (activePrices.length > 0 ? Math.min(...activePrices) : 0);
+        const isOutOfStock = card.stockStatus === 'out_of_stock' || minPrice <= 0;
+
+        const catName = card.categoryName || 'Layanan Digital';
+        const catLower = catName.toLowerCase();
+        const categoryTag: 'ai' | 'design' | 'video' | 'streaming' | 'other' =
+          catLower.includes('ai') ? 'ai' :
+          catLower.includes('design') ? 'design' :
+          catLower.includes('video') ? 'video' :
+          catLower.includes('stream') ? 'streaming' : 'other';
+
+        return {
+          id: card.id,
+          name: card.name,
+          slug: card.slug,
+          category: catName,
+          categoryId: card.categoryId || 'cat-digital',
+          categoryTag,
+          logoUrl: card.logoUrl,
+          imageUrl: card.imageUrl,
+          description: card.description,
+          soldCount: Math.min(40, Math.max(20, card.soldCount ?? 28)),
+          targetMax: Math.min(40, Math.max(20, card.soldCount ?? 28)),
+          rating: String(card.rating || '5.0'),
+          badgeLabel: card.badgeLabel || (card.sections?.includes('promo') ? '🔥 Promo' : ''),
+          isPromo: card.sections?.includes('promo') ?? true,
+          isTerlaris: card.sections?.includes('terlaris') ?? false,
+          isTerbaru: card.sections?.includes('terbaru') ?? false,
+          items,
+          minPrice,
+          isOutOfStock,
+        };
+      })
+      .filter((app) => app.minPrice > 0);
+
+    // 1. Filter by Category
+    if (selectedCategory !== 'Semua') {
+      const targetCat = selectedCategory.toLowerCase().trim();
+      mapped = mapped.filter((g) => {
+        const gCat = (g.category || '').toLowerCase();
+        const gCatId = ((g as any).categoryId || '').toLowerCase();
+        const cardMatch = gCat === targetCat || gCatId === targetCat || gCat.includes(targetCat);
+        const itemMatch = g.items && g.items.some((p) => {
+          const pCatName = (p.category?.name || (p as any).categoryName || '').toLowerCase();
+          const pCatId = (p.category?.id || (p as any).categoryId || '').toLowerCase();
+          return pCatName === targetCat || pCatId === targetCat || pCatName.includes(targetCat);
+        });
+        return cardMatch || itemMatch;
+      });
+    }
+
+    // 2. Filter by Search Query
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      mapped = mapped.filter((g) => {
+        const nameMatch = g.name.toLowerCase().includes(q);
+        const slugMatch = g.slug.toLowerCase().includes(q);
+        const descMatch = (g.description || '').toLowerCase().includes(q);
+        const catMatch = (g.category || '').toLowerCase().includes(q);
+        const itemMatch = g.items.some((item) => item.name.toLowerCase().includes(q));
+        return nameMatch || slugMatch || descMatch || catMatch || itemMatch;
+      });
+    }
+
+    // 3. Sorting
+    mapped.sort((a, b) => {
+      if (sortBy === 'price_asc') return a.minPrice - b.minPrice;
+      if (sortBy === 'price_desc') return b.minPrice - a.minPrice;
+      if (sortBy === 'name_asc') return a.name.localeCompare(b.name);
+      return (b.soldCount || 0) - (a.soldCount || 0);
+    });
+
+    return mapped;
+  }, [cardsResponse?.data, allProducts, selectedCategory, searchQuery, sortBy]);
+
+  // Client-side filtering & sorting for individual products
   const filteredProducts = useMemo(() => {
     let result = [...allProducts];
 
+    // Note 2: Filter out inactive products or products belonging to inactive product groups
+    const inactiveCardIds = new Set(
+      (cardsResponse?.data || [])
+        .filter((c) => c.status !== 'active')
+        .map((c) => c.id.toLowerCase())
+    );
+
+    result = result.filter((p) => {
+      if (p.status && p.status !== 'active') return false;
+      if ((p as any).cardStatus && (p as any).cardStatus !== 'active') return false;
+      const pCardId = (p.cardId || (p as any).card_id || '').toLowerCase();
+      if (pCardId && inactiveCardIds.has(pCardId)) return false;
+      return true;
+    });
+
     // Filter by Category
     if (selectedCategory !== 'Semua') {
+      const targetCat = selectedCategory.toLowerCase().trim();
       result = result.filter(
-        (p) =>
-          p.category?.name?.toLowerCase() === selectedCategory.toLowerCase() ||
-          p.category?.id?.toLowerCase() === selectedCategory.toLowerCase()
+        (p) => {
+          const pName = (p.category?.name || (p as any).categoryName || '').toLowerCase();
+          const pId = (p.category?.id || (p as any).categoryId || '').toLowerCase();
+          return pName === targetCat || pId === targetCat || pName.includes(targetCat);
+        }
       );
     }
 
@@ -175,7 +300,7 @@ function ProductsContent() {
     });
 
     return result;
-  }, [allProducts, selectedCategory, searchQuery, sortBy]);
+  }, [allProducts, cardsResponse?.data, selectedCategory, searchQuery, sortBy]);
 
   // Slice visible products for performance
   const products = useMemo(
@@ -183,11 +308,37 @@ function ProductsContent() {
     [filteredProducts, visibleCount]
   );
 
-
   const handleResetFilters = () => {
     setSelectedCategory('Semua');
     setSearchQuery('');
     setSortBy('popular');
+  };
+
+  const handleOpenQuickView = (app: ApplicationGroupItem) => {
+    const firstItem = app.items && app.items[0];
+
+    setQuickViewProduct({
+      id: app.id || app.slug,
+      name: app.name,
+      slug: app.slug,
+      category: app.category || firstItem?.category?.name || 'Layanan Digital',
+      price: app.minPrice,
+      priceFormatted: `Rp ${app.minPrice.toLocaleString('id-ID')}`,
+      rating: app.rating || '5.0',
+      soldCount: app.soldCount || 28,
+      features: firstItem?.features || [
+        'Garansi Penuh Selama Berlangganan',
+        'Proses Cepat 1-15 Menit',
+        'Akun Resmi & Legal',
+      ],
+      description:
+        app.description ||
+        `Layanan resmi dan bergaransi untuk ${app.name} di Asterra Store dengan konfirmasi otomatis dan dukungan CS 24 jam.`,
+      brand: app.name,
+      isPromo: app.isPromo,
+      badgeLabel: app.badgeLabel,
+    });
+    setIsQuickViewOpen(true);
   };
 
   return (
@@ -199,33 +350,32 @@ function ProductsContent() {
             <div className="w-6 h-6 rounded-full bg-[rgba(201,111,85,0.15)] border border-[rgba(201,111,85,0.3)] flex items-center justify-center text-[#C96F55]">
               <FontAwesomeIcon icon={faCheck} className="w-3.5 h-3.5" />
             </div>
-            <p className="text-xs font-semibold">{notification}</p>
+            <span className="text-xs font-semibold">{notification}</span>
           </div>
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-10 w-full overflow-hidden">
-        {/* Breadcrumb & Title */}
-        <div className="mb-8">
-          <div data-gsap="breadcrumb" className="flex items-center gap-2 text-xs text-[#121A2A]/60 mb-2">
-            <Link href="/" className="hover:text-[#121A2A] transition-colors">
+      {/* Main Container */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 w-full">
+        {/* Page Header */}
+        <div className="mb-6 space-y-1">
+          <div className="flex items-center gap-2 text-xs text-[#121A2A]/50 font-medium">
+            <Link href="/" className="hover:text-[#C96F55] transition-colors">
               Beranda
             </Link>
             <span>/</span>
-            <span className="text-[#121A2A] font-semibold">Katalog Produk</span>
+            <span className="text-[#121A2A]">Katalog Produk</span>
           </div>
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
             <div>
-              <h1 data-gsap="page-title" className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#121A2A]">
-                Katalog Produk & Lisensi Premium
+              <h1 className="text-xl sm:text-2xl font-black text-[#121A2A] tracking-tight">
+                {viewMode === 'group' ? 'Katalog Product Group' : 'Katalog Produk & Lisensi'}
               </h1>
-              <p data-gsap="page-sub" className="text-xs sm:text-sm text-[#121A2A]/70 mt-1">
-                Jelajahi seluruh perangkat lunak, AI tools, dan platform kreatif resmi dengan aktivasi instan.
+              <p className="text-xs sm:text-sm text-[#121A2A]/60 mt-0.5">
+                {viewMode === 'group'
+                  ? 'Pilih grup produk utama untuk melihat ragam paket, tipe akun, dan durasi langganan.'
+                  : 'Seluruh akun premium resmi dengan garansi penggantian dan aktivasi instan.'}
               </p>
-            </div>
-            <div data-gsap="hero-badge" className="flex items-center gap-2 text-xs bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.25)] px-3 py-1.5 rounded-md text-[#C96F55] font-semibold w-fit">
-              <FontAwesomeIcon icon={faBolt} className="w-3.5 h-3.5 text-[#C96F55]" />
-              <span>Aktivasi 100% Cepat & Bergaransi</span>
             </div>
           </div>
         </div>
@@ -238,7 +388,7 @@ function ProductsContent() {
               <FontAwesomeIcon icon={faMagnifyingGlass} className="w-4 h-4 text-[#121A2A]/40 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="text"
-                placeholder="Cari lisensi (misal: Canva, ChatGPT, Gemini, Capcut)..."
+                placeholder={viewMode === 'group' ? 'Cari Product Group (Canva, Netflix, Spotify, Gemini)...' : 'Cari lisensi (misal: Canva, ChatGPT, Gemini, CapCut)...'}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full bg-white border border-[rgba(18,26,42,0.12)] rounded-lg pl-10 pr-16 py-2 text-xs sm:text-sm text-[#121A2A] placeholder:text-[#121A2A]/40 focus:outline-none focus:border-[#C96F55] focus:ring-2 focus:ring-[#C96F55]/20 transition-all shadow-xs"
@@ -273,8 +423,8 @@ function ProductsContent() {
                 </SelectContent>
               </Select>
 
-              {/* View Toggle */}
-              <div className="flex items-center bg-[#F8FAFC] border border-[rgba(18,26,42,0.08)] rounded-lg p-1 shrink-0">
+              {/* Display Filter Toggle (Katalog Produk Satuan vs Product Group Cards) */}
+              <div className="flex items-center bg-[#F8FAFC] border border-[rgba(18,26,42,0.08)] rounded-lg p-1 shrink-0" title="Ganti Tampilan: Katalog Produk / Product Group">
                 <button
                   type="button"
                   onClick={() => setViewMode('grid')}
@@ -283,19 +433,21 @@ function ProductsContent() {
                       ? 'bg-[#121A2A] text-white shadow-xs'
                       : 'text-[#121A2A]/60 hover:text-[#121A2A]'
                   }`}
-                  aria-label="Tampilan Grid"
+                  aria-label="Tampilan Katalog Semua Produk"
+                  title="Tampilan Semua Produk (Katalog Varian)"
                 >
                   <FontAwesomeIcon icon={faTableCellsLarge} className="w-3.5 h-3.5" />
                 </button>
                 <button
                   type="button"
-                  onClick={() => setViewMode('list')}
+                  onClick={() => setViewMode('group')}
                   className={`p-1.5 rounded transition-colors cursor-pointer ${
-                    viewMode === 'list'
+                    viewMode === 'group'
                       ? 'bg-[#121A2A] text-[#F7F5EF] shadow-xs'
                       : 'text-[#121A2A]/60 hover:text-[#121A2A]'
                   }`}
-                  aria-label="Tampilan List"
+                  aria-label="Tampilan Berdasarkan Product Group"
+                  title="Tampilan Product Group (Card Brand)"
                 >
                   <FontAwesomeIcon icon={faList} className="w-3.5 h-3.5" />
                 </button>
@@ -331,7 +483,11 @@ function ProductsContent() {
         {/* Product Count & Active Filter Indicator */}
         <div className="flex items-center justify-between text-xs text-[#121A2A]/60 mb-6">
           <div>
-            Menampilkan <span className="font-bold text-[#121A2A]">{products.length}</span> produk
+            Menampilkan{' '}
+            <span className="font-bold text-[#121A2A]">
+              {viewMode === 'group' ? groupApps.length : products.length}
+            </span>{' '}
+            {viewMode === 'group' ? 'Product Group' : 'produk katalog'}
             {selectedCategory !== 'Semua' && (
               <span> dalam kategori <strong className="text-[#121A2A]">{selectedCategory}</strong></span>
             )}
@@ -353,18 +509,18 @@ function ProductsContent() {
 
         {/* Loading Skeletons */}
         {isLoading && (
-          <div className="grid grid-cols-2 gap-3.5 sm:gap-4 md:gap-5 lg:grid-cols-3">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
+          <div className="grid grid-cols-2 gap-3.5 sm:gap-4 md:gap-5 lg:grid-cols-4">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
               <div
                 key={i}
-                className="bg-white border border-[rgba(18,26,42,0.08)] rounded-2xl p-4 sm:p-5 h-80 animate-pulse flex flex-col justify-between"
+                className="bg-white border border-[rgba(18,26,42,0.08)] rounded-2xl p-4 sm:p-5 h-72 animate-pulse flex flex-col justify-between"
               >
                 <div className="space-y-3">
-                  <div className="w-20 h-4 bg-[rgba(18,26,42,0.06)] rounded" />
+                  <div className="w-10 h-10 rounded-full bg-[rgba(18,26,42,0.06)]" />
                   <div className="w-3/4 h-5 bg-[rgba(18,26,42,0.06)] rounded" />
-                  <div className="w-full aspect-[16/10] bg-[rgba(18,26,42,0.06)] rounded-xl" />
+                  <div className="w-1/2 h-3 bg-[rgba(18,26,42,0.06)] rounded" />
                 </div>
-                <div className="w-full h-9 bg-[rgba(18,26,42,0.06)] rounded-xl" />
+                <div className="w-full h-8 bg-[rgba(18,26,42,0.06)] rounded-xl" />
               </div>
             ))}
           </div>
@@ -382,15 +538,17 @@ function ProductsContent() {
         )}
 
         {/* Empty State */}
-        {!isLoading && !error && products.length === 0 && (
+        {!isLoading && !error && ((viewMode === 'group' && groupApps.length === 0) || (viewMode === 'grid' && products.length === 0)) && (
           <div className="bg-white border border-[rgba(18,26,42,0.08)] rounded-2xl p-12 text-center space-y-4 max-w-md mx-auto my-12 shadow-card">
             <div className="w-12 h-12 rounded-xl bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.2)] flex items-center justify-center mx-auto text-[#C96F55]">
               <FontAwesomeIcon icon={faMagnifyingGlass} className="w-6 h-6" />
             </div>
             <div className="space-y-1">
-              <h3 className="text-base font-bold text-[#121A2A]">Produk tidak ditemukan</h3>
+              <h3 className="text-base font-bold text-[#121A2A]">
+                {viewMode === 'group' ? 'Product Group tidak ditemukan' : 'Produk tidak ditemukan'}
+              </h3>
               <p className="text-xs text-[#121A2A]/60">
-                Tidak ada produk yang cocok dengan kriteria pencarian atau filter yang Anda pilih.
+                Tidak ada {viewMode === 'group' ? 'Product Group' : 'produk'} yang cocok dengan kriteria pencarian atau filter yang Anda pilih.
               </p>
             </div>
             <Button size="sm" variant="outline" onClick={handleResetFilters} className="gap-2 rounded-lg">
@@ -400,9 +558,31 @@ function ProductsContent() {
           </div>
         )}
 
-        {/* Products Listing Grid */}
-        {!isLoading && !error && products.length > 0 && viewMode === 'grid' && (
-          <div data-gsap="product-grid" key={`grid-${selectedCategory}-${sortBy}`} className="grid grid-cols-2 gap-3.5 sm:gap-4 md:gap-5 lg:grid-cols-3">
+        {/* Display Mode 1: Product Group Cards */}
+        {!isLoading && !error && viewMode === 'group' && groupApps.length > 0 && (
+          <div
+            data-gsap="product-grid"
+            key={`groups-${selectedCategory}-${sortBy}`}
+            className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-4.5 animate-tab-glide"
+          >
+            {groupApps.map((app) => (
+              <FeaturedGridCard
+                key={app.id || app.slug}
+                app={app}
+                activeCampaigns={activeCampaigns}
+                onQuickView={handleOpenQuickView}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Display Mode 2: Individual Products Grid */}
+        {!isLoading && !error && viewMode === 'grid' && products.length > 0 && (
+          <div
+            data-gsap="product-grid"
+            key={`grid-${selectedCategory}-${sortBy}`}
+            className="grid grid-cols-2 gap-3.5 sm:gap-4 md:gap-5 lg:grid-cols-3 animate-tab-glide"
+          >
             {products.map((product, idx) => (
               <ProductCard
                 key={product.id}
@@ -414,122 +594,8 @@ function ProductsContent() {
           </div>
         )}
 
-        {/* Products Listing List View */}
-        {!isLoading && !error && products.length > 0 && viewMode === 'list' && (
-          <div key={`list-${selectedCategory}-${sortBy}`} className="space-y-4">
-            {products.map((product, idx) => {
-              const isOutOfStock = isProductOutOfStock(product);
-              const promoCalc = calculateCampaignPrice(product.price, product, activeCampaigns);
-
-              return (
-                <div
-                  key={product.id}
-                  data-gsap="card"
-                  className={`bg-white rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 transition-all duration-200 ${
-                    promoCalc.hasPromo
-                      ? 'border border-[rgba(201,111,85,0.28)] shadow-[0_4px_16px_rgba(201,111,85,0.08)] hover:shadow-card-hover hover:border-[#C96F55]'
-                      : 'border border-[rgba(18,26,42,0.08)] shadow-card hover:shadow-card-hover hover:border-[rgba(18,26,42,0.18)]'
-                  }`}
-                >
-                  <div className="flex items-start sm:items-center gap-4">
-                    <div className="w-20 h-20 rounded-xl overflow-hidden bg-[#F8FAFC] shrink-0 border border-[rgba(18,26,42,0.08)] relative">
-                      {promoCalc.hasPromo && (
-                        <div className="absolute top-1 left-1 z-10 bg-gradient-to-r from-[#DC2626] to-[#C96F55] text-white text-[8px] font-black px-1.5 py-0.5 rounded shadow-xs">
-                          {promoCalc.discountBadge}
-                        </div>
-                      )}
-                      <Link href={`/products/${product.id}`} prefetch={true} className="block w-full h-full relative">
-                        <Image
-                          src={product.imageUrl}
-                          alt={product.name}
-                          fill
-                          sizes="80px"
-                          priority={idx < 4}
-                          className="object-cover"
-                        />
-                      </Link>
-                    </div>
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-xs font-semibold text-[#C96F55]">{product.category.name}</span>
-                        {promoCalc.hasPromo && (
-                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-gradient-to-r from-[#DC2626]/12 to-[#C96F55]/15 border border-[#DC2626]/25 text-[#DC2626] font-bold inline-flex items-center gap-1">
-                            🔥 {promoCalc.discountBadge}
-                          </span>
-                        )}
-                        {promoCalc.hasPromo && (
-                          <ProductPromoCountdownBadge
-                            endsAtOrDate={promoCalc.endsAt || promoCalc.endDate}
-                            startsAtOrDate={promoCalc.startsAt || promoCalc.startDate}
-                            className="text-[10px] px-2 py-0.5 rounded-full bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.25)] text-[#C96F55] font-semibold inline-flex items-center"
-                          />
-                        )}
-                        {product.popular && !promoCalc.hasPromo && (
-                          <span className="text-[10px] px-2 py-0.5 rounded bg-[rgba(201,111,85,0.08)] border border-[rgba(201,111,85,0.25)] text-[#C96F55] font-semibold">
-                            Populer
-                          </span>
-                        )}
-                        {isOutOfStock && (
-                          <span className="text-[10px] px-2 py-0.5 rounded bg-status-error/15 text-status-error font-semibold">
-                            Stok Habis
-                          </span>
-                        )}
-                      </div>
-                      <h3 className="text-base font-bold text-[#121A2A]">
-                        <Link href={`/products/${product.id}`} prefetch={true} className="hover:text-[#C96F55] transition-colors">
-                          {product.name}
-                        </Link>
-                      </h3>
-                      <p className="text-xs text-[#121A2A]/65 max-w-xl line-clamp-2">
-                        {product.description}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto gap-3 pt-3 sm:pt-0 border-t sm:border-t-0 border-[rgba(18,26,42,0.08)]">
-                    <div className="text-left sm:text-right">
-                      {promoCalc.hasPromo ? (
-                        <>
-                          <div className="flex items-center gap-1.5 sm:justify-end flex-wrap">
-                            <span className="text-[11px] sm:text-xs text-[#121A2A]/45 line-through font-semibold">
-                              {promoCalc.originalPriceFormatted}
-                            </span>
-                            <span className="text-[9px] font-black text-[#DC2626] bg-[#DC2626]/10 px-1.5 py-0.2 rounded border border-[#DC2626]/20">
-                              {promoCalc.savingsText}
-                            </span>
-                          </div>
-                          <span className="text-base sm:text-lg font-black text-[#C96F55] block">
-                            {promoCalc.discountedPriceFormatted}
-                          </span>
-                        </>
-                      ) : (
-                        <span className="text-base sm:text-lg font-extrabold text-[#121A2A] block">
-                          {product.priceFormatted}
-                        </span>
-                      )}
-                      <span className="text-[11px] text-[#121A2A]/50 block">/ akun lisensi</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Link href={`/products/${product.id}`} prefetch={true} className="w-full sm:w-auto">
-                        <Button
-                          size="sm"
-                          className="rounded-lg text-xs font-semibold bg-[#C96F55] hover:bg-[#B86047] text-white gap-1.5 shadow-xs cursor-pointer active:scale-95"
-                          disabled={isOutOfStock}
-                        >
-                          <span>{isOutOfStock ? 'Stok Habis' : isClosed ? 'Pre Order' : 'Beli Sekarang'}</span>
-                          <FontAwesomeIcon icon={faArrowRight} className="w-3 h-3" />
-                        </Button>
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Load More / Hide Remainder section */}
-        {!isLoading && filteredProducts.length > visibleCount && (
+        {/* Load More section (for individual products grid) */}
+        {!isLoading && viewMode === 'grid' && filteredProducts.length > visibleCount && (
           <div className="mt-10 p-6 border border-[rgba(18,26,42,0.08)] bg-white rounded-2xl shadow-card flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
             <div className="space-y-1 text-center sm:text-left">
               <p className="font-bold text-[#121A2A]">
@@ -560,6 +626,14 @@ function ProductsContent() {
           </div>
         )}
       </div>
+
+      {/* Quick View Modal */}
+      <QuickViewModal
+        product={quickViewProduct}
+        isOpen={isQuickViewOpen}
+        onClose={() => setIsQuickViewOpen(false)}
+        activeCampaigns={activeCampaigns}
+      />
 
       {/* Guest Authentication Modal */}
       <AuthRequiredModal
