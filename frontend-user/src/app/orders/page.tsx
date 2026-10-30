@@ -220,8 +220,23 @@ function GlobalOrdersContent() {
 
   // Data pesanan publik langsung dari backend (transaksi riil + isolated dummy order terverifikasi)
   const allOrders = useMemo<PublicOrder[]>(() => {
-    const ordersList = data?.data || [];
-    return [...ordersList].sort((a, b) => {
+    const rawList = data?.data || [];
+    const normalizedList: PublicOrder[] = rawList.map((o) => {
+      const isDum = Boolean(
+        o.is_dummy ||
+        o.isDummy ||
+        o.source === 'simulation' ||
+        o.transaction_source === 'dummy'
+      );
+      return {
+        ...o,
+        is_dummy: isDum,
+        isDummy: isDum,
+        source: isDum ? 'simulation' : (o.source || 'direct'),
+        transaction_source: isDum ? 'dummy' : (o.transaction_source || 'real'),
+      };
+    });
+    return [...normalizedList].sort((a, b) => {
       const dateA = new Date(a.order_date || a.created_at || a.createdAt || '').getTime() || 0;
       const dateB = new Date(b.order_date || b.created_at || b.createdAt || '').getTime() || 0;
       return dateB - dateA;
