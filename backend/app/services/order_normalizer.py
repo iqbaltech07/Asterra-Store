@@ -18,6 +18,11 @@ class OrderNormalizer:
 
         o = dict(order)
 
+        # Preserve is_dummy flag
+        is_dummy_val = bool(o.get("is_dummy") or o.get("isDummy") or False)
+        o["is_dummy"] = is_dummy_val
+        o["isDummy"] = is_dummy_val
+
         # Amounts
         tot = o.get("total_amount") if o.get("total_amount") is not None else o.get("totalAmount", 0)
         tot_val = float(tot) if tot is not None else 0.0
@@ -164,48 +169,42 @@ class OrderNormalizer:
                 "transaction_id": o.get("paymentReference") or f"TRX-{o.get('id', '')}",
                 "payment_status": pay_status,
                 "amount": tot_val,
+                "created_at": created,
+                "paid_at": o.get("paidAt"),
             }
 
-        # Normalize items
-        items = o.get("items", [])
-        norm_items = []
-        for it in items:
-            it_dict = dict(it) if isinstance(it, dict) else {}
-            p_id = it_dict.get("productId") or it_dict.get("product_id") or "item"
-            p_name = it_dict.get("productName") or it_dict.get("product_name") or "Layanan Digital"
-            price = it_dict.get("price") if it_dict.get("price") is not None else it_dict.get("unit_price", 0)
-            price_val = float(price) if price is not None else 0.0
-            qty = int(it_dict.get("quantity", 1))
+        # Normalize items summary & items
+        items = o.get("items") or []
+        normalized_items = []
+        if isinstance(items, list):
+            for it in items:
+                if isinstance(it, dict):
+                    nit = dict(it)
+                    p_name = nit.get("product_name") or nit.get("productName") or nit.get("name") or "Layanan Digital"
+                    nit["product_name"] = p_name
+                    nit["productName"] = p_name
+                    u_price = float(nit.get("unit_price") or nit.get("unitPrice") or nit.get("price") or 0)
+                    nit["unit_price"] = u_price
+                    nit["unitPrice"] = u_price
+                    nit["price"] = u_price
+                    q = int(nit.get("quantity") or 1)
+                    nit["quantity"] = q
+                    nit["subtotal"] = float(nit.get("subtotal") or (u_price * q))
+                    normalized_items.append(nit)
 
-            it_dict["productId"] = p_id
-            it_dict["product_id"] = p_id
-            it_dict["productName"] = p_name
-            it_dict["product_name"] = p_name
-            it_dict["price"] = price_val
-            it_dict["unit_price"] = price_val
-            it_dict["quantity"] = qty
+        o["items"] = normalized_items
+        o["items_count"] = len(normalized_items)
 
-            t_id = it_dict.get("targetId") or it_dict.get("target_id") or it_dict.get("target_no") or it_dict.get("targetNo")
-            t_zone = it_dict.get("targetZone") or it_dict.get("target_zone")
-            t_phone = it_dict.get("targetPhone") or it_dict.get("target_phone")
-            t_email = it_dict.get("targetEmail") or it_dict.get("target_email")
-
-            it_dict["targetId"] = t_id
-            it_dict["target_id"] = t_id
-            it_dict["targetZone"] = t_zone
-            it_dict["target_zone"] = t_zone
-            it_dict["targetPhone"] = t_phone
-            it_dict["target_phone"] = t_phone
-            it_dict["targetEmail"] = t_email
-            it_dict["target_email"] = t_email
-
-            norm_items.append(it_dict)
-
-        o["items"] = norm_items
-        o["items_count"] = len(norm_items)
-        first_prod = norm_items[0]["productName"] if len(norm_items) > 0 else "Layanan Digital"
-        o["product_name"] = first_prod
-        o["productName"] = first_prod
-        o["items_summary"] = ", ".join(i.get("productName", "") for i in norm_items) or first_prod
+        if not o.get("items_summary"):
+            if normalized_items:
+                first = normalized_items[0].get("product_name", "Layanan Digital")
+                more = len(normalized_items) - 1
+                o["items_summary"] = f"{first} (+{more} item lainnya)" if more > 0 else first
+                o["product_name"] = first
+            else:
+                o["items_summary"] = "Pesanan Layanan Digital"
+                o["product_name"] = "Layanan Digital"
+        else:
+            o["product_name"] = o.get("items_summary")
 
         return o

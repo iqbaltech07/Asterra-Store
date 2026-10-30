@@ -143,7 +143,7 @@ export function FeaturedGridCard({
               <FontAwesomeIcon icon={faStar} className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-amber-500 shrink-0" />
               <span className="font-semibold text-[#121A2A]">{app.rating || '5.0'}</span>
               <span className="text-[#121A2A]/45 truncate">
-                ({app.soldCount ? `${app.soldCount.toLocaleString('id-ID')} terjual` : (isOutOfStock ? 'Stok Habis' : 'Ready')})
+                ({typeof app.soldCount === 'number' && app.soldCount > 0 ? `${Math.min(40, Math.max(20, app.soldCount)).toLocaleString('id-ID')} terjual` : (isOutOfStock ? 'Stok Habis' : 'Ready')})
               </span>
             </div>
           </div>
@@ -274,7 +274,7 @@ export function ShowcaseLoopingCard({
               <FontAwesomeIcon icon={faStar} className="w-3 h-3 text-amber-500 shrink-0" />
               <span className="font-semibold text-[#121A2A]">{app.rating || '5.0'}</span>
               <span className="text-[#121A2A]/45 truncate">
-                ({app.soldCount ? `${app.soldCount.toLocaleString('id-ID')} terjual` : (isOutOfStock ? 'Stok Habis' : 'Ready')})
+                ({typeof app.soldCount === 'number' && app.soldCount > 0 ? `${Math.min(40, Math.max(20, app.soldCount)).toLocaleString('id-ID')} terjual` : (isOutOfStock ? 'Stok Habis' : 'Ready')})
               </span>
             </div>
           </div>

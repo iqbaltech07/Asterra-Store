@@ -3,7 +3,7 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { parseProductDurations } from '@/lib/services/product-duration';
 import { findRelevantProducts } from '@/lib/services/product-relevance';
-import { resolveProductFamily } from '@/lib/services/product-variant-parser';
+import { resolveProductFamily, parseProductVariant } from '@/lib/services/product-variant-parser';
 import { ProductDetailClient, ProductDetailData } from './product-detail-client';
 import { ProductItem } from '@/lib/products-data';
 import { getStoreOperatingHoursServer } from '@/lib/server/store-operating-hours';
@@ -66,15 +66,51 @@ async function fetchProductByIdImpl(id: string, activeProducts?: ProductItem[]):
 
 const fetchProductById = cache(fetchProductByIdImpl);
 
+async function fetchCardByIdOrSlugImpl(idOrSlug: string): Promise<any> {
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/v1/cards/${idOrSlug}`, {
+      next: { revalidate: 10 },
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json?.data || null;
+  } catch {
+    return null;
+  }
+}
+
+const fetchCardByIdOrSlug = cache(fetchCardByIdOrSlugImpl);
+
+
 interface PageProps {
   params: Promise<{ id: string }>;
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params;
-  const activeProducts = await fetchActiveProducts();
-  const familyData = resolveProductFamily(id, activeProducts);
+  const [activeProducts, initialCardData] = await Promise.all([
+    fetchActiveProducts(),
+    fetchCardByIdOrSlug(id),
+  ]);
   const baseProduct = await fetchProductById(id, activeProducts);
+
+  let cardData = initialCardData;
+  if (!cardData && baseProduct && ((baseProduct as any).cardId || (baseProduct as any).card_id)) {
+    const parentCardId = (baseProduct as any).cardId || (baseProduct as any).card_id;
+    cardData = await fetchCardByIdOrSlug(parentCardId);
+  }
+
+  const familyData = cardData && Array.isArray(cardData.catalogs) && cardData.catalogs.length > 0
+    ? {
+        name: cardData.name,
+        category: cardData.category || { id: cardData.categoryId || 'cat-digital', name: cardData.categoryName || 'Layanan Digital' },
+        imageUrl: cardData.logoUrl || cardData.imageUrl || '/images/default-product-banner.png',
+        description: cardData.description || `Akses resmi bergaransi penuh untuk ${cardData.name} di Asterra Store.`,
+        price: cardData.minPrice || 0,
+        id: cardData.id,
+      }
+    : resolveProductFamily(id, activeProducts);
 
   const product = familyData
     ? {
@@ -82,8 +118,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         category: familyData.category,
         imageUrl: familyData.imageUrl,
         description: familyData.description,
-        price: familyData.selectedVariant.price,
-        id: familyData.selectedVariant.id,
+        price: ('selectedVariant' in familyData && familyData.selectedVariant) ? familyData.selectedVariant.price : (familyData as any).price || 0,
+        id: ('selectedVariant' in familyData && familyData.selectedVariant) ? familyData.selectedVariant.id : (familyData as any).id || id,
       }
     : baseProduct;
 
@@ -145,12 +181,42 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function ProductDetailPage({ params }: PageProps) {
   const { id } = await params;
-  const [activeProducts, storeStatus] = await Promise.all([
+  const [activeProducts, storeStatus, initialCardData] = await Promise.all([
     fetchActiveProducts(),
     getStoreOperatingHoursServer(),
+    fetchCardByIdOrSlug(id),
   ]);
-  const familyData = resolveProductFamily(id, activeProducts);
   const baseProduct = await fetchProductById(id, activeProducts);
+
+  let cardData = initialCardData;
+  if (!cardData && baseProduct && ((baseProduct as any).cardId || (baseProduct as any).card_id)) {
+    const parentCardId = (baseProduct as any).cardId || (baseProduct as any).card_id;
+    cardData = await fetchCardByIdOrSlug(parentCardId);
+  }
+
+  let familyData: any = null;
+  if (cardData && Array.isArray(cardData.catalogs) && cardData.catalogs.length > 0) {
+    const activeCatalogs = (cardData.catalogs || []).filter((c: any) => c.status === 'active');
+    const parsedVariants = activeCatalogs.map((c: any) => parseProductVariant(c));
+    parsedVariants.sort((a: any, b: any) => a.price - b.price);
+    const matchingVariant = parsedVariants.find((v: any) => v.id === id || (baseProduct && v.id === baseProduct.id));
+    const selectedVariant = matchingVariant || parsedVariants.find((v: any) => !v.isOutOfStock) || parsedVariants[0];
+
+    familyData = {
+      slug: cardData.slug,
+      name: cardData.name,
+      category: cardData.category || { id: cardData.categoryId || 'cat-digital', name: cardData.categoryName || 'Layanan Digital' },
+      imageUrl: cardData.logoUrl || cardData.imageUrl || '/images/default-product-banner.png',
+      rating: String(cardData.rating || '5.0'),
+      soldCount: Math.min(40, Math.max(20, cardData.soldCount || 30)),
+      description: cardData.description || `Akses resmi dan bergaransi penuh untuk ${cardData.name} di Asterra Store dengan konfirmasi otomatis dan dukungan CS 24 jam.`,
+      features: ['Garansi Penuh 100% Penggantian', 'Aktivasi Instan 1 - 15 Menit', 'Dukungan CS 24 Jam'],
+      variants: parsedVariants,
+      selectedVariant,
+    };
+  } else {
+    familyData = resolveProductFamily(id, activeProducts);
+  }
 
   if (!familyData && (!baseProduct || baseProduct.status === 'archived')) {
     notFound();
@@ -196,7 +262,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
     familySlug: familyData?.slug,
     familyImageUrl: familyData?.imageUrl || productImageUrl,
     rating: familyData?.rating || '5.0',
-    soldCount: familyData?.soldCount || 850,
+    soldCount: familyData?.soldCount || 30,
     variants: familyData?.variants || [],
     selectedVariant: activeVariant,
     durations,

@@ -25,7 +25,6 @@ import {
   formatRelativeTime,
   parseSafeDate,
   clearLegacySyntheticTimelineStorage,
-  getDeterministicSimulationOrders,
 } from '@/lib/hooks/use-dynamic-orders';
 import { maskCustomerName } from '@/lib/utils/masking';
 import { useCatalogProducts } from '@/lib/hooks/use-catalog-products';
@@ -219,19 +218,15 @@ function GlobalOrdersContent() {
     refetchInterval: 15000, // Background sync every 15s keeps list updated across all browsers
   });
 
-  // Gabungkan transaksi nyata dari database dengan pesanan visual dinamis untuk trust customer
+  // Data pesanan publik langsung dari backend (transaksi riil + isolated dummy order terverifikasi)
   const allOrders = useMemo<PublicOrder[]>(() => {
-    const realOrders = data?.data || [];
-    const visualOrders = getDeterministicSimulationOrders(now, 150);
-    const realIds = new Set(realOrders.map((o) => o.id));
-    const dedupedVisual = visualOrders.filter((o) => !realIds.has(o.id));
-    const combined = [...realOrders, ...dedupedVisual];
-    return combined.sort((a, b) => {
+    const ordersList = data?.data || [];
+    return [...ordersList].sort((a, b) => {
       const dateA = new Date(a.order_date || a.created_at || a.createdAt || '').getTime() || 0;
       const dateB = new Date(b.order_date || b.created_at || b.createdAt || '').getTime() || 0;
       return dateB - dateA;
     });
-  }, [data?.data, now]);
+  }, [data?.data]);
 
   // Filter status dan pencarian
   const filteredOrders = useMemo<PublicOrder[]>(() => {

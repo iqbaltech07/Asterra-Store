@@ -83,6 +83,9 @@ class OrderService:
         cancelled_count = 0
 
         for o in all_orders:
+            # Exclude dummy orders from real business revenue and order counts
+            if o.get("is_dummy") is True or o.get("isDummy") is True:
+                continue
             st = str(o.get("status", "")).lower()
             amt = float(o.get("totalAmount", 0))
 
@@ -271,20 +274,64 @@ class OrderService:
         order_id = f"AST-ORD-{today_str}-{rand_code}"
 
         items = payload.get("items", [])
-        
+        if not items:
+            raise ValueError("Pesanan harus memiliki minimal satu item produk.")
+
+        is_preorder = bool(
+            payload.get("is_preorder")
+            or payload.get("isPreorder")
+            or payload.get("order_type") == "preorder"
+            or payload.get("orderType") == "preorder"
+        )
+
         # Load catalog products to ensure valid base pricing and prevent tampering
         from app.services.catalog_service import CatalogService
+        from app.models.product_card import ProductCard
         catalog_products = {str(p.get("id")): p for p in CatalogService.load_products()}
         
+        db_val = SessionLocal() if SessionLocal else None
+        active_card_cache = {}
+        try:
+            if db_val:
+                all_cards = db_val.query(ProductCard).all()
+                for c in all_cards:
+                    active_card_cache[c.id] = c.status
+        finally:
+            if db_val:
+                db_val.close()
+
         verified_raw_total = 0
         for item in items:
-            p_id = str(item.get("product_id") or item.get("productId") or "")
+            p_id = str(item.get("product_id") or item.get("productId") or "").strip()
             cat_prod = catalog_products.get(p_id)
+            if not cat_prod:
+                raise ValueError(f"Produk katalog dengan ID '{p_id}' tidak ditemukan.")
+
+            prod_status = str(cat_prod.get("status") or "").lower()
+            if prod_status not in ["active", "ready", "tersedia"]:
+                raise ValueError(f"Katalog produk '{cat_prod.get('name', p_id)}' berstatus '{prod_status}' dan tidak tersedia untuk dipesan.")
+
+            parent_card_id = cat_prod.get("cardId") or cat_prod.get("card_id")
+            if parent_card_id and parent_card_id in active_card_cache:
+                card_st = active_card_cache[parent_card_id]
+                if card_st != "active":
+                    raise ValueError(f"Card Produk untuk '{cat_prod.get('name', p_id)}' sedang tidak aktif.")
+
             catalog_price = int(cat_prod.get("price")) if (cat_prod and cat_prod.get("price") is not None) else int(item.get("unit_price") or item.get("price") or 0)
+            if catalog_price <= 0:
+                raise ValueError(f"Harga produk katalog '{cat_prod.get('name', p_id)}' tidak valid.")
+
+            stock = int(cat_prod.get("stock") if cat_prod.get("stock") is not None else 100)
+            is_item_preorder = is_preorder or bool(cat_prod.get("isPreorder") or cat_prod.get("is_preorder"))
+            if stock <= 0 and not is_item_preorder:
+                raise ValueError(f"Stok untuk varian '{cat_prod.get('name', p_id)}' habis.")
+
             item["unit_price"] = catalog_price
             item["price"] = catalog_price
             qty = max(1, int(item.get("quantity", 1)))
             item["quantity"] = qty
+            item["card_id"] = parent_card_id
+            item["cardId"] = parent_card_id
             verified_raw_total += catalog_price * qty
         
         raw_total = verified_raw_total
@@ -514,6 +561,7 @@ class OrderService:
                     customer_name=customer_name,
                     customer_notes=incoming_notes,
                     is_preorder=is_preorder,
+                    is_dummy=False,
                     fulfillment_mode=order_fulfillment_mode,
                     provider=initial_provider,
                     email_delivery_status="pending",
@@ -572,11 +620,15 @@ class OrderService:
                         or customer_phone
                     ).strip()
 
+                    cat_prod_item = catalog_products.get(str(item.get("product_id") or item.get("productId") or ""))
+                    item_card_id = (cat_prod_item.get("cardId") or cat_prod_item.get("card_id")) if cat_prod_item else (item.get("card_id") or item.get("cardId"))
+
                     order_item_rec = OrderItem(
                         id=item_id,
                         order_id=order_id,
                         product_id=item.get("product_id") or item.get("productId") or "vip-service",
                         product_name=item.get("product_name") or item.get("productName") or "Layanan Digital",
+                        card_id=item_card_id,
                         price=int(item.get("unit_price") or item.get("price") or 0),
                         quantity=int(item.get("quantity", 1)),
                         target_email=raw_target_email,
@@ -603,6 +655,7 @@ class OrderService:
                     "order_id": order_id,
                     "product_id": item.get("product_id") or item.get("productId") or "vip-service",
                     "product_name": item.get("product_name") or item.get("productName") or "Layanan Digital",
+                    "card_id": item.get("card_id") or item.get("cardId"),
                     "price": int(item.get("unit_price") or item.get("price") or 0),
                     "quantity": int(item.get("quantity", 1)),
                     "target_email": str(item.get("target_email") or customer_email),

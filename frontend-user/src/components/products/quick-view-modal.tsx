@@ -125,7 +125,7 @@ export function QuickViewModal({ product, isOpen, onClose, activeCampaigns = [] 
             <span className="font-bold">{product.rating || '5.0'}</span>
             {product.soldCount && (
               <span className="text-[#121A2A]/50 text-[11px]">
-                ({product.soldCount.toLocaleString('id-ID')} terjual)
+                ({Math.min(40, Math.max(20, product.soldCount)).toLocaleString('id-ID')} terjual)
               </span>
             )}
           </div>

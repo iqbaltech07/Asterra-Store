@@ -23,6 +23,7 @@ import {
   faClock,
 } from '@fortawesome/free-solid-svg-icons';
 import { useCatalogProducts } from '@/lib/hooks/use-catalog-products';
+import { useProductCards } from '@/lib/hooks/use-product-cards';
 import { useActiveCampaigns } from '@/lib/hooks/use-active-campaigns';
 import { useHomepageSections } from '@/lib/hooks/use-homepage-sections';
 import {
@@ -68,9 +69,10 @@ export default function HomePage() {
     setRecentlyViewed(getRecentlyViewed());
   }, []);
 
-  // Dynamic products fetched from catalog API (cached via shared query)
+  // Dynamic products and Product Cards fetched from catalog API (cached via shared query)
   const { data: catalogResponse, isLoading: isCatalogLoadingQuery } = useCatalogProducts();
   const { data: sectionsResponse, isLoading: isSectionsLoading } = useHomepageSections();
+  const { data: cardsResponse } = useProductCards();
 
   // Reference timestamp to update dynamic sold counts matching /orders delay (5–20m interval)
   const [now, setNow] = useState<number>(() => Date.now());
@@ -97,8 +99,8 @@ export default function HomePage() {
         match: (t: string) => t.includes('gemini') || t.includes('google ai'),
         cat: 'AI Assistant & Cloud',
         tag: 'ai' as const,
-        soldCount: getDynamicSoldCount('Google Gemini', now, 620),
-        targetMax: 620,
+        soldCount: getDynamicSoldCount('Google Gemini', now, 36),
+        targetMax: 40,
         rating: '5.0',
         isPromo: true,
         isTerlaris: false,
@@ -109,8 +111,8 @@ export default function HomePage() {
         match: (t: string) => t.includes('canva'),
         cat: 'Design & Kreatif',
         tag: 'design' as const,
-        soldCount: getDynamicSoldCount('Canva', now, 1420),
-        targetMax: 1420,
+        soldCount: getDynamicSoldCount('Canva', now, 29),
+        targetMax: 35,
         rating: '5.0',
         isPromo: true,
         isTerlaris: true,
@@ -121,8 +123,8 @@ export default function HomePage() {
         match: (t: string) => t.includes('capcut'),
         cat: 'Video Editing & Content',
         tag: 'video' as const,
-        soldCount: getDynamicSoldCount('CapCut', now, 980),
-        targetMax: 980,
+        soldCount: getDynamicSoldCount('CapCut', now, 34),
+        targetMax: 40,
         rating: '4.9',
         isPromo: true,
         isTerlaris: true,
@@ -133,8 +135,8 @@ export default function HomePage() {
         match: (t: string) => t.includes('chatgpt') || t.includes('chat gpt') || t.includes('plus plan'),
         cat: 'AI Assistant & Writing',
         tag: 'ai' as const,
-        soldCount: getDynamicSoldCount('ChatGPT', now, 850),
-        targetMax: 850,
+        soldCount: getDynamicSoldCount('ChatGPT', now, 25),
+        targetMax: 32,
         rating: '5.0',
         isPromo: true,
         isTerlaris: true,
@@ -145,8 +147,8 @@ export default function HomePage() {
         match: (t: string) => t.includes('alightmotion') || t.includes('alight motion'),
         cat: 'Motion Graphic & VFX',
         tag: 'video' as const,
-        soldCount: getDynamicSoldCount('Alight Motion', now, 340),
-        targetMax: 340,
+        soldCount: getDynamicSoldCount('Alight Motion', now, 21),
+        targetMax: 28,
         rating: '4.8',
         isPromo: false,
         isTerlaris: false,
@@ -157,8 +159,8 @@ export default function HomePage() {
         match: (t: string) => t.includes('youtube'),
         cat: 'Streaming & Video',
         tag: 'streaming' as const,
-        soldCount: getDynamicSoldCount('YouTube', now, 2100),
-        targetMax: 2100,
+        soldCount: getDynamicSoldCount('YouTube', now, 32),
+        targetMax: 40,
         rating: '5.0',
         isPromo: true,
         isTerlaris: true,
@@ -169,8 +171,8 @@ export default function HomePage() {
         match: (t: string) => t.includes('spotify'),
         cat: 'Music & Podcast',
         tag: 'streaming' as const,
-        soldCount: getDynamicSoldCount('Spotify', now, 780),
-        targetMax: 780,
+        soldCount: getDynamicSoldCount('Spotify', now, 37),
+        targetMax: 40,
         rating: '5.0',
         isPromo: false,
         isTerlaris: true,
@@ -181,8 +183,8 @@ export default function HomePage() {
         match: (t: string) => t.includes('netflix'),
         cat: 'Movie & Series HD',
         tag: 'streaming' as const,
-        soldCount: getDynamicSoldCount('Netflix', now, 1650),
-        targetMax: 1650,
+        soldCount: getDynamicSoldCount('Netflix', now, 38),
+        targetMax: 40,
         rating: '5.0',
         isPromo: true,
         isTerlaris: true,
@@ -193,8 +195,8 @@ export default function HomePage() {
         match: (t: string) => t.includes('vidio'),
         cat: 'Live Sports & Premier',
         tag: 'streaming' as const,
-        soldCount: getDynamicSoldCount('Vidio', now, 1100),
-        targetMax: 1100,
+        soldCount: getDynamicSoldCount('Vidio', now, 23),
+        targetMax: 30,
         rating: '4.9',
         isPromo: false,
         isTerlaris: true,
@@ -205,8 +207,8 @@ export default function HomePage() {
         match: (t: string) => t.includes('wetv'),
         cat: 'Asian Drama VIP',
         tag: 'streaming' as const,
-        soldCount: getDynamicSoldCount('WeTV', now, 560),
-        targetMax: 560,
+        soldCount: getDynamicSoldCount('WeTV', now, 28),
+        targetMax: 33,
         rating: '4.8',
         isPromo: false,
         isTerlaris: false,
@@ -217,8 +219,8 @@ export default function HomePage() {
         match: (t: string) => t.includes('iqiyi'),
         cat: 'Anime & Drama HD',
         tag: 'streaming' as const,
-        soldCount: getDynamicSoldCount('iQIYI', now, 420),
-        targetMax: 420,
+        soldCount: getDynamicSoldCount('iQIYI', now, 22),
+        targetMax: 28,
         rating: '4.8',
         isPromo: true,
         isTerlaris: false,
@@ -229,8 +231,8 @@ export default function HomePage() {
         match: (t: string) => t.includes('bstation'),
         cat: 'Anime & Pop Culture',
         tag: 'streaming' as const,
-        soldCount: getDynamicSoldCount('Bstation', now, 390),
-        targetMax: 390,
+        soldCount: getDynamicSoldCount('Bstation', now, 24),
+        targetMax: 30,
         rating: '4.8',
         isPromo: false,
         isTerlaris: false,
@@ -241,8 +243,8 @@ export default function HomePage() {
         match: (t: string) => t.includes('viu'),
         cat: 'Asian Drama & Variety',
         tag: 'streaming' as const,
-        soldCount: getDynamicSoldCount('Viu', now, 910),
-        targetMax: 910,
+        soldCount: getDynamicSoldCount('Viu', now, 27),
+        targetMax: 33,
         rating: '4.9',
         isPromo: false,
         isTerlaris: true,
@@ -253,8 +255,8 @@ export default function HomePage() {
         match: (t: string) => t.includes('mobile legend') || t.includes('mlbb') || t.includes('diamond'),
         cat: 'Top Up Game & Diamond',
         tag: 'other' as const,
-        soldCount: getDynamicSoldCount('Mobile Legends', now, 1250),
-        targetMax: 1250,
+        soldCount: getDynamicSoldCount('Mobile Legends', now, 30),
+        targetMax: 35,
         rating: '5.0',
         isPromo: true,
         isTerlaris: true,
@@ -265,8 +267,8 @@ export default function HomePage() {
         match: (t: string) => t.includes('pubg') || t.includes('uc'),
         cat: 'Top Up Game & UC',
         tag: 'other' as const,
-        soldCount: getDynamicSoldCount('PUBG Mobile', now, 950),
-        targetMax: 950,
+        soldCount: getDynamicSoldCount('PUBG Mobile', now, 26),
+        targetMax: 32,
         rating: '5.0',
         isPromo: true,
         isTerlaris: true,
@@ -277,46 +279,92 @@ export default function HomePage() {
 
   // Map to Featured Products (authoritative backend data with 8-product guarantee & resilient fallback)
   const featuredApps = useMemo(() => {
-    // 1. Map all Product application groups to their catalog items
-    const allMapped = appConfigurations.map((target) => {
-      const items = allProducts.filter((p) => {
-        const text = `${p.name} ${(p as unknown as { id?: string }).id || ''} ${(p as unknown as { providerCode?: string }).providerCode || ''}`.toLowerCase();
-        if (text.includes('lisensi')) return false;
-        return target.match(text);
-      });
+    // 1. Map Card Produk dynamically from database or fallback to app configurations
+    const dbCards = cardsResponse?.data || [];
+    const allMapped = dbCards.length > 0
+      ? dbCards.map((card) => {
+          const items = allProducts.filter((p) => {
+            if ((p as any).cardId === card.id || (p as any).card_id === card.id) return true;
+            const text = `${p.name} ${(p as unknown as { id?: string }).id || ''}`.toLowerCase();
+            return text.includes(card.slug.replace(/-/g, ' ')) || text.includes(card.name.toLowerCase());
+          });
 
-      const activePrices = items.map((p) => p.price).filter((p) => p > 0);
-      const minPrice = activePrices.length > 0 ? Math.min(...activePrices) : 0;
+          const activePrices = items.map((p) => p.price).filter((p) => p > 0);
+          const minPrice = card.minPrice > 0 ? card.minPrice : (activePrices.length > 0 ? Math.min(...activePrices) : 0);
+          const isOutOfStock = card.stockStatus === 'out_of_stock' || card.isOutOfStock || minPrice <= 0;
 
-      const isOutOfStock =
-        items.length === 0 ||
-        items.every((p) => {
-          const isZeroStock = p.stock !== undefined && p.stock <= 0;
-          const isEmpty = p.providerStatus === 'empty';
-          const isUnavailable = p.status === 'out_of_stock' || p.status === 'archived';
-          return isZeroStock || isEmpty || isUnavailable;
-        });
+          const catNameLower = (card.categoryName || '').toLowerCase();
+          const categoryTag: 'ai' | 'design' | 'video' | 'streaming' | 'other' =
+            catNameLower.includes('ai') ? 'ai' :
+            catNameLower.includes('design') ? 'design' :
+            catNameLower.includes('video') ? 'video' :
+            catNameLower.includes('stream') ? 'streaming' : 'other';
 
-      return {
-        name: target.name,
-        slug: target.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
-        category: target.cat,
-        categoryTag: target.tag,
-        soldCount: target.soldCount,
-        targetMax: target.targetMax,
-        rating: target.rating,
-        badgeLabel:
-          activeCategory === 'promo'
-            ? '🔥 Promo'
-            : activeCategory === 'terlaris'
-            ? 'Terlaris'
-            : 'Baru',
-        isPromo: target.isPromo,
-        items,
-        minPrice,
-        isOutOfStock,
-      };
-    }).filter((app) => app.items.length > 0 && app.minPrice > 0);
+          return {
+            id: card.id,
+            name: card.name,
+            slug: card.slug,
+            category: card.categoryName || 'Layanan Digital',
+            categoryTag,
+            soldCount: Math.min(40, Math.max(20, card.soldCount ?? 20)),
+            targetMax: Math.min(40, Math.max(20, card.soldCount ?? 20)),
+            rating: String(card.rating || '5.0'),
+            badgeLabel:
+              activeCategory === 'promo'
+                ? '🔥 Promo'
+                : activeCategory === 'terlaris'
+                ? 'Terlaris'
+                : 'Baru',
+            isPromo: card.sections?.includes('promo') ?? true,
+            isTerlaris: card.sections?.includes('terlaris') ?? true,
+            isTerbaru: card.sections?.includes('terbaru') ?? true,
+            items,
+            minPrice,
+            isOutOfStock,
+          };
+        }).filter((app) => app.minPrice > 0)
+      : appConfigurations.map((target) => {
+          const items = allProducts.filter((p) => {
+            const text = `${p.name} ${(p as unknown as { id?: string }).id || ''} ${(p as unknown as { providerCode?: string }).providerCode || ''}`.toLowerCase();
+            if (text.includes('lisensi')) return false;
+            return target.match(text);
+          });
+
+          const activePrices = items.map((p) => p.price).filter((p) => p > 0);
+          const minPrice = activePrices.length > 0 ? Math.min(...activePrices) : 0;
+
+          const isOutOfStock =
+            items.length === 0 ||
+            items.every((p) => {
+              const isZeroStock = p.stock !== undefined && p.stock <= 0;
+              const isEmpty = p.providerStatus === 'empty';
+              const isUnavailable = p.status === 'out_of_stock' || p.status === 'archived';
+              return isZeroStock || isEmpty || isUnavailable;
+            });
+
+          return {
+            id: target.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+            name: target.name,
+            slug: target.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+            category: target.cat,
+            categoryTag: target.tag,
+            soldCount: Math.min(40, Math.max(20, target.soldCount ?? 20)),
+            targetMax: Math.min(40, Math.max(20, target.targetMax ?? 20)),
+            rating: target.rating,
+            badgeLabel:
+              activeCategory === 'promo'
+                ? '🔥 Promo'
+                : activeCategory === 'terlaris'
+                ? 'Terlaris'
+                : 'Baru',
+            isPromo: target.isPromo,
+            isTerlaris: target.isTerlaris,
+            isTerbaru: target.isTerbaru,
+            items,
+            minPrice,
+            isOutOfStock,
+          };
+        }).filter((app) => app.items.length > 0 && app.minPrice > 0);
 
     // Rule: If Promo tab is active but no campaign is running, show no promo products!
     if (activeCategory === 'promo' && (!activeCampaigns || activeCampaigns.length === 0)) {
@@ -419,7 +467,7 @@ export default function HomePage() {
     if (activeCategory === 'terlaris') {
       const terlarisConfigNames = new Set(appConfigurations.filter((a) => a.isTerlaris).map((a) => a.name));
       return allMapped
-        .filter((app) => terlarisConfigNames.has(app.name))
+        .filter((app) => (app as any).isTerlaris !== undefined ? (app as any).isTerlaris : terlarisConfigNames.has(app.name))
         .sort((a, b) => (b.targetMax || b.soldCount || 0) - (a.targetMax || a.soldCount || 0))
         .slice(0, 8);
     }
@@ -427,12 +475,12 @@ export default function HomePage() {
     if (activeCategory === 'terbaru') {
       const terbaruConfigNames = new Set(appConfigurations.filter((a) => a.isTerbaru).map((a) => a.name));
       return allMapped
-        .filter((app) => terbaruConfigNames.has(app.name))
+        .filter((app) => (app as any).isTerbaru !== undefined ? (app as any).isTerbaru : terbaruConfigNames.has(app.name))
         .slice(0, 8);
     }
 
     return allMapped.slice(0, 8);
-  }, [sectionsResponse, allProducts, appConfigurations, activeCategory, activeCampaigns]);
+  }, [sectionsResponse, allProducts, appConfigurations, activeCategory, activeCampaigns, cardsResponse]);
 
   // Client-mounted tracking
   const [isMounted, setIsMounted] = useState<boolean>(false);
@@ -444,7 +492,14 @@ export default function HomePage() {
   // Product Looping Showcase: Curated list of popular accounts that stays completely independent of the selector
   const showcaseApps = useMemo(() => {
     const showcaseNames = ['Canva', 'ChatGPT', 'Netflix', 'YouTube', 'CapCut', 'Google Gemini', 'Spotify', 'Vidio', 'Alight Motion', 'iQIYI'];
+    const dbCards = cardsResponse?.data || [];
     const mapped = showcaseNames.map((name) => {
+      const matchedCard = dbCards.find((c) => {
+        const cName = c.name.toLowerCase();
+        const tName = name.toLowerCase();
+        return cName.includes(tName) || tName.includes(cName);
+      });
+
       const conf = appConfigurations.find((a) => a.name === name) || {
         name,
         match: (t: string) => t.includes(name.toLowerCase()),
@@ -455,29 +510,38 @@ export default function HomePage() {
       };
 
       const items = allProducts.filter((p) => {
+        if (matchedCard && ((p as any).cardId === matchedCard.id || (p as any).card_id === matchedCard.id)) return true;
         const text = `${p.name} ${(p as unknown as { id?: string }).id || ''}`.toLowerCase();
         return conf.match(text);
       });
 
       const activePrices = items.map((p) => p.price).filter((p) => p > 0);
-      const minPrice = activePrices.length > 0 ? Math.min(...activePrices) : 0;
+      const minPrice = matchedCard && matchedCard.minPrice > 0
+        ? matchedCard.minPrice
+        : (activePrices.length > 0 ? Math.min(...activePrices) : 0);
 
       const isOutOfStock =
-        items.length === 0 ||
+        matchedCard ? (matchedCard.stockStatus === 'out_of_stock' || matchedCard.isOutOfStock || minPrice <= 0) :
+        (items.length === 0 ||
         items.every((p) => {
           const isZeroStock = p.stock !== undefined && p.stock <= 0;
           const isEmpty = p.providerStatus === 'empty';
           const isUnavailable = p.status === 'out_of_stock' || p.status === 'archived';
           return isZeroStock || isEmpty || isUnavailable;
-        });
+        }));
+
+      const finalSoldCount = matchedCard?.soldCount !== undefined
+        ? Math.min(40, Math.max(20, matchedCard.soldCount))
+        : Math.min(40, Math.max(20, conf.soldCount));
 
       return {
-        name: conf.name,
-        slug: conf.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
-        category: conf.cat,
+        id: matchedCard?.id || conf.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+        name: matchedCard?.name || conf.name,
+        slug: matchedCard?.slug || conf.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+        category: matchedCard?.categoryName || conf.cat,
         categoryTag: conf.tag,
-        soldCount: conf.soldCount,
-        rating: conf.rating,
+        soldCount: finalSoldCount,
+        rating: String(matchedCard?.rating || conf.rating || '5.0'),
         items,
         minPrice,
         isOutOfStock,
@@ -486,7 +550,7 @@ export default function HomePage() {
 
     // Only include applications that have real items
     return mapped.filter((app) => app.items.length > 0 && app.minPrice > 0);
-  }, [allProducts, appConfigurations, now]);
+  }, [allProducts, appConfigurations, now, cardsResponse]);
 
   const handleOpenQuickView = (app: ApplicationGroupItem) => {
     const minPrice = app.minPrice;
