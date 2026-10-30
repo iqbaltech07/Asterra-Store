@@ -57,6 +57,15 @@ class OrderService:
         return []
 
     @classmethod
+    def load_real_orders(cls, force_reload: bool = False) -> List[Dict[str, Any]]:
+        """
+        Loads only real customer transactions, strictly excluding all dummy/simulated orders.
+        Authoritative source for finance, partner commissions, revenue analytics, and admin stats.
+        """
+        all_orders = cls.load_orders(force_reload=force_reload)
+        return [o for o in all_orders if not (o.get("is_dummy") is True or o.get("isDummy") is True)]
+
+    @classmethod
     def save_orders(cls) -> bool:
         """In-memory cache management - no JSON file persistence."""
         return True

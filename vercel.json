@@ -1,0 +1,9 @@
+{
+  "crons": [
+    {
+      "path": "/api/v1/internal/cron/dummy-order",
+      "schedule": "*/5 * * * *"
+    }
+  ]
+}
+

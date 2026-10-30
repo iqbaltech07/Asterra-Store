@@ -214,7 +214,7 @@ class ReferralProfitService:
             db = SessionLocal()
             try:
                 order = db.query(Order).options(joinedload(Order.items)).filter(Order.id == clean_id).first()
-                if not order:
+                if not order or bool(order.is_dummy):
                     return None
 
                 status_to_eval = (new_status or order.status or "pending").lower()

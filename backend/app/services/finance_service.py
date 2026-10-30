@@ -8,7 +8,7 @@ class FinanceService:
     def load_orders(cls) -> List[Dict[str, Any]]:
         """Authoritative loader sourcing from OrderService (PostgreSQL + local sync)."""
         from app.services.order_service import OrderService
-        return OrderService.load_orders()
+        return OrderService.load_real_orders()
 
     @classmethod
     def get_profit_distribution(cls) -> Dict[str, Any]:

@@ -123,6 +123,101 @@ class DummyOrderService:
             return normal_seconds * 2
 
     @classmethod
+    def check_and_trigger_due_dummy_order(cls, db=None) -> Optional[Dict[str, Any]]:
+        """
+        Serverless-resilient & opportunistic execution check.
+        Ensures dummy orders are generated strictly when due, adhering to store operating hours:
+        - Store OPEN: interval 300–600 seconds (5–10 mins)
+        - Store CLOSED: interval 600–1200 seconds (10–20 mins)
+        - Thread & process-safe via PostgreSQL advisory lock (key: 8822001)
+        - NEVER generates on every page hit if interval has not elapsed
+        - Zero duplicate orders, full diagnostic logging
+        """
+        should_close = False
+        if db is None:
+            if not SessionLocal:
+                return None
+            db = SessionLocal()
+            should_close = True
+
+        lock_acquired = False
+        try:
+            # 1. Acquire distributed PostgreSQL advisory lock (key: 8822001)
+            try:
+                from sqlalchemy import text
+                res = db.execute(text("SELECT pg_try_advisory_lock(8822001)")).scalar()
+                lock_acquired = bool(res)
+            except Exception:
+                lock_acquired = True
+
+            if not lock_acquired:
+                # Another worker or serverless instance is actively evaluating/generating
+                return None
+
+            # 2. Get store operating hours status
+            store_status = StoreOperatingHoursService.get_current_status()
+            is_open = bool(store_status.get("isOpen", False) or store_status.get("is_open", False))
+
+            # 3. Query latest dummy order
+            latest_dummy = (
+                db.query(Order)
+                .filter(Order.is_dummy == True)
+                .order_by(Order.created_at.desc())
+                .first()
+            )
+
+            now_utc = datetime.utcnow()
+
+            if latest_dummy and latest_dummy.created_at:
+                created_at = latest_dummy.created_at
+                if created_at.tzinfo:
+                    created_at = created_at.replace(tzinfo=None)
+                elapsed_seconds = (now_utc - created_at).total_seconds()
+
+                # Derive consistent target interval for this slot based on the hash of latest order ID
+                seed_val = sum(ord(c) for c in (latest_dummy.id or ""))
+                rng = random.Random(seed_val)
+                target_interval = rng.randint(300, 600) if is_open else rng.randint(600, 1200)
+
+                if elapsed_seconds < target_interval:
+                    # Interval not elapsed yet. Strictly skip generation.
+                    return None
+
+                print(
+                    f"[DummyOrderService] Periodic dummy order is due. Elapsed: {int(elapsed_seconds)}s >= "
+                    f"Target: {target_interval}s (Store {'OPEN' if is_open else 'CLOSED'}). Generating..."
+                )
+            else:
+                print(
+                    f"[DummyOrderService] No existing dummy orders found in database. Initializing first dummy order..."
+                )
+
+            # 4. Generate and save the dummy order
+            new_order = cls.generate_and_save_dummy_order()
+            if new_order:
+                # Reload order service cache
+                try:
+                    from app.services.order_service import OrderService
+                    OrderService.load_orders(force_reload=True)
+                except Exception as oe:
+                    print(f"[DummyOrderService] Order cache reload note: {oe}")
+                print(f"[DummyOrderService] Successfully generated periodic dummy order: {new_order.get('id')}")
+
+            return new_order
+        except Exception as e:
+            print(f"[DummyOrderService] Error in check_and_trigger_due_dummy_order: {e}")
+            return None
+        finally:
+            if lock_acquired:
+                try:
+                    from sqlalchemy import text
+                    db.execute(text("SELECT pg_advisory_unlock(8822001)"))
+                except Exception:
+                    pass
+            if should_close:
+                db.close()
+
+    @classmethod
     def generate_and_save_dummy_order(cls) -> Optional[Dict[str, Any]]:
         """
         Generates and saves a valid dummy order meeting all Phase 7 requirements:

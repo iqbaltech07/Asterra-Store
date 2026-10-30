@@ -110,7 +110,7 @@ class PartnerService:
     def load_orders(cls) -> List[Dict[str, Any]]:
         try:
             from app.services.order_service import OrderService
-            return OrderService.load_orders()
+            return OrderService.load_real_orders()
         except Exception:
             return []
 

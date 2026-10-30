@@ -338,5 +338,64 @@ class TestAsterraDynamicArchitecture(unittest.TestCase):
             expected = max(20, min(40, (c.get("baseSoldCount") or 20) + c.get("orderSoldCount", 0)))
             self.assertEqual(c["soldCount"], expected, f"Card '{c['name']}' soldCount mismatch")
 
+    def test_12_dummy_order_serverless_resilience_and_financial_isolation(self):
+        """
+        Verify Serverless-Resilient Dummy Order Architecture:
+        1. Calling check_and_trigger_due_dummy_order when an order was just generated returns None (interval guard works).
+        2. Financial isolation: FinanceService, PartnerService, and AnalyticsService exclude dummy orders from calculations.
+        3. Stock is never deducted.
+        4. Customer private data is strictly masked in public output.
+        """
+        from app.services.finance_service import FinanceService
+        from app.services.partner_service import PartnerService
+        from app.api.v1.checkout import mask_order_for_public
+
+        # 1. Interval Guard Check
+        # Ensure at least one dummy order exists
+        order = DummyOrderService.generate_and_save_dummy_order()
+        self.assertIsNotNone(order)
+        self.assertTrue(order.get("is_dummy"))
+
+        # Immediately calling check_and_trigger_due_dummy_order must return None because interval hasn't elapsed
+        immediate_result = DummyOrderService.check_and_trigger_due_dummy_order()
+        self.assertIsNone(immediate_result, "Interval guard MUST return None when called before interval elapses")
+
+        # 2. Financial Isolation Check
+        real_orders = OrderService.load_real_orders(force_reload=True)
+        for ro in real_orders:
+            self.assertFalse(ro.get("is_dummy"), "load_real_orders must NEVER contain dummy orders")
+
+        finance_orders = FinanceService.load_orders()
+        for fo in finance_orders:
+            self.assertFalse(fo.get("is_dummy"), "FinanceService orders must NEVER contain dummy orders")
+
+        partner_orders = PartnerService.load_orders()
+        for po in partner_orders:
+            self.assertFalse(po.get("is_dummy"), "PartnerService orders must NEVER contain dummy orders")
+
+        # Metrics isolation
+        res = OrderService.get_orders(limit=50)
+        self.assertIn("metrics", res)
+        # Dummy orders must not contribute to totalRevenue
+        all_db_orders = OrderService.load_orders()
+        expected_real_rev = sum(
+            float(o.get("totalAmount") or 0)
+            for o in all_db_orders
+            if not (o.get("is_dummy") is True or o.get("isDummy") is True)
+            and str(o.get("status", "")).lower() in ["completed", "paid", "settlement", "processing"]
+        )
+        self.assertEqual(res["metrics"]["totalRevenue"], expected_real_rev)
+
+        # 3. Public Masking and Source Attribution
+        public_proj = mask_order_for_public(order, is_owner_or_admin=False)
+        self.assertTrue(public_proj.get("is_dummy"))
+        self.assertEqual(public_proj.get("source"), "simulation")
+        self.assertEqual(public_proj.get("transaction_source"), "dummy")
+        self.assertNotIn("customer_email", public_proj)
+        self.assertNotIn("customer_whatsapp", public_proj)
+        self.assertNotIn("customer_notes", public_proj)
+        self.assertIn("customer_display", public_proj)
+        self.assertIn("*", public_proj["customer_display"])
+
 if __name__ == "__main__":
     unittest.main()

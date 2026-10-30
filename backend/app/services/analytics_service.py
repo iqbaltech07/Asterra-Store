@@ -10,7 +10,7 @@ from app.services.catalog_service import CatalogService
 class AnalyticsService:
     @classmethod
     def get_dashboard_overview(cls) -> Dict[str, Any]:
-        orders = OrderService.load_orders()
+        orders = OrderService.load_real_orders()
         profit_data = FinanceService.get_profit_distribution()
         profit_summary = profit_data.get("summary", {})
         partners = PartnerService.get_all_partners()
@@ -214,7 +214,7 @@ class AnalyticsService:
 
     @classmethod
     def get_analytics_suite_data(cls, period: str = "30d") -> Dict[str, Any]:
-        orders = OrderService.load_orders()
+        orders = OrderService.load_real_orders()
         profit_data = FinanceService.get_profit_distribution()
         profit_summary = profit_data.get("summary", {})
         partners = PartnerService.get_all_partners()
@@ -586,7 +586,7 @@ class AnalyticsService:
 
     @classmethod
     def get_finance_summary(cls) -> Dict[str, Any]:
-        orders = OrderService.load_orders()
+        orders = OrderService.load_real_orders()
         profit_data = FinanceService.get_profit_distribution()
         summary = profit_data.get("summary", {})
         ledger_entries = profit_data.get("entries", [])
@@ -741,7 +741,7 @@ class AnalyticsService:
 
     @classmethod
     def get_customers(cls) -> List[Dict[str, Any]]:
-        orders = OrderService.load_orders()
+        orders = OrderService.load_real_orders()
         customer_map = {}
 
         for o in orders:

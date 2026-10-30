@@ -208,7 +208,7 @@ function GlobalOrdersContent() {
       const params = new URLSearchParams();
       params.append('public', 'true');
       params.append('page', '1');
-      params.append('limit', '50');
+      params.append('limit', '100');
       const res = await fetch('/api/v1/orders?' + params.toString());
       if (!res.ok) throw new Error('Gagal mengambil data pesanan publik');
       return res.json();
@@ -501,6 +501,14 @@ function GlobalOrdersContent() {
                             <FontAwesomeIcon icon={faUserCheck} className="w-3 h-3 text-foreground-muted" />
                             <span>{maskCustomerName(order.customer_display) || 'Pelanggan'}</span>
                           </span>
+                          {(order.is_dummy || order.isDummy || order.source === 'simulation') && (
+                            <span
+                              className="text-[10px] px-2 py-0.5 rounded-full bg-surface-raised text-foreground-muted border border-border font-medium inline-flex items-center gap-1"
+                              title="Pesanan simulasi aktivitas sistem"
+                            >
+                              Simulasi Sistem
+                            </span>
+                          )}
                         </div>
                         <p className="text-xs font-semibold text-foreground">
                           {order.product_name}
