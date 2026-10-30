@@ -209,7 +209,7 @@ function GlobalOrdersContent() {
       const params = new URLSearchParams();
       params.append('public', 'true');
       params.append('page', '1');
-      params.append('limit', '50');
+      params.append('limit', '100');
       const res = await fetch('/api/v1/orders?' + params.toString());
       if (!res.ok) throw new Error('Gagal mengambil data pesanan publik');
       return res.json();
@@ -221,10 +221,23 @@ function GlobalOrdersContent() {
 
   // Data pesanan publik: transaksi riil dari database digabungkan dengan visual social-proof orders (hanya untuk tampilan user)
   const allOrders = useMemo<PublicOrder[]>(() => {
-    const realOrders = (data?.data || []).map((o) => ({
-      ...o,
-      order_status: (o.order_status || o.status || 'completed') as PublicOrder['order_status'],
-    }));
+    const rawList = data?.data || [];
+    const realOrders: PublicOrder[] = rawList.map((o) => {
+      const isDum = Boolean(
+        o.is_dummy ||
+        o.isDummy ||
+        o.source === 'simulation' ||
+        o.transaction_source === 'dummy'
+      );
+      return {
+        ...o,
+        order_status: (o.order_status || o.status || 'completed') as PublicOrder['order_status'],
+        is_dummy: isDum,
+        isDummy: isDum,
+        source: isDum ? 'simulation' : (o.source || 'direct'),
+        transaction_source: isDum ? 'dummy' : (o.transaction_source || 'real'),
+      };
+    });
 
     // Visual social-proof orders (murni simulasi sisi klien untuk visual di user saja, tidak pernah masuk database/admin)
     const visualOrders = getDeterministicSimulationOrders(now, 100);
@@ -528,6 +541,14 @@ function GlobalOrdersContent() {
                             <FontAwesomeIcon icon={faUserCheck} className="w-3 h-3 text-foreground-muted" />
                             <span>{maskCustomerName(order.customer_display) || 'Pelanggan'}</span>
                           </span>
+                          {(order.is_dummy || order.isDummy || order.source === 'simulation') && (
+                            <span
+                              className="text-[10px] px-2 py-0.5 rounded-full bg-surface-raised text-foreground-muted border border-border font-medium inline-flex items-center gap-1"
+                              title="Pesanan simulasi aktivitas sistem"
+                            >
+                              Simulasi Sistem
+                            </span>
+                          )}
                         </div>
                         <p className="text-xs font-semibold text-foreground">
                           {order.product_name}

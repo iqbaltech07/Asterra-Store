@@ -15,6 +15,10 @@ export interface PublicOrder {
   product_sku?: string;
   process_estimate?: string;
   warranty_info?: string | null;
+  is_dummy?: boolean;
+  isDummy?: boolean;
+  source?: string;
+  transaction_source?: string;
 }
 
 /**
