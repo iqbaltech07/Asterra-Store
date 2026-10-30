@@ -42,7 +42,15 @@ class OrderService:
             db = SessionLocal() if SessionLocal else None
             if db:
                 try:
-                    db_orders = db.query(Order).options(joinedload(Order.items)).order_by(Order.created_at.desc()).all()
+                    db_orders = (
+                        db.query(Order)
+                        .options(joinedload(Order.items))
+                        .filter(Order.is_dummy == False)
+                        .filter(~Order.customer_email.like("%@customer.id"))
+                        .filter(~Order.customer_email.like("buyer_%"))
+                        .order_by(Order.created_at.desc())
+                        .all()
+                    )
                     if db_orders is not None:
                         normalized = [cls._normalize_order(o.to_dict()) for o in db_orders]
                         cls._orders = normalized
@@ -55,6 +63,15 @@ class OrderService:
 
         cls._orders = []
         return []
+
+    @classmethod
+    def load_real_orders(cls, force_reload: bool = False) -> List[Dict[str, Any]]:
+        """
+        Loads only real customer transactions, strictly excluding all dummy/simulated orders.
+        Authoritative source for finance, partner commissions, revenue analytics, and admin stats.
+        """
+        all_orders = cls.load_orders(force_reload=force_reload)
+        return [o for o in all_orders if not (o.get("is_dummy") is True or o.get("isDummy") is True)]
 
     @classmethod
     def save_orders(cls) -> bool:
@@ -73,7 +90,16 @@ class OrderService:
         page: int = 1,
         limit: int = 20,
     ) -> Dict[str, Any]:
-        all_orders = cls.load_orders()
+        raw_orders = cls.load_orders()
+        # Strict isolation: Exclude any dummy/mock orders from admin and business reports
+        all_orders = [
+            o for o in raw_orders
+            if not o.get("is_dummy") and not o.get("isDummy")
+            and not str(o.get("customerEmail", "")).lower().endswith("@customer.id")
+            and not str(o.get("customer_email", "")).lower().endswith("@customer.id")
+            and not str(o.get("customerEmail", "")).lower().startswith("buyer_")
+            and not str(o.get("customer_email", "")).lower().startswith("buyer_")
+        ]
 
         # Compute summary metrics across all orders
         total_revenue = 0

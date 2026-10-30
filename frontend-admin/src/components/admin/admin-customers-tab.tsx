@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { AdminModalPortal } from '@/components/admin/admin-modal-portal';
 import {
   Users,
   Search,
@@ -67,6 +68,8 @@ export function AdminCustomersTab({ onNotify }: AdminCustomersTabProps) {
   });
 
   const filteredCustomers = customers.filter((c) => {
+    const email = (c.email || '').toLowerCase();
+    if (email.endsWith('@customer.id') || email.startsWith('buyer_')) return false;
     const q = searchQuery.toLowerCase();
     return (
       c.name.toLowerCase().includes(q) ||
@@ -337,6 +340,7 @@ export function AdminCustomersTab({ onNotify }: AdminCustomersTabProps) {
 
       {/* 5. Customer 360° Profile Modal */}
       {selectedCustomer && (
+        <AdminModalPortal>
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200">
           <div className="bg-white border border-[#E2E8F0] rounded-2xl w-full max-w-lg max-h-[calc(100dvh-40px)] flex flex-col shadow-2xl overflow-hidden box-border animate-in zoom-in-95 duration-200">
             {/* Sticky Header */}
@@ -407,6 +411,7 @@ export function AdminCustomersTab({ onNotify }: AdminCustomersTabProps) {
             </div>
           </div>
         </div>
+        </AdminModalPortal>
       )}
     </div>
   );

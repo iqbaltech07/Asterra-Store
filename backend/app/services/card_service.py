@@ -37,6 +37,9 @@ class CardService:
                     JOIN orders o ON oi.order_id = o.id
                     LEFT JOIN products p ON oi.product_id = p.id
                     WHERE LOWER(o.status) IN ('completed', 'paid', 'settlement', 'processing')
+                      AND (o.is_dummy IS FALSE OR o.is_dummy IS NULL)
+                      AND o.customer_email NOT LIKE '%@customer.id'
+                      AND o.customer_email NOT LIKE 'buyer_%'
                       AND COALESCE(oi.card_id, p.card_id) IS NOT NULL
                     GROUP BY COALESCE(oi.card_id, p.card_id);
                 """)
@@ -53,6 +56,9 @@ class CardService:
                     FROM order_items oi
                     JOIN orders o ON oi.order_id = o.id
                     WHERE LOWER(o.status) IN ('completed', 'paid', 'settlement', 'processing')
+                      AND (o.is_dummy IS FALSE OR o.is_dummy IS NULL)
+                      AND o.customer_email NOT LIKE '%@customer.id'
+                      AND o.customer_email NOT LIKE 'buyer_%'
                     GROUP BY oi.product_id;
                 """)
                 cat_rows = db.execute(cat_query).fetchall()
@@ -246,7 +252,8 @@ class CardService:
                     if not exists:
                         card.slug = clean_slug
             if "logoUrl" in payload or "logo_url" in payload or "imageUrl" in payload:
-                card.logo_url = payload.get("logoUrl") or payload.get("logo_url") or payload.get("imageUrl")
+                val = payload.get("logoUrl") if "logoUrl" in payload else (payload.get("logo_url") if "logo_url" in payload else payload.get("imageUrl"))
+                card.logo_url = str(val).strip() if (val and str(val).strip()) else None
             if "description" in payload:
                 card.description = payload["description"]
             if "categoryId" in payload or "category_id" in payload:

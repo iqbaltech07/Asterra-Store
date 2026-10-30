@@ -44,18 +44,18 @@ class ProductCard(Base):
         min_price = 0
         active_catalogs = [c for c in (self.catalogs or []) if getattr(c, "status", None) == "active"]
         if active_catalogs:
-            prices = [int(c.price) for c in active_catalogs if getattr(c, "price", None) and int(c.price) > 0]
+            prices = [int(float(c.price)) for c in active_catalogs if getattr(c, "price", None) is not None and float(c.price) > 0]
             if prices:
                 min_price = min(prices)
 
-        # Calculate stockStatus
+        # Calculate stockStatus according to Note 1:
+        # Stok etalase berstatus habis jika semua variant habis stoknya (atau tidak ada varian aktif)
         has_ready_stock = False
         if active_catalogs:
             for c in active_catalogs:
                 is_zero_stock = getattr(c, "stock", None) is not None and c.stock <= 0
                 is_empty = getattr(c, "provider_status", None) == "empty"
-                is_unavail = getattr(c, "status", "active") != "active"
-                if not is_zero_stock and not is_empty and not is_unavail:
+                if not is_zero_stock and not is_empty:
                     has_ready_stock = True
                     break
 
@@ -86,7 +86,8 @@ class ProductCard(Base):
             "minPriceFormatted": f"Rp {min_price:,.0f}".replace(",", "."),
             "stockStatus": stock_status,
             "isOutOfStock": stock_status == "out_of_stock",
-            "catalogCount": len(self.catalogs) if self.catalogs is not None else 0,
+            "catalogCount": len(active_catalogs),
+            "totalCatalogCount": len(self.catalogs) if self.catalogs is not None else 0,
             "activeCatalogCount": len(active_catalogs),
             "baseSoldCount": self.base_sold_count or 0,
             "orderSoldCount": sold_count,

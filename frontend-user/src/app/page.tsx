@@ -251,27 +251,27 @@ export default function HomePage() {
         isTerbaru: true,
       },
       {
-        name: 'Mobile Legends',
-        match: (t: string) => t.includes('mobile legend') || t.includes('mlbb') || t.includes('diamond'),
-        cat: 'Top Up Game & Diamond',
-        tag: 'other' as const,
-        soldCount: getDynamicSoldCount('Mobile Legends', now, 30),
-        targetMax: 35,
-        rating: '5.0',
-        isPromo: true,
-        isTerlaris: true,
+        name: 'Wink',
+        match: (t: string) => t.includes('wink'),
+        cat: 'Apps & Streaming',
+        tag: 'video' as const,
+        soldCount: getDynamicSoldCount('Wink', now, 24),
+        targetMax: 30,
+        rating: '4.9',
+        isPromo: false,
+        isTerlaris: false,
         isTerbaru: true,
       },
       {
-        name: 'PUBG Mobile',
-        match: (t: string) => t.includes('pubg') || t.includes('uc'),
-        cat: 'Top Up Game & UC',
-        tag: 'other' as const,
-        soldCount: getDynamicSoldCount('PUBG Mobile', now, 26),
-        targetMax: 32,
-        rating: '5.0',
-        isPromo: true,
-        isTerlaris: true,
+        name: 'Meitu',
+        match: (t: string) => t.includes('meitu'),
+        cat: 'Apps & Streaming',
+        tag: 'design' as const,
+        soldCount: getDynamicSoldCount('Meitu', now, 22),
+        targetMax: 28,
+        rating: '4.9',
+        isPromo: false,
+        isTerlaris: false,
         isTerbaru: true,
       },
     ];
@@ -280,10 +280,11 @@ export default function HomePage() {
   // Map to Featured Products (authoritative backend data with 8-product guarantee & resilient fallback)
   const featuredApps = useMemo(() => {
     // 1. Map Card Produk dynamically from database or fallback to app configurations
-    const dbCards = cardsResponse?.data || [];
-    const allMapped = dbCards.length > 0
+    const dbCards = (cardsResponse?.data || []).filter((c) => c.status === 'active');
+    const allMapped: ApplicationGroupItem[] = dbCards.length > 0
       ? dbCards.map((card) => {
           const items = allProducts.filter((p) => {
+            if (p.status && p.status !== 'active') return false;
             if ((p as any).cardId === card.id || (p as any).card_id === card.id) return true;
             const text = `${p.name} ${(p as unknown as { id?: string }).id || ''}`.toLowerCase();
             return text.includes(card.slug.replace(/-/g, ' ')) || text.includes(card.name.toLowerCase());
@@ -306,6 +307,9 @@ export default function HomePage() {
             slug: card.slug,
             category: card.categoryName || 'Layanan Digital',
             categoryTag,
+            logoUrl: card.logoUrl,
+            imageUrl: card.imageUrl,
+            description: card.description,
             soldCount: Math.min(40, Math.max(20, card.soldCount ?? 20)),
             targetMax: Math.min(40, Math.max(20, card.soldCount ?? 20)),
             rating: String(card.rating || '5.0'),
@@ -376,7 +380,7 @@ export default function HomePage() {
     // map them to distinct Product applications to avoid duplicate variants and display clean Brand entities
     const backendSection = sectionsResponse?.sections?.[activeCategory];
     if (backendSection && Array.isArray(backendSection.data) && backendSection.data.length > 0) {
-      const orderedApps: typeof allMapped = [];
+      const orderedApps: ApplicationGroupItem[] = [];
       const seenNames = new Set<string>();
 
       for (const item of backendSection.data) {
@@ -420,11 +424,9 @@ export default function HomePage() {
             fallbackCandidates = [];
           }
         } else if (activeCategory === 'terlaris') {
-          const terlarisNames = new Set(appConfigurations.filter((a) => a.isTerlaris).map((a) => a.name));
-          fallbackCandidates = allMapped.filter((app) => terlarisNames.has(app.name));
+          fallbackCandidates = allMapped.filter((app) => app.isTerlaris);
         } else if (activeCategory === 'terbaru') {
-          const terbaruNames = new Set(appConfigurations.filter((a) => a.isTerbaru).map((a) => a.name));
-          fallbackCandidates = allMapped.filter((app) => terbaruNames.has(app.name));
+          fallbackCandidates = allMapped.filter((app) => app.isTerbaru);
         }
 
         for (const candidate of fallbackCandidates) {
@@ -465,17 +467,16 @@ export default function HomePage() {
     }
 
     if (activeCategory === 'terlaris') {
-      const terlarisConfigNames = new Set(appConfigurations.filter((a) => a.isTerlaris).map((a) => a.name));
       return allMapped
-        .filter((app) => (app as any).isTerlaris !== undefined ? (app as any).isTerlaris : terlarisConfigNames.has(app.name))
+        .filter((app) => app.isTerlaris)
         .sort((a, b) => (b.targetMax || b.soldCount || 0) - (a.targetMax || a.soldCount || 0))
         .slice(0, 8);
     }
 
     if (activeCategory === 'terbaru') {
-      const terbaruConfigNames = new Set(appConfigurations.filter((a) => a.isTerbaru).map((a) => a.name));
       return allMapped
-        .filter((app) => (app as any).isTerbaru !== undefined ? (app as any).isTerbaru : terbaruConfigNames.has(app.name))
+        .filter((app) => app.isTerbaru)
+        .sort((a, b) => (b.targetMax || b.soldCount || 0) - (a.targetMax || a.soldCount || 0))
         .slice(0, 8);
     }
 
@@ -540,6 +541,9 @@ export default function HomePage() {
         slug: matchedCard?.slug || conf.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
         category: matchedCard?.categoryName || conf.cat,
         categoryTag: conf.tag,
+        logoUrl: matchedCard?.logoUrl,
+        imageUrl: matchedCard?.imageUrl,
+        description: matchedCard?.description,
         soldCount: finalSoldCount,
         rating: String(matchedCard?.rating || conf.rating || '5.0'),
         items,

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { AdminModalPortal } from '@/components/admin/admin-modal-portal';
 import {
   Plus,
   Calendar,
@@ -786,6 +787,7 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
 
         {/* Modal Create/Edit Campaign */}
         {isCampaignModalOpen && (
+          <AdminModalPortal>
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200">
             <div className="bg-white border border-[#E2E8F0] rounded-2xl w-full max-w-lg max-h-[calc(100dvh-40px)] flex flex-col shadow-2xl overflow-hidden box-border animate-in zoom-in-95 duration-200">
               {/* Sticky Header */}
@@ -942,6 +944,7 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
               </form>
             </div>
           </div>
+          </AdminModalPortal>
         )}
       </div>
     );
@@ -1305,6 +1308,7 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
 
       {/* Modal Create/Edit Banner */}
       {isBannerModalOpen && (
+        <AdminModalPortal>
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200">
           <div className="bg-white border border-[#E2E8F0] rounded-2xl w-full max-w-lg max-h-[calc(100dvh-40px)] flex flex-col shadow-2xl overflow-hidden box-border animate-in zoom-in-95 duration-200">
             {/* Sticky Header */}
@@ -1487,10 +1491,12 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
             </form>
           </div>
         </div>
+        </AdminModalPortal>
       )}
 
       {/* Modal Panduan & Aturan Ukuran Banner (3:1) */}
       {isSpecGuideOpen && (
+        <AdminModalPortal>
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200">
           <div className="bg-white border border-[#E2E8F0] rounded-2xl w-full max-w-2xl max-h-[calc(100dvh-40px)] flex flex-col shadow-2xl overflow-hidden box-border animate-in zoom-in-95 duration-200">
             {/* Sticky Header */}
@@ -1640,6 +1646,7 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
             </div>
           </div>
         </div>
+        </AdminModalPortal>
       )}
     </div>
   );

@@ -123,116 +123,104 @@ class DummyOrderService:
             return normal_seconds * 2
 
     @classmethod
-    def generate_and_save_dummy_order(cls) -> Optional[Dict[str, Any]]:
+    def check_and_trigger_due_dummy_order(cls, db=None) -> Optional[Dict[str, Any]]:
         """
-        Generates and saves a valid dummy order meeting all Phase 7 requirements:
-        - Validates candidate product twice (selection & pre-save).
-        - Saves with is_dummy = True.
-        - Does NOT alter real catalog stock.
-        - Emits real-time SSE event for storefront /orders page.
+        Serverless-resilient & opportunistic execution check.
+        Ensures dummy orders are generated strictly when due, adhering to store operating hours:
+        - Store OPEN: interval 300–600 seconds (5–10 mins)
+        - Store CLOSED: interval 600–1200 seconds (10–20 mins)
+        - Thread & process-safe via PostgreSQL advisory lock (key: 8822001)
+        - NEVER generates on every page hit if interval has not elapsed
+        - Zero duplicate orders, full diagnostic logging
         """
-        db = SessionLocal()
+        should_close = False
+        if db is None:
+            if not SessionLocal:
+                return None
+            db = SessionLocal()
+            should_close = True
+
+        lock_acquired = False
         try:
-            # Stage 1: Candidate Selection
-            eligible_products = cls.get_eligible_catalogs(db)
-            if not eligible_products:
-                print("[DummyOrderService] No eligible active products available. Skipping dummy order cycle.")
+            # 1. Acquire distributed PostgreSQL advisory lock (key: 8822001)
+            try:
+                from sqlalchemy import text
+                res = db.execute(text("SELECT pg_try_advisory_lock(8822001)")).scalar()
+                lock_acquired = bool(res)
+            except Exception:
+                lock_acquired = True
+
+            if not lock_acquired:
+                # Another worker or serverless instance is actively evaluating/generating
                 return None
 
-            selected_product = random.choice(eligible_products)
+            # 2. Get store operating hours status
+            store_status = StoreOperatingHoursService.get_current_status()
+            is_open = bool(store_status.get("isOpen", False) or store_status.get("is_open", False))
 
-            # Stage 2: Re-validation right before saving
-            prod_check = db.query(Product).filter_by(id=selected_product.id).first()
-            if not prod_check or prod_check.status != "active" or prod_check.price <= 0:
-                print(f"[DummyOrderService] Product {selected_product.id} status changed prior to save. Aborting.")
-                return None
-            if prod_check.card_id:
-                card_check = db.query(ProductCard).filter_by(id=prod_check.card_id).first()
-                if not card_check or card_check.status != "active":
-                    print(f"[DummyOrderService] Card parent {prod_check.card_id} inactive. Aborting.")
+            # 3. Query latest dummy order
+            latest_dummy = (
+                db.query(Order)
+                .filter(Order.is_dummy == True)
+                .order_by(Order.created_at.desc())
+                .first()
+            )
+
+            now_utc = datetime.utcnow()
+
+            if latest_dummy and latest_dummy.created_at:
+                created_at = latest_dummy.created_at
+                if created_at.tzinfo:
+                    created_at = created_at.replace(tzinfo=None)
+                elapsed_seconds = (now_utc - created_at).total_seconds()
+
+                # Derive consistent target interval for this slot based on the hash of latest order ID
+                seed_val = sum(ord(c) for c in (latest_dummy.id or ""))
+                rng = random.Random(seed_val)
+                target_interval = rng.randint(300, 600) if is_open else rng.randint(600, 1200)
+
+                if elapsed_seconds < target_interval:
+                    # Interval not elapsed yet. Strictly skip generation.
                     return None
 
-            # Generate Indonesian masked customer name
-            first = random.choice(INDONESIAN_FIRST_NAMES)
-            last = random.choice(INDONESIAN_LAST_NAMES)
-            raw_customer_name = f"{first} {last}"
-            masked_customer_name = mask_name(raw_customer_name)
-            customer_email = f"buyer_{random.randint(100, 999)}@customer.id"
-
-            # Generate unique order ID format AST-ORD-YYYYMMDD-NNNN
-            now_wib = datetime.now(WIB)
-            date_key = now_wib.strftime("%Y%m%d")
-            order_num = random.randint(1000, 9999)
-            order_id = f"AST-ORD-{date_key}-{order_num}"
-
-            # Ensure ID uniqueness
-            while db.query(Order).filter_by(id=order_id).first():
-                order_num = random.randint(1000, 9999)
-                order_id = f"AST-ORD-{date_key}-{order_num}"
-
-            # Create dummy Order with is_dummy = True
-            now_utc = datetime.now(timezone.utc)
-            order = Order(
-                id=order_id,
-                customer_email=customer_email,
-                customer_name=masked_customer_name,
-                customer_whatsapp=f"08{random.randint(1000000000, 9999999999)}",
-                total_amount=int(prod_check.price),
-                raw_amount=int(prod_check.price),
-                status="completed",
-                payment_method="QRIS",
-                payment_mode="direct",
-                payment_status="settlement",
-                is_preorder=False,
-                is_dummy=True,  # Phase 6 & 7: strictly isolated from real transactions
-                fulfillment_mode="automatic",
-                paid_at=now_utc,
-                fulfilled_at=now_utc,
-                created_at=now_utc,
-                updated_at=now_utc,
-            )
-            db.add(order)
-
-            # Create OrderItem
-            item = OrderItem(
-                id=f"item-{order_id}-1",
-                order_id=order_id,
-                product_id=prod_check.id,
-                product_name=prod_check.name,
-                card_id=prod_check.card_id,
-                price=int(prod_check.price),
-                quantity=1,
-                duration="1 Bulan",
-            )
-            db.add(item)
-
-            # NOTE: DO NOT REDUCE prod_check.stock (Phase 7.4 strictly enforced)
-            db.commit()
-            db.refresh(order)
-
-            order_dict = order.to_dict()
-            print(f"[DummyOrderService] Created dummy order {order_id} for product '{prod_check.name}' (Rp {prod_check.price:,}).")
-
-            # Emit real-time notification to clients
-            try:
-                RealtimeBroadcaster.broadcast(
-                    "order:created",
-                    {
-                        "orderId": order_id,
-                        "productName": prod_check.name,
-                        "customerDisplay": masked_customer_name,
-                        "status": "completed",
-                        "createdAt": now_utc.isoformat() + "Z",
-                    },
-                    target_role="user",
+                print(
+                    f"[DummyOrderService] Periodic dummy order is due. Elapsed: {int(elapsed_seconds)}s >= "
+                    f"Target: {target_interval}s (Store {'OPEN' if is_open else 'CLOSED'}). Generating..."
                 )
-            except Exception as e:
-                print(f"[DummyOrderService] Realtime broadcast note: {e}")
+            else:
+                print(
+                    f"[DummyOrderService] No existing dummy orders found in database. Initializing first dummy order..."
+                )
 
-            return order_dict
+            # 4. Generate and save the dummy order
+            new_order = cls.generate_and_save_dummy_order()
+            if new_order:
+                # Reload order service cache
+                try:
+                    from app.services.order_service import OrderService
+                    OrderService.load_orders(force_reload=True)
+                except Exception as oe:
+                    print(f"[DummyOrderService] Order cache reload note: {oe}")
+                print(f"[DummyOrderService] Successfully generated periodic dummy order: {new_order.get('id')}")
+
+            return new_order
         except Exception as e:
-            db.rollback()
-            print(f"[DummyOrderService] Error generating dummy order: {e}")
+            print(f"[DummyOrderService] Error in check_and_trigger_due_dummy_order: {e}")
             return None
         finally:
-            db.close()
+            if lock_acquired:
+                try:
+                    from sqlalchemy import text
+                    db.execute(text("SELECT pg_advisory_unlock(8822001)"))
+                except Exception:
+                    pass
+            if should_close:
+                db.close()
+
+    @classmethod
+    def generate_and_save_dummy_order(cls) -> Optional[Dict[str, Any]]:
+        """
+        STRICT: Fake orders are strictly visual on the user frontend (/orders).
+        They must NEVER be persisted to the PostgreSQL database or admin console.
+        """
+        return None

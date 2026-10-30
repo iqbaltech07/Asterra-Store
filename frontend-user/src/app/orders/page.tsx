@@ -25,6 +25,7 @@ import {
   formatRelativeTime,
   parseSafeDate,
   clearLegacySyntheticTimelineStorage,
+  getDeterministicSimulationOrders,
 } from '@/lib/hooks/use-dynamic-orders';
 import { maskCustomerName } from '@/lib/utils/masking';
 import { useCatalogProducts } from '@/lib/hooks/use-catalog-products';
@@ -208,7 +209,7 @@ function GlobalOrdersContent() {
       const params = new URLSearchParams();
       params.append('public', 'true');
       params.append('page', '1');
-      params.append('limit', '50');
+      params.append('limit', '100');
       const res = await fetch('/api/v1/orders?' + params.toString());
       if (!res.ok) throw new Error('Gagal mengambil data pesanan publik');
       return res.json();
@@ -218,15 +219,54 @@ function GlobalOrdersContent() {
     refetchInterval: 15000, // Background sync every 15s keeps list updated across all browsers
   });
 
-  // Data pesanan publik langsung dari backend (transaksi riil + isolated dummy order terverifikasi)
+  // Data pesanan publik: transaksi riil dari database digabungkan dengan visual social-proof orders (hanya untuk tampilan user)
   const allOrders = useMemo<PublicOrder[]>(() => {
-    const ordersList = data?.data || [];
-    return [...ordersList].sort((a, b) => {
+    const rawList = data?.data || [];
+    const realOrders: PublicOrder[] = rawList.map((o) => {
+      const isDum = Boolean(
+        o.is_dummy ||
+        o.isDummy ||
+        o.source === 'simulation' ||
+        o.transaction_source === 'dummy'
+      );
+      return {
+        ...o,
+        order_status: (o.order_status || o.status || 'completed') as PublicOrder['order_status'],
+        is_dummy: isDum,
+        isDummy: isDum,
+        source: isDum ? 'simulation' : (o.source || 'direct'),
+        transaction_source: isDum ? 'dummy' : (o.transaction_source || 'real'),
+      };
+    });
+
+    // Visual social-proof orders (murni simulasi sisi klien untuk visual di user saja, tidak pernah masuk database/admin)
+    const visualOrders = getDeterministicSimulationOrders(now, 100);
+
+    const seenIds = new Set<string>();
+    const combined: PublicOrder[] = [];
+
+    // 1. Prioritaskan pesanan riil dari database
+    for (const ro of realOrders) {
+      if (ro.id && !seenIds.has(ro.id)) {
+        seenIds.add(ro.id);
+        combined.push(ro);
+      }
+    }
+
+    // 2. Tambahkan visual orders
+    for (const vo of visualOrders) {
+      if (vo.id && !seenIds.has(vo.id)) {
+        seenIds.add(vo.id);
+        combined.push(vo);
+      }
+    }
+
+    return combined.sort((a, b) => {
       const dateA = new Date(a.order_date || a.created_at || a.createdAt || '').getTime() || 0;
       const dateB = new Date(b.order_date || b.created_at || b.createdAt || '').getTime() || 0;
       return dateB - dateA;
     });
-  }, [data?.data]);
+  }, [data?.data, now]);
 
   // Filter status dan pencarian
   const filteredOrders = useMemo<PublicOrder[]>(() => {
@@ -501,6 +541,14 @@ function GlobalOrdersContent() {
                             <FontAwesomeIcon icon={faUserCheck} className="w-3 h-3 text-foreground-muted" />
                             <span>{maskCustomerName(order.customer_display) || 'Pelanggan'}</span>
                           </span>
+                          {(order.is_dummy || order.isDummy || order.source === 'simulation') && (
+                            <span
+                              className="text-[10px] px-2 py-0.5 rounded-full bg-surface-raised text-foreground-muted border border-border font-medium inline-flex items-center gap-1"
+                              title="Pesanan simulasi aktivitas sistem"
+                            >
+                              Simulasi Sistem
+                            </span>
+                          )}
                         </div>
                         <p className="text-xs font-semibold text-foreground">
                           {order.product_name}

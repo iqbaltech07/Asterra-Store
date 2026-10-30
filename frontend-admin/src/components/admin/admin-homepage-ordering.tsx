@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { AdminModalPortal } from '@/components/admin/admin-modal-portal';
 import {
   Flame,
   Star,
@@ -27,7 +28,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { resolveBrandLogo } from '@/components/ui/product-brand-icon';
+import { ProductAvatar, resolveBrandLogo } from '@/components/ui/product-avatar';
 
 type SectionKey = 'promo' | 'terlaris' | 'terbaru';
 
@@ -123,67 +124,7 @@ export interface AdminProductGroup {
 }
 
 export function ProductBrandLogo({ name, className = 'w-10 h-10' }: { name: string; className?: string }) {
-  const [hasError, setHasError] = useState(false);
-  const n = (name || '').toLowerCase();
-
-  // 1. Game items: jangan di-fetch dulu, gunakan badge Gamepad
-  if (n.includes('mobile legend') || n.includes('mlbb') || n.includes('pubg')) {
-    return (
-      <div className={`${className} bg-amber-500/10 border border-amber-500/20 text-amber-500 rounded-xl flex items-center justify-center p-1.5 shadow-2xs shrink-0`}>
-        <Gamepad2 className="w-5 h-5" />
-      </div>
-    );
-  }
-
-  const logoUrl = resolveBrandLogo(name);
-
-  if (logoUrl && !hasError) {
-    // Transparent glyphs that look best on manual white background with padding:
-    const isTransparentLogo = n.includes('chatgpt') || n.includes('openai') || n.includes('gemini') || n.includes('google') || n.includes('youtube');
-
-    return (
-      <div className={`${className} bg-white border-border/80 rounded-xl border flex items-center justify-center shadow-2xs shrink-0 overflow-hidden`}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={logoUrl}
-          alt={name}
-          className={`w-full h-full ${isTransparentLogo ? 'object-contain p-2' : 'object-cover'}`}
-          draggable={false}
-          onError={() => setHasError(true)}
-        />
-      </div>
-    );
-  }
-
-  if (n.includes('youtube')) {
-    return (
-      <div className={`${className} bg-[#FF0000] rounded-xl border border-border/80 flex items-center justify-center p-1.5 shadow-2xs shrink-0 text-white font-black text-xs`}>
-        <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
-      </div>
-    );
-  }
-
-  if (n.includes('claude')) {
-    return (
-      <div className={`${className} bg-[#D97706]/15 rounded-xl border border-[#D97706]/30 flex items-center justify-center p-1 shadow-2xs shrink-0 text-[#D97706] font-black text-xs`}>
-        Claude
-      </div>
-    );
-  }
-
-  if (n.includes('k-vision') || n.includes('nex') || n.includes('vision') || n.includes('orange tv')) {
-    return (
-      <div className={`${className} bg-[#121A2A] rounded-xl border border-border/80 flex items-center justify-center p-1.5 shadow-2xs shrink-0 text-[#C96F55]`}>
-        <Tv className="w-5 h-5" />
-      </div>
-    );
-  }
-
-  return (
-    <div className={`${className} bg-[#C96F55]/10 rounded-xl border border-[#C96F55]/20 flex items-center justify-center p-1.5 shadow-2xs shrink-0 text-[#C96F55]`}>
-      <Layers className="w-5 h-5" />
-    </div>
-  );
+  return <ProductAvatar name={name} className={className} />;
 }
 
 const ADMIN_PRODUCT_DEFINITIONS: Array<{
@@ -1106,6 +1047,7 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
 
       {/* Modal Picker: Add Product to Manual Ordering */}
       {isAddPickerOpen && (
+        <AdminModalPortal>
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200">
           <div className="bg-white border border-[#E2E8F0] rounded-2xl w-full max-w-3xl max-h-[calc(100dvh-40px)] flex flex-col shadow-2xl overflow-hidden box-border animate-in zoom-in-95 duration-200">
             {/* Sticky Header */}
@@ -1327,6 +1269,7 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
             </div>
           </div>
         </div>
+        </AdminModalPortal>
       )}
     </div>
   );

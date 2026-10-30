@@ -9,8 +9,11 @@ export interface ProductCardItem {
   description?: string;
   shortDescription?: string;
   logoUrl?: string;
+  imageUrl?: string;
   bannerUrl?: string;
   badge?: string;
+  badgeLabel?: string;
+  categoryId?: string;
   categoryName?: string;
   minPrice: number;
   stockStatus: 'in_stock' | 'out_of_stock' | 'low_stock' | 'ready';

@@ -8,7 +8,7 @@ class FinanceService:
     def load_orders(cls) -> List[Dict[str, Any]]:
         """Authoritative loader sourcing from OrderService (PostgreSQL + local sync)."""
         from app.services.order_service import OrderService
-        return OrderService.load_orders()
+        return OrderService.load_real_orders()
 
     @classmethod
     def get_profit_distribution(cls) -> Dict[str, Any]:
@@ -20,6 +20,17 @@ class FinanceService:
             catalog_products = {str(p.get("id")): p for p in CatalogService.load_products()}
         except Exception as e:
             print(f"[FinanceService] Note loading catalog products: {e}")
+
+        db_ledgers = {}
+        try:
+            from app.core.database import SessionLocal
+            from app.models.profit_ledger import ProfitLedger
+            if SessionLocal:
+                with SessionLocal() as db_sess:
+                    for pl in db_sess.query(ProfitLedger).all():
+                        db_ledgers[str(pl.order_id).strip().upper()] = pl
+        except Exception as e:
+            print(f"[FinanceService] Note loading profit ledgers: {e}")
 
         total_orders = sum(
             1 for o in orders 
@@ -86,29 +97,40 @@ class FinanceService:
 
             net_rev = max(0.0, selling_price - discount)
 
-            # Upstream cost of goods (COGS): lookup providerPrice from catalog
-            items = o.get("items") or []
-            cog = 0.0
-            for it in items:
-                p_id = str(it.get("productId") or it.get("product_id") or "")
-                cat_p = catalog_products.get(p_id)
-                qty = max(1, int(it.get("quantity", 1)))
-                if cat_p and cat_p.get("providerPrice") is not None and float(cat_p.get("providerPrice")) > 0:
-                    cog += float(cat_p["providerPrice"]) * qty
-                elif cat_p and cat_p.get("provider_price") is not None and float(cat_p.get("provider_price")) > 0:
-                    cog += float(cat_p["provider_price"]) * qty
-                else:
-                    it_price = float(it.get("price") or it.get("unit_price") or 0.0)
-                    cog += round(it_price * qty * 0.65) if it_price > 0 else 0.0
+            ledger_record = db_ledgers.get(clean_oid)
 
-            if not items and net_rev > 0:
-                cog = round(net_rev * 0.65)
+            # Upstream cost of goods (COGS): lookup authoritative ledger or providerPrice from catalog
+            items = o.get("items") or []
+            if ledger_record and getattr(ledger_record, "cost_of_goods", None) is not None:
+                cog = float(ledger_record.cost_of_goods)
+            else:
+                cog = 0.0
+                for it in items:
+                    p_id = str(it.get("productId") or it.get("product_id") or "")
+                    cat_p = catalog_products.get(p_id)
+                    qty = max(1, int(it.get("quantity", 1)))
+                    if cat_p and cat_p.get("providerPrice") is not None and float(cat_p.get("providerPrice")) > 0:
+                        cog += float(cat_p["providerPrice"]) * qty
+                    elif cat_p and cat_p.get("provider_price") is not None and float(cat_p.get("provider_price")) > 0:
+                        cog += float(cat_p["provider_price"]) * qty
+                    else:
+                        it_price = float(it.get("price") or it.get("unit_price") or 0.0)
+                        cog += round(it_price * qty * 0.65) if it_price > 0 else 0.0
+
+                if not items and net_rev > 0:
+                    cog = round(net_rev * 0.65)
 
             # Payment gateway fee: 0 for manual bank/e-wallet transfer, 0.7% for automated QRIS/payment gateway
-            pay_mode = str(o.get("paymentMode") or o.get("payment_mode") or "").lower()
-            pay_method = str(o.get("paymentMethod") or o.get("payment_method") or "").lower()
-            is_manual = (pay_mode == "manual") or pay_method.startswith("manual_")
-            fee = 0.0 if is_manual else round(net_rev * 0.007)
+            if ledger_record and getattr(ledger_record, "payment_fee", None) is not None:
+                fee = float(ledger_record.payment_fee)
+            else:
+                pay_mode = str(o.get("paymentMode") or o.get("payment_mode") or "").lower()
+                pay_method = str(o.get("paymentMethod") or o.get("payment_method") or "").lower()
+                is_manual = (pay_mode == "manual") or pay_method.startswith("manual_")
+                fee = 0.0 if is_manual else round(net_rev * 0.007)
+
+            has_ref = bool(o.get("referralCode") or o.get("referral_code") or o.get("salesPartnerId") or o.get("sales_partner_id"))
+            has_recruiter = bool(o.get("recruiterPartnerId") or o.get("recruiter_partner_id"))
 
             if is_cancelled:
                 tx_profit = 0.0
@@ -120,12 +142,21 @@ class FinanceService:
                 reserve = 0.0
                 entry_status = "reversed"
                 comm_rate = 0.0
+            elif ledger_record:
+                tx_profit = float(ledger_record.transaction_profit)
+                sales_comm = float(ledger_record.sales_commission or 0.0)
+                comm_rate = float(ledger_record.sale_commission_rate or 0.0) * 100.0
+                recruit_bonus = float(ledger_record.recruitment_bonus or 0.0)
+                distributable = float(ledger_record.profit_distribution or 0.0)
+                ceo_share = float(ledger_record.ceo_share or 0.0)
+                coo_share = float(ledger_record.coo_share or 0.0)
+                reserve = float(ledger_record.business_reserve or 0.0)
+                entry_status = ledger_record.status or "available"
             else:
                 tx_profit = max(0.0, net_rev - cog - fee)
 
                 from app.services.referral_profit_service import ReferralProfitService
 
-                has_ref = bool(o.get("referralCode") or o.get("referral_code") or o.get("salesPartnerId") or o.get("sales_partner_id"))
                 p_ref = str(o.get("referralCode") or o.get("referral_code") or "").strip().upper()
                 p_id_str = str(o.get("salesPartnerId") or o.get("sales_partner_id") or "").strip().upper()
                 p_succ_orders = max(
@@ -135,7 +166,6 @@ class FinanceService:
                 is_vip_partner = (p_succ_orders >= 50 or float(o.get("commissionRate") or 0) >= 20.0)
 
                 campaign_override = float(o.get("campaignRate") or 0) if (o.get("campaignRate") or camp_disc > 0) else None
-                has_recruiter = bool(o.get("recruiterPartnerId") or o.get("recruiter_partner_id"))
 
                 alloc = ReferralProfitService.calculate_profit_allocation(
                     transaction_profit=tx_profit,
@@ -156,6 +186,7 @@ class FinanceService:
 
                 entry_status = "available"
 
+            if is_completed:
                 # Realized metrics ONLY accumulated for completed orders:
                 total_gross_revenue += selling_price
                 total_discounts += discount
@@ -178,14 +209,12 @@ class FinanceService:
 
             direct_cost = cog + fee
 
-            from app.services.partner_service import mask_customer_name
             c_raw = o.get("customerName") or o.get("customer_name")
-            c_name_masked = mask_customer_name(c_raw) if c_raw else "Pelanggan"
             entries.append({
                 "id": f"ledg-{o.get('id', str(idx))}",
                 "orderId": o.get("id"),
                 "customerEmail": o.get("customerEmail") or o.get("customer_email") or "buyer@asterra.store",
-                "customerName": c_name_masked,
+                "customerName": c_raw or "Pelanggan",
                 "productId": first_product_id,
                 "productNames": product_names,
                 "sellingPrice": selling_price,

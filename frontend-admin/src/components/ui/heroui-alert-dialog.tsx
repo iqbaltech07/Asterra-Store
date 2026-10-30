@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faXmark,
@@ -115,9 +116,9 @@ export function AlertDialogBackdrop({
     };
   }, [isOpen]);
 
-  if (!isOpen) return null;
+  if (!isOpen || typeof document === 'undefined') return null;
 
-  return (
+  return createPortal(
     <div
       className={
         className ||
@@ -125,7 +126,8 @@ export function AlertDialogBackdrop({
       }
     >
       {children}
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -137,7 +139,10 @@ export function AlertDialogContainer({
   className?: string;
 }) {
   const { setIsOpen } = useAlertDialog();
-  return (
+
+  if (typeof document === 'undefined') return null;
+
+  return createPortal(
     <div
       className={
         className ||
@@ -150,7 +155,8 @@ export function AlertDialogContainer({
       }}
     >
       {children}
-    </div>
+    </div>,
+    document.body
   );
 }
 

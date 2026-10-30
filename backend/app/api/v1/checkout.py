@@ -93,6 +93,7 @@ def mask_order_for_public(order: dict, is_owner_or_admin: bool, is_admin: bool =
 
     # STRICT PUBLIC PROJECTION: Prevent leakage of customer email, phone, notes, payment info, prices, tokens, or credentials
     if not is_owner_or_admin:
+        is_dum = bool(o.get("is_dummy") or o.get("isDummy"))
         return {
             "id": raw_id,
             "raw_id": raw_id,
@@ -107,6 +108,10 @@ def mask_order_for_public(order: dict, is_owner_or_admin: bool, is_admin: bool =
             "customer_display": customer_display,
             "process_estimate": "Estimasi 10-30 Menit" if st == "processing" else "Garansi Resmi",
             "warranty_info": "Garansi Resmi" if st == "completed" else None,
+            "is_dummy": is_dum,
+            "isDummy": is_dum,
+            "source": "simulation" if is_dum else "direct",
+            "transaction_source": "dummy" if is_dum else "real",
         }
 
     # For owner or admin, retain authorized operational fields
@@ -427,6 +432,14 @@ def get_orders(
             },
             "message": "Silakan cantumkan email atau nomor WhatsApp untuk melacak pesanan Anda.",
         }
+
+    # In public view, opportunistically check if a scheduled dummy order is due
+    if is_public:
+        try:
+            from app.services.dummy_order_service import DummyOrderService
+            DummyOrderService.check_and_trigger_due_dummy_order()
+        except Exception as de:
+            print(f"[OrdersEndpoint] Opportunistic dummy order check note: {de}")
 
     result = OrderService.get_orders(
         status=status,
@@ -751,3 +764,27 @@ async def trigger_cancel_expired_orders(request: Request):
         "data": result,
     }
 
+
+
+@router.api_route("/internal/cron/dummy-order", methods=["GET", "POST"], tags=["Internal"])
+def cron_dummy_order(request: Request):
+    """
+    Dedicated endpoint for scheduled / cron execution of dummy orders.
+    Can be invoked by Vercel Cron, external webhook schedulers, or admin diagnostics.
+    Adheres strictly to store operating hours (300-600s open, 600-1200s closed).
+    """
+    from datetime import datetime, timezone
+    from app.services.dummy_order_service import DummyOrderService
+    from app.services.store_operating_hours_service import StoreOperatingHoursService
+
+    store_status = StoreOperatingHoursService.get_current_status()
+    is_open = bool(store_status.get("isOpen", False) or store_status.get("is_open", False))
+    result = DummyOrderService.check_and_trigger_due_dummy_order()
+
+    return {
+        "status": "ok",
+        "generated": bool(result),
+        "order_id": result.get("id") if result else None,
+        "is_open": is_open,
+        "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
+    }

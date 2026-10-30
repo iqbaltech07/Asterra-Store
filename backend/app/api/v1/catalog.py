@@ -87,7 +87,7 @@ def get_product_by_id(product_id: str, request: Request, response: Response):
     cached_prod = cache.get("catalog", cache_key)
     if cached_prod is None:
         product = CatalogService.get_product_by_id(product_id)
-        if not product:
+        if not product or product.get("status") != "active" or (product.get("cardStatus") and product.get("cardStatus") != "active"):
             raise HTTPException(status_code=404, detail="Produk tidak ditemukan")
         cached_prod = sanitize_public_product(product)
         cache.set("catalog", cache_key, cached_prod, ttl=120)
@@ -862,7 +862,7 @@ def get_cards(
 @router.get("/cards/{id_or_slug}", tags=["Product Cards"])
 def get_card_by_id_or_slug(id_or_slug: str):
     card = CardService.get_card_by_id_or_slug(id_or_slug, include_catalogs=True)
-    if not card:
+    if not card or card.get("status") != "active":
         raise HTTPException(status_code=404, detail="Card Produk tidak ditemukan.")
     return {
         "success": True,

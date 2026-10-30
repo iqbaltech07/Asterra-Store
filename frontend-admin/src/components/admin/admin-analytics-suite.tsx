@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { AdminModalPortal } from '@/components/admin/admin-modal-portal';
 import {
   TrendingUp,
   TrendingDown,
@@ -765,6 +766,7 @@ export function AdminAnalyticsSuite({ activeTab, onNotify }: AdminAnalyticsSuite
 
         {/* Product Detail Modal */}
         {selectedProductDetail && (
+          <AdminModalPortal>
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200">
             <div className="bg-white border border-[#E2E8F0] rounded-2xl w-full max-w-md max-h-[calc(100dvh-40px)] flex flex-col shadow-2xl overflow-hidden box-border animate-in zoom-in-95 duration-200">
               {/* Sticky Header */}
@@ -830,6 +832,7 @@ export function AdminAnalyticsSuite({ activeTab, onNotify }: AdminAnalyticsSuite
               </div>
             </div>
           </div>
+          </AdminModalPortal>
         )}
       </div>
     );

@@ -85,16 +85,41 @@ export function ProductDetailClient({ id, initialData, initialStoreStatus }: Pro
   const { user: legacyUser } = useAuthStore();
   const isAuthenticated = Boolean(session?.user || legacyUser);
 
+  // Synchronize React Query cache whenever fresh initialData arrives from Server Component
+  useEffect(() => {
+    if (initialData) {
+      queryClient.setQueryData(['product', id], { success: true, data: initialData });
+    }
+  }, [id, initialData, queryClient]);
+
   const { data, isLoading, error } = useQuery<{ success: boolean; data: ProductDetailData }>({
     queryKey: ['product', id],
     queryFn: async () => {
-      const res = await fetch(`/api/v1/products/${id}`);
-      if (!res.ok) throw new Error('Produk tidak ditemukan');
-      return res.json();
+      // 1. Try fetching card first if id is a brand group or slug
+      try {
+        const cardRes = await fetch(`/api/v1/cards/${id}`, { cache: 'no-store' });
+        if (cardRes.ok) {
+          const cardJson = await cardRes.json();
+          if (cardJson?.data && initialData) {
+            return { success: true, data: initialData };
+          }
+        }
+      } catch {
+        // Continue to product fetch
+      }
+
+      // 2. Fetch specific product
+      const res = await fetch(`/api/v1/products/${id}`, { cache: 'no-store' });
+      if (!res.ok) {
+        if (initialData) return { success: true, data: initialData };
+        throw new Error('Produk tidak ditemukan');
+      }
+      const json = await res.json();
+      return json;
     },
     initialData: initialData ? { success: true, data: initialData } : undefined,
-    staleTime: 30 * 1000,
-    gcTime: 30 * 60 * 1000,
+    staleTime: 0,
+    gcTime: 5 * 60 * 1000,
     refetchOnWindowFocus: true,
   });
 

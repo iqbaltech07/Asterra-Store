@@ -10,7 +10,7 @@ from app.services.catalog_service import CatalogService
 class AnalyticsService:
     @classmethod
     def get_dashboard_overview(cls) -> Dict[str, Any]:
-        orders = OrderService.load_orders()
+        orders = OrderService.load_real_orders()
         profit_data = FinanceService.get_profit_distribution()
         profit_summary = profit_data.get("summary", {})
         partners = PartnerService.get_all_partners()
@@ -162,13 +162,13 @@ class AnalyticsService:
             amt = float(o.get("totalAmount") or o.get("rawAmount") or 0.0)
             items = o.get("items") or []
             prod_name = items[0].get("productName") or items[0].get("product_name") if items else "Layanan Digital"
-            from app.services.partner_service import mask_customer_name
             c_raw = o.get("customerName") or o.get("customer_name")
-            c_display = mask_customer_name(c_raw) if c_raw else "Pelanggan"
+            c_display = c_raw if c_raw else "Pelanggan"
             recent_txs.append({
                 "id": o.get("id"),
                 "orderId": o.get("id"),
                 "customer": c_display,
+                "customerName": c_raw or "Pelanggan",
                 "customerEmail": o.get("customerEmail") or o.get("customer_email") or "",
                 "whatsapp": o.get("customerWhatsapp") or o.get("customer_whatsapp") or "",
                 "product": prod_name,
@@ -214,7 +214,7 @@ class AnalyticsService:
 
     @classmethod
     def get_analytics_suite_data(cls, period: str = "30d") -> Dict[str, Any]:
-        orders = OrderService.load_orders()
+        orders = OrderService.load_real_orders()
         profit_data = FinanceService.get_profit_distribution()
         profit_summary = profit_data.get("summary", {})
         partners = PartnerService.get_all_partners()
@@ -586,7 +586,7 @@ class AnalyticsService:
 
     @classmethod
     def get_finance_summary(cls) -> Dict[str, Any]:
-        orders = OrderService.load_orders()
+        orders = OrderService.load_real_orders()
         profit_data = FinanceService.get_profit_distribution()
         summary = profit_data.get("summary", {})
         ledger_entries = profit_data.get("entries", [])
@@ -741,7 +741,7 @@ class AnalyticsService:
 
     @classmethod
     def get_customers(cls) -> List[Dict[str, Any]]:
-        orders = OrderService.load_orders()
+        orders = OrderService.load_real_orders()
         customer_map = {}
 
         for o in orders:

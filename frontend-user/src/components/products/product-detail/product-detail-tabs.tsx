@@ -73,20 +73,6 @@ export function ProductDetailTabs({
                 {variantDetails.desc}
               </p>
             </div>
-
-            <div className="pt-4 sm:pt-6 border-t border-[rgba(18,26,42,0.08)]">
-              <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#121A2A]/70 mb-3 sm:mb-3.5">
-                Fitur Unggulan Yang Anda Dapatkan
-              </h3>
-              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
-                {variantDetails.features.map((feature, idx) => (
-                  <li key={idx} data-gsap="product-feature" className="flex items-start gap-2 text-xs sm:text-sm text-[#121A2A]/85">
-                    <FontAwesomeIcon icon={faCircleCheck} className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#C96F55] shrink-0 mt-0.5" />
-                    <span>{feature}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
           </div>
         )}
 

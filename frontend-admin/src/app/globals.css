@@ -207,12 +207,12 @@ body {
   }
   100% {
     opacity: 1;
-    transform: translateY(0);
+    transform: none;
   }
 }
 
 .animate-page-enter {
-  animation: pageEditorialEnter 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: pageEditorialEnter 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes tabGlideIn {
@@ -222,12 +222,12 @@ body {
   }
   100% {
     opacity: 1;
-    transform: translateY(0);
+    transform: none;
   }
 }
 
 .animate-tab-glide {
-  animation: tabGlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: tabGlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes fadeUp {

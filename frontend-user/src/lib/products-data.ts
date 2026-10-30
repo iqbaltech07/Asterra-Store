@@ -15,6 +15,12 @@ export interface ProductItem {
   imageUrl: string;
   popular?: boolean;
   brand?: string;
+  cardId?: string;
+  cardName?: string;
+  cardSlug?: string;
+  card_id?: string;
+  card_name?: string;
+  card_slug?: string;
   providerCode?: string;
   provider_code?: string;
   guaranteeTitle?: string;
