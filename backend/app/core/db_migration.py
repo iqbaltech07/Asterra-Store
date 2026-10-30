@@ -101,8 +101,8 @@ def run_migrations():
         UPDATE product_cards SET base_sold_count = CASE
             WHEN slug = 'netflix' THEN 38
             WHEN slug = 'spotify' THEN 37
-            WHEN slug = 'google-gemini' THEN 34
-            WHEN slug = 'capcut' THEN 34
+            WHEN slug = 'google-gemini' THEN 33
+            WHEN slug = 'capcut' THEN 33
             WHEN slug = 'youtube' THEN 32
             WHEN slug = 'mobile-legends' THEN 30
             WHEN slug = 'canva' THEN 29

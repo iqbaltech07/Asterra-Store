@@ -306,8 +306,8 @@ export default function HomePage() {
             slug: card.slug,
             category: card.categoryName || 'Layanan Digital',
             categoryTag,
-            soldCount: card.soldCount ?? 0,
-            targetMax: card.soldCount ?? 0,
+            soldCount: Math.min(40, Math.max(20, card.soldCount ?? 20)),
+            targetMax: Math.min(40, Math.max(20, card.soldCount ?? 20)),
             rating: String(card.rating || '5.0'),
             badgeLabel:
               activeCategory === 'promo'
@@ -348,8 +348,8 @@ export default function HomePage() {
             slug: target.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
             category: target.cat,
             categoryTag: target.tag,
-            soldCount: target.soldCount,
-            targetMax: target.targetMax,
+            soldCount: Math.min(40, Math.max(20, target.soldCount ?? 20)),
+            targetMax: Math.min(40, Math.max(20, target.targetMax ?? 20)),
             rating: target.rating,
             badgeLabel:
               activeCategory === 'promo'
@@ -492,7 +492,14 @@ export default function HomePage() {
   // Product Looping Showcase: Curated list of popular accounts that stays completely independent of the selector
   const showcaseApps = useMemo(() => {
     const showcaseNames = ['Canva', 'ChatGPT', 'Netflix', 'YouTube', 'CapCut', 'Google Gemini', 'Spotify', 'Vidio', 'Alight Motion', 'iQIYI'];
+    const dbCards = cardsResponse?.data || [];
     const mapped = showcaseNames.map((name) => {
+      const matchedCard = dbCards.find((c) => {
+        const cName = c.name.toLowerCase();
+        const tName = name.toLowerCase();
+        return cName.includes(tName) || tName.includes(cName);
+      });
+
       const conf = appConfigurations.find((a) => a.name === name) || {
         name,
         match: (t: string) => t.includes(name.toLowerCase()),
@@ -503,29 +510,38 @@ export default function HomePage() {
       };
 
       const items = allProducts.filter((p) => {
+        if (matchedCard && ((p as any).cardId === matchedCard.id || (p as any).card_id === matchedCard.id)) return true;
         const text = `${p.name} ${(p as unknown as { id?: string }).id || ''}`.toLowerCase();
         return conf.match(text);
       });
 
       const activePrices = items.map((p) => p.price).filter((p) => p > 0);
-      const minPrice = activePrices.length > 0 ? Math.min(...activePrices) : 0;
+      const minPrice = matchedCard && matchedCard.minPrice > 0
+        ? matchedCard.minPrice
+        : (activePrices.length > 0 ? Math.min(...activePrices) : 0);
 
       const isOutOfStock =
-        items.length === 0 ||
+        matchedCard ? (matchedCard.stockStatus === 'out_of_stock' || matchedCard.isOutOfStock || minPrice <= 0) :
+        (items.length === 0 ||
         items.every((p) => {
           const isZeroStock = p.stock !== undefined && p.stock <= 0;
           const isEmpty = p.providerStatus === 'empty';
           const isUnavailable = p.status === 'out_of_stock' || p.status === 'archived';
           return isZeroStock || isEmpty || isUnavailable;
-        });
+        }));
+
+      const finalSoldCount = matchedCard?.soldCount !== undefined
+        ? Math.min(40, Math.max(20, matchedCard.soldCount))
+        : Math.min(40, Math.max(20, conf.soldCount));
 
       return {
-        name: conf.name,
-        slug: conf.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
-        category: conf.cat,
+        id: matchedCard?.id || conf.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+        name: matchedCard?.name || conf.name,
+        slug: matchedCard?.slug || conf.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+        category: matchedCard?.categoryName || conf.cat,
         categoryTag: conf.tag,
-        soldCount: conf.soldCount,
-        rating: conf.rating,
+        soldCount: finalSoldCount,
+        rating: String(matchedCard?.rating || conf.rating || '5.0'),
         items,
         minPrice,
         isOutOfStock,
@@ -534,7 +550,7 @@ export default function HomePage() {
 
     // Only include applications that have real items
     return mapped.filter((app) => app.items.length > 0 && app.minPrice > 0);
-  }, [allProducts, appConfigurations, now]);
+  }, [allProducts, appConfigurations, now, cardsResponse]);
 
   const handleOpenQuickView = (app: ApplicationGroupItem) => {
     const minPrice = app.minPrice;

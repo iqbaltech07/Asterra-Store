@@ -101,7 +101,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     cardData = await fetchCardByIdOrSlug(parentCardId);
   }
 
-  let familyData = cardData && Array.isArray(cardData.catalogs) && cardData.catalogs.length > 0
+  const familyData = cardData && Array.isArray(cardData.catalogs) && cardData.catalogs.length > 0
     ? {
         name: cardData.name,
         category: cardData.category || { id: cardData.categoryId || 'cat-digital', name: cardData.categoryName || 'Layanan Digital' },
@@ -208,7 +208,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
       category: cardData.category || { id: cardData.categoryId || 'cat-digital', name: cardData.categoryName || 'Layanan Digital' },
       imageUrl: cardData.logoUrl || cardData.imageUrl || '/images/default-product-banner.png',
       rating: String(cardData.rating || '5.0'),
-      soldCount: cardData.soldCount || 0,
+      soldCount: Math.min(40, Math.max(20, cardData.soldCount || 30)),
       description: cardData.description || `Akses resmi dan bergaransi penuh untuk ${cardData.name} di Asterra Store dengan konfirmasi otomatis dan dukungan CS 24 jam.`,
       features: ['Garansi Penuh 100% Penggantian', 'Aktivasi Instan 1 - 15 Menit', 'Dukungan CS 24 Jam'],
       variants: parsedVariants,
