@@ -11,7 +11,6 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { formatRupiah } from '@/lib/utils/format';
-import { maskCustomerName } from '@/lib/utils/masking';
 
 export type AdminToastType = 'order_created' | 'payout_requested';
 
@@ -191,7 +190,7 @@ export const AdminToastCard: React.FC<AdminToastCardProps> = ({
                   {toast.metadata.customerName && (
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 text-[11px] font-medium text-slate-700 truncate max-w-[150px]">
                       <User className="w-3 h-3 text-slate-400 shrink-0" />
-                      <span className="truncate">{maskCustomerName(toast.metadata.customerName)}</span>
+                      <span className="truncate">{toast.metadata.customerName}</span>
                     </span>
                   )}
                   {toast.metadata.productName && (

@@ -151,7 +151,7 @@ export function BrandLogoSelector({
   const isCurrentValueSelected = Boolean(value);
 
   return (
-    <div className="space-y-3 bg-surface-raised/70 border border-border/80 rounded-xl p-3.5">
+    <div className="space-y-3 bg-slate-50 border border-slate-200/90 rounded-xl p-3.5">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -159,10 +159,10 @@ export function BrandLogoSelector({
             <Sparkles className="w-3.5 h-3.5" />
           </div>
           <div>
-            <label className="text-xs font-bold text-foreground block">
+            <label className="text-xs font-bold text-[#0F172A] block">
               Logo Resmi Brand (Brandfetch API)
             </label>
-            <span className="text-[10px] text-foreground-muted">
+            <span className="text-[10px] text-[#64748B]">
               Pilih icon resmi resolusi tinggi otomatis tersimpan ke data produk
             </span>
           </div>
@@ -171,7 +171,7 @@ export function BrandLogoSelector({
         <button
           type="button"
           onClick={() => setIsCustomUrlMode(!isCustomUrlMode)}
-          className="text-[11px] text-primary hover:underline font-medium"
+          className="text-[11px] text-primary hover:underline font-medium cursor-pointer"
         >
           {isCustomUrlMode ? '← Cari Brandfetch' : 'Input URL Manual'}
         </button>
@@ -186,14 +186,14 @@ export function BrandLogoSelector({
               placeholder="https://cdn.brandfetch.io/... atau URL gambar"
               value={customUrl}
               onChange={(e) => setCustomUrl(e.target.value)}
-              className="text-xs h-9 bg-surface border-border flex-1 font-mono"
+              className="text-xs h-9 bg-white border-slate-300 flex-1 font-mono text-[#0F172A]"
             />
             <Button type="submit" size="sm" className="h-9 text-xs px-3 font-semibold">
               Terapkan
             </Button>
           </div>
-          <p className="text-[10px] text-foreground-muted">
-            Format yang didukung: WebP, PNG, SVG (disarankan menggunakan CDN Brandfetch).
+          <p className="text-[10px] text-[#64748B]">
+            Format yang didukung: WebP, PNG, SVG (disarankan menggunakan CDN Brandfetch atau path /images/brand/...).
           </p>
         </form>
       ) : (
@@ -201,14 +201,14 @@ export function BrandLogoSelector({
         <div className="space-y-2.5">
           {/* Search Bar */}
           <div className="relative">
-            <Search className="w-3.5 h-3.5 text-foreground-muted absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-3.5 h-3.5 text-[#64748B] absolute left-3 top-1/2 -translate-y-1/2" />
             <Input
               type="text"
               placeholder="Cari brand (contoh: Canva, Netflix, Spotify, ChatGPT, Gemini)..."
               value={query}
               onChange={(e) => handleQueryChange(e.target.value)}
               disabled={disabled}
-              className="pl-8 pr-8 text-xs h-9 bg-surface border-border"
+              className="pl-8 pr-8 text-xs h-9 bg-white border-slate-300 text-[#0F172A]"
             />
             {isSearching ? (
               <RefreshCw className="w-3.5 h-3.5 text-primary animate-spin absolute right-3 top-1/2 -translate-y-1/2" />
@@ -219,7 +219,7 @@ export function BrandLogoSelector({
                   setQuery('');
                   setResults([]);
                 }}
-                className="w-3.5 h-3.5 text-foreground-muted hover:text-foreground absolute right-3 top-1/2 -translate-y-1/2"
+                className="w-3.5 h-3.5 text-[#64748B] hover:text-[#0F172A] absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -229,7 +229,7 @@ export function BrandLogoSelector({
           {/* Quick Popular Brand Pills */}
           {!query && (
             <div className="space-y-1.5">
-              <span className="text-[10px] text-foreground-muted font-medium block">
+              <span className="text-[10px] text-[#64748B] font-medium block">
                 Brand Populer Cepat:
               </span>
               <div className="flex flex-wrap gap-1.5">
@@ -241,7 +241,7 @@ export function BrandLogoSelector({
                       setQuery(b.query);
                       performSearch(b.query);
                     }}
-                    className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-surface hover:bg-primary/10 hover:text-primary border border-border transition-colors text-foreground-muted"
+                    className="px-2.5 py-1 rounded-full text-[10px] font-medium bg-white hover:bg-primary/10 hover:text-primary border border-slate-200 transition-colors text-slate-600 shadow-2xs cursor-pointer"
                   >
                     {b.name}
                   </button>
@@ -252,7 +252,7 @@ export function BrandLogoSelector({
 
           {/* Search Results Dropdown / Grid */}
           {results.length > 0 && (
-            <div className="space-y-1.5 max-h-56 overflow-y-auto p-1.5 bg-surface border border-primary/30 rounded-xl shadow-lg dark-scrollbar animate-in fade-in slide-in-from-top-1">
+            <div className="space-y-1.5 max-h-56 overflow-y-auto p-1.5 bg-white border border-primary/30 rounded-xl shadow-lg dark-scrollbar animate-in fade-in slide-in-from-top-1">
               <span className="text-[10px] font-semibold text-primary px-2 block">
                 Hasil Pencarian Brandfetch ({results.length}):
               </span>
@@ -267,11 +267,11 @@ export function BrandLogoSelector({
                       className={`p-2 rounded-lg border text-left flex items-center justify-between gap-2.5 transition-all cursor-pointer ${
                         isSelected
                           ? 'border-primary bg-primary/10 shadow-xs'
-                          : 'border-border/80 bg-surface-raised/40 hover:bg-surface-raised hover:border-primary/40'
+                          : 'border-slate-200 bg-slate-50 hover:bg-slate-100 hover:border-primary/40'
                       }`}
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="w-8 h-8 rounded-lg bg-white border border-slate-200/90 p-1 flex items-center justify-center shrink-0 shadow-2xs overflow-hidden">
+                        <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 p-1 flex items-center justify-center shrink-0 shadow-2xs overflow-hidden">
                           {brand.icon ? (
                             /* eslint-disable-next-line @next/next/no-img-element */
                             <img
@@ -285,10 +285,10 @@ export function BrandLogoSelector({
                           )}
                         </div>
                         <div className="min-w-0 flex-1 leading-tight">
-                          <span className="text-xs font-bold text-foreground truncate block">
+                          <span className="text-xs font-bold text-[#0F172A] truncate block">
                             {brand.name}
                           </span>
-                          <span className="text-[10px] text-foreground-muted truncate block">
+                          <span className="text-[10px] text-[#64748B] truncate block">
                             {brand.domain}
                           </span>
                         </div>
@@ -315,12 +315,12 @@ export function BrandLogoSelector({
 
           {/* Empty search results notice */}
           {hasSearched && !isSearching && results.length === 0 && query && (
-            <div className="p-3 bg-surface rounded-lg border border-border text-center text-[11px] text-foreground-muted space-y-1">
+            <div className="p-3 bg-white rounded-lg border border-slate-200 text-center text-[11px] text-[#64748B] space-y-1">
               <p>Tidak menemukan brand resmi untuk &quot;{query}&quot;.</p>
               <button
                 type="button"
                 onClick={() => setIsCustomUrlMode(true)}
-                className="text-primary hover:underline font-semibold"
+                className="text-primary hover:underline font-semibold cursor-pointer"
               >
                 Gunakan URL Logo Kustom
               </button>
@@ -331,7 +331,7 @@ export function BrandLogoSelector({
 
       {/* Active Selected Logo Preview Card */}
       {isCurrentValueSelected && (
-        <div className="mt-2 p-2.5 bg-surface rounded-xl border border-border/80 flex items-center justify-between gap-3 animate-in fade-in">
+        <div className="mt-2 p-2.5 bg-white rounded-xl border border-slate-200 shadow-2xs flex items-center justify-between gap-3 animate-in fade-in">
           <div className="flex items-center gap-3 min-w-0">
             {/* Preview on White Base */}
             <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 shadow-2xs p-1.5 flex items-center justify-center shrink-0 overflow-hidden" title="Preview Tampilan Terang">
@@ -361,15 +361,15 @@ export function BrandLogoSelector({
 
             <div className="min-w-0 leading-tight">
               <div className="flex items-center gap-1.5">
-                <span className="text-xs font-bold text-foreground truncate">
+                <span className="text-xs font-bold text-[#0F172A] truncate">
                   {selectedBrandInfo?.name || 'Logo Terpilih'}
                 </span>
-                <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 border-status-success/30 text-status-success bg-status-success/10">
+                <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 border-[#16A36A]/30 text-[#16A36A] bg-emerald-50">
                   <ShieldCheck className="w-2.5 h-2.5 mr-0.5 inline" />
                   Brandfetch CDN
                 </Badge>
               </div>
-              <span className="text-[10px] text-foreground-muted font-mono truncate block mt-0.5 max-w-[240px] sm:max-w-[340px]">
+              <span className="text-[10px] text-[#64748B] font-mono truncate block mt-0.5 max-w-[240px] sm:max-w-[340px]">
                 {value}
               </span>
             </div>
@@ -380,7 +380,7 @@ export function BrandLogoSelector({
               href={value}
               target="_blank"
               rel="noopener noreferrer"
-              className="p-1.5 text-foreground-muted hover:text-foreground hover:bg-surface-raised rounded-md transition-colors"
+              className="p-1.5 text-[#64748B] hover:text-[#0F172A] hover:bg-slate-100 rounded-md transition-colors"
               title="Buka URL Logo Asli"
             >
               <ExternalLink className="w-3.5 h-3.5" />
@@ -388,7 +388,7 @@ export function BrandLogoSelector({
             <button
               type="button"
               onClick={handleClear}
-              className="p-1.5 text-status-error hover:bg-status-error/10 rounded-md transition-colors"
+              className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-md transition-colors cursor-pointer"
               title="Hapus Logo"
             >
               <X className="w-3.5 h-3.5" />

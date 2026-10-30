@@ -264,10 +264,11 @@ class CatalogService:
 
         # 1. Look up existing category in DB
         c_found = None
-        if c_id:
-            c_found = db.query(Category).filter(Category.id == c_id).first()
-        if not c_found and c_name:
+        # Prefer matching by c_name if provided to allow changing category
+        if c_name:
             c_found = db.query(Category).filter(Category.name.ilike(c_name)).first()
+        if not c_found and c_id:
+            c_found = db.query(Category).filter(Category.id == c_id).first()
 
         if c_found:
             return c_found.id, c_found.name
@@ -322,9 +323,19 @@ class CatalogService:
         margin = price - provider_price if provider_price > 0 else 0
         pct = round((margin / provider_price) * 100, 2) if provider_price > 0 else 0
 
-        cat = payload.get("category") or {}
-        raw_cat_id = cat.get("id") or payload.get("categoryId")
-        raw_cat_name = cat.get("name") or payload.get("categoryName")
+        cat = payload.get("category")
+        raw_cat_id = None
+        raw_cat_name = None
+        if isinstance(cat, dict):
+            raw_cat_id = cat.get("id")
+            raw_cat_name = cat.get("name")
+        elif isinstance(cat, str) and cat.strip():
+            raw_cat_name = cat.strip()
+
+        if payload.get("categoryId"):
+            raw_cat_id = str(payload.get("categoryId")).strip()
+        if payload.get("categoryName"):
+            raw_cat_name = str(payload.get("categoryName")).strip()
 
         # 1. Save directly to Supabase
         try:
@@ -407,12 +418,26 @@ class CatalogService:
                         prod.popular = bool(payload["popular"])
                     if "brand" in payload and payload["brand"] is not None:
                         prod.brand = payload["brand"]
-                    if ("categoryName" in payload and payload["categoryName"] is not None) or ("categoryId" in payload and payload["categoryId"] is not None):
-                        raw_cid = str(payload.get("categoryId") or prod.category_id or "")
-                        raw_cname = str(payload.get("categoryName") or prod.category_name or "")
-                        resolved_id, resolved_name = cls._ensure_category_exists(db, raw_cid, raw_cname)
-                        prod.category_id = resolved_id
-                        prod.category_name = resolved_name
+                    # Category update
+                    if "category" in payload or "categoryId" in payload or "categoryName" in payload:
+                        cat = payload.get("category")
+                        raw_cat_id = None
+                        raw_cat_name = None
+                        if isinstance(cat, dict):
+                            raw_cat_id = cat.get("id")
+                            raw_cat_name = cat.get("name")
+                        elif isinstance(cat, str) and cat.strip():
+                            raw_cat_name = cat.strip()
+
+                        if payload.get("categoryId"):
+                            raw_cat_id = str(payload.get("categoryId")).strip()
+                        if payload.get("categoryName"):
+                            raw_cat_name = str(payload.get("categoryName")).strip()
+
+                        if raw_cat_id or raw_cat_name:
+                            resolved_id, resolved_name = cls._ensure_category_exists(db, raw_cat_id, raw_cat_name)
+                            prod.category_id = resolved_id
+                            prod.category_name = resolved_name
                     if "guaranteeTitle" in payload and payload["guaranteeTitle"] is not None:
                         prod.guarantee_title = payload["guaranteeTitle"]
                     if "guaranteeDesc" in payload and payload["guaranteeDesc"] is not None:
@@ -442,6 +467,7 @@ class CatalogService:
                 db.close()
         except Exception as e:
             print(f"[CatalogService] Error updating product in Supabase: {e}")
+            raise e
 
         # 2. Reload and sync cache
         cls.load_products(force_reload=True)

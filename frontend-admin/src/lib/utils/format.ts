@@ -4,7 +4,6 @@
  */
 
 import { Order } from '@/lib/orders-data';
-import { maskCustomerName } from '@/lib/utils/masking';
 
 /**
  * Format numbers to standard Indonesian Rupiah (Rp XX.XXX)
@@ -79,7 +78,7 @@ export function generateOrderValidationText(order: Order): string {
     `[ASTERRA STORE — VALIDASI PESANAN]\n` +
     `ID Pesanan: ${order.id}\n` +
     `Tanggal: ${formatDateTimeIndo(order.order_date)}\n` +
-    `Nama Customer: ${maskCustomerName(order.customer_name) || 'Pelanggan'}\n` +
+    `Nama Customer: ${order.customer_name || 'Pelanggan'}\n` +
     `Email Pemesan: ${order.customer_email || '-'}\n` +
     `Target Akun: ${targetEmail} (${duration})\n` +
     `No WhatsApp: ${order.customer_whatsapp || '-'}` +

@@ -159,10 +159,19 @@ export function AdminFinanceSuite({ activeTab, metrics, onNotify }: AdminFinance
   const fetchFinanceSummary = useCallback(async () => {
     try {
       setIsLoadingFinance(true);
-      const res = await fetch('/api/v1/admin/finance/summary');
-      const json = await res.json();
+      const token = typeof window !== 'undefined' ? localStorage.getItem('asterra_admin_token') : null;
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const res = await fetch('/api/v1/admin/finance/summary', {
+        headers,
+        credentials: 'include',
+      });
+      const json = await res.json().catch(() => ({}));
       if (json.success && json.data) {
         setFinanceSummary(json.data);
+      } else {
+        console.error('Failed to load finance summary:', json.error || json.detail || res.statusText);
       }
     } catch (err) {
       console.error('Failed to load finance summary:', err);
@@ -174,11 +183,20 @@ export function AdminFinanceSuite({ activeTab, metrics, onNotify }: AdminFinance
   const fetchProfitData = useCallback(async () => {
     try {
       setIsLoadingProfit(true);
-      const res = await fetch('/api/v1/admin/profit-distribution');
-      const json = await res.json();
+      const token = typeof window !== 'undefined' ? localStorage.getItem('asterra_admin_token') : null;
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const res = await fetch('/api/v1/admin/profit-distribution', {
+        headers,
+        credentials: 'include',
+      });
+      const json = await res.json().catch(() => ({}));
       if (json.success && json.data) {
         setProfitSummary(json.data.summary);
         setProfitEntries(json.data.entries || []);
+      } else {
+        console.error('Failed to load profit distribution data:', json.error || json.detail || res.statusText);
       }
     } catch (err) {
       console.error('Failed to load profit distribution data:', err);
@@ -189,15 +207,11 @@ export function AdminFinanceSuite({ activeTab, metrics, onNotify }: AdminFinance
 
   useEffect(() => {
     fetchFinanceSummary();
-    if (activeTab === 'profit') {
-      fetchProfitData();
-    }
+    fetchProfitData();
 
     const handleAutoSync = () => {
       fetchFinanceSummary();
-      if (activeTab === 'profit') {
-        fetchProfitData();
-      }
+      fetchProfitData();
     };
 
     // Auto-sync exclusively on global SSE notification (data-driven)
@@ -206,7 +220,7 @@ export function AdminFinanceSuite({ activeTab, metrics, onNotify }: AdminFinance
     return () => {
       window.removeEventListener('admin:data-updated', handleAutoSync);
     };
-  }, [activeTab, fetchFinanceSummary, fetchProfitData]);
+  }, [fetchFinanceSummary, fetchProfitData]);
 
   const filteredProfitEntries = useMemo(() => {
     return profitEntries.filter((entry) => {

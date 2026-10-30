@@ -174,7 +174,14 @@ export function AdminAnalyticsSuite({ activeTab, onNotify }: AdminAnalyticsSuite
   const { data: suiteResponse, isLoading: isLoadingSuite } = useQuery<{ success: boolean; data: AnalyticsSuiteData }>({
     queryKey: ['admin-analytics-suite', selectedPeriod],
     queryFn: async () => {
-      const res = await fetch(`/api/v1/admin/analytics/suite?period=${selectedPeriod}`);
+      const token = typeof window !== 'undefined' ? localStorage.getItem('asterra_admin_token') : null;
+      const headers: Record<string, string> = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const res = await fetch(`/api/v1/admin/analytics/suite?period=${selectedPeriod}`, {
+        headers,
+        credentials: 'include',
+      });
       if (!res.ok) throw new Error('Failed to fetch analytics suite data');
       return res.json();
     },

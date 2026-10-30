@@ -368,35 +368,45 @@ export function AdminOrderProcessingTab({ onNotify }: AdminOrderProcessingTabPro
 
       {/* Warning Confirmation Modal */}
       {showWarningModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
-          <div className="bg-surface border border-border rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-4">
-            <div className="w-12 h-12 rounded-xl bg-status-warning/15 border border-status-warning/30 flex items-center justify-center text-status-warning">
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowWarningModal(false);
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="bg-white border border-[#E2E8F0] rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-4 animate-in zoom-in-95 duration-200 text-[#0F172A]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-12 h-12 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600">
               <ShieldAlert className="w-6 h-6" />
             </div>
 
             <div>
-              <h4 className="text-base font-bold text-foreground">Konfirmasi Pergantian Mode Pemrosesan</h4>
-              <p className="text-xs text-foreground-muted mt-1 leading-relaxed">
+              <h4 className="text-base font-bold text-[#0F172A]">Konfirmasi Pergantian Mode Pemrosesan</h4>
+              <p className="text-xs text-[#64748B] mt-1 leading-relaxed">
                 Anda akan mengubah mode pemrosesan pesanan toko dari{' '}
-                <strong className="text-foreground uppercase">
+                <strong className="text-[#0F172A] uppercase">
                   {configData?.data?.orderMode || configData?.data?.order_mode || 'manual'}
                 </strong>{' '}
-                menjadi <strong className="text-primary uppercase">{selectedMode}</strong>.
+                menjadi <strong className="text-primary uppercase font-bold">{selectedMode}</strong>.
               </p>
             </div>
 
-            <div className="p-3 bg-surface-raised rounded-xl border border-border text-[11px] text-foreground-muted space-y-1">
+            <div className="p-3 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0] text-[11px] text-[#64748B] space-y-1">
               <p>• Pesanan baru akan diproses dalam <strong>Mode {selectedMode === 'manual' ? 'Manual' : 'Otomatis'}</strong>.</p>
               <p>• Pesanan yang sudah ada sebelumnya tidak akan berubah atau terganggu.</p>
             </div>
 
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex justify-end gap-2.5 pt-2">
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={() => setShowWarningModal(false)}
-                className="text-xs"
+                className="text-xs border-[#CBD5E1] bg-white text-[#0F172A] hover:bg-[#F1F5F9] cursor-pointer"
               >
                 Batal
               </Button>
@@ -405,7 +415,7 @@ export function AdminOrderProcessingTab({ onNotify }: AdminOrderProcessingTabPro
                 size="sm"
                 onClick={executeSave}
                 disabled={updateMutation.isPending}
-                className="text-xs font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-xs cursor-pointer"
+                className="text-xs font-semibold bg-primary hover:bg-primary/90 text-white shadow-xs cursor-pointer"
               >
                 {updateMutation.isPending ? 'Menyimpan...' : 'Ya, Ubah Mode'}
               </Button>

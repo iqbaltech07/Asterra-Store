@@ -63,6 +63,7 @@ export type AdminTab =
   | 'campaigns'
   | 'banners'
   // KEUANGAN
+  | 'finance'
   | 'wallets'
   | 'revenue'
   | 'expenses'

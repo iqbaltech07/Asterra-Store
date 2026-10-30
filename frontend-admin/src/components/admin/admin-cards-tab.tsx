@@ -26,6 +26,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { BrandLogoSelector } from '@/components/admin/brand-logo-selector';
 
 export interface CardItem {
   id: string;
@@ -593,27 +594,49 @@ export function AdminCardsTab({ onNotify, onNavigateToCatalog }: AdminCardsTabPr
 
       {/* ADD / EDIT MODAL */}
       {(isAddModalOpen || editingCard) && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-2xs animate-in fade-in duration-150">
-          <div className="bg-surface border border-border rounded-2xl w-full max-w-lg p-6 shadow-xl space-y-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-border pb-3">
-              <h3 className="font-bold text-base text-foreground flex items-center gap-2">
-                <Boxes className="w-4 h-4 text-primary" />
-                {editingCard ? 'Edit Card Produk' : 'Tambah Card Produk Baru'}
-              </h3>
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setIsAddModalOpen(false);
+              setEditingCard(null);
+            }
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="bg-white border border-[#E2E8F0] rounded-2xl w-full max-w-lg max-h-[calc(100dvh-40px)] flex flex-col shadow-2xl overflow-hidden box-border animate-in zoom-in-95 duration-200 text-[#0F172A]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Sticky Header */}
+            <div className="shrink-0 px-6 py-4 border-b border-[#E2E8F0] bg-white flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <h3 className="font-bold text-base text-[#0F172A] flex items-center gap-2">
+                  <Boxes className="w-4 h-4 text-primary" />
+                  <span>{editingCard ? 'Edit Card Produk' : 'Tambah Card Produk Baru'}</span>
+                </h3>
+                <p className="text-[11px] text-[#64748B] mt-0.5">
+                  Konfigurasi etalase utama brand, logo resmi, dan display homepage.
+                </p>
+              </div>
               <button
+                type="button"
                 onClick={() => {
                   setIsAddModalOpen(false);
                   setEditingCard(null);
                 }}
-                className="text-foreground-muted hover:text-foreground p-1"
+                className="h-8 w-8 p-0 rounded-full text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] flex items-center justify-center shrink-0 cursor-pointer transition-colors"
+                aria-label="Tutup modal"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveCard} className="space-y-4 text-xs">
+            {/* Scrollable Form Body */}
+            <form onSubmit={handleSaveCard} className="flex-1 overflow-y-auto p-6 space-y-4 text-xs">
               <div>
-                <label className="font-semibold text-foreground block mb-1">
+                <label className="font-semibold text-[#0F172A] block mb-1">
                   Nama Produk <span className="text-destructive">*</span>
                 </label>
                 <Input
@@ -625,81 +648,80 @@ export function AdminCardsTab({ onNotify, onNavigateToCatalog }: AdminCardsTabPr
                     }
                   }}
                   placeholder="Contoh: Google Gemini, Canva, Netflix"
-                  className="text-xs h-9 bg-surface-raised/40"
+                  className="text-xs h-9 bg-[#F8FAFC] border-[#CBD5E1] text-[#0F172A] focus:bg-white"
                   required
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-semibold text-foreground block mb-1">
+                  <label className="font-semibold text-[#0F172A] block mb-1">
                     Slug URL <span className="text-destructive">*</span>
                   </label>
                   <Input
                     value={formSlug}
                     onChange={(e) => setFormSlug(e.target.value)}
                     placeholder="google-gemini"
-                    className="text-xs h-9 bg-surface-raised/40 font-mono"
+                    className="text-xs h-9 bg-[#F8FAFC] border-[#CBD5E1] text-[#0F172A] font-mono focus:bg-white"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="font-semibold text-foreground block mb-1">
+                  <label className="font-semibold text-[#0F172A] block mb-1">
                     Urutan Tampilan
                   </label>
                   <Input
                     type="number"
                     value={formOrder}
                     onChange={(e) => setFormOrder(parseInt(e.target.value) || 0)}
-                    className="text-xs h-9 bg-surface-raised/40"
+                    className="text-xs h-9 bg-[#F8FAFC] border-[#CBD5E1] text-[#0F172A] focus:bg-white"
                   />
                 </div>
               </div>
 
+              {/* Logo Resmi Brand (Brandfetch API & Manual URL) */}
               <div>
-                <label className="font-semibold text-foreground block mb-1">
-                  URL Logo Produk (Brand Icon)
+                <label className="font-semibold text-[#0F172A] block mb-1">
+                  Icon / Logo Resmi Brand <span className="text-destructive">*</span>
                 </label>
-                <Input
+                <BrandLogoSelector
                   value={formLogo}
-                  onChange={(e) => setFormLogo(e.target.value)}
-                  placeholder="/images/brand/Google-logo.png atau URL HTTPS"
-                  className="text-xs h-9 bg-surface-raised/40"
+                  productName={formName}
+                  onChange={(logoUrl) => {
+                    setFormLogo(logoUrl);
+                  }}
                 />
-                <p className="text-[10px] text-foreground-muted mt-1">
-                  Gunakan icon brand resmi yang tersimpan di sistem (/images/brand/... atau /images/apps/...).
-                </p>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-semibold text-foreground block mb-1">
+                  <label className="font-semibold text-[#0F172A] block mb-1">
                     Kategori Tampilan
                   </label>
                   <Input
                     value={formCatName}
                     onChange={(e) => setFormCatName(e.target.value)}
                     placeholder="AI Tools, Apps & Streaming, dll"
-                    className="text-xs h-9 bg-surface-raised/40"
+                    className="text-xs h-9 bg-[#F8FAFC] border-[#CBD5E1] text-[#0F172A] focus:bg-white"
                   />
                 </div>
 
                 <div>
-                  <label className="font-semibold text-foreground block mb-1">
+                  <label className="font-semibold text-[#0F172A] block mb-1">
                     Badge Khusus (Opsional)
                   </label>
                   <Input
                     value={formBadge}
                     onChange={(e) => setFormBadge(e.target.value)}
                     placeholder="🔥 Promo, Terlaris, Baru"
-                    className="text-xs h-9 bg-surface-raised/40"
+                    className="text-xs h-9 bg-[#F8FAFC] border-[#CBD5E1] text-[#0F172A] focus:bg-white"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="font-semibold text-foreground block mb-1">
+                <label className="font-semibold text-[#0F172A] block mb-1">
                   Deskripsi Singkat
                 </label>
                 <textarea
@@ -707,22 +729,22 @@ export function AdminCardsTab({ onNotify, onNavigateToCatalog }: AdminCardsTabPr
                   onChange={(e) => setFormDesc(e.target.value)}
                   rows={3}
                   placeholder="Penjelasan ringkas mengenai benefit dan jenis lisensi produk..."
-                  className="w-full rounded-lg border border-border bg-surface-raised/40 p-2 text-xs text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                  className="w-full rounded-lg border border-[#CBD5E1] bg-[#F8FAFC] p-2.5 text-xs text-[#0F172A] focus:bg-white focus:outline-hidden focus:ring-1 focus:ring-primary"
                 />
               </div>
 
               <div>
-                <label className="font-semibold text-foreground block mb-1.5">
+                <label className="font-semibold text-[#0F172A] block mb-1.5">
                   Tampilkan Pada Bagian Etalase Homepage:
                 </label>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-4 p-2.5 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0]">
                   {['promo', 'terlaris', 'terbaru'].map((sec) => (
-                    <label key={sec} className="flex items-center gap-1.5 text-xs text-foreground cursor-pointer select-none">
+                    <label key={sec} className="flex items-center gap-1.5 text-xs text-[#0F172A] font-medium cursor-pointer select-none">
                       <input
                         type="checkbox"
                         checked={formSections.includes(sec)}
                         onChange={() => toggleSectionChoice(sec)}
-                        className="rounded border-border text-primary focus:ring-primary"
+                        className="rounded border-[#CBD5E1] text-primary focus:ring-primary w-4 h-4"
                       />
                       <span className="capitalize">{sec}</span>
                     </label>
@@ -730,7 +752,8 @@ export function AdminCardsTab({ onNotify, onNavigateToCatalog }: AdminCardsTabPr
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
+              {/* Sticky Footer Action Bar */}
+              <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-[#E2E8F0]">
                 <Button
                   type="button"
                   variant="outline"
@@ -738,14 +761,14 @@ export function AdminCardsTab({ onNotify, onNavigateToCatalog }: AdminCardsTabPr
                     setIsAddModalOpen(false);
                     setEditingCard(null);
                   }}
-                  className="text-xs h-9 border-border"
+                  className="text-xs h-9 border-[#CBD5E1] bg-white text-[#0F172A] hover:bg-[#F1F5F9] cursor-pointer"
                 >
                   Batal
                 </Button>
                 <Button
                   type="submit"
                   disabled={createMutation.isPending || updateMutation.isPending}
-                  className="text-xs h-9 bg-primary text-white hover:bg-primary/90"
+                  className="text-xs h-9 bg-primary text-white hover:bg-primary/90 font-semibold shadow-xs cursor-pointer"
                 >
                   {createMutation.isPending || updateMutation.isPending ? 'Menyimpan...' : 'Simpan Card Produk'}
                 </Button>
@@ -757,142 +780,159 @@ export function AdminCardsTab({ onNotify, onNavigateToCatalog }: AdminCardsTabPr
 
       {/* DYNAMIC ATTRIBUTES & VARIANTS MODAL */}
       {managingAttrsCard && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-2xs animate-in fade-in duration-150">
-          <div className="bg-surface border border-border rounded-2xl w-full max-w-2xl p-6 shadow-xl space-y-5 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-border pb-3">
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setManagingAttrsCard(null);
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="bg-white border border-[#E2E8F0] rounded-2xl w-full max-w-2xl max-h-[calc(100dvh-40px)] flex flex-col shadow-2xl overflow-hidden box-border animate-in zoom-in-95 duration-200 text-[#0F172A]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="shrink-0 px-6 py-4 border-b border-[#E2E8F0] bg-white flex items-center justify-between gap-3">
               <div>
-                <h3 className="font-bold text-base text-foreground flex items-center gap-2">
+                <h3 className="font-bold text-base text-[#0F172A] flex items-center gap-2">
                   <Sliders className="w-4 h-4 text-primary" />
-                  Atribut Dinamis: {managingAttrsCard.name}
+                  <span>Atribut Dinamis: {managingAttrsCard.name}</span>
                 </h3>
-                <p className="text-xs text-foreground-muted mt-0.5">
+                <p className="text-xs text-[#64748B] mt-0.5">
                   Atur opsi pilihan (Paket, Tipe Akun, Durasi, Garansi, Region, dsb) untuk card ini.
                 </p>
               </div>
               <button
+                type="button"
                 onClick={() => setManagingAttrsCard(null)}
-                className="text-foreground-muted hover:text-foreground p-1"
+                className="h-8 w-8 p-0 rounded-full text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] flex items-center justify-center shrink-0 cursor-pointer transition-colors"
+                aria-label="Tutup modal"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* List Attributes */}
-            <div className="space-y-3">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-foreground-muted">
-                Daftar Atribut Pilihan
-              </h4>
-              {managingAttrsCard.attributes && managingAttrsCard.attributes.length > 0 ? (
-                <div className="space-y-2">
-                  {managingAttrsCard.attributes.map((attr) => (
-                    <div
-                      key={attr.id}
-                      className="flex items-center justify-between p-3 rounded-xl bg-surface-raised/40 border border-border text-xs"
-                    >
-                      <div>
-                        <span className="font-bold text-foreground block">{attr.name}</span>
-                        <div className="flex items-center gap-1 mt-1 flex-wrap">
-                          {attr.options?.length > 0 ? (
-                            attr.options.map((opt: string) => (
-                              <span
-                                key={opt}
-                                className="px-1.5 py-0.5 rounded text-[10px] bg-surface border border-border text-foreground font-mono"
-                              >
-                                {opt}
-                              </span>
-                            ))
-                          ) : (
-                            <span className="text-[10px] text-foreground-muted italic">
-                              (Mengikuti variasi katalog yang terhubung)
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() =>
-                          deleteAttrMutation.mutate({ cardId: managingAttrsCard.id, attrId: attr.id })
-                        }
-                        title="Hapus Atribut"
-                        className="w-7 h-7 text-foreground-muted hover:text-destructive"
+            {/* Scrollable Body */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-5">
+              {/* List Attributes */}
+              <div className="space-y-3">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-[#64748B]">
+                  Daftar Atribut Pilihan
+                </h4>
+                {managingAttrsCard.attributes && managingAttrsCard.attributes.length > 0 ? (
+                  <div className="space-y-2">
+                    {managingAttrsCard.attributes.map((attr) => (
+                      <div
+                        key={attr.id}
+                        className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="p-4 text-center rounded-xl bg-surface-raised/20 border border-border text-xs text-foreground-muted">
-                  Belum ada atribut kustom. Atribut default sistem akan diterapkan secara otomatis.
-                </div>
-              )}
-            </div>
+                        <div>
+                          <span className="font-bold text-[#0F172A] block">{attr.name}</span>
+                          <div className="flex items-center gap-1 mt-1 flex-wrap">
+                            {attr.options?.length > 0 ? (
+                              attr.options.map((opt: string) => (
+                                <span
+                                  key={opt}
+                                  className="px-2 py-0.5 rounded text-[10px] bg-white border border-slate-200 text-[#0F172A] font-mono shadow-2xs"
+                                >
+                                  {opt}
+                                </span>
+                              ))
+                            ) : (
+                              <span className="text-[10px] text-[#64748B] italic">
+                                (Mengikuti variasi katalog yang terhubung)
+                              </span>
+                            )}
+                          </div>
+                        </div>
 
-            {/* Form Add New Attribute */}
-            <div className="border-t border-border pt-4 space-y-3">
-              <h4 className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                <Plus className="w-3.5 h-3.5 text-primary" />
-                Tambah Atribut Baru
-              </h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                <div>
-                  <label className="font-semibold text-foreground block mb-1">
-                    Nama Atribut (e.g. Region, Platform, Jenis Lisensi)
-                  </label>
-                  <Input
-                    value={newAttrName}
-                    onChange={(e) => setNewAttrName(e.target.value)}
-                    placeholder="Nama Atribut"
-                    className="text-xs h-9 bg-surface-raised/40"
-                  />
-                </div>
-                <div>
-                  <label className="font-semibold text-foreground block mb-1">
-                    Opsi Pilihan (Pisahkan dengan koma)
-                  </label>
-                  <Input
-                    value={newAttrOptions}
-                    onChange={(e) => setNewAttrOptions(e.target.value)}
-                    placeholder="Contoh: Global, Indonesia, Asia"
-                    className="text-xs h-9 bg-surface-raised/40"
-                  />
-                </div>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() =>
+                            deleteAttrMutation.mutate({ cardId: managingAttrsCard.id, attrId: attr.id })
+                          }
+                          title="Hapus Atribut"
+                          className="w-7 h-7 text-[#64748B] hover:text-rose-600 hover:bg-rose-50 cursor-pointer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-4 text-center rounded-xl bg-slate-50 border border-slate-200 text-xs text-[#64748B]">
+                    Belum ada atribut kustom. Atribut default sistem akan diterapkan secara otomatis.
+                  </div>
+                )}
               </div>
 
-              <div className="flex justify-end pt-1">
-                <Button
-                  size="sm"
-                  onClick={() => {
-                    if (!newAttrName.trim()) {
-                      onNotify?.('Nama atribut tidak boleh kosong.');
-                      return;
-                    }
-                    const opts = newAttrOptions
-                      .split(',')
-                      .map((o) => o.trim())
-                      .filter(Boolean);
-                    addAttrMutation.mutate({
-                      cardId: managingAttrsCard.id,
-                      name: newAttrName.trim(),
-                      options: opts,
-                    });
-                  }}
-                  disabled={addAttrMutation.isPending}
-                  className="text-xs h-8 bg-primary text-white hover:bg-primary/90"
-                >
-                  {addAttrMutation.isPending ? 'Menyimpan...' : 'Tambah Atribut'}
-                </Button>
+              {/* Form Add New Attribute */}
+              <div className="border-t border-[#E2E8F0] pt-4 space-y-3">
+                <h4 className="text-xs font-bold text-[#0F172A] flex items-center gap-1.5">
+                  <Plus className="w-3.5 h-3.5 text-primary" />
+                  Tambah Atribut Baru
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  <div>
+                    <label className="font-semibold text-[#0F172A] block mb-1">
+                      Nama Atribut (e.g. Region, Platform, Jenis Lisensi)
+                    </label>
+                    <Input
+                      value={newAttrName}
+                      onChange={(e) => setNewAttrName(e.target.value)}
+                      placeholder="Nama Atribut"
+                      className="text-xs h-9 bg-[#F8FAFC] border-[#CBD5E1] text-[#0F172A] focus:bg-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="font-semibold text-[#0F172A] block mb-1">
+                      Opsi Pilihan (Pisahkan dengan koma)
+                    </label>
+                    <Input
+                      value={newAttrOptions}
+                      onChange={(e) => setNewAttrOptions(e.target.value)}
+                      placeholder="Contoh: Global, Indonesia, Asia"
+                      className="text-xs h-9 bg-[#F8FAFC] border-[#CBD5E1] text-[#0F172A] focus:bg-white"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end pt-1">
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      if (!newAttrName.trim()) {
+                        onNotify?.('Nama atribut tidak boleh kosong.');
+                        return;
+                      }
+                      const opts = newAttrOptions
+                        .split(',')
+                        .map((o) => o.trim())
+                        .filter(Boolean);
+                      addAttrMutation.mutate({
+                        cardId: managingAttrsCard.id,
+                        name: newAttrName.trim(),
+                        options: opts,
+                      });
+                    }}
+                    disabled={addAttrMutation.isPending}
+                    className="text-xs h-8 bg-primary text-white hover:bg-primary/90 font-semibold cursor-pointer shadow-xs"
+                  >
+                    {addAttrMutation.isPending ? 'Menyimpan...' : 'Tambah Atribut'}
+                  </Button>
+                </div>
               </div>
             </div>
 
-            <div className="flex items-center justify-end pt-3 border-t border-border">
+            {/* Footer */}
+            <div className="shrink-0 px-6 py-3.5 border-t border-[#E2E8F0] bg-[#F8FAFC] rounded-b-2xl flex items-center justify-end">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setManagingAttrsCard(null)}
-                className="text-xs h-8 border-border"
+                className="text-xs h-8 border-[#CBD5E1] bg-white text-[#0F172A] hover:bg-[#F1F5F9] cursor-pointer"
               >
                 Tutup
               </Button>
@@ -903,24 +943,39 @@ export function AdminCardsTab({ onNotify, onNavigateToCatalog }: AdminCardsTabPr
 
       {/* DELETE CONFIRMATION MODAL */}
       {deletingCard && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-2xs animate-in fade-in duration-150">
-          <div className="bg-surface border border-border rounded-2xl w-full max-w-md p-6 shadow-xl space-y-4">
-            <div className="flex items-center gap-3 text-destructive">
-              <AlertTriangle className="w-6 h-6 shrink-0" />
-              <h3 className="font-bold text-base text-foreground">Hapus Card Produk?</h3>
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setDeletingCard(null);
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="bg-white border border-[#E2E8F0] rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-4 animate-in zoom-in-95 duration-200 text-[#0F172A]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 text-rose-600">
+              <div className="w-10 h-10 rounded-full bg-rose-50 border border-rose-200 flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-5 h-5 text-rose-600" />
+              </div>
+              <div>
+                <h3 className="font-bold text-base text-[#0F172A]">Hapus Card Produk?</h3>
+                <p className="text-xs text-[#64748B] mt-0.5">Konfirmasi penghapusan etalase produk</p>
+              </div>
             </div>
 
-            <p className="text-xs text-foreground-muted leading-relaxed">
-              Anda akan menghapus Card Produk <strong className="text-foreground">{deletingCard.name}</strong>.
+            <p className="text-xs text-[#64748B] leading-relaxed bg-[#F8FAFC] p-3 rounded-xl border border-[#E2E8F0]">
+              Anda akan menghapus Card Produk <strong className="text-[#0F172A]">{deletingCard.name}</strong>.
               Seluruh Katalog Produk yang terhubung ({deletingCard.catalogCount} item) akan dialihkan menjadi katalog mandiri tanpa merusak riwayat transaksi yang ada.
             </p>
 
-            <div className="flex items-center justify-end gap-2 pt-2">
+            <div className="flex items-center justify-end gap-2.5 pt-2">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setDeletingCard(null)}
-                className="text-xs h-8 border-border"
+                className="text-xs h-8 border-[#CBD5E1] bg-white text-[#0F172A] hover:bg-[#F1F5F9] cursor-pointer"
               >
                 Batal
               </Button>
@@ -929,7 +984,7 @@ export function AdminCardsTab({ onNotify, onNavigateToCatalog }: AdminCardsTabPr
                 variant="destructive"
                 onClick={() => deleteMutation.mutate(deletingCard.id)}
                 disabled={deleteMutation.isPending}
-                className="text-xs h-8 bg-destructive text-white hover:bg-destructive/90"
+                className="text-xs h-8 bg-rose-600 text-white hover:bg-rose-700 font-semibold cursor-pointer shadow-xs"
               >
                 {deleteMutation.isPending ? 'Menghapus...' : 'Ya, Hapus Card'}
               </Button>
