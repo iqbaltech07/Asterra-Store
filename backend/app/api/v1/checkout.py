@@ -766,16 +766,23 @@ async def trigger_cancel_expired_orders(request: Request):
 
 
 
-@router.api_route("/internal/cron/dummy-order", methods=["GET", "POST"], tags=["Internal"])
-def cron_dummy_order(request: Request):
+@router.api_route("/internal/cron/dummy-order", methods=["GET", "POST"], tags=["Internal / QStash"])
+async def cron_dummy_order(request: Request):
     """
     Dedicated endpoint for scheduled / cron execution of dummy orders.
-    Can be invoked by Vercel Cron, external webhook schedulers, or admin diagnostics.
+    Invoked by Upstash QStash Cron, external webhook schedulers, or admin diagnostics.
     Adheres strictly to store operating hours (300-600s open, 600-1200s closed).
     """
     from datetime import datetime, timezone
     from app.services.dummy_order_service import DummyOrderService
     from app.services.store_operating_hours_service import StoreOperatingHoursService
+    from app.core.qstash_client import verify_internal_or_qstash_request
+
+    raw_body = await request.body()
+    # In production, verify internal secret or QStash signature
+    if settings.ENVIRONMENT != "development":
+        if not verify_internal_or_qstash_request(request, raw_body):
+            raise HTTPException(status_code=401, detail="Unauthorized QStash or internal trigger")
 
     store_status = StoreOperatingHoursService.get_current_status()
     is_open = bool(store_status.get("isOpen", False) or store_status.get("is_open", False))
@@ -786,5 +793,6 @@ def cron_dummy_order(request: Request):
         "generated": bool(result),
         "order_id": result.get("id") if result else None,
         "is_open": is_open,
+        "source": "qstash-cron",
         "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
     }

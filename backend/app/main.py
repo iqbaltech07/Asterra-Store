@@ -91,6 +91,20 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"[Lifespan] RealtimeBroadcaster loop init note: {e}")
 
+    # Ensure Upstash QStash cron schedule for serverless dummy orders is synchronized
+    try:
+        if settings.QSTASH_TOKEN:
+            from app.core.qstash_client import register_cron_job
+            base_api_url = os.getenv("API_BASE_URL", "https://api.asterrastore.biz.id").strip().rstrip('/')
+            register_cron_job(
+                destination_url=f"{base_api_url}/api/v1/internal/cron/dummy-order",
+                cron_expression="*/5 * * * *",
+                schedule_id="asterra-dummy-order",
+                payload={"source": "qstash-cron", "action": "trigger_dummy_order"},
+            )
+    except Exception as e:
+        print(f"[Lifespan] QStash cron sync note: {e}")
+
     # Launch autonomous background worker for periodic VIP stock & balance auto-sync
     async def periodic_vip_stock_sync_worker():
         """

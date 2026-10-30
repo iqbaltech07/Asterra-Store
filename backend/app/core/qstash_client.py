@@ -164,12 +164,25 @@ def verify_internal_or_qstash_request(request: Request, raw_body: bytes) -> bool
         try:
             from qstash import Receiver
             receiver = Receiver(current_signing_key=signing_key, next_signing_key=next_signing_key)
-            receiver.verify(
-                signature=signature,
-                body=raw_body.decode("utf-8", errors="replace"),
-                url=str(request.url),
-            )
-            return True
+            body_str = raw_body.decode("utf-8", errors="replace")
+            try:
+                receiver.verify(
+                    signature=signature,
+                    body=body_str,
+                    url=str(request.url),
+                )
+                return True
+            except Exception:
+                # Handle reverse proxy / SSL termination (e.g. x-forwarded-proto: https)
+                proto = request.headers.get("x-forwarded-proto") or request.url.scheme
+                host = request.headers.get("x-forwarded-host") or request.headers.get("host") or request.url.netloc
+                reconstructed_url = f"{proto}://{host}{request.url.path}"
+                receiver.verify(
+                    signature=signature,
+                    body=body_str,
+                    url=reconstructed_url,
+                )
+                return True
         except Exception as err:
             print(f"[Upstash QStash] Signature verification failed: {err}")
             return False
