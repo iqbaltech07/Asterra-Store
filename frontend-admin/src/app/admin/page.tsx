@@ -60,7 +60,6 @@ import { AdminSystemSettingsSuite } from '@/components/admin/admin-system-settin
 import { AdminOrderProcessingTab } from '@/components/admin/admin-order-processing-tab';
 import { AdminNotificationProvider } from '@/context/admin-notification-context';
 import { ImageUploadDropzone, uploadFileToBlob } from '@/components/admin/image-upload-dropzone';
-import { BrandLogoSelector } from '@/components/admin/brand-logo-selector';
 import {
   Select,
   SelectContent,
@@ -118,6 +117,7 @@ const TAB_TITLES: Record<AdminTab, { category: string; title: string }> = {
   promos: { category: 'Marketing & Growth', title: 'Voucher & Promo Diskon' },
   campaigns: { category: 'Marketing & Growth', title: 'Manajemen Campaign & Flash Sale' },
   banners: { category: 'Marketing & Growth', title: 'Banner Hero & Konten Etalase' },
+  finance: { category: 'Keuangan', title: 'Ringkasan & Saldo Keuangan' },
   wallets: { category: 'Keuangan', title: 'Saldo & Wallet Pembayaran' },
   revenue: { category: 'Keuangan', title: 'Laporan Pendapatan (Omzet Bruto)' },
   expenses: { category: 'Keuangan', title: 'Pengeluaran & Biaya Modal (HPP)' },
@@ -146,6 +146,7 @@ const TAB_TITLES: Record<AdminTab, { category: string; title: string }> = {
 
 const RESTRICTED_FOR_OPERATIONAL_ADMIN: AdminTab[] = [
   'providers',
+  'finance',
   'wallets',
   'revenue',
   'expenses',
@@ -158,6 +159,17 @@ const RESTRICTED_FOR_OPERATIONAL_ADMIN: AdminTab[] = [
   'admins',
   'store-settings',
 ];
+
+function getAdminAuthHeaders(extraHeaders: Record<string, string> = {}): Record<string, string> {
+  const headers: Record<string, string> = { ...extraHeaders };
+  if (typeof window !== 'undefined') {
+    const token = localStorage.getItem('asterra_admin_token');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+  }
+  return headers;
+}
 
 function AdminPageContent() {
   const router = useRouter();
@@ -672,9 +684,12 @@ function AdminPageContent() {
     mutationFn: async (id: string) => {
       const res = await fetch(`/api/v1/admin/products/${id}/toggle-status`, {
         method: 'POST',
+        headers: getAdminAuthHeaders(),
+        credentials: 'include',
       });
-      if (!res.ok) throw new Error('Gagal mengubah status visibilitas produk');
-      return res.json();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.detail || data.error || data.message || 'Gagal mengubah status visibilitas produk');
+      return data;
     },
     onSuccess: (data) => {
       showNotification(data.message);
@@ -687,11 +702,12 @@ function AdminPageContent() {
     mutationFn: async ({ ids, status }: { ids: string[]; status: 'active' | 'archived' }) => {
       const res = await fetch('/api/v1/admin/products/bulk-status', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAdminAuthHeaders({ 'Content-Type': 'application/json' }),
+        credentials: 'include',
         body: JSON.stringify({ ids, status }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Gagal mengubah status produk massal');
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.detail || data.error || data.message || 'Gagal mengubah status produk massal');
       return data;
     },
     onSuccess: (data) => {
@@ -707,9 +723,14 @@ function AdminPageContent() {
   // Refresh Upstream Stock Statuses
   const refreshStockMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch('/api/v1/admin/refresh-stock', { method: 'POST' });
-      if (!res.ok) throw new Error('Gagal mengecek status stok supplier');
-      return res.json();
+      const res = await fetch('/api/v1/admin/refresh-stock', {
+        method: 'POST',
+        headers: getAdminAuthHeaders(),
+        credentials: 'include',
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.detail || data.error || data.message || 'Gagal mengecek status stok supplier');
+      return data;
     },
     onSuccess: (data) => {
       showNotification(data.message);
@@ -720,10 +741,14 @@ function AdminPageContent() {
   // Sync All Services from VIP Reseller
   const syncVipMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch('/api/v1/admin/sync-vip', { method: 'POST' });
-      const data = await res.json();
+      const res = await fetch('/api/v1/admin/sync-vip', {
+        method: 'POST',
+        headers: getAdminAuthHeaders(),
+        credentials: 'include',
+      });
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        throw new Error(data.message || 'Gagal sinkronisasi dari VIP Reseller');
+        throw new Error(data.detail || data.error || data.message || 'Gagal sinkronisasi dari VIP Reseller');
       }
       return data;
     },
@@ -794,19 +819,23 @@ function AdminPageContent() {
       if (editingProduct) {
         const res = await fetch(`/api/v1/admin/products/${editingProduct.id}`, {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAdminAuthHeaders({ 'Content-Type': 'application/json' }),
+          credentials: 'include',
           body: JSON.stringify(payload),
         });
-        if (!res.ok) throw new Error('Gagal memperbarui produk');
-        return res.json();
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.detail || data.error || data.message || 'Gagal memperbarui produk');
+        return data;
       } else {
         const res = await fetch('/api/v1/admin/products', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAdminAuthHeaders({ 'Content-Type': 'application/json' }),
+          credentials: 'include',
           body: JSON.stringify(payload),
         });
-        if (!res.ok) throw new Error('Gagal menambahkan produk');
-        return res.json();
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.detail || data.error || data.message || 'Gagal menambahkan produk');
+        return data;
       }
     },
     onSuccess: (data) => {
@@ -830,7 +859,8 @@ function AdminPageContent() {
       if (!importingService) return;
       const res = await fetch('/api/v1/admin/vip-services', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAdminAuthHeaders({ 'Content-Type': 'application/json' }),
+        credentials: 'include',
         body: JSON.stringify({
           code: importingService.code,
           name: formName,
@@ -843,8 +873,9 @@ function AdminPageContent() {
           imageUrl: formImageUrl || undefined,
         }),
       });
-      if (!res.ok) throw new Error('Gagal mengimpor layanan VIP');
-      return res.json();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.detail || data.error || data.message || 'Gagal mengimpor layanan VIP');
+      return data;
     },
     onSuccess: (data) => {
       showNotification(data.message);
@@ -859,9 +890,11 @@ function AdminPageContent() {
     mutationFn: async (id: string) => {
       const res = await fetch(`/api/v1/admin/products/${id}`, {
         method: 'DELETE',
+        headers: getAdminAuthHeaders(),
+        credentials: 'include',
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Gagal menghapus produk');
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.detail || data.error || data.message || 'Gagal menghapus produk');
       return data;
     },
     onSuccess: (data) => {
@@ -880,11 +913,12 @@ function AdminPageContent() {
     mutationFn: async (ids: string[]) => {
       const res = await fetch('/api/v1/admin/products/bulk-delete', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAdminAuthHeaders({ 'Content-Type': 'application/json' }),
+        credentials: 'include',
         body: JSON.stringify({ ids }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Gagal menghapus produk terpilih');
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.detail || data.error || data.message || 'Gagal menghapus produk terpilih');
       return data;
     },
     onSuccess: (data) => {
@@ -2439,12 +2473,14 @@ function AdminPageContent() {
         )}
 
         {/* TAB 14: KEUANGAN (Wallets, Revenue, Expenses, Profit, Transactions) */}
-        {(visitedTabs.has('wallets') ||
+        {(visitedTabs.has('finance') ||
+          visitedTabs.has('wallets') ||
           visitedTabs.has('revenue') ||
           visitedTabs.has('expenses') ||
           visitedTabs.has('profit') ||
           visitedTabs.has('financial-transactions')) && (
           <div className={
+            activeTab === 'finance' ||
             activeTab === 'wallets' ||
             activeTab === 'revenue' ||
             activeTab === 'expenses' ||
@@ -2454,7 +2490,7 @@ function AdminPageContent() {
               : 'hidden'
           }>
             <AdminFinanceSuite
-              activeTab={activeTab as any}
+              activeTab={activeTab === 'finance' ? 'wallets' : (activeTab as any)}
               metrics={metrics}
               onNotify={showNotification}
             />
@@ -2938,19 +2974,6 @@ function AdminPageContent() {
                   placeholder="Fitur 1&#10;Fitur 2&#10;Fitur 3"
                 />
               </div>
-
-              {/* Opsi Pilih Logo Brand Resmi (Brandfetch API) */}
-              <BrandLogoSelector
-                value={formImageUrl}
-                brandName={formBrand}
-                productName={formName}
-                onChange={(logoUrl, detectedBrand) => {
-                  setFormImageUrl(logoUrl);
-                  if (detectedBrand) {
-                    setFormBrand(detectedBrand);
-                  }
-                }}
-              />
 
               {/* Product Banner Guard & Anti-Redundansi Notice */}
               {editingProduct &&

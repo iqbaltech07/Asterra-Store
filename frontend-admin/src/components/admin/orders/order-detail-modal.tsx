@@ -32,7 +32,6 @@ import {
 import { OrdersApi } from '@/lib/api-client';
 import { OrderStatusBadge, OrderActorBadge } from './order-badges';
 import { formatWhatsAppUrl, generateOrderValidationText } from '@/lib/utils/format';
-import { maskCustomerName } from '@/lib/utils/masking';
 
 interface OrderDetailModalProps {
   order: Order | null;
@@ -392,7 +391,7 @@ export function OrderDetailModal({
                   Nama Lengkap Customer:
                 </span>
                 <span className="font-bold text-[#0F172A] text-xs sm:text-sm truncate block mt-0.5">
-                  {maskCustomerName(order.customer_name) || 'Pelanggan Toko'}
+                  {order.customer_name || 'Pelanggan Toko'}
                 </span>
               </div>
 
@@ -981,7 +980,7 @@ export function OrderDetailModal({
                     Silakan masukkan kredensial akun pelanggan
                   </h3>
                   <p className="text-[11px] text-[#64748B] mt-0.5">
-                    Pesanan #{order.id} · {maskCustomerName(order.customer_name)} ({order.customer_email || 'Tanpa email'})
+                    Pesanan #{order.id} · {order.customer_name || 'Pelanggan Toko'} ({order.customer_email || 'Tanpa email'})
                   </p>
                 </div>
               </div>

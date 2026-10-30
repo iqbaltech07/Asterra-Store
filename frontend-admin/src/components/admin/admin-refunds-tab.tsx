@@ -14,7 +14,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { maskCustomerName } from '@/lib/utils/masking';
 
 interface RefundTicket {
   id: string;
@@ -176,7 +175,7 @@ export function AdminRefundsTab({ onNotify }: AdminRefundsTabProps) {
                     <span className="text-[10px] text-primary block mt-0.5">{t.orderId}</span>
                   </td>
                   <td className="py-3.5 px-4">
-                    <span className="font-semibold text-foreground text-xs block">{maskCustomerName(t.customerName)}</span>
+                    <span className="font-semibold text-foreground text-xs block">{t.customerName}</span>
                     <span className="text-[10px] text-foreground-muted font-mono">{t.customerWhatsapp}</span>
                   </td>
                   <td className="py-3.5 px-4">
@@ -260,7 +259,7 @@ export function AdminRefundsTab({ onNotify }: AdminRefundsTabProps) {
               <div className="bg-white border border-[#E2E8F0] rounded-xl p-3.5 sm:p-4 shadow-2xs space-y-2.5">
                 <div className="flex items-center justify-between">
                   <span className="text-[#64748B] font-medium">Pelanggan:</span>
-                  <span className="font-bold text-[#0F172A]">{maskCustomerName(selectedTicket.customerName)} ({selectedTicket.customerWhatsapp})</span>
+                  <span className="font-bold text-[#0F172A]">{selectedTicket.customerName} ({selectedTicket.customerWhatsapp})</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-[#64748B] font-medium">Produk:</span>

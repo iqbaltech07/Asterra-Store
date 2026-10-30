@@ -135,27 +135,11 @@ async def lifespan(app: FastAPI):
     # Launch autonomous background worker for periodic dummy orders (Phase 7 & Phase 9)
     async def periodic_dummy_order_worker():
         """
-        Autonomous background worker for Phase 7 & Phase 9.
-        Generates dummy orders selecting strictly eligible active products.
-        Interval dynamically doubles when store is closed (interval_tutup = interval_normal * 2).
+        Background worker strictly disabled:
+        Fake orders are strictly mockup visual only on frontend-user (/orders)
+        and must NEVER be persisted to the database or admin console.
         """
-        import asyncio
-        from app.services.dummy_order_service import DummyOrderService
-        await asyncio.sleep(15)  # initial delay on boot
-
-        while True:
-            try:
-                await asyncio.to_thread(DummyOrderService.generate_and_save_dummy_order)
-            except asyncio.CancelledError:
-                break
-            except Exception as e:
-                print(f"[PeriodicDummyOrderWorker] Note: {e}")
-
-            try:
-                sleep_sec = await asyncio.to_thread(DummyOrderService.get_next_sleep_seconds)
-                await asyncio.sleep(sleep_sec)
-            except asyncio.CancelledError:
-                break
+        return
 
     vip_worker_task = asyncio.create_task(periodic_vip_stock_sync_worker())
     dummy_worker_task = asyncio.create_task(periodic_dummy_order_worker())

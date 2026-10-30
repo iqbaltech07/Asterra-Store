@@ -18,7 +18,6 @@ import { formatWhatsAppUrl, formatDateTimeIndo } from '@/lib/utils/format';
 
 import { OrderStatusBadge } from './order-badges';
 import { ProductBrandIcon } from '@/components/ui/product-brand-icon';
-import { maskCustomerName } from '@/lib/utils/masking';
 
 interface OrderTableRowProps {
   order: Order;
@@ -54,7 +53,7 @@ export function OrderTableRow({ order, index, onOpenDetail, onCopyEmail }: Order
           </div>
           <div className="min-w-0">
             <div className="font-semibold text-foreground text-xs leading-snug">
-              {maskCustomerName(order.customer_name) || 'Pelanggan Toko'}
+              {order.customer_name || 'Pelanggan Toko'}
             </div>
             <div className="text-[11px] text-foreground-muted flex items-center gap-1.5 mt-0.5 group/email">
               <FontAwesomeIcon icon={faEnvelope} className="w-3 h-3 shrink-0 text-foreground-muted" />

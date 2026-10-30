@@ -327,18 +327,28 @@ export function AdminProvidersTab({ metrics, onNotify, onSyncVip }: AdminProvide
 
       {/* 4. Credentials Edit Modal */}
       {isCredentialModalOpen && selectedProvider && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
-          <div className="bg-surface border border-border rounded-2xl w-full max-w-lg p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-border">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsCredentialModalOpen(false);
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="bg-white border border-[#E2E8F0] rounded-2xl w-full max-w-lg shadow-2xl p-6 space-y-4 animate-in zoom-in-95 duration-200 text-[#0F172A]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-center text-primary">
                   <Key className="w-4 h-4" />
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-foreground">
+                  <h4 className="text-sm font-bold text-[#0F172A]">
                     Atur Kredensial API {selectedProvider.name}
                   </h4>
-                  <span className="text-[10px] text-foreground-muted font-mono">
+                  <span className="text-[10px] text-[#64748B] font-mono">
                     Provider ID: {selectedProvider.id}
                   </span>
                 </div>
@@ -346,7 +356,8 @@ export function AdminProvidersTab({ metrics, onNotify, onSyncVip }: AdminProvide
               <button
                 type="button"
                 onClick={() => setIsCredentialModalOpen(false)}
-                className="text-foreground-muted hover:text-foreground p-1 rounded cursor-pointer"
+                className="h-8 w-8 p-0 rounded-full text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] flex items-center justify-center shrink-0 cursor-pointer transition-colors"
+                aria-label="Tutup modal"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -354,7 +365,7 @@ export function AdminProvidersTab({ metrics, onNotify, onSyncVip }: AdminProvide
 
             <div className="space-y-3.5 text-xs">
               <div>
-                <label className="font-semibold text-foreground block mb-1">
+                <label className="font-semibold text-[#0F172A] block mb-1">
                   Base URL API Gateway (Wajib HTTPS):
                 </label>
                 <Input
@@ -362,15 +373,15 @@ export function AdminProvidersTab({ metrics, onNotify, onSyncVip }: AdminProvide
                   value={formBaseUrl}
                   onChange={(e) => setFormBaseUrl(e.target.value)}
                   placeholder="https://vip-reseller.co.id/api"
-                  className="font-mono text-xs"
+                  className="font-mono text-xs bg-[#F8FAFC] border-[#CBD5E1] text-[#0F172A] focus:bg-white"
                 />
-                <span className="text-[10px] text-foreground-muted mt-1 block">
+                <span className="text-[10px] text-[#64748B] mt-1 block">
                   Dilindungi proteksi SSRF. Alamat loopback (localhost) dan IP privat ditolak.
                 </span>
               </div>
 
               <div>
-                <label className="font-semibold text-foreground block mb-1">
+                <label className="font-semibold text-[#0F172A] block mb-1">
                   API Key / Key Parameter:
                 </label>
                 <div className="relative">
@@ -379,23 +390,23 @@ export function AdminProvidersTab({ metrics, onNotify, onSyncVip }: AdminProvide
                     value={formApiKey}
                     onChange={(e) => setFormApiKey(e.target.value)}
                     placeholder="Masukkan API Key baru atau biarkan jika tidak berubah"
-                    className="font-mono text-xs pr-9"
+                    className="font-mono text-xs pr-9 bg-[#F8FAFC] border-[#CBD5E1] text-[#0F172A] focus:bg-white"
                   />
                   <button
                     type="button"
                     onClick={() => setShowApiKey(!showApiKey)}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-foreground-muted hover:text-foreground cursor-pointer"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#64748B] hover:text-[#0F172A] cursor-pointer"
                   >
                     {showApiKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                   </button>
                 </div>
-                <span className="text-[10px] text-foreground-muted mt-1 block">
+                <span className="text-[10px] text-[#64748B] mt-1 block">
                   Biarkan nilai bertopeng jika tidak ingin mengubah API Key yang sudah tersimpan.
                 </span>
               </div>
 
               <div>
-                <label className="font-semibold text-foreground block mb-1">
+                <label className="font-semibold text-[#0F172A] block mb-1">
                   API Sign / Secret Token:
                 </label>
                 <div className="relative">
@@ -404,22 +415,22 @@ export function AdminProvidersTab({ metrics, onNotify, onSyncVip }: AdminProvide
                     value={formApiSign}
                     onChange={(e) => setFormApiSign(e.target.value)}
                     placeholder="Masukkan Signature / Secret baru"
-                    className="font-mono text-xs pr-9"
+                    className="font-mono text-xs pr-9 bg-[#F8FAFC] border-[#CBD5E1] text-[#0F172A] focus:bg-white"
                   />
                   <button
                     type="button"
                     onClick={() => setShowApiSign(!showApiSign)}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-foreground-muted hover:text-foreground cursor-pointer"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#64748B] hover:text-[#0F172A] cursor-pointer"
                   >
                     {showApiSign ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                   </button>
                 </div>
               </div>
 
-              <div className="p-3 bg-surface-raised rounded-xl border border-border flex items-center justify-between">
+              <div className="p-3 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0] flex items-center justify-between">
                 <div>
-                  <span className="font-semibold text-foreground block">Status Provider</span>
-                  <span className="text-[11px] text-foreground-muted">
+                  <span className="font-semibold text-[#0F172A] block">Status Provider</span>
+                  <span className="text-[11px] text-[#64748B]">
                     Aktifkan untuk pemrosesan order dan pemeriksaan status
                   </span>
                 </div>
@@ -432,13 +443,13 @@ export function AdminProvidersTab({ metrics, onNotify, onSyncVip }: AdminProvide
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-3 border-t border-border">
+            <div className="flex justify-end gap-2.5 pt-3 border-t border-[#E2E8F0]">
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={() => setIsCredentialModalOpen(false)}
-                className="text-xs"
+                className="text-xs border-[#CBD5E1] bg-white text-[#0F172A] hover:bg-[#F1F5F9] cursor-pointer"
               >
                 Batal
               </Button>
@@ -447,7 +458,7 @@ export function AdminProvidersTab({ metrics, onNotify, onSyncVip }: AdminProvide
                 size="sm"
                 disabled={updateConfigMutation.isPending}
                 onClick={handleSaveCredentials}
-                className="text-xs font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-xs cursor-pointer"
+                className="text-xs font-semibold bg-primary hover:bg-primary/90 text-white shadow-xs cursor-pointer"
               >
                 {updateConfigMutation.isPending ? 'Menyimpan...' : 'Simpan Kredensial'}
               </Button>
