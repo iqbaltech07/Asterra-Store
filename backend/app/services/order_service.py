@@ -45,9 +45,12 @@ class OrderService:
                     db_orders = (
                         db.query(Order)
                         .options(joinedload(Order.items))
-                        .filter(Order.is_dummy == False)
+                        .filter((Order.is_dummy == False) | (Order.is_dummy == None))
                         .filter(~Order.customer_email.like("%@customer.id"))
                         .filter(~Order.customer_email.like("buyer_%"))
+                        .filter(~Order.customer_email.like("%_buyer@%"))
+                        .filter(~Order.customer_email.like("%test%@%"))
+                        .filter(~Order.customer_email.like("%@asterra.store"))
                         .order_by(Order.created_at.desc())
                         .all()
                     )
@@ -91,14 +94,22 @@ class OrderService:
         limit: int = 20,
     ) -> Dict[str, Any]:
         raw_orders = cls.load_orders()
-        # Strict isolation: Exclude any dummy/mock orders from admin and business reports
+        # Strict isolation: Exclude any dummy/mock/simulated orders from admin and business reports
         all_orders = [
             o for o in raw_orders
             if not o.get("is_dummy") and not o.get("isDummy")
+            and o.get("source") not in ["simulation", "dummy", "system"]
+            and o.get("transaction_source") != "dummy"
             and not str(o.get("customerEmail", "")).lower().endswith("@customer.id")
             and not str(o.get("customer_email", "")).lower().endswith("@customer.id")
             and not str(o.get("customerEmail", "")).lower().startswith("buyer_")
             and not str(o.get("customer_email", "")).lower().startswith("buyer_")
+            and not "_buyer@" in str(o.get("customerEmail", "")).lower()
+            and not "_buyer@" in str(o.get("customer_email", "")).lower()
+            and not "test" in str(o.get("customerEmail", "")).lower()
+            and not "test" in str(o.get("customer_email", "")).lower()
+            and not str(o.get("customerEmail", "")).lower().endswith("@asterra.store")
+            and not str(o.get("customer_email", "")).lower().endswith("@asterra.store")
         ]
 
         # Compute summary metrics across all orders

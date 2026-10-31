@@ -401,7 +401,24 @@ export default function HomePage() {
           );
         });
 
-        const appToPush: ApplicationGroupItem = matched || {
+        const appToPush: ApplicationGroupItem = matched
+          ? {
+              ...matched,
+              logoUrl: matched.logoUrl || item.logoUrl || (item as any).imageUrl,
+              imageUrl: matched.imageUrl || item.imageUrl || item.logoUrl,
+              badgeLabel:
+                activeCategory === 'promo'
+                  ? '🔥 Promo'
+                  : activeCategory === 'terlaris'
+                  ? 'Terlaris'
+                  : 'Baru',
+              isPromo: item.isPromo ?? matched.isPromo ?? true,
+              isTerlaris: activeCategory === 'terlaris',
+              isTerbaru: activeCategory === 'terbaru',
+              minPrice: matched.minPrice > 0 ? matched.minPrice : (item.minPrice || 0),
+              items: matched.items && matched.items.length > 0 ? matched.items : ((item as any).items || []),
+            }
+          : {
           id: item.id || item.slug,
           name: item.name,
           slug: item.slug || item.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
@@ -461,9 +478,17 @@ export default function HomePage() {
             fallbackCandidates = [];
           }
         } else if (activeCategory === 'terlaris') {
-          fallbackCandidates = allMapped.filter((app) => app.isTerlaris);
+          fallbackCandidates = allMapped.slice().sort((a, b) => (b.targetMax || b.soldCount || 0) - (a.targetMax || a.soldCount || 0));
         } else if (activeCategory === 'terbaru') {
-          fallbackCandidates = allMapped.filter((app) => app.isTerbaru);
+          fallbackCandidates = allMapped.slice().sort((a, b) => {
+            const dtA = Math.max(
+              ...[new Date((a as any).createdAt || (a as any).created_at || 0).getTime(), ...(a.items || []).map((p) => new Date((p as any).createdAt || (p as any).created_at || 0).getTime())]
+            );
+            const dtB = Math.max(
+              ...[new Date((b as any).createdAt || (b as any).created_at || 0).getTime(), ...(b.items || []).map((p) => new Date((p as any).createdAt || (p as any).created_at || 0).getTime())]
+            );
+            return dtB - dtA;
+          });
         }
 
         for (const candidate of fallbackCandidates) {
@@ -512,8 +537,16 @@ export default function HomePage() {
 
     if (activeCategory === 'terbaru') {
       return allMapped
-        .filter((app) => app.isTerbaru)
-        .sort((a, b) => (b.targetMax || b.soldCount || 0) - (a.targetMax || a.soldCount || 0))
+        .slice()
+        .sort((a, b) => {
+          const dtA = Math.max(
+            ...[new Date((a as any).createdAt || (a as any).created_at || 0).getTime(), ...(a.items || []).map((p) => new Date((p as any).createdAt || (p as any).created_at || 0).getTime())]
+          );
+          const dtB = Math.max(
+            ...[new Date((b as any).createdAt || (b as any).created_at || 0).getTime(), ...(b.items || []).map((p) => new Date((p as any).createdAt || (p as any).created_at || 0).getTime())]
+          );
+          return dtB - dtA;
+        })
         .slice(0, 8);
     }
 
@@ -745,8 +778,8 @@ export default function HomePage() {
             </Link>
           </div>
 
-          {/* Live Campaign Countdown (Isolated component to avoid re-rendering entire homepage every 1s) */}
-          {isMounted && (
+          {/* Live Campaign Countdown (Only displayed when Promo tab is active) */}
+          {isMounted && activeCategory === 'promo' && (
             <FeaturedSectionCountdownBadge
               activeCampaigns={activeCampaigns}
               featuredApps={featuredApps}

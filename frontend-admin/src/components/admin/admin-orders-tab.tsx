@@ -87,12 +87,21 @@ export function AdminOrdersTab() {
   });
 
   const rawOrders = ordersData?.data || [];
-  // Strict Filter: Ensure fake/dummy orders never appear in admin console
+  // Strict Filter: Ensure fake/dummy/simulated orders never appear in admin console
   const orders = useMemo(() => {
     return rawOrders.filter((o) => {
       if ((o as any).is_dummy || (o as any).isDummy) return false;
+      if ((o as any).source === 'simulation' || (o as any).transaction_source === 'dummy') return false;
       const email = (o.customer_email || (o as any).customerEmail || '').toLowerCase();
-      if (email.endsWith('@customer.id') || email.startsWith('buyer_')) return false;
+      if (
+        email.endsWith('@customer.id') ||
+        email.startsWith('buyer_') ||
+        email.includes('_buyer@') ||
+        email.includes('test') ||
+        email.endsWith('@asterra.store')
+      ) {
+        return false;
+      }
       return true;
     });
   }, [rawOrders]);

@@ -41,7 +41,7 @@ export const DEFAULT_STORE_OPERATING_STATUS: StoreOperatingHoursStatus = {
 export async function getStoreOperatingHoursServer(): Promise<StoreOperatingHoursStatus> {
   try {
     const res = await fetch(`${BACKEND_URL}/api/v1/store/operating-hours`, {
-      next: { revalidate: 10 },
+      cache: 'no-store',
       signal: AbortSignal.timeout(3500),
     });
 

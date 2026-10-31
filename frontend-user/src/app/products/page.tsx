@@ -53,6 +53,9 @@ function ProductsContent() {
     if (lower === 'cat-apps-streaming' || lower === 'apps-streaming' || lower === 'apps & streaming' || lower === 'streaming') {
       return 'Apps & Streaming';
     }
+    if (lower === 'cat-editing-app' || lower === 'editing-app' || lower === 'editing app' || lower === 'editing' || lower === 'design') {
+      return 'Editing App';
+    }
     if (lower === 'cat-digital-services' || lower === 'digital' || lower === 'layanan digital') {
       return 'Layanan Digital';
     }
@@ -212,14 +215,27 @@ function ProductsContent() {
     if (selectedCategory !== 'Semua') {
       const targetCat = selectedCategory.toLowerCase().trim();
       mapped = mapped.filter((g) => {
-        const gCat = (g.category || '').toLowerCase();
-        const gCatId = ((g as any).categoryId || '').toLowerCase();
-        const cardMatch = gCat === targetCat || gCatId === targetCat || gCat.includes(targetCat);
-        const itemMatch = g.items && g.items.some((p) => {
-          const pCatName = (p.category?.name || (p as any).categoryName || '').toLowerCase();
-          const pCatId = (p.category?.id || (p as any).categoryId || '').toLowerCase();
-          return pCatName === targetCat || pCatId === targetCat || pCatName.includes(targetCat);
-        });
+        const gCat = (g.category || '').toLowerCase().trim();
+        const gCatId = ((g as any).categoryId || '').toLowerCase().trim();
+        const cardMatch =
+          gCat === targetCat ||
+          gCatId === targetCat ||
+          gCat.includes(targetCat) ||
+          targetCat.includes(gCat) ||
+          (targetCat === 'editing app' && (gCat.includes('editing') || gCatId.includes('editing')));
+        const itemMatch =
+          g.items &&
+          g.items.some((p) => {
+            const pCatName = (p.category?.name || (p as any).categoryName || '').toLowerCase().trim();
+            const pCatId = (p.category?.id || (p as any).categoryId || '').toLowerCase().trim();
+            return (
+              pCatName === targetCat ||
+              pCatId === targetCat ||
+              pCatName.includes(targetCat) ||
+              targetCat.includes(pCatName) ||
+              (targetCat === 'editing app' && (pCatName.includes('editing') || pCatId.includes('editing')))
+            );
+          });
         return cardMatch || itemMatch;
       });
     }
@@ -272,9 +288,15 @@ function ProductsContent() {
       const targetCat = selectedCategory.toLowerCase().trim();
       result = result.filter(
         (p) => {
-          const pName = (p.category?.name || (p as any).categoryName || '').toLowerCase();
-          const pId = (p.category?.id || (p as any).categoryId || '').toLowerCase();
-          return pName === targetCat || pId === targetCat || pName.includes(targetCat);
+          const pName = (p.category?.name || (p as any).categoryName || '').toLowerCase().trim();
+          const pId = (p.category?.id || (p as any).categoryId || '').toLowerCase().trim();
+          return (
+            pName === targetCat ||
+            pId === targetCat ||
+            pName.includes(targetCat) ||
+            targetCat.includes(pName) ||
+            (targetCat === 'editing app' && (pName.includes('editing') || pId.includes('editing')))
+          );
         }
       );
     }

@@ -28,7 +28,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { ProductAvatar, resolveBrandLogo } from '@/components/ui/product-avatar';
+import { ProductAvatar, ProductAvatarSize, resolveBrandLogo } from '@/components/ui/product-avatar';
 
 type SectionKey = 'promo' | 'terlaris' | 'terbaru';
 
@@ -49,6 +49,7 @@ interface HomepageProductItem {
   isPromo?: boolean;
   status?: string;
   stock?: number;
+  logoUrl?: string;
   imageUrl?: string;
   createdAt?: string;
 }
@@ -117,14 +118,26 @@ export interface AdminProductGroup {
   minPrice: number;
   originalPrice: number;
   isPromo: boolean;
+  logoUrl?: string;
+  imageUrl?: string;
   savingsText?: string;
   variantCount: number;
   items: AdminProductItem[];
   match: (text: string) => boolean;
 }
 
-export function ProductBrandLogo({ name, className = 'w-10 h-10' }: { name: string; className?: string }) {
-  return <ProductAvatar name={name} className={className} />;
+export function ProductBrandLogo({
+  name,
+  imageUrl,
+  className = 'w-10 h-10',
+  size,
+}: {
+  name: string;
+  imageUrl?: string;
+  className?: string;
+  size?: ProductAvatarSize;
+}) {
+  return <ProductAvatar name={name} imageUrl={imageUrl} className={className} size={size} />;
 }
 
 const ADMIN_PRODUCT_DEFINITIONS: Array<{
@@ -528,6 +541,8 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
           minPrice,
           originalPrice,
           isPromo,
+          logoUrl: c.logoUrl || c.imageUrl,
+          imageUrl: c.imageUrl || c.logoUrl,
           savingsText: savings > 0 ? `Hemat Rp ${savings.toLocaleString('id-ID')}` : undefined,
           variantCount: c.activeCatalogCount || c.catalogCount || items.length || 1,
           items,
@@ -928,6 +943,7 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
                     const displayName = prodGroup?.name || legacyProd?.name || idOrName;
                     const displayCategory = prodGroup?.categoryName || legacyProd?.categoryName || 'Katalog';
                     const displayPrice = prodGroup ? `Mulai Rp ${prodGroup.minPrice.toLocaleString('id-ID')}` : (legacyProd?.priceFormatted || '-');
+                    const displayLogo = prodGroup?.logoUrl || (prodGroup as any)?.imageUrl || legacyProd?.imageUrl;
 
                     return (
                       <div
@@ -940,7 +956,7 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
                             {idx + 1}
                           </span>
 
-                          <ProductBrandLogo name={displayName} className="w-9 h-9" />
+                          <ProductBrandLogo name={displayName} imageUrl={displayLogo} className="w-9 h-9" />
 
                           <div className="min-w-0 flex-1">
                             <p className="text-xs font-bold text-foreground truncate" title={displayName}>
@@ -1046,6 +1062,7 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
                     });
                   const displayName = prodGroup?.name || prod.productName || prod.name;
                   const displayPrice = Number(prod.minPrice || prod.price || prodGroup?.minPrice || 0);
+                  const displayLogo = prod.logoUrl || prod.imageUrl || prodGroup?.logoUrl || (prodGroup as any)?.imageUrl;
 
                   return (
                     <div
@@ -1056,7 +1073,7 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
                         <span className="w-5 h-5 rounded-md bg-[#C96F55] text-white font-black text-[10px] flex items-center justify-center shrink-0">
                           {rankIdx + 1}
                         </span>
-                        <ProductBrandLogo name={displayName} className="w-8 h-8" />
+                        <ProductBrandLogo name={displayName} imageUrl={displayLogo} className="w-8 h-8" />
                         <div className="min-w-0 flex-1">
                           <p className="font-semibold text-foreground truncate" title={displayName}>
                             {displayName}
@@ -1226,7 +1243,7 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
                         <div>
                           {/* Top: Brand Logo + Name + Star Rating & Sales */}
                           <div className="flex items-start gap-3">
-                            <ProductBrandLogo name={prod.name} className="w-12 h-12" />
+                            <ProductBrandLogo name={prod.name} imageUrl={prod.imageUrl || prod.logoUrl} className="w-12 h-12" />
 
                             <div className="min-w-0 flex-1">
                               <h4 className="text-sm font-bold text-[#0F172A] truncate" title={prod.name}>
