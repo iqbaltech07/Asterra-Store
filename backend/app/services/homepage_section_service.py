@@ -344,14 +344,18 @@ class HomepageSectionService:
 
                     stock_status = "ready" if has_ready_stock else "out_of_stock"
 
+                    name_clean = str(card.name or "").strip()
+                    if not name_clean or name_clean.lower() in ["digital", "layanan digital", "produk digital"]:
+                        name_clean = str(card.slug or "").replace("-", " ").title() if card.slug else "Layanan Pilihan"
+
                     card_dict = {
                         "id": card.id,
                         "cardId": card.id,
-                        "name": card.name,
+                        "name": name_clean,
                         "slug": card.slug,
                         "brandGroup": card.slug,
-                        "productName": card.name,
-                        "displayName": card.name,
+                        "productName": name_clean,
+                        "displayName": name_clean,
                         "logoUrl": card.logo_url,
                         "imageUrl": card.logo_url,
                         "description": card.description,

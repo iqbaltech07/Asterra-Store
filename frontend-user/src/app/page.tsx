@@ -274,6 +274,54 @@ export default function HomePage() {
         isTerlaris: false,
         isTerbaru: true,
       },
+      {
+        name: 'Loklok',
+        match: (t: string) => t.includes('loklok'),
+        cat: 'Apps & Streaming',
+        tag: 'streaming' as const,
+        soldCount: getDynamicSoldCount('Loklok', now, 22),
+        targetMax: 28,
+        rating: '5.0',
+        isPromo: false,
+        isTerlaris: false,
+        isTerbaru: true,
+      },
+      {
+        name: 'Getcontact',
+        match: (t: string) => t.includes('getcontact') || t.includes('getcontac'),
+        cat: 'Apps & Streaming',
+        tag: 'other' as const,
+        soldCount: getDynamicSoldCount('Getcontact', now, 22),
+        targetMax: 28,
+        rating: '5.0',
+        isPromo: false,
+        isTerlaris: false,
+        isTerbaru: true,
+      },
+      {
+        name: 'Zoom',
+        match: (t: string) => t.includes('zoom'),
+        cat: 'Apps & Streaming',
+        tag: 'other' as const,
+        soldCount: getDynamicSoldCount('Zoom', now, 22),
+        targetMax: 30,
+        rating: '5.0',
+        isPromo: false,
+        isTerlaris: false,
+        isTerbaru: true,
+      },
+      {
+        name: 'Apple Music',
+        match: (t: string) => t.includes('apple music') || t.includes('applemusic'),
+        cat: 'Apps & Streaming',
+        tag: 'streaming' as const,
+        soldCount: getDynamicSoldCount('Apple Music', now, 22),
+        targetMax: 30,
+        rating: '5.0',
+        isPromo: false,
+        isTerlaris: false,
+        isTerbaru: true,
+      },
     ];
   }, [now]);
 
@@ -388,18 +436,35 @@ export default function HomePage() {
         const itemId = (item.id || (item as any).cardId || '').toLowerCase();
         const itemName = (item.name || (item as any).productName || '').toLowerCase();
 
+        // 1. Strict Filter: Never process generic supplier brand "Digital" as a standalone storefront card
+        const isGenericDigital = itemName === 'digital' || itemName === 'produk digital' || itemSlug === 'digital';
+
         const matched = allMapped.find((app) => {
           const appSlug = (app.slug || '').toLowerCase();
           const appId = (app.id || '').toLowerCase();
           const appName = (app.name || '').toLowerCase();
 
-          return (
-            (itemSlug && (appSlug === itemSlug || appId === itemSlug)) ||
-            (itemId && (appId === itemId || appSlug === itemId)) ||
-            (itemName && (appName === itemName || appSlug.includes(itemName) || itemName.includes(appName))) ||
-            (itemSlug && (appSlug.includes(itemSlug) || itemSlug.includes(appSlug)))
-          );
+          if (!isGenericDigital) {
+            if (itemSlug && (appSlug === itemSlug || appId === itemSlug)) return true;
+            if (itemId && (appId === itemId || appSlug === itemId)) return true;
+            if (itemName && (appName === itemName || appSlug.includes(itemName) || itemName.includes(appName))) return true;
+            if (itemSlug && (appSlug.includes(itemSlug) || itemSlug.includes(appSlug))) return true;
+          }
+
+          // Match via catalog item variants inside the app
+          return app.items.some((it) => {
+            const itId = (it.id || '').toLowerCase();
+            const itName = (it.name || '').toLowerCase();
+            const itCardId = ((it as any).cardId || (it as any).card_id || '').toLowerCase();
+            return (itemId && (itId === itemId || itCardId === itemId)) || (itemName && !isGenericDigital && itName.includes(itemName));
+          });
         });
+
+        // If matched or fallback
+        const candidateName = matched?.name || (isGenericDigital ? (item.items?.[0]?.name ? item.items[0].name.split(' ')[0] : '') : item.name);
+        if (!candidateName || candidateName.toLowerCase() === 'digital' || candidateName.toLowerCase() === 'produk digital') {
+          continue; // Strict safety guarantee: never render "Digital" card to customers
+        }
 
         const appToPush: ApplicationGroupItem = matched
           ? {
@@ -420,8 +485,8 @@ export default function HomePage() {
             }
           : {
           id: item.id || item.slug,
-          name: item.name,
-          slug: item.slug || item.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+          name: candidateName,
+          slug: item.slug || candidateName.toLowerCase().replace(/[^a-z0-9]/g, '-'),
           category: (item as any).categoryName || (typeof (item as any).category === 'string' ? (item as any).category : (item as any).category?.name) || 'Layanan Digital',
           categoryTag: ((item as any).categoryTag as any) || 'other',
           logoUrl: item.logoUrl || (item as any).imageUrl,
