@@ -3,8 +3,11 @@ import pathlib
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 from sqlalchemy import text
+from sqlalchemy.orm import joinedload
 from app.core.database import SessionLocal, engine, Base
 from app.models.homepage_section import HomepageProductSection
+from app.models.product_card import ProductCard
+from app.models.product import Product
 from app.models.order import Order, OrderItem
 from app.services.catalog_service import CatalogService
 from app.services.campaign_service import CampaignService
@@ -215,39 +218,28 @@ class HomepageSectionService:
     @classmethod
     def compute_section_products(cls, section_key: str, limit: int = 8) -> Dict[str, Any]:
         """
-        Computes the definitive list of up to 8 products for Promo, Terlaris, or Terbaru.
+        Computes the definitive list of up to 8 ProductCards (Product Groups) for Promo, Terlaris, or Terbaru.
         Strictly observes:
         1. Max 8 products.
-        2. Auto Mode follows real metrics (Campaigns, Sales, CreatedAt).
-        3. Manual Mode applies admin priority order, filling remaining slots up to 8 via Auto logic.
-        4. Inactive/archived products are excluded.
-        5. Zero duplicate products within section.
+        2. Auto Mode follows real metrics:
+           - terbaru: effective_time = max(card.created_at, max(variant.created_at)). Sort DESC.
+             Rule: 'jika ada product group baru atau variant baru di product group tersebut maka kalkulasikan masuk ke dalam tab terbaru.'
+           - terlaris: sold_count DESC, effective_time DESC.
+           - promo: active_campaign DESC, sold_count DESC, effective_time DESC.
+        3. Manual Mode applies admin priority order without dropping any manual selections,
+           filling remaining slots up to 8 via Auto logic.
+        4. Inactive/archived cards and cards with zero active variants are excluded.
+        5. Zero duplicates.
         """
         configs = cls.get_sections_config()
         config = configs.get(section_key, DEFAULT_CONFIG.get(section_key, {}))
         mode = config.get("mode", "auto")
         manual_ids = config.get("manualProductIds", [])
 
-        all_products = CatalogService.load_products(force_reload=False)
-        # Only active products with positive price
-        active_products = [
-            p for p in all_products
-            if p.get("status", "active") == "active"
-            and (p.get("price") or 0) > 0
-        ]
-
         sales_counts = cls.get_valid_sales_counts()
         active_campaigns = CampaignService.get_active_campaigns()
 
-        # Helper to get sold units for a product
-        def get_sold(p: Dict[str, Any]) -> int:
-            pid = str(p.get("id") or "").lower()
-            pname = str(p.get("name") or "").lower()
-            return sales_counts.get(pid, 0) or sales_counts.get(pname, 0)
-
-        # Helper to parse created_at timestamp
-        def get_created_dt(p: Dict[str, Any]) -> datetime:
-            val = p.get("createdAt") or p.get("created_at")
+        def parse_dt(val: Any) -> datetime:
             if isinstance(val, datetime):
                 return val
             if val:
@@ -260,232 +252,225 @@ class HomepageSectionService:
                     pass
             return datetime(2020, 1, 1)
 
-        # Helper to check if product matches an active campaign
-        def is_in_active_campaign(p: Dict[str, Any]) -> bool:
+        def is_card_in_campaign(card_obj: ProductCard, active_catalogs: List[Product]) -> bool:
             if not active_campaigns:
                 return False
-            pid = str(p.get("id") or "").lower()
-            pname = str(p.get("name") or "").lower()
-            cat_name = str(p.get("categoryName") or (p.get("category", {}).get("name") if isinstance(p.get("category"), dict) else "")).lower()
+            cid = str(card_obj.id or "").lower()
+            cname = str(card_obj.name or "").lower()
+            cslug = str(card_obj.slug or "").lower()
+            cat_name = str(card_obj.category_name or "").lower()
+            cat_id = str(card_obj.category_id or "").lower()
 
             for camp in active_campaigns:
                 scope = camp.get("targetScope", "all")
                 if scope == "all":
                     return True
                 if scope == "category":
-                    cats = [c.lower().strip() for c in (camp.get("targetCategories") or [camp.get("targetCategory", "")]) if c]
-                    if any(c in cat_name for c in cats):
+                    target_cats = [c.lower().strip() for c in (camp.get("targetCategories") or [camp.get("targetCategory", "")]) if c]
+                    if any(tc in cat_name or tc in cat_id for tc in target_cats):
                         return True
                 if scope == "specific_products":
-                    prods = [prod.lower().strip() for prod in (camp.get("targetProducts") or []) if prod]
-                    if any(prod == pid or prod in pname for prod in prods):
+                    target_prods = [p.lower().strip() for p in (camp.get("targetProducts") or []) if p]
+                    if any(tp in [cid, cname, cslug] for tp in target_prods):
                         return True
+                    for v in active_catalogs:
+                        vid = str(v.id or "").lower()
+                        vname = str(v.name or "").lower()
+                        if any(tp in [vid, vname] for tp in target_prods):
+                            return True
             return False
+
+        # Build candidate card items inside DB session
+        candidate_cards: List[Dict[str, Any]] = []
+        db = SessionLocal() if SessionLocal else None
+        if db:
+            try:
+                active_cards = (
+                    db.query(ProductCard)
+                    .options(joinedload(ProductCard.catalogs))
+                    .filter(ProductCard.status == "active")
+                    .all()
+                )
+                for card in active_cards:
+                    active_catalogs = [p for p in (card.catalogs or []) if getattr(p, "status", None) == "active"]
+                    if not active_catalogs:
+                        continue
+
+                    prices = [int(float(p.price)) for p in active_catalogs if getattr(p, "price", None) is not None and float(p.price) > 0]
+                    min_price = min(prices) if prices else 0
+                    if min_price <= 0:
+                        continue
+
+                    # Calculate effective created_at:
+                    # Rule: 'jika ada product group baru atau variant baru di product group tersebut maka kalkulasikan masuk ke dalam tab terbaru.'
+                    created_timestamps = [parse_dt(card.created_at)]
+                    for p in active_catalogs:
+                        created_timestamps.append(parse_dt(p.created_at))
+                    effective_created_at = max(created_timestamps)
+
+                    # Sold count
+                    base_sold = card.base_sold_count or 20
+                    order_sold = sales_counts.get(str(card.id).lower(), 0) + sales_counts.get(str(card.slug).lower(), 0)
+                    for v in active_catalogs:
+                        order_sold += sales_counts.get(str(v.id).lower(), 0)
+                    total_sold = max(20, min(40, base_sold + order_sold))
+
+                    in_promo = is_card_in_campaign(card, active_catalogs)
+
+                    # Determine categoryTag
+                    name_u = str(card.name or "").upper()
+                    cat_u = str(card.category_name or "").upper()
+                    if "AI" in name_u or "CHATGPT" in name_u or "GEMINI" in name_u or "CLAUDE" in name_u:
+                        tag = "ai"
+                    elif "CANVA" in name_u or "DESIGN" in name_u or "DESAINER" in name_u:
+                        tag = "design"
+                    elif "CAPCUT" in name_u or "VIDEO" in name_u or "ALIGHT" in name_u:
+                        tag = "video"
+                    elif "STREAMING" in cat_u or "NETFLIX" in name_u or "YOUTUBE" in name_u or "SPOTIFY" in name_u or "VIDIO" in name_u:
+                        tag = "streaming"
+                    elif "PUBG" in name_u or "MOBILE LEGEND" in name_u or "DIAMOND" in name_u or "UC" in name_u:
+                        tag = "gaming"
+                    else:
+                        tag = "other"
+
+                    # Check ready stock
+                    has_ready_stock = False
+                    for c_item in active_catalogs:
+                        is_zero_stock = getattr(c_item, "stock", None) is not None and c_item.stock <= 0
+                        is_empty = getattr(c_item, "provider_status", None) == "empty"
+                        if not is_zero_stock and not is_empty:
+                            has_ready_stock = True
+                            break
+
+                    stock_status = "ready" if has_ready_stock else "out_of_stock"
+
+                    card_dict = {
+                        "id": card.id,
+                        "cardId": card.id,
+                        "name": card.name,
+                        "slug": card.slug,
+                        "brandGroup": card.slug,
+                        "productName": card.name,
+                        "displayName": card.name,
+                        "logoUrl": card.logo_url,
+                        "imageUrl": card.logo_url,
+                        "description": card.description,
+                        "categoryId": card.category_id or "cat-digital",
+                        "categoryName": card.category_name or "Layanan Digital",
+                        "category": {
+                            "id": card.category_id or "cat-digital",
+                            "name": card.category_name or "Layanan Digital",
+                        },
+                        "categoryTag": tag,
+                        "status": card.status,
+                        "rating": card.rating or "5.0",
+                        "badgeLabel": "🔥 Promo" if section_key == "promo" else ("⭐ Terlaris" if section_key == "terlaris" else "✨ Baru"),
+                        "minPrice": min_price,
+                        "price": min_price,
+                        "priceFormatted": f"Rp {min_price:,.0f}".replace(",", "."),
+                        "stockStatus": stock_status,
+                        "isOutOfStock": stock_status == "out_of_stock",
+                        "soldCount": total_sold,
+                        "isPromo": in_promo or section_key == "promo",
+                        "effectiveCreatedAt": effective_created_at.isoformat(),
+                        "_effective_dt": effective_created_at,
+                        "variantCount": len(active_catalogs),
+                        "items": [p.to_dict() for p in active_catalogs],
+                    }
+                    candidate_cards.append(card_dict)
+            except Exception as e:
+                print(f"[HomepageSectionService] DB cards query note: {e}")
+            finally:
+                db.close()
 
         # --- AUTO RANKING FOR EACH SECTION ---
         auto_ranked: List[Dict[str, Any]] = []
-
         if section_key == "promo":
-            # Only products in an active campaign
-            promo_candidates = [p for p in active_products if is_in_active_campaign(p)]
-            # Sort by sales DESC, then created_at DESC
+            # Auto Promo: Prioritize cards in active campaigns, then sold_count DESC, then effective_dt DESC
             auto_ranked = sorted(
-                promo_candidates,
-                key=lambda p: (get_sold(p), get_created_dt(p).timestamp(), str(p.get("id", ""))),
+                candidate_cards,
+                key=lambda x: (
+                    1 if x["isPromo"] else 0,
+                    x["soldCount"],
+                    x["_effective_dt"].timestamp(),
+                    x["id"],
+                ),
                 reverse=True,
             )
-
         elif section_key == "terlaris":
-            # Sort by valid sold units count DESC, tie-breaker created_at DESC
+            # Auto Terlaris: Sort by sold_count DESC, tie-breaker effective_dt DESC
             auto_ranked = sorted(
-                active_products,
-                key=lambda p: (get_sold(p), get_created_dt(p).timestamp(), str(p.get("id", ""))),
+                candidate_cards,
+                key=lambda x: (
+                    x["soldCount"],
+                    x["_effective_dt"].timestamp(),
+                    x["id"],
+                ),
                 reverse=True,
             )
-
         elif section_key == "terbaru":
-            # Sort by created_at DESC, tie-breaker id DESC
+            # Auto Terbaru: Sort by effective_dt DESC (newest card or variant), tie-breaker id DESC
             auto_ranked = sorted(
-                active_products,
-                key=lambda p: (get_created_dt(p).timestamp(), str(p.get("id", ""))),
+                candidate_cards,
+                key=lambda x: (
+                    x["_effective_dt"].timestamp(),
+                    x["id"],
+                ),
                 reverse=True,
             )
 
-        # --- ASSEMBLE FINAL 8 PRODUCTS (AUTO vs MANUAL) ---
-        def get_brand_group(p: Dict[str, Any]) -> str:
-            name_u = str(p.get("name") or "").upper()
-            brand_u = str(p.get("brand") or "").upper()
-            combined = f"{brand_u} {name_u}"
-            if "CAPCUT" in combined:
-                return "capcut"
-            if "NETFLIX" in combined:
-                return "netflix"
-            if "GEMINI" in combined or "GOOGLE AI" in combined or "GOOGLE PRO" in combined:
-                return "google-gemini"
-            if "CHATGPT" in combined or "OPENAI" in combined:
-                return "chatgpt"
-            if "CANVA" in combined:
-                return "canva"
-            if "ALIGHT" in combined:
-                return "alight-motion"
-            if "YOUTUBE" in combined:
-                return "youtube"
-            if "SPOTIFY" in combined:
-                return "spotify"
-            if "VIDIO" in combined:
-                return "vidio"
-            if "WETV" in combined:
-                return "wetv"
-            if "VIU" in combined:
-                return "viu"
-            if "BSTATION" in combined:
-                return "bstation"
-            if "IQIYI" in combined:
-                return "iqiyi"
-            if "MOBILE LEGEND" in combined or "MLBB" in combined or "DIAMOND" in combined:
-                return "mobile-legends"
-            if "PUBG" in combined or "UC" in combined:
-                return "pubg"
-            if "CLAUDE" in combined:
-                return "claude"
-            return str(p.get("id") or "").lower()
+        # Helper to match a manual id/slug/name to candidate card
+        def match_candidate(mid: str) -> Optional[Dict[str, Any]]:
+            cmid = mid.lower().strip()
+            # 1. Exact match by id, slug, or name
+            for c in candidate_cards:
+                if c["id"].lower() == cmid or c["slug"].lower() == cmid or c["name"].lower() == cmid:
+                    return c
+            # 2. Substring match
+            for c in candidate_cards:
+                if cmid in c["slug"].lower() or c["slug"].lower() in cmid or cmid in c["name"].lower() or c["name"].lower() in cmid:
+                    return c
+            # 3. Match against variant IDs or names
+            for c in candidate_cards:
+                for it in c.get("items", []):
+                    if str(it.get("id", "")).lower() == cmid or str(it.get("name", "")).lower() == cmid:
+                        return c
+            return None
 
-        BRAND_DISPLAY_NAMES = {
-            "capcut": "CapCut",
-            "netflix": "Netflix",
-            "google-gemini": "Google Gemini",
-            "chatgpt": "ChatGPT",
-            "canva": "Canva",
-            "alight-motion": "Alight Motion",
-            "youtube": "YouTube",
-            "spotify": "Spotify",
-            "vidio": "Vidio",
-            "wetv": "WeTV",
-            "viu": "Viu",
-            "bstation": "Bstation",
-            "iqiyi": "iQIYI",
-            "mobile-legends": "Mobile Legends",
-            "pubg": "PUBG Mobile",
-            "claude": "Claude",
-            "k-vision": "K-Vision & TV",
-        }
-
-        final_products: List[Dict[str, Any]] = []
-        selected_ids: set = set()
-        selected_brands: set = set()
+        final_cards: List[Dict[str, Any]] = []
+        selected_card_ids: set = set()
 
         if mode == "manual" and manual_ids:
-            # Create a lookup map for active products
-            active_lookup: Dict[str, Dict[str, Any]] = {}
-            brand_lookup: Dict[str, Dict[str, Any]] = {}
-            for p in auto_ranked:
-                pid = str(p.get("id") or "").lower()
-                active_lookup[pid] = p
-                pname = str(p.get("name") or "").lower()
-                active_lookup[pname] = p
-                b_grp = get_brand_group(p)
-                if b_grp not in brand_lookup:
-                    brand_lookup[b_grp] = p
-
             for mid in manual_ids:
-                clean_mid = str(mid).lower().strip()
-                matched = active_lookup.get(clean_mid) or brand_lookup.get(clean_mid)
-                if not matched:
-                    for b_grp, p in brand_lookup.items():
-                        if clean_mid in b_grp or b_grp in clean_mid:
-                            matched = p
-                            break
-                # If section is promo, verify the product matches active campaign
-                if matched and (section_key != "promo" or is_in_active_campaign(matched)):
-                    real_id = str(matched.get("id"))
-                    b_grp = get_brand_group(matched)
-                    if real_id not in selected_ids and b_grp not in selected_brands:
-                        selected_ids.add(real_id)
-                        selected_brands.add(b_grp)
-                        final_products.append(matched)
-                        if len(final_products) >= limit:
-                            break
-
-        # Fill remaining slots up to limit (8) from auto_ranked
-        # Pass 1: Prioritize distinct product brands so no duplicate products appear
-        selected_brands = {get_brand_group(p) for p in final_products}
-        for p in auto_ranked:
-            real_id = str(p.get("id"))
-            b_group = get_brand_group(p)
-            if real_id not in selected_ids and b_group not in selected_brands:
-                selected_ids.add(real_id)
-                selected_brands.add(b_group)
-                final_products.append(p)
-                if len(final_products) >= limit:
-                    break
-
-        # Pass 2: If still under limit (e.g. promo only had a few campaign items),
-        # fill from ANY remaining active_products with DISTINCT brand so ZERO duplicate products appear!
-        if len(final_products) < limit:
-            for p in active_products:
-                real_id = str(p.get("id"))
-                b_group = get_brand_group(p)
-                if real_id not in selected_ids and b_group not in selected_brands:
-                    selected_ids.add(real_id)
-                    selected_brands.add(b_group)
-                    final_products.append(p)
-                    if len(final_products) >= limit:
+                matched = match_candidate(mid)
+                if matched and matched["id"] not in selected_card_ids:
+                    selected_card_ids.add(matched["id"])
+                    final_cards.append(matched)
+                    if len(final_cards) >= limit:
                         break
 
-        # Enrich products with computed fields for seamless frontend showcase integration
-        enriched_products = []
-        for p in final_products:
-            p_copy = dict(p)
-            name_u = str(p.get("name") or "").upper()
-            cat_u = str(p.get("categoryName") or "").upper()
+        # Fill remaining slots up to limit (8) from auto_ranked
+        if len(final_cards) < limit:
+            for c in auto_ranked:
+                if c["id"] not in selected_card_ids:
+                    selected_card_ids.add(c["id"])
+                    final_cards.append(c)
+                    if len(final_cards) >= limit:
+                        break
 
-            b_grp = get_brand_group(p)
-            clean_product_name = BRAND_DISPLAY_NAMES.get(b_grp, p.get("brand") or p.get("name"))
-
-            # Calculate minPrice across all variants of this brand in active catalog
-            brand_variants = [v for v in active_products if get_brand_group(v) == b_grp]
-            prices = [v.get("price") for v in brand_variants if (v.get("price") or 0) > 0]
-            brand_min_price = min(prices) if prices else (p.get("price") or 0)
-
-            if "AI" in name_u or "CHATGPT" in name_u or "GEMINI" in name_u or "CLAUDE" in name_u:
-                tag = "ai"
-            elif "CANVA" in name_u or "DESIGN" in name_u or "DESAINER" in name_u:
-                tag = "design"
-            elif "CAPCUT" in name_u or "VIDEO" in name_u or "ALIGHT" in name_u:
-                tag = "video"
-            elif "STREAMING" in cat_u or "NETFLIX" in name_u or "YOUTUBE" in name_u or "SPOTIFY" in name_u or "VIDIO" in name_u:
-                tag = "streaming"
-            elif "PUBG" in name_u or "MOBILE LEGEND" in name_u or "DIAMOND" in name_u or "UC" in name_u:
-                tag = "gaming"
-            else:
-                tag = "other"
-
-            p_copy["brandGroup"] = b_grp
-            p_copy["productName"] = clean_product_name
-            p_copy["name"] = clean_product_name
-            p_copy["displayName"] = clean_product_name
-            p_copy["variantName"] = p.get("name")
-            p_copy["skuName"] = p.get("name")
-            p_copy["categoryTag"] = tag
-            p_copy["minPrice"] = brand_min_price
-            p_copy["price"] = brand_min_price
-            p_copy["priceFormatted"] = f"Rp {brand_min_price:,.0f}".replace(",", ".")
-            p_copy["soldCount"] = get_sold(p) or 100
-            p_copy["rating"] = "5.0"
-            p_copy["isPromo"] = is_in_active_campaign(p) or section_key == "promo"
-            p_copy["badgeLabel"] = "🔥 Promo" if section_key == "promo" else ("⭐ Terlaris" if section_key == "terlaris" else "✨ Baru")
-            p_copy["slug"] = b_grp
-            p_copy["variantCount"] = len(brand_variants)
-            p_copy["items"] = brand_variants
-            enriched_products.append(p_copy)
+        # Clean up internal helper keys before returning
+        output_data = []
+        for c in final_cards:
+            item_clean = {k: v for k, v in c.items() if k != "_effective_dt"}
+            output_data.append(item_clean)
 
         return {
             "sectionKey": section_key,
             "mode": mode,
             "manualProductIds": manual_ids,
             "totalAvailable": len(auto_ranked),
-            "count": len(enriched_products),
-            "data": enriched_products,
+            "count": len(output_data),
+            "data": output_data,
             "limit": limit,
             "updatedAt": config.get("updatedAt"),
             "updatedBy": config.get("updatedBy"),

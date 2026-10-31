@@ -28,7 +28,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { ProductAvatar, resolveBrandLogo } from '@/components/ui/product-avatar';
+import { ProductAvatar, ProductAvatarSize, resolveBrandLogo } from '@/components/ui/product-avatar';
 
 type SectionKey = 'promo' | 'terlaris' | 'terbaru';
 
@@ -49,6 +49,7 @@ interface HomepageProductItem {
   isPromo?: boolean;
   status?: string;
   stock?: number;
+  logoUrl?: string;
   imageUrl?: string;
   createdAt?: string;
 }
@@ -117,14 +118,26 @@ export interface AdminProductGroup {
   minPrice: number;
   originalPrice: number;
   isPromo: boolean;
+  logoUrl?: string;
+  imageUrl?: string;
   savingsText?: string;
   variantCount: number;
   items: AdminProductItem[];
   match: (text: string) => boolean;
 }
 
-export function ProductBrandLogo({ name, className = 'w-10 h-10' }: { name: string; className?: string }) {
-  return <ProductAvatar name={name} className={className} />;
+export function ProductBrandLogo({
+  name,
+  imageUrl,
+  className = 'w-10 h-10',
+  size,
+}: {
+  name: string;
+  imageUrl?: string;
+  className?: string;
+  size?: ProductAvatarSize;
+}) {
+  return <ProductAvatar name={name} imageUrl={imageUrl} className={className} size={size} />;
 }
 
 const ADMIN_PRODUCT_DEFINITIONS: Array<{
@@ -351,6 +364,17 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
   });
   const dbCategories = categoriesData?.data || [];
 
+  // 4. Fetch real Product Cards from Database so all product groups (Loklok, Getcontact, Zoom, etc.) are available
+  const { data: cardsData } = useQuery<{ success: boolean; data: any[] }>({
+    queryKey: ['public-cards'],
+    queryFn: async () => {
+      const res = await fetch('/api/v1/cards');
+      if (!res.ok) return { success: false, data: [] };
+      return res.json();
+    },
+    staleTime: 30 * 1000,
+  });
+
 
 
   // Current section data from server
@@ -480,6 +504,52 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
   // Curated, authoritative Product entities for the homepage ordering (strictly Product level, not catalog SKUs)
   const availableProductGroups = useMemo<AdminProductGroup[]>(() => {
     const catalog = catalogData?.data || [];
+    const dbCards = (cardsData?.data || []).filter((c: any) => c.status === 'active');
+
+    if (dbCards.length > 0) {
+      return dbCards.map((c: any) => {
+        const catNameLower = (c.categoryName || '').toLowerCase();
+        const tag: AdminProductGroup['categoryTag'] =
+          catNameLower.includes('ai') ? 'ai' :
+          catNameLower.includes('design') ? 'design' :
+          catNameLower.includes('video') ? 'video' :
+          catNameLower.includes('stream') ? 'streaming' :
+          catNameLower.includes('game') ? 'gaming' : 'other';
+
+        const items = catalog.filter((p) => {
+          if (p.status !== 'active') return false;
+          if ((p as any).cardId === c.id || (p as any).card_id === c.id) return true;
+          const text = `${p.name} ${p.categoryName || ''}`.toLowerCase();
+          return text.includes(c.slug.replace(/-/g, ' ')) || text.includes(c.name.toLowerCase());
+        });
+
+        const prices = items.map((p) => p.price).filter((p) => p > 0);
+        const minPrice = c.minPrice > 0 ? c.minPrice : (prices.length > 0 ? Math.min(...prices) : 15000);
+        const isPromo = activeSection === 'promo' || (c.sections?.includes('promo') ?? true) || items.some((it) => it.isPromo);
+        const originalPrice = isPromo ? Math.round(minPrice / 0.85) : minPrice;
+        const savings = originalPrice > minPrice ? originalPrice - minPrice : 0;
+
+        return {
+          id: c.slug || c.id,
+          name: c.name,
+          slug: c.slug,
+          categoryName: c.categoryName || 'Layanan Digital',
+          categoryId: c.categoryId,
+          categoryTag: tag,
+          rating: String(c.rating || '5.0'),
+          soldCount: c.soldCount || 20,
+          minPrice,
+          originalPrice,
+          isPromo,
+          logoUrl: c.logoUrl || c.imageUrl,
+          imageUrl: c.imageUrl || c.logoUrl,
+          savingsText: savings > 0 ? `Hemat Rp ${savings.toLocaleString('id-ID')}` : undefined,
+          variantCount: c.activeCatalogCount || c.catalogCount || items.length || 1,
+          items,
+          match: (t: string) => t.includes(c.slug.replace(/-/g, ' ')) || t.includes(c.name.toLowerCase()),
+        };
+      });
+    }
 
     return ADMIN_PRODUCT_DEFINITIONS.map((def) => {
       const items = catalog.filter((p) => {
@@ -515,7 +585,7 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
         savingsText: savings > 0 ? `Hemat Rp ${savings.toLocaleString('id-ID')}` : undefined,
       };
     });
-  }, [catalogData, activeSection]);
+  }, [catalogData, cardsData, activeSection]);
 
   const productGroupMap = useMemo(() => {
     const map = new Map<string, AdminProductGroup>();
@@ -523,6 +593,11 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
       map.set(g.id.toLowerCase(), g);
       map.set(g.name.toLowerCase(), g);
       map.set(g.slug.toLowerCase(), g);
+      if (g.id.startsWith('card-')) {
+        map.set(g.id.replace('card-', '').toLowerCase(), g);
+      } else {
+        map.set(('card-' + g.id).toLowerCase(), g);
+      }
     }
     return map;
   }, [availableProductGroups]);
@@ -868,6 +943,7 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
                     const displayName = prodGroup?.name || legacyProd?.name || idOrName;
                     const displayCategory = prodGroup?.categoryName || legacyProd?.categoryName || 'Katalog';
                     const displayPrice = prodGroup ? `Mulai Rp ${prodGroup.minPrice.toLocaleString('id-ID')}` : (legacyProd?.priceFormatted || '-');
+                    const displayLogo = prodGroup?.logoUrl || (prodGroup as any)?.imageUrl || legacyProd?.imageUrl;
 
                     return (
                       <div
@@ -880,7 +956,7 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
                             {idx + 1}
                           </span>
 
-                          <ProductBrandLogo name={displayName} className="w-9 h-9" />
+                          <ProductBrandLogo name={displayName} imageUrl={displayLogo} className="w-9 h-9" />
 
                           <div className="min-w-0 flex-1">
                             <p className="text-xs font-bold text-foreground truncate" title={displayName}>
@@ -986,6 +1062,7 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
                     });
                   const displayName = prodGroup?.name || prod.productName || prod.name;
                   const displayPrice = Number(prod.minPrice || prod.price || prodGroup?.minPrice || 0);
+                  const displayLogo = prod.logoUrl || prod.imageUrl || prodGroup?.logoUrl || (prodGroup as any)?.imageUrl;
 
                   return (
                     <div
@@ -996,7 +1073,7 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
                         <span className="w-5 h-5 rounded-md bg-[#C96F55] text-white font-black text-[10px] flex items-center justify-center shrink-0">
                           {rankIdx + 1}
                         </span>
-                        <ProductBrandLogo name={displayName} className="w-8 h-8" />
+                        <ProductBrandLogo name={displayName} imageUrl={displayLogo} className="w-8 h-8" />
                         <div className="min-w-0 flex-1">
                           <p className="font-semibold text-foreground truncate" title={displayName}>
                             {displayName}
@@ -1166,7 +1243,7 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
                         <div>
                           {/* Top: Brand Logo + Name + Star Rating & Sales */}
                           <div className="flex items-start gap-3">
-                            <ProductBrandLogo name={prod.name} className="w-12 h-12" />
+                            <ProductBrandLogo name={prod.name} imageUrl={prod.imageUrl || prod.logoUrl} className="w-12 h-12" />
 
                             <div className="min-w-0 flex-1">
                               <h4 className="text-sm font-bold text-[#0F172A] truncate" title={prod.name}>

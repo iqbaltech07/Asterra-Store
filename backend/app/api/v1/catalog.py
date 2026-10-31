@@ -915,7 +915,7 @@ async def create_admin_card(request: Request):
     payload = await request.json()
     try:
         card = CardService.create_card(payload)
-        cache.invalidate("catalog")
+        cache.invalidate("catalog", "homepage_sections")
         RealtimeBroadcaster.broadcast("cards:updated", {"action": "created", "id": card["id"]}, target_role="all")
         return {
             "success": True,
@@ -933,7 +933,7 @@ async def update_admin_card(card_id: str, request: Request):
     payload = await request.json()
     try:
         card = CardService.update_card(card_id, payload)
-        cache.invalidate("catalog")
+        cache.invalidate("catalog", "homepage_sections")
         RealtimeBroadcaster.broadcast("cards:updated", {"action": "updated", "id": card_id}, target_role="all")
         return {
             "success": True,
@@ -949,7 +949,7 @@ async def update_admin_card(card_id: str, request: Request):
 def delete_admin_card(card_id: str):
     try:
         res = CardService.delete_card(card_id)
-        cache.invalidate("catalog")
+        cache.invalidate("catalog", "homepage_sections")
         RealtimeBroadcaster.broadcast("cards:updated", {"action": "deleted", "id": card_id}, target_role="all")
         return res
     except ValueError as ve:
@@ -961,7 +961,7 @@ def delete_admin_card(card_id: str):
 def toggle_admin_card_status(card_id: str):
     try:
         res = CardService.toggle_status(card_id)
-        cache.invalidate("catalog")
+        cache.invalidate("catalog", "homepage_sections")
         RealtimeBroadcaster.broadcast("cards:updated", {"action": "toggled", "id": card_id}, target_role="all")
         return {
             "success": True,
@@ -982,7 +982,7 @@ async def link_catalog_to_card(card_id: str, request: Request):
         raise HTTPException(status_code=400, detail="catalogId wajib diisi.")
     try:
         res = CardService.link_catalog_to_card(catalog_id, target_card_id)
-        cache.invalidate("catalog")
+        cache.invalidate("catalog", "homepage_sections")
         RealtimeBroadcaster.broadcast("catalog:updated", {"action": "linked", "catalogId": catalog_id, "cardId": target_card_id}, target_role="all")
         return {
             "success": True,

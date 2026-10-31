@@ -52,6 +52,58 @@ const DEFAULT_SCHEDULE: WeeklySchedule = {
   sunday: { is_open: true, open_time: '09:00', close_time: '23:00' },
 };
 
+function WibTimeSelector({
+  value,
+  onChange,
+  disabled = false,
+}: {
+  value: string;
+  onChange: (val: string) => void;
+  disabled?: boolean;
+}) {
+  const parts = (value || '09:00').split(':');
+  const h = parts[0] || '09';
+  const m = parts[1] || '00';
+
+  const hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
+  const minutes = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'));
+
+  return (
+    <div className="inline-flex items-center gap-1 bg-surface border border-border rounded-lg px-2 h-8 text-xs font-mono shadow-2xs hover:border-primary/50 transition-colors">
+      <select
+        value={h}
+        disabled={disabled}
+        onChange={(e) => onChange(`${e.target.value}:${m}`)}
+        className="bg-transparent text-foreground font-semibold focus:outline-none cursor-pointer text-xs"
+        title="Jam (24 Jam WIB)"
+      >
+        {hours.map((hour) => (
+          <option key={hour} value={hour} className="bg-surface text-foreground">
+            {hour}
+          </option>
+        ))}
+      </select>
+      <span className="text-foreground-muted font-bold">:</span>
+      <select
+        value={m}
+        disabled={disabled}
+        onChange={(e) => onChange(`${h}:${e.target.value}`)}
+        className="bg-transparent text-foreground font-semibold focus:outline-none cursor-pointer text-xs"
+        title="Menit"
+      >
+        {minutes.map((min) => (
+          <option key={min} value={min} className="bg-surface text-foreground">
+            {min}
+          </option>
+        ))}
+      </select>
+      <span className="text-[10px] font-bold text-primary px-1 py-0.5 rounded bg-primary/10 tracking-wider">
+        WIB
+      </span>
+    </div>
+  );
+}
+
 export function AdminStoreHoursTab({ onNotify }: AdminStoreHoursTabProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -444,7 +496,7 @@ export function AdminStoreHoursTab({ onNotify }: AdminStoreHoursTabProps) {
               onClick={() => applyPreset('standard')}
               className="text-[11px] h-7 px-2.5 border-border"
             >
-              09:00 - 23:00
+              09:00 - 23:00 WIB
             </Button>
             <Button
               type="button"
@@ -453,7 +505,7 @@ export function AdminStoreHoursTab({ onNotify }: AdminStoreHoursTabProps) {
               onClick={() => applyPreset('24hours')}
               className="text-[11px] h-7 px-2.5 border-border"
             >
-              24 Jam
+              24 Jam (00:00 - 23:59 WIB)
             </Button>
             <Button
               type="button"
@@ -462,7 +514,7 @@ export function AdminStoreHoursTab({ onNotify }: AdminStoreHoursTabProps) {
               onClick={() => applyPreset('office')}
               className="text-[11px] h-7 px-2.5 border-border"
             >
-              Jam Kerja (08:00 - 17:00)
+              Jam Kerja (08:00 - 17:00 WIB)
             </Button>
           </div>
         </div>
@@ -511,11 +563,9 @@ export function AdminStoreHoursTab({ onNotify }: AdminStoreHoursTabProps) {
                     <div className="flex items-center gap-1.5">
                       <FontAwesomeIcon icon={faSun} className="w-3 h-3 text-[#EAB308]" />
                       <span className="text-[11px] text-foreground-muted font-medium">Buka:</span>
-                      <Input
-                        type="time"
+                      <WibTimeSelector
                         value={openTime}
-                        onChange={(e) => handleUpdateDay(key, 'open_time', e.target.value)}
-                        className="w-24 h-8 bg-surface border-border text-xs font-mono"
+                        onChange={(val) => handleUpdateDay(key, 'open_time', val)}
                       />
                     </div>
 
@@ -524,11 +574,9 @@ export function AdminStoreHoursTab({ onNotify }: AdminStoreHoursTabProps) {
                     <div className="flex items-center gap-1.5">
                       <FontAwesomeIcon icon={faMoon} className="w-3 h-3 text-[#6366F1]" />
                       <span className="text-[11px] text-foreground-muted font-medium">Tutup:</span>
-                      <Input
-                        type="time"
+                      <WibTimeSelector
                         value={closeTime}
-                        onChange={(e) => handleUpdateDay(key, 'close_time', e.target.value)}
-                        className="w-24 h-8 bg-surface border-border text-xs font-mono"
+                        onChange={(val) => handleUpdateDay(key, 'close_time', val)}
                       />
                     </div>
 

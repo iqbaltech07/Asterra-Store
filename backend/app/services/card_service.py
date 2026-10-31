@@ -229,7 +229,7 @@ class CardService:
 
             db.commit()
             db.refresh(new_card)
-            cache.invalidate("catalog")
+            cache.invalidate("catalog", "homepage_sections")
             return new_card.to_dict(include_catalogs=True)
         finally:
             db.close()
@@ -296,7 +296,7 @@ class CardService:
             card.updated_at = datetime.utcnow()
             db.commit()
             db.refresh(card)
-            cache.invalidate("catalog")
+            cache.invalidate("catalog", "homepage_sections")
             return card.to_dict(include_catalogs=True)
         finally:
             db.close()
@@ -311,7 +311,7 @@ class CardService:
             card.status = "archived" if card.status == "active" else "active"
             card.updated_at = datetime.utcnow()
             db.commit()
-            cache.invalidate("catalog")
+            cache.invalidate("catalog", "homepage_sections")
             return {"id": card.id, "status": card.status}
         finally:
             db.close()
@@ -333,7 +333,7 @@ class CardService:
             # Remove card record
             db.delete(card)
             db.commit()
-            cache.invalidate("catalog")
+            cache.invalidate("catalog", "homepage_sections")
             return {"success": True, "message": f"Card Produk '{card_id}' berhasil dihapus."}
         finally:
             db.close()

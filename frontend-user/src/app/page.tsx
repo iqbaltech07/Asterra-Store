@@ -384,25 +384,79 @@ export default function HomePage() {
       const seenNames = new Set<string>();
 
       for (const item of backendSection.data) {
-        const itemText = `${item.name || ''} ${(item as unknown as { brand?: string }).brand || ''} ${item.id || ''}`.toLowerCase();
+        const itemSlug = (item.slug || '').toLowerCase();
+        const itemId = (item.id || (item as any).cardId || '').toLowerCase();
+        const itemName = (item.name || (item as any).productName || '').toLowerCase();
+
         const matched = allMapped.find((app) => {
-          const appName = app.name.toLowerCase();
-          const appSlug = app.slug.toLowerCase();
-          return itemText.includes(appName) || itemText.includes(appSlug) || (appName.includes('gemini') && (itemText.includes('google') || itemText.includes('gemini')));
+          const appSlug = (app.slug || '').toLowerCase();
+          const appId = (app.id || '').toLowerCase();
+          const appName = (app.name || '').toLowerCase();
+
+          return (
+            (itemSlug && (appSlug === itemSlug || appId === itemSlug)) ||
+            (itemId && (appId === itemId || appSlug === itemId)) ||
+            (itemName && (appName === itemName || appSlug.includes(itemName) || itemName.includes(appName))) ||
+            (itemSlug && (appSlug.includes(itemSlug) || itemSlug.includes(appSlug)))
+          );
         });
 
-        if (matched && !seenNames.has(matched.name)) {
-          if (activeCategory === 'promo') {
+        const appToPush: ApplicationGroupItem = matched
+          ? {
+              ...matched,
+              logoUrl: matched.logoUrl || item.logoUrl || (item as any).imageUrl,
+              imageUrl: matched.imageUrl || item.imageUrl || item.logoUrl,
+              badgeLabel:
+                activeCategory === 'promo'
+                  ? '🔥 Promo'
+                  : activeCategory === 'terlaris'
+                  ? 'Terlaris'
+                  : 'Baru',
+              isPromo: item.isPromo ?? matched.isPromo ?? true,
+              isTerlaris: activeCategory === 'terlaris',
+              isTerbaru: activeCategory === 'terbaru',
+              minPrice: matched.minPrice > 0 ? matched.minPrice : (item.minPrice || 0),
+              items: matched.items && matched.items.length > 0 ? matched.items : ((item as any).items || []),
+            }
+          : {
+          id: item.id || item.slug,
+          name: item.name,
+          slug: item.slug || item.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+          category: (item as any).categoryName || (typeof (item as any).category === 'string' ? (item as any).category : (item as any).category?.name) || 'Layanan Digital',
+          categoryTag: ((item as any).categoryTag as any) || 'other',
+          logoUrl: item.logoUrl || (item as any).imageUrl,
+          imageUrl: (item as any).imageUrl || item.logoUrl,
+          description: (item as any).description,
+          soldCount: Math.min(40, Math.max(20, item.soldCount ?? 20)),
+          targetMax: Math.min(40, Math.max(20, item.soldCount ?? 20)),
+          rating: String(item.rating || '5.0'),
+          badgeLabel:
+            activeCategory === 'promo'
+              ? '🔥 Promo'
+              : activeCategory === 'terlaris'
+              ? 'Terlaris'
+              : 'Baru',
+          isPromo: item.isPromo ?? true,
+          isTerlaris: activeCategory === 'terlaris',
+          isTerbaru: activeCategory === 'terbaru',
+          items: (item as any).items || [],
+          minPrice: item.minPrice || (item as any).price || 0,
+          isOutOfStock: (item as any).isOutOfStock || (item as any).stockStatus === 'out_of_stock' || (item.minPrice || 0) <= 0,
+        };
+
+        if (appToPush && !seenNames.has(appToPush.name)) {
+          // If Promo and in auto mode, check campaign status; if manual mode, admin explicitly prioritized it
+          if (activeCategory === 'promo' && backendSection.mode === 'auto') {
             const hasPromo = (activeCampaigns || []).some((camp) =>
-              isProductInCampaign(matched, camp) ||
-              matched.items.some((it) =>
+              isProductInCampaign(appToPush, camp) ||
+              appToPush.items.some((it) =>
                 isProductInCampaign({ id: it.id, name: it.name, category: it.category?.name }, camp)
               )
             );
             if (!hasPromo) continue;
           }
-          seenNames.add(matched.name);
-          orderedApps.push(matched);
+          seenNames.add(appToPush.name);
+          orderedApps.push(appToPush);
           if (orderedApps.length >= 8) break;
         }
       }
@@ -424,9 +478,17 @@ export default function HomePage() {
             fallbackCandidates = [];
           }
         } else if (activeCategory === 'terlaris') {
-          fallbackCandidates = allMapped.filter((app) => app.isTerlaris);
+          fallbackCandidates = allMapped.slice().sort((a, b) => (b.targetMax || b.soldCount || 0) - (a.targetMax || a.soldCount || 0));
         } else if (activeCategory === 'terbaru') {
-          fallbackCandidates = allMapped.filter((app) => app.isTerbaru);
+          fallbackCandidates = allMapped.slice().sort((a, b) => {
+            const dtA = Math.max(
+              ...[new Date((a as any).createdAt || (a as any).created_at || 0).getTime(), ...(a.items || []).map((p) => new Date((p as any).createdAt || (p as any).created_at || 0).getTime())]
+            );
+            const dtB = Math.max(
+              ...[new Date((b as any).createdAt || (b as any).created_at || 0).getTime(), ...(b.items || []).map((p) => new Date((p as any).createdAt || (p as any).created_at || 0).getTime())]
+            );
+            return dtB - dtA;
+          });
         }
 
         for (const candidate of fallbackCandidates) {
@@ -475,8 +537,16 @@ export default function HomePage() {
 
     if (activeCategory === 'terbaru') {
       return allMapped
-        .filter((app) => app.isTerbaru)
-        .sort((a, b) => (b.targetMax || b.soldCount || 0) - (a.targetMax || a.soldCount || 0))
+        .slice()
+        .sort((a, b) => {
+          const dtA = Math.max(
+            ...[new Date((a as any).createdAt || (a as any).created_at || 0).getTime(), ...(a.items || []).map((p) => new Date((p as any).createdAt || (p as any).created_at || 0).getTime())]
+          );
+          const dtB = Math.max(
+            ...[new Date((b as any).createdAt || (b as any).created_at || 0).getTime(), ...(b.items || []).map((p) => new Date((p as any).createdAt || (p as any).created_at || 0).getTime())]
+          );
+          return dtB - dtA;
+        })
         .slice(0, 8);
     }
 
@@ -708,8 +778,8 @@ export default function HomePage() {
             </Link>
           </div>
 
-          {/* Live Campaign Countdown (Isolated component to avoid re-rendering entire homepage every 1s) */}
-          {isMounted && (
+          {/* Live Campaign Countdown (Only displayed when Promo tab is active) */}
+          {isMounted && activeCategory === 'promo' && (
             <FeaturedSectionCountdownBadge
               activeCampaigns={activeCampaigns}
               featuredApps={featuredApps}

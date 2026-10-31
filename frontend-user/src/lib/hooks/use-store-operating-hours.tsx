@@ -1,7 +1,7 @@
 'use client';
 
-import React, { createContext, useContext, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { createContext, useContext, useMemo, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { StoreHoursApi, StoreOperatingHoursStatus } from '@/lib/api-client';
 
 export const DEFAULT_STORE_OPERATING_STATUS: StoreOperatingHoursStatus = {
@@ -60,6 +60,8 @@ export function StoreOperatingHoursProvider({
   children: React.ReactNode;
   initialStatus?: StoreOperatingHoursStatus | null;
 }) {
+  const queryClient = useQueryClient();
+
   const query = useQuery<{ success: boolean; data: StoreOperatingHoursStatus }>({
     queryKey: ['store-operating-hours'],
     queryFn: () => StoreHoursApi.getStatus(),
@@ -69,6 +71,41 @@ export function StoreOperatingHoursProvider({
     refetchInterval: 20 * 1000,
     refetchOnWindowFocus: true,
   });
+
+  // Listen to Server-Sent Events (SSE) for instant sync when admin changes store operational status
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    let eventSource: EventSource | null = null;
+    try {
+      eventSource = new EventSource('/api/v1/realtime/events?client_role=user');
+      const handleStoreUpdate = (e: MessageEvent) => {
+        try {
+          const parsed = JSON.parse(e.data);
+          if (parsed?.status) {
+            queryClient.setQueryData(['store-operating-hours'], {
+              success: true,
+              data: parsed.status,
+            });
+          }
+        } catch {
+          // ignore parse error
+        }
+        queryClient.invalidateQueries({ queryKey: ['store-operating-hours'] });
+      };
+
+      eventSource.addEventListener('store_hours:updated', handleStoreUpdate);
+      eventSource.addEventListener('store:updated', handleStoreUpdate);
+    } catch {
+      // Graceful fallback to periodic polling
+    }
+
+    return () => {
+      if (eventSource) {
+        eventSource.close();
+      }
+    };
+  }, [queryClient]);
 
   const status = query.data?.data || initialStatus || DEFAULT_STORE_OPERATING_STATUS;
   const isLoaded = Boolean(query.data?.data || initialStatus);
