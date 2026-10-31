@@ -320,6 +320,66 @@ const ADMIN_PRODUCT_DEFINITIONS: Array<{
     soldCount: 450,
     match: (t: string) => t.includes('k-vision') || t.includes('nex') || t.includes('vision') || t.includes('orange tv'),
   },
+  {
+    id: 'loklok',
+    name: 'Loklok',
+    slug: 'loklok',
+    categoryName: 'Apps & Streaming',
+    categoryTag: 'streaming',
+    rating: '5.0',
+    soldCount: 22,
+    match: (t: string) => t.includes('loklok'),
+  },
+  {
+    id: 'getcontact',
+    name: 'Getcontact',
+    slug: 'getcontact',
+    categoryName: 'Utility & Security',
+    categoryTag: 'other',
+    rating: '5.0',
+    soldCount: 22,
+    match: (t: string) => t.includes('getcontact') || t.includes('getcontac'),
+  },
+  {
+    id: 'zoom',
+    name: 'Zoom',
+    slug: 'zoom',
+    categoryName: 'Meeting & Productivity',
+    categoryTag: 'other',
+    rating: '5.0',
+    soldCount: 22,
+    match: (t: string) => t.includes('zoom'),
+  },
+  {
+    id: 'apple-music',
+    name: 'Apple Music',
+    slug: 'apple-music',
+    categoryName: 'Apps & Streaming',
+    categoryTag: 'streaming',
+    rating: '5.0',
+    soldCount: 22,
+    match: (t: string) => t.includes('apple music') || t.includes('applemusic'),
+  },
+  {
+    id: 'meitu',
+    name: 'Meitu',
+    slug: 'meitu',
+    categoryName: 'Apps & Streaming',
+    categoryTag: 'design',
+    rating: '4.8',
+    soldCount: 23,
+    match: (t: string) => t.includes('meitu'),
+  },
+  {
+    id: 'wink',
+    name: 'Wink',
+    slug: 'wink',
+    categoryName: 'Apps & Streaming',
+    categoryTag: 'video',
+    rating: '4.9',
+    soldCount: 24,
+    match: (t: string) => t.includes('wink'),
+  },
 ];
 
 export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) => void }) {
@@ -597,6 +657,10 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
         map.set(g.id.replace('card-', '').toLowerCase(), g);
       } else {
         map.set(('card-' + g.id).toLowerCase(), g);
+      }
+      for (const it of (g.items || [])) {
+        if (it.id) map.set(it.id.toLowerCase(), g);
+        if (it.name) map.set(it.name.toLowerCase(), g);
       }
     }
     return map;
@@ -1051,16 +1115,34 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
               </div>
             ) : currentSectionData?.data && currentSectionData.data.length > 0 ? (
               <div className="space-y-2 max-h-[520px] overflow-y-auto pr-1">
-                {currentSectionData.data.slice(0, 8).map((prod, rankIdx) => {
-                  const prodGroup =
-                    productGroupMap.get(prod.id?.toLowerCase()) ||
-                    productGroupMap.get(prod.brandGroup?.toLowerCase() || '') ||
-                    productGroupMap.get(prod.slug?.toLowerCase() || '') ||
-                    availableProductGroups.find((g) => {
-                      const text = `${prod.productName || ''} ${prod.name || ''} ${prod.id || ''} ${prod.brandGroup || ''}`.toLowerCase();
-                      return g.match(text) || g.name.toLowerCase() === text || g.slug === text;
-                    });
-                  const displayName = prodGroup?.name || prod.productName || prod.name;
+                {(() => {
+                  const seen = new Set<string>();
+                  const dedupedList: Array<{ prod: HomepageProductItem; prodGroup?: AdminProductGroup; displayName: string }> = [];
+
+                  for (const prod of (currentSectionData.data || [])) {
+                    const prodGroup =
+                      productGroupMap.get(prod.id?.toLowerCase()) ||
+                      productGroupMap.get(prod.brandGroup?.toLowerCase() || '') ||
+                      productGroupMap.get(prod.slug?.toLowerCase() || '') ||
+                      availableProductGroups.find((g) => {
+                        const text = `${prod.productName || ''} ${prod.name || ''} ${prod.id || ''} ${prod.brandGroup || ''}`.toLowerCase();
+                        return g.match(text) || g.name.toLowerCase() === text || g.slug === text;
+                      });
+
+                    let resolvedName = prodGroup?.name || prod.productName || prod.name;
+                    if (!resolvedName || resolvedName.toLowerCase() === 'digital' || resolvedName.toLowerCase() === 'produk digital') {
+                      resolvedName = prodGroup?.name || (prod.name && !prod.name.toLowerCase().startsWith('digital') ? prod.name : 'Produk Layanan');
+                    }
+
+                    const dedupKey = (prodGroup?.id || resolvedName).toLowerCase();
+                    if (!seen.has(dedupKey)) {
+                      seen.add(dedupKey);
+                      dedupedList.push({ prod, prodGroup, displayName: resolvedName });
+                    }
+                  }
+
+                  return dedupedList.slice(0, 8);
+                })().map(({ prod, prodGroup, displayName }, rankIdx) => {
                   const displayPrice = Number(prod.minPrice || prod.price || prodGroup?.minPrice || 0);
                   const displayLogo = prod.logoUrl || prod.imageUrl || prodGroup?.logoUrl || (prodGroup as any)?.imageUrl;
 
