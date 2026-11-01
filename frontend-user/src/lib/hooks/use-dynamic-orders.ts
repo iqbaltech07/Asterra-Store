@@ -454,11 +454,11 @@ export const PRODUCT_SOLD_CONFIGS: Record<string, ProductSoldConfig> = {
   canva: { name: 'Canva', baseCount: 24, targetMax: 30, seed: 103 },
   vidio: { name: 'Vidio', baseCount: 22, targetMax: 28, seed: 104 },
   'mobile-legends': { name: 'Mobile Legends', baseCount: 22, targetMax: 28, seed: 110 },
-  wetv: { name: 'WeTV', baseCount: 21, targetMax: 26, seed: 112 },
+  wetv: { name: 'WeTV', baseCount: 9, targetMax: 15, seed: 112 },
   'pubg-mobile': { name: 'PUBG Mobile', baseCount: 20, targetMax: 25, seed: 111 },
   viu: { name: 'Viu', baseCount: 20, targetMax: 25, seed: 106 },
-  bstation: { name: 'Bstation', baseCount: 19, targetMax: 25, seed: 114 },
-  'alight-motion': { name: 'Alight Motion', baseCount: 19, targetMax: 24, seed: 115 },
+  bstation: { name: 'Bstation', baseCount: 8, targetMax: 15, seed: 114 },
+  'alight-motion': { name: 'Alight Motion', baseCount: 10, targetMax: 15, seed: 115 },
   iqiyi: { name: 'iQIYI', baseCount: 18, targetMax: 23, seed: 113 },
 };
 

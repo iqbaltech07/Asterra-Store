@@ -179,7 +179,24 @@ class CardService:
 
             base_sold = int(payload.get("baseSoldCount") or payload.get("base_sold_count") or 0)
             is_pri = any(p in clean_slug for p in ["gemini", "netflix", "chatgpt", "spotify", "apple-music", "youtube", "capcut"])
-            if not is_pri:
+
+            raw_sec_list = payload.get("sections", ["promo"])
+            if isinstance(raw_sec_list, list):
+                sec_check = [str(s).lower() for s in raw_sec_list]
+            else:
+                sec_check = [s.strip().lower() for s in str(raw_sec_list).split(",") if s.strip()]
+            badge_check = str(payload.get("badgeLabel") or payload.get("badge_label") or "").lower()
+            is_new_terbaru = (not is_pri) and ("terbaru" in sec_check or "baru" in badge_check)
+
+            if is_pri:
+                base_sold = base_sold if base_sold >= 28 else 30
+            elif is_new_terbaru:
+                # Rule: Card Produk Terbaru baseline awal strictly 7-11
+                if 7 <= base_sold <= 11:
+                    pass
+                else:
+                    base_sold = 7 + (abs(hash(clean_slug)) % 5)
+            else:
                 base_sold = max(10, min(25, base_sold if base_sold > 0 else 18))
 
             new_card = ProductCard(
@@ -278,9 +295,25 @@ class CardService:
                 raw_val = int(payload.get("baseSoldCount") or payload.get("base_sold_count") or 0)
                 card_slug = (card.slug or card.id or "").lower()
                 is_pri = any(p in card_slug for p in ["gemini", "netflix", "chatgpt", "spotify", "apple-music", "youtube", "capcut"])
-                if not is_pri and raw_val > 0:
-                    raw_val = max(10, min(25, raw_val))
-                card.base_sold_count = raw_val
+
+                sec_list = []
+                if card.sections:
+                    try:
+                        sec_list = json.loads(card.sections) if isinstance(card.sections, str) else list(card.sections)
+                    except Exception:
+                        sec_list = [card.sections]
+                sec_lower = [str(s).lower() for s in sec_list]
+                badge_lower = (card.badge_label or "").lower()
+                is_terbaru = (not is_pri) and ("baru" in badge_lower or (len(sec_lower) == 1 and "terbaru" in sec_lower) or (7 <= (card.base_sold_count or 0) <= 11))
+
+                if is_pri:
+                    card.base_sold_count = raw_val if raw_val >= 28 else 30
+                elif is_terbaru and raw_val > 0:
+                    card.base_sold_count = max(7, min(11, raw_val))
+                elif not is_pri and raw_val > 0:
+                    card.base_sold_count = max(10, min(25, raw_val))
+                else:
+                    card.base_sold_count = raw_val
 
             # Update catalog linkages if provided
             if "catalogIds" in payload or "catalog_ids" in payload:

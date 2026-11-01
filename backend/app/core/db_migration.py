@@ -107,14 +107,14 @@ def run_migrations():
             WHEN slug = 'youtube' THEN 32
             WHEN slug = 'chatgpt' THEN 30
             WHEN slug = 'apple-music' THEN 28
+            WHEN slug = 'alight-motion' THEN 10
+            WHEN slug = 'wetv' THEN 9
+            WHEN slug = 'bstation' THEN 8
             WHEN slug = 'canva' THEN 24
             WHEN slug = 'vidio' THEN 22
-            WHEN slug = 'wetv' THEN 21
             WHEN slug = 'mobile-legends' THEN 22
             WHEN slug = 'pubg-mobile' THEN 20
             WHEN slug = 'viu' THEN 20
-            WHEN slug = 'bstation' THEN 19
-            WHEN slug = 'alight-motion' THEN 19
             WHEN slug = 'iqiyi' THEN 18
             WHEN slug = 'wink' THEN 17
             WHEN slug = 'meitu' THEN 16

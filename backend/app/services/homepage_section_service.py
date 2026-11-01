@@ -308,12 +308,13 @@ class HomepageSectionService:
                         created_timestamps.append(parse_dt(p.created_at))
                     effective_created_at = max(created_timestamps)
 
-                    # Sold count
-                    base_sold = card.base_sold_count or 20
+                    # Sold count: unified canonical calculation via card.to_dict
                     order_sold = sales_counts.get(str(card.id).lower(), 0) + sales_counts.get(str(card.slug).lower(), 0)
                     for v in active_catalogs:
                         order_sold += sales_counts.get(str(v.id).lower(), 0)
-                    total_sold = max(20, min(40, base_sold + order_sold))
+                    card_summary = card.to_dict(include_catalogs=False, sold_count=order_sold)
+                    total_sold = card_summary["soldCount"]
+                    base_sold = card_summary["baseSoldCount"]
 
                     in_promo = is_card_in_campaign(card, active_catalogs)
 
@@ -374,6 +375,8 @@ class HomepageSectionService:
                         "priceFormatted": f"Rp {min_price:,.0f}".replace(",", "."),
                         "stockStatus": stock_status,
                         "isOutOfStock": stock_status == "out_of_stock",
+                        "baseSoldCount": base_sold,
+                        "orderSoldCount": order_sold,
                         "soldCount": total_sold,
                         "isPromo": in_promo or section_key == "promo",
                         "effectiveCreatedAt": effective_created_at.isoformat(),

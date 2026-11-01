@@ -74,7 +74,7 @@ INITIAL_CARDS = [
     },
     {
         "id": "card-alight-motion",
-        "base_sold_count": 19,
+        "base_sold_count": 10,
         "name": "Alight Motion",
         "slug": "alight-motion",
         "category_id": "cat-apps-streaming",
@@ -154,7 +154,7 @@ INITIAL_CARDS = [
     },
     {
         "id": "card-wetv",
-        "base_sold_count": 21,
+        "base_sold_count": 9,
         "name": "WeTV",
         "slug": "wetv",
         "category_id": "cat-apps-streaming",
@@ -186,7 +186,7 @@ INITIAL_CARDS = [
     },
     {
         "id": "card-bstation",
-        "base_sold_count": 19,
+        "base_sold_count": 8,
         "name": "Bstation",
         "slug": "bstation",
         "category_id": "cat-apps-streaming",

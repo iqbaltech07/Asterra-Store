@@ -62,12 +62,33 @@ class ProductCard(Base):
         stock_status = "ready" if (self.status == "active" and active_catalogs and has_ready_stock) else "out_of_stock"
         
         # Determine baseline sold count:
-        # Priority products (Google Gemini, Netflix, ChatGPT, Spotify, Apple Music, YouTube, CapCut) have higher baseline,
-        # while regular products have baseline strictly bounded between 10 and 25.
+        # 1. Priority products (Google Gemini, Netflix, ChatGPT, Spotify, Apple Music, YouTube, CapCut):
+        #    Baseline is higher (calibrated ~28-38), maintaining high demand visibility.
+        # 2. Produk Terbaru (New / Latest Products):
+        #    Card Produk categorized/displayed as "Produk Terbaru" (sections contains 'terbaru' or badge_label is 'Baru'
+        #    or stored base_sold_count in [7, 11]).
+        #    Initial baseline is strictly bounded between 7 and 11.
+        # 3. Regular products:
+        #    Baseline strictly bounded between 10 and 25.
         card_slug = (self.slug or self.id or "").lower()
         is_priority = any(p in card_slug for p in ["gemini", "netflix", "chatgpt", "spotify", "apple-music", "youtube", "capcut"])
+
+        sec_lower = [str(s).lower() for s in sec_list]
+        badge_lower = (self.badge_label or "").lower()
+        is_terbaru = (
+            not is_priority
+            and (
+                "baru" in badge_lower
+                or (len(sec_lower) == 1 and "terbaru" in sec_lower)
+                or (self.base_sold_count is not None and 7 <= self.base_sold_count <= 11)
+            )
+        )
+
         if is_priority:
             effective_base = int(self.base_sold_count or 30)
+        elif is_terbaru:
+            raw_base = int(self.base_sold_count if self.base_sold_count and self.base_sold_count > 0 else 9)
+            effective_base = max(7, min(11, raw_base))
         else:
             raw_base = int(self.base_sold_count if self.base_sold_count and self.base_sold_count > 0 else 18)
             effective_base = max(10, min(25, raw_base))
