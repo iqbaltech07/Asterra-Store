@@ -96,25 +96,42 @@ def run_migrations():
           AND p.card_id IS NOT NULL;
         """,
 
-        # 10. Calibrate base_sold_count on product_cards for realistic 20-40 range distribution
+        # 10. Calibrate base_sold_count on product_cards:
+        # Priority products have higher baseline (~28-38), regular products strictly between 10 and 25
         """
         UPDATE product_cards SET base_sold_count = CASE
             WHEN slug = 'netflix' THEN 38
             WHEN slug = 'spotify' THEN 37
             WHEN slug = 'google-gemini' THEN 33
-            WHEN slug = 'capcut' THEN 33
+            WHEN slug = 'capcut' THEN 34
             WHEN slug = 'youtube' THEN 32
-            WHEN slug = 'mobile-legends' THEN 30
-            WHEN slug = 'canva' THEN 29
-            WHEN slug = 'wetv' THEN 27
+            WHEN slug = 'chatgpt' THEN 30
+            WHEN slug = 'apple-music' THEN 28
+            WHEN slug = 'canva' THEN 24
+            WHEN slug = 'vidio' THEN 22
+            WHEN slug = 'wetv' THEN 21
+            WHEN slug = 'mobile-legends' THEN 22
+            WHEN slug = 'pubg-mobile' THEN 20
             WHEN slug = 'viu' THEN 20
-            WHEN slug = 'pubg-mobile' THEN 26
-            WHEN slug = 'chatgpt' THEN 25
-            WHEN slug = 'bstation' THEN 22
-            WHEN slug = 'vidio' THEN 23
-            WHEN slug = 'iqiyi' THEN 22
-            WHEN slug = 'alight-motion' THEN 21
-            ELSE 22
+            WHEN slug = 'bstation' THEN 19
+            WHEN slug = 'alight-motion' THEN 19
+            WHEN slug = 'iqiyi' THEN 18
+            WHEN slug = 'wink' THEN 17
+            WHEN slug = 'meitu' THEN 16
+            WHEN slug = 'zoom' THEN 15
+            WHEN slug = 'getcontact' THEN 18
+            WHEN slug = 'loklok' THEN 17
+            WHEN slug = 'picsart' THEN 18
+            WHEN slug = 'vsco' THEN 16
+            WHEN slug = 'remini' THEN 17
+            WHEN slug = 'duolingo' THEN 19
+            WHEN slug = 'strava' THEN 15
+            WHEN slug = 'camscanner' THEN 18
+            WHEN slug = 'icloud' THEN 16
+            WHEN slug = 'nex-parabola' THEN 18
+            WHEN slug = 'disney-hotstar' THEN 21
+            WHEN slug = 'vision-plus' THEN 19
+            ELSE 18
         END;
         """,
     ]

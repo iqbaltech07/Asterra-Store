@@ -449,16 +449,17 @@ export const PRODUCT_SOLD_CONFIGS: Record<string, ProductSoldConfig> = {
   gemini: { name: 'Google Gemini', baseCount: 36, targetMax: 40, seed: 108 },
   capcut: { name: 'CapCut', baseCount: 34, targetMax: 40, seed: 105 },
   youtube: { name: 'YouTube', baseCount: 32, targetMax: 40, seed: 101 },
-  'mobile-legends': { name: 'Mobile Legends', baseCount: 30, targetMax: 35, seed: 110 },
-  canva: { name: 'Canva', baseCount: 29, targetMax: 35, seed: 103 },
-  wetv: { name: 'WeTV', baseCount: 28, targetMax: 33, seed: 112 },
-  viu: { name: 'Viu', baseCount: 27, targetMax: 33, seed: 106 },
-  'pubg-mobile': { name: 'PUBG Mobile', baseCount: 26, targetMax: 32, seed: 111 },
-  chatgpt: { name: 'ChatGPT', baseCount: 25, targetMax: 32, seed: 107 },
-  bstation: { name: 'Bstation', baseCount: 24, targetMax: 30, seed: 114 },
-  vidio: { name: 'Vidio', baseCount: 23, targetMax: 30, seed: 104 },
-  iqiyi: { name: 'iQIYI', baseCount: 22, targetMax: 28, seed: 113 },
-  'alight-motion': { name: 'Alight Motion', baseCount: 21, targetMax: 28, seed: 115 },
+  chatgpt: { name: 'ChatGPT', baseCount: 30, targetMax: 35, seed: 107 },
+  'apple-music': { name: 'Apple Music', baseCount: 28, targetMax: 35, seed: 116 },
+  canva: { name: 'Canva', baseCount: 24, targetMax: 30, seed: 103 },
+  vidio: { name: 'Vidio', baseCount: 22, targetMax: 28, seed: 104 },
+  'mobile-legends': { name: 'Mobile Legends', baseCount: 22, targetMax: 28, seed: 110 },
+  wetv: { name: 'WeTV', baseCount: 21, targetMax: 26, seed: 112 },
+  'pubg-mobile': { name: 'PUBG Mobile', baseCount: 20, targetMax: 25, seed: 111 },
+  viu: { name: 'Viu', baseCount: 20, targetMax: 25, seed: 106 },
+  bstation: { name: 'Bstation', baseCount: 19, targetMax: 25, seed: 114 },
+  'alight-motion': { name: 'Alight Motion', baseCount: 19, targetMax: 24, seed: 115 },
+  iqiyi: { name: 'iQIYI', baseCount: 18, targetMax: 23, seed: 113 },
 };
 
 export function getProductSoldConfig(nameOrSlug: string): ProductSoldConfig {
@@ -493,7 +494,9 @@ export function getDynamicSoldCount(
   targetMaxOverride?: number
 ): number {
   const config = getProductSoldConfig(nameOrSlug);
-  const target = targetMaxOverride ? Math.min(40, Math.max(20, targetMaxOverride)) : config.baseCount;
-  return Math.min(40, Math.max(20, target));
+  if (typeof targetMaxOverride === 'number' && targetMaxOverride > 0) {
+    return targetMaxOverride;
+  }
+  return config.baseCount;
 }
 

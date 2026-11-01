@@ -60,8 +60,20 @@ class ProductCard(Base):
                     break
 
         stock_status = "ready" if (self.status == "active" and active_catalogs and has_ready_stock) else "out_of_stock"
-        # Bound strictly between 20 and 40 for realistic storefront display
-        total_sold = max(20, min(40, int((self.base_sold_count or 20) + sold_count)))
+        
+        # Determine baseline sold count:
+        # Priority products (Google Gemini, Netflix, ChatGPT, Spotify, Apple Music, YouTube, CapCut) have higher baseline,
+        # while regular products have baseline strictly bounded between 10 and 25.
+        card_slug = (self.slug or self.id or "").lower()
+        is_priority = any(p in card_slug for p in ["gemini", "netflix", "chatgpt", "spotify", "apple-music", "youtube", "capcut"])
+        if is_priority:
+            effective_base = int(self.base_sold_count or 30)
+        else:
+            raw_base = int(self.base_sold_count if self.base_sold_count and self.base_sold_count > 0 else 18)
+            effective_base = max(10, min(25, raw_base))
+
+        # Dynamic Sold Count = BASELINE SOLD COUNT + COMPLETED DUMMY ORDER + COMPLETED REAL ORDER
+        total_sold = effective_base + int(sold_count)
 
         res = {
             "id": self.id,
@@ -89,7 +101,7 @@ class ProductCard(Base):
             "catalogCount": len(active_catalogs),
             "totalCatalogCount": len(self.catalogs) if self.catalogs is not None else 0,
             "activeCatalogCount": len(active_catalogs),
-            "baseSoldCount": self.base_sold_count or 0,
+            "baseSoldCount": effective_base,
             "orderSoldCount": sold_count,
             "soldCount": total_sold,
             "createdAt": self.created_at.isoformat() if self.created_at else None,

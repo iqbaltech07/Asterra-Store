@@ -17,8 +17,9 @@ class CardService:
         """
         Idempotent SQL aggregation computing actual units sold for each Card Produk
         and each individual Catalog Product from orders shown on /orders.
-        Phase 5 & 6 Source of Truth:
-        - Only orders with status IN ('completed', 'paid', 'settlement', 'processing')
+        Canonical Source of Truth:
+        - Only orders with status IN ('completed', 'paid', 'settlement', 'done', 'selesai')
+        - Strictly excludes pending, processing, cancelled, or waiting payment orders
         - Sum of OrderItem.quantity (consistent unit metric across all successful transactions)
         - Historical snapshot uses oi.card_id or falls back to p.card_id
         """
@@ -28,7 +29,7 @@ class CardService:
         try:
             db = SessionLocal()
             try:
-                # 1. Sales aggregated by Card Produk
+                # 1. Sales aggregated by Card Produk (completed orders only)
                 card_query = text("""
                     SELECT 
                         COALESCE(oi.card_id, p.card_id) AS card_id,
@@ -36,10 +37,7 @@ class CardService:
                     FROM order_items oi
                     JOIN orders o ON oi.order_id = o.id
                     LEFT JOIN products p ON oi.product_id = p.id
-                    WHERE LOWER(o.status) IN ('completed', 'paid', 'settlement', 'processing')
-                      AND (o.is_dummy IS FALSE OR o.is_dummy IS NULL)
-                      AND o.customer_email NOT LIKE '%@customer.id'
-                      AND o.customer_email NOT LIKE 'buyer_%'
+                    WHERE LOWER(o.status) IN ('completed', 'paid', 'settlement', 'done', 'selesai')
                       AND COALESCE(oi.card_id, p.card_id) IS NOT NULL
                     GROUP BY COALESCE(oi.card_id, p.card_id);
                 """)
@@ -48,17 +46,14 @@ class CardService:
                     if r[0]:
                         card_sales[str(r[0])] = int(r[1])
 
-                # 2. Sales aggregated by Catalog ID
+                # 2. Sales aggregated by Catalog ID (completed orders only)
                 cat_query = text("""
                     SELECT 
                         oi.product_id,
                         COALESCE(SUM(oi.quantity), 0) AS total_units
                     FROM order_items oi
                     JOIN orders o ON oi.order_id = o.id
-                    WHERE LOWER(o.status) IN ('completed', 'paid', 'settlement', 'processing')
-                      AND (o.is_dummy IS FALSE OR o.is_dummy IS NULL)
-                      AND o.customer_email NOT LIKE '%@customer.id'
-                      AND o.customer_email NOT LIKE 'buyer_%'
+                    WHERE LOWER(o.status) IN ('completed', 'paid', 'settlement', 'done', 'selesai')
                     GROUP BY oi.product_id;
                 """)
                 cat_rows = db.execute(cat_query).fetchall()
@@ -183,6 +178,9 @@ class CardService:
                 sections_json = json.dumps([s.strip() for s in str(raw_sections).split(",") if s.strip()])
 
             base_sold = int(payload.get("baseSoldCount") or payload.get("base_sold_count") or 0)
+            is_pri = any(p in clean_slug for p in ["gemini", "netflix", "chatgpt", "spotify", "apple-music", "youtube", "capcut"])
+            if not is_pri:
+                base_sold = max(10, min(25, base_sold if base_sold > 0 else 18))
 
             new_card = ProductCard(
                 id=card_id,
@@ -277,7 +275,12 @@ class CardService:
             if "badgeLabel" in payload or "badge_label" in payload:
                 card.badge_label = payload.get("badgeLabel") or payload.get("badge_label")
             if "baseSoldCount" in payload or "base_sold_count" in payload:
-                card.base_sold_count = int(payload.get("baseSoldCount") or payload.get("base_sold_count") or 0)
+                raw_val = int(payload.get("baseSoldCount") or payload.get("base_sold_count") or 0)
+                card_slug = (card.slug or card.id or "").lower()
+                is_pri = any(p in card_slug for p in ["gemini", "netflix", "chatgpt", "spotify", "apple-music", "youtube", "capcut"])
+                if not is_pri and raw_val > 0:
+                    raw_val = max(10, min(25, raw_val))
+                card.base_sold_count = raw_val
 
             # Update catalog linkages if provided
             if "catalogIds" in payload or "catalog_ids" in payload:

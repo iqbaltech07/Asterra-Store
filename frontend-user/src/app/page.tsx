@@ -358,8 +358,8 @@ export default function HomePage() {
             logoUrl: card.logoUrl,
             imageUrl: card.imageUrl,
             description: card.description,
-            soldCount: Math.min(40, Math.max(20, card.soldCount ?? 20)),
-            targetMax: Math.min(40, Math.max(20, card.soldCount ?? 20)),
+            soldCount: card.soldCount ?? 20,
+            targetMax: card.soldCount ?? 20,
             rating: String(card.rating || '5.0'),
             badgeLabel:
               activeCategory === 'promo'
@@ -400,8 +400,8 @@ export default function HomePage() {
             slug: target.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
             category: target.cat,
             categoryTag: target.tag,
-            soldCount: Math.min(40, Math.max(20, target.soldCount ?? 20)),
-            targetMax: Math.min(40, Math.max(20, target.targetMax ?? 20)),
+            soldCount: target.soldCount ?? 20,
+            targetMax: target.targetMax ?? 20,
             rating: target.rating,
             badgeLabel:
               activeCategory === 'promo'
@@ -667,8 +667,8 @@ export default function HomePage() {
         }));
 
       const finalSoldCount = matchedCard?.soldCount !== undefined
-        ? Math.min(40, Math.max(20, matchedCard.soldCount))
-        : Math.min(40, Math.max(20, conf.soldCount));
+        ? matchedCard.soldCount
+        : conf.soldCount;
 
       return {
         id: matchedCard?.id || conf.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
