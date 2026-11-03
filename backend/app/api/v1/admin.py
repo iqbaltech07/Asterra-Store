@@ -14,8 +14,8 @@ router = APIRouter()
 # 1. Finance & Analytics Endpoints
 # ------------------------------------------
 @router.get("/admin/profit-distribution", tags=["Admin Finance"])
-def get_profit_distribution():
-    res = FinanceService.get_profit_distribution()
+def get_profit_distribution(month: Optional[str] = Query(None)):
+    res = FinanceService.get_profit_distribution(month=month)
     return {
         "success": True,
         "data": res,
@@ -36,10 +36,10 @@ def get_analytics_suite(period: Optional[str] = Query("30d")):
     }
 
 @router.get("/admin/finance/summary", tags=["Admin Finance"])
-def get_finance_summary():
+def get_finance_summary(month: Optional[str] = Query(None)):
     return {
         "success": True,
-        "data": AnalyticsService.get_finance_summary(),
+        "data": AnalyticsService.get_finance_summary(month=month),
     }
 
 @router.get("/admin/customers", tags=["Admin Customers"])

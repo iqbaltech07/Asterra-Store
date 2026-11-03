@@ -57,7 +57,7 @@ export function SalesNetworkTab({
             Bonus Teman yang Anda Ajak (1-Level Referral)
           </h2>
           <p className="text-xs sm:text-sm text-foreground-muted mt-0.5">
-            Ajak teman menjadi mitra sales langsung dengan kode Anda. Nikmati bonus 2% dari subsidi margin Asterra Store tanpa memotong hak komisi teman Anda.
+            Ajak teman menjadi mitra sales langsung dengan kode Anda. Nikmati komisi 30% dari profit transaksi setiap penjualan langsung tanpa potongan.
           </p>
         </div>
 
@@ -92,11 +92,11 @@ export function SalesNetworkTab({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 text-xs text-foreground-muted">
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>Komisi teman 100% utuh (15% – 20% Profit)</span>
+                <span>Komisi mitra 100% utuh (30% Profit Bersih)</span>
               </div>
               <div className="flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-primary shrink-0" />
-                <span>Bonus rekrutmen 2% disubsidi toko</span>
+                <span>Target produktivitas Rp 25.000 / hari</span>
               </div>
             </div>
           </div>
@@ -127,7 +127,7 @@ export function SalesNetworkTab({
               <ShareButton
                 url={inviteSalesUrl}
                 title="Ayo Gabung Jadi Mitra Sales Asterra Store"
-                text="Ayo gabung jadi Mitra Sales resmi Asterra Store! Dapatkan komisi profit bersih 15% hingga 20% dari setiap penjualan produk digital bergaransi:"
+                text="Ayo gabung jadi Mitra Sales resmi Asterra Store! Dapatkan komisi profit bersih 30% dari setiap penjualan produk digital bergaransi:"
                 variant="purple"
                 className="h-10 text-xs font-semibold"
               />
@@ -505,7 +505,7 @@ export function SalesNetworkTab({
             <span>100% Hak Teman Utuh</span>
           </div>
           <p className="text-xs text-foreground-muted leading-relaxed">
-            Bonus 2% disubsidi 100% dari alokasi laba bersih Asterra Store. Komisi teman Anda tidak dipotong sepeser pun.
+            Komisi dihitung murni 30% dari profit bersih transaksi produk upstream. Hak komisi mitra tidak dipotong sepeser pun.
           </p>
         </div>
 

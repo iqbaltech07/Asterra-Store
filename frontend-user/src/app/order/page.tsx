@@ -533,13 +533,28 @@ function PrivateOrderContent() {
       setSelectedOrderForModal(order);
     } else {
       try {
-        showNotification('Memuat tagihan pembayaran Tripay...');
+        showNotification('Memuat QRIS DANA Resmi...');
         const res = await OrdersApi.pay(order.id, order.payment?.payment_method || 'qris');
         const checkoutUrl = res.payment?.checkout_url || res.payment?.redirect_url;
         if (checkoutUrl) {
           window.location.href = checkoutUrl;
+        } else if (res.payment?.qr_url || res.payment?.qr_string) {
+          setActiveManualModal({
+            orderId: order.id,
+            amount: res.payment.amount || orderTotal,
+            totalAmount: res.payment.amount || orderTotal,
+            total_amount: res.payment.amount || orderTotal,
+            rawAmount: orderRaw,
+            raw_amount: orderRaw,
+            uniqueCode: 0,
+            unique_code: 0,
+            method: 'qris_dana',
+            expiresAt: res.payment.expired_at || orderExpiresAt || new Date(Date.now() + 25 * 60000).toISOString(),
+            expires_at: res.payment.expired_at || orderExpiresAt || new Date(Date.now() + 25 * 60000).toISOString(),
+          });
+          setSelectedOrderForModal(order);
         } else {
-          showNotification('Gagal memuat link pembayaran Tripay.');
+          showNotification('Gagal memuat pembayaran QRIS DANA Resmi.');
         }
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : 'Gagal memproses pembayaran.';

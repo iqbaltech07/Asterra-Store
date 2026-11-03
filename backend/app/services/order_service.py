@@ -88,6 +88,7 @@ class OrderService:
         search: Optional[str] = None,
         email: Optional[str] = None,
         period: Optional[str] = None,
+        month: Optional[str] = None,
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
         page: int = 1,
@@ -138,6 +139,27 @@ class OrderService:
                 cancelled_count += 1
 
         filtered = all_orders
+
+        # Available months from all real orders
+        current_m = datetime.now().strftime("%Y-%m")
+        all_month_set = {
+            str(o.get("createdAt") or o.get("created_at") or o.get("order_date") or "")[:7]
+            for o in all_orders
+            if len(str(o.get("createdAt") or o.get("created_at") or o.get("order_date") or "")) >= 7
+        }
+        all_month_set.add(current_m)
+        available_months = sorted(list(all_month_set), reverse=True)
+
+        selected_month = "all"
+        if month and str(month).strip().lower() not in ["all", "all-time", "semua", ""]:
+            m_target = str(month).strip()
+            if m_target.lower() == "current":
+                m_target = current_m
+            selected_month = m_target
+            filtered = [
+                f for f in filtered
+                if str(f.get("createdAt") or f.get("created_at") or f.get("order_date") or "").startswith(m_target)
+            ]
 
         # Status filter
         if status and status != "all":
@@ -272,6 +294,8 @@ class OrderService:
             "page": page,
             "totalPages": total_pages,
             "limit": limit,
+            "availableMonths": available_months,
+            "selectedMonth": selected_month,
             "metrics": {
                 "total": len(all_orders),
                 "totalRevenue": total_revenue,
@@ -846,8 +870,9 @@ class OrderService:
                     order_cust_email = order_obj.customer_email
                     order_obj.status = new_status
                     order_obj.updated_at = now_dt
-                    if new_status in ["completed", "paid", "settlement"]:
-                        order_obj.paid_at = now_dt
+                    if new_status in ["processing", "completed", "paid", "settlement"]:
+                        if not order_obj.paid_at:
+                            order_obj.paid_at = now_dt
                         order_obj.payment_status = "settlement"
                     elif new_status in ["cancelled", "expired"]:
                         order_obj.payment_status = "cancelled"

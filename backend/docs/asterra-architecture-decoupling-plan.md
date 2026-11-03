@@ -16,7 +16,7 @@ Asterra Store saat ini berjalan sebagai **Next.js Fullstack Monolith** di mana s
 1. **Customer Storefront** (Katalog publik, keranjang belanja, checkout, pelacakan order, profil pembeli).
 2. **Admin Command Hub** (26 menu manajemen: keuangan, katalog, provider, refund, audit).
 3. **Sales Affiliate Portal** (Portal kemitraan sales, pencairan komisi, tracking tim).
-4. **Backend API & Background Operations** (Tripay webhook, sinkronisasi 12.500+ layanan VIP Reseller, kalkulasi waterfall profit, holding komisi).
+4. **Backend API & Background Operations** (DANA QRIS webhook, sinkronisasi 12.500+ layanan VIP Reseller, kalkulasi waterfall profit, holding komisi).
 
 **Dampak Negatif Monolit:**
 - **Bundle Size Berat & Build Lambat:** Komponen admin (Chart, Lucide icons, data grid) dan sales suite ikut membebani proses kompilasi Next.js (`Collecting page data (54/54)`).
@@ -45,7 +45,7 @@ graph TD
     subgraph DataLayer["Unified Data & State Tier"]
         DB[(PostgreSQL Supabase<br/>Central Relational SSOT)]
         Redis[(Upstash Redis<br/>Cache, Rate Limits, Queue)]
-        TripayGateway[Tripay Payment Gateway]
+        DanaGateway[DANA QRIS Gateway]
         VIPProvider[VIP Reseller API Upstream]
     end
 
@@ -55,7 +55,7 @@ graph TD
 
     FastAPI --> DB
     FastAPI --> Redis
-    FastAPI --> TripayGateway
+    FastAPI --> DanaGateway
     FastAPI --> VIPProvider
 ```
 
@@ -81,7 +81,7 @@ c:\Iqbal\Development\Project Library\
 │   │   ├── core\                       # Auth JWT, Security, Dependencies, Permissions
 │   │   ├── models\                     # SQLAlchemy 2.0 / SQLModel (Order, Product, Partner, Commission)
 │   │   ├── schemas\                    # Pydantic DTO Schemas (Request & Response)
-│   │   ├── services\                   # Business Engines (Profit Waterfall, Tripay, VIP Reseller, Promos)
+│   │   ├── services\                   # Business Engines (Profit Waterfall, DANA QRIS, VIP Reseller, Promos)
 │   │   └── workers\                    # Background Tasks / Cron (APScheduler/Celery)
 │   ├── alembic\                        # Database Migrations
 │   └── requirements.txt
@@ -102,7 +102,7 @@ c:\Iqbal\Development\Project Library\
 ## 🐍 4. Spesifikasi Teknis: FastAPI Core Backend
 
 ### Mengapa FastAPI (Python)?
-1. **Asynchronous & Concurrency:** Menangani ribuan request pembayaran, webhook Tripay, dan polling status tanpa blocking event loop Node.js.
+1. **Asynchronous & Concurrency:** Menangani ribuan request pembayaran, webhook DANA QRIS, dan polling status tanpa blocking event loop Node.js.
 2. **Pydantic v2 Type Safety:** Validasi schema payload, request, dan response super cepat dengan runtime enforcement berbasis Rust.
 3. **Worker & Background Tasks Terintegrasi:** Sinkronisasi berkala 12.500+ layanan VIP Reseller dapat dijalankan di background thread tanpa membebani respon user.
 4. **Dokumentasi Otomatis:** Menghasilkan Swagger UI (`/docs`) dan ReDoc (`/redoc`) interaktif otomatis untuk seluruh tim frontend.
@@ -113,8 +113,8 @@ c:\Iqbal\Development\Project Library\
 |---|---|---|---|
 | **Katalog** | `GET /api/v1/products` | `GET /v1/products` | Katalog publik dengan Redis cache |
 | **Pesanan** | `POST /api/v1/orders` | `POST /v1/orders` | Checkout transaksi + Floor Price Protection |
-| **Pembayaran** | `POST /api/v1/orders/[id]/pay` | `POST /v1/orders/{id}/pay` | Inisiasi Tripay / manual BCA transfer |
-| **Webhook** | `POST /api/v1/webhooks/tripay` | `POST /v1/webhooks/tripay` | Verifikasi signature HMAC & auto-fulfillment |
+| **Pembayaran** | `POST /api/v1/orders/[id]/pay` | `POST /v1/orders/{id}/pay` | Inisiasi DANA QRIS / manual BCA transfer |
+| **Webhook** | `POST /api/v1/webhooks/dana` | `POST /v1/webhooks/dana` | Verifikasi signature SNAP RSA-SHA256 & auto-fulfillment |
 | **Voucher** | `POST /api/v1/promos/validate` | `POST /v1/promos/validate` | Validasi kupon + batas bawah modal |
 | **Sales Order**| `GET /api/v1/sales/orders` | `GET /v1/sales/orders` | Pesanan langsung mitra (10% profit) |
 | **Bonus Tim** | `GET /api/v1/sales/network` | `GET /v1/sales/network` | Jurnal bonus rekrutmen teman (2% profit) |
@@ -176,7 +176,7 @@ Untuk menjamin **Zero-Downtime** dan **tidak merusak operasional Asterra Store s
 ### Milestone 1: Setup Proyek FastAPI & Porting Core Service (Backend Engine)
 - Inisialisasi folder `Python/asterra-api-fastapi`.
 - Konfigurasi SQLAlchemy 2.0 menghubungkan PostgreSQL Supabase yang sudah ada.
-- Porting SSOT kalkulasi keuangan: `ReferralProfitService`, `FloorPriceProtection`, dan `TripayService`.
+- Porting SSOT kalkulasi keuangan: `ReferralProfitService`, `FloorPriceProtection`, dan `DanaService`.
 - Implementasi endpoint customer: `/v1/products`, `/v1/orders`, `/v1/promos/validate`.
 - Verifikasi via Swagger UI (`/docs`).
 

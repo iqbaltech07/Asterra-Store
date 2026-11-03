@@ -283,7 +283,7 @@ export function AdminOrderProcessingTab({ onNotify }: AdminOrderProcessingTabPro
               <ul className="space-y-1.5 text-foreground-muted text-[11px]">
                 <li className="flex items-start gap-1.5">
                   <span className="text-primary font-bold">✓</span>
-                  <span>Verifikasi pembayaran otomatis dari gateway Tripay / mutasi instan memicu dispatch.</span>
+                  <span>Verifikasi pembayaran otomatis dari gateway QRIS DANA Resmi / mutasi instan memicu dispatch.</span>
                 </li>
                 <li className="flex items-start gap-1.5">
                   <span className="text-primary font-bold">✓</span>

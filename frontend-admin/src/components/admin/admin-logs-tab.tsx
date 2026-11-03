@@ -77,11 +77,12 @@ export function AdminLogsTab() {
             <span>Admin Manual</span>
           </span>
         );
+      case 'dana_webhook':
       case 'tripay_webhook':
         return (
           <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-status-success/15 text-status-success border border-status-success/30">
             <FontAwesomeIcon icon={faBolt} className="w-3 h-3" />
-            <span>Tripay Webhook</span>
+            <span>DANA Webhook</span>
           </span>
         );
       case 'customer':
@@ -151,7 +152,7 @@ export function AdminLogsTab() {
           </h2>
           <p className="text-xs text-foreground-muted mt-1 max-w-2xl">
             Mencatat setiap peristiwa perubahan status transaksi secara transparan beserta identitas customer dan email pemesan, baik yang dilakukan manual oleh
-            administrator maupun otomatis dari callback payment gateway (Tripay).
+            administrator maupun otomatis dari callback payment gateway (DANA QRIS).
           </p>
         </div>
 
@@ -202,15 +203,15 @@ export function AdminLogsTab() {
           </button>
           <button
             type="button"
-            onClick={() => setActorFilter('tripay_webhook')}
+            onClick={() => setActorFilter('dana_webhook')}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5 ${
-              actorFilter === 'tripay_webhook'
+              actorFilter === 'dana_webhook' || actorFilter === 'tripay_webhook'
                 ? 'bg-status-success text-white shadow-sm'
                 : 'bg-surface-raised text-foreground-muted hover:text-foreground border border-border'
             }`}
           >
             <FontAwesomeIcon icon={faBolt} className="w-3 h-3" />
-            <span>Tripay Webhook</span>
+            <span>DANA Webhook</span>
           </button>
           <button
             type="button"

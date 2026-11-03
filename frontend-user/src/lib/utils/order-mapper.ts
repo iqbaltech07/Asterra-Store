@@ -180,7 +180,7 @@ export function mapDbOrderToOrder(d: RawDbOrder): Order {
     logs: logsList.map((l) => ({
       id: l.id || `log-${Math.random()}`,
       order_id: l.orderId || d.id,
-      actor: (l.actor as 'customer' | 'admin' | 'tripay_webhook' | 'system') || 'system',
+      actor: (l.actor as 'customer' | 'admin' | 'dana_webhook' | 'tripay_webhook' | 'system') || 'system',
       action: l.action || 'status_updated',
       previous_status: l.previousStatus || undefined,
       new_status: l.newStatus || undefined,
@@ -195,7 +195,7 @@ export function mapDbOrderToOrder(d: RawDbOrder): Order {
     payment: {
       id: `pay-${d.id}`,
       payment_method: d.paymentMethod || 'qris',
-      transaction_id: d.paymentReference || `trx-tripay-${d.id.replace(/\D/g, '')}`,
+      transaction_id: d.paymentReference || `trx-dana-${d.id.replace(/\D/g, '')}`,
       payment_status:
         orderStatus === 'completed' || orderStatus === 'processing'
           ? 'success'

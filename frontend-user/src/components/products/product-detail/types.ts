@@ -81,4 +81,5 @@ export interface VariantDetails {
   privacyDesc: string;
   specifications: SpecItem[];
   warrantyText: string;
+  hasWarranty: boolean;
 }

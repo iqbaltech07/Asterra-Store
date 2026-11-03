@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { getStoreBaseUrl } from '@/lib/utils/url';
+import { SalesLandingPage } from '@/components/landing/sales-landing-page';
 
 export default async function SalesRootPage(props: {
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -16,7 +17,8 @@ export default async function SalesRootPage(props: {
       : resolvedParams.campaign
     : null;
 
-  if (ref) {
+  // If a store customer referral is clicked, forward to customer storefront
+  if (ref && !resolvedParams.landing) {
     const storeUrl = getStoreBaseUrl();
     const query = new URLSearchParams();
     query.set('ref', ref);
@@ -24,5 +26,6 @@ export default async function SalesRootPage(props: {
     redirect(`${storeUrl}/?${query.toString()}`);
   }
 
-  redirect('/sales');
+  // Render official Sales Partner Landing Page for http://localhost:3002/
+  return <SalesLandingPage />;
 }

@@ -97,8 +97,8 @@ class AuditLogService:
         clean_actor = str(actor).lower().strip()
         if "admin" in clean_actor:
             std_actor = "admin"
-        elif "tripay" in clean_actor or "webhook" in clean_actor:
-            std_actor = "tripay_webhook"
+        elif "dana" in clean_actor or "tripay" in clean_actor or "webhook" in clean_actor:
+            std_actor = "dana_webhook"
         elif "customer" in clean_actor or "pelanggan" in clean_actor:
             std_actor = "customer"
         else:

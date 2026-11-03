@@ -509,6 +509,73 @@ async def upload_admin_media(
         "message": msg,
     }
 
+@router.get("/admin/storage-banners", tags=["Admin Media"])
+@router.get("/storage-banners", tags=["Admin Media"])
+def get_storage_banners():
+    """
+    Returns unique image banners already available in storage across catalog products and promo banners.
+    Enables zero-redundancy banner reuse when creating or updating products.
+    """
+    from app.services.catalog_service import CatalogService
+    from app.services.banner_service import BannerService
+
+    seen_urls = set()
+    banners = []
+
+    # 1. Product banners from catalog
+    products = CatalogService.get_products()
+    for p in products:
+        img_url = p.get("imageUrl") or p.get("image_url")
+        if img_url and img_url not in seen_urls and not str(img_url).endswith("default-product-banner.png"):
+            seen_urls.add(img_url)
+            p_name = p.get("name") or "Produk Digital"
+            raw_cat = p.get("category")
+            cat_name = raw_cat.get("name") if isinstance(raw_cat, dict) else str(raw_cat or "Katalog Produk")
+            file_name = img_url.split("/")[-1].split("?")[0]
+            banners.append({
+                "url": img_url,
+                "title": p_name,
+                "category": cat_name,
+                "fileName": file_name,
+                "source": "product",
+            })
+
+    # 2. Promo banners from BannerService
+    try:
+        promo_banners = BannerService.get_banners()
+        for b in promo_banners:
+            img_url = b.get("imageUrl") or b.get("image_url")
+            if img_url and img_url not in seen_urls and not str(img_url).endswith("default-product-banner.png"):
+                seen_urls.add(img_url)
+                file_name = img_url.split("/")[-1].split("?")[0]
+                banners.append({
+                    "url": img_url,
+                    "title": b.get("title") or "Banner Promo",
+                    "category": "Promo Banner",
+                    "fileName": file_name,
+                    "source": "promo",
+                })
+    except Exception as e:
+        print(f"[get_storage_banners] Promo banners note: {e}")
+
+    # 3. Static banners
+    static_banners = [
+        {"url": "/images/banners/capcut-banner.png", "title": "CapCut Pro Banner", "category": "Aset Resmi", "fileName": "capcut-banner.png", "source": "static"},
+        {"url": "/images/banners/hero-banner-reseller.webp", "title": "Banner VIP Reseller", "category": "Aset Resmi", "fileName": "hero-banner-reseller.webp", "source": "static"},
+        {"url": "/images/banners/hero-banner-welcome.webp", "title": "Banner Welcome Asterra", "category": "Aset Resmi", "fileName": "hero-banner-welcome.webp", "source": "static"},
+        {"url": "/images/banners/hero-banner-affiliate.webp", "title": "Banner Affiliate & Mitra", "category": "Aset Resmi", "fileName": "hero-banner-affiliate.webp", "source": "static"},
+    ]
+    for sb in static_banners:
+        if sb["url"] not in seen_urls:
+            seen_urls.add(sb["url"])
+            banners.append(sb)
+
+    return {
+        "success": True,
+        "total": len(banners),
+        "data": banners,
+    }
+
 # ------------------------------------------
 # 1.4 Promo Banner Endpoints (Storefront & Admin)
 # ------------------------------------------

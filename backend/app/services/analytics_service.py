@@ -585,11 +585,13 @@ class AnalyticsService:
         }
 
     @classmethod
-    def get_finance_summary(cls) -> Dict[str, Any]:
+    def get_finance_summary(cls, month: Optional[str] = None) -> Dict[str, Any]:
         orders = OrderService.load_real_orders()
-        profit_data = FinanceService.get_profit_distribution()
+        profit_data = FinanceService.get_profit_distribution(month=month)
         summary = profit_data.get("summary", {})
         ledger_entries = profit_data.get("entries", [])
+        available_months = profit_data.get("availableMonths") or []
+        selected_month = profit_data.get("selectedMonth") or "all"
 
         # 1. Wallets (Strictly completed/selesai orders, excluding corrupt zero-profit order AST-ORD-20261015-7615)
         completed_orders = [
@@ -597,10 +599,18 @@ class AnalyticsService:
             if str(o.get("status")).lower() in ["completed", "selesai", "done"]
             and str(o.get("id") or o.get("order_id") or "").strip().upper() != "AST-ORD-20261015-7615"
         ]
-        tripay_settled = sum(
+        if month and str(month).strip().lower() not in ["all", "all-time", "semua", ""]:
+            m_target = str(month).strip()
+            if m_target.lower() == "current":
+                m_target = datetime.now().strftime("%Y-%m")
+            completed_orders = [
+                o for o in completed_orders
+                if str(o.get("createdAt") or o.get("created_at") or "").startswith(m_target)
+            ]
+        dana_settled = sum(
             float(o.get("totalAmount") or o.get("rawAmount") or 0.0)
             for o in completed_orders
-            if "tripay" in str(o.get("paymentMode", "")).lower() or "qris" in str(o.get("paymentMethod", "")).lower()
+            if "dana" in str(o.get("paymentMode", "")).lower() or "qris" in str(o.get("paymentMethod", "")).lower()
         )
         from app.services.vip_service import VipService
         vip_info = VipService.get_profile()
@@ -640,11 +650,11 @@ class AnalyticsService:
             },
             {
                 "id": "exp-2",
-                "category": "Payment Gateway Fee (Tripay / QRIS)",
-                "desc": "Fee gateway 0.7% transaksi perbankan",
+                "category": "Payment Gateway Fee (DANA QRIS Resmi)",
+                "desc": "Fee gateway QRIS DANA Resmi 0.7% transaksi lunas",
                 "amount": pg_fees_total,
                 "date": datetime.utcnow().strftime("%d %b %Y"),
-                "ref": "TRIPAY-PG-07",
+                "ref": "DANA-PG-07",
             },
             {
                 "id": "exp-3",
@@ -723,7 +733,8 @@ class AnalyticsService:
 
         return {
             "wallets": {
-                "tripayBalance": tripay_settled,
+                "danaBalance": dana_settled,
+                "tripayBalance": dana_settled,
                 "vipBalance": vip_deposit,
                 "reserveBalance": reserve_balance,
             },
@@ -737,6 +748,8 @@ class AnalyticsService:
             "expenses": expenses_list,
             "totalExpense": total_expense,
             "financialTransactions": journal_entries[:40],
+            "availableMonths": available_months,
+            "selectedMonth": selected_month,
         }
 
     @classmethod

@@ -164,12 +164,12 @@ export function SalesCatalogTab({
             const productUrl = `${getStoreBaseUrl()}/products/${p.id}?ref=${partnerCode}`;
             const catName = p.categoryName || p.category?.name || 'Digital';
 
-            // Safe commission calculation without exposing store profit margins
+            // Safe commission calculation without exposing store profit margins (Model Bisnis v2.0 - 30% dari Profit)
             const commissionRp = p.baseCommission
-              ? Math.round(p.baseCommission * (partnerRate / 15))
+              ? Math.round(p.baseCommission * (partnerRate / 30))
               : (p.profitMargin && p.profitMargin > 0
                   ? Math.round((p.profitMargin * partnerRate) / 100)
-                  : Math.max(750, Math.round(p.price * 0.075)));
+                  : Math.max(1000, Math.round(p.price * 0.15)));
 
             return (
               <div

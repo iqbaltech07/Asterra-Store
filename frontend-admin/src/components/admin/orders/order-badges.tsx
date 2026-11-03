@@ -45,10 +45,11 @@ export function OrderActorBadge({ actor }: { actor?: OrderLog['actor'] | string 
           Admin Manual
         </Badge>
       );
+    case 'dana_webhook':
     case 'tripay_webhook':
       return (
         <Badge variant="outline" className="bg-status-success/10 text-status-success border-status-success/30 text-[10px]">
-          Tripay Gateway
+          DANA QRIS Gateway
         </Badge>
       );
     case 'customer':

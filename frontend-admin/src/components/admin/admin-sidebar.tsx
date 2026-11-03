@@ -561,7 +561,7 @@ export function AdminSidebar({
             id: 'payment-settings',
             label: 'Metode Pembayaran',
             icon: CreditCard,
-            description: 'Tripay, QRIS, bank transfer, & fee admin',
+            description: 'DANA QRIS Resmi, transfer bank, & fee',
           },
           {
             id: 'logs',

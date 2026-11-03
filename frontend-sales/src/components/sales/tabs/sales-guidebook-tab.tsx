@@ -75,7 +75,7 @@ const CHAPTERS: Chapter[] = [
     id: 'bab-5',
     number: 5,
     title: 'Memahami Komisi Sales',
-    subtitle: 'Skema komisi 15% (Pemula), 20% (VIP), dan holding garansi 3 hari',
+    subtitle: 'Skema komisi 30% dari profit transaksi, target harian Rp 25.000, dan holding garansi 3 hari',
     icon: DollarSign,
   },
   {
@@ -154,16 +154,16 @@ export function SalesGuidebookTab({
               Buku Panduan Mitra Sales AsterraStore
             </h1>
             <p className="text-xs sm:text-sm text-foreground-muted leading-relaxed">
-              Panduan lengkap penggunaan portal Sales, cara menawarkan produk digital bergaransi, memahami pembagian komisi 15%–20%, dan mengembangkan jaringan referral secara etis.
+              Panduan lengkap penggunaan portal Sales, cara menawarkan produk digital bergaransi, memahami pembagian komisi 30% dari profit transaksi, dan mencapai target produktivitas harian.
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 shrink-0">
             <Badge variant="outline" className="border-border text-xs px-3 py-1.5 font-mono">
-              Status: Pemula (15%) &bull; VIP (20%)
+              Komisi: Flat 30% Profit
             </Badge>
             <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700 text-xs px-3 py-1.5 font-semibold">
-              Bonus Tim: 2%
+              Target Harian: Rp 25.000
             </Badge>
           </div>
         </div>
@@ -290,17 +290,17 @@ export function SalesGuidebookTab({
                         <span>Penjualan Pribadi (Direct Sales)</span>
                       </h4>
                       <p className="text-[11px] text-foreground-muted leading-relaxed">
-                        Anda membagikan link produk atau merekomendasikan layanan kepada pembeli. Dari setiap transaksi yang berhasil, Anda memperoleh komisi <strong>15% hingga 20%</strong> dari profit transaksi.
+                        Anda membagikan link produk atau merekomendasikan layanan kepada pembeli. Dari setiap transaksi yang berhasil, Anda memperoleh komisi <strong>30%</strong> dari profit transaksi.
                       </p>
                     </div>
 
                     <div className="p-4 rounded-xl bg-surface-raised border border-border space-y-1.5">
                       <h4 className="font-bold text-foreground text-xs flex items-center gap-1.5">
                         <Users className="w-3.5 h-3.5 text-emerald-600" />
-                        <span>Jaringan Mitra (Referral Sales)</span>
+                        <span>Jaringan Kemitraan (Referral Sales)</span>
                       </h4>
                       <p className="text-[11px] text-foreground-muted leading-relaxed">
-                        Anda mengajak teman bergabung menjadi mitra sales menggunakan kode referral Anda. Setiap teman Anda berhasil menjual produk, Anda mendapatkan bonus pasif <strong>2%</strong> dari profit transaksi mereka.
+                        Anda mengajak rekan bergabung menjadi mitra sales menggunakan link referral resmi untuk membangun komunitas affiliate binaan Asterra Store.
                       </p>
                     </div>
                   </div>
@@ -311,7 +311,7 @@ export function SalesGuidebookTab({
                       <span>Bukan Sistem MLM atau Skema Piramida</span>
                     </div>
                     <p className="text-[11px] text-amber-800 leading-relaxed">
-                      AsterraStore menerapkan <strong>Single-Level Referral resmi (1 tingkat saja)</strong>. Tidak ada sistem binary, tidak ada kaki kiri-kanan, dan komisi penjualan teman Anda tidak dipotong sedikitpun (komisi teman Anda tetap utuh 15%–20%).
+                      AsterraStore menerapkan <strong>Single-Level Referral resmi (1 tingkat saja)</strong>. Tidak ada sistem binary, tidak ada kaki kiri-kanan, dan hak komisi mitra dihitung 30% utuh dari profit transaksi tanpa manipulasi harga ke pelanggan.
                     </p>
                   </div>
 
@@ -361,7 +361,7 @@ export function SalesGuidebookTab({
                     <div className="p-3.5 rounded-xl bg-surface-raised border border-border space-y-1">
                       <span className="font-bold text-foreground block">Tingkat Komisi Anda ({partnerRate}%)</span>
                       <p className="text-[11px] text-foreground-muted leading-relaxed">
-                        Persentase komisi aktif Anda saat ini. Tingkat awal adalah <strong>15%</strong> (Sales Pemula) dan otomatis naik ke <strong>20%</strong> (Sales VIP) setelah mencapai 50 order sukses.
+                        Persentase komisi aktif Anda saat ini ({partnerRate || 30}%). Sesuai Model Bisnis v2.0, komisi ditetapkan flat <strong>30%</strong> dari profit transaksi sejak transaksi pertama.
                       </p>
                     </div>
 
@@ -513,25 +513,25 @@ export function SalesGuidebookTab({
                   </p>
 
                   <div className="p-4 rounded-xl bg-surface-raised border border-border space-y-3">
-                    <h4 className="font-bold text-foreground text-xs">Tingkatan Komisi Penjualan Pribadi:</h4>
+                    <h4 className="font-bold text-foreground text-xs">Skema Bagi Hasil Transparan (Model Bisnis v2.0):</h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                       <div className="p-3 rounded-lg bg-surface border border-border space-y-1">
                         <div className="flex items-center justify-between">
-                          <span className="font-bold text-foreground">Sales Pemula</span>
-                          <Badge variant="primary" className="text-[10px]">15% Komisi</Badge>
+                          <span className="font-bold text-foreground">Mitra Affiliate</span>
+                          <Badge variant="primary" className="text-[10px]">30% Komisi</Badge>
                         </div>
                         <p className="text-[11px] text-foreground-muted">
-                          Berlaku langsung sejak pendaftaran pertama Anda hingga 49 pesanan sukses.
+                          Diberikan flat 30% dari profit transaksi (Harga Jual - Modal Upstream) sejak transaksi pertama tanpa markup harga ke pembeli.
                         </p>
                       </div>
 
                       <div className="p-3 rounded-lg bg-surface border border-border space-y-1">
                         <div className="flex items-center justify-between">
-                          <span className="font-bold text-foreground">Sales Target (VIP)</span>
-                          <Badge variant="success" className="text-[10px]">20% Komisi</Badge>
+                          <span className="font-bold text-foreground">Asterra Store</span>
+                          <Badge variant="success" className="text-[10px]">70% Retained</Badge>
                         </div>
                         <p className="text-[11px] text-foreground-muted">
-                          Otomatis naik ke <strong>20%</strong> setelah Anda mengakumulasi minimal 50 pesanan sukses.
+                          70% profit dialokasikan ke cadangan usaha & garansi (15%) dan laba operasional pendiri (55%).
                         </p>
                       </div>
                     </div>
@@ -761,10 +761,10 @@ export function SalesGuidebookTab({
 
                     <div className="p-4 rounded-xl bg-surface-raised border border-border space-y-1">
                       <span className="font-bold text-foreground text-xs block">
-                        Q: Bagaimana cara menaikkan komisi dari 15% menjadi 20%?
+                        Q: Bagaimana target produktivitas dan komisi dihitung?
                       </span>
                       <p className="text-[11px] text-foreground-muted leading-relaxed">
-                        A: Anda hanya perlu mengumpulkan total 50 pesanan sukses. Sistem kami secara otomatis meningkatkan tier akun Anda ke <strong>Sales VIP (20%)</strong> tanpa perlu permohonan manual.
+                        A: Komisi dihitung 30% dari profit setiap produk terjual. Tolok ukur produktivitas harian mitra adalah <strong>Rp 25.000 / hari</strong> (setara ~Rp 750.000 / bulan). Cukup dengan menghasilkan 2–6 penjualan produk per hari, target ini tercapai stabil.
                       </p>
                     </div>
 

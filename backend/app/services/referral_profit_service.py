@@ -13,16 +13,20 @@ from app.models.profit_ledger import ProfitLedger
 class ReferralProfitService:
     """
     Asterra Store - Referral Profit Waterfall & Commission Allocation Engine.
-    Implements 100% exact business logic from Asterra Store Constitution:
-    - Direct Sales Commission: Follows partner rate (standard 10%) or Campaign Booster override
-    - Sponsor Recruitment Bonus: 2% of Net Transaction Profit (1-level network only)
-    - Holding Window: 3 Days (Warranty holding guarantee before payout release)
+    Implements 100% exact business logic from Asterra Store Business Model v2.0 (model-bisnis.md):
+    - Affiliate Sales Commission: 30% of Transaction Profit (Selling Price - Supplier Cost)
+    - Asterra Store Retained Profit: 70% of Transaction Profit
+      - Business Reserve: 15% of Transaction Profit (Operational & Warranty pool)
+      - Net Founder Distributable: 55% (Strict 50:50 parity: CEO 27.5%, COO 27.5%)
+    - Direct Sales (Non-Affiliate): 100% Asterra Retained Profit (CEO 42.5%, COO 42.5%, Reserve 15%)
+    - Initial Phase: 0% Recruiter Bonus (no multi-tier MLM, focused purely on direct distribution)
+    - Holding Window: 3 Days (Warranty protection before payout release)
     - Complete Idempotent Persistence into PostgreSQL tables: `commissions` and `profit_ledgers`
     """
 
-    DIRECT_RATE_DEFAULT = 15.0  # 15% (Sales Pemula baseline)
-    DIRECT_RATE_VIP = 20.0      # 20% (Sales VIP / Milestone >= 50 orders)
-    SPONSOR_RATE_DEFAULT = 2.0  # 2% of transaction profit (untouched)
+    DIRECT_RATE_DEFAULT = 30.0  # 30% of Transaction Profit (Business Model v2.0 SSOT)
+    DIRECT_RATE_VIP = 30.0      # 30% of Transaction Profit
+    SPONSOR_RATE_DEFAULT = 0.0  # 0% (Disabled in initial phase per Business Model v2.0 section 4.9)
     HOLDING_DAYS = 3            # 3 days warranty holding guarantee
 
     @staticmethod
@@ -42,22 +46,21 @@ class ReferralProfitService:
         campaign_rate_override: Optional[float] = None,
     ) -> Dict[str, Any]:
         """
-        Canonical Asterra Profit Waterfall & Split Engine:
-        | Penerima | Di bawah 50 transaksi sukses | Minimal 50 transaksi sukses |
+        Canonical Asterra Profit Waterfall & Split Engine (Model Bisnis v2.0):
+        | Penerima | Transaksi Direct (Tanpa Affiliate) | Transaksi Melalui Affiliate (70:30) |
         |---|---:|---:|
-        | CEO | 35% | 32,5% |
-        | COO | 35% | 32,5% |
-        | Sales | 15% | 20% |
-        | Reserve | 15% | 15% |
-        | Total | 100% | 100% |
+        | Affiliate Sales | 0% | 30% |
+        | Asterra Store | 100% | 70% |
+        | - Cadangan Usaha & Garansi (Reserve) | 15% | 15% |
+        | - CEO Share | 42,5% | 27,5% |
+        | - COO Share | 42,5% | 27,5% |
+        | Total Alokasi | 100% | 100% |
 
         Ketentuan:
-        - Komisi dasar Sales: 15%.
-        - Setelah mencapai minimal 50 transaksi sukses, komisi otomatis menjadi 20%.
-        - Tambahan 5 poin persentase Sales berasal dari pengurangan CEO 2,5 poin dan COO 2,5 poin.
-        - Reserve tetap 15% (jika ada recruiter 2%, sponsor mendapat 2% dan reserve menjadi 13%, total tetap 15%).
-        - Total seluruh alokasi strictly 100% dari transaction_profit (zero leakage/loss).
-        - Strict 50:50 parity antara CEO dan COO.
+        - Komisi Affiliate: 30% dari Transaction Profit (Selling Price - Supplier Cost).
+        - Porsi Asterra Store: 70% dari Transaction Profit untuk transaksi affiliate.
+        - Strict 50:50 Founder Parity antara CEO dan COO.
+        - Zero Leakage: Total seluruh alokasi strictly 100% dari transaction_profit.
         """
         tx_profit = int(round(transaction_profit))
         if tx_profit <= 0:
@@ -75,9 +78,8 @@ class ReferralProfitService:
                 "profit_distribution": 0,
                 "is_vip": False,
                 "total": 0,
+                "total_allocated": 0,
             }
-
-        is_vip_effective = is_vip or (successful_orders_count >= 50)
 
         if not has_sales_partner:
             reserve = int(round(tx_profit * 0.15))
@@ -99,46 +101,38 @@ class ReferralProfitService:
                 "profit_distribution": tx_profit,
                 "is_vip": False,
                 "total": ceo + coo + reserve,
+                "total_allocated": ceo + coo + reserve,
             }
 
-        # Sales Rate calculation
-        if campaign_rate_override and campaign_rate_override > (cls.DIRECT_RATE_VIP if is_vip_effective else cls.DIRECT_RATE_DEFAULT):
-            sales_rate = campaign_rate_override / 100.0
-            founder_pool = max(0.0, 0.85 - sales_rate)
-            ceo_rate = founder_pool / 2.0
-            coo_rate = founder_pool / 2.0
-        elif is_vip_effective:
-            sales_rate = 0.20
-            ceo_rate = 0.325
-            coo_rate = 0.325
-        else:
-            sales_rate = 0.15
-            ceo_rate = 0.35
-            coo_rate = 0.35
-
+        # Affiliate Sales (70:30 Model Bisnis v2.0)
+        sales_rate = (campaign_rate_override / 100.0) if (campaign_rate_override and campaign_rate_override > 0) else (cls.DIRECT_RATE_DEFAULT / 100.0)
         sales_comm = int(round(tx_profit * sales_rate))
-        sponsor_bonus = int(round(tx_profit * 0.02)) if has_recruiter else 0
-        ceo_share = int(round(tx_profit * ceo_rate))
-        coo_share = int(round(tx_profit * coo_rate))
-        # Reserve absorbs any integer rounding difference so sum is strictly 100% of tx_profit
+        sponsor_bonus = 0  # Initial phase: 0% sponsor bonus per section 4.9
+
+        # Asterra Retained Profit (70% standard)
+        retained_profit = max(0, tx_profit - sales_comm - sponsor_bonus)
+        reserve = int(round(tx_profit * 0.15))
+        founder_distributable = max(0, retained_profit - reserve)
+        ceo_share = founder_distributable // 2
+        coo_share = ceo_share
+        # Reserve absorbs integer rounding to strictly maintain 100% sum
         reserve = tx_profit - sales_comm - sponsor_bonus - ceo_share - coo_share
-        distributable = max(0, tx_profit - sales_comm - sponsor_bonus)
 
         return {
             "sales_commission": sales_comm,
             "sales_commission_rate": round(sales_rate * 100.0, 1),
-            "recruitment_bonus": sponsor_bonus,
-            "recruitment_bonus_rate": 2.0 if has_recruiter else 0.0,
+            "recruitment_bonus": 0,
+            "recruitment_bonus_rate": 0.0,
             "ceo_share": ceo_share,
-            "ceo_share_rate": round(ceo_rate * 100.0, 1),
+            "ceo_share_rate": 27.5,
             "coo_share": coo_share,
-            "coo_share_rate": round(coo_rate * 100.0, 1),
+            "coo_share_rate": 27.5,
             "business_reserve": reserve,
-            "business_reserve_rate": 15.0 if not has_recruiter else 13.0,
-            "profit_distribution": distributable,
-            "is_vip": is_vip_effective,
-            "total": sales_comm + sponsor_bonus + ceo_share + coo_share + reserve,
-            "total_allocated": sales_comm + sponsor_bonus + ceo_share + coo_share + reserve,
+            "business_reserve_rate": 15.0,
+            "profit_distribution": retained_profit,
+            "is_vip": False,
+            "total": sales_comm + ceo_share + coo_share + reserve,
+            "total_allocated": sales_comm + ceo_share + coo_share + reserve,
         }
 
     @classmethod
@@ -450,7 +444,7 @@ class ReferralProfitService:
                     ledger_record.recruiter_sales_id = recruiter_id
                     ledger_record.recruiter_sales_name = recruiter.name if recruiter else None
                     ledger_record.sale_commission_rate = float(commission_rate / 100.0)
-                    ledger_record.recruitment_bonus_rate = 0.02 if recruiter_id else 0.0
+                    ledger_record.recruitment_bonus_rate = 0.0
                     ledger_record.selling_price = int(selling_price)
                     ledger_record.customer_referral_discount = int(total_discount)
                     ledger_record.net_revenue = int(net_revenue)
@@ -484,7 +478,7 @@ class ReferralProfitService:
                         recruiter_sales_id=recruiter_id,
                         recruiter_sales_name=recruiter.name if recruiter else None,
                         sale_commission_rate=float(commission_rate / 100.0),
-                        recruitment_bonus_rate=0.02 if recruiter_id else 0.0,
+                        recruitment_bonus_rate=0.0,
                         selling_price=int(selling_price),
                         customer_referral_discount=int(total_discount),
                         net_revenue=int(net_revenue),

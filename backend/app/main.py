@@ -239,7 +239,7 @@ def health_check():
         "status": "ok",
         "service": settings.PROJECT_NAME,
         "version": settings.VERSION,
-        "mode": "production" if settings.TRIPAY_IS_PRODUCTION else "development",
+        "mode": "production" if settings.DANA_IS_PRODUCTION else "development",
         "timestamp": datetime.utcnow().isoformat(),
     }
 
@@ -248,10 +248,10 @@ async def root_vip_reseller_webhook(request: Request):
     from app.api.v1.checkout import vip_reseller_webhook
     return await vip_reseller_webhook(request)
 
-@app.post("/webhooks/tripay", tags=["Webhooks"], include_in_schema=False)
-async def root_tripay_webhook(request: Request):
-    from app.api.v1.checkout import tripay_webhook
-    return await tripay_webhook(request)
+@app.post("/webhooks/dana", tags=["Webhooks"], include_in_schema=False)
+async def root_dana_webhook(request: Request):
+    from app.api.v1.checkout import dana_webhook
+    return await dana_webhook(request)
 
 from app.core.security_middleware import security_and_rate_limit_middleware
 

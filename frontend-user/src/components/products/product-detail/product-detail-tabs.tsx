@@ -99,14 +99,35 @@ export function ProductDetailTabs({
 
         {activeTab === 'garansi' && (
           <div className="space-y-3 sm:space-y-3.5 text-xs sm:text-sm text-[#121A2A]/85 leading-relaxed">
-            <div className="flex items-center gap-2 text-[#16A34A] font-bold">
-              <FontAwesomeIcon icon={faShieldHalved} className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
-              <span>Jaminan {variantDetails.guaranteeTitle} (100% Proteksi Penggantian Akun)</span>
-            </div>
-            <p>{variantDetails.warrantyText}</p>
-            <p className="text-[11px] sm:text-xs text-[#121A2A]/60">
-              *Klaim garansi mudah dan cepat, cukup konfirmasi nomor Invoice pesanan Anda ke WhatsApp Customer Service Asterra Store.
-            </p>
+            {variantDetails.hasWarranty ? (
+              <>
+                <div className="flex items-center gap-2 text-[#16A34A] font-bold">
+                  <FontAwesomeIcon icon={faShieldHalved} className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
+                  <span>Jaminan {variantDetails.guaranteeTitle} (100% Proteksi Penggantian Akun)</span>
+                </div>
+                <p className="leading-relaxed">{variantDetails.warrantyText}</p>
+                <p className="text-[11px] sm:text-xs text-[#121A2A]/60">
+                  *Klaim garansi mudah dan cepat, cukup konfirmasi nomor Invoice pesanan Anda ke WhatsApp Customer Service Asterra Store.
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center gap-2 text-[#475569] font-bold">
+                  <FontAwesomeIcon icon={faShieldHalved} className="w-4 h-4 sm:w-5 sm:h-5 shrink-0 text-[#94A3B8]" />
+                  <span className="text-[#1E293B]">Informasi Layanan: Tanpa Garansi</span>
+                </div>
+                <div className="p-3.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] space-y-1.5 text-xs sm:text-sm text-[#334155]">
+                  <p className="font-bold text-[#DC2626] flex items-center gap-1.5">
+                    <span>⚠️</span>
+                    <span>Perhatian: Paket ini tidak mencakup proteksi penggantian akun.</span>
+                  </p>
+                  <p className="leading-relaxed text-[#475569]">{variantDetails.warrantyText}</p>
+                </div>
+                <p className="text-[11px] sm:text-xs text-[#121A2A]/60">
+                  *Jika Anda membutuhkan layanan dengan proteksi garansi pergantian penuh, silakan pilih varian paket bergaransi yang tersedia pada pilihan paket di atas.
+                </p>
+              </>
+            )}
           </div>
         )}
       </div>

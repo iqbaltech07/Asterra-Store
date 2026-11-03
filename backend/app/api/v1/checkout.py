@@ -6,7 +6,7 @@ from app.config import settings
 from app.services.order_service import OrderService
 from app.services.payment_config_service import PaymentConfigService
 from app.services.promo_service import PromoService
-from app.services.tripay_service import TripayService
+from app.services.dana_service import DanaService
 
 router = APIRouter()
 
@@ -507,15 +507,43 @@ def sync_order_vip_status(order_id: str):
 
 @router.post("/orders/{order_id}/pay", tags=["Orders"])
 async def pay_order(order_id: str, request: Request):
-    try:
-        body = await request.json()
-    except Exception:
-        body = {}
+    body = {}
+    if isinstance(request, Request):
+        try:
+            body = await request.json()
+        except Exception:
+            body = {}
+    elif isinstance(request, dict):
+        body = request
 
     order = OrderService.get_order_by_id(order_id)
-    amount = order.get("totalAmount", 50000) if order else 50000
-    method = body.get("payment_method", "manual_bca")
+    if not order:
+        raise HTTPException(status_code=404, detail="Pesanan tidak ditemukan")
 
+    amount = order.get("totalAmount") or order.get("total_amount") or 50000
+    method = body.get("payment_method") or order.get("paymentMethod") or order.get("payment_method") or "qris_dana"
+
+    # Dynamic QRIS DANA Resmi Gateway
+    if method in ["qris", "qris_dana", "dana", "gateway"]:
+        cust_name = order.get("customerName") or order.get("customer_name") or "Pelanggan Asterra"
+        cust_email = order.get("customerEmail") or order.get("customer_email") or "customer@asterra.store"
+        cust_phone = order.get("customerPhone") or order.get("customer_phone") or ""
+
+        payment_info = DanaService.generate_qris(
+            order_id=order_id,
+            amount=int(amount),
+            customer_name=cust_name,
+            customer_email=cust_email,
+            customer_phone=cust_phone,
+            title=f"Order {order_id} - Asterra Store",
+        )
+        return {
+            "success": True,
+            "message": "Instruksi pembayaran QRIS DANA Resmi berhasil dibuat",
+            "payment": payment_info,
+        }
+
+    # Manual bank transfer fallback
     payment_info = {
         "id": f"PAY-{order_id}",
         "order_id": order_id,
@@ -556,43 +584,66 @@ def cancel_order(order_id: str):
     }
 
 # ------------------------------------------
-# 4. Payment Gateway Webhook (Tripay)
+# 4. Payment Gateway Webhook (DANA QRIS Resmi)
 # ------------------------------------------
-@router.post("/webhooks/tripay", tags=["Webhooks"])
-async def tripay_webhook(request: Request):
+@router.post("/webhooks/dana", tags=["Webhooks"])
+async def dana_webhook(request: Request):
     raw_body = await request.body()
-    signature = request.headers.get("x-callback-signature", "")
-    try:
-        payload = json.loads(raw_body.decode("utf-8"))
-    except Exception:
-        raise HTTPException(status_code=400, detail="Invalid JSON payload")
+    headers = dict(request.headers)
+    relative_path = str(request.url.path)
+    http_method = request.method
 
-    merchant_ref = payload.get("merchant_ref")
-    if not merchant_ref:
-        raise HTTPException(status_code=400, detail="merchant_ref is required")
+    verified = DanaService.verify_webhook(
+        http_method=http_method,
+        relative_path_url=relative_path,
+        headers=headers,
+        raw_body=raw_body,
+    )
 
-    # Signature verification
-    is_valid = TripayService.verify_callback_signature(raw_body, signature)
-    if not is_valid and (settings.TRIPAY_IS_PRODUCTION or settings.TRIPAY_PRIVATE_KEY):
-        raise HTTPException(status_code=401, detail="Invalid callback signature")
+    if not verified.get("is_valid"):
+        err_msg = verified.get("error", "Invalid callback signature")
+        raise HTTPException(status_code=401, detail=err_msg)
 
-    status = payload.get("status", "")
-    if status == "PAID":
+    order_id = verified.get("order_id")
+    if not order_id:
+        raise HTTPException(status_code=400, detail="partner_reference_no / order_id is required")
+
+    status = str(verified.get("status", "")).upper()
+    ref = verified.get("reference", "DANA-PG")
+
+    if status in ["PAID", "SUCCESS", "00", "SUCCESSFUL"]:
         updated = OrderService.update_status(
-            merchant_ref,
+            order_id,
             "processing",
-            notes=f"Pembayaran otomatis terverifikasi Tripay ({payload.get('payment_method')}) Ref: {payload.get('reference')}",
+            notes=f"Pembayaran otomatis terverifikasi QRIS DANA Resmi Ref: {ref}",
         )
-        return {"success": True, "message": "Pembayaran berhasil diverifikasi", "order": updated}
-    elif status in ["EXPIRED", "FAILED"]:
+        return {
+            "responseCode": "2005400",
+            "responseMessage": "Successful",
+            "success": True,
+            "message": "Pembayaran DANA berhasil diverifikasi",
+            "order": updated,
+        }
+    elif status in ["EXPIRED", "FAILED", "CANCELLED"]:
         updated = OrderService.update_status(
-            merchant_ref,
+            order_id,
             "cancelled",
-            notes=f"Pembayaran Tripay {status.lower()}",
+            notes=f"Pembayaran DANA {status.lower()}",
         )
-        return {"success": True, "message": f"Pesanan {status.lower()}", "order": updated}
+        return {
+            "responseCode": "2005400",
+            "responseMessage": "Successful",
+            "success": True,
+            "message": f"Pesanan {status.lower()}",
+            "order": updated,
+        }
 
-    return {"success": True, "message": f"Status webhook diterima: {status}"}
+    return {
+        "responseCode": "2005400",
+        "responseMessage": "Successful",
+        "success": True,
+        "message": f"Status webhook DANA diterima: {status}",
+    }
 
 # ------------------------------------------
 # 5. VIP Reseller Automated Webhook Callback
@@ -630,10 +681,11 @@ async def vip_reseller_webhook(request: Request):
 def get_admin_orders(
     status: Optional[str] = None,
     search: Optional[str] = None,
+    month: Optional[str] = Query(None),
     page: int = 1,
     limit: int = 20,
 ):
-    result = OrderService.get_orders(status=status, search=search, page=page, limit=limit)
+    result = OrderService.get_orders(status=status, search=search, month=month, page=page, limit=limit)
     return {
         "success": True,
         "data": result["orders"],
@@ -644,6 +696,8 @@ def get_admin_orders(
             "items_per_page": result["limit"],
         },
         "metrics": result["metrics"],
+        "available_months": result.get("availableMonths", []),
+        "selected_month": result.get("selectedMonth", "all"),
     }
 
 @router.get("/admin/orders/{order_id}", tags=["Admin Orders"])

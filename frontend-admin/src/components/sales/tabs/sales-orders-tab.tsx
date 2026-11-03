@@ -92,7 +92,7 @@ export function SalesOrdersTab({
               </div>
               <h4 className="font-bold text-sm text-foreground">Belum Ada Penjualan dari Campaign</h4>
               <p className="text-xs text-foreground-muted max-w-md mx-auto leading-relaxed">
-                Bagikan tautan promo event dari tab Generator Tautan untuk mendapatkan booster komisi dinamis hingga 15% - 20%!
+                Bagikan tautan promo event dari tab Generator Tautan untuk mendapatkan komisi optimal 30% dari profit transaksi!
               </p>
               <Button
                 size="sm"

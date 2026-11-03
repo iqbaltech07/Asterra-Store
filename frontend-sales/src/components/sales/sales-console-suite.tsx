@@ -132,8 +132,8 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
 
   const inviteWaMessage = encodeURIComponent(
     `Halo! Mau dapat penghasilan tambahan tanpa modal? Yuk gabung jadi Mitra Sales resmi di Asterra Store!\n\n` +
-      `✅ Komisi penjualan langsung 15% – 20% (naik 20% setelah 50 order) dari Profit Transaksi bersih\n` +
-      `✅ Bonus rekrutmen mitra sales 2% dari Profit Transaksi (1-Level resmi)\n` +
+      `✅ Komisi penjualan langsung 30% dari Profit Transaksi bersih (Harga Jual - Modal)\n` +
+      `✅ Target produktivitas Rp 25.000 / hari (≈ Rp 750.000 / bulan)\n` +
       `✅ Produk digital terlaris (Canva Pro, ChatGPT, Gemini, Netflix, Spotify, dll)\n` +
       `✅ Disediakan link affiliate, banner & materi promosi siap pakai\n` +
       `✅ Pencairan komisi mudah & cepat langsung ke rekening bank Anda\n\n` +

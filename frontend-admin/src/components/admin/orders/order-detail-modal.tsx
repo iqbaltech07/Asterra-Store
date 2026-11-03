@@ -193,7 +193,8 @@ export function OrderDetailModal({
         order.payment?.payment_method?.toLowerCase().includes('manual') ||
         order.payment?.payment_method === 'bca' ||
         order.payment?.payment_method === 'dana' ||
-        !order.payment?.transaction_id?.startsWith('trx-tripay'))
+        (!order.payment?.transaction_id?.startsWith('trx-dana') &&
+          !order.payment?.transaction_id?.startsWith('trx-tripay')))
   );
 
   const isSaveDisabled = Boolean(

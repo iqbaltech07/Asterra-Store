@@ -55,11 +55,16 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7 # 7 days
     
-    # Tripay Payment Gateway
-    TRIPAY_API_KEY: str = os.getenv("TRIPAY_API_KEY", "")
-    TRIPAY_PRIVATE_KEY: str = os.getenv("TRIPAY_PRIVATE_KEY", "")
-    TRIPAY_MERCHANT_CODE: str = os.getenv("TRIPAY_MERCHANT_CODE", "")
-    TRIPAY_IS_PRODUCTION: bool = os.getenv("TRIPAY_IS_PRODUCTION", "false").lower() == "true"
+    # DANA Official Payment Gateway / QRIS (dana-python)
+    DANA_ENV: str = os.getenv("DANA_ENV", "sandbox").lower()
+    DANA_PARTNER_ID: str = os.getenv("DANA_PARTNER_ID", os.getenv("X_PARTNER_ID", ""))
+    DANA_CLIENT_SECRET: str = os.getenv("DANA_CLIENT_SECRET", os.getenv("CLIENT_SECRET", ""))
+    DANA_MERCHANT_ID: str = os.getenv("DANA_MERCHANT_ID", "")
+    DANA_PRIVATE_KEY: str = os.getenv("DANA_PRIVATE_KEY", os.getenv("PRIVATE_KEY", ""))
+    DANA_PRIVATE_KEY_PATH: str = os.getenv("DANA_PRIVATE_KEY_PATH", os.getenv("PRIVATE_KEY_PATH", ""))
+    DANA_PUBLIC_KEY: str = os.getenv("DANA_PUBLIC_KEY", "")
+    DANA_ORIGIN: str = os.getenv("DANA_ORIGIN", os.getenv("ORIGIN", "https://asterrastore.biz.id"))
+    DANA_IS_PRODUCTION: bool = os.getenv("DANA_ENV", "sandbox").lower() == "production"
     
     # Vercel Blob Storage
     BLOB_READ_WRITE_TOKEN: str = os.getenv("BLOB_READ_WRITE_TOKEN", "")

@@ -37,7 +37,7 @@ interface CommissionPreset {
   id: string;
   code: string;
   name: string;
-  personalRate: 15 | 20;
+  personalRate: number;
   referrals: number;
   totalPercent: number;
   description: string;
@@ -46,57 +46,57 @@ interface CommissionPreset {
 const COMMISSION_PRESETS: CommissionPreset[] = [
   {
     id: 'level-a',
-    code: 'LEVEL A',
-    name: 'Sales Pemula',
-    personalRate: 15,
+    code: '1 MITRA',
+    name: 'Target Harian (1 Mitra)',
+    personalRate: 30,
     referrals: 0,
-    totalPercent: 15,
-    description: 'Komisi standar 15% penjualan mandiri tanpa referral',
+    totalPercent: 30,
+    description: 'Target komisi Rp 25.000 / hari (Rp 750.000 / bulan)',
   },
   {
     id: 'level-b',
-    code: 'LEVEL B',
-    name: 'Sales Target (VIP)',
-    personalRate: 20,
+    code: '5 MITRA',
+    name: 'Tim 5 Mitra Produktif',
+    personalRate: 30,
     referrals: 0,
-    totalPercent: 20,
-    description: 'Komisi 20% penjualan mandiri (Milestone 50+ order)',
+    totalPercent: 30,
+    description: 'Simulasi omzet 5 mitra: Komisi Rp 125.000 / hari (Rp 3.750.000 / bulan)',
   },
   {
     id: 'level-c',
-    code: 'LEVEL C',
-    name: 'Pemula + 1 Referral',
-    personalRate: 15,
-    referrals: 1,
-    totalPercent: 17,
-    description: '15% komisi pribadi + 2% bonus referral (Total 17%)',
+    code: '10 MITRA',
+    name: 'Milestone 10 Mitra',
+    personalRate: 30,
+    referrals: 0,
+    totalPercent: 30,
+    description: 'Milestone 10 mitra: Komisi Rp 250.000 / hari (Rp 7.500.000 / bulan)',
   },
   {
     id: 'level-d',
-    code: 'LEVEL D',
-    name: 'Pemula + 2 Referral',
-    personalRate: 15,
-    referrals: 2,
-    totalPercent: 19,
-    description: '15% komisi pribadi + 2×2% bonus referral (Total 19%)',
+    code: '25 MITRA',
+    name: 'Skala 25 Mitra',
+    personalRate: 30,
+    referrals: 0,
+    totalPercent: 30,
+    description: 'Skala 25 mitra: Komisi Rp 625.000 / hari (Rp 18.750.000 / bulan)',
   },
   {
     id: 'level-e',
-    code: 'LEVEL E',
-    name: 'Target + 1 Referral',
-    personalRate: 20,
-    referrals: 1,
-    totalPercent: 22,
-    description: '20% komisi pribadi + 2% bonus referral (Total 22%)',
+    code: '50 MITRA',
+    name: 'Ekspansi 50 Mitra',
+    personalRate: 30,
+    referrals: 0,
+    totalPercent: 30,
+    description: 'Ekspansi 50 mitra: Komisi Rp 1.250.000 / hari (Rp 37.500.000 / bulan)',
   },
   {
     id: 'level-f',
-    code: 'LEVEL F',
-    name: 'Target + 2 Referral',
-    personalRate: 20,
-    referrals: 2,
-    totalPercent: 24,
-    description: '20% komisi pribadi + 2×2% bonus referral (Total 24%)',
+    code: '100 MITRA',
+    name: 'Skala Penuh 100 Mitra',
+    personalRate: 30,
+    referrals: 0,
+    totalPercent: 30,
+    description: 'Skala 100 mitra: Komisi Rp 2.500.000 / hari (Rp 75.000.000 / bulan)',
   },
 ];
 
@@ -123,7 +123,7 @@ export function CommissionSimulator() {
   // ----------------------------------------------------
   // STATE MODE 1: SIMULASI KOMISI SALES
   // ----------------------------------------------------
-  const [personalRate, setPersonalRate] = useState<15 | 20>(15);
+  const [personalRate, setPersonalRate] = useState<number>(30);
   const [referralCount, setReferralCount] = useState<number>(0);
   const [activePreset, setActivePreset] = useState<string>('level-a');
   const [items, setItems] = useState<SimulationItem[]>(INITIAL_ITEMS);
@@ -153,7 +153,7 @@ export function CommissionSimulator() {
     setReferralCount(preset.referrals);
   };
 
-  const handleRateChange = (rate: 15 | 20) => {
+  const handleRateChange = (rate: number) => {
     setPersonalRate(rate);
     const matching = COMMISSION_PRESETS.find(
       (p) => p.personalRate === rate && p.referrals === referralCount
@@ -209,27 +209,23 @@ export function CommissionSimulator() {
   // Reset Commission Simulation
   const handleResetSimulation = () => {
     setItems(INITIAL_ITEMS);
-    setPersonalRate(15);
+    setPersonalRate(30);
     setReferralCount(0);
     setActivePreset('level-a');
   };
 
-  // Safe Real-time Commission Calculation (Zero Internal Profit Leakage)
+  // Safe Real-time Commission Calculation (Model Bisnis v2.0 - 30% dari Profit Transaksi)
   const simulationResults = useMemo(() => {
     let totalUnits = 0;
     let personalCommission = 0;
-    let totalBaseCommission = 0;
 
     const breakdown = items.map((item) => {
       const qty = item.quantity;
-      // Base commission is 15% standard rate. If VIP 20%, scaled proportionally.
-      const rateMultiplier = personalRate === 20 ? (20 / 15) : 1.0;
-      const unitCommission = Math.round(item.product.baseCommission * rateMultiplier);
+      const unitCommission = item.product.baseCommission;
       const subtotalCommission = unitCommission * qty;
 
       totalUnits += qty;
       personalCommission += subtotalCommission;
-      totalBaseCommission += item.product.baseCommission * qty;
 
       return {
         ...item,
@@ -238,20 +234,18 @@ export function CommissionSimulator() {
       };
     });
 
-    // Referral bonus is 2% of profit baseline (which is exactly 2/15 of the 15% base commission)
-    const referralBonus = Math.round(totalBaseCommission * (2 / 15) * referralCount);
-    const totalEarnings = personalCommission + referralBonus;
-    const effectiveCommissionRate = personalRate + referralCount * 2;
+    const totalEarnings = personalCommission;
+    const effectiveCommissionRate = 30;
 
     return {
       totalUnits,
       personalCommission,
-      referralBonus,
+      referralBonus: 0,
       totalEarnings,
       effectiveCommissionRate,
       breakdown,
     };
-  }, [items, personalRate, referralCount]);
+  }, [items]);
 
   // ----------------------------------------------------
   // STATE MODE 2: SIMULASI HARGA JUAL RESELLER
@@ -504,7 +498,7 @@ export function CommissionSimulator() {
                         isSelected ? 'text-white/80' : 'text-foreground-muted'
                       }`}
                     >
-                      {preset.personalRate}% {preset.referrals > 0 ? `+ ${preset.referrals * 2}% Ref` : ''}
+                      {preset.description}
                     </span>
                   </button>
                 );
@@ -517,83 +511,22 @@ export function CommissionSimulator() {
             {/* Left Column: Rate Customizer & Product Basket (7 cols) */}
             <div className="lg:col-span-7 space-y-6">
               {/* Rate & Referral Controls Bar */}
-              <div className="p-4 rounded-xl bg-surface-raised border border-border grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Personal Commission Rate Toggle */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-foreground block">
-                    Tingkat Komisi Penjualan Pribadi:
-                  </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleRateChange(15)}
-                      className={`py-2 px-3 rounded-lg text-xs font-bold border transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                        personalRate === 15
-                          ? 'bg-primary text-white border-primary shadow-2xs'
-                          : 'bg-surface hover:bg-surface-raised border-border text-foreground'
-                      }`}
-                    >
-                      <FontAwesomeIcon icon={faPercent} className="text-xs" />
-                      <span>15% (Pemula)</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleRateChange(20)}
-                      className={`py-2 px-3 rounded-lg text-xs font-bold border transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                        personalRate === 20
-                          ? 'bg-primary text-white border-primary shadow-2xs'
-                          : 'bg-surface hover:bg-surface-raised border-border text-foreground'
-                      }`}
-                    >
-                      <FontAwesomeIcon icon={faArrowTrendUp} className="text-xs" />
-                      <span>20% (Target VIP)</span>
-                    </button>
-                  </div>
-                  <span className="text-[10px] text-foreground-muted block">
-                    Naik ke 20% otomatis setelah akumulasi 50 pesanan sukses.
-                  </span>
-                </div>
-
-                {/* Referral Count Stepper */}
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-foreground">
-                      Mitra Referral Aktif:
-                    </label>
-                    <span className="text-[10px] font-mono text-status-success font-semibold">
-                      +{referralCount * 2}% Bonus
-                    </span>
-                  </div>
+              <div className="p-4 rounded-xl bg-surface-raised border border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => handleReferralChange(referralCount - 1)}
-                      disabled={referralCount <= 0}
-                      className="w-9 h-9 p-0 rounded-lg shrink-0 border-border cursor-pointer"
-                    >
-                      <FontAwesomeIcon icon={faMinus} className="text-xs" />
-                    </Button>
-                    <input
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={referralCount}
-                      onChange={(e) => handleReferralChange(parseInt(e.target.value, 10) || 0)}
-                      className="h-9 w-full rounded-lg bg-surface border border-border text-center text-xs font-mono font-bold text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => handleReferralChange(referralCount + 1)}
-                      className="w-9 h-9 p-0 rounded-lg shrink-0 border-border cursor-pointer"
-                    >
-                      <FontAwesomeIcon icon={faPlus} className="text-xs" />
-                    </Button>
+                    <span className="text-xs font-bold text-foreground">Skema Bagi Hasil:</span>
+                    <Badge variant="outline" className="text-primary border-primary/30 text-xs font-mono font-bold px-2 py-0.5">
+                      30% Profit Bersih
+                    </Badge>
                   </div>
-                  <span className="text-[10px] text-foreground-muted block">
-                    Bonus 2% dari transaksi mitra yang Anda rekrut langsung.
-                  </span>
+                  <p className="text-[11px] text-foreground-muted leading-relaxed">
+                    Sesuai <strong>Model Bisnis Asterra Store v2.0</strong>, komisi dihitung murni 30% dari keuntungan transaksi (Harga Jual - Modal Produk), tanpa manipulasi harga jual ke pelanggan.
+                  </p>
+                </div>
+                <div className="shrink-0 text-left sm:text-right border-t sm:border-t-0 sm:border-l border-border/60 pt-2 sm:pt-0 sm:pl-4">
+                  <span className="text-[10px] text-foreground-muted uppercase tracking-wider block font-semibold">Target Harian Mitra</span>
+                  <span className="text-sm font-bold text-status-success font-mono">Rp 25.000 / hari</span>
+                  <span className="text-[10px] text-foreground-muted block mt-0.5">≈ Rp 750.000 / bulan</span>
                 </div>
               </div>
 
@@ -797,19 +730,11 @@ export function CommissionSimulator() {
                 {/* Commission Scheme Breakdown Pill */}
                 <div className="p-3 rounded-xl bg-primary/10 border border-primary/20 space-y-1.5">
                   <div className="flex items-center justify-between text-xs font-bold text-primary">
-                    <span>Total Komisi Efektif:</span>
-                    <span className="font-mono text-sm">{simulationResults.effectiveCommissionRate}%</span>
+                    <span>Skema Bagi Hasil:</span>
+                    <span className="font-mono text-sm">30% dari Profit</span>
                   </div>
                   <p className="text-[11px] text-foreground-muted leading-relaxed">
-                    Skema: <strong className="text-foreground">{personalRate}%</strong> Komisi Pribadi
-                    {referralCount > 0 ? (
-                      <>
-                        {' '}+ <strong className="text-status-success">{referralCount * 2}%</strong> Bonus Referral ({referralCount} mitra)
-                      </>
-                    ) : (
-                      ' (0 referral)'
-                    )}
-                    .
+                    Sistem Asterra Store membagi <strong>30% untuk Affiliate</strong> dan <strong>70% untuk Asterra Store</strong> dari profit bersih setiap transaksi yang berhasil.
                   </p>
                 </div>
 
@@ -817,13 +742,13 @@ export function CommissionSimulator() {
                 <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[11px] text-foreground-muted space-y-1 leading-relaxed">
                   <div className="flex items-center gap-1.5 font-bold text-amber-600 text-xs">
                     <FontAwesomeIcon icon={faShieldHalved} className="text-xs" />
-                    <span>Ketentuan Komisi Asterra Store:</span>
+                    <span>Ketentuan Komisi Model Bisnis v2.0:</span>
                   </div>
                   <p>
-                    • Komisi dihitung berdasarkan performa penjualan produk yang berhasil diselesaikan dan lolos masa garansi.
+                    • Komisi dihitung berdasarkan performa penjualan produk yang berhasil diselesaikan dan lolos masa garansi 3 hari.
                   </p>
                   <p>
-                    • Bonus referral 2% diproyeksikan atas asumsi mitra binaan aktif menghasilkan volume transaksi setara.
+                    • Target penghasilan harian ditetapkan sebesar Rp 25.000 / hari sebagai tolok ukur produktivitas kemitraan.
                   </p>
                   <p className="text-[10px] text-foreground-muted/80 pt-1 border-t border-amber-500/15 italic">
                     * Estimasi di atas merupakan simulasi ilustratif untuk perencanaan sales. Bukan saldo riil atau pendapatan tetap yang dijamin.

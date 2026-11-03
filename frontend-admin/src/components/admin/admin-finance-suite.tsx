@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   Wallet,
   TrendingUp,
@@ -27,11 +27,37 @@ import {
   Check,
   ChevronRight,
   ExternalLink,
+  Calendar,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { AdminTab } from './admin-sidebar';
+
+function getCurrentMonthKey(): string {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  return `${year}-${month}`;
+}
+
+function formatMonthName(mKey: string): string {
+  if (!mKey || mKey === 'all') return 'Semua Periode (All-Time)';
+  const parts = mKey.split('-');
+  if (parts.length === 2) {
+    const year = parts[0];
+    const monthIndex = parseInt(parts[1], 10) - 1;
+    const monthNames = [
+      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    ];
+    if (monthIndex >= 0 && monthIndex < 12) {
+      const isCurrent = mKey === getCurrentMonthKey();
+      return `${monthNames[monthIndex]} ${year}${isCurrent ? ' (Bulan Ini)' : ''}`;
+    }
+  }
+  return mKey;
+}
 
 interface ProfitDistributionSummary {
   totalOrders: number;
@@ -89,7 +115,8 @@ interface ProfitLedgerEntry {
 }
 
 interface WalletData {
-  tripayBalance: number;
+  danaBalance?: number;
+  tripayBalance?: number;
   vipBalance: number;
   reserveBalance: number;
 }
@@ -152,18 +179,26 @@ export function AdminFinanceSuite({ activeTab, metrics, onNotify }: AdminFinance
   // Profit Distribution & Ledger SSOT state
   const [profitSummary, setProfitSummary] = useState<ProfitDistributionSummary | null>(null);
   const [profitEntries, setProfitEntries] = useState<ProfitLedgerEntry[]>([]);
+  const [availableMonths, setAvailableMonths] = useState<string[]>([]);
+  const [selectedMonth, setSelectedMonth] = useState<string>(() => getCurrentMonthKey());
+  const selectedMonthRef = useRef<string>(getCurrentMonthKey());
   const [isLoadingProfit, setIsLoadingProfit] = useState<boolean>(false);
   const [profitSearch, setProfitSearch] = useState<string>('');
   const [profitStatusFilter, setProfitStatusFilter] = useState<string>('all');
 
-  const fetchFinanceSummary = useCallback(async () => {
+  const fetchFinanceSummary = useCallback(async (targetMonth?: string) => {
     try {
       setIsLoadingFinance(true);
       const token = typeof window !== 'undefined' ? localStorage.getItem('asterra_admin_token') : null;
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const res = await fetch('/api/v1/admin/finance/summary', {
+      const monthToFetch = targetMonth !== undefined ? targetMonth : selectedMonthRef.current;
+      const url = monthToFetch && monthToFetch !== 'all'
+        ? `/api/v1/admin/finance/summary?month=${encodeURIComponent(monthToFetch)}`
+        : '/api/v1/admin/finance/summary';
+
+      const res = await fetch(url, {
         headers,
         credentials: 'include',
       });
@@ -180,14 +215,19 @@ export function AdminFinanceSuite({ activeTab, metrics, onNotify }: AdminFinance
     }
   }, []);
 
-  const fetchProfitData = useCallback(async () => {
+  const fetchProfitData = useCallback(async (targetMonth?: string) => {
     try {
       setIsLoadingProfit(true);
       const token = typeof window !== 'undefined' ? localStorage.getItem('asterra_admin_token') : null;
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const res = await fetch('/api/v1/admin/profit-distribution', {
+      const monthToFetch = targetMonth !== undefined ? targetMonth : selectedMonthRef.current;
+      const url = monthToFetch && monthToFetch !== 'all'
+        ? `/api/v1/admin/profit-distribution?month=${encodeURIComponent(monthToFetch)}`
+        : '/api/v1/admin/profit-distribution';
+
+      const res = await fetch(url, {
         headers,
         credentials: 'include',
       });
@@ -195,6 +235,9 @@ export function AdminFinanceSuite({ activeTab, metrics, onNotify }: AdminFinance
       if (json.success && json.data) {
         setProfitSummary(json.data.summary);
         setProfitEntries(json.data.entries || []);
+        if (json.data.availableMonths && Array.isArray(json.data.availableMonths)) {
+          setAvailableMonths(json.data.availableMonths);
+        }
       } else {
         console.error('Failed to load profit distribution data:', json.error || json.detail || res.statusText);
       }
@@ -205,13 +248,29 @@ export function AdminFinanceSuite({ activeTab, metrics, onNotify }: AdminFinance
     }
   }, []);
 
+  const allMonthsList = useMemo(() => {
+    const currentM = getCurrentMonthKey();
+    const set = new Set<string>([currentM, ...availableMonths]);
+    return Array.from(set).sort().reverse();
+  }, [availableMonths]);
+
+  const handleMonthChange = (monthKey: string) => {
+    setSelectedMonth(monthKey);
+    selectedMonthRef.current = monthKey;
+    fetchProfitData(monthKey);
+    fetchFinanceSummary(monthKey);
+    if (onNotify) {
+      onNotify(`Kalkulasi buku besar dialihkan ke periode: ${formatMonthName(monthKey)}`);
+    }
+  };
+
   useEffect(() => {
-    fetchFinanceSummary();
-    fetchProfitData();
+    fetchFinanceSummary(selectedMonthRef.current);
+    fetchProfitData(selectedMonthRef.current);
 
     const handleAutoSync = () => {
-      fetchFinanceSummary();
-      fetchProfitData();
+      fetchFinanceSummary(selectedMonthRef.current);
+      fetchProfitData(selectedMonthRef.current);
     };
 
     // Auto-sync exclusively on global SSE notification (data-driven)
@@ -255,7 +314,7 @@ export function AdminFinanceSuite({ activeTab, metrics, onNotify }: AdminFinance
             </div>
             <h2 className="text-lg font-bold text-foreground tracking-tight">Saldo & Dompet Pembayaran</h2>
             <p className="text-xs text-foreground-muted mt-0.5">
-              Kelola saldo penampung payment gateway Tripay, saldo deposit operasional VIP Reseller, dan kas internal toko.
+              Kelola saldo penampung payment gateway QRIS DANA Resmi, saldo deposit operasional VIP Reseller, dan kas internal toko.
             </p>
           </div>
           <Button
@@ -270,22 +329,22 @@ export function AdminFinanceSuite({ activeTab, metrics, onNotify }: AdminFinance
 
         {/* Wallets Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Tripay Settlement Wallet */}
+          {/* DANA QRIS Settlement Wallet */}
           <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-3">
             <div className="flex items-center justify-between text-xs text-foreground-muted">
-              <span>Tripay Settlement Balance</span>
+              <span>DANA QRIS Settlement Balance</span>
               <Badge variant="outline" className="text-status-success border-status-success/30 text-[10px]">
                 Available
               </Badge>
             </div>
             <div className="text-2xl font-bold text-foreground font-mono">
-              Rp {(financeSummary?.wallets?.tripayBalance ?? 0).toLocaleString('id-ID')}
+              Rp {(financeSummary?.wallets?.danaBalance ?? financeSummary?.wallets?.tripayBalance ?? 0).toLocaleString('id-ID')}
             </div>
             <p className="text-[11px] text-foreground-muted">Dana siap ditarik ke rekening bank operasional</p>
             <Button
               size="sm"
               variant="outline"
-              onClick={() => onNotify?.(`Pengajuan pencairan Tripay sebesar Rp ${(financeSummary?.wallets?.tripayBalance ?? 0).toLocaleString('id-ID')} sedang diproses.`)}
+              onClick={() => onNotify?.(`Pengajuan pencairan DANA QRIS sebesar Rp ${(financeSummary?.wallets?.danaBalance ?? financeSummary?.wallets?.tripayBalance ?? 0).toLocaleString('id-ID')} sedang diproses.`)}
               className="w-full text-xs border-border"
             >
               Withdraw ke Rekening Bank
@@ -348,20 +407,48 @@ export function AdminFinanceSuite({ activeTab, metrics, onNotify }: AdminFinance
       <div className="space-y-6">
         <div className="bg-surface border border-border rounded-xl p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
+            <div className="flex flex-wrap items-center gap-2 mb-1">
+              <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider bg-status-success/15 text-status-success border border-status-success/25">
+                Revenue Intelligence
+              </span>
+              <Badge variant="outline" className="text-[10px] font-bold text-primary border-primary/30 bg-primary/5">
+                Periode: {formatMonthName(selectedMonth)}
+              </Badge>
+            </div>
             <h2 className="text-lg font-bold text-foreground tracking-tight">Analisis Pendapatan (Revenue Intelligence)</h2>
             <p className="text-xs text-foreground-muted mt-0.5">
               Rincian omzet bruto transaksi, kontribusi metode pembayaran, dan performa jalur akuisisi.
             </p>
           </div>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => onNotify?.('Laporan pendapatan berhasil diekspor ke Excel.')}
-            className="text-xs gap-1.5 border-border"
-          >
-            <Download className="w-3.5 h-3.5" />
-            <span>Ekspor Laporan Pendapatan</span>
-          </Button>
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Filter Pilih Bulan */}
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-border bg-surface-raised shadow-2xs hover:border-primary/40 transition-colors">
+              <Calendar className="w-3.5 h-3.5 text-primary shrink-0" />
+              <span className="text-[11px] font-semibold text-foreground-muted whitespace-nowrap">Pilih Bulan:</span>
+              <select
+                value={selectedMonth}
+                aria-label="Pilih Periode Bulan Pendapatan"
+                onChange={(e) => handleMonthChange(e.target.value)}
+                className="bg-transparent font-bold text-xs text-foreground focus:outline-none cursor-pointer pr-1"
+              >
+                {allMonthsList.map((m) => (
+                  <option key={m} value={m}>
+                    {formatMonthName(m)}
+                  </option>
+                ))}
+                <option value="all">Semua Periode (All-Time)</option>
+              </select>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => onNotify?.(`Laporan pendapatan periode ${formatMonthName(selectedMonth)} berhasil diekspor.`)}
+              className="text-xs gap-1.5 border-border"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Ekspor Laporan Pendapatan</span>
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -438,14 +525,42 @@ export function AdminFinanceSuite({ activeTab, metrics, onNotify }: AdminFinance
       <div className="space-y-6">
         <div className="bg-surface border border-border rounded-xl p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
+            <div className="flex flex-wrap items-center gap-2 mb-1">
+              <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider bg-status-error/15 text-status-error border border-status-error/25">
+                Cost Center
+              </span>
+              <Badge variant="outline" className="text-[10px] font-bold text-primary border-primary/30 bg-primary/5">
+                Periode: {formatMonthName(selectedMonth)}
+              </Badge>
+            </div>
             <h2 className="text-lg font-bold text-foreground tracking-tight">Manajemen Pengeluaran & Biaya Bisnis</h2>
             <p className="text-xs text-foreground-muted mt-0.5">
               Pencatatan seluruh biaya modal produk (COGS), komisi sales, payment gateway fee, dan infrastruktur cloud.
             </p>
           </div>
-          <div className="text-right">
-            <span className="text-[10px] text-foreground-muted uppercase tracking-wider block">Total Pengeluaran Bulan Ini</span>
-            <span className="text-xl font-bold text-status-error font-mono">Rp {totalExpense.toLocaleString('id-ID')}</span>
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Filter Pilih Bulan */}
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-border bg-surface-raised shadow-2xs hover:border-primary/40 transition-colors">
+              <Calendar className="w-3.5 h-3.5 text-primary shrink-0" />
+              <span className="text-[11px] font-semibold text-foreground-muted whitespace-nowrap">Pilih Bulan:</span>
+              <select
+                value={selectedMonth}
+                aria-label="Pilih Periode Bulan Biaya"
+                onChange={(e) => handleMonthChange(e.target.value)}
+                className="bg-transparent font-bold text-xs text-foreground focus:outline-none cursor-pointer pr-1"
+              >
+                {allMonthsList.map((m) => (
+                  <option key={m} value={m}>
+                    {formatMonthName(m)}
+                  </option>
+                ))}
+                <option value="all">Semua Periode (All-Time)</option>
+              </select>
+            </div>
+            <div className="text-right pl-3 border-l border-border/80">
+              <span className="text-[10px] text-foreground-muted uppercase tracking-wider block">Total Pengeluaran</span>
+              <span className="text-xl font-bold text-status-error font-mono">Rp {totalExpense.toLocaleString('id-ID')}</span>
+            </div>
           </div>
         </div>
 
@@ -518,21 +633,43 @@ export function AdminFinanceSuite({ activeTab, metrics, onNotify }: AdminFinance
         {/* Header */}
         <div className="bg-surface border border-border rounded-xl p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex flex-wrap items-center gap-2 mb-1">
               <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider bg-status-success/15 text-status-success border border-status-success/25">
                 Single Source of Truth (SSOT)
               </span>
               <span className="text-[11px] text-foreground-muted">Model Profit Sharing Asterra</span>
+              <Badge variant="outline" className="text-[10px] font-bold text-primary border-primary/30 bg-primary/5">
+                Periode: {formatMonthName(selectedMonth)}
+              </Badge>
             </div>
             <h2 className="text-lg font-bold text-foreground tracking-tight">
               Buku Besar Distribusi Laba & Audit Finansial
             </h2>
             <p className="text-xs text-foreground-muted mt-0.5">
-              Perhitungan murni dari Profit Transaksi (Net Revenue − Biaya Langsung). Pembagian: Non-VIP: 35% CEO, 35% COO, 15% Sales, 15% Cadangan | VIP: 32,5% CEO, 32,5% COO, 20% Sales, 15% Cadangan.
+              Perhitungan murni dari Profit Transaksi (Net Revenue − Modal Upstream). Model Bisnis v2.0: Order Affiliate: 30% Mitra, 15% Cadangan, 27,5% CEO, 27,5% COO | Order Direct: 0% Mitra, 15% Cadangan, 42,5% CEO, 42,5% COO (Strict 50:50 Parity).
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="text-right">
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Filter Pilih Bulan */}
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-border bg-surface-raised shadow-2xs hover:border-primary/40 transition-colors">
+              <Calendar className="w-3.5 h-3.5 text-primary shrink-0" />
+              <span className="text-[11px] font-semibold text-foreground-muted whitespace-nowrap">Pilih Bulan:</span>
+              <select
+                value={selectedMonth}
+                aria-label="Pilih Periode Bulan"
+                onChange={(e) => handleMonthChange(e.target.value)}
+                className="bg-transparent font-bold text-xs text-foreground focus:outline-none cursor-pointer pr-1"
+              >
+                {allMonthsList.map((m) => (
+                  <option key={m} value={m}>
+                    {formatMonthName(m)}
+                  </option>
+                ))}
+                <option value="all">Semua Periode (All-Time)</option>
+              </select>
+            </div>
+
+            <div className="text-right pl-3 border-l border-border/80">
               <span className="text-[10px] text-foreground-muted uppercase tracking-wider block">Profit Margin Toko</span>
               <span className="text-xl font-bold text-status-success font-mono">+{netMarginPercent}%</span>
             </div>
@@ -540,11 +677,11 @@ export function AdminFinanceSuite({ activeTab, metrics, onNotify }: AdminFinance
               size="sm"
               variant="outline"
               onClick={() => {
-                fetchProfitData();
+                fetchProfitData(selectedMonth);
                 onNotify?.('Data distribusi laba dan buku besar berhasil diperbarui.');
               }}
               disabled={isLoadingProfit}
-              className="text-xs gap-1.5 border-border"
+              className="text-xs gap-1.5 border-border h-9 rounded-xl"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isLoadingProfit ? 'animate-spin' : ''}`} />
               <span>Sinkronisasi Data</span>
@@ -562,14 +699,14 @@ export function AdminFinanceSuite({ activeTab, metrics, onNotify }: AdminFinance
                 <span>Bagian CEO (Chief Executive Officer)</span>
               </div>
               <Badge variant="outline" className="text-primary border-primary/30 text-[10px] font-mono font-bold">
-                35% / 32,5% VIP
+                27,5% / 42,5% Direct
               </Badge>
             </div>
             <div className="text-2xl font-bold text-foreground font-mono">
               Rp {ceoShare.toLocaleString('id-ID')}
             </div>
             <div className="flex items-center justify-between text-[11px] text-foreground-muted pt-1 border-t border-border/60">
-              <span>Formula: 35% (32,5% VIP) × Profit Transaksi</span>
+              <span>{selectedMonth !== 'all' ? `Laba Bersih ${formatMonthName(selectedMonth)}` : 'Formula: 27,5% / 42,5% × Profit'}</span>
               <span className="text-status-success font-medium flex items-center gap-1">
                 <Check className="w-3 h-3" /> Sama Rata COO
               </span>
@@ -584,14 +721,14 @@ export function AdminFinanceSuite({ activeTab, metrics, onNotify }: AdminFinance
                 <span>Bagian COO (Chief Operating Officer)</span>
               </div>
               <Badge variant="outline" className="text-primary border-primary/30 text-[10px] font-mono font-bold">
-                35% / 32,5% VIP
+                27,5% / 42,5% Direct
               </Badge>
             </div>
             <div className="text-2xl font-bold text-foreground font-mono">
               Rp {cooShare.toLocaleString('id-ID')}
             </div>
             <div className="flex items-center justify-between text-[11px] text-foreground-muted pt-1 border-t border-border/60">
-              <span>Formula: 35% (32,5% VIP) × Profit Transaksi</span>
+              <span>{selectedMonth !== 'all' ? `Laba Bersih ${formatMonthName(selectedMonth)}` : 'Formula: 27,5% / 42,5% × Profit'}</span>
               <span className="text-status-success font-medium flex items-center gap-1">
                 <Check className="w-3 h-3" /> Sama Rata CEO
               </span>
@@ -612,8 +749,11 @@ export function AdminFinanceSuite({ activeTab, metrics, onNotify }: AdminFinance
             <div className="text-2xl font-bold text-foreground font-mono">
               Rp {businessReserve.toLocaleString('id-ID')}
             </div>
-            <div className="text-[11px] text-foreground-muted pt-1 border-t border-border/60">
-              Formula: 15% Cadangan Operasional & Garansi
+            <div className="flex items-center justify-between text-[11px] text-foreground-muted pt-1 border-t border-border/60">
+              <span>Formula: 15% Cadangan Garansi</span>
+              <span className="text-foreground-muted font-medium">
+                {selectedMonth !== 'all' ? formatMonthName(selectedMonth) : 'Akumulasi'}
+              </span>
             </div>
           </div>
         </div>
@@ -627,6 +767,9 @@ export function AdminFinanceSuite({ activeTab, metrics, onNotify }: AdminFinance
             </h3>
             <span className="text-[11px] text-foreground-muted">
               Total Transaksi Tercatat: <strong className="text-foreground">{profitSummary?.totalOrders ?? 0} order</strong>
+              {selectedMonth !== 'all' && (
+                <span className="text-primary font-bold ml-1">({formatMonthName(selectedMonth)})</span>
+              )}
             </span>
           </div>
 
@@ -682,29 +825,19 @@ export function AdminFinanceSuite({ activeTab, metrics, onNotify }: AdminFinance
 
             <div className="p-3 rounded-lg bg-surface-raised border border-border flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="text-foreground-muted">(-) Komisi Direct Sales (15% Standar / 20% VIP dari Profit Transaksi)</span>
-                <Badge variant="outline" className="text-[10px] border-border">15% / 20% Profit</Badge>
+                <span className="text-foreground-muted">(-) Komisi Mitra Affiliate (30% dari Profit Transaksi Sesuai Model Bisnis v2.0)</span>
+                <Badge variant="outline" className="text-[10px] border-border font-semibold">30% Profit</Badge>
               </div>
               <span className="text-status-error font-mono font-bold">
                 -Rp {salesCommission.toLocaleString('id-ID')}
               </span>
             </div>
 
-            <div className="p-3 rounded-lg bg-surface-raised border border-border flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-foreground-muted">(-) Bonus Rekrutmen Upline (2% dari Profit Transaksi, 1-Level)</span>
-                <Badge variant="outline" className="text-[10px] border-border">2% Profit</Badge>
-              </div>
-              <span className="text-status-error font-mono font-bold">
-                -Rp {recruitmentBonus.toLocaleString('id-ID')}
-              </span>
-            </div>
-
             <div className="p-4 rounded-xl bg-primary/10 border border-primary/30 flex items-center justify-between font-bold text-sm">
               <div>
-                <span className="text-primary font-bold text-base">(=) TOTAL PROFIT DISTRIBUSI</span>
+                <span className="text-primary font-bold text-base">(=) TOTAL PROFIT DISTRIBUSI (PORSI ASTERRA STORE)</span>
                 <span className="text-[11px] text-foreground-muted block font-normal">
-                  Dialokasikan: CEO (35% / 32,5% VIP: Rp {ceoShare.toLocaleString('id-ID')}) + COO (35% / 32,5% VIP: Rp {cooShare.toLocaleString('id-ID')}) + Cadangan Modal (15%: Rp {businessReserve.toLocaleString('id-ID')})
+                  Dialokasikan: CEO (Rp {ceoShare.toLocaleString('id-ID')}) + COO (Rp {cooShare.toLocaleString('id-ID')}) + Cadangan Modal Usaha 15% (Rp {businessReserve.toLocaleString('id-ID')})
                 </span>
               </div>
               <span className="text-primary font-mono text-lg">
@@ -750,9 +883,14 @@ export function AdminFinanceSuite({ activeTab, metrics, onNotify }: AdminFinance
               <h3 className="font-bold text-foreground text-sm flex items-center gap-2">
                 <FileSpreadsheet className="w-4 h-4 text-primary" />
                 <span>Buku Besar Transaksi (Audit Trail Section 8)</span>
+                {selectedMonth !== 'all' && (
+                  <Badge variant="outline" className="text-[10px] font-bold text-primary border-primary/30 bg-primary/5">
+                    {formatMonthName(selectedMonth)}
+                  </Badge>
+                )}
               </h3>
               <p className="text-foreground-muted text-[11px] mt-0.5">
-                Audit riil per transaksi: Net Revenue, COGS, Profit, Komisi Sales (15% / 20%), Rekrutmen (2%), dan Distribusi.
+                Audit riil per transaksi: Net Revenue, COGS, Profit Transaksi, Komisi Affiliate (30%), Porsi Asterra (70%), dan Distribusi Pendiri (CEO & COO 50:50).
               </p>
             </div>
 
@@ -793,7 +931,7 @@ export function AdminFinanceSuite({ activeTab, metrics, onNotify }: AdminFinance
                     <th className="py-3 px-3 text-right">Net Revenue</th>
                     <th className="py-3 px-3 text-right">Biaya Langsung</th>
                     <th className="py-3 px-3 text-right">Profit Transaksi</th>
-                    <th className="py-3 px-3 text-right">Komisi (15%/20% + 2%)</th>
+                    <th className="py-3 px-3 text-right">Komisi Mitra (30%)</th>
                     <th className="py-3 px-3 text-right">Profit Distribusi</th>
                     <th className="py-3 px-3 text-right">CEO / COO / Cadangan</th>
                     <th className="py-3 px-3 text-center">Status</th>
@@ -936,22 +1074,51 @@ export function AdminFinanceSuite({ activeTab, metrics, onNotify }: AdminFinance
 
   return (
     <div className="space-y-6">
-      <div className="bg-surface border border-border rounded-xl p-5 shadow-xs flex items-center justify-between">
+      <div className="bg-surface border border-border rounded-xl p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
+          <div className="flex flex-wrap items-center gap-2 mb-1">
+            <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider bg-primary/15 text-primary border border-primary/25">
+              Jurnal Pembukuan Kas
+            </span>
+            <Badge variant="outline" className="text-[10px] font-bold text-primary border-primary/30 bg-primary/5">
+              Periode: {formatMonthName(selectedMonth)}
+            </Badge>
+          </div>
           <h2 className="text-base font-bold text-foreground">Jurnal Pembukuan & Riwayat Mutasi Kas</h2>
           <p className="text-xs text-foreground-muted mt-0.5">
             Audit trail transaksi finansial double-entry internal secara kronologis.
           </p>
         </div>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => onNotify?.('Buku kas transaksi berhasil diekspor.')}
-          className="text-xs gap-1.5 border-border"
-        >
-          <Download className="w-3.5 h-3.5" />
-          <span>Ekspor Jurnal (CSV)</span>
-        </Button>
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Filter Pilih Bulan */}
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-border bg-surface-raised shadow-2xs hover:border-primary/40 transition-colors">
+            <Calendar className="w-3.5 h-3.5 text-primary shrink-0" />
+            <span className="text-[11px] font-semibold text-foreground-muted whitespace-nowrap">Pilih Bulan:</span>
+            <select
+              value={selectedMonth}
+              aria-label="Pilih Periode Bulan Jurnal"
+              onChange={(e) => handleMonthChange(e.target.value)}
+              className="bg-transparent font-bold text-xs text-foreground focus:outline-none cursor-pointer pr-1"
+            >
+              {allMonthsList.map((m) => (
+                <option key={m} value={m}>
+                  {formatMonthName(m)}
+                </option>
+              ))}
+              <option value="all">Semua Periode (All-Time)</option>
+            </select>
+          </div>
+
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => onNotify?.(`Buku kas transaksi periode ${formatMonthName(selectedMonth)} berhasil diekspor.`)}
+            className="text-xs gap-1.5 border-border"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>Ekspor Jurnal (CSV)</span>
+          </Button>
+        </div>
       </div>
 
       <div className="bg-surface border border-border rounded-xl overflow-hidden shadow-xs">

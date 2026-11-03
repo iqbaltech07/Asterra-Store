@@ -124,7 +124,7 @@ export function SalesOverviewTab({
               <span>
                 Status Akun:{' '}
                 {partner?.status === 'active'
-                  ? `Mitra Aktif (${partner?.tier || 'Standard 15%'})`
+                  ? `Mitra Aktif (${partner?.tier || 'Affiliate Mitra (30%)'})`
                   : partner?.status === 'suspended'
                   ? 'Ditangguhkan (Suspended)'
                   : partner?.status === 'pending'
@@ -425,10 +425,10 @@ export function SalesOverviewTab({
               <span className="text-xs text-foreground-muted font-medium">Bukan Multi-Level</span>
             </div>
             <h4 className="text-sm font-bold text-foreground">
-              Ajak Teman Jadi Mitra Sales & Dapatkan Bonus 2% Profit!
+              Ajak Rekan Jadi Mitra Sales Asterra Store!
             </h4>
             <p className="text-xs text-foreground-muted mt-0.5 max-w-2xl">
-              Dapatkan bonus 2% dari Profit Transaksi teman langsung Anda tanpa memotong komisi penjualan mereka (teman tetap menerima 15% utuh).
+              Bangun komunitas affiliate Anda dengan skema komisi 30% dari Profit Transaksi langsung tanpa markup harga ke pelanggan.
             </p>
           </div>
         </div>
@@ -457,7 +457,7 @@ export function SalesOverviewTab({
               handleShare(
                 inviteSalesUrl,
                 'Gabung Mitra Sales Asterra Store',
-                'Ayo gabung jadi Mitra Sales Asterra Store! Dapatkan komisi 15% profit dari setiap penjualan produk digital bergaransi:'
+                'Ayo gabung jadi Mitra Sales Asterra Store! Dapatkan komisi 30% profit dari setiap penjualan produk digital bergaransi:'
               )
             }
             className="h-9 px-3 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"

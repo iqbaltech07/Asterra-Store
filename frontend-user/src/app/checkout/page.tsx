@@ -836,13 +836,31 @@ function CheckoutPageContent() {
           expires_at: orderExpiresAt,
         });
       } else {
-        showNotification('Membuat tagihan pembayaran Tripay...');
+        showNotification('Membuat QRIS DANA Resmi...');
         const payData = await OrdersApi.pay(createdOrder.id, selectedMethod);
 
         const checkoutUrl = payData.payment?.checkout_url || payData.payment?.redirect_url;
         if (checkoutUrl) {
-          showNotification('Mengarahkan ke halaman pembayaran resmi Tripay...');
+          showNotification('Mengarahkan ke pembayaran DANA...');
           window.location.href = checkoutUrl;
+          return;
+        }
+
+        if (payData.payment?.qr_url || payData.payment?.qr_string) {
+          showNotification('QRIS DANA Resmi siap dipindai.');
+          setActiveManualModal({
+            orderId: createdOrder.id,
+            amount: payData.payment.amount || orderTotal,
+            totalAmount: payData.payment.amount || orderTotal,
+            total_amount: payData.payment.amount || orderTotal,
+            rawAmount: orderRaw,
+            raw_amount: orderRaw,
+            uniqueCode: 0,
+            unique_code: 0,
+            method: 'qris_dana',
+            expiresAt: payData.payment.expired_at || orderExpiresAt,
+            expires_at: payData.payment.expired_at || orderExpiresAt,
+          });
           return;
         }
 
@@ -936,7 +954,7 @@ function CheckoutPageContent() {
     if (methodId === 'bni_va') return 'BNI Virtual Account';
     if (methodId === 'seabank_va') return 'SeaBank Virtual Account';
     if (methodId === 'dana') return 'DANA E-Wallet';
-    return 'Tripay Payment Gateway';
+    return 'QRIS DANA Resmi';
   };
 
   return (

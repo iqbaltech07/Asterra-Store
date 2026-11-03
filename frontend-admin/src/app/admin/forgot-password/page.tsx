@@ -1,3 +1,7 @@
+'use client';
+
 import AdminForgotPasswordPage from '../lupa-password/page';
 
-export default AdminForgotPasswordPage;
+export default function ForgotPasswordPage() {
+  return <AdminForgotPasswordPage />;
+}

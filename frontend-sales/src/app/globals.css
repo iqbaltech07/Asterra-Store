@@ -1,33 +1,34 @@
+@import url('https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  /* Asterra Store Design System Tokens - Precision Reference Glassmorphism */
-  --color-bg: #EEF3F9;
-  --color-surface: rgba(255, 255, 255, 0.65);
-  --color-surface-secondary: rgba(255, 255, 255, 0.45);
-  --color-surface-hover: rgba(255, 255, 255, 0.85);
+  /* Asterra Store Design System Tokens - Precision Light Mode Warm Identity */
+  --color-bg: #FAFAF8;
+  --color-surface: #FFFFFF;
+  --color-surface-secondary: #F4F4F0;
+  --color-surface-hover: #FFFFFF;
   
-  --color-border: rgba(255, 255, 255, 0.78);
-  --color-border-subtle: rgba(255, 255, 255, 0.50);
-  --color-border-strong: rgba(148, 163, 184, 0.25);
+  --color-border: #E5E5E0;
+  --color-border-subtle: #EEEEEC;
+  --color-border-strong: #D4D4CE;
 
-  --color-text: #10213D;
-  --color-text-secondary: #6680A8;
-  --color-text-muted: #8496B0;
+  --color-text: #121A2A;
+  --color-text-secondary: #64748B;
+  --color-text-muted: #94A3B8;
 
   /* Dark Charcoal Sidebar */
-  --color-sidebar: #111318;
-  --color-sidebar-surface: #191C22;
-  --color-sidebar-active: #303844;
+  --color-sidebar: #121A2A;
+  --color-sidebar-surface: #1E283A;
+  --color-sidebar-active: #2C384E;
   --color-sidebar-border: rgba(255, 255, 255, 0.10);
   --color-sidebar-text: #F4F7FB;
   --color-sidebar-muted: #94A3B8;
 
-  /* Functional Accents */
-  --color-accent: #2563EB;
-  --color-primary: #2563EB;
+  /* Functional Accents - Asterra Terracotta / Orange */
+  --color-accent: #EA580C;
+  --color-primary: #121A2A;
   --color-success: #16A36A;
   --color-warning: #D97706;
   --color-danger: #EF4444;
@@ -68,23 +69,53 @@ body {
   overflow-x: clip;
   max-width: 100vw;
   width: 100%;
-  background-color: #EEF3F9;
-  background-image: 
-    radial-gradient(at 0% 0%, rgba(220, 235, 252, 0.75) 0px, transparent 50%),
-    radial-gradient(at 100% 0%, rgba(228, 239, 255, 0.55) 0px, transparent 50%),
-    radial-gradient(at 50% 100%, rgba(232, 241, 252, 0.60) 0px, transparent 50%);
-  background-attachment: fixed;
-  color: #10213D;
+  background-color: var(--color-bg, #EEF3F9);
+  color: var(--color-text, #10213D);
   font-family:
+    'General Sans',
     var(--font-jakarta),
-    'Plus Jakarta Sans',
-    system-ui,
     -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
     sans-serif;
   min-height: 100dvh;
   margin: 0;
   padding: 0;
   -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+@keyframes tasteFadeIn {
+  0% {
+    opacity: 0.05;
+    transform: translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes tasteTickerScroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.taste-animate-in {
+  animation: tasteFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.taste-ticker-track {
+  animation: tasteTickerScroll 28s linear infinite;
 }
 
 /* Custom Sleek Scrollbar */
