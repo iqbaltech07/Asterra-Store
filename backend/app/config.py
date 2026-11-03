@@ -130,6 +130,10 @@ class Settings(BaseSettings):
         "https://www.sales.asterrastore.biz.id",
         "https://api.asterrastore.biz.id",
         "https://www.api.asterrastore.biz.id",
+        "https://staging.asterrastore.biz.id",
+        "https://staging.admin.asterrastore.biz.id",
+        "https://staging.sales.asterrastore.biz.id",
+        "https://staging.api.asterrastore.biz.id",
     ]
 
     @property
