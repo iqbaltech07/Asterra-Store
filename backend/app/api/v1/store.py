@@ -22,8 +22,24 @@ def get_store_operating_hours():
         }
 
     status = StoreOperatingHoursService.get_current_status()
-    # Cache for 15 seconds to withstand high traffic while staying synchronized
-    cache.set("store", "operating_hours_status", status, ttl=15)
+    # Cache dynamically: maximum 15s, but cap at remaining seconds until next transition so status changes with exact-second accuracy
+    target_iso = status.get("nextCloseAt") or status.get("nextOpenAt")
+    ttl = 15
+    if target_iso:
+        try:
+            from datetime import datetime
+            from app.services.store_operating_hours_service import WIB
+            target_dt = datetime.fromisoformat(target_iso)
+            now_wib = datetime.now(WIB)
+            diff = int((target_dt - now_wib).total_seconds())
+            if diff > 0:
+                ttl = max(1, min(15, diff))
+            else:
+                ttl = 1
+        except Exception:
+            pass
+
+    cache.set("store", "operating_hours_status", status, ttl=ttl)
 
     return {
         "success": True,

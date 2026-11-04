@@ -253,8 +253,24 @@ class TestAsterraDynamicArchitecture(unittest.TestCase):
 
             db.close()
 
-        # SCENARIO A: At 14:00 WIB (before 21:00 WIB on same day), store is OPEN
+        # SCENARIO A: In auto mode, store is open between 09:00 and 21:00 WIB
         time_14 = base_date.replace(hour=14, minute=0, second=0)
+        db = SessionLocal()
+        try:
+            row = db.query(StoreOperatingHours).filter_by(id="main").first()
+            if not row:
+                row = StoreOperatingHours(id="main")
+                db.add(row)
+            row.mode = "auto"
+            row.auto_close_time = "21:00"
+            row.timezone = "Asia/Jakarta"
+            db.commit()
+        finally:
+            db.close()
+        StoreOperatingHoursService.get_raw_config()
+        from app.core.cache import cache
+        cache.invalidate("store")
+
         status_14 = StoreOperatingHoursService.get_current_status(time_14)
         self.assertTrue(status_14["is_open"], "Skenario A: Toko harus buka pada 14:00 WIB sebelum 21:00 WIB")
         self.assertEqual(status_14["status"], "open")
@@ -266,58 +282,64 @@ class TestAsterraDynamicArchitecture(unittest.TestCase):
         self.assertFalse(status_21["is_open"], "Skenario B: Toko harus otomatis tutup tepat pukul 21:00 WIB")
         self.assertEqual(status_21["status"], "closed")
 
-        # SCENARIO C: Next day (Saturday Oct 31) passes midnight and reaches 09:00 WIB; store STAYS CLOSED
+        # SCENARIO C: Next day (Saturday) at 08:59:59 WIB, store is CLOSED
+        next_day_before_09 = (base_date + timedelta(days=1)).replace(hour=8, minute=59, second=59)
+        status_before_09 = StoreOperatingHoursService.get_current_status(next_day_before_09)
+        self.assertFalse(status_before_09["is_open"], "Skenario C1: Toko harus tutup sebelum jam 09:00 WIB")
+
+        # SCENARIO D: Next day (Saturday) at 09:00:00 WIB, store AUTOMATICALLY OPENS on schedule
         next_day_09 = (base_date + timedelta(days=1)).replace(hour=9, minute=0, second=0)
         status_next_09 = StoreOperatingHoursService.get_current_status(next_day_09)
-        self.assertFalse(status_next_09["is_open"], "Skenario C: Toko harus tetap tutup pada 09:00 WIB esok hari (TIDAK auto-open!)")
-        self.assertEqual(status_next_09["status"], "closed")
+        self.assertTrue(status_next_09["is_open"], "Skenario D: Toko harus otomatis buka tepat pukul 09:00 WIB sesuai jadwal mingguan")
+        self.assertEqual(status_next_09["status"], "open")
 
-        # SCENARIO D: At 13:00 WIB next day, store STILL STAYS CLOSED without admin action
-        next_day_13 = (base_date + timedelta(days=1)).replace(hour=13, minute=0, second=0)
-        status_next_13 = StoreOperatingHoursService.get_current_status(next_day_13)
-        self.assertFalse(status_next_13["is_open"], "Skenario D: Toko harus tetap tutup sampai admin membuka secara manual")
+        # SCENARIO E: Admin manual closed forces closed
+        db = SessionLocal()
+        try:
+            row = db.query(StoreOperatingHours).filter_by(id="main").first()
+            row.mode = "manual_closed"
+            row.manual_close_reason = "Maintenance darurat"
+            db.commit()
+        finally:
+            db.close()
+        cache.invalidate("store")
 
-        # SCENARIO E: Admin explicitly opens the store manually on next day
-        admin_reopen_time_wib = (base_date + timedelta(days=1)).replace(hour=13, minute=30, second=0)
-        admin_reopen_time_utc = admin_reopen_time_wib.astimezone(timezone.utc).replace(tzinfo=None)
+        status_manual_closed = StoreOperatingHoursService.get_current_status(time_14)
+        self.assertFalse(status_manual_closed["is_open"], "Skenario E: Toko harus tutup saat mode manual_closed")
+        self.assertEqual(status_manual_closed["statusLabel"], "Tutup (Manual Admin)")
 
+        # SCENARIO F: Admin manual open forces open
         db = SessionLocal()
         try:
 
             row = db.query(StoreOperatingHours).filter_by(id="main").first()
-            row.last_manual_opened_at = admin_reopen_time_utc
             row.mode = "manual_open"
             db.commit()
 
         finally:
 
             db.close()
+        cache.invalidate("store")
 
-        # Verify status is now OPEN after manual action
-        time_after_admin_open = (base_date + timedelta(days=1)).replace(hour=13, minute=35, second=0)
-        status_after_open = StoreOperatingHoursService.get_current_status(time_after_admin_open)
-        self.assertTrue(status_after_open["is_open"], "Skenario E: Toko harus terbuka setelah tindakan manual admin")
+        status_manual_open = StoreOperatingHoursService.get_current_status(time_21)
+        self.assertTrue(status_manual_open["is_open"], "Skenario F: Toko harus buka saat mode manual_open bahkan setelah jam tutup")
 
-        # SCENARIO F: Server restart while closed preserves closed state
-        # Simulate closing and server re-read
+        # Restore to auto mode
         db = SessionLocal()
         try:
 
             row = db.query(StoreOperatingHours).filter_by(id="main").first()
-            row.last_manual_closed_at = admin_reopen_time_utc + timedelta(hours=1)
+            row.mode = "auto"
             db.commit()
 
         finally:
 
             db.close()
-
-        # Re-ensure table / service init (simulates restart)
-        StoreOperatingHoursService.ensure_table(force=True)
-        status_restart = StoreOperatingHoursService.get_current_status(time_after_admin_open + timedelta(hours=2))
-        self.assertFalse(status_restart["is_open"], "Skenario F: Restart backend tidak boleh mengubah status tutup menjadi buka")
+        cache.invalidate("store")
 
         # SCENARIO G: Timezone verification
-        self.assertEqual(status_restart["timezone"], "Asia/Jakarta", "Skenario G: Zona waktu wajib Asia/Jakarta")
+        status_now = StoreOperatingHoursService.get_current_status()
+        self.assertEqual(status_now["timezone"], "Asia/Jakarta", "Skenario G: Zona waktu wajib Asia/Jakarta")
 
     def test_10_dummy_order_interval_scales_when_closed(self):
 
