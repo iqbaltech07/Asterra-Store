@@ -471,12 +471,11 @@ function PrivateOrderContent() {
 
   const getMethodName = (methodId: string) => {
     if (methodId === 'manual_bca') return paymentConfig?.bank?.name || 'Bank Central Asia (BCA)';
-    if (methodId === 'manual_qris') return 'QRIS Statis Toko';
+    if (methodId === 'manual_qris' || methodId === 'qris_manual') return 'QRIS Statis Toko';
     if (methodId === 'manual_dana') return 'Transfer E-Wallet DANA';
-    if (methodId === 'qris') return 'QRIS (Semua Pembayaran)';
+    if (methodId === 'qris' || methodId === 'qris_midtrans') return 'QRIS Dinamis Midtrans';
     if (methodId === 'bca_va') return 'BCA Virtual Account';
     if (methodId === 'bni_va') return 'BNI Virtual Account';
-    if (methodId === 'dana') return 'DANA E-Wallet';
     return 'Metode Pembayaran';
   };
 
@@ -516,6 +515,11 @@ function PrivateOrderContent() {
       rawOrder.paymentMode === 'manual' ||
       paymentMethod.startsWith('manual_');
 
+    const resolvedMethod =
+      isManual && (paymentMethod === 'qris' || paymentMethod === 'qris_manual')
+        ? 'manual_qris'
+        : paymentMethod;
+
     if (isManual) {
       setActiveManualModal({
         orderId: order.id,
@@ -526,7 +530,7 @@ function PrivateOrderContent() {
         raw_amount: orderRaw,
         uniqueCode: orderUnique,
         unique_code: orderUnique,
-        method: paymentMethod,
+        method: resolvedMethod,
         expiresAt: orderExpiresAt,
         expires_at: orderExpiresAt,
       });
@@ -548,7 +552,7 @@ function PrivateOrderContent() {
             raw_amount: orderRaw,
             uniqueCode: 0,
             unique_code: 0,
-            method: 'qris',
+            method: 'qris_midtrans',
             qrUrl: res.payment.qr_url,
             qr_url: res.payment.qr_url,
             qrString: res.payment.qr_string,

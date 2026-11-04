@@ -18,7 +18,7 @@ export interface OrderLog {
   order_id: string;
   customer_name?: string;
   customer_email?: string;
-  actor: 'admin' | 'dana_webhook' | 'tripay_webhook' | 'customer' | 'system';
+  actor: 'admin' | 'midtrans_webhook' | 'dana_webhook' | 'tripay_webhook' | 'customer' | 'system';
   action: string;
   previous_status?: string;
   new_status?: string;
@@ -125,7 +125,7 @@ export function getGlobalLogs(orderId?: string): OrderLog[] {
 export function updateGlobalOrderStatus(
   orderId: string,
   status: Order['order_status'],
-  actor: 'admin' | 'dana_webhook' | 'tripay_webhook' | 'system' = 'admin',
+  actor: 'admin' | 'midtrans_webhook' | 'dana_webhook' | 'tripay_webhook' | 'system' = 'admin',
   notes?: string
 ): Order | undefined {
   const order = globalOrdersStore.find((o) => o.id === orderId);
@@ -144,7 +144,7 @@ export function updateGlobalOrderStatus(
       customer_name: order.customer_name,
       customer_email: order.customer_email,
       actor,
-      action: actor === 'dana_webhook' || actor === 'tripay_webhook' ? 'payment_received' : 'status_updated',
+      action: actor === 'midtrans_webhook' || actor === 'dana_webhook' || actor === 'tripay_webhook' ? 'payment_received' : 'status_updated',
       previous_status: previousStatus,
       new_status: status,
       notes: notes || `Status diubah dari ${previousStatus} menjadi ${status} oleh ${actor}`,

@@ -43,8 +43,8 @@ import {
 const GATEWAY_PAYMENT_METHODS: PaymentMethodOption[] = [
   {
     id: 'qris',
-    name: 'QRIS (Semua Pembayaran)',
-    description: 'Scan instan via BCA, Mandiri, BRI, BNI, GoPay, OVO, ShopeePay, DANA',
+    name: 'QRIS Dinamis Midtrans',
+    description: 'Scan instan via GoPay, OVO, Dana, ShopeePay, BCA, Mandiri, BRI, BNI (Otomatis Terverifikasi)',
     category: 'qris',
   },
   {
@@ -58,12 +58,6 @@ const GATEWAY_PAYMENT_METHODS: PaymentMethodOption[] = [
     name: 'BNI Virtual Account',
     description: 'Transfer otomatis via BNI Mobile Banking, Internet Banking, atau ATM BNI',
     category: 'va',
-  },
-  {
-    id: 'dana',
-    name: 'DANA E-Wallet',
-    description: 'Pembayaran instan terhubung langsung dengan akun DANA Anda',
-    category: 'ewallet',
   },
 ];
 
@@ -796,11 +790,7 @@ function CheckoutPageContent() {
         (createdOrder as unknown as { expiresAt?: string; expires_at?: string }).expiresAt ||
         (createdOrder as unknown as { expiresAt?: string; expires_at?: string }).expires_at;
 
-      const isOrderManual =
-        isManualMode ||
-        createdOrder.payment_mode === 'manual' ||
-        (createdOrder as unknown as { paymentMode?: string }).paymentMode === 'manual' ||
-        selectedMethod.startsWith('manual_');
+      const isOrderManual = isManualMode || selectedMethod.startsWith('manual_');
 
       const isPreorderOrder =
         isPreorderMode ||
@@ -857,7 +847,7 @@ function CheckoutPageContent() {
             raw_amount: orderRaw,
             uniqueCode: 0,
             unique_code: 0,
-            method: 'qris',
+            method: 'qris_midtrans',
             qrUrl: payData.payment.qr_url,
             qr_url: payData.payment.qr_url,
             qrString: payData.payment.qr_string,
@@ -927,6 +917,7 @@ function CheckoutPageContent() {
       customer_notes: isPreorderMode
         ? (customerNotes.trim() ? `[PRE-ORDER] ${customerNotes.trim()}` : '[PRE-ORDER] Pesanan terjadwal saat toko tutup')
         : customerNotes.trim(),
+      payment_mode: isManualMode ? 'manual' : 'gateway',
       payment_method: selectedMethod,
       promo_code: appliedPromo?.code || undefined,
       referral_code: referralPartner?.code || (referralCode.trim() ? referralCode.trim() : undefined),
@@ -953,11 +944,10 @@ function CheckoutPageContent() {
     if (methodId === 'manual_bca') return paymentConfig?.bank?.name || 'Bank Central Asia (BCA)';
     if (methodId === 'manual_qris') return 'QRIS Statis Toko';
     if (methodId === 'manual_dana') return 'Transfer E-Wallet DANA';
-    if (methodId === 'qris') return 'QRIS (Semua Pembayaran)';
+    if (methodId === 'qris' || methodId === 'qris_midtrans') return 'QRIS Dinamis Midtrans';
     if (methodId === 'bca_va') return 'BCA Virtual Account';
     if (methodId === 'bni_va') return 'BNI Virtual Account';
     if (methodId === 'seabank_va') return 'SeaBank Virtual Account';
-    if (methodId === 'dana') return 'DANA E-Wallet';
     return 'QRIS Dinamis Midtrans';
   };
 

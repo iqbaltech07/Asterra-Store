@@ -245,15 +245,32 @@ export function CheckoutManualModal({
 
   const formattedAmount = amountNumber.toLocaleString('id-ID');
 
-  const isDynamicQris = Boolean(
-    data.qrUrl ||
-    data.qr_url ||
-    data.qrString ||
-    data.qr_string ||
-    data.method === 'qris' ||
-    data.method === 'qris_midtrans' ||
-    data.method === 'qris_dana'
-  );
+  // Dynamic QRIS applies exclusively to Midtrans automatic payment gateway charges
+  const isDynamicQris =
+    !data.method?.startsWith('manual_') &&
+    data.method !== 'manual_qris' &&
+    data.method !== 'qris_manual' &&
+    data.method !== 'manual_bca' &&
+    data.method !== 'manual_dana' &&
+    Boolean(
+      data.qrString ||
+      data.qr_string ||
+      (data.qrUrl && !data.qrUrl.includes('/images/')) ||
+      (data.qr_url && !data.qr_url.includes('/images/')) ||
+      data.method === 'qris_midtrans'
+    );
+
+  const uploadedQrisUrl =
+    paymentConfig?.qris?.image_url ||
+    (paymentConfig as any)?.qrisImageUrl ||
+    (paymentConfig as any)?.qris_image_url ||
+    '/images/qris-toko.png';
+
+  const qrisMerchantName =
+    paymentConfig?.qris?.merchant_name ||
+    (paymentConfig as any)?.qrisMerchantName ||
+    (paymentConfig as any)?.qris_merchant_name ||
+    'ASTERRA STORE QRIS';
 
   const activeQrImage =
     data.qrUrl ||
@@ -262,7 +279,7 @@ export function CheckoutManualModal({
       ? `https://api.qrserver.com/v1/create-qr-code/?size=350x350&data=${encodeURIComponent(
           data.qrString || data.qr_string || ''
         )}`
-      : paymentConfig?.qris?.image_url || '/images/qris-toko.png');
+      : uploadedQrisUrl);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -489,7 +506,7 @@ export function CheckoutManualModal({
                     <span>QRIS Dinamis Midtrans</span>
                   </div>
                   <span className="text-xs font-bold text-foreground block">
-                    {paymentConfig?.qris?.merchant_name || 'ASTERRA STORE'}
+                    {qrisMerchantName}
                   </span>
                   <p className="text-[11px] text-foreground-muted max-w-xs mx-auto leading-relaxed">
                     Bisa di-scan via BCA Mobile, Mandiri Livin, BRImo, BNI Mobile, GoPay, OVO, Dana, ShopeePay & semua aplikasi perbankan berlogo QRIS.
@@ -571,18 +588,18 @@ export function CheckoutManualModal({
               </div>
             )}
 
-            {data.method === 'manual_qris' && (
+            {!isDynamicQris && (data.method === 'manual_qris' || data.method === 'qris_manual' || data.method === 'qris') && (
               <div className="p-4 bg-surface-raised rounded-xl border border-border text-center space-y-3">
                 <div
                   onClick={() => setIsQrisExpanded(true)}
                   className="w-64 h-64 sm:w-72 sm:h-72 bg-white p-3.5 rounded-2xl mx-auto flex items-center justify-center border border-border shadow-md overflow-hidden relative cursor-zoom-in group transition-all duration-200 hover:shadow-xl hover:border-primary/40 select-none"
                   title="Klik untuk membuka & memperbesar barcode QRIS"
                 >
-                  {paymentConfig?.qris?.image_url ? (
+                  {uploadedQrisUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      src={paymentConfig.qris.image_url}
-                      alt={paymentConfig.qris.merchant_name || 'ASTERRA STORE QRIS'}
+                      src={uploadedQrisUrl}
+                      alt={qrisMerchantName}
                       className="w-full h-full object-contain rounded-xl group-hover:scale-[1.02] transition-transform duration-200"
                       onError={(e) => {
                         const target = e.currentTarget;
@@ -594,17 +611,17 @@ export function CheckoutManualModal({
                   ) : null}
                   <div
                     className={`w-full h-full border-2 border-zinc-900 border-dashed rounded-xl flex flex-col items-center justify-center p-2 text-zinc-900 ${
-                      paymentConfig?.qris?.image_url ? 'hidden' : 'flex'
+                      uploadedQrisUrl ? 'hidden' : 'flex'
                     }`}
                   >
                     <FontAwesomeIcon icon={faQrcode} className="w-14 h-14 mb-1" />
                     <span className="text-[8px] font-bold uppercase tracking-wider text-zinc-900">
-                      {paymentConfig?.qris?.merchant_name || 'ASTERRA STORE QRIS'}
+                      {qrisMerchantName}
                     </span>
                   </div>
 
                   {/* Hover Overlay Badge */}
-                  {paymentConfig?.qris?.image_url && (
+                  {uploadedQrisUrl && (
                     <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1.5 text-white backdrop-blur-[2px] rounded-2xl">
                       <span className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-white shadow-sm">
                         <FontAwesomeIcon icon={faExpand} className="w-4 h-4" />
@@ -617,36 +634,38 @@ export function CheckoutManualModal({
                 </div>
 
                 <div className="space-y-1.5">
+                  <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-[11px] font-bold">
+                    <span>QRIS Statis Toko (Scan & Transfer Manual)</span>
+                  </div>
                   <span className="text-xs font-bold text-foreground block">
-                    {paymentConfig?.qris?.merchant_name || 'ASTERRA STORE QRIS'}
+                    {qrisMerchantName}
                   </span>
-                  <p className="text-[11px] text-foreground-muted max-w-xs mx-auto">
-                    Scan barcode di atas menggunakan GoPay, OVO, Dana, ShopeePay, atau BCA Mobile.
+                  <p className="text-[11px] text-foreground-muted max-w-xs mx-auto leading-relaxed">
+                    Scan barcode di atas menggunakan GoPay, OVO, Dana, ShopeePay, BCA Mobile, atau semua aplikasi perbankan berlogo QRIS.
                   </p>
 
-                  {paymentConfig?.qris?.image_url && (
-                    <div className="pt-1.5 flex flex-wrap items-center justify-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setIsQrisExpanded(true)}
-                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary border border-primary/25 text-xs font-semibold transition-all cursor-pointer shadow-xs active:scale-95"
-                      >
-                        <FontAwesomeIcon icon={faExpand} className="w-3.5 h-3.5" />
-                        <span>Perbesar Barcode (Layar Lebar)</span>
-                      </button>
+                  <div className="pt-1.5 flex flex-wrap items-center justify-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsQrisExpanded(true)}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary border border-primary/25 text-xs font-semibold transition-all cursor-pointer shadow-xs active:scale-95"
+                    >
+                      <FontAwesomeIcon icon={faExpand} className="w-3.5 h-3.5" />
+                      <span>Perbesar Barcode (Layar Lebar)</span>
+                    </button>
 
-                      <a
-                        href={paymentConfig.qris.image_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-surface hover:bg-surface-raised text-foreground-muted hover:text-foreground border border-border text-xs transition-colors"
-                        title="Buka file gambar di tab baru"
-                      >
-                        <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="w-3 h-3" />
-                        <span>Tab Baru</span>
-                      </a>
-                    </div>
-                  )}
+                    <a
+                      href={uploadedQrisUrl}
+                      download={`QRIS-${qrisMerchantName.replace(/\s+/g, '-')}.png`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-surface hover:bg-surface-raised text-foreground-muted hover:text-foreground border border-border text-xs transition-colors"
+                      title="Unduh file barcode QRIS"
+                    >
+                      <FontAwesomeIcon icon={faDownload} className="w-3 h-3 text-primary" />
+                      <span>Unduh QRIS</span>
+                    </a>
+                  </div>
                 </div>
               </div>
             )}
@@ -752,7 +771,7 @@ export function CheckoutManualModal({
       {/* ========================================================= */}
       {/* EXPANDED QRIS LIGHTBOX (Full screen wide barcode view)    */}
       {/* ========================================================= */}
-      {isQrisExpanded && (activeQrImage || paymentConfig?.qris?.image_url) && (
+      {isQrisExpanded && (
         <div
           role="dialog"
           aria-modal="true"
@@ -772,10 +791,10 @@ export function CheckoutManualModal({
                 </div>
                 <div>
                   <h4 className="text-sm font-bold text-foreground">
-                    {isDynamicQris ? 'Barcode QRIS Dinamis Midtrans' : 'Barcode QRIS Resmi Toko'}
+                    {isDynamicQris ? 'Barcode QRIS Dinamis Midtrans' : 'Barcode QRIS Toko (Scan & Bayar Manual)'}
                   </h4>
                   <span className="text-[11px] text-foreground-muted block">
-                    {paymentConfig?.qris?.merchant_name || 'ASTERRA STORE'}
+                    {qrisMerchantName}
                   </span>
                 </div>
               </div>
@@ -825,8 +844,8 @@ export function CheckoutManualModal({
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={activeQrImage || paymentConfig?.qris?.image_url}
-                  alt={paymentConfig?.qris?.merchant_name || 'ASTERRA STORE QRIS'}
+                  src={isDynamicQris ? activeQrImage : uploadedQrisUrl}
+                  alt={qrisMerchantName}
                   className={`w-auto object-contain rounded-lg transition-transform duration-200 select-none ${
                     isZoomedIn ? 'scale-125 max-h-[75vh]' : 'max-h-[55vh] max-w-full'
                   }`}
@@ -834,7 +853,9 @@ export function CheckoutManualModal({
               </div>
 
               <p className="text-[11px] text-foreground-muted text-center max-w-sm">
-                Arahkan kamera aplikasi bank/e-wallet Anda ke barcode di atas atau simpan gambar ke galeri untuk scan dari aplikasi pembayaran.
+                {isDynamicQris
+                  ? 'Arahkan kamera aplikasi bank/e-wallet Anda ke barcode di atas. Pembayaran terverifikasi otomatis dalam beberapa detik.'
+                  : 'Arahkan kamera aplikasi bank/e-wallet Anda ke barcode di atas atau simpan gambar ke galeri untuk scan dari aplikasi pembayaran. Setelah transfer, kirimkan bukti ke WhatsApp Admin.'}
               </p>
             </div>
 
@@ -853,8 +874,8 @@ export function CheckoutManualModal({
               </button>
 
               <a
-                href={activeQrImage || paymentConfig?.qris?.image_url}
-                download={`QRIS-${data.orderId}.png`}
+                href={isDynamicQris ? activeQrImage : uploadedQrisUrl}
+                download={isDynamicQris ? `QRIS-${data.orderId}.png` : `QRIS-${qrisMerchantName.replace(/\s+/g, '-')}.png`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full sm:w-auto px-3.5 py-2.5 rounded-xl bg-surface hover:bg-surface-raised text-foreground border border-border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer"

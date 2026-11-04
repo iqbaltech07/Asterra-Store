@@ -6,7 +6,6 @@ from app.config import settings
 from app.services.order_service import OrderService
 from app.services.payment_config_service import PaymentConfigService
 from app.services.promo_service import PromoService
-from app.services.dana_service import DanaService
 from app.services.midtrans_service import MidtransService
 
 router = APIRouter()
@@ -522,10 +521,19 @@ async def pay_order(order_id: str, request: Request):
         raise HTTPException(status_code=404, detail="Pesanan tidak ditemukan")
 
     amount = order.get("totalAmount") or order.get("total_amount") or 50000
-    method = body.get("payment_method") or order.get("paymentMethod") or order.get("payment_method") or "qris_dana"
+    method = body.get("payment_method") or order.get("paymentMethod") or order.get("payment_method") or "qris"
+
+    pay_cfg = PaymentConfigService.get_config()
+    is_manual = (
+        order.get("payment_mode") == "manual"
+        or order.get("paymentMode") == "manual"
+        or str(method).startswith("manual_")
+        or method in ["manual_qris", "qris_manual", "manual_bca", "manual_dana"]
+        or pay_cfg.get("mode") == "manual"
+    )
 
     # Dynamic QRIS Midtrans (Core API - In-Page Native Modal without Snap/redirect)
-    if method in ["qris", "qris_midtrans", "midtrans", "qris_dana", "dana", "gateway"]:
+    if not is_manual and method in ["qris", "qris_midtrans", "midtrans", "gateway"]:
         cust_name = order.get("customerName") or order.get("customer_name") or "Pelanggan Asterra"
         cust_email = order.get("customerEmail") or order.get("customer_email") or "customer@asterra.store"
         cust_phone = order.get("customerPhone") or order.get("customer_phone") or ""
@@ -538,13 +546,31 @@ async def pay_order(order_id: str, request: Request):
             customer_phone=cust_phone,
             title=f"Order {order_id} - Asterra Store",
         )
+        if not payment_info.get("success"):
+            err_msg = payment_info.get("error") or "Gagal membuat tagihan QRIS Midtrans."
+            raise HTTPException(status_code=502, detail=err_msg)
+
         return {
             "success": True,
             "message": "Instruksi pembayaran QRIS Midtrans berhasil dibuat",
             "payment": payment_info,
         }
 
-    # Manual bank transfer fallback
+    # Manual payment instructions (uploaded QRIS or manual bank)
+    qris_url = (
+        pay_cfg.get("qris_image_url")
+        or pay_cfg.get("qrisImageUrl")
+        or (pay_cfg.get("qris", {}).get("image_url") if isinstance(pay_cfg.get("qris"), dict) else None)
+        or "/images/qris-toko.png"
+    )
+    qris_merchant = (
+        pay_cfg.get("qris_merchant_name")
+        or pay_cfg.get("qrisMerchantName")
+        or (pay_cfg.get("qris", {}).get("merchant_name") if isinstance(pay_cfg.get("qris"), dict) else None)
+        or "ASTERRA STORE QRIS"
+    )
+    bank_info = pay_cfg.get("bank", {}) if isinstance(pay_cfg.get("bank"), dict) else {}
+
     payment_info = {
         "id": f"PAY-{order_id}",
         "order_id": order_id,
@@ -552,16 +578,16 @@ async def pay_order(order_id: str, request: Request):
         "payment_method": method,
         "transaction_id": f"TRX-{order_id}",
         "payment_status": "pending",
-        "qr_url": "https://panduan.bersama.co.id/QRIS/images/Qris.png",
+        "is_manual": True,
+        "qr_image_url": qris_url,
+        "qris_merchant_name": qris_merchant,
         "instructions": [
             {
-                "title": "Instruksi Transfer Bank BCA",
+                "title": "Instruksi Transfer Manual",
                 "steps": [
-                    "Buka BCA Mobile, KlikBCA, atau ATM BCA",
-                    "Pilih Transfer Antar Rekening BCA",
-                    "Nomor Rekening: 8965123456 (a/n Asterra Store Official)",
+                    f"Scan Barcode QRIS Resmi Toko ({qris_merchant}) atau transfer ke rekening {bank_info.get('name', 'Bank Central Asia (BCA)')} {bank_info.get('account_number', '8965123456')}",
                     f"Pastikan transfer dengan nominal tepat Rp {amount:,.0f}".replace(",", "."),
-                    "Pembayaran akan diverifikasi secara otomatis dalam 1 - 5 menit.",
+                    "Kirimkan bukti transfer pembayaran ke WhatsApp Admin untuk validasi pesanan.",
                 ],
             }
         ],
@@ -569,7 +595,7 @@ async def pay_order(order_id: str, request: Request):
 
     return {
         "success": True,
-        "message": "Instruksi pembayaran berhasil dibuat",
+        "message": "Instruksi pembayaran manual berhasil dibuat",
         "payment": payment_info,
     }
 
@@ -637,66 +663,6 @@ async def midtrans_webhook(request: Request):
     return {
         "status": "ok",
         "message": f"Status webhook Midtrans diterima: {status}",
-    }
-
-# Fallback Legacy DANA Webhook
-@router.post("/webhooks/dana", tags=["Webhooks"])
-async def dana_webhook(request: Request):
-    raw_body = await request.body()
-    headers = dict(request.headers)
-    relative_path = str(request.url.path)
-    http_method = request.method
-
-    verified = DanaService.verify_webhook(
-        http_method=http_method,
-        relative_path_url=relative_path,
-        headers=headers,
-        raw_body=raw_body,
-    )
-
-    if not verified.get("is_valid"):
-        err_msg = verified.get("error", "Invalid callback signature")
-        raise HTTPException(status_code=401, detail=err_msg)
-
-    order_id = verified.get("order_id")
-    if not order_id:
-        raise HTTPException(status_code=400, detail="partner_reference_no / order_id is required")
-
-    status = str(verified.get("status", "")).upper()
-    ref = verified.get("reference", "DANA-PG")
-
-    if status in ["PAID", "SUCCESS", "00", "SUCCESSFUL"]:
-        updated = OrderService.update_status(
-            order_id,
-            "processing",
-            notes=f"Pembayaran otomatis terverifikasi QRIS DANA Resmi Ref: {ref}",
-        )
-        return {
-            "responseCode": "2005400",
-            "responseMessage": "Successful",
-            "success": True,
-            "message": "Pembayaran DANA berhasil diverifikasi",
-            "order": updated,
-        }
-    elif status in ["EXPIRED", "FAILED", "CANCELLED"]:
-        updated = OrderService.update_status(
-            order_id,
-            "cancelled",
-            notes=f"Pembayaran DANA {status.lower()}",
-        )
-        return {
-            "responseCode": "2005400",
-            "responseMessage": "Successful",
-            "success": True,
-            "message": f"Pesanan {status.lower()}",
-            "order": updated,
-        }
-
-    return {
-        "responseCode": "2005400",
-        "responseMessage": "Successful",
-        "success": True,
-        "message": f"Status webhook DANA diterima: {status}",
     }
 
 # ------------------------------------------

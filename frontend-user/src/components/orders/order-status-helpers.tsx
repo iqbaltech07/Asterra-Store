@@ -128,7 +128,7 @@ export function formatFriendlyPaymentMethod(rawMethod?: string): string {
   if (m === 'manual_qris' || m === 'qris_manual') return 'QRIS (Verifikasi Manual)';
   if (m === 'manual_bca') return 'Transfer Bank BCA';
   if (m === 'manual_dana') return 'Transfer DANA';
-  if (m.includes('qris')) return 'QRIS Instan';
+  if (m.includes('qris')) return 'QRIS Dinamis Midtrans';
   if (m.includes('bcava') || m === 'bca_va') return 'BCA Virtual Account';
   if (m.includes('mandiriva') || m === 'mandiri_va') return 'Mandiri Virtual Account';
   if (m.includes('briva') || m === 'bri_va') return 'BRI Virtual Account';

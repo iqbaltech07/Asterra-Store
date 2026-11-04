@@ -607,10 +607,13 @@ class AnalyticsService:
                 o for o in completed_orders
                 if str(o.get("createdAt") or o.get("created_at") or "").startswith(m_target)
             ]
-        dana_settled = sum(
+        midtrans_settled = sum(
             float(o.get("totalAmount") or o.get("rawAmount") or 0.0)
             for o in completed_orders
-            if "dana" in str(o.get("paymentMode", "")).lower() or "qris" in str(o.get("paymentMethod", "")).lower()
+            if str(o.get("paymentMode", "")).lower() in ["gateway", "midtrans"]
+            or "midtrans" in str(o.get("paymentMethod", "")).lower()
+            or str(o.get("paymentMethod", "")).lower() == "qris"
+            or "dana" in str(o.get("paymentMode", "")).lower()
         )
         from app.services.vip_service import VipService
         vip_info = VipService.get_profile()
@@ -733,8 +736,9 @@ class AnalyticsService:
 
         return {
             "wallets": {
-                "danaBalance": dana_settled,
-                "tripayBalance": dana_settled,
+                "midtransBalance": midtrans_settled,
+                "danaBalance": midtrans_settled,
+                "tripayBalance": midtrans_settled,
                 "vipBalance": vip_deposit,
                 "reserveBalance": reserve_balance,
             },

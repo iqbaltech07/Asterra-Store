@@ -612,6 +612,19 @@ class OrderService:
         if is_preorder and "[PRE-ORDER]" not in incoming_notes:
             incoming_notes = f"[PRE-ORDER] {incoming_notes}".strip()
 
+        incoming_pay_method = str(payload.get("payment_method") or payload.get("paymentMethod") or "manual_bca").strip()
+        incoming_pay_mode = payload.get("payment_mode") or payload.get("paymentMode")
+        if not incoming_pay_mode:
+            incoming_pay_mode = (
+                "manual"
+                if (
+                    incoming_pay_method.startswith("manual_")
+                    or incoming_pay_method in ["manual_qris", "qris_manual", "manual_bca", "manual_dana"]
+                    or pay_cfg.get("mode") == "manual"
+                )
+                else "gateway"
+            )
+
         try:
             db = SessionLocal()
             try:
@@ -633,8 +646,8 @@ class OrderService:
                     campaign_id=canonical_campaign_id or None,
                     campaign_discount=campaign_discount,
                     unique_code=unique_code,
-                    payment_mode=payload.get("payment_mode") or payload.get("paymentMode") or "manual",
-                    payment_method=payload.get("payment_method") or payload.get("paymentMethod") or "manual_bca",
+                    payment_mode=incoming_pay_mode,
+                    payment_method=incoming_pay_method,
                     payment_reference=None,
                     payment_status="pending",
                     status="pending",
@@ -744,8 +757,8 @@ class OrderService:
                 "campaign_id": canonical_campaign_id or None,
                 "campaign_discount": campaign_discount,
                 "unique_code": unique_code,
-                "payment_mode": payload.get("payment_mode") or payload.get("paymentMode") or "manual",
-                "payment_method": payload.get("payment_method") or payload.get("paymentMethod") or "manual_bca",
+                "payment_mode": incoming_pay_mode,
+                "payment_method": incoming_pay_method,
                 "payment_status": "pending",
                 "status": "pending",
                 "created_at": now.isoformat() + "Z",

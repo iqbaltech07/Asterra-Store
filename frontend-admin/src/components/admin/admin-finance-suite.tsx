@@ -115,6 +115,7 @@ interface ProfitLedgerEntry {
 }
 
 interface WalletData {
+  midtransBalance?: number;
   danaBalance?: number;
   tripayBalance?: number;
   vipBalance: number;
@@ -314,7 +315,7 @@ export function AdminFinanceSuite({ activeTab, metrics, onNotify }: AdminFinance
             </div>
             <h2 className="text-lg font-bold text-foreground tracking-tight">Saldo & Dompet Pembayaran</h2>
             <p className="text-xs text-foreground-muted mt-0.5">
-              Kelola saldo penampung payment gateway QRIS DANA Resmi, saldo deposit operasional VIP Reseller, dan kas internal toko.
+              Kelola saldo penampung payment gateway QRIS Midtrans Resmi, saldo deposit operasional VIP Reseller, dan kas internal toko.
             </p>
           </div>
           <Button
@@ -329,22 +330,22 @@ export function AdminFinanceSuite({ activeTab, metrics, onNotify }: AdminFinance
 
         {/* Wallets Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* DANA QRIS Settlement Wallet */}
+          {/* Midtrans QRIS Settlement Wallet */}
           <div className="bg-surface border border-border rounded-xl p-5 shadow-xs space-y-3">
             <div className="flex items-center justify-between text-xs text-foreground-muted">
-              <span>DANA QRIS Settlement Balance</span>
+              <span>Midtrans QRIS Settlement Balance</span>
               <Badge variant="outline" className="text-status-success border-status-success/30 text-[10px]">
                 Available
               </Badge>
             </div>
             <div className="text-2xl font-bold text-foreground font-mono">
-              Rp {(financeSummary?.wallets?.danaBalance ?? financeSummary?.wallets?.tripayBalance ?? 0).toLocaleString('id-ID')}
+              Rp {(financeSummary?.wallets?.midtransBalance ?? financeSummary?.wallets?.danaBalance ?? financeSummary?.wallets?.tripayBalance ?? 0).toLocaleString('id-ID')}
             </div>
             <p className="text-[11px] text-foreground-muted">Dana siap ditarik ke rekening bank operasional</p>
             <Button
               size="sm"
               variant="outline"
-              onClick={() => onNotify?.(`Pengajuan pencairan DANA QRIS sebesar Rp ${(financeSummary?.wallets?.danaBalance ?? financeSummary?.wallets?.tripayBalance ?? 0).toLocaleString('id-ID')} sedang diproses.`)}
+              onClick={() => onNotify?.(`Pengajuan pencairan Midtrans QRIS sebesar Rp ${(financeSummary?.wallets?.midtransBalance ?? financeSummary?.wallets?.danaBalance ?? financeSummary?.wallets?.tripayBalance ?? 0).toLocaleString('id-ID')} sedang diproses.`)}
               className="w-full text-xs border-border"
             >
               Withdraw ke Rekening Bank

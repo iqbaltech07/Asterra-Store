@@ -154,11 +154,7 @@ const RESTRICTED_FOR_OPERATIONAL_ADMIN: AdminTab[] = [
   'profit',
   'financial-transactions',
   'financial-reports',
-  'payment-settings',
-  'logs',
-  'notifications',
   'admins',
-  'store-settings',
 ];
 
 function getAdminAuthHeaders(extraHeaders: Record<string, string> = {}): Record<string, string> {
@@ -178,16 +174,21 @@ function AdminPageContent() {
   const queryClient = useQueryClient();
 
   const getTabFromUrl = useCallback((): AdminTab | null => {
+    const resolveAlias = (t: string | null): AdminTab | null => {
+      if (!t) return null;
+      if (t === 'product-groups') return 'cards';
+      if (t === 'settings' || t === 'konfigurasi') return 'store-settings';
+      if (t === 'payment' || t === 'payments') return 'payment-settings';
+      if (t in TAB_TITLES) return t as AdminTab;
+      return null;
+    };
+
     if (typeof window !== 'undefined') {
       const sp = new URLSearchParams(window.location.search);
-      const t = sp.get('tab');
-      if (t === 'product-groups') return 'cards';
-      if (t && t in TAB_TITLES) return t as AdminTab;
+      const resolved = resolveAlias(sp.get('tab'));
+      if (resolved) return resolved;
     }
-    const t = searchParams?.get('tab');
-    if (t === 'product-groups') return 'cards';
-    if (t && t in TAB_TITLES) return t as AdminTab;
-    return null;
+    return resolveAlias(searchParams?.get('tab') || null);
   }, [searchParams]);
 
   // Admin authentication state

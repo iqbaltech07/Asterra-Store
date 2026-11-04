@@ -50,6 +50,7 @@ class MidtransService:
     ) -> Dict[str, Any]:
         """
         Generates dynamic QRIS for the specified order via Midtrans Core API.
+        Communicates directly with Midtrans Core API without fallback mock QR strings.
         """
         tz_jkt = timezone(timedelta(hours=7))
         now = datetime.now(tz_jkt)
@@ -57,118 +58,152 @@ class MidtransService:
         expiry_iso = expiry_dt.strftime("%Y-%m-%dT%H:%M:%S+07:00")
 
         server_key = settings.MIDTRANS_SERVER_KEY.strip()
+        if not server_key:
+            logger.error("[Midtrans] MIDTRANS_SERVER_KEY belum dikonfigurasi di environment.")
+            return {
+                "success": False,
+                "error": "MIDTRANS_SERVER_KEY belum dikonfigurasi di backend environment.",
+            }
 
-        # If live/sandbox server key is available, call Midtrans Core API
-        if server_key and not server_key.startswith("mock_") and not server_key.startswith("your-"):
-            try:
-                base_url = cls.get_base_url()
-                headers = cls.get_auth_headers()
+        base_url = cls.get_base_url()
+        headers = cls.get_auth_headers()
 
-                payload = {
-                    "payment_type": "qris",
-                    "transaction_details": {
-                        "order_id": order_id,
-                        "gross_amount": int(amount),
-                    },
-                    "qris": {
-                        "acquirer": "gopay",
-                    },
-                    "customer_details": {
-                        "first_name": customer_name,
-                        "email": customer_email,
-                        "phone": customer_phone or "081234567890",
-                    },
-                }
+        payload = {
+            "payment_type": "qris",
+            "transaction_details": {
+                "order_id": order_id,
+                "gross_amount": int(amount),
+            },
+            "qris": {
+                "acquirer": "gopay",
+            },
+            "customer_details": {
+                "first_name": customer_name,
+                "email": customer_email,
+                "phone": customer_phone or "081234567890",
+            },
+        }
 
-                logger.info(f"[Midtrans] Sending charge request for order {order_id} ({amount} IDR) to {base_url}/charge")
-                with httpx.Client(timeout=15.0) as client:
-                    resp = client.post(f"{base_url}/charge", json=payload, headers=headers)
-                    data = resp.json()
+        logger.info(f"[Midtrans] Sending charge request for order {order_id} ({amount} IDR) to {base_url}/charge")
+        try:
+            with httpx.Client(timeout=15.0) as client:
+                resp = client.post(f"{base_url}/charge", json=payload, headers=headers)
+                data = resp.json()
+        except Exception as e:
+            logger.error(f"[Midtrans] Request connection error to {base_url}/charge: {e}")
+            return {
+                "success": False,
+                "error": f"Gagal menghubungi server Midtrans: {str(e)}",
+            }
 
-                if resp.status_code in [200, 201] and data.get("status_code") in ["200", "201"]:
-                    qr_string = data.get("qr_string", "")
-                    actions = data.get("actions", [])
-                    qr_url = None
-                    for action in actions:
-                        if action.get("name") in ["generate-qr-code", "qr-code"]:
-                            qr_url = action.get("url")
-                            break
+        if resp.status_code in [200, 201] and str(data.get("status_code")) in ["200", "201"]:
+            qr_string = data.get("qr_string", "")
+            actions = data.get("actions", [])
+            qr_url = None
+            for action in actions:
+                if action.get("name") in ["generate-qr-code", "qr-code"]:
+                    qr_url = action.get("url")
+                    break
 
-                    if not qr_url and qr_string:
-                        qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=350x350&data={qr_string}"
+            if not qr_url:
+                for action in actions:
+                    if action.get("url"):
+                        qr_url = action.get("url")
+                        break
 
-                    trans_id = data.get("transaction_id", f"MID-{order_id}")
-                    expire_time_str = data.get("expire_time")
-                    if expire_time_str:
-                        try:
-                            # Format usually "YYYY-MM-DD HH:MM:SS"
-                            parsed_dt = datetime.strptime(expire_time_str, "%Y-%m-%d %H:%M:%S").replace(tzinfo=tz_jkt)
-                            expiry_iso = parsed_dt.strftime("%Y-%m-%dT%H:%M:%S+07:00")
-                        except Exception:
-                            pass
+            if not qr_url and qr_string:
+                qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=350x350&data={qr_string}"
 
-                    return {
-                        "success": True,
-                        "payment_id": f"PAY-MIDTRANS-{order_id}",
-                        "order_id": order_id,
-                        "amount": amount,
-                        "payment_method": "qris",
-                        "transaction_id": trans_id,
-                        "payment_status": "pending",
-                        "qr_string": qr_string,
-                        "qr_url": qr_url,
-                        "checkout_url": None,  # Direct In-Page Modal (No redirect/Snap)
-                        "redirect_url": None,
-                        "expired_at": expiry_iso,
-                        "instructions": [
-                            {
-                                "title": "Cara Pembayaran QRIS Midtrans",
-                                "steps": [
-                                    "Buka aplikasi m-Banking (BCA, Mandiri, BRI, BNI) atau E-Wallet (GoPay, OVO, Dana, ShopeePay, LinkAja).",
-                                    "Pilih menu 'Scan' atau 'Bayar dengan QRIS'.",
-                                    "Arahkan kamera smartphone Anda ke kode QRIS dinamis di layar ini.",
-                                    f"Periksa nama penerima: ASTERRA STORE dan nominal Rp {amount:,}.".replace(",", "."),
-                                    "Konfirmasi pembayaran dan masukkan PIN Anda.",
-                                    "Pesanan akan otomatis terverifikasi lunas dalam hitungan detik tanpa upload bukti transfer.",
-                                ],
-                            }
+            trans_id = data.get("transaction_id", f"MID-{order_id}")
+            expire_time_str = data.get("expiry_time") or data.get("expire_time")
+            if expire_time_str:
+                try:
+                    # Format usually "YYYY-MM-DD HH:MM:SS"
+                    parsed_dt = datetime.strptime(expire_time_str, "%Y-%m-%d %H:%M:%S").replace(tzinfo=tz_jkt)
+                    expiry_iso = parsed_dt.strftime("%Y-%m-%dT%H:%M:%S+07:00")
+                except Exception:
+                    pass
+
+            return {
+                "success": True,
+                "payment_id": f"PAY-MIDTRANS-{order_id}",
+                "order_id": order_id,
+                "amount": amount,
+                "payment_method": "qris",
+                "transaction_id": trans_id,
+                "payment_status": "pending",
+                "qr_string": qr_string,
+                "qr_url": qr_url,
+                "checkout_url": None,  # Direct In-Page Modal (No redirect/Snap)
+                "redirect_url": None,
+                "expired_at": expiry_iso,
+                "instructions": [
+                    {
+                        "title": "Cara Pembayaran QRIS Midtrans",
+                        "steps": [
+                            "Buka aplikasi m-Banking (BCA, Mandiri, BRI, BNI) atau E-Wallet (GoPay, OVO, Dana, ShopeePay, LinkAja).",
+                            "Pilih menu 'Scan' atau 'Bayar dengan QRIS'.",
+                            "Arahkan kamera smartphone Anda ke kode QRIS dinamis di layar ini.",
+                            f"Periksa nama penerima dan nominal Rp {amount:,}.".replace(",", "."),
+                            "Konfirmasi pembayaran dan masukkan PIN Anda.",
+                            "Pesanan akan otomatis terverifikasi lunas dalam hitungan detik tanpa upload bukti transfer.",
                         ],
                     }
-                else:
-                    logger.warning(
-                        f"[Midtrans] Charge response non-200/201: {resp.status_code} - {data}. Falling back to simulated dynamic QRIS."
-                    )
-            except Exception as e:
-                logger.error(f"[Midtrans] Live charge request failed: {e}. Falling back to simulated dynamic QRIS.")
+                ],
+            }
+        else:
+            # If rejected due to existing active transaction (conflict/406), attempt recovery via status check
+            if str(data.get("status_code")) in ["406", "412"] or "conflict" in str(data).lower():
+                status_res = cls.check_status(order_id)
+                if status_res.get("success") and status_res.get("data"):
+                    sdata = status_res["data"]
+                    if sdata.get("transaction_status") == "pending":
+                        trans_id = sdata.get("transaction_id")
+                        qr_url = f"{base_url}/qris/{trans_id}/qr-code"
+                        expire_time_str = sdata.get("expiry_time")
+                        if expire_time_str:
+                            try:
+                                parsed_dt = datetime.strptime(expire_time_str, "%Y-%m-%d %H:%M:%S").replace(tzinfo=tz_jkt)
+                                expiry_iso = parsed_dt.strftime("%Y-%m-%dT%H:%M:%S+07:00")
+                            except Exception:
+                                pass
+                        logger.info(f"[Midtrans] Recovered existing active transaction {trans_id} for order {order_id}")
+                        return {
+                            "success": True,
+                            "payment_id": f"PAY-MIDTRANS-{order_id}",
+                            "order_id": order_id,
+                            "amount": int(float(sdata.get("gross_amount", amount))),
+                            "payment_method": "qris",
+                            "transaction_id": trans_id,
+                            "payment_status": "pending",
+                            "qr_string": "",
+                            "qr_url": qr_url,
+                            "checkout_url": None,
+                            "redirect_url": None,
+                            "expired_at": expiry_iso,
+                            "instructions": [
+                                {
+                                    "title": "Cara Pembayaran QRIS Midtrans",
+                                    "steps": [
+                                        "Buka aplikasi m-Banking (BCA, Mandiri, BRI, BNI) atau E-Wallet (GoPay, OVO, Dana, ShopeePay, LinkAja).",
+                                        "Pilih menu 'Scan' atau 'Bayar dengan QRIS'.",
+                                        "Arahkan kamera smartphone Anda ke kode QRIS dinamis di layar ini.",
+                                        f"Periksa nama penerima dan nominal Rp {amount:,}.".replace(",", "."),
+                                        "Konfirmasi pembayaran dan masukkan PIN Anda.",
+                                        "Pesanan akan otomatis terverifikasi lunas dalam hitungan detik tanpa upload bukti transfer.",
+                                    ],
+                                }
+                            ],
+                        }
 
-        # Sandbox / Fallback Dynamic QRIS Generator for local dev and staging without active keys
-        mock_qr_string = f"00020101021226620014COM.GO-JEK.WWW011993600914337918182570210G3791818250303UKE51440014ID.CO.QRIS.WWW0215AID7720513752290303UKE52043593530336054{amount:02d}5802ID5913ASTERRA STORE6007JAKARTA6304MIDT"
-        return {
-            "success": True,
-            "payment_id": f"PAY-MIDTRANS-{order_id}",
-            "order_id": order_id,
-            "amount": amount,
-            "payment_method": "qris",
-            "transaction_id": f"mock-midtrans-{order_id}",
-            "payment_status": "pending",
-            "qr_string": mock_qr_string,
-            "qr_url": f"https://api.qrserver.com/v1/create-qr-code/?size=350x350&data={mock_qr_string}",
-            "checkout_url": None,  # Direct In-Page Modal (No redirect/Snap)
-            "redirect_url": None,
-            "expired_at": expiry_iso,
-            "instructions": [
-                {
-                    "title": "Cara Pembayaran QRIS Midtrans",
-                    "steps": [
-                        "Buka aplikasi m-Banking atau E-Wallet pilihan Anda (GoPay, OVO, Dana, ShopeePay, BCA, dll).",
-                        "Pilih menu 'Scan QRIS'.",
-                        "Arahkan kamera ke kode QR dinamis di atas.",
-                        f"Pastikan nominal pembayaran tepat Rp {amount:,}.".replace(",", "."),
-                        "Selesaikan pembayaran. Sistem akan memverifikasi secara otomatis.",
-                    ],
-                }
-            ],
-        }
+            status_msg = data.get("status_message") or data.get("error") or data.get("message") or f"HTTP {resp.status_code}"
+            logger.error(f"[Midtrans] Charge rejected by Midtrans API: {resp.status_code} - {data}")
+            return {
+                "success": False,
+                "error": f"Midtrans Charge Gagal: {status_msg}",
+                "status_code": data.get("status_code", str(resp.status_code)),
+                "raw_response": data,
+            }
 
     @classmethod
     def verify_webhook(cls, body_dict: Dict[str, Any]) -> Dict[str, Any]:

@@ -190,10 +190,14 @@ export function OrderDetailModal({
     order &&
       newStatus === 'completed' &&
       (order.payment_mode === 'manual' ||
+        (order as any).paymentMode === 'manual' ||
         order.payment?.payment_method?.toLowerCase().includes('manual') ||
         order.payment?.payment_method === 'bca' ||
         order.payment?.payment_method === 'dana' ||
-        (!order.payment?.transaction_id?.startsWith('trx-dana') &&
+        (order.payment_mode !== 'gateway' &&
+          !order.payment?.transaction_id?.startsWith('MID-') &&
+          !order.payment?.transaction_id?.startsWith('mock-midtrans') &&
+          !order.payment?.transaction_id?.startsWith('trx-dana') &&
           !order.payment?.transaction_id?.startsWith('trx-tripay')))
   );
 

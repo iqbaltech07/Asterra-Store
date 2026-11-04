@@ -31,6 +31,10 @@ export interface PublicPaymentConfig {
   is_bank_active?: boolean;
   is_qris_active?: boolean;
   is_dana_active?: boolean;
+  qrisImageUrl?: string;
+  qris_image_url?: string;
+  qrisMerchantName?: string;
+  qris_merchant_name?: string;
   bank: {
     name: string;
     account_number: string;
