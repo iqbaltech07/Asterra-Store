@@ -41,8 +41,21 @@ export const BRAND_ICONS_MAP: Record<string, string> = {
 export function resolveBrandLogo(name: string = '', fallbackUrl: string = ''): string {
   const trimmed = (fallbackUrl || '').trim();
 
-  // If a valid custom logo URL is provided (and not a broken legacy path /images/brand/), ALWAYS prioritize it
-  if (trimmed && !trimmed.startsWith('/images/brand/')) {
+  // Filter out banners and broken legacy paths so avatars never squish banners or hit 404s
+  const isInvalidLogo =
+    !trimmed ||
+    trimmed.startsWith('/images/brand/') ||
+    trimmed.startsWith('/images/banners/') ||
+    trimmed.includes('default-product-banner') ||
+    (trimmed.includes('/banners/') && !trimmed.includes('/brand-icons/'));
+
+  // If an authoritative brand logo URL is provided (Brandfetch CDN or brand-icons API proxy), prioritize it
+  if (
+    !isInvalidLogo &&
+    (trimmed.startsWith('https://cdn.brandfetch.io/') ||
+      trimmed.startsWith('/api/v1/media/brand-icons/') ||
+      trimmed.startsWith('data:image/'))
+  ) {
     return trimmed;
   }
 
@@ -54,7 +67,7 @@ export function resolveBrandLogo(name: string = '', fallbackUrl: string = ''): s
     }
   }
 
-  return trimmed && !trimmed.startsWith('/images/brand/') ? trimmed : '';
+  return !isInvalidLogo ? trimmed : '';
 }
 
 /**
