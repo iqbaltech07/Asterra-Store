@@ -91,7 +91,7 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"[Lifespan] RealtimeBroadcaster loop init note: {e}")
 
-    # Ensure Upstash QStash cron schedule for serverless dummy orders is synchronized
+    # Ensure Upstash QStash cron schedules (dummy orders, expired orders cancellation, keep-alive) are synchronized
     try:
         if settings.QSTASH_TOKEN:
             from app.core.qstash_client import register_cron_job
@@ -99,11 +99,29 @@ async def lifespan(app: FastAPI):
             default_api_url = "https://staging.api.asterrastore.biz.id" if is_dev else "https://api.asterrastore.biz.id"
             base_api_url = os.getenv("API_BASE_URL", default_api_url).strip().rstrip('/')
             schedule_prefix = "staging-" if is_dev else ""
+
+            # 1. Dummy order generator
             register_cron_job(
                 destination_url=f"{base_api_url}/api/v1/internal/cron/dummy-order",
                 cron_expression="*/5 * * * *",
                 schedule_id=f"{schedule_prefix}asterra-dummy-order",
                 payload={"source": "qstash-cron", "action": "trigger_dummy_order"},
+            )
+
+            # 2. Cancel expired pending orders
+            register_cron_job(
+                destination_url=f"{base_api_url}/api/v1/internal/cancel-expired-orders",
+                cron_expression="*/15 * * * *",
+                schedule_id=f"{schedule_prefix}asterra-cancel-expired-orders",
+                payload={"source": "qstash-cron", "action": "cancel_expired"},
+            )
+
+            # 3. Keep-alive ping to prevent serverless sleep / cold-starts
+            register_cron_job(
+                destination_url=f"{base_api_url}/api/v1/health",
+                cron_expression="*/5 * * * *",
+                schedule_id=f"{schedule_prefix}asterra-keep-alive-ping",
+                payload={"source": "qstash-cron", "action": "keep-alive"},
             )
     except Exception as e:
         print(f"[Lifespan] QStash cron sync note: {e}")
