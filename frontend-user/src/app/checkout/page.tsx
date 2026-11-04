@@ -836,18 +836,18 @@ function CheckoutPageContent() {
           expires_at: orderExpiresAt,
         });
       } else {
-        showNotification('Membuat QRIS DANA Resmi...');
+        showNotification('Membuat QRIS Dinamis Midtrans...');
         const payData = await OrdersApi.pay(createdOrder.id, selectedMethod);
 
         const checkoutUrl = payData.payment?.checkout_url || payData.payment?.redirect_url;
         if (checkoutUrl) {
-          showNotification('Mengarahkan ke pembayaran DANA...');
+          showNotification('Mengarahkan ke pembayaran...');
           window.location.href = checkoutUrl;
           return;
         }
 
         if (payData.payment?.qr_url || payData.payment?.qr_string) {
-          showNotification('QRIS DANA Resmi siap dipindai.');
+          showNotification('QRIS Midtrans siap dipindai.');
           setActiveManualModal({
             orderId: createdOrder.id,
             amount: payData.payment.amount || orderTotal,
@@ -857,7 +857,11 @@ function CheckoutPageContent() {
             raw_amount: orderRaw,
             uniqueCode: 0,
             unique_code: 0,
-            method: 'qris_dana',
+            method: 'qris',
+            qrUrl: payData.payment.qr_url,
+            qr_url: payData.payment.qr_url,
+            qrString: payData.payment.qr_string,
+            qr_string: payData.payment.qr_string,
             expiresAt: payData.payment.expired_at || orderExpiresAt,
             expires_at: payData.payment.expired_at || orderExpiresAt,
           });
@@ -954,7 +958,7 @@ function CheckoutPageContent() {
     if (methodId === 'bni_va') return 'BNI Virtual Account';
     if (methodId === 'seabank_va') return 'SeaBank Virtual Account';
     if (methodId === 'dana') return 'DANA E-Wallet';
-    return 'QRIS DANA Resmi';
+    return 'QRIS Dinamis Midtrans';
   };
 
   return (

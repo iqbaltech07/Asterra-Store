@@ -217,19 +217,19 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
                     : 'bg-status-warning/20 text-status-warning border-status-warning/30 hover:bg-status-warning/20 font-mono text-[11px]'
                 }
               >
-                {mode === 'gateway' ? '🟢 GATEWAY OTOMATIS (DANA QRIS)' : '🟡 MANUAL TRANSFER TOKO'}
+                {mode === 'gateway' ? '🟢 GATEWAY OTOMATIS (MIDTRANS QRIS)' : '🟡 MANUAL TRANSFER TOKO'}
               </Badge>
             </div>
 
             <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
               {mode === 'gateway'
-                ? 'Payment Gateway DANA QRIS Resmi Berjalan Normal'
+                ? 'Payment Gateway Midtrans Dynamic QRIS Berjalan Normal'
                 : 'Mode Transfer Manual Toko Sedang Digunakan'}
             </h2>
 
             <p className="text-xs sm:text-sm text-foreground-muted max-w-2xl leading-relaxed">
               {mode === 'gateway'
-                ? 'Semua transaksi pelanggan diproses otomatis via DANA QRIS Gateway (QRIS Nasional Dinamis realtime - support DANA, BCA, Mandiri, GoPay, OVO, ShopeePay). Jika sedang ada kendala jaringan, switch ke mode manual untuk menerima transfer langsung ke rekening toko.'
+                ? 'Semua transaksi pelanggan diproses otomatis via Midtrans Core API Dynamic QRIS (QRIS Nasional Dinamis realtime - support GoPay, BCA, Mandiri, BRI, BNI, OVO, Dana, ShopeePay, LinkAja). Notifikasi webhook SHA-512 memicu pemrosesan lisensi instan tanpa upload bukti transfer.'
                 : 'Pelanggan saat ini diarahkan transfer manual ke rekening Bank BCA, QRIS Manual, atau akun DANA Anda dengan instruksi konfirmasi via WhatsApp. Verifikasi mutasi dilakukan manual oleh admin.'}
             </p>
           </div>
@@ -253,7 +253,7 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
                 className="bg-status-success text-black hover:bg-status-success/90 font-semibold text-xs gap-2 px-5 py-5 shadow-lg shadow-status-success/10"
               >
                 <FontAwesomeIcon icon={faCheck} className="w-4 h-4 text-black" />
-                <span>Beralih ke Gateway Otomatis (DANA QRIS)</span>
+                <span>Beralih ke Gateway Otomatis (Midtrans QRIS)</span>
               </Button>
             )}
 
@@ -848,40 +848,40 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
             </div>
           </div>
 
-          {/* Card: Dynamic DANA QRIS Webhook & Callback Info */}
+          {/* Card: Dynamic Midtrans QRIS Webhook & Callback Info */}
           <div className="bg-surface border border-border rounded-xl p-5 space-y-3.5">
             <div className="flex items-center justify-between pb-2.5 border-b border-border">
               <div className="flex items-center gap-2">
                 <FontAwesomeIcon icon={faShieldHalved} className="w-4 h-4 text-status-success" />
                 <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
-                  Integrasi & Callback DANA QRIS SNAP
+                  Integrasi & Webhook Midtrans QRIS Core API
                 </h4>
               </div>
               <Badge variant="outline" className="text-[10px] text-status-success border-status-success/30 font-mono">
-                Official SNAP v3.0
+                Core API Dynamic QRIS
               </Badge>
             </div>
 
             <p className="text-[11px] text-foreground-muted leading-relaxed">
-              Sistem telah dikonfigurasi secara otomatis memproses webhook SNAP DANA resmi pada domain aktif Anda ({currentBaseUrl || 'https://asterrastore.biz.id'}). Verifikasi tanda tangan digital RSA-SHA256 diterapkan otomatis.
+              Sistem telah dikonfigurasi secara otomatis memproses webhook notifikasi Midtrans resmi pada domain aktif Anda ({currentBaseUrl || 'https://asterrastore.biz.id'}). Verifikasi tanda tangan digital enkripsi SHA-512 diterapkan otomatis.
             </p>
 
             <div className="space-y-3 text-xs">
               <div>
                 <span className="text-[10px] text-foreground-muted block font-medium mb-1">
-                  URL Webhook Callback DANA SNAP (POST):
+                  URL Webhook Notification Midtrans (POST):
                 </span>
                 <div className="relative">
                   <Input
                     readOnly
-                    value={`${currentBaseUrl || 'https://asterrastore.biz.id'}/api/v1/webhooks/dana`}
+                    value={`${currentBaseUrl || 'https://asterrastore.biz.id'}/api/v1/webhooks/midtrans`}
                     className="text-[11px] bg-surface-raised border-border font-mono pr-16 select-all"
                   />
                   <button
                     type="button"
                     onClick={() =>
                       handleCopy(
-                        `${currentBaseUrl || 'https://asterrastore.biz.id'}/api/v1/webhooks/dana`,
+                        `${currentBaseUrl || 'https://asterrastore.biz.id'}/api/v1/webhooks/midtrans`,
                         'webhook'
                       )
                     }

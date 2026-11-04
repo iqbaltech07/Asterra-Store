@@ -55,7 +55,13 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7 # 7 days
     
-    # DANA Official Payment Gateway / QRIS (dana-python)
+    # Midtrans Official Payment Gateway / Dynamic QRIS (Core API)
+    MIDTRANS_SERVER_KEY: str = os.getenv("MIDTRANS_SERVER_KEY", "")
+    MIDTRANS_CLIENT_KEY: str = os.getenv("MIDTRANS_CLIENT_KEY", "")
+    MIDTRANS_MERCHANT_ID: str = os.getenv("MIDTRANS_MERCHANT_ID", "")
+    MIDTRANS_IS_PRODUCTION: bool = os.getenv("MIDTRANS_IS_PRODUCTION", "false").lower() == "true"
+    
+    # Deprecated DANA settings (fallback reference)
     DANA_ENV: str = os.getenv("DANA_ENV", "sandbox").lower()
     DANA_PARTNER_ID: str = os.getenv("DANA_PARTNER_ID", os.getenv("X_PARTNER_ID", ""))
     DANA_CLIENT_SECRET: str = os.getenv("DANA_CLIENT_SECRET", os.getenv("CLIENT_SECRET", ""))

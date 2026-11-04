@@ -533,7 +533,7 @@ function PrivateOrderContent() {
       setSelectedOrderForModal(order);
     } else {
       try {
-        showNotification('Memuat QRIS DANA Resmi...');
+        showNotification('Memuat QRIS Dinamis Midtrans...');
         const res = await OrdersApi.pay(order.id, order.payment?.payment_method || 'qris');
         const checkoutUrl = res.payment?.checkout_url || res.payment?.redirect_url;
         if (checkoutUrl) {
@@ -548,13 +548,17 @@ function PrivateOrderContent() {
             raw_amount: orderRaw,
             uniqueCode: 0,
             unique_code: 0,
-            method: 'qris_dana',
-            expiresAt: res.payment.expired_at || orderExpiresAt || new Date(Date.now() + 25 * 60000).toISOString(),
-            expires_at: res.payment.expired_at || orderExpiresAt || new Date(Date.now() + 25 * 60000).toISOString(),
+            method: 'qris',
+            qrUrl: res.payment.qr_url,
+            qr_url: res.payment.qr_url,
+            qrString: res.payment.qr_string,
+            qr_string: res.payment.qr_string,
+            expiresAt: res.payment.expired_at || orderExpiresAt || new Date(Date.now() + 15 * 60000).toISOString(),
+            expires_at: res.payment.expired_at || orderExpiresAt || new Date(Date.now() + 15 * 60000).toISOString(),
           });
           setSelectedOrderForModal(order);
         } else {
-          showNotification('Gagal memuat pembayaran QRIS DANA Resmi.');
+          showNotification('Gagal memuat pembayaran QRIS Midtrans.');
         }
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : 'Gagal memproses pembayaran.';

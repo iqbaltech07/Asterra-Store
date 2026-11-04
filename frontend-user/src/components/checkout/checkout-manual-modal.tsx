@@ -35,6 +35,11 @@ export interface ManualPaymentModalData {
   method: string;
   expiresAt?: string;
   expires_at?: string;
+  qrUrl?: string;
+  qr_url?: string;
+  qrString?: string;
+  qr_string?: string;
+  instructions?: Array<{ title: string; steps: string[] }>;
 }
 
 interface CheckoutManualModalProps {
@@ -240,6 +245,25 @@ export function CheckoutManualModal({
 
   const formattedAmount = amountNumber.toLocaleString('id-ID');
 
+  const isDynamicQris = Boolean(
+    data.qrUrl ||
+    data.qr_url ||
+    data.qrString ||
+    data.qr_string ||
+    data.method === 'qris' ||
+    data.method === 'qris_midtrans' ||
+    data.method === 'qris_dana'
+  );
+
+  const activeQrImage =
+    data.qrUrl ||
+    data.qr_url ||
+    (data.qrString || data.qr_string
+      ? `https://api.qrserver.com/v1/create-qr-code/?size=350x350&data=${encodeURIComponent(
+          data.qrString || data.qr_string || ''
+        )}`
+      : paymentConfig?.qris?.image_url || '/images/qris-toko.png');
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div
@@ -261,7 +285,11 @@ export function CheckoutManualModal({
               ID Pesanan: {data.orderId}
             </span>
             <h3 className="text-xl font-bold text-foreground mt-1">
-              {isPaidSuccess ? 'Pembayaran Berhasil!' : 'Instruksi Pembayaran Manual'}
+              {isPaidSuccess
+                ? 'Pembayaran Berhasil!'
+                : isDynamicQris
+                ? 'QRIS Dinamis Midtrans (Scan & Bayar)'
+                : 'Instruksi Pembayaran Manual'}
             </h3>
           </div>
           <button
@@ -430,8 +458,82 @@ export function CheckoutManualModal({
               </div>
             </div>
 
-            {/* Method Details: Bank BCA / QRIS / DANA */}
-            {data.method === 'manual_bca' && (
+            {/* Dynamic QRIS Midtrans View */}
+            {isDynamicQris && (
+              <div className="p-4 bg-surface-raised rounded-xl border border-border text-center space-y-3">
+                <div
+                  onClick={() => setIsQrisExpanded(true)}
+                  className="w-64 h-64 sm:w-72 sm:h-72 bg-white p-3.5 rounded-2xl mx-auto flex items-center justify-center border border-border shadow-md overflow-hidden relative cursor-zoom-in group transition-all duration-200 hover:shadow-xl hover:border-primary/40 select-none"
+                  title="Klik untuk membuka & memperbesar barcode QRIS"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={activeQrImage}
+                    alt="ASTERRA STORE Dynamic QRIS"
+                    className="w-full h-full object-contain rounded-xl group-hover:scale-[1.02] transition-transform duration-200"
+                  />
+
+                  {/* Hover Overlay Badge */}
+                  <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1.5 text-white backdrop-blur-[2px] rounded-2xl">
+                    <span className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-white shadow-sm">
+                      <FontAwesomeIcon icon={faExpand} className="w-4 h-4" />
+                    </span>
+                    <span className="text-[11px] font-bold px-3 py-1 rounded-full bg-black/60 text-white shadow-sm">
+                      Klik untuk Perbesar Barcode
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-[11px] font-bold">
+                    <span>QRIS Dinamis Midtrans</span>
+                  </div>
+                  <span className="text-xs font-bold text-foreground block">
+                    {paymentConfig?.qris?.merchant_name || 'ASTERRA STORE'}
+                  </span>
+                  <p className="text-[11px] text-foreground-muted max-w-xs mx-auto leading-relaxed">
+                    Bisa di-scan via BCA Mobile, Mandiri Livin, BRImo, BNI Mobile, GoPay, OVO, Dana, ShopeePay & semua aplikasi perbankan berlogo QRIS.
+                  </p>
+
+                  <div className="pt-1.5 flex flex-wrap items-center justify-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsQrisExpanded(true)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary border border-primary/25 text-xs font-semibold transition-all cursor-pointer shadow-xs active:scale-95"
+                    >
+                      <FontAwesomeIcon icon={faExpand} className="w-3.5 h-3.5" />
+                      <span>Perbesar Barcode</span>
+                    </button>
+
+                    <a
+                      href={activeQrImage}
+                      download={`QRIS-${data.orderId}.png`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface hover:bg-surface-raised text-foreground-muted hover:text-foreground border border-border text-xs transition-colors"
+                      title="Unduh file barcode QRIS"
+                    >
+                      <FontAwesomeIcon icon={faDownload} className="w-3 h-3 text-primary" />
+                      <span>Unduh QRIS</span>
+                    </a>
+                  </div>
+                </div>
+
+                {/* Real-time Listening Indicator */}
+                <div className="p-3 rounded-xl bg-primary/5 border border-primary/20 flex items-center justify-center gap-2 text-xs text-foreground">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                  </span>
+                  <span className="font-medium text-foreground-muted text-[11px]">
+                    Menunggu pembayaran... Terverifikasi otomatis dalam detik.
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Method Details: Bank BCA / QRIS / DANA (Only for manual transfer) */}
+            {!isDynamicQris && data.method === 'manual_bca' && (
               <div className="p-4 bg-surface-raised rounded-xl border border-border space-y-3">
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-semibold text-foreground">Rekening Tujuan Transfer:</span>
@@ -587,34 +689,62 @@ export function CheckoutManualModal({
               </div>
             )}
 
-            {/* Direct WhatsApp Confirmation Button */}
-            <div className="space-y-2.5 pt-1">
-              <a
-                href={`https://wa.me/${paymentConfig?.confirmation_whatsapp || '6281234567890'}?text=${encodeURIComponent(
-                  `Halo Admin Asterra Store, saya sudah melakukan transfer pembayaran manual untuk pesanan:\n\n• No. Pesanan: ${
-                    data.orderId
-                  }\n• Nama Pemesan: ${customerName}\n• Email Aktivasi: ${targetEmail}\n• Total Nominal Ditransfer: Rp ${formattedAmount}\n• Metode: ${getMethodName(
-                    data.method
-                  )}\n\nBerikut saya lampirkan bukti transfernya untuk divalidasi. Terima kasih!`
-                )}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold flex items-center justify-center gap-2 text-xs sm:text-sm shadow-lg shadow-emerald-900/30 transition-all cursor-pointer"
-              >
-                <FontAwesomeIcon icon={faWhatsapp} className="w-4 h-4" />
-                <span>Kirim Bukti Pembayaran ke WhatsApp Admin</span>
-                <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="w-3.5 h-3.5" />
-              </a>
+            {/* Actions for Dynamic QRIS vs Manual Transfer */}
+            {isDynamicQris ? (
+              <div className="space-y-2 pt-1 text-center">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full text-xs text-foreground-muted border-border hover:bg-surface-raised h-10 cursor-pointer"
+                  onClick={handleRedirectToOrder}
+                >
+                  <FontAwesomeIcon icon={faReceipt} className="w-3.5 h-3.5 mr-1 text-primary" />
+                  <span>Lihat Halaman Status Pesanan</span>
+                </Button>
+                <div className="text-[11px] text-foreground-muted">
+                  Butuh bantuan?{' '}
+                  <a
+                    href={`https://wa.me/${paymentConfig?.confirmation_whatsapp || '6281234567890'}?text=${encodeURIComponent(
+                      `Halo CS Asterra Store, saya butuh bantuan untuk pesanan QRIS: ${data.orderId}`
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline font-semibold"
+                  >
+                    Hubungi WhatsApp CS
+                  </a>
+                </div>
+              </div>
+            ) : (
+              /* Direct WhatsApp Confirmation Button for Manual Transfers */
+              <div className="space-y-2.5 pt-1">
+                <a
+                  href={`https://wa.me/${paymentConfig?.confirmation_whatsapp || '6281234567890'}?text=${encodeURIComponent(
+                    `Halo Admin Asterra Store, saya sudah melakukan transfer pembayaran manual untuk pesanan:\n\n• No. Pesanan: ${
+                      data.orderId
+                    }\n• Nama Pemesan: ${customerName}\n• Email Aktivasi: ${targetEmail}\n• Total Nominal Ditransfer: Rp ${formattedAmount}\n• Metode: ${getMethodName(
+                      data.method
+                    )}\n\nBerikut saya lampirkan bukti transfernya untuk divalidasi. Terima kasih!`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold flex items-center justify-center gap-2 text-xs sm:text-sm shadow-lg shadow-emerald-900/30 transition-all cursor-pointer"
+                >
+                  <FontAwesomeIcon icon={faWhatsapp} className="w-4 h-4" />
+                  <span>Kirim Bukti Pembayaran ke WhatsApp Admin</span>
+                  <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="w-3.5 h-3.5" />
+                </a>
 
-              <Button
-                variant="outline"
-                className="w-full text-xs text-foreground-muted border-border hover:bg-surface-raised h-10 cursor-pointer"
-                onClick={handleRedirectToOrder}
-              >
-                <FontAwesomeIcon icon={faReceipt} className="w-3.5 h-3.5 mr-1 text-primary" />
-                <span>Lihat Status Pesanan</span>
-              </Button>
-            </div>
+                <Button
+                  variant="outline"
+                  className="w-full text-xs text-foreground-muted border-border hover:bg-surface-raised h-10 cursor-pointer"
+                  onClick={handleRedirectToOrder}
+                >
+                  <FontAwesomeIcon icon={faReceipt} className="w-3.5 h-3.5 mr-1 text-primary" />
+                  <span>Lihat Status Pesanan</span>
+                </Button>
+              </div>
+            )}
           </>
         )}
       </div>
@@ -622,7 +752,7 @@ export function CheckoutManualModal({
       {/* ========================================================= */}
       {/* EXPANDED QRIS LIGHTBOX (Full screen wide barcode view)    */}
       {/* ========================================================= */}
-      {isQrisExpanded && paymentConfig?.qris?.image_url && (
+      {isQrisExpanded && (activeQrImage || paymentConfig?.qris?.image_url) && (
         <div
           role="dialog"
           aria-modal="true"
@@ -642,10 +772,10 @@ export function CheckoutManualModal({
                 </div>
                 <div>
                   <h4 className="text-sm font-bold text-foreground">
-                    Barcode QRIS Resmi Toko
+                    {isDynamicQris ? 'Barcode QRIS Dinamis Midtrans' : 'Barcode QRIS Resmi Toko'}
                   </h4>
                   <span className="text-[11px] text-foreground-muted block">
-                    {paymentConfig?.qris?.merchant_name || 'ASTERRA STORE QRIS'}
+                    {paymentConfig?.qris?.merchant_name || 'ASTERRA STORE'}
                   </span>
                 </div>
               </div>
@@ -695,8 +825,8 @@ export function CheckoutManualModal({
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={paymentConfig.qris.image_url}
-                  alt={paymentConfig.qris.merchant_name || 'ASTERRA STORE QRIS'}
+                  src={activeQrImage || paymentConfig?.qris?.image_url}
+                  alt={paymentConfig?.qris?.merchant_name || 'ASTERRA STORE QRIS'}
                   className={`w-auto object-contain rounded-lg transition-transform duration-200 select-none ${
                     isZoomedIn ? 'scale-125 max-h-[75vh]' : 'max-h-[55vh] max-w-full'
                   }`}
@@ -723,7 +853,7 @@ export function CheckoutManualModal({
               </button>
 
               <a
-                href={paymentConfig.qris.image_url}
+                href={activeQrImage || paymentConfig?.qris?.image_url}
                 download={`QRIS-${data.orderId}.png`}
                 target="_blank"
                 rel="noopener noreferrer"

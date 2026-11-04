@@ -650,11 +650,11 @@ class AnalyticsService:
             },
             {
                 "id": "exp-2",
-                "category": "Payment Gateway Fee (DANA QRIS Resmi)",
-                "desc": "Fee gateway QRIS DANA Resmi 0.7% transaksi lunas",
+                "category": "Payment Gateway Fee (Midtrans QRIS 0.7%)",
+                "desc": "Fee gateway Midtrans QRIS 0.7% transaksi lunas",
                 "amount": pg_fees_total,
                 "date": datetime.utcnow().strftime("%d %b %Y"),
-                "ref": "DANA-PG-07",
+                "ref": "MIDTRANS-QRIS-07",
             },
             {
                 "id": "exp-3",

@@ -239,9 +239,14 @@ def health_check():
         "status": "ok",
         "service": settings.PROJECT_NAME,
         "version": settings.VERSION,
-        "mode": "production" if settings.DANA_IS_PRODUCTION else "development",
+        "mode": "production" if settings.MIDTRANS_IS_PRODUCTION else "development",
         "timestamp": datetime.utcnow().isoformat(),
     }
+
+@app.post("/webhooks/midtrans", tags=["Webhooks"], include_in_schema=False)
+async def root_midtrans_webhook(request: Request):
+    from app.api.v1.checkout import midtrans_webhook
+    return await midtrans_webhook(request)
 
 @app.post("/webhooks/vip-reseller", tags=["Webhooks"], include_in_schema=False)
 async def root_vip_reseller_webhook(request: Request):

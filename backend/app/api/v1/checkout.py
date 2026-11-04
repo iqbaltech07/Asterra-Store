@@ -7,6 +7,7 @@ from app.services.order_service import OrderService
 from app.services.payment_config_service import PaymentConfigService
 from app.services.promo_service import PromoService
 from app.services.dana_service import DanaService
+from app.services.midtrans_service import MidtransService
 
 router = APIRouter()
 
@@ -523,13 +524,13 @@ async def pay_order(order_id: str, request: Request):
     amount = order.get("totalAmount") or order.get("total_amount") or 50000
     method = body.get("payment_method") or order.get("paymentMethod") or order.get("payment_method") or "qris_dana"
 
-    # Dynamic QRIS DANA Resmi Gateway
-    if method in ["qris", "qris_dana", "dana", "gateway"]:
+    # Dynamic QRIS Midtrans (Core API - In-Page Native Modal without Snap/redirect)
+    if method in ["qris", "qris_midtrans", "midtrans", "qris_dana", "dana", "gateway"]:
         cust_name = order.get("customerName") or order.get("customer_name") or "Pelanggan Asterra"
         cust_email = order.get("customerEmail") or order.get("customer_email") or "customer@asterra.store"
         cust_phone = order.get("customerPhone") or order.get("customer_phone") or ""
 
-        payment_info = DanaService.generate_qris(
+        payment_info = MidtransService.generate_qris(
             order_id=order_id,
             amount=int(amount),
             customer_name=cust_name,
@@ -539,7 +540,7 @@ async def pay_order(order_id: str, request: Request):
         )
         return {
             "success": True,
-            "message": "Instruksi pembayaran QRIS DANA Resmi berhasil dibuat",
+            "message": "Instruksi pembayaran QRIS Midtrans berhasil dibuat",
             "payment": payment_info,
         }
 
@@ -584,8 +585,61 @@ def cancel_order(order_id: str):
     }
 
 # ------------------------------------------
-# 4. Payment Gateway Webhook (DANA QRIS Resmi)
+# 4. Payment Gateway Webhook (Midtrans Dynamic QRIS)
 # ------------------------------------------
+@router.post("/webhooks/midtrans", tags=["Webhooks"])
+async def midtrans_webhook(request: Request):
+    try:
+        body = await request.json()
+    except Exception:
+        raw = await request.body()
+        try:
+            body = json.loads(raw.decode("utf-8"))
+        except Exception:
+            raise HTTPException(status_code=400, detail="Invalid JSON payload")
+
+    verified = MidtransService.verify_webhook(body)
+
+    if not verified.get("is_valid"):
+        err_msg = verified.get("error", "Invalid callback signature")
+        raise HTTPException(status_code=401, detail=err_msg)
+
+    order_id = verified.get("order_id")
+    if not order_id:
+        raise HTTPException(status_code=400, detail="order_id is required")
+
+    status = str(verified.get("status", "")).upper()
+    ref = verified.get("reference", f"MID-{order_id}")
+
+    if status in ["PAID", "SETTLEMENT", "SUCCESS", "SUCCESSFUL"]:
+        updated = OrderService.update_status(
+            order_id,
+            "processing",
+            notes=f"Pembayaran otomatis terverifikasi QRIS Midtrans Ref: {ref}",
+        )
+        return {
+            "status": "success",
+            "message": "Pembayaran Midtrans berhasil diverifikasi",
+            "order": updated,
+        }
+    elif status in ["CANCELLED", "EXPIRED", "DENY"]:
+        updated = OrderService.update_status(
+            order_id,
+            "cancelled",
+            notes=f"Pembayaran Midtrans {status.lower()}",
+        )
+        return {
+            "status": "cancelled",
+            "message": f"Pesanan {status.lower()}",
+            "order": updated,
+        }
+
+    return {
+        "status": "ok",
+        "message": f"Status webhook Midtrans diterima: {status}",
+    }
+
+# Fallback Legacy DANA Webhook
 @router.post("/webhooks/dana", tags=["Webhooks"])
 async def dana_webhook(request: Request):
     raw_body = await request.body()
