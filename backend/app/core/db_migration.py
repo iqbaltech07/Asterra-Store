@@ -133,7 +133,8 @@ def run_migrations():
             WHEN slug = 'disney-hotstar' THEN 21
             WHEN slug = 'vision-plus' THEN 19
             ELSE 16
-        END;
+        END
+        WHERE base_sold_count = 0;
         """,
     ]
 
