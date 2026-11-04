@@ -3,12 +3,8 @@ import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { prisma } from '@/lib/prisma';
 import { getAppBaseUrl } from '@/lib/utils/url';
 
-const appBaseUrl = getAppBaseUrl();
+const fallbackAppBaseUrl = getAppBaseUrl();
 
-// Ensure BETTER_AUTH_URL and secret are always populated and synced with production domain
-if (!process.env.BETTER_AUTH_URL || (process.env.BETTER_AUTH_URL.includes('localhost') && (process.env.VERCEL || process.env.VERCEL_URL))) {
-  process.env.BETTER_AUTH_URL = appBaseUrl;
-}
 if (!process.env.BETTER_AUTH_SECRET) {
   process.env.BETTER_AUTH_SECRET =
     process.env.NEXTAUTH_SECRET ||
@@ -18,11 +14,28 @@ if (!process.env.BETTER_AUTH_SECRET) {
 
 export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET,
-  baseURL: appBaseUrl,
+  baseURL: {
+    allowedHosts: [
+      'asterrastore.biz.id',
+      'www.asterrastore.biz.id',
+      'staging.asterrastore.biz.id',
+      '*.asterrastore.biz.id',
+      '*.vercel.app',
+      'localhost:*',
+      '127.0.0.1:*',
+    ],
+    protocol: 'auto',
+    fallback:
+      process.env.NEXT_PUBLIC_APP_URL ||
+      process.env.BETTER_AUTH_URL ||
+      fallbackAppBaseUrl ||
+      'https://asterrastore.biz.id',
+  },
   trustedOrigins: async (request) => {
     const list: string[] = [
       'https://asterrastore.biz.id',
       'https://*.asterrastore.biz.id',
+      'https://staging.asterrastore.biz.id',
       'https://asterrastore.vercel.app',
       'https://*.vercel.app',
       'http://localhost:3000',
@@ -62,7 +75,6 @@ export const auth = betterAuth({
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID || 'placeholder_client_id',
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'placeholder_client_secret',
-      redirectURI: `${appBaseUrl}/api/auth/callback/google`,
     },
   },
   user: {
