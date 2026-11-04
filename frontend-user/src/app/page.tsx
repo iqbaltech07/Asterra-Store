@@ -522,30 +522,34 @@ export default function HomePage() {
           }
           seenNames.add(appToPush.name);
           orderedApps.push(appToPush);
-          if (orderedApps.length >= 8) break;
         }
       }
 
-      // If fewer than 8, fill from category-specific candidates in allMapped
-      if (orderedApps.length < 8) {
-        let fallbackCandidates = allMapped;
-        if (activeCategory === 'promo') {
-          if (activeCampaigns && activeCampaigns.length > 0) {
-            fallbackCandidates = allMapped.filter((app) =>
-              activeCampaigns.some((camp) =>
-                isProductInCampaign(app, camp) ||
-                app.items.some((it) =>
-                  isProductInCampaign({ id: it.id, name: it.name, category: it.category?.name }, camp)
-                )
+      // Fill remaining category-specific candidates from allMapped if not already in orderedApps
+      let fallbackCandidates = allMapped;
+      if (activeCategory === 'promo') {
+        if (activeCampaigns && activeCampaigns.length > 0) {
+          fallbackCandidates = allMapped.filter((app) =>
+            activeCampaigns.some((camp) =>
+              isProductInCampaign(app, camp) ||
+              app.items.some((it) =>
+                isProductInCampaign({ id: it.id, name: it.name, category: it.category?.name }, camp)
               )
-            );
-          } else {
-            fallbackCandidates = [];
-          }
-        } else if (activeCategory === 'terlaris') {
-          fallbackCandidates = allMapped.slice().sort((a, b) => (b.targetMax || b.soldCount || 0) - (a.targetMax || a.soldCount || 0));
-        } else if (activeCategory === 'terbaru') {
-          fallbackCandidates = allMapped.slice().sort((a, b) => {
+            )
+          );
+        } else {
+          fallbackCandidates = [];
+        }
+      } else if (activeCategory === 'terlaris') {
+        fallbackCandidates = allMapped
+          .filter((app) => app.isTerlaris)
+          .slice()
+          .sort((a, b) => (b.targetMax || b.soldCount || 0) - (a.targetMax || a.soldCount || 0));
+      } else if (activeCategory === 'terbaru') {
+        fallbackCandidates = allMapped
+          .filter((app) => app.isTerbaru)
+          .slice()
+          .sort((a, b) => {
             const dtA = Math.max(
               ...[new Date((a as any).createdAt || (a as any).created_at || 0).getTime(), ...(a.items || []).map((p) => new Date((p as any).createdAt || (p as any).created_at || 0).getTime())]
             );
@@ -554,19 +558,17 @@ export default function HomePage() {
             );
             return dtB - dtA;
           });
-        }
+      }
 
-        for (const candidate of fallbackCandidates) {
-          if (!seenNames.has(candidate.name)) {
-            seenNames.add(candidate.name);
-            orderedApps.push(candidate);
-            if (orderedApps.length >= 8) break;
-          }
+      for (const candidate of fallbackCandidates) {
+        if (!seenNames.has(candidate.name)) {
+          seenNames.add(candidate.name);
+          orderedApps.push(candidate);
         }
       }
 
       if (orderedApps.length > 0) {
-        return orderedApps.slice(0, 8);
+        return orderedApps;
       }
     }
 
@@ -587,21 +589,19 @@ export default function HomePage() {
         );
       });
 
-      // Maximum 8 popular products, sorted by popularity (soldCount descending)
       return promoMatching
-        .sort((a, b) => (b.targetMax || b.soldCount || 0) - (a.targetMax || a.soldCount || 0))
-        .slice(0, 8);
+        .sort((a, b) => (b.targetMax || b.soldCount || 0) - (a.targetMax || a.soldCount || 0));
     }
 
     if (activeCategory === 'terlaris') {
       return allMapped
         .filter((app) => app.isTerlaris)
-        .sort((a, b) => (b.targetMax || b.soldCount || 0) - (a.targetMax || a.soldCount || 0))
-        .slice(0, 8);
+        .sort((a, b) => (b.targetMax || b.soldCount || 0) - (a.targetMax || a.soldCount || 0));
     }
 
     if (activeCategory === 'terbaru') {
       return allMapped
+        .filter((app) => app.isTerbaru)
         .slice()
         .sort((a, b) => {
           const dtA = Math.max(
@@ -611,11 +611,10 @@ export default function HomePage() {
             ...[new Date((b as any).createdAt || (b as any).created_at || 0).getTime(), ...(b.items || []).map((p) => new Date((p as any).createdAt || (p as any).created_at || 0).getTime())]
           );
           return dtB - dtA;
-        })
-        .slice(0, 8);
+        });
     }
 
-    return allMapped.slice(0, 8);
+    return allMapped;
   }, [sectionsResponse, allProducts, appConfigurations, activeCategory, activeCampaigns, cardsResponse]);
 
   // Client-mounted tracking
@@ -820,15 +819,82 @@ export default function HomePage() {
         <HeroBannerSwiper />
 
         {/*
+          SECTION 2: PRODUCT LOOPING SHOWCASE (MARQUEE)
+          LOCATED IMMEDIATELY BELOW HERO BANNER AND DIRECTLY ABOVE PRODUK UNGGULAN & LISENSI RESMI.
+          - Smooth infinite horizontal marquee loop.
+          - Independent showcase: NOT affected when user switches between Promo / Terlaris / Terbaru.
+          - Clear visual separation with dedicated section heading.
+        */}
+        <section aria-label="Showcase Produk Asterra" className="mb-6 sm:mb-8">
+          <div className="flex items-center justify-between mb-3 px-1">
+            <div className="flex items-center gap-2">
+              <h2 data-gsap="section-heading" className="text-xs sm:text-sm font-black uppercase tracking-wider text-[#121A2A]/85">
+                Showcase Katalog Pilihan
+              </h2>
+            </div>
+            <span className="text-[11px] text-[#121A2A]/50 font-medium hidden sm:inline">
+              Aktivasi instan 1 - 15 menit · Garansi resmi
+            </span>
+          </div>
+
+          {/* Marquee Track Container with Edge Fades */}
+          <div className="carousel-viewport relative w-full overflow-hidden py-1">
+            <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-3 sm:w-6 z-10 bg-gradient-to-r from-white to-transparent" />
+            <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-3 sm:w-6 z-10 bg-gradient-to-l from-white to-transparent" />
+
+            {isCatalogLoading ? (
+              <div className="flex flex-nowrap w-max gap-3 sm:gap-4 overflow-hidden py-1">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <ShowcaseLoopingCardSkeleton key={`skeleton-showcase-${i}`} />
+                ))}
+              </div>
+            ) : showcaseApps.length > 0 ? (
+              <div
+                className="carousel-track flex flex-nowrap w-max shrink-0 items-stretch"
+                style={{
+                  display: 'flex',
+                  width: 'max-content',
+                  flexShrink: 0,
+                  willChange: 'transform',
+                  animation: 'infinite-scroll 45s linear infinite',
+                }}
+              >
+                {/* Original Showcase Items */}
+                {showcaseApps.map((app, idx) => (
+                  <ShowcaseLoopingCard
+                    key={`showcase-orig-${app.slug || app.name}-${idx}`}
+                    app={app}
+                    rank={app.rank || (idx % 5) + 1}
+                    activeCampaigns={activeCampaigns}
+                    onQuickView={handleOpenQuickView}
+                  />
+                ))}
+
+                {/* Duplicated Items for continuous -50% loop */}
+                {showcaseApps.map((app, idx) => (
+                  <ShowcaseLoopingCard
+                    key={`showcase-dup-${app.slug || app.name}-${idx}`}
+                    app={app}
+                    rank={app.rank || (idx % 5) + 1}
+                    isDuplicate
+                    activeCampaigns={activeCampaigns}
+                    onQuickView={handleOpenQuickView}
+                  />
+                ))}
+              </div>
+            ) : null}
+          </div>
+        </section>
+
+        {/*
           SECTION 3: FEATURED PRODUCTS (STATIC GRID: [ 🔥 Promo ] [ Terlaris ] [ Terbaru ])
-          MUST BE LOCATED IMMEDIATELY BELOW THE BANNER.
-          - Selector: ONLY Promo / Terlaris / Terbaru (Best Seller is removed).
+          LOCATED IMMEDIATELY BELOW PRODUCT MARQUEE.
+          - Selector: ONLY Promo / Terlaris / Terbaru.
           - Promo is default and visually prioritized with Asterra coral accent.
           - Cards are STATIC (NOT marquee, NOT slider, NOT looping).
           - 4 columns on desktop, 2 columns on mobile.
-          - Immediately visible in first viewport!
         */}
-        <section id="produk-unggulan" aria-label="Produk Unggulan Asterra" data-gsap="featured-section" className="mb-6 sm:mb-8">
+        <section id="produk-unggulan" aria-label="Produk Unggulan Asterra" data-gsap="featured-section" className="mb-6 sm:mb-8 pt-6 sm:pt-7 border-t border-[rgba(18,26,42,0.06)]">
           {/* Section Heading & Subtitle */}
           <div className="flex items-center justify-between mb-2.5 sm:mb-3 px-0.5">
             <h2 data-gsap="section-heading" className="text-sm sm:text-base md:text-lg font-black tracking-tight text-[#121A2A]">
@@ -934,73 +1000,7 @@ export default function HomePage() {
           )}
         </section>
 
-        {/*
-          SECTION 4: PRODUCT LOOPING SHOWCASE (VISUAL PEMANIS ONLY)
-          MUST BE LOCATED BELOW FEATURED PRODUCTS.
-          - Smooth infinite horizontal marquee loop.
-          - Independent showcase: NOT affected when user switches between Promo / Terlaris / Terbaru.
-          - Clear visual separation with dedicated section heading.
-        */}
-        <section aria-label="Showcase Produk Asterra" className="mt-7 sm:mt-10 mb-6 sm:mb-8 pt-6 sm:pt-7 border-t border-[rgba(18,26,42,0.06)]">
-          <div className="flex items-center justify-between mb-3 px-1">
-            <div className="flex items-center gap-2">
-              <h2 data-gsap="section-heading" className="text-xs sm:text-sm font-black uppercase tracking-wider text-[#121A2A]/85">
-                Showcase Katalog Pilihan
-              </h2>
-            </div>
-            <span className="text-[11px] text-[#121A2A]/50 font-medium hidden sm:inline">
-              Aktivasi instan 1 - 15 menit · Garansi resmi
-            </span>
-          </div>
 
-          {/* Marquee Track Container with Edge Fades */}
-          <div className="carousel-viewport relative w-full overflow-hidden py-1">
-            <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-3 sm:w-6 z-10 bg-gradient-to-r from-white to-transparent" />
-            <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-3 sm:w-6 z-10 bg-gradient-to-l from-white to-transparent" />
-
-            {isCatalogLoading ? (
-              <div className="flex flex-nowrap w-max gap-3 sm:gap-4 overflow-hidden py-1">
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <ShowcaseLoopingCardSkeleton key={`skeleton-showcase-${i}`} />
-                ))}
-              </div>
-            ) : showcaseApps.length > 0 ? (
-              <div
-                className="carousel-track flex flex-nowrap w-max shrink-0 items-stretch"
-                style={{
-                  display: 'flex',
-                  width: 'max-content',
-                  flexShrink: 0,
-                  willChange: 'transform',
-                  animation: 'infinite-scroll 45s linear infinite',
-                }}
-              >
-                {/* Original Showcase Items */}
-                {showcaseApps.map((app, idx) => (
-                  <ShowcaseLoopingCard
-                    key={`showcase-orig-${app.slug || app.name}-${idx}`}
-                    app={app}
-                    rank={app.rank || (idx % 5) + 1}
-                    activeCampaigns={activeCampaigns}
-                    onQuickView={handleOpenQuickView}
-                  />
-                ))}
-
-                {/* Duplicated Items for continuous -50% loop */}
-                {showcaseApps.map((app, idx) => (
-                  <ShowcaseLoopingCard
-                    key={`showcase-dup-${app.slug || app.name}-${idx}`}
-                    app={app}
-                    rank={app.rank || (idx % 5) + 1}
-                    isDuplicate
-                    activeCampaigns={activeCampaigns}
-                    onQuickView={handleOpenQuickView}
-                  />
-                ))}
-              </div>
-            ) : null}
-          </div>
-        </section>
 
         {/* SECTION 5: TERAKHIR DILIHAT (Conditional from localStorage: Rendered ONLY if history exists) */}
         {recentlyViewed.length > 0 && (

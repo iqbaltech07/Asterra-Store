@@ -223,7 +223,7 @@ class HomepageSectionService:
         return sales
 
     @classmethod
-    def compute_section_products(cls, section_key: str, limit: int = 8) -> Dict[str, Any]:
+    def compute_section_products(cls, section_key: str, limit: Optional[int] = None) -> Dict[str, Any]:
         """
         Computes the definitive list of up to 8 ProductCards (Product Groups) for Promo, Terlaris, or Terbaru.
         Strictly observes:
@@ -471,16 +471,16 @@ class HomepageSectionService:
                 if matched and matched["id"] not in selected_card_ids:
                     selected_card_ids.add(matched["id"])
                     final_cards.append(matched)
-                    if len(final_cards) >= limit:
+                    if limit and limit > 0 and len(final_cards) >= limit:
                         break
 
-        # Fill remaining slots up to limit (8) from auto_ranked
-        if len(final_cards) < limit:
+        # Fill remaining slots from auto_ranked
+        if not limit or limit <= 0 or len(final_cards) < limit:
             for c in auto_ranked:
                 if c["id"] not in selected_card_ids:
                     selected_card_ids.add(c["id"])
                     final_cards.append(c)
-                    if len(final_cards) >= limit:
+                    if limit and limit > 0 and len(final_cards) >= limit:
                         break
 
         # Clean up internal helper keys before returning
@@ -499,13 +499,13 @@ class HomepageSectionService:
             "totalAvailable": len(auto_ranked),
             "count": len(output_data),
             "data": output_data,
-            "limit": limit,
+            "limit": limit if limit is not None else len(output_data),
             "updatedAt": config.get("updatedAt"),
             "updatedBy": config.get("updatedBy"),
         }
 
     @classmethod
-    def get_all_homepage_sections(cls, limit: int = 8) -> Dict[str, Any]:
+    def get_all_homepage_sections(cls, limit: Optional[int] = None) -> Dict[str, Any]:
         return {
             "success": True,
             "sections": {

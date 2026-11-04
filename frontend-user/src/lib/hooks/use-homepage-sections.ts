@@ -28,7 +28,7 @@ export interface HomepageSectionsResponse {
 }
 
 export async function fetchHomepageSections(): Promise<HomepageSectionsResponse> {
-  const res = await fetch('/api/v1/homepage/sections?limit=8');
+  const res = await fetch('/api/v1/homepage/sections');
   if (!res.ok) {
     throw new Error('Gagal memuat urutan produk homepage.');
   }
@@ -37,7 +37,7 @@ export async function fetchHomepageSections(): Promise<HomepageSectionsResponse>
 
 /**
  * Shared React Query hook for Homepage Product Showcase.
- * Guarantees exactly up to 8 products per category (Promo, Terlaris, Terbaru).
+ * Fetches authoritative homepage products per category (Promo, Terlaris, Terbaru) and TOP 1-5 Showcase.
  * Listens to RealtimeBroadcaster SSE events for instant auto-sync without page reload.
  */
 export function useHomepageSections() {

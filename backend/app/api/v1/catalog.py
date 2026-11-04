@@ -706,8 +706,8 @@ async def delete_promo_banner(banner_id: str):
 from app.services.homepage_section_service import HomepageSectionService
 
 @router.get("/homepage/sections", tags=["Homepage Sections"])
-def get_homepage_sections(request: Request, response: Response, limit: int = 8):
-    cache_key = f"hp_sections_l_{limit}"
+def get_homepage_sections(request: Request, response: Response, limit: Optional[int] = None):
+    cache_key = f"hp_sections_l_{limit if limit is not None else 'all'}"
     etag = cache.generate_etag("homepage_sections", cache_key)
     if cache.is_not_modified(request, etag):
         return cache.not_modified_response(etag, max_age=15)
@@ -721,12 +721,13 @@ def get_homepage_sections(request: Request, response: Response, limit: int = 8):
     return data
 
 @router.get("/homepage/sections/{section_key}", tags=["Homepage Sections"])
-def get_homepage_section_by_key(section_key: str, request: Request, response: Response, limit: int = 8):
-    if section_key not in ["promo", "terlaris", "terbaru"]:
-        raise HTTPException(status_code=400, detail="Section key tidak valid. Gunakan 'promo', 'terlaris', atau 'terbaru'.")
+def get_homepage_section_by_key(section_key: str, request: Request, response: Response, limit: Optional[int] = None):
+    if section_key not in ["promo", "terlaris", "terbaru", "showcase"]:
+        raise HTTPException(status_code=400, detail="Section key tidak valid. Gunakan 'promo', 'terlaris', 'terbaru', atau 'showcase'.")
+    effective_limit = 5 if section_key == "showcase" and limit is None else limit
     return {
         "success": True,
-        "data": HomepageSectionService.compute_section_products(section_key, limit=limit),
+        "data": HomepageSectionService.compute_section_products(section_key, limit=effective_limit),
     }
 
 @router.get("/admin/homepage/sections/config", tags=["Admin Homepage Ordering"])

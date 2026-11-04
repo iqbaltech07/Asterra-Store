@@ -194,35 +194,24 @@ class TestAsterraDynamicArchitecture(unittest.TestCase):
         # 2. Archived or inactive product
         db = SessionLocal()
         try:
-
-            temp_archived = db.query(Product).filter_by(status="archived").first()
-            if not temp_archived:
-
-                cand = db.query(Product).first()
-                if cand:
-
-                    cand.status = "archived"
-                    db.commit()
-                    temp_archived = cand
-
-            if temp_archived:
-
-                with self.assertRaises(ValueError) as ctx:
-
-                    OrderService.create_order({
-
-                        "items": [{"productId": temp_archived.id, "quantity": 1}],
-                        "customerEmail": "test@asterra.store",
-
-                    })
-
-                self.assertIn("tidak tersedia", str(ctx.exception).lower())
-                # Revert
-                temp_archived.status = "active"
+            cand = db.query(Product).first()
+            if cand:
+                orig_st = cand.status
+                cand.status = "archived"
                 db.commit()
-
+                CatalogService.load_products(force_reload=True)
+                try:
+                    with self.assertRaises(ValueError) as ctx:
+                        OrderService.create_order({
+                            "items": [{"productId": cand.id, "quantity": 1}],
+                            "customerEmail": "test@asterra.store",
+                        })
+                    self.assertIn("tidak tersedia", str(ctx.exception).lower())
+                finally:
+                    cand.status = orig_st
+                    db.commit()
+                    CatalogService.load_products(force_reload=True)
         finally:
-
             db.close()
 
     def test_09_store_hours_auto_close_and_manual_reopen_lifecycle(self):
