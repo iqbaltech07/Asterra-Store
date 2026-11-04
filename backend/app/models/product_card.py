@@ -30,7 +30,13 @@ class ProductCard(Base):
     attributes = relationship("ProductAttribute", back_populates="card", cascade="all, delete-orphan", order_by="ProductAttribute.display_order")
     variants = relationship("ProductVariant", back_populates="card", cascade="all, delete-orphan")
 
-    def to_dict(self, include_catalogs: bool = False, sold_count: int = 0) -> Dict[str, Any]:
+    def to_dict(
+        self,
+        include_catalogs: bool = False,
+        sold_count: int = 0,
+        dummy_sold: int = 0,
+        real_sold: int = 0,
+    ) -> Dict[str, Any]:
         sec_list = []
         if self.sections:
             try:
@@ -71,7 +77,7 @@ class ProductCard(Base):
         # 3. Regular products:
         #    Baseline strictly bounded between 10 and 25.
         card_slug = (self.slug or self.id or "").lower()
-        is_priority = any(p in card_slug for p in ["gemini", "netflix", "chatgpt", "spotify", "apple-music", "youtube", "capcut"])
+        is_priority = any(p in card_slug for p in ["gemini", "netflix", "chatgpt", "spotify", "youtube", "capcut"])
 
         sec_lower = [str(s).lower() for s in sec_list]
         badge_lower = (self.badge_label or "").lower()
@@ -80,21 +86,46 @@ class ProductCard(Base):
             and (
                 "baru" in badge_lower
                 or (len(sec_lower) == 1 and "terbaru" in sec_lower)
-                or (self.base_sold_count is not None and 7 <= self.base_sold_count <= 11)
+                or any(t in card_slug for t in ["duolingo", "getcontact", "loklok", "zoom", "meitu", "wink", "alight", "wetv", "bstation"])
             )
         )
 
-        if is_priority:
-            effective_base = int(self.base_sold_count or 30)
+        if self.base_sold_count is not None and self.base_sold_count > 0:
+            effective_base = int(self.base_sold_count)
+        elif is_priority:
+            priority_defaults = {
+                "netflix": 38,
+                "spotify": 37,
+                "capcut": 34,
+                "gemini": 33,
+                "youtube": 32,
+                "chatgpt": 30,
+                "apple-music": 28,
+            }
+            matched_key = next((k for k in priority_defaults if k in card_slug), None)
+            effective_base = priority_defaults[matched_key] if matched_key else 30
         elif is_terbaru:
-            raw_base = int(self.base_sold_count if self.base_sold_count and self.base_sold_count > 0 else 9)
-            effective_base = max(7, min(11, raw_base))
+            terbaru_defaults = {
+                "wetv": 19,
+                "apple-music": 18,
+                "getcontact": 17,
+                "wink": 16,
+                "zoom": 15,
+                "alight-motion": 14,
+                "alight": 14,
+                "duolingo": 13,
+                "loklok": 12,
+                "bstation": 12,
+                "meitu": 11,
+            }
+            matched_t = next((k for k in terbaru_defaults if k in card_slug), None)
+            effective_base = terbaru_defaults[matched_t] if matched_t else (11 + (abs(hash(card_slug)) % 10))
         else:
-            raw_base = int(self.base_sold_count if self.base_sold_count and self.base_sold_count > 0 else 18)
-            effective_base = max(10, min(25, raw_base))
+            effective_base = 10 + (abs(hash(card_slug)) % 16)
 
         # Dynamic Sold Count = BASELINE SOLD COUNT + COMPLETED DUMMY ORDER + COMPLETED REAL ORDER
-        total_sold = effective_base + int(sold_count)
+        total_order_units = (int(dummy_sold) + int(real_sold)) if (dummy_sold or real_sold) else int(sold_count)
+        total_sold = effective_base + total_order_units
 
         res = {
             "id": self.id,
@@ -123,7 +154,9 @@ class ProductCard(Base):
             "totalCatalogCount": len(self.catalogs) if self.catalogs is not None else 0,
             "activeCatalogCount": len(active_catalogs),
             "baseSoldCount": effective_base,
-            "orderSoldCount": sold_count,
+            "dummySoldCount": int(dummy_sold),
+            "realSoldCount": int(real_sold),
+            "orderSoldCount": total_order_units,
             "soldCount": total_sold,
             "createdAt": self.created_at.isoformat() if self.created_at else None,
             "updatedAt": self.updated_at.isoformat() if self.updated_at else None,

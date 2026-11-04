@@ -99,7 +99,7 @@ export default function HomePage() {
         match: (t: string) => t.includes('gemini') || t.includes('google ai'),
         cat: 'AI Assistant & Cloud',
         tag: 'ai' as const,
-        soldCount: getDynamicSoldCount('Google Gemini', now, 36),
+        soldCount: getDynamicSoldCount('Google Gemini', now, 33),
         targetMax: 40,
         rating: '5.0',
         isPromo: true,
@@ -111,7 +111,7 @@ export default function HomePage() {
         match: (t: string) => t.includes('canva'),
         cat: 'Design & Kreatif',
         tag: 'design' as const,
-        soldCount: getDynamicSoldCount('Canva', now, 29),
+        soldCount: getDynamicSoldCount('Canva', now, 22),
         targetMax: 35,
         rating: '5.0',
         isPromo: true,
@@ -135,7 +135,7 @@ export default function HomePage() {
         match: (t: string) => t.includes('chatgpt') || t.includes('chat gpt') || t.includes('plus plan'),
         cat: 'AI Assistant & Writing',
         tag: 'ai' as const,
-        soldCount: getDynamicSoldCount('ChatGPT', now, 25),
+        soldCount: getDynamicSoldCount('ChatGPT', now, 30),
         targetMax: 32,
         rating: '5.0',
         isPromo: true,
@@ -147,7 +147,7 @@ export default function HomePage() {
         match: (t: string) => t.includes('alightmotion') || t.includes('alight motion'),
         cat: 'Motion Graphic & VFX',
         tag: 'video' as const,
-        soldCount: getDynamicSoldCount('Alight Motion', now, 10),
+        soldCount: getDynamicSoldCount('Alight Motion', now, 14),
         targetMax: 15,
         rating: '4.8',
         isPromo: false,
@@ -207,7 +207,7 @@ export default function HomePage() {
         match: (t: string) => t.includes('wetv'),
         cat: 'Asian Drama VIP',
         tag: 'streaming' as const,
-        soldCount: getDynamicSoldCount('WeTV', now, 9),
+        soldCount: getDynamicSoldCount('WeTV', now, 19),
         targetMax: 15,
         rating: '4.8',
         isPromo: false,
@@ -219,7 +219,7 @@ export default function HomePage() {
         match: (t: string) => t.includes('iqiyi'),
         cat: 'Anime & Drama HD',
         tag: 'streaming' as const,
-        soldCount: getDynamicSoldCount('iQIYI', now, 22),
+        soldCount: getDynamicSoldCount('iQIYI', now, 18),
         targetMax: 28,
         rating: '4.8',
         isPromo: true,
@@ -231,7 +231,7 @@ export default function HomePage() {
         match: (t: string) => t.includes('bstation'),
         cat: 'Anime & Pop Culture',
         tag: 'streaming' as const,
-        soldCount: getDynamicSoldCount('Bstation', now, 8),
+        soldCount: getDynamicSoldCount('Bstation', now, 12),
         targetMax: 15,
         rating: '4.8',
         isPromo: false,
@@ -243,7 +243,7 @@ export default function HomePage() {
         match: (t: string) => t.includes('viu'),
         cat: 'Asian Drama & Variety',
         tag: 'streaming' as const,
-        soldCount: getDynamicSoldCount('Viu', now, 27),
+        soldCount: getDynamicSoldCount('Viu', now, 20),
         targetMax: 33,
         rating: '4.9',
         isPromo: false,
@@ -255,7 +255,7 @@ export default function HomePage() {
         match: (t: string) => t.includes('wink'),
         cat: 'Apps & Streaming',
         tag: 'video' as const,
-        soldCount: getDynamicSoldCount('Wink', now, 24),
+        soldCount: getDynamicSoldCount('Wink', now, 16),
         targetMax: 30,
         rating: '4.9',
         isPromo: false,
@@ -267,7 +267,7 @@ export default function HomePage() {
         match: (t: string) => t.includes('meitu'),
         cat: 'Apps & Streaming',
         tag: 'design' as const,
-        soldCount: getDynamicSoldCount('Meitu', now, 22),
+        soldCount: getDynamicSoldCount('Meitu', now, 11),
         targetMax: 28,
         rating: '4.9',
         isPromo: false,
@@ -279,7 +279,7 @@ export default function HomePage() {
         match: (t: string) => t.includes('loklok'),
         cat: 'Apps & Streaming',
         tag: 'streaming' as const,
-        soldCount: getDynamicSoldCount('Loklok', now, 22),
+        soldCount: getDynamicSoldCount('Loklok', now, 12),
         targetMax: 28,
         rating: '5.0',
         isPromo: false,
@@ -291,7 +291,7 @@ export default function HomePage() {
         match: (t: string) => t.includes('getcontact') || t.includes('getcontac'),
         cat: 'Apps & Streaming',
         tag: 'other' as const,
-        soldCount: getDynamicSoldCount('Getcontact', now, 22),
+        soldCount: getDynamicSoldCount('Getcontact', now, 17),
         targetMax: 28,
         rating: '5.0',
         isPromo: false,
@@ -303,7 +303,7 @@ export default function HomePage() {
         match: (t: string) => t.includes('zoom'),
         cat: 'Apps & Streaming',
         tag: 'other' as const,
-        soldCount: getDynamicSoldCount('Zoom', now, 22),
+        soldCount: getDynamicSoldCount('Zoom', now, 15),
         targetMax: 30,
         rating: '5.0',
         isPromo: false,
@@ -315,7 +315,7 @@ export default function HomePage() {
         match: (t: string) => t.includes('apple music') || t.includes('applemusic'),
         cat: 'Apps & Streaming',
         tag: 'streaming' as const,
-        soldCount: getDynamicSoldCount('Apple Music', now, 22),
+        soldCount: getDynamicSoldCount('Apple Music', now, 18),
         targetMax: 30,
         rating: '5.0',
         isPromo: false,
@@ -625,23 +625,76 @@ export default function HomePage() {
     setIsMounted(true);
   }, []);
 
-  // Product Looping Showcase: Curated list of popular accounts that stays completely independent of the selector
+  // Product Looping Showcase: Curated list of top accounts for the marquee loop
   const showcaseApps = useMemo(() => {
-    const showcaseNames = ['Canva', 'ChatGPT', 'Netflix', 'YouTube', 'CapCut', 'Google Gemini', 'Spotify', 'Vidio', 'Alight Motion', 'iQIYI'];
+    // 1. Check if backend provided authoritative showcase section data
+    const backendShowcase = sectionsResponse?.sections?.showcase?.data;
     const dbCards = cardsResponse?.data || [];
-    const mapped = showcaseNames.map((name) => {
-      const matchedCard = dbCards.find((c) => {
-        const cName = c.name.toLowerCase();
-        const tName = name.toLowerCase();
-        return cName.includes(tName) || tName.includes(cName);
-      });
 
-      const conf = appConfigurations.find((a) => a.name === name) || {
+    if (Array.isArray(backendShowcase) && backendShowcase.length > 0) {
+      return backendShowcase.map((item: any, idx: number) => {
+        const matchedCard = dbCards.find(
+          (c) => (c.id && c.id === item.id) || (c.slug && c.slug === item.slug) || c.name.toLowerCase() === (item.name || '').toLowerCase()
+        );
+
+        const items = allProducts.filter((p) => {
+          if (matchedCard && ((p as any).cardId === matchedCard.id || (p as any).card_id === matchedCard.id)) return true;
+          if ((p as any).cardId === item.id || (p as any).card_id === item.id) return true;
+          const text = `${p.name} ${(p as unknown as { id?: string }).id || ''}`.toLowerCase();
+          return text.includes((item.slug || '').replace(/-/g, ' ')) || text.includes((item.name || '').toLowerCase());
+        });
+
+        const activePrices = items.map((p) => p.price).filter((p) => p > 0);
+        const minPrice = item.minPrice && item.minPrice > 0
+          ? item.minPrice
+          : (matchedCard && matchedCard.minPrice > 0 ? matchedCard.minPrice : (activePrices.length > 0 ? Math.min(...activePrices) : 0));
+
+        const isOutOfStock =
+          item.isOutOfStock ||
+          item.stockStatus === 'out_of_stock' ||
+          (matchedCard && (matchedCard.stockStatus === 'out_of_stock' || matchedCard.isOutOfStock)) ||
+          minPrice <= 0;
+
+        return {
+          id: item.id || matchedCard?.id || `showcase-${idx}`,
+          name: item.name || matchedCard?.name || 'Layanan Pilihan',
+          slug: item.slug || matchedCard?.slug || 'layanan-pilihan',
+          category: item.categoryName || matchedCard?.categoryName || 'Apps & Streaming',
+          categoryTag: (item.categoryTag || 'other') as any,
+          logoUrl: item.logoUrl || matchedCard?.logoUrl,
+          imageUrl: item.imageUrl || matchedCard?.imageUrl,
+          description: item.description || matchedCard?.description,
+          soldCount: item.soldCount ?? matchedCard?.soldCount ?? 20,
+          rating: String(item.rating || matchedCard?.rating || '5.0'),
+          badgeLabel: item.badgeLabel || `TOP ${idx + 1}`,
+          rank: item.rank || idx + 1,
+          items,
+          minPrice: minPrice > 0 ? minPrice : 11815,
+          isOutOfStock,
+        };
+      });
+    }
+
+    // 2. Default Curated TOP 5 matching Reference (iQIYI, Canva, ChatGPT, Netflix, YouTube)
+    const defaultShowcaseOrder = [
+      { name: 'iQIYI', slug: 'iqiyi', rank: 1 },
+      { name: 'Canva', slug: 'canva', rank: 2 },
+      { name: 'ChatGPT', slug: 'chatgpt', rank: 3 },
+      { name: 'Netflix', slug: 'netflix', rank: 4 },
+      { name: 'YouTube', slug: 'youtube', rank: 5 },
+    ];
+
+    const mapped = defaultShowcaseOrder.map(({ name, slug, rank }) => {
+      const matchedCard = dbCards.find(
+        (c) => c.slug === slug || c.id === slug || c.name.toLowerCase().includes(name.toLowerCase())
+      );
+
+      const conf = appConfigurations.find((a) => a.name.toLowerCase().includes(name.toLowerCase())) || {
         name,
         match: (t: string) => t.includes(name.toLowerCase()),
         cat: 'Digital Product',
         tag: 'other' as const,
-        soldCount: getDynamicSoldCount(name, now),
+        soldCount: matchedCard?.soldCount || 20,
         rating: '5.0',
       };
 
@@ -654,7 +707,7 @@ export default function HomePage() {
       const activePrices = items.map((p) => p.price).filter((p) => p > 0);
       const minPrice = matchedCard && matchedCard.minPrice > 0
         ? matchedCard.minPrice
-        : (activePrices.length > 0 ? Math.min(...activePrices) : 0);
+        : (activePrices.length > 0 ? Math.min(...activePrices) : (items.length > 0 ? 15000 : 0));
 
       const isOutOfStock =
         matchedCard ? (matchedCard.stockStatus === 'out_of_stock' || matchedCard.isOutOfStock || minPrice <= 0) :
@@ -671,9 +724,9 @@ export default function HomePage() {
         : conf.soldCount;
 
       return {
-        id: matchedCard?.id || conf.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
-        name: matchedCard?.name || conf.name,
-        slug: matchedCard?.slug || conf.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+        id: matchedCard?.id || slug,
+        name: matchedCard?.name || name,
+        slug: matchedCard?.slug || slug,
         category: matchedCard?.categoryName || conf.cat,
         categoryTag: conf.tag,
         logoUrl: matchedCard?.logoUrl,
@@ -681,15 +734,16 @@ export default function HomePage() {
         description: matchedCard?.description,
         soldCount: finalSoldCount,
         rating: String(matchedCard?.rating || conf.rating || '5.0'),
+        badgeLabel: `TOP ${rank}`,
+        rank,
         items,
-        minPrice,
+        minPrice: minPrice > 0 ? minPrice : 15000,
         isOutOfStock,
       };
     });
 
-    // Only include applications that have real items
-    return mapped.filter((app) => app.items.length > 0 && app.minPrice > 0);
-  }, [allProducts, appConfigurations, now, cardsResponse]);
+    return mapped;
+  }, [sectionsResponse, allProducts, appConfigurations, cardsResponse]);
 
   const handleOpenQuickView = (app: ApplicationGroupItem) => {
     const minPrice = app.minPrice;
@@ -922,20 +976,22 @@ export default function HomePage() {
                 }}
               >
                 {/* Original Showcase Items */}
-                {showcaseApps.map((app) => (
+                {showcaseApps.map((app, idx) => (
                   <ShowcaseLoopingCard
-                    key={`showcase-orig-${app.name}`}
+                    key={`showcase-orig-${app.slug || app.name}-${idx}`}
                     app={app}
+                    rank={app.rank || (idx % 5) + 1}
                     activeCampaigns={activeCampaigns}
                     onQuickView={handleOpenQuickView}
                   />
                 ))}
 
                 {/* Duplicated Items for continuous -50% loop */}
-                {showcaseApps.map((app) => (
+                {showcaseApps.map((app, idx) => (
                   <ShowcaseLoopingCard
-                    key={`showcase-dup-${app.name}`}
+                    key={`showcase-dup-${app.slug || app.name}-${idx}`}
                     app={app}
+                    rank={app.rank || (idx % 5) + 1}
                     isDuplicate
                     activeCampaigns={activeCampaigns}
                     onQuickView={handleOpenQuickView}

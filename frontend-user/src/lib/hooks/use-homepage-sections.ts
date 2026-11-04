@@ -5,7 +5,7 @@ import { useEffect } from 'react';
 import { ApplicationGroupItem } from '@/components/home/product-showcase-cards';
 
 export interface SectionResult {
-  sectionKey: 'promo' | 'terlaris' | 'terbaru';
+  sectionKey: 'promo' | 'terlaris' | 'terbaru' | 'showcase';
   mode: 'auto' | 'manual';
   manualProductIds: string[];
   totalAvailable: number;
@@ -22,6 +22,7 @@ export interface HomepageSectionsResponse {
     promo: SectionResult;
     terlaris: SectionResult;
     terbaru: SectionResult;
+    showcase?: SectionResult;
   };
   timestamp: string;
 }

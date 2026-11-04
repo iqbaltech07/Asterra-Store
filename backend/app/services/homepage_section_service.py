@@ -14,7 +14,7 @@ from app.services.campaign_service import CampaignService
 from app.services.realtime_broadcaster import RealtimeBroadcaster
 from app.core.cache import cache
 
-VALID_SECTIONS = ["promo", "terlaris", "terbaru"]
+VALID_SECTIONS = ["promo", "terlaris", "terbaru", "showcase"]
 
 DEFAULT_CONFIG: Dict[str, Dict[str, Any]] = {
     "promo": {
@@ -35,6 +35,13 @@ DEFAULT_CONFIG: Dict[str, Dict[str, Any]] = {
         "sectionKey": "terbaru",
         "mode": "auto",
         "manualProductIds": [],
+        "updatedBy": "system",
+        "updatedAt": datetime.utcnow().isoformat(),
+    },
+    "showcase": {
+        "sectionKey": "showcase",
+        "mode": "manual",
+        "manualProductIds": ["card-iqiyi", "card-canva", "card-chatgpt", "card-netflix", "card-youtube"],
         "updatedBy": "system",
         "updatedAt": datetime.utcnow().isoformat(),
     },
@@ -425,6 +432,17 @@ class HomepageSectionService:
                 ),
                 reverse=True,
             )
+        elif section_key == "showcase":
+            # Auto Showcase: Prioritize top performers by sold_count DESC
+            auto_ranked = sorted(
+                candidate_cards,
+                key=lambda x: (
+                    x["soldCount"],
+                    x["_effective_dt"].timestamp(),
+                    x["id"],
+                ),
+                reverse=True,
+            )
 
         # Helper to match a manual id/slug/name to candidate card
         def match_candidate(mid: str) -> Optional[Dict[str, Any]]:
@@ -467,8 +485,11 @@ class HomepageSectionService:
 
         # Clean up internal helper keys before returning
         output_data = []
-        for c in final_cards:
+        for idx, c in enumerate(final_cards):
             item_clean = {k: v for k, v in c.items() if k != "_effective_dt"}
+            if section_key == "showcase":
+                item_clean["rank"] = idx + 1
+                item_clean["badgeLabel"] = f"TOP {idx + 1}"
             output_data.append(item_clean)
 
         return {
@@ -491,6 +512,7 @@ class HomepageSectionService:
                 "promo": cls.compute_section_products("promo", limit=limit),
                 "terlaris": cls.compute_section_products("terlaris", limit=limit),
                 "terbaru": cls.compute_section_products("terbaru", limit=limit),
+                "showcase": cls.compute_section_products("showcase", limit=5),
             },
             "timestamp": datetime.utcnow().isoformat(),
         }

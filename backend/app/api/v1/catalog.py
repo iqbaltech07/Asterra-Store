@@ -945,6 +945,44 @@ async def update_admin_card(card_id: str, request: Request):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Gagal memperbarui Card Produk: {str(e)}")
 
+@router.put("/admin/cards/{card_id}/baseline", tags=["Admin Product Cards"])
+@router.patch("/admin/cards/{card_id}/baseline", tags=["Admin Product Cards"])
+async def update_admin_card_baseline(card_id: str, request: Request):
+    payload = await request.json()
+    try:
+        raw_val = payload.get("baseSoldCount") if "baseSoldCount" in payload else (payload.get("base_sold_count") if "base_sold_count" in payload else payload.get("baseline", 0))
+        card = CardService.update_card(card_id, {"baseSoldCount": int(raw_val)})
+        cache.invalidate("catalog", "homepage_sections")
+        RealtimeBroadcaster.broadcast("cards:updated", {"action": "baseline_updated", "id": card_id, "baseSoldCount": card.get("baseSoldCount")}, target_role="all")
+        return {
+            "success": True,
+            "message": f"Baseline jumlah terjual untuk '{card['name']}' berhasil diperbarui.",
+            "data": card,
+        }
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Gagal memperbarui baseline: {str(e)}")
+
+@router.patch("/admin/cards/batch-baseline", tags=["Admin Product Cards"])
+@router.put("/admin/cards/batch-baseline", tags=["Admin Product Cards"])
+async def batch_update_admin_card_baselines(request: Request):
+    payload = await request.json()
+    updates = payload.get("updates") if isinstance(payload, dict) and "updates" in payload else (payload if isinstance(payload, list) else [])
+    try:
+        updated = CardService.batch_update_baselines(updates)
+        cache.invalidate("catalog", "homepage_sections")
+        RealtimeBroadcaster.broadcast("cards:updated", {"action": "batch_baseline_updated", "count": len(updated)}, target_role="all")
+        return {
+            "success": True,
+            "message": f"{len(updated)} baseline Product Card berhasil diperbarui.",
+            "data": updated,
+        }
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Gagal memperbarui batch baseline: {str(e)}")
+
 @router.delete("/admin/cards/{card_id}", tags=["Admin Product Cards"])
 def delete_admin_card(card_id: str):
     try:
