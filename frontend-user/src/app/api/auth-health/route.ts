@@ -25,14 +25,22 @@ export async function GET() {
   let dbUser = null;
   let dbPort = null;
   let dbParams = null;
+  let passwordDiagnostic = null;
   if (rawDbUrl) {
     try {
-      const sanitized = rawDbUrl.replace(/^postgresql:\/\//, 'http://');
+      const sanitized = rawDbUrl.trim().replace(/^["']|["']$/g, '').replace(/^postgresql:\/\//, 'http://');
       const parsed = new URL(sanitized);
       dbHost = parsed.host;
       dbUser = parsed.username ? parsed.username.slice(0, 16) + '...' : null;
       dbPort = parsed.port || '5432';
       dbParams = parsed.search || null;
+      passwordDiagnostic = {
+        hasQuotes: rawDbUrl.startsWith('"') || rawDbUrl.startsWith("'"),
+        hasWhitespace: rawDbUrl.trim() !== rawDbUrl,
+        length: parsed.password ? parsed.password.length : 0,
+        matchesDevEnvPassword: parsed.password === 'hOcuOBmRdytexlFE',
+        matchesProdEnvPassword: parsed.password === 'gWh4ph3ASw49BZRm',
+      };
     } catch {
       dbHost = 'invalid-url';
     }
@@ -84,6 +92,7 @@ export async function GET() {
     databaseUser: dbUser,
     databasePort: dbPort,
     databaseParams: dbParams,
+    passwordDiagnostic,
     hasDirectUrl: Boolean(process.env.DIRECT_URL),
     directHost: directHost,
     directPort: directPort,

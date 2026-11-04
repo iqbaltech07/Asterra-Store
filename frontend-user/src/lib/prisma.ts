@@ -8,8 +8,9 @@ function getOptimizedDatabaseUrl(): string | undefined {
   const raw = process.env.DATABASE_URL;
   if (!raw) return undefined;
   try {
-    const parsed = new URL(raw.replace(/^postgresql:\/\//, 'http://'));
-    if (parsed.port === '6543' || raw.includes('pooler.supabase.com')) {
+    const cleaned = raw.trim().replace(/^["']|["']$/g, '');
+    const parsed = new URL(cleaned.replace(/^postgresql:\/\//, 'http://'));
+    if (parsed.port === '6543' || cleaned.includes('pooler.supabase.com')) {
       if (!parsed.searchParams.has('connection_limit')) {
         parsed.searchParams.set('connection_limit', '1');
       }
@@ -21,6 +22,7 @@ function getOptimizedDatabaseUrl(): string | undefined {
       }
       return parsed.toString().replace(/^http:\/\//, 'postgresql://');
     }
+    return cleaned;
   } catch {}
   return raw;
 }
