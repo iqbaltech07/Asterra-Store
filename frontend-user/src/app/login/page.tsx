@@ -45,8 +45,22 @@ function LoginFormContent() {
   const safeCallback = rawCallback ? getSafeInternalRedirectUrl(rawCallback, '/') : '/';
   const callbackUrl = appendReferralParams(safeCallback);
 
+  const urlError = searchParams.get('error');
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Catch OAuth redirect errors (e.g. from Better Auth callback redirect)
+  useEffect(() => {
+    if (urlError) {
+      if (urlError === 'access_denied') {
+        setErrorMessage('Akses login Google dibatalkan.');
+      } else if (urlError === 'internal_server_error') {
+        setErrorMessage('Terjadi kendala pada server autentikasi. Silakan coba kembali beberapa saat lagi.');
+      } else {
+        setErrorMessage(`Gagal melakukan autentikasi (${urlError}).`);
+      }
+    }
+  }, [urlError]);
 
   const { data: session, isPending } = useSession();
   const { user: legacyUser } = useAuthStore();

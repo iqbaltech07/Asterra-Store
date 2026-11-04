@@ -46,7 +46,8 @@ export const auth = betterAuth({
     onError: (error) => {
       console.error('[BetterAuth:APIError]', error);
     },
-    throw: true,
+    errorURL: '/login',
+    throw: false,
   },
   emailAndPassword: {
     enabled: true,
@@ -92,6 +93,7 @@ export const auth = betterAuth({
                 email: user.email,
                 name: user.name || '',
               }),
+              signal: AbortSignal.timeout(5000),
             });
             console.log(`[BetterAuth:Hook] Dispatched welcome email for new user: ${user.email}`);
           } catch (hookErr) {
