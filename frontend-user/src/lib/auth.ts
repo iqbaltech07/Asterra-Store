@@ -70,6 +70,15 @@ export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: 'postgresql',
   }),
+  account: {
+    storeStateStrategy: 'cookie',
+  },
+  onAPIError: {
+    onError: (error) => {
+      console.error('[BetterAuth:APIError]', error);
+    },
+    throw: true,
+  },
   emailAndPassword: {
     enabled: true,
   },
