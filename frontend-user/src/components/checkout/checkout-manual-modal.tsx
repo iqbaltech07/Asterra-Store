@@ -20,6 +20,12 @@ import {
   faDownload,
   faMagnifyingGlassPlus,
   faMagnifyingGlassMinus,
+  faBuildingColumns,
+  faSpinner,
+  faChevronDown,
+  faChevronUp,
+  faRotateRight,
+  faCircleExclamation,
 } from '@fortawesome/free-solid-svg-icons';
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
 
@@ -39,6 +45,18 @@ export interface ManualPaymentModalData {
   qr_url?: string;
   qrString?: string;
   qr_string?: string;
+  // Virtual Account fields (Midtrans Core API)
+  vaNumber?: string;
+  va_number?: string;
+  bank?: string;
+  billerCode?: string;
+  biller_code?: string;
+  billKey?: string;
+  bill_key?: string;
+  // In-popup loading & error state
+  isLoading?: boolean;
+  errorMessage?: string;
+  onRetry?: () => void;
   instructions?: Array<{ title: string; steps: string[] }>;
 }
 
@@ -83,6 +101,7 @@ export function CheckoutManualModal({
   const [paidStatusLabel, setPaidStatusLabel] = useState('Sedang Diproses');
   const [isQrisExpanded, setIsQrisExpanded] = useState(false);
   const [isZoomedIn, setIsZoomedIn] = useState(false);
+  const [activeInstructionIdx, setActiveInstructionIdx] = useState<number | null>(0);
 
   // Close expanded QRIS lightbox on Escape key
   useEffect(() => {
@@ -245,20 +264,65 @@ export function CheckoutManualModal({
 
   const formattedAmount = amountNumber.toLocaleString('id-ID');
 
-  // Dynamic QRIS applies exclusively to Midtrans automatic payment gateway charges
+  // Helper for bank styling & metadata
+  const getBankMeta = (method?: string, bank?: string) => {
+    const m = (bank || method || '').toLowerCase();
+    if (m.includes('bca')) {
+      return {
+        name: 'Bank Central Asia (BCA)',
+        shortName: 'BCA',
+        badgeColor: 'bg-blue-50 text-blue-700 border-blue-200',
+      };
+    }
+    if (m.includes('mandiri')) {
+      return {
+        name: 'Bank Mandiri',
+        shortName: 'Mandiri',
+        badgeColor: 'bg-amber-50 text-amber-800 border-amber-200',
+      };
+    }
+    if (m.includes('bni')) {
+      return {
+        name: 'Bank Negara Indonesia (BNI)',
+        shortName: 'BNI',
+        badgeColor: 'bg-teal-50 text-teal-800 border-teal-200',
+      };
+    }
+    if (m.includes('bri')) {
+      return {
+        name: 'Bank Rakyat Indonesia (BRI)',
+        shortName: 'BRI',
+        badgeColor: 'bg-sky-50 text-sky-800 border-sky-200',
+      };
+    }
+    return {
+      name: 'Virtual Account Bank',
+      shortName: 'VA',
+      badgeColor: 'bg-slate-50 text-slate-800 border-slate-200',
+    };
+  };
+
+  // Virtual Account (BCA, BNI, BRI, Mandiri via Midtrans Core API)
+  const isVirtualAccount =
+    ['bca_va', 'bni_va', 'bri_va', 'mandiri_va', 'bca', 'bni', 'bri', 'mandiri', 'echannel'].includes(data.method) ||
+    Boolean(data.vaNumber || data.va_number || data.billKey || data.bill_key);
+
+  // Dynamic QRIS applies to automated QRIS charges
   const isDynamicQris =
+    !isVirtualAccount &&
     !data.method?.startsWith('manual_') &&
     data.method !== 'manual_qris' &&
     data.method !== 'qris_manual' &&
     data.method !== 'manual_bca' &&
     data.method !== 'manual_dana' &&
-    Boolean(
-      data.qrString ||
-      data.qr_string ||
-      (data.qrUrl && !data.qrUrl.includes('/images/')) ||
-      (data.qr_url && !data.qr_url.includes('/images/')) ||
-      data.method === 'qris_midtrans'
-    );
+    (data.method === 'qris' ||
+      data.method === 'qris_midtrans' ||
+      Boolean(
+        data.qrString ||
+        data.qr_string ||
+        (data.qrUrl && !data.qrUrl.includes('/images/')) ||
+        (data.qr_url && !data.qr_url.includes('/images/'))
+      ));
 
   const uploadedQrisUrl =
     paymentConfig?.qris?.image_url ||
@@ -270,7 +334,7 @@ export function CheckoutManualModal({
     paymentConfig?.qris?.merchant_name ||
     (paymentConfig as any)?.qrisMerchantName ||
     (paymentConfig as any)?.qris_merchant_name ||
-    'ASTERRA STORE QRIS';
+    'ASTERRA STORE';
 
   const activeQrImage =
     data.qrUrl ||
@@ -280,6 +344,18 @@ export function CheckoutManualModal({
           data.qrString || data.qr_string || ''
         )}`
       : uploadedQrisUrl);
+
+  const modalTitle = isPaidSuccess
+    ? 'Pembayaran Berhasil!'
+    : data.isLoading
+    ? isVirtualAccount
+      ? `Membuat Virtual Account ${getBankMeta(data.method, data.bank).shortName}...`
+      : 'Menyiapkan Barcode QRIS...'
+    : isDynamicQris
+    ? 'QRIS (Scan & Bayar)'
+    : isVirtualAccount
+    ? `Virtual Account ${getBankMeta(data.method, data.bank).name}`
+    : 'Instruksi Pembayaran Manual';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -302,11 +378,7 @@ export function CheckoutManualModal({
               ID Pesanan: {data.orderId}
             </span>
             <h3 className="text-xl font-bold text-foreground mt-1">
-              {isPaidSuccess
-                ? 'Pembayaran Berhasil!'
-                : isDynamicQris
-                ? 'QRIS Dinamis Midtrans (Scan & Bayar)'
-                : 'Instruksi Pembayaran Manual'}
+              {modalTitle}
             </h3>
           </div>
           <button
@@ -406,9 +478,69 @@ export function CheckoutManualModal({
               </Button>
             </div>
           </div>
+        ) : data.isLoading ? (
+          /* ========================================================= */
+          /* IN-POPUP LOADING STATE: While QRIS / VA is generating     */
+          /* ========================================================= */
+          <div className="py-8 px-4 text-center space-y-5 animate-in fade-in duration-200">
+            {isVirtualAccount ? (
+              <div className="space-y-4">
+                <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 text-primary flex items-center justify-center mx-auto shadow-sm">
+                  <FontAwesomeIcon icon={faBuildingColumns} className="w-8 h-8 text-primary animate-pulse" />
+                </div>
+                <div className="space-y-1.5">
+                  <div className="inline-flex items-center gap-2 text-foreground font-bold text-base">
+                    <FontAwesomeIcon icon={faSpinner} className="w-4 h-4 animate-spin text-primary" />
+                    <span>Membuat Nomor Virtual Account...</span>
+                  </div>
+                  <p className="text-xs text-foreground-muted max-w-sm mx-auto leading-relaxed">
+                    Menghubungkan langsung ke server {getBankMeta(data.method, data.bank).name} untuk menerbitkan nomor pembayaran Anda.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="w-20 h-20 rounded-2xl bg-primary/10 border border-primary/20 text-primary flex items-center justify-center mx-auto shadow-sm">
+                  <FontAwesomeIcon icon={faQrcode} className="w-10 h-10 text-primary animate-pulse" />
+                </div>
+                <div className="space-y-1.5">
+                  <div className="inline-flex items-center gap-2 text-foreground font-bold text-base">
+                    <FontAwesomeIcon icon={faSpinner} className="w-4 h-4 animate-spin text-primary" />
+                    <span>Menyiapkan Barcode QRIS...</span>
+                  </div>
+                  <p className="text-xs text-foreground-muted max-w-sm mx-auto leading-relaxed">
+                    Barcode QRIS dapat dipindai dari semua aplikasi e-wallet (GoPay, OVO, DANA, ShopeePay, LinkAja) & semua m-Banking.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-raised border border-border text-[11px] text-foreground-muted font-mono">
+              <span>Mohon tunggu sebentar...</span>
+            </div>
+          </div>
+        ) : data.errorMessage ? (
+          /* ========================================================= */
+          /* IN-POPUP ERROR STATE                                      */
+          /* ========================================================= */
+          <div className="py-6 px-4 text-center space-y-4 animate-in fade-in duration-200">
+            <div className="w-12 h-12 rounded-full bg-status-error/10 text-status-error flex items-center justify-center mx-auto">
+              <FontAwesomeIcon icon={faCircleExclamation} className="w-6 h-6" />
+            </div>
+            <div className="space-y-1">
+              <h4 className="text-sm font-bold text-foreground">Gagal Menyiapkan Pembayaran</h4>
+              <p className="text-xs text-foreground-muted max-w-xs mx-auto">{data.errorMessage}</p>
+            </div>
+            {data.onRetry && (
+              <Button size="sm" onClick={data.onRetry} className="gap-2 text-xs font-semibold cursor-pointer">
+                <FontAwesomeIcon icon={faRotateRight} className="w-3.5 h-3.5" />
+                <span>Coba Lagi</span>
+              </Button>
+            )}
+          </div>
         ) : (
           /* ========================================================= */
-          /* PENDING PAYMENT VIEW: Manual Transfer Instructions        */
+          /* ACTIVE PAYMENT VIEW: QRIS / VA / Manual Transfer          */
           /* ========================================================= */
           <>
             {/* Live Expiry Countdown Box */}
@@ -475,7 +607,7 @@ export function CheckoutManualModal({
               </div>
             </div>
 
-            {/* Dynamic QRIS Midtrans View */}
+            {/* 1. Dynamic QRIS View (All E-Wallets & Banks) */}
             {isDynamicQris && (
               <div className="p-4 bg-surface-raised rounded-xl border border-border text-center space-y-3">
                 <div
@@ -486,7 +618,7 @@ export function CheckoutManualModal({
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={activeQrImage}
-                    alt="ASTERRA STORE Dynamic QRIS"
+                    alt="ASTERRA STORE QRIS"
                     className="w-full h-full object-contain rounded-xl group-hover:scale-[1.02] transition-transform duration-200"
                   />
 
@@ -503,13 +635,13 @@ export function CheckoutManualModal({
 
                 <div className="space-y-1.5">
                   <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-[11px] font-bold">
-                    <span>QRIS Dinamis Midtrans</span>
+                    <span>QRIS</span>
                   </div>
                   <span className="text-xs font-bold text-foreground block">
                     {qrisMerchantName}
                   </span>
                   <p className="text-[11px] text-foreground-muted max-w-xs mx-auto leading-relaxed">
-                    Bisa di-scan via BCA Mobile, Mandiri Livin, BRImo, BNI Mobile, GoPay, OVO, Dana, ShopeePay & semua aplikasi perbankan berlogo QRIS.
+                    Bisa di-scan via GoPay, OVO, DANA, ShopeePay, LinkAja, BCA Mobile, Livin' Mandiri, BRImo, BNI Mobile & semua aplikasi berlogo QRIS.
                   </p>
 
                   <div className="pt-1.5 flex flex-wrap items-center justify-center gap-2">
@@ -549,8 +681,131 @@ export function CheckoutManualModal({
               </div>
             )}
 
-            {/* Method Details: Bank BCA / QRIS / DANA (Only for manual transfer) */}
-            {!isDynamicQris && data.method === 'manual_bca' && (
+            {/* 2. Virtual Account View (BCA, Mandiri, BNI, BRI via Core API) */}
+            {isVirtualAccount && (
+              <div className="p-4 bg-surface-raised rounded-xl border border-border space-y-4">
+                {/* Bank Header Card */}
+                <div className="flex items-center justify-between pb-3 border-b border-border/80">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold text-xs">
+                      <FontAwesomeIcon icon={faBuildingColumns} className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold text-foreground block">
+                        {getBankMeta(data.method, data.bank).name}
+                      </span>
+                      <span className="text-[11px] text-foreground-muted">
+                        Virtual Account Resmi
+                      </span>
+                    </div>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                    Otomatis
+                  </span>
+                </div>
+
+                {/* Mandiri (Biller Code + Bill Key) vs Other Banks (Single VA Number) */}
+                {data.billerCode && data.billKey ? (
+                  <div className="space-y-3">
+                    {/* Biller Code Box */}
+                    <div className="flex items-center justify-between bg-surface p-3.5 rounded-xl border border-border shadow-xs">
+                      <div>
+                        <span className="text-[11px] text-foreground-muted block font-medium">
+                          Kode Perusahaan (Biller Code):
+                        </span>
+                        <span className="font-mono font-extrabold text-lg text-foreground tracking-wider block">
+                          {data.billerCode}
+                        </span>
+                        <span className="text-[10px] text-foreground-muted">Nama Penyedia Jasa: MIDTRANS</span>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => onCopy(data.billerCode!, 'biller', 'Kode Perusahaan')}
+                        className="text-xs gap-1.5 h-8 font-semibold cursor-pointer"
+                      >
+                        {copiedKey === 'biller' ? (
+                          <FontAwesomeIcon icon={faCheck} className="w-3.5 h-3.5 text-status-success" />
+                        ) : (
+                          <FontAwesomeIcon icon={faCopy} className="w-3.5 h-3.5" />
+                        )}
+                        <span>{copiedKey === 'biller' ? 'Tersalin' : 'Salin'}</span>
+                      </Button>
+                    </div>
+
+                    {/* Bill Key Box */}
+                    <div className="flex items-center justify-between bg-surface p-3.5 rounded-xl border border-border shadow-xs">
+                      <div>
+                        <span className="text-[11px] text-foreground-muted block font-medium">
+                          Nomor Pembayaran (Bill Key):
+                        </span>
+                        <span className="font-mono font-extrabold text-lg text-primary tracking-wider block">
+                          {data.billKey}
+                        </span>
+                        <span className="text-[10px] text-foreground-muted">Input nomor ini saat transaksi</span>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => onCopy(data.billKey!, 'billkey', 'Nomor Pembayaran')}
+                        className="text-xs gap-1.5 h-8 font-semibold cursor-pointer"
+                      >
+                        {copiedKey === 'billkey' ? (
+                          <FontAwesomeIcon icon={faCheck} className="w-3.5 h-3.5 text-status-success" />
+                        ) : (
+                          <FontAwesomeIcon icon={faCopy} className="w-3.5 h-3.5" />
+                        )}
+                        <span>{copiedKey === 'billkey' ? 'Tersalin' : 'Salin'}</span>
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  /* Single Virtual Account Number (BCA / BNI / BRI) */
+                  <div className="bg-surface p-4 rounded-xl border border-border shadow-xs space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-foreground-muted font-medium">
+                        Nomor Virtual Account:
+                      </span>
+                      <span className="text-[10px] font-semibold text-primary uppercase">
+                        Hanya untuk pesanan ini
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="font-mono font-extrabold text-xl sm:text-2xl text-foreground tracking-wider select-all break-all">
+                        {data.vaNumber || data.va_number || '-'}
+                      </span>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => onCopy(data.vaNumber || data.va_number || '', 'va', 'Nomor Virtual Account')}
+                        className="text-xs gap-1.5 h-9 px-3.5 font-bold shrink-0 cursor-pointer shadow-xs border-primary/30 text-primary hover:bg-primary/10"
+                      >
+                        {copiedKey === 'va' ? (
+                          <FontAwesomeIcon icon={faCheck} className="w-3.5 h-3.5 text-status-success" />
+                        ) : (
+                          <FontAwesomeIcon icon={faCopy} className="w-3.5 h-3.5" />
+                        )}
+                        <span>{copiedKey === 'va' ? 'Tersalin' : 'Salin No. VA'}</span>
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Real-time Listening Indicator */}
+                <div className="p-3 rounded-xl bg-primary/5 border border-primary/20 flex items-center justify-center gap-2 text-xs text-foreground">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                  </span>
+                  <span className="font-medium text-foreground-muted text-[11px]">
+                    Menunggu transfer... Otomatis terkonfirmasi dalam detik setelah Anda transfer.
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* 3. Manual Bank Transfer (Only for manual_bca) */}
+            {!isDynamicQris && !isVirtualAccount && data.method === 'manual_bca' && (
               <div className="p-4 bg-surface-raised rounded-xl border border-border space-y-3">
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-semibold text-foreground">Rekening Tujuan Transfer:</span>
@@ -588,7 +843,8 @@ export function CheckoutManualModal({
               </div>
             )}
 
-            {!isDynamicQris && (data.method === 'manual_qris' || data.method === 'qris_manual' || data.method === 'qris') && (
+            {/* 4. Manual QRIS (Only for manual_qris) */}
+            {!isDynamicQris && !isVirtualAccount && (data.method === 'manual_qris' || data.method === 'qris_manual') && (
               <div className="p-4 bg-surface-raised rounded-xl border border-border text-center space-y-3">
                 <div
                   onClick={() => setIsQrisExpanded(true)}
@@ -651,7 +907,7 @@ export function CheckoutManualModal({
                       className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary border border-primary/25 text-xs font-semibold transition-all cursor-pointer shadow-xs active:scale-95"
                     >
                       <FontAwesomeIcon icon={faExpand} className="w-3.5 h-3.5" />
-                      <span>Perbesar Barcode (Layar Lebar)</span>
+                      <span>Perbesar Barcode</span>
                     </button>
 
                     <a
@@ -670,7 +926,8 @@ export function CheckoutManualModal({
               </div>
             )}
 
-            {data.method === 'manual_dana' && (
+            {/* 5. Manual DANA (Only for manual_dana) */}
+            {!isDynamicQris && !isVirtualAccount && data.method === 'manual_dana' && (
               <div className="p-4 bg-surface-raised rounded-xl border border-border space-y-3">
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-semibold text-foreground">Nomor Akun E-Wallet DANA:</span>
@@ -708,8 +965,46 @@ export function CheckoutManualModal({
               </div>
             )}
 
-            {/* Actions for Dynamic QRIS vs Manual Transfer */}
-            {isDynamicQris ? (
+            {/* 6. Step-by-Step Payment Instructions (Accordion) */}
+            {data.instructions && data.instructions.length > 0 && (
+              <div className="p-4 bg-surface-raised rounded-xl border border-border space-y-2.5">
+                <span className="text-xs font-bold text-foreground block">
+                  Petunjuk Cara Pembayaran:
+                </span>
+                <div className="space-y-1.5">
+                  {data.instructions.map((inst, idx) => {
+                    const isOpen = activeInstructionIdx === idx;
+                    return (
+                      <div key={idx} className="border border-border/80 rounded-lg overflow-hidden bg-surface">
+                        <button
+                          type="button"
+                          onClick={() => setActiveInstructionIdx(isOpen ? null : idx)}
+                          className="w-full px-3.5 py-2.5 text-left text-xs font-semibold text-foreground flex items-center justify-between hover:bg-surface-raised transition-colors cursor-pointer"
+                        >
+                          <span>{inst.title}</span>
+                          <FontAwesomeIcon
+                            icon={isOpen ? faChevronUp : faChevronDown}
+                            className="w-3 h-3 text-foreground-muted transition-transform"
+                          />
+                        </button>
+                        {isOpen && (
+                          <div className="px-3.5 pb-3 pt-1 border-t border-border/60">
+                            <ol className="list-decimal list-outside ml-4 text-[11px] text-foreground-muted space-y-1.5 leading-relaxed">
+                              {inst.steps.map((st, sidx) => (
+                                <li key={sidx}>{st}</li>
+                              ))}
+                            </ol>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Actions: Automated Gateway (QRIS/VA) vs Manual WhatsApp Confirmation */}
+            {isDynamicQris || isVirtualAccount ? (
               <div className="space-y-2 pt-1 text-center">
                 <Button
                   type="button"
@@ -724,7 +1019,7 @@ export function CheckoutManualModal({
                   Butuh bantuan?{' '}
                   <a
                     href={`https://wa.me/${paymentConfig?.confirmation_whatsapp || '6281234567890'}?text=${encodeURIComponent(
-                      `Halo CS Asterra Store, saya butuh bantuan untuk pesanan QRIS: ${data.orderId}`
+                      `Halo CS Asterra Store, saya butuh bantuan untuk pesanan ${data.method.toUpperCase()}: ${data.orderId}`
                     )}`}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -791,7 +1086,7 @@ export function CheckoutManualModal({
                 </div>
                 <div>
                   <h4 className="text-sm font-bold text-foreground">
-                    {isDynamicQris ? 'Barcode QRIS Dinamis Midtrans' : 'Barcode QRIS Toko (Scan & Bayar Manual)'}
+                    {isDynamicQris ? 'Barcode QRIS' : 'Barcode QRIS Toko (Scan & Bayar Manual)'}
                   </h4>
                   <span className="text-[11px] text-foreground-muted block">
                     {qrisMerchantName}

@@ -473,9 +473,11 @@ function PrivateOrderContent() {
     if (methodId === 'manual_bca') return paymentConfig?.bank?.name || 'Bank Central Asia (BCA)';
     if (methodId === 'manual_qris' || methodId === 'qris_manual') return 'QRIS Statis Toko';
     if (methodId === 'manual_dana') return 'Transfer E-Wallet DANA';
-    if (methodId === 'qris' || methodId === 'qris_midtrans') return 'QRIS Dinamis Midtrans';
+    if (methodId === 'qris' || methodId === 'qris_midtrans') return 'QRIS';
     if (methodId === 'bca_va') return 'BCA Virtual Account';
+    if (methodId === 'mandiri_va') return 'Mandiri Virtual Account';
     if (methodId === 'bni_va') return 'BNI Virtual Account';
+    if (methodId === 'bri_va') return 'BRI Virtual Account';
     return 'Metode Pembayaran';
   };
 
@@ -536,37 +538,73 @@ function PrivateOrderContent() {
       });
       setSelectedOrderForModal(order);
     } else {
+      setActiveManualModal({
+        orderId: order.id,
+        amount: orderTotal,
+        totalAmount: orderTotal,
+        total_amount: orderTotal,
+        rawAmount: orderRaw,
+        raw_amount: orderRaw,
+        uniqueCode: 0,
+        unique_code: 0,
+        method: paymentMethod,
+        expiresAt: orderExpiresAt,
+        expires_at: orderExpiresAt,
+        isLoading: true,
+      });
+      setSelectedOrderForModal(order);
+
       try {
-        showNotification('Memuat QRIS Dinamis Midtrans...');
-        const res = await OrdersApi.pay(order.id, order.payment?.payment_method || 'qris');
+        const res = await OrdersApi.pay(order.id, paymentMethod);
         const checkoutUrl = res.payment?.checkout_url || res.payment?.redirect_url;
         if (checkoutUrl) {
           window.location.href = checkoutUrl;
-        } else if (res.payment?.qr_url || res.payment?.qr_string) {
-          setActiveManualModal({
-            orderId: order.id,
-            amount: res.payment.amount || orderTotal,
-            totalAmount: res.payment.amount || orderTotal,
-            total_amount: res.payment.amount || orderTotal,
-            rawAmount: orderRaw,
-            raw_amount: orderRaw,
-            uniqueCode: 0,
-            unique_code: 0,
-            method: 'qris_midtrans',
-            qrUrl: res.payment.qr_url,
-            qr_url: res.payment.qr_url,
-            qrString: res.payment.qr_string,
-            qr_string: res.payment.qr_string,
-            expiresAt: res.payment.expired_at || orderExpiresAt || new Date(Date.now() + 15 * 60000).toISOString(),
-            expires_at: res.payment.expired_at || orderExpiresAt || new Date(Date.now() + 15 * 60000).toISOString(),
-          });
-          setSelectedOrderForModal(order);
-        } else {
-          showNotification('Gagal memuat pembayaran QRIS Midtrans.');
+          return;
         }
+
+        setActiveManualModal({
+          orderId: order.id,
+          amount: res.payment?.amount || orderTotal,
+          totalAmount: res.payment?.amount || orderTotal,
+          total_amount: res.payment?.amount || orderTotal,
+          rawAmount: orderRaw,
+          raw_amount: orderRaw,
+          uniqueCode: 0,
+          unique_code: 0,
+          method: paymentMethod,
+          qrUrl: res.payment?.qr_url,
+          qr_url: res.payment?.qr_url,
+          qrString: res.payment?.qr_string,
+          qr_string: res.payment?.qr_string,
+          vaNumber: res.payment?.va_number,
+          va_number: res.payment?.va_number,
+          billerCode: res.payment?.biller_code,
+          biller_code: res.payment?.biller_code,
+          billKey: res.payment?.bill_key,
+          bill_key: res.payment?.bill_key,
+          bank: res.payment?.bank,
+          instructions: res.payment?.instructions,
+          expiresAt: res.payment?.expired_at || orderExpiresAt || new Date(Date.now() + 15 * 60000).toISOString(),
+          expires_at: res.payment?.expired_at || orderExpiresAt || new Date(Date.now() + 15 * 60000).toISOString(),
+          isLoading: false,
+        });
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : 'Gagal memproses pembayaran.';
-        showNotification(msg);
+        setActiveManualModal({
+          orderId: order.id,
+          amount: orderTotal,
+          totalAmount: orderTotal,
+          total_amount: orderTotal,
+          rawAmount: orderRaw,
+          raw_amount: orderRaw,
+          uniqueCode: 0,
+          unique_code: 0,
+          method: paymentMethod,
+          expiresAt: orderExpiresAt,
+          expires_at: orderExpiresAt,
+          isLoading: false,
+          errorMessage: msg,
+        });
       }
     }
   };
