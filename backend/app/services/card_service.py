@@ -17,8 +17,9 @@ class CardService:
         """
         Idempotent SQL aggregation computing actual units sold for each Card Produk
         and each individual Catalog Product from orders shown on /orders.
-        Phase 5 & 6 Source of Truth:
-        - Only orders with status IN ('completed', 'paid', 'settlement', 'processing')
+        Canonical Source of Truth:
+        - Only orders with status IN ('completed', 'paid', 'settlement', 'done', 'selesai')
+        - Strictly excludes pending, processing, cancelled, or waiting payment orders
         - Sum of OrderItem.quantity (consistent unit metric across all successful transactions)
         - Historical snapshot uses oi.card_id or falls back to p.card_id
         """
@@ -28,7 +29,7 @@ class CardService:
         try:
             db = SessionLocal()
             try:
-                # 1. Sales aggregated by Card Produk
+                # 1. Sales aggregated by Card Produk (completed orders only)
                 card_query = text("""
                     SELECT 
                         COALESCE(oi.card_id, p.card_id) AS card_id,
@@ -36,10 +37,7 @@ class CardService:
                     FROM order_items oi
                     JOIN orders o ON oi.order_id = o.id
                     LEFT JOIN products p ON oi.product_id = p.id
-                    WHERE LOWER(o.status) IN ('completed', 'paid', 'settlement', 'processing')
-                      AND (o.is_dummy IS FALSE OR o.is_dummy IS NULL)
-                      AND o.customer_email NOT LIKE '%@customer.id'
-                      AND o.customer_email NOT LIKE 'buyer_%'
+                    WHERE LOWER(o.status) IN ('completed', 'paid', 'settlement', 'done', 'selesai')
                       AND COALESCE(oi.card_id, p.card_id) IS NOT NULL
                     GROUP BY COALESCE(oi.card_id, p.card_id);
                 """)
@@ -48,17 +46,14 @@ class CardService:
                     if r[0]:
                         card_sales[str(r[0])] = int(r[1])
 
-                # 2. Sales aggregated by Catalog ID
+                # 2. Sales aggregated by Catalog ID (completed orders only)
                 cat_query = text("""
                     SELECT 
                         oi.product_id,
                         COALESCE(SUM(oi.quantity), 0) AS total_units
                     FROM order_items oi
                     JOIN orders o ON oi.order_id = o.id
-                    WHERE LOWER(o.status) IN ('completed', 'paid', 'settlement', 'processing')
-                      AND (o.is_dummy IS FALSE OR o.is_dummy IS NULL)
-                      AND o.customer_email NOT LIKE '%@customer.id'
-                      AND o.customer_email NOT LIKE 'buyer_%'
+                    WHERE LOWER(o.status) IN ('completed', 'paid', 'settlement', 'done', 'selesai')
                     GROUP BY oi.product_id;
                 """)
                 cat_rows = db.execute(cat_query).fetchall()
@@ -73,6 +68,75 @@ class CardService:
         return card_sales
 
     @classmethod
+    def get_sales_breakdown(cls) -> Dict[str, Dict[str, int]]:
+        """
+        Idempotent SQL aggregation computing separated dummy_units, real_units,
+        and total_units sold for each Card Produk from completed/paid/settlement/done/selesai orders.
+        """
+        sales: Dict[str, Dict[str, int]] = {}
+        try:
+            db = SessionLocal()
+            try:
+                query = text("""
+                    SELECT 
+                        COALESCE(oi.card_id, p.card_id) AS card_id,
+                        COALESCE(SUM(CASE WHEN o.is_dummy = true THEN oi.quantity ELSE 0 END), 0) AS dummy_units,
+                        COALESCE(SUM(CASE WHEN o.is_dummy IS NOT true THEN oi.quantity ELSE 0 END), 0) AS real_units,
+                        COALESCE(SUM(oi.quantity), 0) AS total_units
+                    FROM order_items oi
+                    JOIN orders o ON oi.order_id = o.id
+                    LEFT JOIN products p ON oi.product_id = p.id
+                    WHERE LOWER(o.status) IN ('completed', 'paid', 'settlement', 'done', 'selesai')
+                      AND COALESCE(oi.card_id, p.card_id) IS NOT NULL
+                    GROUP BY COALESCE(oi.card_id, p.card_id);
+                """)
+                rows = db.execute(query).fetchall()
+                for r in rows:
+                    if r[0]:
+                        cid = str(r[0])
+                        sales[cid] = {
+                            "dummy": int(r[1]),
+                            "real": int(r[2]),
+                            "total": int(r[3]),
+                        }
+            finally:
+                db.close()
+        except Exception as e:
+            print(f"[CardService] Sales breakdown warning: {e}")
+        return sales
+
+    @classmethod
+    def batch_update_baselines(cls, updates: List[Dict[str, Any]], admin_actor: Optional[str] = "admin") -> List[Dict[str, Any]]:
+        """
+        Batch updates baseline sold count for multiple product cards in a single database transaction.
+        """
+        db = SessionLocal()
+        try:
+            updated_cards = []
+            for item in updates:
+                card_id = item.get("id") or item.get("cardId") or item.get("card_id")
+                if not card_id:
+                    continue
+                card = db.query(ProductCard).filter_by(id=card_id).first()
+                if not card:
+                    continue
+                raw_val = item.get("baseSoldCount") if "baseSoldCount" in item else (item.get("base_sold_count") if "base_sold_count" in item else item.get("baseline", 0))
+                card.base_sold_count = max(0, int(raw_val))
+                card.updated_at = datetime.utcnow()
+                updated_cards.append(card)
+            db.commit()
+            sales = cls.get_sales_breakdown()
+            res = []
+            for c in updated_cards:
+                db.refresh(c)
+                sb = sales.get(c.id, {"dummy": 0, "real": 0, "total": 0})
+                res.append(c.to_dict(include_catalogs=True, sold_count=sb["total"], dummy_sold=sb["dummy"], real_sold=sb["real"]))
+            cache.invalidate("catalog", "homepage_sections")
+            return res
+        finally:
+            db.close()
+
+    @classmethod
     def get_cards(
         cls,
         status: Optional[str] = None,
@@ -85,7 +149,7 @@ class CardService:
         Retrieves Card Produk with real-time pricing from connected catalogs,
         real unit sold counts from /orders, and stock availability.
         """
-        sold_counts = cls.get_real_sold_counts()
+        sold_breakdown = cls.get_sales_breakdown()
         db = SessionLocal()
         try:
             query = db.query(ProductCard).options(
@@ -101,8 +165,13 @@ class CardService:
 
             results = []
             for c in cards:
-                card_sold = sold_counts.get(c.id, 0)
-                cd = c.to_dict(include_catalogs=include_catalogs, sold_count=card_sold)
+                sb = sold_breakdown.get(c.id, {"dummy": 0, "real": 0, "total": 0})
+                cd = c.to_dict(
+                    include_catalogs=include_catalogs,
+                    sold_count=sb["total"],
+                    dummy_sold=sb["dummy"],
+                    real_sold=sb["real"],
+                )
 
                 # Filter by section e.g. 'promo' | 'terlaris' | 'terbaru'
                 if section and section != "all":
@@ -134,7 +203,7 @@ class CardService:
 
     @classmethod
     def get_card_by_id_or_slug(cls, id_or_slug: str, include_catalogs: bool = True) -> Optional[Dict[str, Any]]:
-        sold_counts = cls.get_real_sold_counts()
+        sold_breakdown = cls.get_sales_breakdown()
         db = SessionLocal()
         try:
             card = (
@@ -149,8 +218,13 @@ class CardService:
             )
             if not card:
                 return None
-            card_sold = sold_counts.get(card.id, 0)
-            return card.to_dict(include_catalogs=include_catalogs, sold_count=card_sold)
+            sb = sold_breakdown.get(card.id, {"dummy": 0, "real": 0, "total": 0})
+            return card.to_dict(
+                include_catalogs=include_catalogs,
+                sold_count=sb["total"],
+                dummy_sold=sb["dummy"],
+                real_sold=sb["real"],
+            )
         finally:
             db.close()
 
@@ -183,6 +257,26 @@ class CardService:
                 sections_json = json.dumps([s.strip() for s in str(raw_sections).split(",") if s.strip()])
 
             base_sold = int(payload.get("baseSoldCount") or payload.get("base_sold_count") or 0)
+            is_pri = any(p in clean_slug for p in ["gemini", "netflix", "chatgpt", "spotify", "apple-music", "youtube", "capcut"])
+
+            raw_sec_list = payload.get("sections", ["promo"])
+            if isinstance(raw_sec_list, list):
+                sec_check = [str(s).lower() for s in raw_sec_list]
+            else:
+                sec_check = [s.strip().lower() for s in str(raw_sec_list).split(",") if s.strip()]
+            badge_check = str(payload.get("badgeLabel") or payload.get("badge_label") or "").lower()
+            is_new_terbaru = (not is_pri) and ("terbaru" in sec_check or "baru" in badge_check)
+
+            if is_pri:
+                base_sold = base_sold if base_sold >= 28 else 30
+            elif is_new_terbaru:
+                # Rule: Card Produk Terbaru baseline awal strictly 11-20
+                if 11 <= base_sold <= 20:
+                    pass
+                else:
+                    base_sold = 11 + (abs(hash(clean_slug)) % 10)
+            else:
+                base_sold = max(10, min(25, base_sold if base_sold > 0 else 18))
 
             new_card = ProductCard(
                 id=card_id,
@@ -277,7 +371,8 @@ class CardService:
             if "badgeLabel" in payload or "badge_label" in payload:
                 card.badge_label = payload.get("badgeLabel") or payload.get("badge_label")
             if "baseSoldCount" in payload or "base_sold_count" in payload:
-                card.base_sold_count = int(payload.get("baseSoldCount") or payload.get("base_sold_count") or 0)
+                raw_val = int(payload.get("baseSoldCount") if "baseSoldCount" in payload else payload.get("base_sold_count", 0))
+                card.base_sold_count = max(0, raw_val)
 
             # Update catalog linkages if provided
             if "catalogIds" in payload or "catalog_ids" in payload:

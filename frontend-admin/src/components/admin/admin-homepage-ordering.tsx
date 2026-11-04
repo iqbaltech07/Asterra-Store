@@ -394,7 +394,7 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
   const { data: sectionsData, isLoading: isLoadingSections } = useQuery<SectionsResponse>({
     queryKey: ['homepage-sections'],
     queryFn: async () => {
-      const res = await fetch('/api/v1/homepage/sections?limit=8');
+      const res = await fetch('/api/v1/homepage/sections');
       if (!res.ok) throw new Error('Gagal memuat urutan homepage.');
       return res.json();
     },

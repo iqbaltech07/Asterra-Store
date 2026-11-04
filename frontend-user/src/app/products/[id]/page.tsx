@@ -219,7 +219,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
       category: cardData.category || { id: cardData.categoryId || 'cat-digital', name: cardData.categoryName || 'Layanan Digital' },
       imageUrl: cardData.logoUrl || cardData.imageUrl || '/images/default-product-banner.png',
       rating: String(cardData.rating || '5.0'),
-      soldCount: Math.min(40, Math.max(20, cardData.soldCount || 30)),
+      soldCount: cardData.soldCount || 30,
       description: cardData.description || `Akses resmi dan bergaransi penuh untuk ${cardData.name} di Asterra Store dengan konfirmasi otomatis dan dukungan CS 24 jam.`,
       features: (selectedVariant?.features && selectedVariant.features.length > 0) ? selectedVariant.features : fallbackFeatures,
       variants: parsedVariants,
