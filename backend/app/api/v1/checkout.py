@@ -524,12 +524,18 @@ async def pay_order(order_id: str, request: Request):
     method = body.get("payment_method") or order.get("paymentMethod") or order.get("payment_method") or "qris"
 
     pay_cfg = PaymentConfigService.get_config()
-    is_gateway_qris = (
+    is_qris = (
         method in ["qris", "qris_midtrans", "midtrans", "gateway"]
         and not str(method).startswith("manual_")
         and method not in ["manual_qris", "qris_manual", "manual_bca", "manual_dana"]
     )
-    is_manual = not is_gateway_qris and (
+    is_va = method in [
+        "bca_va", "bni_va", "bri_va", "mandiri_va",
+        "bca", "bni", "bri", "mandiri", "echannel",
+    ]
+    is_gateway = is_qris or is_va
+
+    is_manual = not is_gateway and (
         order.get("payment_mode") == "manual"
         or order.get("paymentMode") == "manual"
         or str(method).startswith("manual_")
@@ -537,12 +543,12 @@ async def pay_order(order_id: str, request: Request):
         or pay_cfg.get("mode") == "manual"
     )
 
-    # Dynamic QRIS Midtrans (Core API - In-Page Native Modal without Snap/redirect)
-    if is_gateway_qris or (not is_manual and method in ["qris", "qris_midtrans", "midtrans", "gateway"]):
-        cust_name = order.get("customerName") or order.get("customer_name") or "Pelanggan Asterra"
-        cust_email = order.get("customerEmail") or order.get("customer_email") or "customer@asterra.store"
-        cust_phone = order.get("customerPhone") or order.get("customer_phone") or ""
+    cust_name = order.get("customerName") or order.get("customer_name") or "Pelanggan Asterra"
+    cust_email = order.get("customerEmail") or order.get("customer_email") or "customer@asterra.store"
+    cust_phone = order.get("customerPhone") or order.get("customer_phone") or ""
 
+    # 1. Dynamic QRIS (Midtrans Core API)
+    if is_qris:
         payment_info = MidtransService.generate_qris(
             order_id=order_id,
             amount=int(amount),
@@ -552,7 +558,7 @@ async def pay_order(order_id: str, request: Request):
             title=f"Order {order_id} - Asterra Store",
         )
         if not payment_info.get("success"):
-            err_msg = payment_info.get("error") or "Gagal membuat tagihan QRIS Midtrans."
+            err_msg = payment_info.get("error") or "Gagal membuat tagihan QRIS."
             raise HTTPException(status_code=502, detail=err_msg)
 
         # Update order with payment transaction ID / reference
@@ -573,7 +579,45 @@ async def pay_order(order_id: str, request: Request):
 
         return {
             "success": True,
-            "message": "Instruksi pembayaran QRIS Midtrans berhasil dibuat",
+            "message": "Instruksi pembayaran QRIS berhasil dibuat",
+            "payment": payment_info,
+        }
+
+    # 2. Virtual Account Bank Transfer (BCA, BNI, BRI, Mandiri via Midtrans Core API)
+    if is_va:
+        bank_name = "mandiri" if "mandiri" in method or method == "echannel" else method.replace("_va", "")
+        payment_info = MidtransService.generate_bank_transfer(
+            order_id=order_id,
+            amount=int(amount),
+            bank=bank_name,
+            customer_name=cust_name,
+            customer_email=cust_email,
+            customer_phone=cust_phone,
+            title=f"Order {order_id} - Asterra Store",
+        )
+        if not payment_info.get("success"):
+            err_msg = payment_info.get("error") or f"Gagal membuat tagihan Virtual Account {bank_name.upper()}."
+            raise HTTPException(status_code=502, detail=err_msg)
+
+        # Update order with payment transaction ID / reference
+        try:
+            from app.core.database import SessionLocal
+            from app.models.order import Order
+            db = SessionLocal()
+            try:
+                db_order = db.query(Order).filter(Order.id == order_id).first()
+                if db_order:
+                    db_order.payment_reference = payment_info.get("transaction_id")
+                    db_order.payment_status = "pending"
+                    db.commit()
+            finally:
+                db.close()
+        except Exception as e:
+            logger.warning(f"Could not update order payment ref: {e}")
+
+        return {
+            "success": True,
+            "message": f"Instruksi pembayaran Virtual Account {bank_name.upper()} berhasil dibuat",
             "payment": payment_info,
         }
 
@@ -663,7 +707,7 @@ async def midtrans_webhook(request: Request):
         updated = OrderService.update_status(
             order_id,
             "processing",
-            notes=f"Pembayaran otomatis terverifikasi QRIS Midtrans Ref: {ref}",
+            notes=f"Pembayaran otomatis terverifikasi Midtrans Ref: {ref}",
         )
         return {
             "status": "success",

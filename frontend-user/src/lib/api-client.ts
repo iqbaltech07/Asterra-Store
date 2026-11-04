@@ -234,6 +234,9 @@ export const OrdersApi = {
         redirect_url?: string;
         checkout_url?: string;
         va_number?: string;
+        biller_code?: string;
+        bill_key?: string;
+        bank?: string;
         qr_url?: string;
         qr_string?: string;
         expired_at?: string;

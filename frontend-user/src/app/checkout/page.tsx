@@ -8,7 +8,7 @@ import { useCartStore } from '@/store/use-cart-store';
 import { useAuthStore } from '@/store/use-auth-store';
 import { useSession } from '@/lib/auth-client';
 import { PublicPaymentConfig } from '@/types/payment';
-import { OrdersApi, PromosApi, PaymentConfigApi } from '@/lib/api-client';
+import { OrdersApi, PromosApi } from '@/lib/api-client';
 import { usePaymentConfig } from '@/lib/hooks/use-payment-config';
 import { calculateCampaignPrice, ActiveCampaign } from '@/lib/utils/promo-pricing';
 import { clearCampaignSession, removeCampaignUrlParams } from '@/lib/utils/referral';
@@ -43,20 +43,32 @@ import {
 const GATEWAY_PAYMENT_METHODS: PaymentMethodOption[] = [
   {
     id: 'qris',
-    name: 'QRIS Dinamis Midtrans',
-    description: 'Scan instan via GoPay, OVO, Dana, ShopeePay, BCA, Mandiri, BRI, BNI (Otomatis Terverifikasi)',
+    name: 'QRIS',
+    description: 'Scan via GoPay, OVO, DANA, ShopeePay, LinkAja & semua m-Banking / E-Wallet',
     category: 'qris',
   },
   {
     id: 'bca_va',
     name: 'BCA Virtual Account',
-    description: 'Transfer otomatis via BCA Mobile, myBCA, KlikBCA, atau ATM BCA',
+    description: 'Transfer otomatis via myBCA, BCA Mobile, KlikBCA, atau ATM BCA',
+    category: 'va',
+  },
+  {
+    id: 'mandiri_va',
+    name: 'Mandiri Virtual Account',
+    description: 'Transfer otomatis via Livin by Mandiri, ATM Mandiri, atau Internet Banking',
     category: 'va',
   },
   {
     id: 'bni_va',
     name: 'BNI Virtual Account',
     description: 'Transfer otomatis via BNI Mobile Banking, Internet Banking, atau ATM BNI',
+    category: 'va',
+  },
+  {
+    id: 'bri_va',
+    name: 'BRI Virtual Account',
+    description: 'Transfer otomatis via BRImo, Internet Banking BRI, atau ATM BRI',
     category: 'va',
   },
 ];
@@ -830,13 +842,33 @@ function CheckoutPageContent() {
         return;
       }
 
-      // Midtrans Dynamic QRIS Flow — In-page popup modal without redirect
-      showNotification('Membuat QRIS Dinamis Midtrans...');
+      // Automated Gateway Payment Flow (QRIS / Virtual Account)
+      // Open the modal popup IMMEDIATELY with in-popup loading animation — NO sonner notification toast!
+      setActiveManualModal({
+        orderId: createdOrder.id,
+        amount: orderTotal,
+        totalAmount: orderTotal,
+        total_amount: orderTotal,
+        rawAmount: orderRaw,
+        raw_amount: orderRaw,
+        uniqueCode: 0,
+        unique_code: 0,
+        method: selectedMethod,
+        expiresAt: orderExpiresAt,
+        expires_at: orderExpiresAt,
+        isLoading: true,
+      });
+
       try {
         const payData = await OrdersApi.pay(createdOrder.id, selectedMethod);
 
         const qrUrl = payData.payment?.qr_url || (payData.payment as any)?.qr_image_url;
         const qrString = payData.payment?.qr_string;
+        const vaNumber = payData.payment?.va_number;
+        const billerCode = payData.payment?.biller_code;
+        const billKey = payData.payment?.bill_key;
+        const bank = payData.payment?.bank;
+        const instructions = payData.payment?.instructions;
 
         setActiveManualModal({
           orderId: createdOrder.id,
@@ -847,20 +879,27 @@ function CheckoutPageContent() {
           raw_amount: orderRaw,
           uniqueCode: 0,
           unique_code: 0,
-          method: 'qris_midtrans',
+          method: selectedMethod,
           qrUrl: qrUrl,
           qr_url: qrUrl,
           qrString: qrString,
           qr_string: qrString,
+          vaNumber: vaNumber,
+          va_number: vaNumber,
+          billerCode: billerCode,
+          biller_code: billerCode,
+          billKey: billKey,
+          bill_key: billKey,
+          bank: bank,
           expiresAt: payData.payment?.expired_at || orderExpiresAt,
           expires_at: payData.payment?.expired_at || orderExpiresAt,
-          instructions: payData.payment?.instructions,
+          instructions: instructions,
+          isLoading: false,
         });
         clearCart();
-        showNotification('QRIS Midtrans siap dipindai.');
         return;
       } catch (payErr) {
-        // Fallback gracefully without redirecting away: load payment modal with order details
+        // Fallback gracefully inside modal without redirecting away or throwing sonner toasts
         setActiveManualModal({
           orderId: createdOrder.id,
           amount: orderTotal,
@@ -873,9 +912,10 @@ function CheckoutPageContent() {
           method: selectedMethod,
           expiresAt: orderExpiresAt,
           expires_at: orderExpiresAt,
+          isLoading: false,
+          errorMessage: payErr instanceof Error ? payErr.message : 'Gagal memuat instruksi pembayaran.',
         });
         clearCart();
-        showNotification('Pesanan berhasil dibuat. Silakan selesaikan pembayaran.');
         return;
       }
     },
@@ -960,11 +1000,13 @@ function CheckoutPageContent() {
     if (methodId === 'manual_bca') return paymentConfig?.bank?.name || 'Bank Central Asia (BCA)';
     if (methodId === 'manual_qris') return 'QRIS Statis Toko';
     if (methodId === 'manual_dana') return 'Transfer E-Wallet DANA';
-    if (methodId === 'qris' || methodId === 'qris_midtrans') return 'QRIS Dinamis Midtrans';
+    if (methodId === 'qris' || methodId === 'qris_midtrans') return 'QRIS';
     if (methodId === 'bca_va') return 'BCA Virtual Account';
+    if (methodId === 'mandiri_va') return 'Mandiri Virtual Account';
     if (methodId === 'bni_va') return 'BNI Virtual Account';
+    if (methodId === 'bri_va') return 'BRI Virtual Account';
     if (methodId === 'seabank_va') return 'SeaBank Virtual Account';
-    return 'QRIS Dinamis Midtrans';
+    return 'Metode Pembayaran';
   };
 
   return (
