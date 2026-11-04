@@ -107,7 +107,7 @@ def run_migrations():
             WHEN slug = 'google-gemini' THEN 33
             WHEN slug = 'youtube' THEN 32
             WHEN slug = 'chatgpt' THEN 30
-            WHEN slug = 'canva' THEN 29
+            WHEN slug = 'canva' THEN 24
             WHEN slug = 'vidio' THEN 23
             -- Produk Terbaru (baseline 11-20, variatif & persisten)
             WHEN slug = 'wetv' THEN 19
