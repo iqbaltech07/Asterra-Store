@@ -227,9 +227,14 @@ export default function ProfilePage() {
   const handleGoogleLogin = async () => {
     setIsLoggingIn(true);
     try {
+      const fullCallbackUrl =
+        typeof window !== 'undefined'
+          ? new URL('/profile', window.location.origin).toString()
+          : '/profile';
       await signIn.social({
         provider: 'google',
-        callbackURL: '/profile',
+        callbackURL: fullCallbackUrl,
+        newUserCallbackURL: fullCallbackUrl,
       });
     } catch {
       setIsLoggingIn(false);

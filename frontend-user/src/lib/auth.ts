@@ -17,10 +17,15 @@ export const auth = betterAuth({
   baseURL: {
     allowedHosts: [
       'asterrastore.biz.id',
+      'asterrastore.biz.id:*',
       'www.asterrastore.biz.id',
+      'www.asterrastore.biz.id:*',
       'staging.asterrastore.biz.id',
+      'staging.asterrastore.biz.id:*',
       '*.asterrastore.biz.id',
+      '*.asterrastore.biz.id:*',
       '*.vercel.app',
+      '*.vercel.app:*',
       'localhost',
       'localhost:*',
       '127.0.0.1',
@@ -28,9 +33,12 @@ export const auth = betterAuth({
     ],
     protocol: 'auto',
     fallback:
+      (process.env.VERCEL_ENV === 'preview' ? 'https://staging.asterrastore.biz.id' : null) ||
+      (process.env.NEXT_PUBLIC_APP_URL?.includes('staging') ? process.env.NEXT_PUBLIC_APP_URL : null) ||
+      (process.env.BETTER_AUTH_URL?.includes('staging') ? process.env.BETTER_AUTH_URL : null) ||
+      fallbackAppBaseUrl ||
       process.env.NEXT_PUBLIC_APP_URL ||
       process.env.BETTER_AUTH_URL ||
-      fallbackAppBaseUrl ||
       'https://asterrastore.biz.id',
   },
   trustedOrigins: async (request) => {
