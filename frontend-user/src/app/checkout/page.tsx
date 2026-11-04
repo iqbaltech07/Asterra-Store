@@ -406,11 +406,11 @@ function CheckoutPageContent() {
         if (cached) {
           const parsed = JSON.parse(cached);
           if (parsed.mode === 'gateway') return 'qris';
-          return 'manual_bca';
+          return 'qris';
         }
       } catch {}
     }
-    return 'manual_bca';
+    return 'qris';
   });
 
 
@@ -489,7 +489,7 @@ function CheckoutPageContent() {
       } catch {}
       setSelectedMethod((prev) => {
         if (configData.data.mode === 'manual' && !prev.startsWith('manual_')) {
-          return 'manual_bca';
+          return configData.data.isQrisActive ? 'manual_qris' : 'manual_bca';
         }
         if (configData.data.mode === 'gateway' && prev.startsWith('manual_')) {
           return 'qris';
@@ -766,8 +766,6 @@ function CheckoutPageContent() {
         } catch {}
       }
 
-      clearCart();
-
       const orderTotal = Number(
         (createdOrder as unknown as { totalAmount?: number; total_amount?: number; amount?: number }).totalAmount ??
         (createdOrder as unknown as { totalAmount?: number; total_amount?: number; amount?: number }).total_amount ??
@@ -790,7 +788,9 @@ function CheckoutPageContent() {
         (createdOrder as unknown as { expiresAt?: string; expires_at?: string }).expiresAt ||
         (createdOrder as unknown as { expiresAt?: string; expires_at?: string }).expires_at;
 
-      const isOrderManual = isManualMode || selectedMethod.startsWith('manual_');
+      const isOrderManual =
+        selectedMethod.startsWith('manual_') ||
+        (isManualMode && selectedMethod !== 'qris' && selectedMethod !== 'qris_midtrans');
 
       const isPreorderOrder =
         isPreorderMode ||
@@ -808,6 +808,7 @@ function CheckoutPageContent() {
           itemsCount: items.length,
           itemsSummary: items.map((i) => `${i.name} (x${i.quantity})`).join(', '),
         });
+        clearCart();
         return;
       }
 
@@ -825,42 +826,57 @@ function CheckoutPageContent() {
           expiresAt: orderExpiresAt,
           expires_at: orderExpiresAt,
         });
-      } else {
-        showNotification('Membuat QRIS Dinamis Midtrans...');
+        clearCart();
+        return;
+      }
+
+      // Midtrans Dynamic QRIS Flow — In-page popup modal without redirect
+      showNotification('Membuat QRIS Dinamis Midtrans...');
+      try {
         const payData = await OrdersApi.pay(createdOrder.id, selectedMethod);
 
-        const checkoutUrl = payData.payment?.checkout_url || payData.payment?.redirect_url;
-        if (checkoutUrl) {
-          showNotification('Mengarahkan ke pembayaran...');
-          window.location.href = checkoutUrl;
-          return;
-        }
+        const qrUrl = payData.payment?.qr_url || (payData.payment as any)?.qr_image_url;
+        const qrString = payData.payment?.qr_string;
 
-        if (payData.payment?.qr_url || payData.payment?.qr_string) {
-          showNotification('QRIS Midtrans siap dipindai.');
-          setActiveManualModal({
-            orderId: createdOrder.id,
-            amount: payData.payment.amount || orderTotal,
-            totalAmount: payData.payment.amount || orderTotal,
-            total_amount: payData.payment.amount || orderTotal,
-            rawAmount: orderRaw,
-            raw_amount: orderRaw,
-            uniqueCode: 0,
-            unique_code: 0,
-            method: 'qris_midtrans',
-            qrUrl: payData.payment.qr_url,
-            qr_url: payData.payment.qr_url,
-            qrString: payData.payment.qr_string,
-            qr_string: payData.payment.qr_string,
-            expiresAt: payData.payment.expired_at || orderExpiresAt,
-            expires_at: payData.payment.expired_at || orderExpiresAt,
-          });
-          return;
-        }
-
-        showNotification('Pesanan berhasil dibuat. Mengarahkan ke status pesanan.');
-        const emailQuery = invoiceEmail ? `&email=${encodeURIComponent(invoiceEmail)}` : '';
-        router.push(`/order?id=${createdOrder.id}${emailQuery}`);
+        setActiveManualModal({
+          orderId: createdOrder.id,
+          amount: payData.payment?.amount || orderTotal,
+          totalAmount: payData.payment?.amount || orderTotal,
+          total_amount: payData.payment?.amount || orderTotal,
+          rawAmount: orderRaw,
+          raw_amount: orderRaw,
+          uniqueCode: 0,
+          unique_code: 0,
+          method: 'qris_midtrans',
+          qrUrl: qrUrl,
+          qr_url: qrUrl,
+          qrString: qrString,
+          qr_string: qrString,
+          expiresAt: payData.payment?.expired_at || orderExpiresAt,
+          expires_at: payData.payment?.expired_at || orderExpiresAt,
+          instructions: payData.payment?.instructions,
+        });
+        clearCart();
+        showNotification('QRIS Midtrans siap dipindai.');
+        return;
+      } catch (payErr) {
+        // Fallback gracefully without redirecting away: load payment modal with order details
+        setActiveManualModal({
+          orderId: createdOrder.id,
+          amount: orderTotal,
+          totalAmount: orderTotal,
+          total_amount: orderTotal,
+          rawAmount: orderRaw,
+          raw_amount: orderRaw,
+          uniqueCode: orderUnique,
+          unique_code: orderUnique,
+          method: selectedMethod,
+          expiresAt: orderExpiresAt,
+          expires_at: orderExpiresAt,
+        });
+        clearCart();
+        showNotification('Pesanan berhasil dibuat. Silakan selesaikan pembayaran.');
+        return;
       }
     },
     onError: (err: unknown) => {

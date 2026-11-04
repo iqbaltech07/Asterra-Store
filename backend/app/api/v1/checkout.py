@@ -524,7 +524,12 @@ async def pay_order(order_id: str, request: Request):
     method = body.get("payment_method") or order.get("paymentMethod") or order.get("payment_method") or "qris"
 
     pay_cfg = PaymentConfigService.get_config()
-    is_manual = (
+    is_gateway_qris = (
+        method in ["qris", "qris_midtrans", "midtrans", "gateway"]
+        and not str(method).startswith("manual_")
+        and method not in ["manual_qris", "qris_manual", "manual_bca", "manual_dana"]
+    )
+    is_manual = not is_gateway_qris and (
         order.get("payment_mode") == "manual"
         or order.get("paymentMode") == "manual"
         or str(method).startswith("manual_")
@@ -533,7 +538,7 @@ async def pay_order(order_id: str, request: Request):
     )
 
     # Dynamic QRIS Midtrans (Core API - In-Page Native Modal without Snap/redirect)
-    if not is_manual and method in ["qris", "qris_midtrans", "midtrans", "gateway"]:
+    if is_gateway_qris or (not is_manual and method in ["qris", "qris_midtrans", "midtrans", "gateway"]):
         cust_name = order.get("customerName") or order.get("customer_name") or "Pelanggan Asterra"
         cust_email = order.get("customerEmail") or order.get("customer_email") or "customer@asterra.store"
         cust_phone = order.get("customerPhone") or order.get("customer_phone") or ""
@@ -549,6 +554,22 @@ async def pay_order(order_id: str, request: Request):
         if not payment_info.get("success"):
             err_msg = payment_info.get("error") or "Gagal membuat tagihan QRIS Midtrans."
             raise HTTPException(status_code=502, detail=err_msg)
+
+        # Update order with payment transaction ID / reference
+        try:
+            from app.core.database import SessionLocal
+            from app.models.order import Order
+            db = SessionLocal()
+            try:
+                db_order = db.query(Order).filter(Order.id == order_id).first()
+                if db_order:
+                    db_order.payment_reference = payment_info.get("transaction_id")
+                    db_order.payment_status = "pending"
+                    db.commit()
+            finally:
+                db.close()
+        except Exception as e:
+            logger.warning(f"Could not update order payment ref: {e}")
 
         return {
             "success": True,
@@ -580,6 +601,7 @@ async def pay_order(order_id: str, request: Request):
         "payment_status": "pending",
         "is_manual": True,
         "qr_image_url": qris_url,
+        "qr_url": qris_url,
         "qris_merchant_name": qris_merchant,
         "instructions": [
             {
