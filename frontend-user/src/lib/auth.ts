@@ -1,9 +1,6 @@
 import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { prisma } from '@/lib/prisma';
-import { getAppBaseUrl } from '@/lib/utils/url';
-
-const fallbackAppBaseUrl = getAppBaseUrl();
 
 if (!process.env.BETTER_AUTH_SECRET) {
   process.env.BETTER_AUTH_SECRET =
@@ -17,64 +14,28 @@ export const auth = betterAuth({
   baseURL: {
     allowedHosts: [
       'asterrastore.biz.id',
-      'asterrastore.biz.id:*',
       'www.asterrastore.biz.id',
-      'www.asterrastore.biz.id:*',
       'staging.asterrastore.biz.id',
-      'staging.asterrastore.biz.id:*',
       '*.asterrastore.biz.id',
-      '*.asterrastore.biz.id:*',
       '*.vercel.app',
-      '*.vercel.app:*',
-      'localhost',
       'localhost:*',
-      '127.0.0.1',
+      'localhost',
       '127.0.0.1:*',
+      '127.0.0.1',
     ],
     protocol: 'auto',
-    fallback:
-      (process.env.VERCEL_ENV === 'preview' ? 'https://staging.asterrastore.biz.id' : null) ||
-      (process.env.NEXT_PUBLIC_APP_URL?.includes('staging') ? process.env.NEXT_PUBLIC_APP_URL : null) ||
-      (process.env.BETTER_AUTH_URL?.includes('staging') ? process.env.BETTER_AUTH_URL : null) ||
-      fallbackAppBaseUrl ||
-      process.env.NEXT_PUBLIC_APP_URL ||
-      process.env.BETTER_AUTH_URL ||
-      'https://asterrastore.biz.id',
   },
-  trustedOrigins: async (request) => {
-    const list: string[] = [
-      'https://asterrastore.biz.id',
-      'https://*.asterrastore.biz.id',
-      'https://staging.asterrastore.biz.id',
-      'https://asterrastore.vercel.app',
-      'https://*.vercel.app',
-      'http://localhost:3000',
-      'http://localhost:3001',
-      'http://127.0.0.1:3000',
-      'http://127.0.0.1:3001',
-      'https://localhost:3000',
-    ];
-    if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
-      list.push(`https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`);
-    }
-    if (process.env.VERCEL_URL) {
-      list.push(`https://${process.env.VERCEL_URL}`);
-    }
-    if (process.env.NEXT_PUBLIC_APP_URL) {
-      list.push(process.env.NEXT_PUBLIC_APP_URL);
-    }
-    if (process.env.BETTER_AUTH_URL) {
-      list.push(process.env.BETTER_AUTH_URL);
-    }
-    if (request) {
-      const origin = request.headers.get('origin');
-      if (origin) list.push(origin);
-      const host = request.headers.get('x-forwarded-host') || request.headers.get('host');
-      const proto = request.headers.get('x-forwarded-proto') || 'https';
-      if (host) list.push(`${proto}://${host}`);
-    }
-    return Array.from(new Set(list.filter(Boolean)));
-  },
+  trustedOrigins: [
+    'https://asterrastore.biz.id',
+    'https://www.asterrastore.biz.id',
+    'https://staging.asterrastore.biz.id',
+    'https://*.asterrastore.biz.id',
+    'https://asterrastore.vercel.app',
+    'https://*.vercel.app',
+    'http://localhost:*',
+    'http://127.0.0.1:*',
+    'https://localhost:*',
+  ],
   database: prismaAdapter(prisma, {
     provider: 'postgresql',
   }),

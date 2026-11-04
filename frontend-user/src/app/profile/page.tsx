@@ -231,11 +231,19 @@ export default function ProfilePage() {
         typeof window !== 'undefined'
           ? new URL('/profile', window.location.origin).toString()
           : '/profile';
-      await signIn.social({
+      const res = await signIn.social({
         provider: 'google',
         callbackURL: fullCallbackUrl,
         newUserCallbackURL: fullCallbackUrl,
       });
+      if (res?.error) {
+        setIsLoggingIn(false);
+        showNotification(res.error.message || 'Gagal menghubungkan ke layanan Google.');
+        return;
+      }
+      if (res?.data?.url) {
+        window.location.href = res.data.url;
+      }
     } catch {
       setIsLoggingIn(false);
       showNotification('Gagal menghubungkan ke layanan Google. Silakan coba lagi.');
