@@ -127,6 +127,18 @@ class ProductCard(Base):
         total_order_units = (int(dummy_sold) + int(real_sold)) if (dummy_sold or real_sold) else int(sold_count)
         total_sold = effective_base + total_order_units
 
+        # Calculate effective created timestamp (card or variants, whichever is newest)
+        created_dts = [self.created_at] if self.created_at else []
+        if self.updated_at:
+            created_dts.append(self.updated_at)
+        if self.catalogs:
+            for c in self.catalogs:
+                if getattr(c, "created_at", None):
+                    created_dts.append(c.created_at)
+                if getattr(c, "updated_at", None):
+                    created_dts.append(c.updated_at)
+        effective_created = max(created_dts) if created_dts else None
+
         res = {
             "id": self.id,
             "name": self.name,
@@ -160,6 +172,7 @@ class ProductCard(Base):
             "soldCount": total_sold,
             "createdAt": self.created_at.isoformat() if self.created_at else None,
             "updatedAt": self.updated_at.isoformat() if self.updated_at else None,
+            "effectiveCreatedAt": effective_created.isoformat() if effective_created else None,
         }
 
         if include_catalogs:

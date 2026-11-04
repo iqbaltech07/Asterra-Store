@@ -21,6 +21,8 @@ import {
   faFire,
   faEye,
   faClock,
+  faChevronDown,
+  faChevronUp,
 } from '@fortawesome/free-solid-svg-icons';
 import { useCatalogProducts } from '@/lib/hooks/use-catalog-products';
 import { useProductCards } from '@/lib/hooks/use-product-cards';
@@ -52,8 +54,9 @@ import { getDynamicSoldCount } from '@/lib/hooks/use-dynamic-orders';
 export default function HomePage() {
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
 
-  // 1. Selector category state: ONLY PROMO, TERLARIS, TERBARU. (PROMO is default & priority)
+  // 1. Selector category state: ONLY PROMO, TERLARIS, TERBARU
   const [activeCategory, setActiveCategory] = useState<'promo' | 'terlaris' | 'terbaru'>('promo');
+  const [isExpanded, setIsExpanded] = useState<boolean>(false);
 
   // 2. Quick View Modal State
   const [quickViewProduct, setQuickViewProduct] = useState<QuickViewProductData | null>(null);
@@ -64,6 +67,24 @@ export default function HomePage() {
 
   // Active Campaign Status for live promotional discounts & badges (cached via shared query)
   const { campaigns: activeCampaigns } = useActiveCampaigns();
+
+  // Evaluate if any campaign is actually active now in WIB (startAt <= now < endsAt and isActive != false)
+  const hasActiveCampaign = useMemo(() => {
+    if (!activeCampaigns || activeCampaigns.length === 0) return false;
+    return activeCampaigns.some((camp) => isCampaignActiveNow(camp));
+  }, [activeCampaigns]);
+
+  // Safe Tab Fallback: if user is on Promo tab and campaign expires or is inactive, safely switch to Terlaris
+  useEffect(() => {
+    if (!hasActiveCampaign && activeCategory === 'promo') {
+      setActiveCategory('terlaris');
+    }
+  }, [hasActiveCampaign, activeCategory]);
+
+  // Reset dropdown to collapsed whenever tab changes
+  useEffect(() => {
+    setIsExpanded(false);
+  }, [activeCategory]);
 
   useEffect(() => {
     setRecentlyViewed(getRecentlyViewed());
@@ -325,6 +346,41 @@ export default function HomePage() {
     ];
   }, [now]);
 
+  // Helper to extract authoritative effective timestamp (card or latest variant) for Terbaru sorting
+  const getEffectiveTimestamp = (app: ApplicationGroupItem): number => {
+    const dates: number[] = [];
+    const eff = (app as any).effectiveCreatedAt || (app as any).effective_created_at;
+    if (eff) {
+      const t = new Date(eff).getTime();
+      if (!isNaN(t) && t > 0) dates.push(t);
+    }
+    const created = (app as any).createdAt || (app as any).created_at;
+    if (created) {
+      const t = new Date(created).getTime();
+      if (!isNaN(t) && t > 0) dates.push(t);
+    }
+    const updated = (app as any).updatedAt || (app as any).updated_at;
+    if (updated) {
+      const t = new Date(updated).getTime();
+      if (!isNaN(t) && t > 0) dates.push(t);
+    }
+    if (Array.isArray(app.items)) {
+      for (const it of app.items) {
+        const itCreated = (it as any).createdAt || (it as any).created_at;
+        if (itCreated) {
+          const t = new Date(itCreated).getTime();
+          if (!isNaN(t) && t > 0) dates.push(t);
+        }
+        const itUpdated = (it as any).updatedAt || (it as any).updated_at;
+        if (itUpdated) {
+          const t = new Date(itUpdated).getTime();
+          if (!isNaN(t) && t > 0) dates.push(t);
+        }
+      }
+    }
+    return dates.length > 0 ? Math.max(...dates) : -1;
+  };
+
   // Map to Featured Products (authoritative backend data with 8-product guarantee & resilient fallback)
   const featuredApps = useMemo(() => {
     // 1. Map Card Produk dynamically from database or fallback to app configurations
@@ -370,6 +426,9 @@ export default function HomePage() {
             isPromo: card.sections?.includes('promo') ?? true,
             isTerlaris: card.sections?.includes('terlaris') ?? true,
             isTerbaru: card.sections?.includes('terbaru') ?? true,
+            effectiveCreatedAt: (card as any).effectiveCreatedAt || (card as any).effective_created_at || (card as any).createdAt || (card as any).created_at,
+            createdAt: (card as any).createdAt || (card as any).created_at,
+            updatedAt: (card as any).updatedAt || (card as any).updated_at,
             items,
             minPrice,
             isOutOfStock,
@@ -480,8 +539,13 @@ export default function HomePage() {
               isPromo: item.isPromo ?? matched.isPromo ?? true,
               isTerlaris: activeCategory === 'terlaris',
               isTerbaru: activeCategory === 'terbaru',
+              soldCount: typeof item.soldCount === 'number' ? item.soldCount : (typeof matched.soldCount === 'number' ? matched.soldCount : 20),
+              targetMax: typeof item.soldCount === 'number' ? item.soldCount : (typeof matched.targetMax === 'number' ? matched.targetMax : 20),
               minPrice: matched.minPrice > 0 ? matched.minPrice : (item.minPrice || 0),
               items: matched.items && matched.items.length > 0 ? matched.items : ((item as any).items || []),
+              effectiveCreatedAt: item.effectiveCreatedAt || (item as any).effective_created_at || (matched as any).effectiveCreatedAt || (matched as any).createdAt,
+              createdAt: item.createdAt || (item as any).created_at || (matched as any).createdAt,
+              updatedAt: item.updatedAt || (item as any).updated_at || (matched as any).updatedAt,
             }
           : {
           id: item.id || item.slug,
@@ -507,6 +571,9 @@ export default function HomePage() {
           items: (item as any).items || [],
           minPrice: item.minPrice || (item as any).price || 0,
           isOutOfStock: (item as any).isOutOfStock || (item as any).stockStatus === 'out_of_stock' || (item.minPrice || 0) <= 0,
+          effectiveCreatedAt: item.effectiveCreatedAt || (item as any).effective_created_at,
+          createdAt: item.createdAt || (item as any).created_at,
+          updatedAt: item.updatedAt || (item as any).updated_at,
         };
 
         if (appToPush && !seenNames.has(appToPush.name)) {
@@ -541,23 +608,9 @@ export default function HomePage() {
           fallbackCandidates = [];
         }
       } else if (activeCategory === 'terlaris') {
-        fallbackCandidates = allMapped
-          .filter((app) => app.isTerlaris)
-          .slice()
-          .sort((a, b) => (b.targetMax || b.soldCount || 0) - (a.targetMax || a.soldCount || 0));
+        fallbackCandidates = allMapped.slice();
       } else if (activeCategory === 'terbaru') {
-        fallbackCandidates = allMapped
-          .filter((app) => app.isTerbaru)
-          .slice()
-          .sort((a, b) => {
-            const dtA = Math.max(
-              ...[new Date((a as any).createdAt || (a as any).created_at || 0).getTime(), ...(a.items || []).map((p) => new Date((p as any).createdAt || (p as any).created_at || 0).getTime())]
-            );
-            const dtB = Math.max(
-              ...[new Date((b as any).createdAt || (b as any).created_at || 0).getTime(), ...(b.items || []).map((p) => new Date((p as any).createdAt || (p as any).created_at || 0).getTime())]
-            );
-            return dtB - dtA;
-          });
+        fallbackCandidates = allMapped.slice();
       }
 
       for (const candidate of fallbackCandidates) {
@@ -568,18 +621,43 @@ export default function HomePage() {
       }
 
       if (orderedApps.length > 0) {
+        // Strict sorting guarantee across all modes
+        if (activeCategory === 'terlaris') {
+          orderedApps.sort((a, b) => {
+            const sA = a.soldCount ?? 0;
+            const sB = b.soldCount ?? 0;
+            if (sB !== sA) return sB - sA;
+            const rA = parseFloat(a.rating || '5.0') || 0;
+            const rB = parseFloat(b.rating || '5.0') || 0;
+            if (rB !== rA) return rB - rA;
+            const dtA = getEffectiveTimestamp(a);
+            const dtB = getEffectiveTimestamp(b);
+            if (dtB !== dtA) return dtB - dtA;
+            return a.name.localeCompare(b.name);
+          });
+        } else if (activeCategory === 'terbaru') {
+          orderedApps.sort((a, b) => {
+            const dtA = getEffectiveTimestamp(a);
+            const dtB = getEffectiveTimestamp(b);
+            if (dtB !== dtA) return dtB - dtA;
+            const sA = a.soldCount ?? 0;
+            const sB = b.soldCount ?? 0;
+            if (sB !== sA) return sB - sA;
+            return a.name.localeCompare(b.name);
+          });
+        } else if (activeCategory === 'promo') {
+          orderedApps.sort((a, b) => (b.soldCount ?? 0) - (a.soldCount ?? 0));
+        }
         return orderedApps;
       }
     }
 
     // 3. Resilient Fallback if backend section is empty
     if (activeCategory === 'promo') {
-      // Rule 4: Dynamic based on active campaigns!
       if (!activeCampaigns || activeCampaigns.length === 0) {
         return [];
       }
 
-      // Filter products participating in active campaigns
       const promoMatching = allMapped.filter((app) => {
         return activeCampaigns.some((camp) =>
           isProductInCampaign(app, camp) ||
@@ -589,33 +667,62 @@ export default function HomePage() {
         );
       });
 
-      return promoMatching
-        .sort((a, b) => (b.targetMax || b.soldCount || 0) - (a.targetMax || a.soldCount || 0));
+      return promoMatching.sort((a, b) => (b.soldCount ?? 0) - (a.soldCount ?? 0));
     }
 
     if (activeCategory === 'terlaris') {
       return allMapped
-        .filter((app) => app.isTerlaris)
-        .sort((a, b) => (b.targetMax || b.soldCount || 0) - (a.targetMax || a.soldCount || 0));
+        .slice()
+        .sort((a, b) => {
+          const sA = a.soldCount ?? 0;
+          const sB = b.soldCount ?? 0;
+          if (sB !== sA) return sB - sA;
+          const rA = parseFloat(a.rating || '5.0') || 0;
+          const rB = parseFloat(b.rating || '5.0') || 0;
+          if (rB !== rA) return rB - rA;
+          const dtA = getEffectiveTimestamp(a);
+          const dtB = getEffectiveTimestamp(b);
+          if (dtB !== dtA) return dtB - dtA;
+          return a.name.localeCompare(b.name);
+        });
     }
 
     if (activeCategory === 'terbaru') {
       return allMapped
-        .filter((app) => app.isTerbaru)
         .slice()
         .sort((a, b) => {
-          const dtA = Math.max(
-            ...[new Date((a as any).createdAt || (a as any).created_at || 0).getTime(), ...(a.items || []).map((p) => new Date((p as any).createdAt || (p as any).created_at || 0).getTime())]
-          );
-          const dtB = Math.max(
-            ...[new Date((b as any).createdAt || (b as any).created_at || 0).getTime(), ...(b.items || []).map((p) => new Date((p as any).createdAt || (p as any).created_at || 0).getTime())]
-          );
-          return dtB - dtA;
+          const dtA = getEffectiveTimestamp(a);
+          const dtB = getEffectiveTimestamp(b);
+          if (dtB !== dtA) return dtB - dtA;
+          const sA = a.soldCount ?? 0;
+          const sB = b.soldCount ?? 0;
+          if (sB !== sA) return sB - sA;
+          return a.name.localeCompare(b.name);
         });
     }
 
     return allMapped;
   }, [sectionsResponse, allProducts, appConfigurations, activeCategory, activeCampaigns, cardsResponse]);
+
+  // Slicing for initial 8-card grid and expandable dropdown
+  const visibleApps = useMemo(() => {
+    return isExpanded ? featuredApps : featuredApps.slice(0, 8);
+  }, [isExpanded, featuredApps]);
+
+  const handleToggleExpand = () => {
+    if (isExpanded) {
+      setIsExpanded(false);
+      const el = document.getElementById('produk-unggulan');
+      if (el) {
+        const rect = el.getBoundingClientRect();
+        if (rect.top < 0) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
+    } else {
+      setIsExpanded(true);
+    }
+  };
 
   // Client-mounted tracking
   const [isMounted, setIsMounted] = useState<boolean>(false);
@@ -908,26 +1015,34 @@ export default function HomePage() {
           {/* Selector Tabs: [ 🔥 Promo ] [ Terlaris ] [ Terbaru ] */}
           <div data-gsap="category-tabs" className="flex items-center justify-between gap-2 mb-3 sm:mb-4 pb-1 border-b border-[rgba(18,26,42,0.06)] overflow-x-auto scrollbar-none">
             <div className="flex items-center gap-1.5 sm:gap-2">
-              {/* Tab 1: PROMO (DEFAULT & VISUALLY PROMINENT) */}
-              <button
-                type="button"
-                data-gsap="hero-button"
-                onClick={() => setActiveCategory('promo')}
-                className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs sm:text-[13px] font-bold transition-all cursor-pointer ${
-                  activeCategory === 'promo'
-                    ? 'bg-[#C96F55] text-white shadow-xs scale-102 ring-2 ring-[#C96F55]/30'
-                    : 'bg-white text-[#C96F55] border border-[#C96F55]/40 hover:bg-[#C96F55]/10'
-                }`}
-              >
-                <FontAwesomeIcon icon={faFire} className="w-3.5 h-3.5" />
-                <span>Promo</span>
-              </button>
+              {/* Tab 1: PROMO (CONDITIONAL: ONLY SHOWN IF ACTIVE CAMPAIGN EXISTS) */}
+              {hasActiveCampaign && (
+                <button
+                  type="button"
+                  data-gsap="hero-button"
+                  onClick={() => {
+                    setActiveCategory('promo');
+                    setIsExpanded(false);
+                  }}
+                  className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs sm:text-[13px] font-bold transition-all cursor-pointer ${
+                    activeCategory === 'promo'
+                      ? 'bg-[#C96F55] text-white shadow-xs scale-102 ring-2 ring-[#C96F55]/30'
+                      : 'bg-white text-[#C96F55] border border-[#C96F55]/40 hover:bg-[#C96F55]/10'
+                  }`}
+                >
+                  <FontAwesomeIcon icon={faFire} className="w-3.5 h-3.5" />
+                  <span>Promo</span>
+                </button>
+              )}
 
               {/* Tab 2: Terlaris */}
               <button
                 type="button"
                 data-gsap="hero-button"
-                onClick={() => setActiveCategory('terlaris')}
+                onClick={() => {
+                  setActiveCategory('terlaris');
+                  setIsExpanded(false);
+                }}
                 className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs sm:text-[13px] transition-all cursor-pointer ${
                   activeCategory === 'terlaris'
                     ? 'bg-[#121A2A] text-white font-bold shadow-xs'
@@ -941,7 +1056,10 @@ export default function HomePage() {
               <button
                 type="button"
                 data-gsap="hero-button"
-                onClick={() => setActiveCategory('terbaru')}
+                onClick={() => {
+                  setActiveCategory('terbaru');
+                  setIsExpanded(false);
+                }}
                 className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs sm:text-[13px] transition-all cursor-pointer ${
                   activeCategory === 'terbaru'
                     ? 'bg-[#121A2A] text-white font-bold shadow-xs'
@@ -979,15 +1097,45 @@ export default function HomePage() {
               ))}
             </div>
           ) : featuredApps.length > 0 ? (
-            <div key={activeCategory} data-gsap="product-grid" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-4.5 animate-tab-glide">
-              {featuredApps.map((app) => (
-                <FeaturedGridCard
-                  key={`featured-${activeCategory}-${app.name}`}
-                  app={app}
-                  activeCampaigns={activeCampaigns}
-                  onQuickView={handleOpenQuickView}
-                />
-              ))}
+            <div>
+              <div
+                id="featured-product-grid"
+                key={`${activeCategory}-${isExpanded ? 'expanded' : 'collapsed'}`}
+                data-gsap="product-grid"
+                className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-4.5 animate-tab-glide"
+              >
+                {visibleApps.map((app, index) => (
+                  <div
+                    key={`featured-${activeCategory}-${app.name}-${app.id || index}`}
+                    className={index >= 8 ? 'animate-grid-expand' : undefined}
+                  >
+                    <FeaturedGridCard
+                      app={app}
+                      activeCampaigns={activeCampaigns}
+                      onQuickView={handleOpenQuickView}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {/* Expand / Collapse Button (Shown only when total products > 8) */}
+              {featuredApps.length > 8 && (
+                <div className="flex justify-center mt-5 sm:mt-6">
+                  <button
+                    type="button"
+                    onClick={handleToggleExpand}
+                    aria-expanded={isExpanded}
+                    aria-controls="featured-product-grid"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-[rgba(18,26,42,0.12)] bg-white hover:bg-[#F8FAFC] hover:border-[#121A2A]/30 text-[#121A2A] text-xs sm:text-sm font-bold shadow-xs transition-all active:scale-98 cursor-pointer group"
+                  >
+                    <span>{isExpanded ? 'Tampilkan Lebih Sedikit' : 'Tampilkan Produk Lainnya'}</span>
+                    <FontAwesomeIcon
+                      icon={isExpanded ? faChevronUp : faChevronDown}
+                      className="w-3.5 h-3.5 text-[#121A2A]/60 group-hover:text-[#121A2A] transition-transform duration-200"
+                    />
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             <div className="p-8 text-center bg-white rounded-2xl border border-[rgba(18,26,42,0.08)] col-span-full">

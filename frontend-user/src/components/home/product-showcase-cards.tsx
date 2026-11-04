@@ -41,6 +41,9 @@ export interface ApplicationGroupItem {
   items: ProductItem[];
   isOutOfStock?: boolean;
   rank?: number;
+  effectiveCreatedAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export function isAppOutOfStock(app: ApplicationGroupItem): boolean {
