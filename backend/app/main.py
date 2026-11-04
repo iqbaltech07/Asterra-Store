@@ -95,11 +95,14 @@ async def lifespan(app: FastAPI):
     try:
         if settings.QSTASH_TOKEN:
             from app.core.qstash_client import register_cron_job
-            base_api_url = os.getenv("API_BASE_URL", "https://api.asterrastore.biz.id").strip().rstrip('/')
+            is_dev = settings.ENVIRONMENT.lower() in ("development", "staging", "dev")
+            default_api_url = "https://staging.api.asterrastore.biz.id" if is_dev else "https://api.asterrastore.biz.id"
+            base_api_url = os.getenv("API_BASE_URL", default_api_url).strip().rstrip('/')
+            schedule_prefix = "staging-" if is_dev else ""
             register_cron_job(
                 destination_url=f"{base_api_url}/api/v1/internal/cron/dummy-order",
                 cron_expression="*/5 * * * *",
-                schedule_id="asterra-dummy-order",
+                schedule_id=f"{schedule_prefix}asterra-dummy-order",
                 payload={"source": "qstash-cron", "action": "trigger_dummy_order"},
             )
     except Exception as e:
