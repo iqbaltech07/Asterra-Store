@@ -163,7 +163,7 @@ class TestAsterraDynamicArchitecture(unittest.TestCase):
 
             self.assertGreaterEqual(count, 0)
 
-        # Verify card.to_dict includes base_sold_count + real orders (dynamic, deterministic)
+        # Verify card.to_dict includes fake + real orders (dynamic, deterministic)
         db = SessionLocal()
         try:
 
@@ -171,8 +171,8 @@ class TestAsterraDynamicArchitecture(unittest.TestCase):
             if card:
 
                 cd = card.to_dict(sold_count=5)
-                expected_total = cd["baseSoldCount"] + 5
-                self.assertEqual(cd["soldCount"], expected_total)
+                self.assertEqual(cd["soldCount"], 5)
+                self.assertEqual(cd["orderSoldCount"], 5)
 
         finally:
 
@@ -406,8 +406,8 @@ class TestAsterraDynamicArchitecture(unittest.TestCase):
                 self.assertGreaterEqual(base, 10, f"Regular card '{c['name']}' base ({base}) must be >= 10")
                 self.assertLessEqual(base, 25, f"Regular card '{c['name']}' base ({base}) must be <= 25")
 
-            # Dynamic sold count formula: baseline + order units
-            expected = base + c.get("orderSoldCount", 0)
+            # Dynamic sold count formula: fake orders + real orders
+            expected = c.get("orderSoldCount", 0)
             self.assertEqual(sc, expected, f"Card '{c['name']}' soldCount mismatch: expected {expected}, got {sc}")
 
         # Verify values are varied (not all identical)
@@ -515,7 +515,7 @@ class TestAsterraDynamicArchitecture(unittest.TestCase):
                 orders = c.get("orderSoldCount", 0)
                 self.assertGreaterEqual(base, 11, f"Produk Terbaru '{slug}' base ({base}) must be >= 11")
                 self.assertLessEqual(base, 20, f"Produk Terbaru '{slug}' base ({base}) must be <= 20")
-                self.assertEqual(sc, base + orders, f"Formula mismatch for '{slug}': {sc} != {base} + {orders}")
+                self.assertEqual(sc, orders, f"Formula mismatch for '{slug}': {sc} != {orders}")
 
         # 2. Test create_card for a new Produk Terbaru
         test_slug = f"test-new-service-{int(datetime.utcnow().timestamp())}"
@@ -529,13 +529,13 @@ class TestAsterraDynamicArchitecture(unittest.TestCase):
         try:
             self.assertGreaterEqual(created["baseSoldCount"], 11, "New card baseSoldCount must be >= 11")
             self.assertLessEqual(created["baseSoldCount"], 20, "New card baseSoldCount must be <= 20")
-            self.assertEqual(created["soldCount"], created["baseSoldCount"], "Initial soldCount must equal baseSoldCount")
+            self.assertEqual(created["soldCount"], 0, "Initial soldCount must be 0 (no orders yet)")
 
             # Verify persistence across fresh query
             queried = CardService.get_card_by_id_or_slug(test_slug)
             self.assertIsNotNone(queried)
             self.assertEqual(queried["baseSoldCount"], created["baseSoldCount"], "baseSoldCount must persist across queries")
-            self.assertEqual(queried["soldCount"], created["soldCount"], "soldCount must persist across queries")
+            self.assertEqual(queried["soldCount"], 0, "soldCount must persist as 0")
 
             # 3. Test order status effects on sold count
             db = SessionLocal()
@@ -611,7 +611,7 @@ class TestAsterraDynamicArchitecture(unittest.TestCase):
                 card_after_non_completed = CardService.get_card_by_id_or_slug(test_slug)
                 self.assertEqual(
                     card_after_non_completed["soldCount"],
-                    created["baseSoldCount"],
+                    0,
                     "Pending/Processing/Cancelled orders must NOT increment soldCount!"
                 )
 
@@ -663,9 +663,8 @@ class TestAsterraDynamicArchitecture(unittest.TestCase):
 
                 # Re-query card: sold count must increase by exactly 2 (1 dummy + 1 real)!
                 card_after_completed = CardService.get_card_by_id_or_slug(test_slug)
-                expected_total = created["baseSoldCount"] + 2
                 self.assertEqual(card_after_completed["orderSoldCount"], 2)
-                self.assertEqual(card_after_completed["soldCount"], expected_total)
+                self.assertEqual(card_after_completed["soldCount"], 2)
 
             finally:
                 db.query(OrderItem).filter(OrderItem.card_id == new_card_id).delete(synchronize_session=False)

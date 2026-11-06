@@ -123,9 +123,10 @@ class ProductCard(Base):
         else:
             effective_base = 10 + (abs(hash(card_slug)) % 16)
 
-        # Dynamic Sold Count = BASELINE SOLD COUNT + COMPLETED DUMMY ORDER + COMPLETED REAL ORDER
-        total_order_units = (int(dummy_sold) + int(real_sold)) if (dummy_sold or real_sold) else int(sold_count)
-        total_sold = effective_base + total_order_units
+        # Product sold count is accumulated strictly from:
+        # fake orders @productgroup + real orders @productgroup
+        total_order_units = (int(dummy_sold or 0) + int(real_sold or 0)) if (dummy_sold or real_sold) else int(sold_count or 0)
+        total_sold = total_order_units
 
         # Calculate effective created timestamp (card or variants, whichever is newest)
         created_dts = [self.created_at] if self.created_at else []

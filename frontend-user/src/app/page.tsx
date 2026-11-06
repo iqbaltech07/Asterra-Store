@@ -414,8 +414,8 @@ export default function HomePage() {
             logoUrl: card.logoUrl,
             imageUrl: card.imageUrl,
             description: card.description,
-            soldCount: card.soldCount ?? 20,
-            targetMax: card.soldCount ?? 20,
+            soldCount: card.soldCount ?? 0,
+            targetMax: card.soldCount ?? 0,
             rating: String(card.rating || '5.0'),
             badgeLabel:
               activeCategory === 'promo'
@@ -539,8 +539,8 @@ export default function HomePage() {
               isPromo: item.isPromo ?? matched.isPromo ?? true,
               isTerlaris: activeCategory === 'terlaris',
               isTerbaru: activeCategory === 'terbaru',
-              soldCount: typeof item.soldCount === 'number' ? item.soldCount : (typeof matched.soldCount === 'number' ? matched.soldCount : 20),
-              targetMax: typeof item.soldCount === 'number' ? item.soldCount : (typeof matched.targetMax === 'number' ? matched.targetMax : 20),
+              soldCount: typeof item.soldCount === 'number' ? item.soldCount : (typeof matched.soldCount === 'number' ? matched.soldCount : 0),
+              targetMax: typeof item.soldCount === 'number' ? item.soldCount : (typeof matched.targetMax === 'number' ? matched.targetMax : 0),
               minPrice: matched.minPrice > 0 ? matched.minPrice : (item.minPrice || 0),
               items: matched.items && matched.items.length > 0 ? matched.items : ((item as any).items || []),
               effectiveCreatedAt: item.effectiveCreatedAt || (item as any).effective_created_at || (matched as any).effectiveCreatedAt || (matched as any).createdAt,
@@ -556,8 +556,8 @@ export default function HomePage() {
           logoUrl: item.logoUrl || (item as any).imageUrl,
           imageUrl: (item as any).imageUrl || item.logoUrl,
           description: (item as any).description,
-          soldCount: item.soldCount ?? 20,
-          targetMax: item.soldCount ?? 20,
+          soldCount: item.soldCount ?? 0,
+          targetMax: item.soldCount ?? 0,
           rating: String(item.rating || '5.0'),
           badgeLabel:
             activeCategory === 'promo'
@@ -770,7 +770,7 @@ export default function HomePage() {
           logoUrl: item.logoUrl || matchedCard?.logoUrl,
           imageUrl: item.imageUrl || matchedCard?.imageUrl,
           description: item.description || matchedCard?.description,
-          soldCount: item.soldCount ?? matchedCard?.soldCount ?? 20,
+          soldCount: item.soldCount ?? matchedCard?.soldCount ?? 0,
           rating: String(item.rating || matchedCard?.rating || '5.0'),
           badgeLabel: item.badgeLabel || `TOP ${idx + 1}`,
           rank: item.rank || idx + 1,
@@ -800,7 +800,7 @@ export default function HomePage() {
         match: (t: string) => t.includes(name.toLowerCase()),
         cat: 'Digital Product',
         tag: 'other' as const,
-        soldCount: matchedCard?.soldCount || 20,
+        soldCount: matchedCard?.soldCount ?? 0,
         rating: '5.0',
       };
 
