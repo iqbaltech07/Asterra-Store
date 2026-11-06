@@ -8,6 +8,7 @@ from app.api.v1.realtime import router as realtime_router
 from app.api.v1.brandfetch import router as brandfetch_router
 from app.api.v1.media import router as media_router
 from app.api.v1.store import router as store_router
+from app.api.v1.payment_events import router as payment_events_router
 
 api_router = APIRouter()
 
@@ -22,6 +23,7 @@ api_router.include_router(admin_router)
 api_router.include_router(auth_router)
 api_router.include_router(realtime_router)
 api_router.include_router(brandfetch_router)
+api_router.include_router(payment_events_router)
 
 # 2. Universal Fallback Handler for Graceful Proxy Support
 @api_router.api_route("/{full_path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE"], tags=["Fallback"])

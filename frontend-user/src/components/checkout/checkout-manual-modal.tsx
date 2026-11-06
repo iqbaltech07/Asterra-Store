@@ -45,7 +45,7 @@ export interface ManualPaymentModalData {
   qr_url?: string;
   qrString?: string;
   qr_string?: string;
-  // Virtual Account fields (Midtrans Core API)
+  // Virtual Account / Bank fields
   vaNumber?: string;
   va_number?: string;
   bank?: string;
@@ -302,12 +302,12 @@ export function CheckoutManualModal({
     };
   };
 
-  // Virtual Account (BCA, BNI, BRI, Mandiri via Midtrans Core API)
+  // Virtual Account / Bank Transfer
   const isVirtualAccount =
     ['bca_va', 'bni_va', 'bri_va', 'mandiri_va', 'bca', 'bni', 'bri', 'mandiri', 'echannel'].includes(data.method) ||
     Boolean(data.vaNumber || data.va_number || data.billKey || data.bill_key);
 
-  // Dynamic QRIS applies to automated QRIS charges
+  // Dynamic QRIS applies to automated QRIS charges (LiPay QRIS DANA Bisnis)
   const isDynamicQris =
     !isVirtualAccount &&
     !data.method?.startsWith('manual_') &&
@@ -316,6 +316,8 @@ export function CheckoutManualModal({
     data.method !== 'manual_bca' &&
     data.method !== 'manual_dana' &&
     (data.method === 'qris' ||
+      data.method === 'lipay' ||
+      data.method === 'qris_dana' ||
       data.method === 'qris_midtrans' ||
       Boolean(
         data.qrString ||
@@ -716,7 +718,7 @@ export function CheckoutManualModal({
                         <span className="font-mono font-extrabold text-lg text-foreground tracking-wider block">
                           {data.billerCode}
                         </span>
-                        <span className="text-[10px] text-foreground-muted">Nama Penyedia Jasa: MIDTRANS</span>
+                        <span className="text-[10px] text-foreground-muted">Nama Merchant: Asterra Store</span>
                       </div>
                       <Button
                         size="sm"

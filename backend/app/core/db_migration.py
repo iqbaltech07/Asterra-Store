@@ -136,6 +136,32 @@ def run_migrations():
         END
         WHERE base_sold_count = 0;
         """,
+
+        # 11. DANA Payment Events table for Asterra Payment Listener
+        """
+        CREATE TABLE IF NOT EXISTS dana_payment_events (
+            id VARCHAR(100) PRIMARY KEY,
+            event_id VARCHAR(100) UNIQUE NOT NULL,
+            device_id VARCHAR(100) NOT NULL,
+            amount NUMERIC(15, 2) NOT NULL,
+            currency VARCHAR(10) DEFAULT 'IDR' NOT NULL,
+            transaction_time TIMESTAMP WITH TIME ZONE NOT NULL,
+            source VARCHAR(50) DEFAULT 'dana_business' NOT NULL,
+            raw_reference VARCHAR(255),
+            status VARCHAR(50) DEFAULT 'DETECTED' NOT NULL,
+            matched_order_id VARCHAR(100),
+            verified_by_admin_id VARCHAR(100),
+            verified_at TIMESTAMP WITHOUT TIME ZONE,
+            notes TEXT,
+            created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc'),
+            updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc')
+        );
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_dana_payment_events_event_id ON dana_payment_events(event_id);",
+        "CREATE INDEX IF NOT EXISTS idx_dana_payment_events_status ON dana_payment_events(status);",
+        "CREATE INDEX IF NOT EXISTS idx_dana_payment_events_device_id ON dana_payment_events(device_id);",
+        "CREATE INDEX IF NOT EXISTS idx_dana_payment_events_matched_order ON dana_payment_events(matched_order_id);",
+        "CREATE INDEX IF NOT EXISTS idx_dana_payment_events_tx_time ON dana_payment_events(transaction_time);",
     ]
 
     try:

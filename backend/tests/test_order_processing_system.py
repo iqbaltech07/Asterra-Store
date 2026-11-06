@@ -27,7 +27,7 @@ def ensure_db():
 def real_product_id():
     db = SessionLocal()
     try:
-        p = db.query(Product).first()
+        p = db.query(Product).filter(Product.stock > 0, Product.status == "active").first()
         if not p:
             p = Product(
                 id="vip-viu1bln-s1",

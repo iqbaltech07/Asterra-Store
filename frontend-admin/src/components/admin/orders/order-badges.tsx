@@ -45,12 +45,13 @@ export function OrderActorBadge({ actor }: { actor?: OrderLog['actor'] | string 
           Admin Manual
         </Badge>
       );
+    case 'lipay_listener':
     case 'midtrans_webhook':
     case 'dana_webhook':
     case 'tripay_webhook':
       return (
         <Badge variant="outline" className="bg-status-success/10 text-status-success border-status-success/30 text-[10px]">
-          Midtrans QRIS Gateway
+          LiPay DANA Listener
         </Badge>
       );
     case 'customer':

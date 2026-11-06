@@ -802,7 +802,7 @@ function CheckoutPageContent() {
 
       const isOrderManual =
         selectedMethod.startsWith('manual_') ||
-        (isManualMode && selectedMethod !== 'qris' && selectedMethod !== 'qris_midtrans');
+        (isManualMode && selectedMethod !== 'qris' && selectedMethod !== 'lipay' && selectedMethod !== 'qris_midtrans');
 
       const isPreorderOrder =
         isPreorderMode ||
@@ -1000,7 +1000,7 @@ function CheckoutPageContent() {
     if (methodId === 'manual_bca') return paymentConfig?.bank?.name || 'Bank Central Asia (BCA)';
     if (methodId === 'manual_qris') return 'QRIS Statis Toko';
     if (methodId === 'manual_dana') return 'Transfer E-Wallet DANA';
-    if (methodId === 'qris' || methodId === 'qris_midtrans') return 'QRIS';
+    if (methodId === 'qris' || methodId === 'lipay' || methodId === 'qris_midtrans') return 'QRIS';
     if (methodId === 'bca_va') return 'BCA Virtual Account';
     if (methodId === 'mandiri_va') return 'Mandiri Virtual Account';
     if (methodId === 'bni_va') return 'BNI Virtual Account';

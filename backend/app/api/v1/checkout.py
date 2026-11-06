@@ -1,4 +1,5 @@
 import json
+import logging
 from typing import Optional, List, Dict, Any
 from fastapi import APIRouter, Request, Response, HTTPException, Query, BackgroundTasks
 
@@ -6,9 +7,9 @@ from app.config import settings
 from app.services.order_service import OrderService
 from app.services.payment_config_service import PaymentConfigService
 from app.services.promo_service import PromoService
-from app.services.midtrans_service import MidtransService
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 from app.core.cache import cache
 from app.services.realtime_broadcaster import RealtimeBroadcaster
@@ -547,21 +548,9 @@ async def pay_order(order_id: str, request: Request):
     cust_email = order.get("customerEmail") or order.get("customer_email") or "customer@asterra.store"
     cust_phone = order.get("customerPhone") or order.get("customer_phone") or ""
 
-    # 1. Dynamic QRIS (Midtrans Core API)
+    # 1. LiPay QRIS Detection (DANA Bisnis Direct Settlement)
     if is_qris:
-        payment_info = MidtransService.generate_qris(
-            order_id=order_id,
-            amount=int(amount),
-            customer_name=cust_name,
-            customer_email=cust_email,
-            customer_phone=cust_phone,
-            title=f"Order {order_id} - Asterra Store",
-        )
-        if not payment_info.get("success"):
-            err_msg = payment_info.get("error") or "Gagal membuat tagihan QRIS."
-            raise HTTPException(status_code=502, detail=err_msg)
-
-        # Update order with payment transaction ID / reference
+        payment_ref = f"LIPAY-{order_id}"
         try:
             from app.core.database import SessionLocal
             from app.models.order import Order
@@ -569,73 +558,47 @@ async def pay_order(order_id: str, request: Request):
             try:
                 db_order = db.query(Order).filter(Order.id == order_id).first()
                 if db_order:
-                    db_order.payment_reference = payment_info.get("transaction_id")
+                    db_order.payment_reference = payment_ref
                     db_order.payment_status = "pending"
+                    db_order.payment_mode = "LIPAY"
                     db.commit()
             finally:
                 db.close()
         except Exception as e:
             logger.warning(f"Could not update order payment ref: {e}")
 
-        return {
-            "success": True,
-            "message": "Instruksi pembayaran QRIS berhasil dibuat",
-            "payment": payment_info,
+        payment_info = {
+            "id": f"PAY-{order_id}",
+            "order_id": order_id,
+            "amount": amount,
+            "payment_method": "qris",
+            "transaction_id": payment_ref,
+            "payment_status": "pending",
+            "payment_mode": "LIPAY",
+            "is_lipay": True,
+            "qr_image_url": qris_url,
+            "qr_url": qris_url,
+            "qris_merchant_name": qris_merchant,
+            "instructions": [
+                {
+                    "title": "Instruksi Pembayaran QRIS (Verifikasi LiPay)",
+                    "steps": [
+                        f"Buka aplikasi e-wallet (DANA, GoPay, OVO, ShopeePay) atau mobile banking pilihan Anda.",
+                        f"Scan kode QRIS Toko ({qris_merchant}) di atas.",
+                        f"Pastikan nominal transfer tepat Rp {amount:,.0f}".replace(",", "."),
+                        "Sistem LiPay akan mendeteksi notifikasi masuk dari DANA Bisnis dan memverifikasi pesanan secara otomatis.",
+                    ],
+                }
+            ],
         }
-
-    # 2. Virtual Account Bank Transfer (BCA, BNI, BRI, Mandiri via Midtrans Core API)
-    if is_va:
-        bank_name = "mandiri" if "mandiri" in method or method == "echannel" else method.replace("_va", "")
-        payment_info = MidtransService.generate_bank_transfer(
-            order_id=order_id,
-            amount=int(amount),
-            bank=bank_name,
-            customer_name=cust_name,
-            customer_email=cust_email,
-            customer_phone=cust_phone,
-            title=f"Order {order_id} - Asterra Store",
-        )
-        if not payment_info.get("success"):
-            err_msg = payment_info.get("error") or f"Gagal membuat tagihan Virtual Account {bank_name.upper()}."
-            raise HTTPException(status_code=502, detail=err_msg)
-
-        # Update order with payment transaction ID / reference
-        try:
-            from app.core.database import SessionLocal
-            from app.models.order import Order
-            db = SessionLocal()
-            try:
-                db_order = db.query(Order).filter(Order.id == order_id).first()
-                if db_order:
-                    db_order.payment_reference = payment_info.get("transaction_id")
-                    db_order.payment_status = "pending"
-                    db.commit()
-            finally:
-                db.close()
-        except Exception as e:
-            logger.warning(f"Could not update order payment ref: {e}")
 
         return {
             "success": True,
-            "message": f"Instruksi pembayaran Virtual Account {bank_name.upper()} berhasil dibuat",
+            "message": "Instruksi pembayaran LiPay QRIS berhasil dibuat",
             "payment": payment_info,
         }
 
-    # Manual payment instructions (uploaded QRIS or manual bank)
-    qris_url = (
-        pay_cfg.get("qris_image_url")
-        or pay_cfg.get("qrisImageUrl")
-        or (pay_cfg.get("qris", {}).get("image_url") if isinstance(pay_cfg.get("qris"), dict) else None)
-        or "/images/qris-toko.png"
-    )
-    qris_merchant = (
-        pay_cfg.get("qris_merchant_name")
-        or pay_cfg.get("qrisMerchantName")
-        or (pay_cfg.get("qris", {}).get("merchant_name") if isinstance(pay_cfg.get("qris"), dict) else None)
-        or "ASTERRA STORE QRIS"
-    )
-    bank_info = pay_cfg.get("bank", {}) if isinstance(pay_cfg.get("bank"), dict) else {}
-
+    # 2. Manual Bank / E-Wallet Transfer
     payment_info = {
         "id": f"PAY-{order_id}",
         "order_id": order_id,
@@ -643,6 +606,7 @@ async def pay_order(order_id: str, request: Request):
         "payment_method": method,
         "transaction_id": f"TRX-{order_id}",
         "payment_status": "pending",
+        "payment_mode": "MANUAL",
         "is_manual": True,
         "qr_image_url": qris_url,
         "qr_url": qris_url,
@@ -651,9 +615,9 @@ async def pay_order(order_id: str, request: Request):
             {
                 "title": "Instruksi Transfer Manual",
                 "steps": [
-                    f"Scan Barcode QRIS Resmi Toko ({qris_merchant}) atau transfer ke rekening {bank_info.get('name', 'Bank Central Asia (BCA)')} {bank_info.get('account_number', '8965123456')}",
+                    f"Transfer ke rekening {bank_info.get('name', 'Bank Central Asia (BCA)')} {bank_info.get('account_number', '8965123456')} a.n {bank_info.get('account_name', 'Asterra Store Official')}",
                     f"Pastikan transfer dengan nominal tepat Rp {amount:,.0f}".replace(",", "."),
-                    "Kirimkan bukti transfer pembayaran ke WhatsApp Admin untuk validasi pesanan.",
+                    "Kirimkan bukti transfer pembayaran ke WhatsApp Admin untuk konfirmasi pesanan.",
                 ],
             }
         ],
@@ -677,62 +641,7 @@ def cancel_order(order_id: str):
     }
 
 # ------------------------------------------
-# 4. Payment Gateway Webhook (Midtrans Dynamic QRIS)
-# ------------------------------------------
-@router.post("/webhooks/midtrans", tags=["Webhooks"])
-async def midtrans_webhook(request: Request):
-    try:
-        body = await request.json()
-    except Exception:
-        raw = await request.body()
-        try:
-            body = json.loads(raw.decode("utf-8"))
-        except Exception:
-            raise HTTPException(status_code=400, detail="Invalid JSON payload")
-
-    verified = MidtransService.verify_webhook(body)
-
-    if not verified.get("is_valid"):
-        err_msg = verified.get("error", "Invalid callback signature")
-        raise HTTPException(status_code=401, detail=err_msg)
-
-    order_id = verified.get("order_id")
-    if not order_id:
-        raise HTTPException(status_code=400, detail="order_id is required")
-
-    status = str(verified.get("status", "")).upper()
-    ref = verified.get("reference", f"MID-{order_id}")
-
-    if status in ["PAID", "SETTLEMENT", "SUCCESS", "SUCCESSFUL"]:
-        updated = OrderService.update_status(
-            order_id,
-            "processing",
-            notes=f"Pembayaran otomatis terverifikasi Midtrans Ref: {ref}",
-        )
-        return {
-            "status": "success",
-            "message": "Pembayaran Midtrans berhasil diverifikasi",
-            "order": updated,
-        }
-    elif status in ["CANCELLED", "EXPIRED", "DENY"]:
-        updated = OrderService.update_status(
-            order_id,
-            "cancelled",
-            notes=f"Pembayaran Midtrans {status.lower()}",
-        )
-        return {
-            "status": "cancelled",
-            "message": f"Pesanan {status.lower()}",
-            "order": updated,
-        }
-
-    return {
-        "status": "ok",
-        "message": f"Status webhook Midtrans diterima: {status}",
-    }
-
-# ------------------------------------------
-# 5. VIP Reseller Automated Webhook Callback
+# 4. VIP Reseller Automated Webhook Callback
 # ------------------------------------------
 @router.post("/webhooks/vip-reseller", tags=["Webhooks"])
 async def vip_reseller_webhook(request: Request):
