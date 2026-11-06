@@ -74,14 +74,21 @@ def test_receive_dana_event_success_and_matching(auth_headers):
         data = res.json()
         assert data["success"] is True
         assert data["event_id"] == event_id
-        assert data["status"] == "PENDING_REVIEW"
+        assert data["status"] == "PAID"
         assert data["matched_order_id"] == order_id
 
-        # Verify event saved in database
+        # Verify event saved in database as PAID
         saved = db.query(PaymentEvent).filter(PaymentEvent.event_id == event_id).first()
         assert saved is not None
         assert float(saved.amount) == test_amount
         assert saved.matched_order_id == order_id
+        assert saved.status == "PAID"
+
+        # Verify order in database transitioned to paid
+        db_order = db.query(Order).filter(Order.id == order_id).first()
+        assert db_order is not None
+        assert db_order.status in ["paid", "processing", "completed"]
+        assert db_order.payment_status == "settlement"
 
         # Test Idempotency: Submitting the exact same event_id must return DUPLICATE
         dup_res = client.post(
@@ -95,7 +102,7 @@ def test_receive_dana_event_success_and_matching(auth_headers):
         assert dup_data["event_id"] == event_id
 
     finally:
-        # Cleanup
+        # Cleanup Matching Test
         db.query(PaymentEvent).filter(PaymentEvent.event_id == event_id).delete()
         db.query(Order).filter(Order.id == order_id).delete()
         db.commit()
@@ -104,11 +111,12 @@ def test_receive_dana_event_success_and_matching(auth_headers):
 def test_admin_confirm_payment_workflow():
     db = SessionLocal()
     order_id = f"TEST-ORD-{uuid.uuid4().hex[:6].upper()}"
+    order_id_2 = f"TEST-ORD-2-{uuid.uuid4().hex[:6].upper()}"
     event_id = f"DANA-EVT-{uuid.uuid4().hex[:8]}"
     test_amount = 50000.0
 
     try:
-        # Create pending order
+        # Create 2 pending orders with exact same amount to trigger ambiguous PENDING_REVIEW
         test_order = Order(
             id=order_id,
             customer_email="testbuyer2@asterra.store",
@@ -120,7 +128,19 @@ def test_admin_confirm_payment_workflow():
             fulfillment_mode="automatic",
             created_at=datetime.utcnow(),
         )
+        test_order_2 = Order(
+            id=order_id_2,
+            customer_email="testbuyer3@asterra.store",
+            customer_name="Test Buyer 3",
+            total_amount=test_amount,
+            status="pending",
+            payment_status="pending",
+            payment_mode="MANUAL",
+            fulfillment_mode="automatic",
+            created_at=datetime.utcnow(),
+        )
         db.add(test_order)
+        db.add(test_order_2)
         db.commit()
 
         # Ingest event
@@ -156,9 +176,9 @@ def test_admin_confirm_payment_workflow():
         assert test_order.status in ["paid", "processing", "completed"]
 
     finally:
-        # Cleanup
+        # Cleanup Admin Test
         db.query(PaymentEvent).filter(PaymentEvent.event_id == event_id).delete()
-        db.query(Order).filter(Order.id == order_id).delete()
+        db.query(Order).filter(Order.id.in_([order_id, order_id_2])).delete()
         db.commit()
         db.close()
 

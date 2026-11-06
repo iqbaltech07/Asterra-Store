@@ -108,11 +108,14 @@ class PaymentEventService:
                 except Exception:
                     continue
 
+            matched_order_obj = None
             if len(candidate_orders) == 1:
                 matched = candidate_orders[0]
+                matched_order_obj = matched
                 new_event.matched_order_id = matched.id
-                new_event.status = "PENDING_REVIEW"
-                new_event.notes = f"Cocok otomatis dengan invoice {matched.id} (Rp {amount:,.0f}). Menunggu verifikasi admin.".replace(",", ".")
+                new_event.status = "PAID"
+                new_event.verified_at = datetime.utcnow()
+                new_event.notes = f"Pembayaran QRIS DANA Bisnis senilai Rp {amount:,.0f} diverifikasi otomatis oleh LiPay untuk invoice {matched.id}.".replace(",", ".")
             elif len(candidate_orders) > 1:
                 matched_ids = ", ".join([o.id for o in candidate_orders])
                 new_event.status = "PENDING_REVIEW"
@@ -124,6 +127,46 @@ class PaymentEventService:
             db.add(new_event)
             db.commit()
             db.refresh(new_event)
+
+            # Auto-update Asterra order to PAID and trigger fulfillment when exactly matched
+            if matched_order_obj and new_event.status == "PAID":
+                try:
+                    OrderService.update_status(
+                        matched_order_obj.id,
+                        "paid",
+                        notes=f"Pembayaran QRIS DANA Bisnis diverifikasi otomatis oleh LiPay (Event: {new_event.event_id})",
+                    )
+                except Exception as ord_err:
+                    print(f"[PaymentEventService] Auto order status update error: {ord_err}")
+
+                try:
+                    RealtimeBroadcaster.broadcast(
+                        "order:payment_verified",
+                        {
+                            "order_id": matched_order_obj.id,
+                            "id": matched_order_obj.id,
+                            "event_id": new_event.event_id,
+                            "amount": amount,
+                            "status": "paid",
+                            "payment_status": "settlement",
+                            "timestamp": datetime.utcnow().isoformat(),
+                        },
+                        target_role="all",
+                    )
+                    RealtimeBroadcaster.broadcast(
+                        "order:status_changed",
+                        {
+                            "order_id": matched_order_obj.id,
+                            "id": matched_order_obj.id,
+                            "status": "paid",
+                            "new_status": "paid",
+                            "payment_status": "settlement",
+                            "timestamp": datetime.utcnow().isoformat(),
+                        },
+                        target_role="all",
+                    )
+                except Exception as b_ex:
+                    print(f"[PaymentEventService] Realtime broadcast error on auto-paid: {b_ex}")
 
             event_dict = new_event.to_dict()
 
