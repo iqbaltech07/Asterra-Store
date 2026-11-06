@@ -417,7 +417,12 @@ class OrderProcessingService:
 
             if notes:
                 curr_notes = order.customer_notes or ""
-                order.customer_notes = f"{curr_notes} | Admin: {notes}".strip(" | ")
+                clean_note = notes.strip()
+                if clean_note.startswith("Sistem:") or clean_note.startswith("Admin:") or clean_note.startswith("System:"):
+                    formatted_note = clean_note
+                else:
+                    formatted_note = f"Admin: {clean_note}"
+                order.customer_notes = f"{curr_notes} | {formatted_note}".strip(" | ")
 
             db.commit()
             db.refresh(order)

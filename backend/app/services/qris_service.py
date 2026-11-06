@@ -129,3 +129,4 @@ class QrisService:
             logger.error(f"[QrisService] Error rendering QR with segno: {e}")
             from urllib.parse import quote
             return f"https://api.qrserver.com/v1/create-qr-code/?size=350x350&data={quote(content)}"
+

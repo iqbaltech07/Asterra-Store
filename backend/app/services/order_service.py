@@ -893,7 +893,12 @@ class OrderService:
                         curr_notes = order_obj.customer_notes or ""
                         # Only append if not an automated admin status change log
                         if not notes.lower().startswith("status pesanan diubah"):
-                            order_obj.customer_notes = f"{curr_notes} | Admin: {notes}".strip(" | ")
+                            clean_note = notes.strip()
+                            if clean_note.startswith("Sistem:") or clean_note.startswith("Admin:") or clean_note.startswith("System:"):
+                                formatted_note = clean_note
+                            else:
+                                formatted_note = f"Admin: {clean_note}"
+                            order_obj.customer_notes = f"{curr_notes} | {formatted_note}".strip(" | ")
 
                     db.commit()
                     db.refresh(order_obj)

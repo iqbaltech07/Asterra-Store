@@ -89,6 +89,7 @@ def test_receive_dana_event_success_and_matching(auth_headers):
         assert db_order is not None
         assert db_order.status in ["paid", "processing", "completed"]
         assert db_order.payment_status == "settlement"
+        assert db_order.customer_notes == "Sistem: Pembayaran QRIS diverifikasi otomatis oleh LiPay"
 
         # Test Idempotency: Submitting the exact same event_id must return DUPLICATE
         dup_res = client.post(
@@ -174,6 +175,7 @@ def test_admin_confirm_payment_workflow():
         # Verify order transitioned to paid in DB
         db.refresh(test_order)
         assert test_order.status in ["paid", "processing", "completed"]
+        assert "Admin: Pembayaran QRIS diverifikasi manual oleh Super Admin" in (test_order.customer_notes or "")
 
     finally:
         # Cleanup Admin Test

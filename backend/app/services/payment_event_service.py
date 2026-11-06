@@ -134,7 +134,7 @@ class PaymentEventService:
                     OrderService.update_status(
                         matched_order_obj.id,
                         "paid",
-                        notes=f"Pembayaran QRIS DANA Bisnis diverifikasi otomatis oleh LiPay (Event: {new_event.event_id})",
+                        notes="Sistem: Pembayaran QRIS diverifikasi otomatis oleh LiPay",
                     )
                 except Exception as ord_err:
                     print(f"[PaymentEventService] Auto order status update error: {ord_err}")
@@ -298,7 +298,9 @@ class PaymentEventService:
             db.refresh(event)
 
             # Update existing Asterra order workflow to PAID
-            order_update_note = f"Pembayaran QRIS DANA Bisnis dikonfirmasi oleh {admin_name} (Event: {event.event_id})"
+            order_update_note = f"Admin: Pembayaran QRIS diverifikasi manual oleh {admin_name}"
+            if notes:
+                order_update_note += f" ({notes})"
             updated_order = OrderService.update_status(target_order_id, "paid", notes=order_update_note)
 
             # Audit log
