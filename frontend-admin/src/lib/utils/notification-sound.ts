@@ -39,6 +39,8 @@ export interface PlayOptions {
   orderId?: string;
   eventId?: string;
   force?: boolean;
+  status?: string;
+  timestamp?: number;
 }
 
 const STORAGE_QUEUE_KEY = 'asterra_admin_audio_queue';
@@ -84,15 +86,10 @@ class NotificationAudioPlayer {
       }
     } catch {}
 
-    // 3. Load Persistent Unplayed Queue
+    // 3. Clear Stale Audio Queue on initialization
+    this.queue = [];
     try {
-      const storedQueue = localStorage.getItem(STORAGE_QUEUE_KEY);
-      if (storedQueue) {
-        const parsed = JSON.parse(storedQueue);
-        if (Array.isArray(parsed)) {
-          this.queue = parsed;
-        }
-      }
+      localStorage.removeItem(STORAGE_QUEUE_KEY);
     } catch {}
 
     // 4. Preload Audio Elements for instant 0ms response
@@ -101,19 +98,16 @@ class NotificationAudioPlayer {
     // 5. Register Global User Interaction Listeners to unlock autoplay
     this.setupAutoUnlock();
 
-    // 6. Handle tab visibility changes
+    // 6. Handle tab visibility changes (discard stale sounds older than 10s)
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') {
+        const now = Date.now();
+        this.queue = this.queue.filter((item) => now - item.timestamp < 10000);
         if (!this.isPlaying && this.queue.length > 0) {
           this.processQueue();
         }
       }
     });
-
-    // 7. Process any remaining restored queue items
-    if (this.queue.length > 0) {
-      setTimeout(() => this.processQueue(), 300);
-    }
   }
 
   private preloadAudio() {
@@ -207,7 +201,9 @@ class NotificationAudioPlayer {
   private saveQueue() {
     if (typeof window === 'undefined') return;
     try {
-      localStorage.setItem(STORAGE_QUEUE_KEY, JSON.stringify(this.queue));
+      // Intentionally clear storage key: audio queues are ephemeral in-memory only
+      // to prevent historical sound blasts when admin reopens or refreshes the page
+      localStorage.removeItem(STORAGE_QUEUE_KEY);
     } catch {}
   }
 
@@ -259,6 +255,22 @@ class NotificationAudioPlayer {
       return;
     }
 
+    // Validation for new order notifications:
+    // Only play sound if order is waiting for payment (pending / unpaid)
+    // and was created recently (< 30 seconds ago) to avoid replay spam
+    if (resolved === 'order' && !options?.force) {
+      if (options?.status) {
+        const st = options.status.toLowerCase().trim();
+        const isWaitingPayment = st === 'pending' || st === 'unpaid' || st === 'menunggu pembayaran';
+        if (!isWaitingPayment) {
+          return;
+        }
+      }
+      if (options?.timestamp && Math.abs(Date.now() - options.timestamp) > 30000) {
+        return;
+      }
+    }
+
     const uniqueId =
       options?.eventId ||
       (options?.orderId ? `${options.orderId.trim().toUpperCase()}:${resolved}` : `evt-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`);
@@ -303,6 +315,14 @@ class NotificationAudioPlayer {
 
     const currentItem = this.queue[0];
     if (!currentItem) return;
+
+    // Discard stale queue items older than 15 seconds to prevent audio spam
+    if (Date.now() - currentItem.timestamp > 15000) {
+      this.queue.shift();
+      this.saveQueue();
+      this.processQueue();
+      return;
+    }
 
     const sound = currentItem.sound;
     let audio = this.audioCache.get(sound);
@@ -382,72 +402,15 @@ class NotificationAudioPlayer {
 
   /**
    * Offline Event Recovery
-   * When admin opens the dashboard after being closed, queries recent audit logs
-   * since last sync timestamp and enqueues missed 'order' and 'cancel' events
-   * in exact chronological order.
+   * Kept for interface compatibility, but disabled from playing sounds
+   * to guarantee admin is never spammed with historical order sounds when opening/returning to the dashboard.
    */
   public async reconcileOfflineEvents(): Promise<number> {
     if (typeof window === 'undefined') return 0;
-
-    let lastSync: string | null = null;
     try {
-      lastSync = localStorage.getItem(STORAGE_LAST_SYNC_KEY);
+      localStorage.setItem(STORAGE_LAST_SYNC_KEY, new Date().toISOString());
     } catch {}
-
-    // First time ever opening dashboard: set baseline without playing entire historical database
-    if (!lastSync) {
-      const nowIso = new Date().toISOString();
-      try {
-        localStorage.setItem(STORAGE_LAST_SYNC_KEY, nowIso);
-      } catch {}
-      return 0;
-    }
-
-    try {
-      const res = await fetch(`/api/v1/admin/logs?since=${encodeURIComponent(lastSync)}&limit=100`);
-      if (!res.ok) return 0;
-
-      const data = await res.json();
-      const logs = data?.data || [];
-      if (!Array.isArray(logs) || logs.length === 0) return 0;
-
-      let enqueuedCount = 0;
-
-      // Logs are returned chronologically ascending (oldest to newest)
-      for (const log of logs) {
-        const action = String(log.action || '').toLowerCase();
-        const newStatus = String(log.new_status || log.status || '').toLowerCase();
-        const orderId = String(log.order_id || log.orderId || '').trim();
-        const logId = String(log.id || `${orderId}:${action}:${log.created_at || ''}`);
-
-        if (action === 'order_created' || (action.includes('created') && newStatus === 'pending')) {
-          if (!this.processedEvents.has(logId)) {
-            this.play('order', { orderId, eventId: logId });
-            enqueuedCount++;
-          }
-        } else if (
-          action === 'cancelled' ||
-          newStatus === 'cancelled' ||
-          newStatus === 'expired' ||
-          newStatus === 'batal'
-        ) {
-          if (!this.processedEvents.has(logId)) {
-            this.play('cancel', { orderId, eventId: logId });
-            enqueuedCount++;
-          }
-        }
-      }
-
-      // Update sync timestamp
-      try {
-        localStorage.setItem(STORAGE_LAST_SYNC_KEY, new Date().toISOString());
-      } catch {}
-
-      return enqueuedCount;
-    } catch (err) {
-      console.warn('[NotificationAudio] Offline reconciliation note:', err);
-      return 0;
-    }
+    return 0;
   }
 }
 

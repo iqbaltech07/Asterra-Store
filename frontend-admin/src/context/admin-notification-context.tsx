@@ -77,7 +77,6 @@ export const AdminNotificationProvider: React.FC<AdminNotificationProviderProps>
     const unsub = notificationSound.onUnlockChange((unlocked) => {
       setAudioUnlocked(unlocked);
     });
-    notificationSound.reconcileOfflineEvents();
     return unsub;
   }, []);
 
@@ -165,8 +164,21 @@ export const AdminNotificationProvider: React.FC<AdminNotificationProviderProps>
             if (processedEventsRef.current.has(eventKey)) return;
             saveProcessedEvent(eventKey);
 
-            // Play existing audio notification
-            notificationSound.play('order', { orderId, eventId: eventKey });
+            // Play audio notification ONLY if the new order is waiting for payment (pending / unpaid)
+            // and was created recently (< 60 seconds) to prevent replay spam
+            const orderStatus = String(payload.order_status || payload.status || 'pending').toLowerCase().trim();
+            const isWaitingPayment = orderStatus === 'pending' || orderStatus === 'unpaid' || orderStatus === 'menunggu pembayaran';
+            const createdAtMs = payload.created_at || payload.createdAt ? new Date(payload.created_at || payload.createdAt).getTime() : Date.now();
+            const isFresh = Math.abs(Date.now() - createdAtMs) < 60000;
+
+            if (isWaitingPayment && isFresh) {
+              notificationSound.play('order', {
+                orderId,
+                eventId: eventKey,
+                status: orderStatus,
+                timestamp: createdAtMs,
+              });
+            }
 
             // Invalidate React Query caches
             queryClient.invalidateQueries({ queryKey: ['admin-orders'] });

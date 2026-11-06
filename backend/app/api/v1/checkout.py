@@ -548,6 +548,23 @@ async def pay_order(order_id: str, request: Request):
     cust_email = order.get("customerEmail") or order.get("customer_email") or "customer@asterra.store"
     cust_phone = order.get("customerPhone") or order.get("customer_phone") or ""
 
+    qris_url = (
+        pay_cfg.get("qris_image_url")
+        or pay_cfg.get("qrisImageUrl")
+        or (pay_cfg.get("qris", {}).get("image_url") if isinstance(pay_cfg.get("qris"), dict) else None)
+        or "/images/qris-toko.png"
+    )
+    qris_merchant = (
+        pay_cfg.get("qris_merchant_name")
+        or pay_cfg.get("qrisMerchantName")
+        or (pay_cfg.get("qris", {}).get("merchant_name") if isinstance(pay_cfg.get("qris"), dict) else None)
+        or "ASTERRA STORE QRIS"
+    )
+    bank_info = pay_cfg.get("bank", {}) if isinstance(pay_cfg.get("bank"), dict) else {}
+    bank_name = (bank_info.get("name") if isinstance(bank_info, dict) else None) or pay_cfg.get("bank_name") or pay_cfg.get("bankName") or "Bank Central Asia (BCA)"
+    bank_acc = (bank_info.get("account_number") if isinstance(bank_info, dict) else None) or pay_cfg.get("bank_account_number") or pay_cfg.get("bankAccountNumber") or "8965123456"
+    bank_holder = (bank_info.get("account_name") if isinstance(bank_info, dict) else None) or pay_cfg.get("bank_account_name") or pay_cfg.get("bankAccountName") or "Asterra Store Official"
+
     # 1. LiPay QRIS Detection (DANA Bisnis Direct Settlement)
     if is_qris:
         payment_ref = f"LIPAY-{order_id}"
@@ -615,7 +632,7 @@ async def pay_order(order_id: str, request: Request):
             {
                 "title": "Instruksi Transfer Manual",
                 "steps": [
-                    f"Transfer ke rekening {bank_info.get('name', 'Bank Central Asia (BCA)')} {bank_info.get('account_number', '8965123456')} a.n {bank_info.get('account_name', 'Asterra Store Official')}",
+                    f"Transfer ke rekening {bank_name} {bank_acc} a.n {bank_holder}",
                     f"Pastikan transfer dengan nominal tepat Rp {amount:,.0f}".replace(",", "."),
                     "Kirimkan bukti transfer pembayaran ke WhatsApp Admin untuk konfirmasi pesanan.",
                 ],

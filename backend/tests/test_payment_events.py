@@ -161,3 +161,39 @@ def test_admin_confirm_payment_workflow():
         db.query(Order).filter(Order.id == order_id).delete()
         db.commit()
         db.close()
+
+
+def test_pay_order_qris_returns_lipay_info():
+    db = SessionLocal()
+    order_id = f"TEST-PAY-{uuid.uuid4().hex[:6].upper()}"
+    try:
+        order = Order(
+            id=order_id,
+            customer_email="buyer_pay@asterra.store",
+            customer_name="Buyer Pay",
+            total_amount=50000,
+            status="pending",
+            payment_status="pending",
+            payment_method="qris",
+            payment_mode="LIPAY",
+            created_at=datetime.utcnow(),
+        )
+        db.add(order)
+        db.commit()
+
+        res = client.post(
+            f"/api/v1/orders/{order_id}/pay",
+            json={"payment_method": "qris"},
+        )
+        assert res.status_code == 200, res.text
+        data = res.json()
+        assert data.get("success") is True
+        payment = data.get("payment", {})
+        assert payment.get("is_lipay") is True
+        assert "qr_image_url" in payment
+        assert payment["qr_image_url"] is not None
+        assert "qris_merchant_name" in payment
+    finally:
+        db.query(Order).filter(Order.id == order_id).delete()
+        db.commit()
+        db.close()
