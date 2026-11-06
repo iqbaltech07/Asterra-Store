@@ -198,6 +198,15 @@ class NotificationAudioPlayer {
     return next;
   }
 
+  public isEventProcessed(eventId: string): boolean {
+    return this.processedEvents.has(eventId);
+  }
+
+  public markEventProcessed(eventId: string) {
+    this.processedEvents.add(eventId);
+    this.saveProcessed();
+  }
+
   private saveQueue() {
     if (typeof window === 'undefined') return;
     try {
@@ -256,32 +265,42 @@ class NotificationAudioPlayer {
     }
 
     // Validation for new order notifications:
-    // Only play sound if order is waiting for payment (pending / unpaid)
-    // and was created recently (< 30 seconds ago) to avoid replay spam
+    // Only play sound if order is waiting for payment (pending / unpaid / menunggu pembayaran)
+    // and was created recently (< 2 minutes ago) to avoid replay spam
     if (resolved === 'order' && !options?.force) {
       if (options?.status) {
         const st = options.status.toLowerCase().trim();
-        const isWaitingPayment = st === 'pending' || st === 'unpaid' || st === 'menunggu pembayaran';
+        const isWaitingPayment =
+          st === 'pending' ||
+          st === 'unpaid' ||
+          st === 'menunggu pembayaran' ||
+          st === 'menunggu_pembayaran';
         if (!isWaitingPayment) {
           return;
         }
       }
-      if (options?.timestamp && Math.abs(Date.now() - options.timestamp) > 30000) {
+      if (options?.timestamp && Date.now() - options.timestamp > 120000) {
         return;
       }
     }
 
+    const orderKey = options?.orderId ? `${options.orderId.trim().toUpperCase()}:${resolved}` : null;
     const uniqueId =
       options?.eventId ||
-      (options?.orderId ? `${options.orderId.trim().toUpperCase()}:${resolved}` : `evt-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`);
+      orderKey ||
+      `evt-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
 
-    // Deduplication check
-    if (!options?.force && this.processedEvents.has(uniqueId)) {
-      return;
+    // Deduplication check: cross-check all potential event key formats
+    if (!options?.force) {
+      if (this.processedEvents.has(uniqueId)) return;
+      if (orderKey && this.processedEvents.has(orderKey)) return;
+      if (options?.orderId && this.processedEvents.has(`order:${options.orderId.trim()}:created`)) return;
     }
 
-    // Mark as processed
+    // Mark as processed across all key variants
     this.processedEvents.add(uniqueId);
+    if (orderKey) this.processedEvents.add(orderKey);
+    if (options?.orderId) this.processedEvents.add(`order:${options.orderId.trim()}:created`);
     this.saveProcessed();
 
     // If muted, do not queue audio playback
