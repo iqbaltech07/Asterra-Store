@@ -16,6 +16,7 @@ dependencies = [
     "python-jose[cryptography]>=3.3.0",
     "upstash-redis>=1.8.0",
     "qstash>=3.4.0",
+    "segno>=1.6.0",
 ]
 
 [tool.vercel]

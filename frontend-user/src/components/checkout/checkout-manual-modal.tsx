@@ -45,6 +45,10 @@ export interface ManualPaymentModalData {
   qr_url?: string;
   qrString?: string;
   qr_string?: string;
+  qrImageUrl?: string;
+  qr_image_url?: string;
+  isDynamic?: boolean;
+  is_dynamic?: boolean;
   // Virtual Account / Bank fields
   vaNumber?: string;
   va_number?: string;
@@ -308,23 +312,24 @@ export function CheckoutManualModal({
     Boolean(data.vaNumber || data.va_number || data.billKey || data.bill_key);
 
   // Dynamic QRIS applies to automated QRIS charges (LiPay QRIS DANA Bisnis)
+  const hasDynamicQr = Boolean(
+    data.qrString ||
+    data.qr_string ||
+    data.is_dynamic ||
+    data.isDynamic ||
+    (data.qrUrl && (data.qrUrl.startsWith('data:image/') || !data.qrUrl.includes('/images/'))) ||
+    (data.qr_url && (data.qr_url.startsWith('data:image/') || !data.qr_url.includes('/images/')))
+  );
+
   const isDynamicQris =
     !isVirtualAccount &&
-    !data.method?.startsWith('manual_') &&
-    data.method !== 'manual_qris' &&
-    data.method !== 'qris_manual' &&
     data.method !== 'manual_bca' &&
     data.method !== 'manual_dana' &&
     (data.method === 'qris' ||
       data.method === 'lipay' ||
       data.method === 'qris_dana' ||
       data.method === 'qris_midtrans' ||
-      Boolean(
-        data.qrString ||
-        data.qr_string ||
-        (data.qrUrl && !data.qrUrl.includes('/images/')) ||
-        (data.qr_url && !data.qr_url.includes('/images/'))
-      ));
+      hasDynamicQr);
 
   const uploadedQrisUrl =
     paymentConfig?.qris?.image_url ||
@@ -636,14 +641,14 @@ export function CheckoutManualModal({
                 </div>
 
                 <div className="space-y-1.5">
-                  <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-[11px] font-bold">
-                    <span>QRIS</span>
+                  <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-[11px] font-bold">
+                    <span>QRIS Dinamis (Nominal Terkunci)</span>
                   </div>
                   <span className="text-xs font-bold text-foreground block">
                     {qrisMerchantName}
                   </span>
                   <p className="text-[11px] text-foreground-muted max-w-xs mx-auto leading-relaxed">
-                    Bisa di-scan via GoPay, OVO, DANA, ShopeePay, LinkAja, BCA Mobile, Livin' Mandiri, BRImo, BNI Mobile & semua aplikasi berlogo QRIS.
+                    Nominal tagihan otomatis terisi saat di-scan via BCA Mobile, Livin' Mandiri, BRImo, DANA, GoPay, OVO, ShopeePay & semua aplikasi berlogo QRIS.
                   </p>
 
                   <div className="pt-1.5 flex flex-wrap items-center justify-center gap-2">
@@ -658,7 +663,7 @@ export function CheckoutManualModal({
 
                     <a
                       href={activeQrImage}
-                      download={`QRIS-${data.orderId}.png`}
+                      download={`QRIS-${data.orderId}.${activeQrImage.startsWith('data:image/svg') ? 'svg' : 'png'}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface hover:bg-surface-raised text-foreground-muted hover:text-foreground border border-border text-xs transition-colors"
@@ -1172,7 +1177,11 @@ export function CheckoutManualModal({
 
               <a
                 href={isDynamicQris ? activeQrImage : uploadedQrisUrl}
-                download={isDynamicQris ? `QRIS-${data.orderId}.png` : `QRIS-${qrisMerchantName.replace(/\s+/g, '-')}.png`}
+                download={
+                  isDynamicQris
+                    ? `QRIS-${data.orderId}.${activeQrImage.startsWith('data:image/svg') ? 'svg' : 'png'}`
+                    : `QRIS-${qrisMerchantName.replace(/\s+/g, '-')}.png`
+                }
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full sm:w-auto px-3.5 py-2.5 rounded-xl bg-surface hover:bg-surface-raised text-foreground border border-border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer"

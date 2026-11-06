@@ -35,6 +35,8 @@ export interface PublicPaymentConfig {
   qris_image_url?: string;
   qrisMerchantName?: string;
   qris_merchant_name?: string;
+  qrisRawString?: string;
+  qris_raw_string?: string;
   bank: {
     name: string;
     account_number: string;

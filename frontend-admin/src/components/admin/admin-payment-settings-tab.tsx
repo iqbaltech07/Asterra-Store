@@ -50,6 +50,7 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
   const [bankAccountName, setBankAccountName] = useState('Asterra Store Official');
   const [qrisImageUrl, setQrisImageUrl] = useState('/images/qris-toko.png');
   const [qrisMerchantName, setQrisMerchantName] = useState('ASTERRA STORE QRIS');
+  const [qrisRawString, setQrisRawString] = useState('');
   const [danaNumber, setDanaNumber] = useState('081234567890');
   const [danaAccountName, setDanaAccountName] = useState('Asterra Store');
   const [confirmationWhatsapp, setConfirmationWhatsapp] = useState('6281234567890');
@@ -88,6 +89,7 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
           setBankAccountName(d.bankAccountName || 'Asterra Store Official');
           setQrisImageUrl(d.qrisImageUrl || '');
           setQrisMerchantName(d.qrisMerchantName || 'ASTERRA STORE QRIS');
+          setQrisRawString(d.qrisRawString || (d as any).qris_raw_string || '');
           setDanaNumber(d.danaNumber || '081234567890');
           setDanaAccountName(d.danaAccountName || 'Asterra Store');
           setConfirmationWhatsapp(d.confirmationWhatsapp || '6281234567890');
@@ -152,6 +154,8 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
         bankAccountName,
         qrisImageUrl,
         qrisMerchantName,
+        qrisRawString,
+        qris_raw_string: qrisRawString,
         danaNumber,
         danaAccountName,
         confirmationWhatsapp,
@@ -409,6 +413,7 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
               {config && (
                 qrisImageUrl !== (config.qrisImageUrl || '') ||
                 qrisMerchantName !== (config.qrisMerchantName || '') ||
+                qrisRawString !== (config.qrisRawString || (config as any).qris_raw_string || '') ||
                 isQrisActive !== ((config.isQrisActive ?? config.is_qris_active) !== false)
               ) && (
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 rounded-xl bg-primary/10 border border-primary/25 text-xs animate-in fade-in-50">
@@ -429,7 +434,6 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
               )}
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-
               <div>
                 <label className="text-[11px] font-medium text-foreground-muted block mb-1">
                   Nama Merchant Terdaftar di QRIS
@@ -442,6 +446,21 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
                 />
                 <span className="text-[10px] text-foreground-muted mt-1 block">
                   Membantu pembeli memastikan nama penerima benar saat scan barcode.
+                </span>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-medium text-foreground-muted block mb-1">
+                  String Payload EMVCo QRIS (Untuk QRIS Dinamis)
+                </label>
+                <Input
+                  value={qrisRawString}
+                  onChange={(e) => setQrisRawString(e.target.value)}
+                  placeholder="0002010102112657..."
+                  className="text-xs bg-surface-raised border-border font-mono text-[11px]"
+                />
+                <span className="text-[10px] text-foreground-muted mt-1 block">
+                  Standar EMVCo QRIS toko. Sistem otomatis mengubahnya menjadi QRIS Dinamis dengan nominal terkunci per pesanan.
                 </span>
               </div>
             </div>

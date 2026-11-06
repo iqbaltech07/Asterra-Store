@@ -526,9 +526,8 @@ async def pay_order(order_id: str, request: Request):
 
     pay_cfg = PaymentConfigService.get_config()
     is_qris = (
-        method in ["qris", "qris_midtrans", "midtrans", "gateway"]
-        and not str(method).startswith("manual_")
-        and method not in ["manual_qris", "qris_manual", "manual_bca", "manual_dana"]
+        method in ["qris", "qris_midtrans", "midtrans", "gateway", "manual_qris", "qris_manual", "qris_dana", "lipay"]
+        or str(method).lower().endswith("qris")
     )
     is_va = method in [
         "bca_va", "bni_va", "bri_va", "mandiri_va",
@@ -540,7 +539,6 @@ async def pay_order(order_id: str, request: Request):
         order.get("payment_mode") == "manual"
         or order.get("paymentMode") == "manual"
         or str(method).startswith("manual_")
-        or method in ["manual_qris", "qris_manual", "manual_bca", "manual_dana"]
         or pay_cfg.get("mode") == "manual"
     )
 
@@ -565,7 +563,7 @@ async def pay_order(order_id: str, request: Request):
     bank_acc = (bank_info.get("account_number") if isinstance(bank_info, dict) else None) or pay_cfg.get("bank_account_number") or pay_cfg.get("bankAccountNumber") or "8965123456"
     bank_holder = (bank_info.get("account_name") if isinstance(bank_info, dict) else None) or pay_cfg.get("bank_account_name") or pay_cfg.get("bankAccountName") or "Asterra Store Official"
 
-    # 1. LiPay QRIS Detection (DANA Bisnis Direct Settlement)
+    # 1. LiPay QRIS Detection (DANA Bisnis Direct Settlement with Dynamic QRIS)
     if is_qris:
         payment_ref = f"LIPAY-{order_id}"
         try:
@@ -584,6 +582,24 @@ async def pay_order(order_id: str, request: Request):
         except Exception as e:
             logger.warning(f"Could not update order payment ref: {e}")
 
+        # Generate Dynamic QRIS with exact order amount injected (EMVCo Tag 54 + Tag 01=12)
+        from app.services.qris_service import QrisService
+        dynamic_qr_string = None
+        active_qr_image = qris_url
+
+        try:
+            raw_payload = (
+                pay_cfg.get("qris_raw_string")
+                or pay_cfg.get("qrisRawString")
+                or (pay_cfg.get("qris", {}).get("raw_string") if isinstance(pay_cfg.get("qris"), dict) else None)
+            )
+            dynamic_qr_string = QrisService.build_dynamic_qris(raw_payload, amount)
+            active_qr_image = QrisService.generate_qr_svg_data_uri(dynamic_qr_string)
+        except Exception as qe:
+            logger.error(f"[Checkout] Failed to generate dynamic QRIS: {qe}")
+            dynamic_qr_string = None
+            active_qr_image = qris_url
+
         payment_info = {
             "id": f"PAY-{order_id}",
             "order_id": order_id,
@@ -593,17 +609,18 @@ async def pay_order(order_id: str, request: Request):
             "payment_status": "pending",
             "payment_mode": "LIPAY",
             "is_lipay": True,
-            "qr_image_url": qris_url,
-            "qr_url": qris_url,
+            "is_dynamic": bool(dynamic_qr_string),
+            "qr_image_url": active_qr_image,
+            "qr_url": active_qr_image,
+            "qr_string": dynamic_qr_string,
             "qris_merchant_name": qris_merchant,
             "instructions": [
                 {
-                    "title": "Instruksi Pembayaran QRIS (Verifikasi LiPay)",
+                    "title": "Instruksi Pembayaran QRIS Dinamis (Verifikasi LiPay)",
                     "steps": [
-                        f"Buka aplikasi e-wallet (DANA, GoPay, OVO, ShopeePay) atau mobile banking pilihan Anda.",
-                        f"Scan kode QRIS Toko ({qris_merchant}) di atas.",
-                        f"Pastikan nominal transfer tepat Rp {amount:,.0f}".replace(",", "."),
-                        "Sistem LiPay akan mendeteksi notifikasi masuk dari DANA Bisnis dan memverifikasi pesanan secara otomatis.",
+                        "Buka aplikasi e-wallet (DANA, GoPay, OVO, ShopeePay) atau mobile banking (BCA, Mandiri, BRImo, BNI, dll).",
+                        f"Scan barcode QRIS Toko ({qris_merchant}) di atas. Nominal tagihan Rp {amount:,.0f} otomatis terkunci (tidak perlu diketik manual).".replace(",", "."),
+                        "Selesaikan pembayaran. Sistem LiPay akan otomatis memverifikasi pesanan dalam hitungan detik.",
                     ],
                 }
             ],
@@ -611,7 +628,7 @@ async def pay_order(order_id: str, request: Request):
 
         return {
             "success": True,
-            "message": "Instruksi pembayaran LiPay QRIS berhasil dibuat",
+            "message": "Instruksi pembayaran LiPay QRIS dinamis berhasil dibuat",
             "payment": payment_info,
         }
 
