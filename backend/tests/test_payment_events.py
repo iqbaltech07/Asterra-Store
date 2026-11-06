@@ -197,3 +197,39 @@ def test_pay_order_qris_returns_lipay_info():
         db.query(Order).filter(Order.id == order_id).delete()
         db.commit()
         db.close()
+
+def test_pay_order_manual_transfer_returns_info():
+    db = SessionLocal()
+    order_id = f"TEST-PAY-MANUAL-{uuid.uuid4().hex[:6].upper()}"
+    try:
+        order = Order(
+            id=order_id,
+            customer_email="buyer_manual@asterra.store",
+            customer_name="Buyer Manual",
+            total_amount=75000,
+            status="pending",
+            payment_status="pending",
+            payment_method="manual_bca",
+            payment_mode="MANUAL",
+            created_at=datetime.utcnow(),
+        )
+        db.add(order)
+        db.commit()
+
+        res = client.post(
+            f"/api/v1/orders/{order_id}/pay",
+            json={"payment_method": "manual_bca"},
+        )
+        assert res.status_code == 200, res.text
+        data = res.json()
+        assert data.get("success") is True
+        payment = data.get("payment", {})
+        assert payment.get("is_manual") is True
+        assert "qr_image_url" in payment
+        assert payment["qr_image_url"] is not None
+        assert "instructions" in payment
+        assert len(payment["instructions"]) > 0
+    finally:
+        db.query(Order).filter(Order.id == order_id).delete()
+        db.commit()
+        db.close()
