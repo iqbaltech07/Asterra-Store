@@ -354,6 +354,36 @@ export function AdminSidebar({
               icon: Sliders,
               description: 'Mode Manual vs Otomatis & aturan order',
             },
+            {
+              id: 'operating-hours',
+              label: 'Jam Operasional Toko',
+              icon: Clock,
+              description: 'Jadwal operasional, buka/tutup, & pre-order',
+            },
+            {
+              id: 'payment-settings',
+              label: 'Metode Pembayaran',
+              icon: CreditCard,
+              description: 'Midtrans QRIS, transfer bank, & fee',
+            },
+            {
+              id: 'logs',
+              label: 'Log & Audit Gateway',
+              icon: Activity,
+              description: 'Webhook callback & audit log sistem',
+            },
+            {
+              id: 'notifications',
+              label: 'Notifikasi',
+              icon: Bell,
+              description: 'Template pesan WhatsApp & email bot',
+            },
+            {
+              id: 'store-settings',
+              label: 'Pengaturan Toko',
+              icon: Store,
+              description: 'Identitas toko, kontak CS, & pemeliharaan',
+            },
           ],
         },
       ];
@@ -561,7 +591,7 @@ export function AdminSidebar({
             id: 'payment-settings',
             label: 'Metode Pembayaran',
             icon: CreditCard,
-            description: 'Tripay, QRIS, bank transfer, & fee admin',
+            description: 'Midtrans QRIS, transfer bank, & fee',
           },
           {
             id: 'logs',
@@ -601,7 +631,7 @@ export function AdminSidebar({
       marketing: true,
       finance: true,
       analytics: false,
-      settings: false,
+      settings: true,
     };
   };
 

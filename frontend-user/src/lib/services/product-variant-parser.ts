@@ -402,25 +402,29 @@ export function parseProductVariant(
 
   // 2. Warranty (Garansi) extraction
   let warranty = '1 Bulan';
-  const garMatch = name.match(/garansi\s*([^\]]+)/i);
-  if (garMatch) {
-    const g = garMatch[1].trim();
-    if (/6\s*b/i.test(g)) warranty = '6 Bulan';
-    else if (/3\s*b/i.test(g)) warranty = '3 Bulan';
-    else if (/2\s*b/i.test(g)) warranty = '2 Bulan';
-    else if (/12\s*b|1\s*t/i.test(g)) warranty = '12 Bulan';
-    else if (/1\s*b/i.test(g)) warranty = '1 Bulan';
-    else if (/28\s*h/i.test(g)) warranty = '28 Hari';
-    else if (/25\s*h/i.test(g)) warranty = '25 Hari';
-    else if (/14\s*h/i.test(g)) warranty = '14 Hari';
-    else if (/7\s*h/i.test(g)) warranty = '7 Hari';
-    else if (/5\s*h/i.test(g)) warranty = '5 Hari';
-    else if (/3\s*h/i.test(g)) warranty = '3 Hari';
-    else warranty = g;
-  } else if (/full\s*garansi/i.test(name)) {
-    warranty = 'Full Garansi';
+  if (/tidak\s*(?:ada|ber)?\s*garansi|tanpa\s*garansi|non\s*garansi|no\s*warranty|no\s*garansi/i.test(name)) {
+    warranty = 'Tanpa Garansi';
   } else {
-    warranty = duration.includes('Tahun') ? '6 Bulan' : duration;
+    const garMatch = name.match(/garansi\s*([^\]]+)/i);
+    if (garMatch) {
+      const g = garMatch[1].trim();
+      if (/6\s*b/i.test(g)) warranty = '6 Bulan';
+      else if (/3\s*b/i.test(g)) warranty = '3 Bulan';
+      else if (/2\s*b/i.test(g)) warranty = '2 Bulan';
+      else if (/12\s*b|1\s*t/i.test(g)) warranty = '12 Bulan';
+      else if (/1\s*b/i.test(g)) warranty = '1 Bulan';
+      else if (/28\s*h/i.test(g)) warranty = '28 Hari';
+      else if (/25\s*h/i.test(g)) warranty = '25 Hari';
+      else if (/14\s*h/i.test(g)) warranty = '14 Hari';
+      else if (/7\s*h/i.test(g)) warranty = '7 Hari';
+      else if (/5\s*h/i.test(g)) warranty = '5 Hari';
+      else if (/3\s*h/i.test(g)) warranty = '3 Hari';
+      else warranty = g;
+    } else if (/full\s*garansi/i.test(name)) {
+      warranty = 'Full Garansi';
+    } else {
+      warranty = duration.includes('Tahun') ? '6 Bulan' : duration;
+    }
   }
 
   // 3. Type (Private, Shared, Anggota, Invite, etc.)
@@ -456,7 +460,11 @@ export function parseProductVariant(
   const rawPrivDesc = (p as any).privacyDesc || (p as any).privacy_desc;
 
   if (rawGTitle) {
-    warranty = rawGTitle.replace(/^garansi\s*/i, '').trim() || rawGTitle;
+    if (/tidak|tanpa|non|no/i.test(rawGTitle)) {
+      warranty = 'Tanpa Garansi';
+    } else {
+      warranty = rawGTitle.replace(/^garansi\s*/i, '').trim() || rawGTitle;
+    }
   }
   if (rawPrivTitle) {
     type = rawPrivTitle.replace(/^akun\s*/i, '').trim() || rawPrivTitle;

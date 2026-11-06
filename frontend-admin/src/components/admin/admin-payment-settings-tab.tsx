@@ -217,19 +217,19 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
                     : 'bg-status-warning/20 text-status-warning border-status-warning/30 hover:bg-status-warning/20 font-mono text-[11px]'
                 }
               >
-                {mode === 'gateway' ? '🟢 GATEWAY OTOMATIS (TRIPAY)' : '🟡 MANUAL TRANSFER TOKO'}
+                {mode === 'gateway' ? '🟢 GATEWAY OTOMATIS (MIDTRANS QRIS)' : '🟡 MANUAL TRANSFER TOKO'}
               </Badge>
             </div>
 
             <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
               {mode === 'gateway'
-                ? 'Payment Gateway Tripay Berjalan Normal'
+                ? 'Payment Gateway Midtrans Dynamic QRIS Berjalan Normal'
                 : 'Mode Transfer Manual Toko Sedang Digunakan'}
             </h2>
 
             <p className="text-xs sm:text-sm text-foreground-muted max-w-2xl leading-relaxed">
               {mode === 'gateway'
-                ? 'Semua transaksi pelanggan diproses otomatis via Tripay Gateway (QRIS Realtime, Virtual Account BCA/Mandiri/BNI/BRI, E-Wallet). Jika Tripay sedang kendala limit atau gangguan server, switch ke mode manual untuk menerima transfer langsung ke rekening toko.'
+                ? 'Semua transaksi pelanggan diproses otomatis via Midtrans Core API Dynamic QRIS (QRIS Nasional Dinamis realtime - support GoPay, BCA, Mandiri, BRI, BNI, OVO, Dana, ShopeePay, LinkAja). Notifikasi webhook SHA-512 memicu pemrosesan lisensi instan tanpa upload bukti transfer.'
                 : 'Pelanggan saat ini diarahkan transfer manual ke rekening Bank BCA, QRIS Manual, atau akun DANA Anda dengan instruksi konfirmasi via WhatsApp. Verifikasi mutasi dilakukan manual oleh admin.'}
             </p>
           </div>
@@ -253,7 +253,7 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
                 className="bg-status-success text-black hover:bg-status-success/90 font-semibold text-xs gap-2 px-5 py-5 shadow-lg shadow-status-success/10"
               >
                 <FontAwesomeIcon icon={faCheck} className="w-4 h-4 text-black" />
-                <span>Beralih ke Gateway Otomatis (Tripay)</span>
+                <span>Beralih ke Gateway Otomatis (Midtrans QRIS)</span>
               </Button>
             )}
 
@@ -740,14 +740,14 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
                 <div className="space-y-3">
                   <div className="p-3 rounded-lg bg-status-success/10 border border-status-success/20 flex items-center gap-2 text-status-success text-xs">
                     <FontAwesomeIcon icon={faCheck} className="w-4 h-4 shrink-0" />
-                    <span>Payment Gateway Otomatis (Tripay) Aktif</span>
+                    <span>Payment Gateway Otomatis (DANA QRIS Resmi) Aktif</span>
                   </div>
                   <div className="p-3 border border-border rounded-lg bg-surface space-y-2">
                     <div className="font-semibold text-foreground">Metode Pembayaran Tersedia:</div>
                     <ul className="text-foreground-muted space-y-1 text-[11px]">
-                      <li>• QRIS Otomatis (Gojek, OVO, ShopeePay, Dana, LinkAja)</li>
-                      <li>• Virtual Account (BCA, Mandiri, BNI, BRI, Permata)</li>
-                      <li>• Minimarket (Indomaret, Alfamart)</li>
+                      <li>• QRIS Dinamis Resmi (DANA, GoPay, OVO, ShopeePay, LinkAja)</li>
+                      <li>• Mobile Banking Nasional (BCA Mobile, Livin Mandiri, BRImo, BNI)</li>
+                      <li>• Verifikasi Notifikasi SNAP Otomatis Realtime</li>
                     </ul>
                   </div>
                 </div>
@@ -848,40 +848,40 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
             </div>
           </div>
 
-          {/* Card: Dynamic Tripay Webhook & Callback Info */}
+          {/* Card: Dynamic Midtrans QRIS Webhook & Callback Info */}
           <div className="bg-surface border border-border rounded-xl p-5 space-y-3.5">
             <div className="flex items-center justify-between pb-2.5 border-b border-border">
               <div className="flex items-center gap-2">
                 <FontAwesomeIcon icon={faShieldHalved} className="w-4 h-4 text-status-success" />
                 <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
-                  Integrasi & Callback Tripay
+                  Integrasi & Webhook Midtrans QRIS Core API
                 </h4>
               </div>
               <Badge variant="outline" className="text-[10px] text-status-success border-status-success/30 font-mono">
-                Auto-Dynamic
+                Core API Dynamic QRIS
               </Badge>
             </div>
 
             <p className="text-[11px] text-foreground-muted leading-relaxed">
-              Sistem telah dikonfigurasi secara otomatis mengirimkan <strong>Callback URL</strong> &amp; <strong>Return URL</strong> dinamis pada setiap pembuatan tagihan Tripay sesuai domain aktif Anda ({currentBaseUrl || 'https://asterrastore.biz.id'}).
+              Sistem telah dikonfigurasi secara otomatis memproses webhook notifikasi Midtrans resmi pada domain aktif Anda ({currentBaseUrl || 'https://asterrastore.biz.id'}). Verifikasi tanda tangan digital enkripsi SHA-512 diterapkan otomatis.
             </p>
 
             <div className="space-y-3 text-xs">
               <div>
                 <span className="text-[10px] text-foreground-muted block font-medium mb-1">
-                  URL Webhook Callback Tripay (POST):
+                  URL Webhook Notification Midtrans (POST):
                 </span>
                 <div className="relative">
                   <Input
                     readOnly
-                    value={`${currentBaseUrl || 'https://asterrastore.biz.id'}/api/v1/webhooks/tripay`}
+                    value={`${currentBaseUrl || 'https://asterrastore.biz.id'}/api/v1/webhooks/midtrans`}
                     className="text-[11px] bg-surface-raised border-border font-mono pr-16 select-all"
                   />
                   <button
                     type="button"
                     onClick={() =>
                       handleCopy(
-                        `${currentBaseUrl || 'https://asterrastore.biz.id'}/api/v1/webhooks/tripay`,
+                        `${currentBaseUrl || 'https://asterrastore.biz.id'}/api/v1/webhooks/midtrans`,
                         'webhook'
                       )
                     }

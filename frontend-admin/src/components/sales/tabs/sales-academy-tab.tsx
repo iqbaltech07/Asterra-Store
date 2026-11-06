@@ -35,7 +35,7 @@ export function SalesAcademyTab() {
             <li className="flex items-start gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
               <span>
-                <strong className="text-foreground">Kalkulasi Berbasis Profit Transaksi:</strong> Komisi direct sales (15% Standar / 20% VIP) dan bonus rekrutmen (2%) selalu dihitung dari Profit Transaksi (Net Revenue dikurangi modal produk & biaya langsung), bukan dari omzet kotor.
+                <strong className="text-foreground">Kalkulasi Berbasis Profit Transaksi:</strong> Komisi direct affiliate 30% selalu dihitung dari Profit Transaksi (Harga Jual dikurangi modal produk & biaya langsung), bukan dari omzet kotor, tanpa markup harga ke pembeli.
               </span>
             </li>
             <li className="flex items-start gap-2">
@@ -67,9 +67,9 @@ export function SalesAcademyTab() {
               </p>
             </div>
             <div className="p-3.5 rounded-xl bg-surface-raised border border-border">
-              <p className="font-semibold text-foreground mb-1">Dari mana sumber bonus 2% ajak teman?</p>
+              <p className="font-semibold text-foreground mb-1">Bagaimana skema pembagian profit 70:30 Asterra Store?</p>
               <p className="text-[11px]">
-                Bonus rekrutmen 2% dihitung dari Profit Transaksi yang dihasilkan oleh teman langsung Anda. Komisi penjualan teman Anda tetap utuh 100% (15% dari Profit Transaksi) tanpa ada potongan.
+                Sesuai <strong>Model Bisnis v2.0</strong>, profit transaksi dibagi <strong>30% untuk Mitra Affiliate</strong> dan <strong>70% untuk Asterra Store</strong> (15% cadangan usaha/garansi dan 55% laba pendiri). Hak komisi mitra 30% selalu dibayarkan utuh dan transparan.
               </p>
             </div>
             <div className="p-3.5 rounded-xl bg-surface-raised border border-border">

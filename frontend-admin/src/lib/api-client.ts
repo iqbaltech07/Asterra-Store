@@ -158,16 +158,19 @@ export interface OrdersApiResponse {
     cancelled: number;
     totalRevenue?: number;
   };
+  available_months?: string[];
+  selected_month?: string;
 }
 
 /**
  * Centralized Orders API
  */
 export const OrdersApi = {
-  async getAll(params?: { status?: string; search?: string; page?: number; limit?: number }) {
+  async getAll(params?: { status?: string; search?: string; month?: string; page?: number; limit?: number }) {
     const query = new URLSearchParams();
     if (params?.status && params.status !== 'all') query.append('status', params.status);
     if (params?.search?.trim()) query.append('search', params.search.trim());
+    if (params?.month && params.month !== 'all') query.append('month', params.month);
     if (params?.page) query.append('page', String(params.page));
     if (params?.limit) query.append('limit', String(params.limit));
 

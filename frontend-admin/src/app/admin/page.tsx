@@ -154,11 +154,7 @@ const RESTRICTED_FOR_OPERATIONAL_ADMIN: AdminTab[] = [
   'profit',
   'financial-transactions',
   'financial-reports',
-  'payment-settings',
-  'logs',
-  'notifications',
   'admins',
-  'store-settings',
 ];
 
 function getAdminAuthHeaders(extraHeaders: Record<string, string> = {}): Record<string, string> {
@@ -178,16 +174,21 @@ function AdminPageContent() {
   const queryClient = useQueryClient();
 
   const getTabFromUrl = useCallback((): AdminTab | null => {
+    const resolveAlias = (t: string | null): AdminTab | null => {
+      if (!t) return null;
+      if (t === 'product-groups') return 'cards';
+      if (t === 'settings' || t === 'konfigurasi') return 'store-settings';
+      if (t === 'payment' || t === 'payments') return 'payment-settings';
+      if (t in TAB_TITLES) return t as AdminTab;
+      return null;
+    };
+
     if (typeof window !== 'undefined') {
       const sp = new URLSearchParams(window.location.search);
-      const t = sp.get('tab');
-      if (t === 'product-groups') return 'cards';
-      if (t && t in TAB_TITLES) return t as AdminTab;
+      const resolved = resolveAlias(sp.get('tab'));
+      if (resolved) return resolved;
     }
-    const t = searchParams?.get('tab');
-    if (t === 'product-groups') return 'cards';
-    if (t && t in TAB_TITLES) return t as AdminTab;
-    return null;
+    return resolveAlias(searchParams?.get('tab') || null);
   }, [searchParams]);
 
   // Admin authentication state
@@ -3229,26 +3230,15 @@ function AdminPageContent() {
                     <div className="flex items-center justify-between">
                       <span className="font-semibold text-primary flex items-center gap-1.5">
                         <ShieldCheck className="w-4 h-4 text-primary" />
-                        <span>Banner Resmi Terdaftar di Vercel Blob</span>
+                        <span>Banner Resmi Terdaftar</span>
                       </span>
                       <Badge variant="outline" className="text-[10px] text-primary border-primary/30">
-                        Terkunci (Anti-Duplikasi)
+                        Hemat Storage
                       </Badge>
                     </div>
                     <p className="text-[11px] text-foreground-muted leading-relaxed">
-                      Produk ini sudah memiliki banner resmi di Vercel Blob. Upload banner reguler dinonaktifkan untuk menjaga integritas aset dan mencegah redundansi file.
+                      Produk ini sudah menggunakan banner dari storage Asterra. Anda dapat memilih banner lain dari storage atau mengunggah banner baru / banner promo khusus di bawah ini.
                     </p>
-                    <label className="flex items-center gap-2 pt-1 font-medium text-foreground cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={isSpecialPromoBanner}
-                        onChange={(e) => setIsSpecialPromoBanner(e.target.checked)}
-                        className="rounded text-primary focus:ring-primary w-4 h-4"
-                      />
-                      <span className="text-xs">
-                        Aktifkan Unggah Banner Promo Khusus (Event / Promo Terbatas)
-                      </span>
-                    </label>
                   </div>
                 )}
 
@@ -3260,26 +3250,16 @@ function AdminPageContent() {
                 productName={formName}
                 productId={editingProduct?.id}
                 isSpecialPromo={isSpecialPromoBanner}
-                disabled={Boolean(
-                  editingProduct &&
-                    editingProduct.imageUrl &&
-                    !editingProduct.imageUrl.includes('default-product-banner') &&
-                    !isSpecialPromoBanner
-                )}
+                onSpecialPromoChange={setIsSpecialPromoBanner}
                 label={
                   isSpecialPromoBanner
-                    ? 'Unggah Banner Promo Khusus (Vercel Blob)'
+                    ? 'Banner Produk (Mode Promo Khusus Aktif)'
                     : 'Banner / Gambar Tambahan Produk (Opsional)'
                 }
                 description={
-                  editingProduct &&
-                  editingProduct.imageUrl &&
-                  !editingProduct.imageUrl.includes('default-product-banner') &&
-                  !isSpecialPromoBanner
-                    ? 'Banner resmi sudah aktif. Centang opsi di atas jika ingin mengunggah banner promosi khusus.'
-                    : isSpecialPromoBanner
+                  isSpecialPromoBanner
                     ? 'Tarik & lepas gambar promo khusus ke sini (otomatis ditandai prefix promo-).'
-                    : 'Gunakan jika ingin menambahkan gambar poster/banner custom selain logo Brandfetch.'
+                    : 'Pilih dari 44 banner siap pakai di storage untuk menghemat kuota, atau unggah gambar banner baru.'
                 }
                 mode="lazy"
               />

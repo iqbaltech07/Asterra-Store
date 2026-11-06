@@ -107,6 +107,27 @@ export function StoreOperatingHoursProvider({
     };
   }, [queryClient]);
 
+  // Exact-second automatic transition timer when nextCloseAt or nextOpenAt arrives
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const targetIso = query.data?.data?.nextCloseAt || query.data?.data?.nextOpenAt;
+    if (!targetIso) return;
+
+    const targetTime = new Date(targetIso).getTime();
+    const now = Date.now();
+    const delay = targetTime - now;
+
+    // Only set timer if within the next 24 hours and in the future
+    if (delay > 0 && delay < 24 * 60 * 60 * 1000) {
+      // Add slight 350ms buffer so server time has definitely ticked over to the next second
+      const timer = setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['store-operating-hours'] });
+      }, delay + 350);
+
+      return () => clearTimeout(timer);
+    }
+  }, [query.data?.data?.nextCloseAt, query.data?.data?.nextOpenAt, queryClient]);
+
   const status = query.data?.data || initialStatus || DEFAULT_STORE_OPERATING_STATUS;
   const isLoaded = Boolean(query.data?.data || initialStatus);
   const isOpen = Boolean(status.isOpen ?? status.is_open);

@@ -62,14 +62,20 @@ class StoreOperatingHoursService:
 
     @classmethod
     def get_raw_config(cls) -> Dict[str, Any]:
-        """Loads store operating hours configuration from database with fallback."""
+        """Loads store operating hours configuration from cache or database with fallback."""
+        cached = cache.get("store", "raw_config")
+        if cached is not None and isinstance(cached, dict):
+            return cached
+
         cls.ensure_table()
         try:
             db = SessionLocal()
             try:
                 row = db.query(StoreOperatingHours).filter_by(id="main").first()
                 if row:
-                    return row.to_dict()
+                    res = row.to_dict()
+                    cache.set("store", "raw_config", res, ttl=300)
+                    return res
             finally:
                 db.close()
         except Exception as e:
@@ -129,7 +135,9 @@ class StoreOperatingHoursService:
                 db.add(row)
 
             now_utc = datetime.utcnow()
-            if mode == "manual_open" or action == "open" or payload.get("isOpen") is True or payload.get("is_open") is True:
+            if mode == "auto":
+                row.mode = "auto"
+            elif mode == "manual_open" or action == "open" or payload.get("isOpen") is True or payload.get("is_open") is True:
                 row.last_manual_opened_at = now_utc
                 row.mode = "manual_open"
             elif mode == "manual_closed" or action == "close" or payload.get("isOpen") is False or payload.get("is_open") is False:
@@ -151,7 +159,7 @@ class StoreOperatingHoursService:
         finally:
             db.close()
 
-        cache.invalidate("store", "store_operating_hours")
+        cache.invalidate("store")
         return res
 
     @classmethod
@@ -167,17 +175,14 @@ class StoreOperatingHoursService:
     @classmethod
     def get_current_status(cls, ref_time: Optional[datetime] = None) -> Dict[str, Any]:
         """
-        Determines current operational status of the store in Asia/Jakarta (WIB) timezone.
-        AsterraStore Operational Rules:
-        1. Daily automatic closing at 21:00 WIB (Asia/Jakarta).
-        2. Store NEVER automatically reopens on schedule, date change, midnight rollover, or server restart.
-        3. Reopening the store is an explicit manual action by the Admin.
-        4. Once automatically closed at 21:00 WIB, the store remains closed until the Admin explicitly reopens it.
-        5. Zero auto-open at 09:00 WIB or any other morning hour.
-        6. Persistent database storage guarantees consistency across server restarts.
+        Determines current operational status of the store in Asia/Jakarta (WIB, UTC+7) timezone.
+        Modes:
+        - 'auto': Strictly follows weeklySchedule (open_time, close_time, is_open) and autoCloseTime in WIB.
+        - 'manual_open': Explicitly forced open by Admin until closed.
+        - 'manual_closed': Explicitly forced closed by Admin until reopened.
         """
         config = cls.get_raw_config()
-        mode = config.get("mode", "auto")
+        mode = str(config.get("mode") or "auto").lower()
         schedule: Dict[str, Any] = config.get("weeklySchedule") or DEFAULT_WEEKLY_SCHEDULE
         allow_preorder = bool(config.get("allowPreorder", True))
         manual_reason = config.get("manualCloseReason")
@@ -194,90 +199,144 @@ class StoreOperatingHoursService:
                 now_wib = ref_time.replace(tzinfo=WIB)
 
         current_day_en = now_wib.strftime("%A").lower()
+        today_idx = DAY_NAMES_EN.index(current_day_en) if current_day_en in DAY_NAMES_EN else 0
 
-        # Parse auto close time (default 21:00)
+        # Retrieve today's schedule
+        today_sched = schedule.get(current_day_en) if isinstance(schedule.get(current_day_en), dict) else DEFAULT_WEEKLY_SCHEDULE.get(current_day_en, {})
+        today_is_open = bool(today_sched.get("is_open") if "is_open" in today_sched else today_sched.get("isOpen", True))
+        open_time_str = str(today_sched.get("open_time") or today_sched.get("openTime") or "09:00").strip()
+        close_time_str = str(today_sched.get("close_time") or today_sched.get("closeTime") or auto_close_str or "21:00").strip()
+
         try:
-            ach, acm = [int(x) for x in auto_close_str.split(":")]
-            auto_close_t = time(ach, acm)
+            oh, om = [int(x) for x in open_time_str.split(":")]
+            open_t = time(oh, om)
         except Exception:
-            auto_close_t = time(21, 0)
-            auto_close_str = "21:00"
+            open_t = time(9, 0)
+            open_time_str = "09:00"
 
-        # Check last manual opened time
-        last_opened_iso = config.get("lastManualOpenedAt")
-        last_opened_wib: Optional[datetime] = None
-        if last_opened_iso:
-            try:
-                lo_dt = datetime.fromisoformat(last_opened_iso.replace("Z", "+00:00"))
-                if lo_dt.tzinfo is None:
-                    lo_dt = lo_dt.replace(tzinfo=timezone.utc)
-                last_opened_wib = lo_dt.astimezone(WIB)
-            except Exception:
-                pass
+        try:
+            ch, cm = [int(x) for x in close_time_str.split(":")]
+            close_t = time(ch, cm)
+        except Exception:
+            close_t = time(21, 0)
+            close_time_str = "21:00"
 
-        # Check last manual closed time
-        last_closed_iso = config.get("lastManualClosedAt")
-        last_closed_wib: Optional[datetime] = None
-        if last_closed_iso:
-            try:
-                lc_dt = datetime.fromisoformat(last_closed_iso.replace("Z", "+00:00"))
-                if lc_dt.tzinfo is None:
-                    lc_dt = lc_dt.replace(tzinfo=timezone.utc)
-                last_closed_wib = lc_dt.astimezone(WIB)
-            except Exception:
-                pass
+        # Helper to find next opening day and time
+        def find_next_opening() -> Tuple[Optional[datetime], str]:
+            for offset in range(1, 8):
+                next_day_idx = (today_idx + offset) % 7
+                next_day_name = DAY_NAMES_EN[next_day_idx]
+                next_day_sched = schedule.get(next_day_name) if isinstance(schedule.get(next_day_name), dict) else DEFAULT_WEEKLY_SCHEDULE.get(next_day_name, {})
+                next_is_open = bool(next_day_sched.get("is_open") if "is_open" in next_day_sched else next_day_sched.get("isOpen", True))
+                if next_is_open:
+                    next_open_t_str = str(next_day_sched.get("open_time") or next_day_sched.get("openTime") or "09:00").strip()
+                    try:
+                        noh, nom = [int(x) for x in next_open_t_str.split(":")]
+                    except Exception:
+                        noh, nom = 9, 0
+                    target_dt = (now_wib + timedelta(days=offset)).replace(hour=noh, minute=nom, second=0, microsecond=0)
+                    day_id = DAY_NAMES_ID.get(next_day_name, next_day_name)
+                    if offset == 1:
+                        display = f"besok ({day_id}) pukul {next_open_t_str} WIB"
+                    else:
+                        display = f"{day_id} pukul {next_open_t_str} WIB"
+                    return target_dt, display
+            return None, "sesuai jadwal operasional"
 
-        # Calculate scheduled auto-close cutoff datetime for the most recent opening session
-        cutoff_dt: Optional[datetime] = None
-        if last_opened_wib:
-            if last_opened_wib.time() < auto_close_t:
-                cutoff_dt = last_opened_wib.replace(hour=auto_close_t.hour, minute=auto_close_t.minute, second=0, microsecond=0)
-            else:
-                # Admin opened after 21:00 WIB; session extends until 21:00 WIB the next day
-                cutoff_dt = last_opened_wib.replace(hour=auto_close_t.hour, minute=auto_close_t.minute, second=0, microsecond=0) + timedelta(days=1)
-
-        # ----------------------------------------------------
-        # Operational Decision Logic
-        # ----------------------------------------------------
-        SLEEPING_ADMIN_NOTE = "Pemesanan akan diproses kembali ketika admin membuka toko kembali 😴 (Toko tutup otomatis pukul 21.00 WIB setiap hari)."
+        SLEEPING_ADMIN_NOTE = "Pemesanan akan diproses kembali ketika jam operasional toko aktif 😴."
 
         final_is_open = False
         status_label = "Tutup"
-        final_next_close_dt = None
-        final_next_close_display = None
-        final_next_open_display = None
-        banner_message = None
+        final_next_close_dt: Optional[datetime] = None
+        final_next_close_display: Optional[str] = None
+        final_next_open_dt: Optional[datetime] = None
+        final_next_open_display: Optional[str] = None
+        banner_message: Optional[str] = None
 
-        if mode == "manual_closed" or (last_closed_wib and last_opened_wib and last_closed_wib >= last_opened_wib):
-            # Admin explicitly closed the store manually
+        if mode == "manual_closed":
             final_is_open = False
             status_label = "Tutup (Manual Admin)"
             final_next_open_display = reopen_est or "ketika Admin membuka toko kembali"
             banner_message = f"{SLEEPING_ADMIN_NOTE} Toko sedang ditutup sementara oleh Admin." if not manual_reason else f"{SLEEPING_ADMIN_NOTE} ({manual_reason})"
 
-        elif last_opened_wib is None:
-            # Store has never been opened by Admin
-            final_is_open = False
-            status_label = "Tutup (Menunggu Admin Buka)"
-            final_next_open_display = "ketika Admin membuka toko kembali"
-            banner_message = f"{SLEEPING_ADMIN_NOTE} Toko siap menerima pesanan setelah dibuka secara manual oleh Admin."
-
-        elif cutoff_dt and now_wib >= cutoff_dt:
-            # Reached or passed 21:00 WIB since the store was opened.
-            # Store automatically closes and STAYS closed through midnight, 09:00 WIB, and beyond
-            # until Admin explicitly reopens it.
-            final_is_open = False
-            status_label = f"Tutup Otomatis ({auto_close_str} WIB)"
-            final_next_open_display = "ketika Admin membuka toko kembali"
-            banner_message = f"{SLEEPING_ADMIN_NOTE} Toko telah tutup otomatis pukul {auto_close_str} WIB. Silakan lakukan pemesanan melalui alur Pre-Order."
+        elif mode == "manual_open":
+            final_is_open = True
+            status_label = "Buka (Manual Admin)"
+            final_next_close_display = f"pukul {close_time_str} WIB"
+            banner_message = None
 
         else:
-            # Opened by admin and current time is before 21:00 WIB cutoff
-            final_is_open = True
-            status_label = "Buka"
-            final_next_close_dt = cutoff_dt
-            final_next_close_display = f"pukul {auto_close_str} WIB"
-            banner_message = None
+            # Mode Otomatis (auto) based on WIB schedule
+            curr_t = now_wib.time()
+            if not today_is_open:
+                final_is_open = False
+                status_label = "Tutup (Hari Libur Toko)"
+                final_next_open_dt, final_next_open_display = find_next_opening()
+                banner_message = f"{SLEEPING_ADMIN_NOTE} Hari ini toko libur. Buka kembali {final_next_open_display}. Anda tetap dapat memesan via Pre-Order."
+            elif open_t < close_t:
+                # Standard schedule within same day (e.g. 09:00 - 21:00)
+                if curr_t < open_t:
+                    final_is_open = False
+                    status_label = f"Tutup (Buka {open_time_str} WIB)"
+                    final_next_open_dt = now_wib.replace(hour=open_t.hour, minute=open_t.minute, second=0, microsecond=0)
+                    final_next_open_display = f"hari ini pukul {open_time_str} WIB"
+                    banner_message = f"{SLEEPING_ADMIN_NOTE} Toko buka kembali hari ini pukul {open_time_str} WIB. Anda tetap dapat memesan via Pre-Order."
+                elif curr_t >= close_t:
+                    final_is_open = False
+                    status_label = f"Tutup Otomatis ({close_time_str} WIB)"
+                    final_next_open_dt, final_next_open_display = find_next_opening()
+                    banner_message = f"{SLEEPING_ADMIN_NOTE} Toko telah tutup otomatis pukul {close_time_str} WIB. Buka kembali {final_next_open_display}. Anda tetap dapat memesan via Pre-Order."
+                else:
+                    final_is_open = True
+                    status_label = "Buka"
+                    final_next_close_dt = now_wib.replace(hour=close_t.hour, minute=close_t.minute, second=0, microsecond=0)
+                    final_next_close_display = f"pukul {close_time_str} WIB"
+                    banner_message = None
+            else:
+                # Overnight schedule (e.g. 20:00 - 02:00)
+                if curr_t >= open_t or curr_t < close_t:
+                    final_is_open = True
+                    status_label = "Buka"
+                    if curr_t >= open_t:
+                        final_next_close_dt = (now_wib + timedelta(days=1)).replace(hour=close_t.hour, minute=close_t.minute, second=0, microsecond=0)
+                    else:
+                        final_next_close_dt = now_wib.replace(hour=close_t.hour, minute=close_t.minute, second=0, microsecond=0)
+                    final_next_close_display = f"pukul {close_time_str} WIB"
+                    banner_message = None
+                else:
+                    final_is_open = False
+                    status_label = f"Tutup (Buka {open_time_str} WIB)"
+                    final_next_open_dt = now_wib.replace(hour=open_t.hour, minute=open_t.minute, second=0, microsecond=0)
+                    final_next_open_display = f"hari ini pukul {open_time_str} WIB"
+                    banner_message = f"{SLEEPING_ADMIN_NOTE} Toko buka kembali hari ini pukul {open_time_str} WIB. Anda tetap dapat memesan via Pre-Order."
+
+        return {
+            "status": "open" if final_is_open else "closed",
+            "isOpen": final_is_open,
+            "is_open": final_is_open,
+            "mode": mode,
+            "statusLabel": status_label,
+            "currentTimeWIB": now_wib.isoformat(),
+            "currentDay": current_day_en,
+            "currentDayID": DAY_NAMES_ID.get(current_day_en, current_day_en),
+            "nextOpenAt": final_next_open_dt.isoformat() if final_next_open_dt else None,
+            "nextOpenDisplay": final_next_open_display,
+            "next_open_display": final_next_open_display,
+            "nextCloseAt": final_next_close_dt.isoformat() if final_next_close_dt else None,
+            "nextCloseDisplay": final_next_close_display,
+            "bannerMessage": banner_message,
+            "banner_message": banner_message,
+            "sleepingAdminNote": SLEEPING_ADMIN_NOTE if not final_is_open else None,
+            "allowPreorder": allow_preorder,
+            "allow_preorder": allow_preorder,
+            "weeklySchedule": schedule,
+            "manualCloseReason": manual_reason,
+            "reopenEstimate": reopen_est,
+            "autoCloseTime": auto_close_str,
+            "timezone": "Asia/Jakarta",
+            "updatedAt": config.get("updatedAt"),
+            "updatedBy": config.get("updatedBy"),
+        }
 
         return {
             "status": "open" if final_is_open else "closed",

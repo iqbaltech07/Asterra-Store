@@ -21,6 +21,8 @@ import {
   faFire,
   faEye,
   faClock,
+  faChevronDown,
+  faChevronUp,
 } from '@fortawesome/free-solid-svg-icons';
 import { useCatalogProducts } from '@/lib/hooks/use-catalog-products';
 import { useProductCards } from '@/lib/hooks/use-product-cards';
@@ -52,8 +54,9 @@ import { getDynamicSoldCount } from '@/lib/hooks/use-dynamic-orders';
 export default function HomePage() {
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
 
-  // 1. Selector category state: ONLY PROMO, TERLARIS, TERBARU. (PROMO is default & priority)
+  // 1. Selector category state: ONLY PROMO, TERLARIS, TERBARU
   const [activeCategory, setActiveCategory] = useState<'promo' | 'terlaris' | 'terbaru'>('promo');
+  const [isExpanded, setIsExpanded] = useState<boolean>(false);
 
   // 2. Quick View Modal State
   const [quickViewProduct, setQuickViewProduct] = useState<QuickViewProductData | null>(null);
@@ -64,6 +67,24 @@ export default function HomePage() {
 
   // Active Campaign Status for live promotional discounts & badges (cached via shared query)
   const { campaigns: activeCampaigns } = useActiveCampaigns();
+
+  // Evaluate if any campaign is actually active now in WIB (startAt <= now < endsAt and isActive != false)
+  const hasActiveCampaign = useMemo(() => {
+    if (!activeCampaigns || activeCampaigns.length === 0) return false;
+    return activeCampaigns.some((camp) => isCampaignActiveNow(camp));
+  }, [activeCampaigns]);
+
+  // Safe Tab Fallback: if user is on Promo tab and campaign expires or is inactive, safely switch to Terlaris
+  useEffect(() => {
+    if (!hasActiveCampaign && activeCategory === 'promo') {
+      setActiveCategory('terlaris');
+    }
+  }, [hasActiveCampaign, activeCategory]);
+
+  // Reset dropdown to collapsed whenever tab changes
+  useEffect(() => {
+    setIsExpanded(false);
+  }, [activeCategory]);
 
   useEffect(() => {
     setRecentlyViewed(getRecentlyViewed());
@@ -99,7 +120,7 @@ export default function HomePage() {
         match: (t: string) => t.includes('gemini') || t.includes('google ai'),
         cat: 'AI Assistant & Cloud',
         tag: 'ai' as const,
-        soldCount: getDynamicSoldCount('Google Gemini', now, 36),
+        soldCount: getDynamicSoldCount('Google Gemini', now, 33),
         targetMax: 40,
         rating: '5.0',
         isPromo: true,
@@ -111,7 +132,7 @@ export default function HomePage() {
         match: (t: string) => t.includes('canva'),
         cat: 'Design & Kreatif',
         tag: 'design' as const,
-        soldCount: getDynamicSoldCount('Canva', now, 29),
+        soldCount: getDynamicSoldCount('Canva', now, 22),
         targetMax: 35,
         rating: '5.0',
         isPromo: true,
@@ -135,7 +156,7 @@ export default function HomePage() {
         match: (t: string) => t.includes('chatgpt') || t.includes('chat gpt') || t.includes('plus plan'),
         cat: 'AI Assistant & Writing',
         tag: 'ai' as const,
-        soldCount: getDynamicSoldCount('ChatGPT', now, 25),
+        soldCount: getDynamicSoldCount('ChatGPT', now, 30),
         targetMax: 32,
         rating: '5.0',
         isPromo: true,
@@ -147,8 +168,8 @@ export default function HomePage() {
         match: (t: string) => t.includes('alightmotion') || t.includes('alight motion'),
         cat: 'Motion Graphic & VFX',
         tag: 'video' as const,
-        soldCount: getDynamicSoldCount('Alight Motion', now, 21),
-        targetMax: 28,
+        soldCount: getDynamicSoldCount('Alight Motion', now, 14),
+        targetMax: 15,
         rating: '4.8',
         isPromo: false,
         isTerlaris: false,
@@ -207,8 +228,8 @@ export default function HomePage() {
         match: (t: string) => t.includes('wetv'),
         cat: 'Asian Drama VIP',
         tag: 'streaming' as const,
-        soldCount: getDynamicSoldCount('WeTV', now, 28),
-        targetMax: 33,
+        soldCount: getDynamicSoldCount('WeTV', now, 19),
+        targetMax: 15,
         rating: '4.8',
         isPromo: false,
         isTerlaris: false,
@@ -219,7 +240,7 @@ export default function HomePage() {
         match: (t: string) => t.includes('iqiyi'),
         cat: 'Anime & Drama HD',
         tag: 'streaming' as const,
-        soldCount: getDynamicSoldCount('iQIYI', now, 22),
+        soldCount: getDynamicSoldCount('iQIYI', now, 18),
         targetMax: 28,
         rating: '4.8',
         isPromo: true,
@@ -231,8 +252,8 @@ export default function HomePage() {
         match: (t: string) => t.includes('bstation'),
         cat: 'Anime & Pop Culture',
         tag: 'streaming' as const,
-        soldCount: getDynamicSoldCount('Bstation', now, 24),
-        targetMax: 30,
+        soldCount: getDynamicSoldCount('Bstation', now, 12),
+        targetMax: 15,
         rating: '4.8',
         isPromo: false,
         isTerlaris: false,
@@ -243,7 +264,7 @@ export default function HomePage() {
         match: (t: string) => t.includes('viu'),
         cat: 'Asian Drama & Variety',
         tag: 'streaming' as const,
-        soldCount: getDynamicSoldCount('Viu', now, 27),
+        soldCount: getDynamicSoldCount('Viu', now, 20),
         targetMax: 33,
         rating: '4.9',
         isPromo: false,
@@ -255,7 +276,7 @@ export default function HomePage() {
         match: (t: string) => t.includes('wink'),
         cat: 'Apps & Streaming',
         tag: 'video' as const,
-        soldCount: getDynamicSoldCount('Wink', now, 24),
+        soldCount: getDynamicSoldCount('Wink', now, 16),
         targetMax: 30,
         rating: '4.9',
         isPromo: false,
@@ -267,7 +288,7 @@ export default function HomePage() {
         match: (t: string) => t.includes('meitu'),
         cat: 'Apps & Streaming',
         tag: 'design' as const,
-        soldCount: getDynamicSoldCount('Meitu', now, 22),
+        soldCount: getDynamicSoldCount('Meitu', now, 11),
         targetMax: 28,
         rating: '4.9',
         isPromo: false,
@@ -279,7 +300,7 @@ export default function HomePage() {
         match: (t: string) => t.includes('loklok'),
         cat: 'Apps & Streaming',
         tag: 'streaming' as const,
-        soldCount: getDynamicSoldCount('Loklok', now, 22),
+        soldCount: getDynamicSoldCount('Loklok', now, 12),
         targetMax: 28,
         rating: '5.0',
         isPromo: false,
@@ -291,7 +312,7 @@ export default function HomePage() {
         match: (t: string) => t.includes('getcontact') || t.includes('getcontac'),
         cat: 'Apps & Streaming',
         tag: 'other' as const,
-        soldCount: getDynamicSoldCount('Getcontact', now, 22),
+        soldCount: getDynamicSoldCount('Getcontact', now, 17),
         targetMax: 28,
         rating: '5.0',
         isPromo: false,
@@ -303,7 +324,7 @@ export default function HomePage() {
         match: (t: string) => t.includes('zoom'),
         cat: 'Apps & Streaming',
         tag: 'other' as const,
-        soldCount: getDynamicSoldCount('Zoom', now, 22),
+        soldCount: getDynamicSoldCount('Zoom', now, 15),
         targetMax: 30,
         rating: '5.0',
         isPromo: false,
@@ -315,7 +336,7 @@ export default function HomePage() {
         match: (t: string) => t.includes('apple music') || t.includes('applemusic'),
         cat: 'Apps & Streaming',
         tag: 'streaming' as const,
-        soldCount: getDynamicSoldCount('Apple Music', now, 22),
+        soldCount: getDynamicSoldCount('Apple Music', now, 18),
         targetMax: 30,
         rating: '5.0',
         isPromo: false,
@@ -324,6 +345,41 @@ export default function HomePage() {
       },
     ];
   }, [now]);
+
+  // Helper to extract authoritative effective timestamp (card or latest variant) for Terbaru sorting
+  const getEffectiveTimestamp = (app: ApplicationGroupItem): number => {
+    const dates: number[] = [];
+    const eff = (app as any).effectiveCreatedAt || (app as any).effective_created_at;
+    if (eff) {
+      const t = new Date(eff).getTime();
+      if (!isNaN(t) && t > 0) dates.push(t);
+    }
+    const created = (app as any).createdAt || (app as any).created_at;
+    if (created) {
+      const t = new Date(created).getTime();
+      if (!isNaN(t) && t > 0) dates.push(t);
+    }
+    const updated = (app as any).updatedAt || (app as any).updated_at;
+    if (updated) {
+      const t = new Date(updated).getTime();
+      if (!isNaN(t) && t > 0) dates.push(t);
+    }
+    if (Array.isArray(app.items)) {
+      for (const it of app.items) {
+        const itCreated = (it as any).createdAt || (it as any).created_at;
+        if (itCreated) {
+          const t = new Date(itCreated).getTime();
+          if (!isNaN(t) && t > 0) dates.push(t);
+        }
+        const itUpdated = (it as any).updatedAt || (it as any).updated_at;
+        if (itUpdated) {
+          const t = new Date(itUpdated).getTime();
+          if (!isNaN(t) && t > 0) dates.push(t);
+        }
+      }
+    }
+    return dates.length > 0 ? Math.max(...dates) : -1;
+  };
 
   // Map to Featured Products (authoritative backend data with 8-product guarantee & resilient fallback)
   const featuredApps = useMemo(() => {
@@ -358,8 +414,8 @@ export default function HomePage() {
             logoUrl: card.logoUrl,
             imageUrl: card.imageUrl,
             description: card.description,
-            soldCount: Math.min(40, Math.max(20, card.soldCount ?? 20)),
-            targetMax: Math.min(40, Math.max(20, card.soldCount ?? 20)),
+            soldCount: card.soldCount ?? 20,
+            targetMax: card.soldCount ?? 20,
             rating: String(card.rating || '5.0'),
             badgeLabel:
               activeCategory === 'promo'
@@ -370,6 +426,9 @@ export default function HomePage() {
             isPromo: card.sections?.includes('promo') ?? true,
             isTerlaris: card.sections?.includes('terlaris') ?? true,
             isTerbaru: card.sections?.includes('terbaru') ?? true,
+            effectiveCreatedAt: (card as any).effectiveCreatedAt || (card as any).effective_created_at || (card as any).createdAt || (card as any).created_at,
+            createdAt: (card as any).createdAt || (card as any).created_at,
+            updatedAt: (card as any).updatedAt || (card as any).updated_at,
             items,
             minPrice,
             isOutOfStock,
@@ -400,8 +459,8 @@ export default function HomePage() {
             slug: target.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
             category: target.cat,
             categoryTag: target.tag,
-            soldCount: Math.min(40, Math.max(20, target.soldCount ?? 20)),
-            targetMax: Math.min(40, Math.max(20, target.targetMax ?? 20)),
+            soldCount: target.soldCount ?? 20,
+            targetMax: target.targetMax ?? 20,
             rating: target.rating,
             badgeLabel:
               activeCategory === 'promo'
@@ -480,8 +539,13 @@ export default function HomePage() {
               isPromo: item.isPromo ?? matched.isPromo ?? true,
               isTerlaris: activeCategory === 'terlaris',
               isTerbaru: activeCategory === 'terbaru',
+              soldCount: typeof item.soldCount === 'number' ? item.soldCount : (typeof matched.soldCount === 'number' ? matched.soldCount : 20),
+              targetMax: typeof item.soldCount === 'number' ? item.soldCount : (typeof matched.targetMax === 'number' ? matched.targetMax : 20),
               minPrice: matched.minPrice > 0 ? matched.minPrice : (item.minPrice || 0),
               items: matched.items && matched.items.length > 0 ? matched.items : ((item as any).items || []),
+              effectiveCreatedAt: item.effectiveCreatedAt || (item as any).effective_created_at || (matched as any).effectiveCreatedAt || (matched as any).createdAt,
+              createdAt: item.createdAt || (item as any).created_at || (matched as any).createdAt,
+              updatedAt: item.updatedAt || (item as any).updated_at || (matched as any).updatedAt,
             }
           : {
           id: item.id || item.slug,
@@ -492,8 +556,8 @@ export default function HomePage() {
           logoUrl: item.logoUrl || (item as any).imageUrl,
           imageUrl: (item as any).imageUrl || item.logoUrl,
           description: (item as any).description,
-          soldCount: Math.min(40, Math.max(20, item.soldCount ?? 20)),
-          targetMax: Math.min(40, Math.max(20, item.soldCount ?? 20)),
+          soldCount: item.soldCount ?? 20,
+          targetMax: item.soldCount ?? 20,
           rating: String(item.rating || '5.0'),
           badgeLabel:
             activeCategory === 'promo'
@@ -507,6 +571,9 @@ export default function HomePage() {
           items: (item as any).items || [],
           minPrice: item.minPrice || (item as any).price || 0,
           isOutOfStock: (item as any).isOutOfStock || (item as any).stockStatus === 'out_of_stock' || (item.minPrice || 0) <= 0,
+          effectiveCreatedAt: item.effectiveCreatedAt || (item as any).effective_created_at,
+          createdAt: item.createdAt || (item as any).created_at,
+          updatedAt: item.updatedAt || (item as any).updated_at,
         };
 
         if (appToPush && !seenNames.has(appToPush.name)) {
@@ -522,62 +589,75 @@ export default function HomePage() {
           }
           seenNames.add(appToPush.name);
           orderedApps.push(appToPush);
-          if (orderedApps.length >= 8) break;
         }
       }
 
-      // If fewer than 8, fill from category-specific candidates in allMapped
-      if (orderedApps.length < 8) {
-        let fallbackCandidates = allMapped;
-        if (activeCategory === 'promo') {
-          if (activeCampaigns && activeCampaigns.length > 0) {
-            fallbackCandidates = allMapped.filter((app) =>
-              activeCampaigns.some((camp) =>
-                isProductInCampaign(app, camp) ||
-                app.items.some((it) =>
-                  isProductInCampaign({ id: it.id, name: it.name, category: it.category?.name }, camp)
-                )
+      // Fill remaining category-specific candidates from allMapped if not already in orderedApps
+      let fallbackCandidates = allMapped;
+      if (activeCategory === 'promo') {
+        if (activeCampaigns && activeCampaigns.length > 0) {
+          fallbackCandidates = allMapped.filter((app) =>
+            activeCampaigns.some((camp) =>
+              isProductInCampaign(app, camp) ||
+              app.items.some((it) =>
+                isProductInCampaign({ id: it.id, name: it.name, category: it.category?.name }, camp)
               )
-            );
-          } else {
-            fallbackCandidates = [];
-          }
-        } else if (activeCategory === 'terlaris') {
-          fallbackCandidates = allMapped.slice().sort((a, b) => (b.targetMax || b.soldCount || 0) - (a.targetMax || a.soldCount || 0));
-        } else if (activeCategory === 'terbaru') {
-          fallbackCandidates = allMapped.slice().sort((a, b) => {
-            const dtA = Math.max(
-              ...[new Date((a as any).createdAt || (a as any).created_at || 0).getTime(), ...(a.items || []).map((p) => new Date((p as any).createdAt || (p as any).created_at || 0).getTime())]
-            );
-            const dtB = Math.max(
-              ...[new Date((b as any).createdAt || (b as any).created_at || 0).getTime(), ...(b.items || []).map((p) => new Date((p as any).createdAt || (p as any).created_at || 0).getTime())]
-            );
-            return dtB - dtA;
-          });
+            )
+          );
+        } else {
+          fallbackCandidates = [];
         }
+      } else if (activeCategory === 'terlaris') {
+        fallbackCandidates = allMapped.slice();
+      } else if (activeCategory === 'terbaru') {
+        fallbackCandidates = allMapped.slice();
+      }
 
-        for (const candidate of fallbackCandidates) {
-          if (!seenNames.has(candidate.name)) {
-            seenNames.add(candidate.name);
-            orderedApps.push(candidate);
-            if (orderedApps.length >= 8) break;
-          }
+      for (const candidate of fallbackCandidates) {
+        if (!seenNames.has(candidate.name)) {
+          seenNames.add(candidate.name);
+          orderedApps.push(candidate);
         }
       }
 
       if (orderedApps.length > 0) {
-        return orderedApps.slice(0, 8);
+        // Strict sorting guarantee across all modes
+        if (activeCategory === 'terlaris') {
+          orderedApps.sort((a, b) => {
+            const sA = a.soldCount ?? 0;
+            const sB = b.soldCount ?? 0;
+            if (sB !== sA) return sB - sA;
+            const rA = parseFloat(a.rating || '5.0') || 0;
+            const rB = parseFloat(b.rating || '5.0') || 0;
+            if (rB !== rA) return rB - rA;
+            const dtA = getEffectiveTimestamp(a);
+            const dtB = getEffectiveTimestamp(b);
+            if (dtB !== dtA) return dtB - dtA;
+            return a.name.localeCompare(b.name);
+          });
+        } else if (activeCategory === 'terbaru') {
+          orderedApps.sort((a, b) => {
+            const dtA = getEffectiveTimestamp(a);
+            const dtB = getEffectiveTimestamp(b);
+            if (dtB !== dtA) return dtB - dtA;
+            const sA = a.soldCount ?? 0;
+            const sB = b.soldCount ?? 0;
+            if (sB !== sA) return sB - sA;
+            return a.name.localeCompare(b.name);
+          });
+        } else if (activeCategory === 'promo') {
+          orderedApps.sort((a, b) => (b.soldCount ?? 0) - (a.soldCount ?? 0));
+        }
+        return orderedApps;
       }
     }
 
     // 3. Resilient Fallback if backend section is empty
     if (activeCategory === 'promo') {
-      // Rule 4: Dynamic based on active campaigns!
       if (!activeCampaigns || activeCampaigns.length === 0) {
         return [];
       }
 
-      // Filter products participating in active campaigns
       const promoMatching = allMapped.filter((app) => {
         return activeCampaigns.some((camp) =>
           isProductInCampaign(app, camp) ||
@@ -587,36 +667,62 @@ export default function HomePage() {
         );
       });
 
-      // Maximum 8 popular products, sorted by popularity (soldCount descending)
-      return promoMatching
-        .sort((a, b) => (b.targetMax || b.soldCount || 0) - (a.targetMax || a.soldCount || 0))
-        .slice(0, 8);
+      return promoMatching.sort((a, b) => (b.soldCount ?? 0) - (a.soldCount ?? 0));
     }
 
     if (activeCategory === 'terlaris') {
       return allMapped
-        .filter((app) => app.isTerlaris)
-        .sort((a, b) => (b.targetMax || b.soldCount || 0) - (a.targetMax || a.soldCount || 0))
-        .slice(0, 8);
+        .slice()
+        .sort((a, b) => {
+          const sA = a.soldCount ?? 0;
+          const sB = b.soldCount ?? 0;
+          if (sB !== sA) return sB - sA;
+          const rA = parseFloat(a.rating || '5.0') || 0;
+          const rB = parseFloat(b.rating || '5.0') || 0;
+          if (rB !== rA) return rB - rA;
+          const dtA = getEffectiveTimestamp(a);
+          const dtB = getEffectiveTimestamp(b);
+          if (dtB !== dtA) return dtB - dtA;
+          return a.name.localeCompare(b.name);
+        });
     }
 
     if (activeCategory === 'terbaru') {
       return allMapped
         .slice()
         .sort((a, b) => {
-          const dtA = Math.max(
-            ...[new Date((a as any).createdAt || (a as any).created_at || 0).getTime(), ...(a.items || []).map((p) => new Date((p as any).createdAt || (p as any).created_at || 0).getTime())]
-          );
-          const dtB = Math.max(
-            ...[new Date((b as any).createdAt || (b as any).created_at || 0).getTime(), ...(b.items || []).map((p) => new Date((p as any).createdAt || (p as any).created_at || 0).getTime())]
-          );
-          return dtB - dtA;
-        })
-        .slice(0, 8);
+          const dtA = getEffectiveTimestamp(a);
+          const dtB = getEffectiveTimestamp(b);
+          if (dtB !== dtA) return dtB - dtA;
+          const sA = a.soldCount ?? 0;
+          const sB = b.soldCount ?? 0;
+          if (sB !== sA) return sB - sA;
+          return a.name.localeCompare(b.name);
+        });
     }
 
-    return allMapped.slice(0, 8);
+    return allMapped;
   }, [sectionsResponse, allProducts, appConfigurations, activeCategory, activeCampaigns, cardsResponse]);
+
+  // Slicing for initial 8-card grid and expandable dropdown
+  const visibleApps = useMemo(() => {
+    return isExpanded ? featuredApps : featuredApps.slice(0, 8);
+  }, [isExpanded, featuredApps]);
+
+  const handleToggleExpand = () => {
+    if (isExpanded) {
+      setIsExpanded(false);
+      const el = document.getElementById('produk-unggulan');
+      if (el) {
+        const rect = el.getBoundingClientRect();
+        if (rect.top < 0) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
+    } else {
+      setIsExpanded(true);
+    }
+  };
 
   // Client-mounted tracking
   const [isMounted, setIsMounted] = useState<boolean>(false);
@@ -625,23 +731,76 @@ export default function HomePage() {
     setIsMounted(true);
   }, []);
 
-  // Product Looping Showcase: Curated list of popular accounts that stays completely independent of the selector
+  // Product Looping Showcase: Curated list of top accounts for the marquee loop
   const showcaseApps = useMemo(() => {
-    const showcaseNames = ['Canva', 'ChatGPT', 'Netflix', 'YouTube', 'CapCut', 'Google Gemini', 'Spotify', 'Vidio', 'Alight Motion', 'iQIYI'];
+    // 1. Check if backend provided authoritative showcase section data
+    const backendShowcase = sectionsResponse?.sections?.showcase?.data;
     const dbCards = cardsResponse?.data || [];
-    const mapped = showcaseNames.map((name) => {
-      const matchedCard = dbCards.find((c) => {
-        const cName = c.name.toLowerCase();
-        const tName = name.toLowerCase();
-        return cName.includes(tName) || tName.includes(cName);
-      });
 
-      const conf = appConfigurations.find((a) => a.name === name) || {
+    if (Array.isArray(backendShowcase) && backendShowcase.length > 0) {
+      return backendShowcase.map((item: any, idx: number) => {
+        const matchedCard = dbCards.find(
+          (c) => (c.id && c.id === item.id) || (c.slug && c.slug === item.slug) || c.name.toLowerCase() === (item.name || '').toLowerCase()
+        );
+
+        const items = allProducts.filter((p) => {
+          if (matchedCard && ((p as any).cardId === matchedCard.id || (p as any).card_id === matchedCard.id)) return true;
+          if ((p as any).cardId === item.id || (p as any).card_id === item.id) return true;
+          const text = `${p.name} ${(p as unknown as { id?: string }).id || ''}`.toLowerCase();
+          return text.includes((item.slug || '').replace(/-/g, ' ')) || text.includes((item.name || '').toLowerCase());
+        });
+
+        const activePrices = items.map((p) => p.price).filter((p) => p > 0);
+        const minPrice = item.minPrice && item.minPrice > 0
+          ? item.minPrice
+          : (matchedCard && matchedCard.minPrice > 0 ? matchedCard.minPrice : (activePrices.length > 0 ? Math.min(...activePrices) : 0));
+
+        const isOutOfStock =
+          item.isOutOfStock ||
+          item.stockStatus === 'out_of_stock' ||
+          (matchedCard && (matchedCard.stockStatus === 'out_of_stock' || matchedCard.isOutOfStock)) ||
+          minPrice <= 0;
+
+        return {
+          id: item.id || matchedCard?.id || `showcase-${idx}`,
+          name: item.name || matchedCard?.name || 'Layanan Pilihan',
+          slug: item.slug || matchedCard?.slug || 'layanan-pilihan',
+          category: item.categoryName || matchedCard?.categoryName || 'Apps & Streaming',
+          categoryTag: (item.categoryTag || 'other') as any,
+          logoUrl: item.logoUrl || matchedCard?.logoUrl,
+          imageUrl: item.imageUrl || matchedCard?.imageUrl,
+          description: item.description || matchedCard?.description,
+          soldCount: item.soldCount ?? matchedCard?.soldCount ?? 20,
+          rating: String(item.rating || matchedCard?.rating || '5.0'),
+          badgeLabel: item.badgeLabel || `TOP ${idx + 1}`,
+          rank: item.rank || idx + 1,
+          items,
+          minPrice: minPrice > 0 ? minPrice : 11815,
+          isOutOfStock,
+        };
+      });
+    }
+
+    // 2. Default Curated TOP 5 matching Reference (iQIYI, Canva, ChatGPT, Netflix, YouTube)
+    const defaultShowcaseOrder = [
+      { name: 'iQIYI', slug: 'iqiyi', rank: 1 },
+      { name: 'Canva', slug: 'canva', rank: 2 },
+      { name: 'ChatGPT', slug: 'chatgpt', rank: 3 },
+      { name: 'Netflix', slug: 'netflix', rank: 4 },
+      { name: 'YouTube', slug: 'youtube', rank: 5 },
+    ];
+
+    const mapped = defaultShowcaseOrder.map(({ name, slug, rank }) => {
+      const matchedCard = dbCards.find(
+        (c) => c.slug === slug || c.id === slug || c.name.toLowerCase().includes(name.toLowerCase())
+      );
+
+      const conf = appConfigurations.find((a) => a.name.toLowerCase().includes(name.toLowerCase())) || {
         name,
         match: (t: string) => t.includes(name.toLowerCase()),
         cat: 'Digital Product',
         tag: 'other' as const,
-        soldCount: getDynamicSoldCount(name, now),
+        soldCount: matchedCard?.soldCount || 20,
         rating: '5.0',
       };
 
@@ -654,7 +813,7 @@ export default function HomePage() {
       const activePrices = items.map((p) => p.price).filter((p) => p > 0);
       const minPrice = matchedCard && matchedCard.minPrice > 0
         ? matchedCard.minPrice
-        : (activePrices.length > 0 ? Math.min(...activePrices) : 0);
+        : (activePrices.length > 0 ? Math.min(...activePrices) : (items.length > 0 ? 15000 : 0));
 
       const isOutOfStock =
         matchedCard ? (matchedCard.stockStatus === 'out_of_stock' || matchedCard.isOutOfStock || minPrice <= 0) :
@@ -667,13 +826,13 @@ export default function HomePage() {
         }));
 
       const finalSoldCount = matchedCard?.soldCount !== undefined
-        ? Math.min(40, Math.max(20, matchedCard.soldCount))
-        : Math.min(40, Math.max(20, conf.soldCount));
+        ? matchedCard.soldCount
+        : conf.soldCount;
 
       return {
-        id: matchedCard?.id || conf.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
-        name: matchedCard?.name || conf.name,
-        slug: matchedCard?.slug || conf.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+        id: matchedCard?.id || slug,
+        name: matchedCard?.name || name,
+        slug: matchedCard?.slug || slug,
         category: matchedCard?.categoryName || conf.cat,
         categoryTag: conf.tag,
         logoUrl: matchedCard?.logoUrl,
@@ -681,15 +840,16 @@ export default function HomePage() {
         description: matchedCard?.description,
         soldCount: finalSoldCount,
         rating: String(matchedCard?.rating || conf.rating || '5.0'),
+        badgeLabel: `TOP ${rank}`,
+        rank,
         items,
-        minPrice,
+        minPrice: minPrice > 0 ? minPrice : 15000,
         isOutOfStock,
       };
     });
 
-    // Only include applications that have real items
-    return mapped.filter((app) => app.items.length > 0 && app.minPrice > 0);
-  }, [allProducts, appConfigurations, now, cardsResponse]);
+    return mapped;
+  }, [sectionsResponse, allProducts, appConfigurations, cardsResponse]);
 
   const handleOpenQuickView = (app: ApplicationGroupItem) => {
     const minPrice = app.minPrice;
@@ -766,15 +926,82 @@ export default function HomePage() {
         <HeroBannerSwiper />
 
         {/*
+          SECTION 2: PRODUCT LOOPING SHOWCASE (MARQUEE)
+          LOCATED IMMEDIATELY BELOW HERO BANNER AND DIRECTLY ABOVE PRODUK UNGGULAN & LISENSI RESMI.
+          - Smooth infinite horizontal marquee loop.
+          - Independent showcase: NOT affected when user switches between Promo / Terlaris / Terbaru.
+          - Clear visual separation with dedicated section heading.
+        */}
+        <section aria-label="Showcase Produk Asterra" className="mb-6 sm:mb-8">
+          <div className="flex items-center justify-between mb-3 px-1">
+            <div className="flex items-center gap-2">
+              <h2 data-gsap="section-heading" className="text-xs sm:text-sm font-black uppercase tracking-wider text-[#121A2A]/85">
+                Showcase Katalog Pilihan
+              </h2>
+            </div>
+            <span className="text-[11px] text-[#121A2A]/50 font-medium hidden sm:inline">
+              Aktivasi instan 1 - 15 menit · Garansi resmi
+            </span>
+          </div>
+
+          {/* Marquee Track Container with Edge Fades */}
+          <div className="carousel-viewport relative w-full overflow-hidden py-1">
+            <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-3 sm:w-6 z-10 bg-gradient-to-r from-white to-transparent" />
+            <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-3 sm:w-6 z-10 bg-gradient-to-l from-white to-transparent" />
+
+            {isCatalogLoading ? (
+              <div className="flex flex-nowrap w-max gap-3 sm:gap-4 overflow-hidden py-1">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <ShowcaseLoopingCardSkeleton key={`skeleton-showcase-${i}`} />
+                ))}
+              </div>
+            ) : showcaseApps.length > 0 ? (
+              <div
+                className="carousel-track flex flex-nowrap w-max shrink-0 items-stretch"
+                style={{
+                  display: 'flex',
+                  width: 'max-content',
+                  flexShrink: 0,
+                  willChange: 'transform',
+                  animation: 'infinite-scroll 45s linear infinite',
+                }}
+              >
+                {/* Original Showcase Items */}
+                {showcaseApps.map((app, idx) => (
+                  <ShowcaseLoopingCard
+                    key={`showcase-orig-${app.slug || app.name}-${idx}`}
+                    app={app}
+                    rank={app.rank || (idx % 5) + 1}
+                    activeCampaigns={activeCampaigns}
+                    onQuickView={handleOpenQuickView}
+                  />
+                ))}
+
+                {/* Duplicated Items for continuous -50% loop */}
+                {showcaseApps.map((app, idx) => (
+                  <ShowcaseLoopingCard
+                    key={`showcase-dup-${app.slug || app.name}-${idx}`}
+                    app={app}
+                    rank={app.rank || (idx % 5) + 1}
+                    isDuplicate
+                    activeCampaigns={activeCampaigns}
+                    onQuickView={handleOpenQuickView}
+                  />
+                ))}
+              </div>
+            ) : null}
+          </div>
+        </section>
+
+        {/*
           SECTION 3: FEATURED PRODUCTS (STATIC GRID: [ 🔥 Promo ] [ Terlaris ] [ Terbaru ])
-          MUST BE LOCATED IMMEDIATELY BELOW THE BANNER.
-          - Selector: ONLY Promo / Terlaris / Terbaru (Best Seller is removed).
+          LOCATED IMMEDIATELY BELOW PRODUCT MARQUEE.
+          - Selector: ONLY Promo / Terlaris / Terbaru.
           - Promo is default and visually prioritized with Asterra coral accent.
           - Cards are STATIC (NOT marquee, NOT slider, NOT looping).
           - 4 columns on desktop, 2 columns on mobile.
-          - Immediately visible in first viewport!
         */}
-        <section id="produk-unggulan" aria-label="Produk Unggulan Asterra" data-gsap="featured-section" className="mb-6 sm:mb-8">
+        <section id="produk-unggulan" aria-label="Produk Unggulan Asterra" data-gsap="featured-section" className="mb-6 sm:mb-8 pt-6 sm:pt-7 border-t border-[rgba(18,26,42,0.06)]">
           {/* Section Heading & Subtitle */}
           <div className="flex items-center justify-between mb-2.5 sm:mb-3 px-0.5">
             <h2 data-gsap="section-heading" className="text-sm sm:text-base md:text-lg font-black tracking-tight text-[#121A2A]">
@@ -788,26 +1015,34 @@ export default function HomePage() {
           {/* Selector Tabs: [ 🔥 Promo ] [ Terlaris ] [ Terbaru ] */}
           <div data-gsap="category-tabs" className="flex items-center justify-between gap-2 mb-3 sm:mb-4 pb-1 border-b border-[rgba(18,26,42,0.06)] overflow-x-auto scrollbar-none">
             <div className="flex items-center gap-1.5 sm:gap-2">
-              {/* Tab 1: PROMO (DEFAULT & VISUALLY PROMINENT) */}
-              <button
-                type="button"
-                data-gsap="hero-button"
-                onClick={() => setActiveCategory('promo')}
-                className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs sm:text-[13px] font-bold transition-all cursor-pointer ${
-                  activeCategory === 'promo'
-                    ? 'bg-[#C96F55] text-white shadow-xs scale-102 ring-2 ring-[#C96F55]/30'
-                    : 'bg-white text-[#C96F55] border border-[#C96F55]/40 hover:bg-[#C96F55]/10'
-                }`}
-              >
-                <FontAwesomeIcon icon={faFire} className="w-3.5 h-3.5" />
-                <span>Promo</span>
-              </button>
+              {/* Tab 1: PROMO (CONDITIONAL: ONLY SHOWN IF ACTIVE CAMPAIGN EXISTS) */}
+              {hasActiveCampaign && (
+                <button
+                  type="button"
+                  data-gsap="hero-button"
+                  onClick={() => {
+                    setActiveCategory('promo');
+                    setIsExpanded(false);
+                  }}
+                  className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs sm:text-[13px] font-bold transition-all cursor-pointer ${
+                    activeCategory === 'promo'
+                      ? 'bg-[#C96F55] text-white shadow-xs scale-102 ring-2 ring-[#C96F55]/30'
+                      : 'bg-white text-[#C96F55] border border-[#C96F55]/40 hover:bg-[#C96F55]/10'
+                  }`}
+                >
+                  <FontAwesomeIcon icon={faFire} className="w-3.5 h-3.5" />
+                  <span>Promo</span>
+                </button>
+              )}
 
               {/* Tab 2: Terlaris */}
               <button
                 type="button"
                 data-gsap="hero-button"
-                onClick={() => setActiveCategory('terlaris')}
+                onClick={() => {
+                  setActiveCategory('terlaris');
+                  setIsExpanded(false);
+                }}
                 className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs sm:text-[13px] transition-all cursor-pointer ${
                   activeCategory === 'terlaris'
                     ? 'bg-[#121A2A] text-white font-bold shadow-xs'
@@ -821,7 +1056,10 @@ export default function HomePage() {
               <button
                 type="button"
                 data-gsap="hero-button"
-                onClick={() => setActiveCategory('terbaru')}
+                onClick={() => {
+                  setActiveCategory('terbaru');
+                  setIsExpanded(false);
+                }}
                 className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs sm:text-[13px] transition-all cursor-pointer ${
                   activeCategory === 'terbaru'
                     ? 'bg-[#121A2A] text-white font-bold shadow-xs'
@@ -859,15 +1097,45 @@ export default function HomePage() {
               ))}
             </div>
           ) : featuredApps.length > 0 ? (
-            <div key={activeCategory} data-gsap="product-grid" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-4.5 animate-tab-glide">
-              {featuredApps.map((app) => (
-                <FeaturedGridCard
-                  key={`featured-${activeCategory}-${app.name}`}
-                  app={app}
-                  activeCampaigns={activeCampaigns}
-                  onQuickView={handleOpenQuickView}
-                />
-              ))}
+            <div>
+              <div
+                id="featured-product-grid"
+                key={`${activeCategory}-${isExpanded ? 'expanded' : 'collapsed'}`}
+                data-gsap="product-grid"
+                className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-4.5 animate-tab-glide"
+              >
+                {visibleApps.map((app, index) => (
+                  <div
+                    key={`featured-${activeCategory}-${app.name}-${app.id || index}`}
+                    className={index >= 8 ? 'animate-grid-expand' : undefined}
+                  >
+                    <FeaturedGridCard
+                      app={app}
+                      activeCampaigns={activeCampaigns}
+                      onQuickView={handleOpenQuickView}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {/* Expand / Collapse Button (Shown only when total products > 8) */}
+              {featuredApps.length > 8 && (
+                <div className="flex justify-center mt-5 sm:mt-6">
+                  <button
+                    type="button"
+                    onClick={handleToggleExpand}
+                    aria-expanded={isExpanded}
+                    aria-controls="featured-product-grid"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-[rgba(18,26,42,0.12)] bg-white hover:bg-[#F8FAFC] hover:border-[#121A2A]/30 text-[#121A2A] text-xs sm:text-sm font-bold shadow-xs transition-all active:scale-98 cursor-pointer group"
+                  >
+                    <span>{isExpanded ? 'Tampilkan Lebih Sedikit' : 'Tampilkan Produk Lainnya'}</span>
+                    <FontAwesomeIcon
+                      icon={isExpanded ? faChevronUp : faChevronDown}
+                      className="w-3.5 h-3.5 text-[#121A2A]/60 group-hover:text-[#121A2A] transition-transform duration-200"
+                    />
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             <div className="p-8 text-center bg-white rounded-2xl border border-[rgba(18,26,42,0.08)] col-span-full">
@@ -880,71 +1148,7 @@ export default function HomePage() {
           )}
         </section>
 
-        {/*
-          SECTION 4: PRODUCT LOOPING SHOWCASE (VISUAL PEMANIS ONLY)
-          MUST BE LOCATED BELOW FEATURED PRODUCTS.
-          - Smooth infinite horizontal marquee loop.
-          - Independent showcase: NOT affected when user switches between Promo / Terlaris / Terbaru.
-          - Clear visual separation with dedicated section heading.
-        */}
-        <section aria-label="Showcase Produk Asterra" className="mt-7 sm:mt-10 mb-6 sm:mb-8 pt-6 sm:pt-7 border-t border-[rgba(18,26,42,0.06)]">
-          <div className="flex items-center justify-between mb-3 px-1">
-            <div className="flex items-center gap-2">
-              <h2 data-gsap="section-heading" className="text-xs sm:text-sm font-black uppercase tracking-wider text-[#121A2A]/85">
-                Showcase Katalog Pilihan
-              </h2>
-            </div>
-            <span className="text-[11px] text-[#121A2A]/50 font-medium hidden sm:inline">
-              Aktivasi instan 1 - 15 menit · Garansi resmi
-            </span>
-          </div>
 
-          {/* Marquee Track Container with Edge Fades */}
-          <div className="carousel-viewport relative w-full overflow-hidden py-1">
-            <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-3 sm:w-6 z-10 bg-gradient-to-r from-white to-transparent" />
-            <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-3 sm:w-6 z-10 bg-gradient-to-l from-white to-transparent" />
-
-            {isCatalogLoading ? (
-              <div className="flex flex-nowrap w-max gap-3 sm:gap-4 overflow-hidden py-1">
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <ShowcaseLoopingCardSkeleton key={`skeleton-showcase-${i}`} />
-                ))}
-              </div>
-            ) : showcaseApps.length > 0 ? (
-              <div
-                className="carousel-track flex flex-nowrap w-max shrink-0 items-stretch"
-                style={{
-                  display: 'flex',
-                  width: 'max-content',
-                  flexShrink: 0,
-                  willChange: 'transform',
-                  animation: 'infinite-scroll 45s linear infinite',
-                }}
-              >
-                {/* Original Showcase Items */}
-                {showcaseApps.map((app) => (
-                  <ShowcaseLoopingCard
-                    key={`showcase-orig-${app.name}`}
-                    app={app}
-                    activeCampaigns={activeCampaigns}
-                    onQuickView={handleOpenQuickView}
-                  />
-                ))}
-
-                {/* Duplicated Items for continuous -50% loop */}
-                {showcaseApps.map((app) => (
-                  <ShowcaseLoopingCard
-                    key={`showcase-dup-${app.name}`}
-                    app={app}
-                    isDuplicate
-                    activeCampaigns={activeCampaigns}
-                    onQuickView={handleOpenQuickView}
-                  />
-                ))}
-              </div>
-            ) : null}
-          </div>
-        </section>
 
         {/* SECTION 5: TERAKHIR DILIHAT (Conditional from localStorage: Rendered ONLY if history exists) */}
         {recentlyViewed.length > 0 && (

@@ -183,13 +183,8 @@ class PartnerService:
 
             successful_orders_count = cls.count_unique_successful_orders(partner_orders)
             total_orders_count = len(partner_orders)
-            raw_tier = str(p.get("tier", "")).strip().lower()
-            if successful_orders_count >= 50 or "vip" in raw_tier or p.get("rate") == 20:
-                eff_tier = "VIP (20%)"
-                eff_rate = 20
-            else:
-                eff_tier = "Standard (15%)"
-                eff_rate = max(15, int(p.get("rate", 15) or 15))
+            eff_tier = "Affiliate Mitra (30%)"
+            eff_rate = int(p.get("rate") or 30)
 
             enriched.append({
                 **p,
@@ -384,13 +379,8 @@ class PartnerService:
 
         successful_orders_count = cls.count_unique_successful_orders(partner_orders)
         total_orders_count = len(partner_orders)
-        raw_tier = str(partner.get("tier", "")).strip().lower()
-        if successful_orders_count >= 50 or "vip" in raw_tier or partner.get("rate") == 20:
-            effective_tier = "VIP (20%)"
-            effective_rate = 20
-        else:
-            effective_tier = "Standard (15%)"
-            effective_rate = 20 if partner.get("rate") == 20 else max(15, int(partner.get("rate", 15) or 15))
+        effective_tier = "Affiliate Mitra (30%)"
+        effective_rate = int(partner.get("rate") or 30)
 
         return {
             "id": partner.get("id"),
@@ -541,8 +531,7 @@ class PartnerService:
             else:
                 campaign_rate = None
                 matched_successful_count = cls.count_unique_successful_orders(matched)
-                is_vip_matched = bool(partner.get("rate") == 20 or matched_successful_count >= 50 or "vip" in str(partner.get("tier", "")).lower())
-                fallback_rate = 20.0 if is_vip_matched else 15.0
+                fallback_rate = 30.0
                 commission_rate = float(comm_rec.commission_rate if (comm_rec and comm_rec.commission_rate) else partner.get("rate", fallback_rate))
                 campaign_name = None
 
@@ -826,8 +815,8 @@ class PartnerService:
             "email": email,
             "whatsapp": whatsapp,
             "code": custom_code,
-            "tier": "Standard (15%)",
-            "rate": 15,
+            "tier": "Affiliate Mitra (30%)",
+            "rate": 30,
             "totalClicks": 0,
             "bankName": payload.get("bankName") or "Bank Central Asia (BCA)",
             "bankAccount": payload.get("bankAccount") or "-",
@@ -859,8 +848,8 @@ class PartnerService:
                         email=email,
                         whatsapp=whatsapp,
                         code=custom_code,
-                        tier="Standard (15%)",
-                        rate=15,
+                        tier="Affiliate Mitra (30%)",
+                        rate=30,
                         total_clicks=0,
                         bank_name=new_partner["bankName"],
                         bank_account=new_partner["bankAccount"],
@@ -1160,7 +1149,7 @@ class PartnerService:
                 "partnerCode": p.get("code") if p else "",
                 "partnerWhatsapp": p.get("whatsapp") if p else "",
                 "partnerTier": p.get("tier") if p else "Standard",
-                "partnerRate": p.get("rate") if p else 10,
+                "partnerRate": p.get("rate") if p else 30,
             })
         return enriched
 

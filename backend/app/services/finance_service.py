@@ -1,7 +1,7 @@
 import json
 import pathlib
 from datetime import datetime
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 
 class FinanceService:
     @classmethod
@@ -11,8 +11,37 @@ class FinanceService:
         return OrderService.load_real_orders()
 
     @classmethod
-    def get_profit_distribution(cls) -> Dict[str, Any]:
-        orders = cls.load_orders()
+    def get_profit_distribution(cls, month: Optional[str] = None) -> Dict[str, Any]:
+        all_orders = cls.load_orders()
+
+        # Extract available months (YYYY-MM) from all orders + current month
+        current_m = datetime.now().strftime("%Y-%m")
+        all_month_set = {
+            str(o.get("createdAt") or o.get("created_at") or "")[:7]
+            for o in all_orders
+            if len(str(o.get("createdAt") or o.get("created_at") or "")) >= 7
+        }
+        all_month_set.add(current_m)
+        available_months = sorted(list(all_month_set), reverse=True)
+
+        # Filter by month if provided and not "all"
+        if month and str(month).strip().lower() == "current":
+            target_month = current_m
+            orders = [
+                o for o in all_orders
+                if str(o.get("createdAt") or o.get("created_at") or "").startswith(target_month)
+            ]
+            selected_month = target_month
+        elif month and str(month).strip().lower() not in ["all", "all-time", "semua", ""]:
+            target_month = str(month).strip()
+            orders = [
+                o for o in all_orders
+                if str(o.get("createdAt") or o.get("created_at") or "").startswith(target_month)
+            ]
+            selected_month = target_month
+        else:
+            orders = all_orders
+            selected_month = "all"
 
         catalog_products = {}
         try:
@@ -229,7 +258,7 @@ class FinanceService:
                 "referralCode": o.get("referralCode") or o.get("referral_code"),
                 "recruiterSalesId": o.get("recruiterPartnerId") or o.get("recruiter_partner_id"),
                 "saleCommissionRate": (comm_rate / 100.0) if has_ref else 0.0,
-                "recruitmentBonusRate": 0.02 if (has_ref and has_recruiter) else 0.0,
+                "recruitmentBonusRate": 0.0,
                 "salesCommission": sales_comm,
                 "recruitmentBonus": recruit_bonus,
                 "profitDistribution": distributable,
@@ -263,4 +292,6 @@ class FinanceService:
         return {
             "summary": summary,
             "entries": entries,
+            "availableMonths": available_months,
+            "selectedMonth": selected_month,
         }

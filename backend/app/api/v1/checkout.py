@@ -6,7 +6,7 @@ from app.config import settings
 from app.services.order_service import OrderService
 from app.services.payment_config_service import PaymentConfigService
 from app.services.promo_service import PromoService
-from app.services.tripay_service import TripayService
+from app.services.midtrans_service import MidtransService
 
 router = APIRouter()
 
@@ -507,14 +507,134 @@ def sync_order_vip_status(order_id: str):
 
 @router.post("/orders/{order_id}/pay", tags=["Orders"])
 async def pay_order(order_id: str, request: Request):
-    try:
-        body = await request.json()
-    except Exception:
-        body = {}
+    body = {}
+    if isinstance(request, Request):
+        try:
+            body = await request.json()
+        except Exception:
+            body = {}
+    elif isinstance(request, dict):
+        body = request
 
     order = OrderService.get_order_by_id(order_id)
-    amount = order.get("totalAmount", 50000) if order else 50000
-    method = body.get("payment_method", "manual_bca")
+    if not order:
+        raise HTTPException(status_code=404, detail="Pesanan tidak ditemukan")
+
+    amount = order.get("totalAmount") or order.get("total_amount") or 50000
+    method = body.get("payment_method") or order.get("paymentMethod") or order.get("payment_method") or "qris"
+
+    pay_cfg = PaymentConfigService.get_config()
+    is_qris = (
+        method in ["qris", "qris_midtrans", "midtrans", "gateway"]
+        and not str(method).startswith("manual_")
+        and method not in ["manual_qris", "qris_manual", "manual_bca", "manual_dana"]
+    )
+    is_va = method in [
+        "bca_va", "bni_va", "bri_va", "mandiri_va",
+        "bca", "bni", "bri", "mandiri", "echannel",
+    ]
+    is_gateway = is_qris or is_va
+
+    is_manual = not is_gateway and (
+        order.get("payment_mode") == "manual"
+        or order.get("paymentMode") == "manual"
+        or str(method).startswith("manual_")
+        or method in ["manual_qris", "qris_manual", "manual_bca", "manual_dana"]
+        or pay_cfg.get("mode") == "manual"
+    )
+
+    cust_name = order.get("customerName") or order.get("customer_name") or "Pelanggan Asterra"
+    cust_email = order.get("customerEmail") or order.get("customer_email") or "customer@asterra.store"
+    cust_phone = order.get("customerPhone") or order.get("customer_phone") or ""
+
+    # 1. Dynamic QRIS (Midtrans Core API)
+    if is_qris:
+        payment_info = MidtransService.generate_qris(
+            order_id=order_id,
+            amount=int(amount),
+            customer_name=cust_name,
+            customer_email=cust_email,
+            customer_phone=cust_phone,
+            title=f"Order {order_id} - Asterra Store",
+        )
+        if not payment_info.get("success"):
+            err_msg = payment_info.get("error") or "Gagal membuat tagihan QRIS."
+            raise HTTPException(status_code=502, detail=err_msg)
+
+        # Update order with payment transaction ID / reference
+        try:
+            from app.core.database import SessionLocal
+            from app.models.order import Order
+            db = SessionLocal()
+            try:
+                db_order = db.query(Order).filter(Order.id == order_id).first()
+                if db_order:
+                    db_order.payment_reference = payment_info.get("transaction_id")
+                    db_order.payment_status = "pending"
+                    db.commit()
+            finally:
+                db.close()
+        except Exception as e:
+            logger.warning(f"Could not update order payment ref: {e}")
+
+        return {
+            "success": True,
+            "message": "Instruksi pembayaran QRIS berhasil dibuat",
+            "payment": payment_info,
+        }
+
+    # 2. Virtual Account Bank Transfer (BCA, BNI, BRI, Mandiri via Midtrans Core API)
+    if is_va:
+        bank_name = "mandiri" if "mandiri" in method or method == "echannel" else method.replace("_va", "")
+        payment_info = MidtransService.generate_bank_transfer(
+            order_id=order_id,
+            amount=int(amount),
+            bank=bank_name,
+            customer_name=cust_name,
+            customer_email=cust_email,
+            customer_phone=cust_phone,
+            title=f"Order {order_id} - Asterra Store",
+        )
+        if not payment_info.get("success"):
+            err_msg = payment_info.get("error") or f"Gagal membuat tagihan Virtual Account {bank_name.upper()}."
+            raise HTTPException(status_code=502, detail=err_msg)
+
+        # Update order with payment transaction ID / reference
+        try:
+            from app.core.database import SessionLocal
+            from app.models.order import Order
+            db = SessionLocal()
+            try:
+                db_order = db.query(Order).filter(Order.id == order_id).first()
+                if db_order:
+                    db_order.payment_reference = payment_info.get("transaction_id")
+                    db_order.payment_status = "pending"
+                    db.commit()
+            finally:
+                db.close()
+        except Exception as e:
+            logger.warning(f"Could not update order payment ref: {e}")
+
+        return {
+            "success": True,
+            "message": f"Instruksi pembayaran Virtual Account {bank_name.upper()} berhasil dibuat",
+            "payment": payment_info,
+        }
+
+    # Manual payment instructions (uploaded QRIS or manual bank)
+    qris_url = (
+        pay_cfg.get("qris_image_url")
+        or pay_cfg.get("qrisImageUrl")
+        or (pay_cfg.get("qris", {}).get("image_url") if isinstance(pay_cfg.get("qris"), dict) else None)
+        or "/images/qris-toko.png"
+    )
+    qris_merchant = (
+        pay_cfg.get("qris_merchant_name")
+        or pay_cfg.get("qrisMerchantName")
+        or (pay_cfg.get("qris", {}).get("merchant_name") if isinstance(pay_cfg.get("qris"), dict) else None)
+        or "ASTERRA STORE QRIS"
+    )
+    bank_info = pay_cfg.get("bank", {}) if isinstance(pay_cfg.get("bank"), dict) else {}
 
     payment_info = {
         "id": f"PAY-{order_id}",
@@ -523,16 +643,17 @@ async def pay_order(order_id: str, request: Request):
         "payment_method": method,
         "transaction_id": f"TRX-{order_id}",
         "payment_status": "pending",
-        "qr_url": "https://panduan.bersama.co.id/QRIS/images/Qris.png",
+        "is_manual": True,
+        "qr_image_url": qris_url,
+        "qr_url": qris_url,
+        "qris_merchant_name": qris_merchant,
         "instructions": [
             {
-                "title": "Instruksi Transfer Bank BCA",
+                "title": "Instruksi Transfer Manual",
                 "steps": [
-                    "Buka BCA Mobile, KlikBCA, atau ATM BCA",
-                    "Pilih Transfer Antar Rekening BCA",
-                    "Nomor Rekening: 8965123456 (a/n Asterra Store Official)",
+                    f"Scan Barcode QRIS Resmi Toko ({qris_merchant}) atau transfer ke rekening {bank_info.get('name', 'Bank Central Asia (BCA)')} {bank_info.get('account_number', '8965123456')}",
                     f"Pastikan transfer dengan nominal tepat Rp {amount:,.0f}".replace(",", "."),
-                    "Pembayaran akan diverifikasi secara otomatis dalam 1 - 5 menit.",
+                    "Kirimkan bukti transfer pembayaran ke WhatsApp Admin untuk validasi pesanan.",
                 ],
             }
         ],
@@ -540,7 +661,7 @@ async def pay_order(order_id: str, request: Request):
 
     return {
         "success": True,
-        "message": "Instruksi pembayaran berhasil dibuat",
+        "message": "Instruksi pembayaran manual berhasil dibuat",
         "payment": payment_info,
     }
 
@@ -556,43 +677,59 @@ def cancel_order(order_id: str):
     }
 
 # ------------------------------------------
-# 4. Payment Gateway Webhook (Tripay)
+# 4. Payment Gateway Webhook (Midtrans Dynamic QRIS)
 # ------------------------------------------
-@router.post("/webhooks/tripay", tags=["Webhooks"])
-async def tripay_webhook(request: Request):
-    raw_body = await request.body()
-    signature = request.headers.get("x-callback-signature", "")
+@router.post("/webhooks/midtrans", tags=["Webhooks"])
+async def midtrans_webhook(request: Request):
     try:
-        payload = json.loads(raw_body.decode("utf-8"))
+        body = await request.json()
     except Exception:
-        raise HTTPException(status_code=400, detail="Invalid JSON payload")
+        raw = await request.body()
+        try:
+            body = json.loads(raw.decode("utf-8"))
+        except Exception:
+            raise HTTPException(status_code=400, detail="Invalid JSON payload")
 
-    merchant_ref = payload.get("merchant_ref")
-    if not merchant_ref:
-        raise HTTPException(status_code=400, detail="merchant_ref is required")
+    verified = MidtransService.verify_webhook(body)
 
-    # Signature verification
-    is_valid = TripayService.verify_callback_signature(raw_body, signature)
-    if not is_valid and (settings.TRIPAY_IS_PRODUCTION or settings.TRIPAY_PRIVATE_KEY):
-        raise HTTPException(status_code=401, detail="Invalid callback signature")
+    if not verified.get("is_valid"):
+        err_msg = verified.get("error", "Invalid callback signature")
+        raise HTTPException(status_code=401, detail=err_msg)
 
-    status = payload.get("status", "")
-    if status == "PAID":
+    order_id = verified.get("order_id")
+    if not order_id:
+        raise HTTPException(status_code=400, detail="order_id is required")
+
+    status = str(verified.get("status", "")).upper()
+    ref = verified.get("reference", f"MID-{order_id}")
+
+    if status in ["PAID", "SETTLEMENT", "SUCCESS", "SUCCESSFUL"]:
         updated = OrderService.update_status(
-            merchant_ref,
+            order_id,
             "processing",
-            notes=f"Pembayaran otomatis terverifikasi Tripay ({payload.get('payment_method')}) Ref: {payload.get('reference')}",
+            notes=f"Pembayaran otomatis terverifikasi Midtrans Ref: {ref}",
         )
-        return {"success": True, "message": "Pembayaran berhasil diverifikasi", "order": updated}
-    elif status in ["EXPIRED", "FAILED"]:
+        return {
+            "status": "success",
+            "message": "Pembayaran Midtrans berhasil diverifikasi",
+            "order": updated,
+        }
+    elif status in ["CANCELLED", "EXPIRED", "DENY"]:
         updated = OrderService.update_status(
-            merchant_ref,
+            order_id,
             "cancelled",
-            notes=f"Pembayaran Tripay {status.lower()}",
+            notes=f"Pembayaran Midtrans {status.lower()}",
         )
-        return {"success": True, "message": f"Pesanan {status.lower()}", "order": updated}
+        return {
+            "status": "cancelled",
+            "message": f"Pesanan {status.lower()}",
+            "order": updated,
+        }
 
-    return {"success": True, "message": f"Status webhook diterima: {status}"}
+    return {
+        "status": "ok",
+        "message": f"Status webhook Midtrans diterima: {status}",
+    }
 
 # ------------------------------------------
 # 5. VIP Reseller Automated Webhook Callback
@@ -630,10 +767,11 @@ async def vip_reseller_webhook(request: Request):
 def get_admin_orders(
     status: Optional[str] = None,
     search: Optional[str] = None,
+    month: Optional[str] = Query(None),
     page: int = 1,
     limit: int = 20,
 ):
-    result = OrderService.get_orders(status=status, search=search, page=page, limit=limit)
+    result = OrderService.get_orders(status=status, search=search, month=month, page=page, limit=limit)
     return {
         "success": True,
         "data": result["orders"],
@@ -644,6 +782,8 @@ def get_admin_orders(
             "items_per_page": result["limit"],
         },
         "metrics": result["metrics"],
+        "available_months": result.get("availableMonths", []),
+        "selected_month": result.get("selectedMonth", "all"),
     }
 
 @router.get("/admin/orders/{order_id}", tags=["Admin Orders"])

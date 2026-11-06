@@ -227,10 +227,23 @@ export default function ProfilePage() {
   const handleGoogleLogin = async () => {
     setIsLoggingIn(true);
     try {
-      await signIn.social({
+      const fullCallbackUrl =
+        typeof window !== 'undefined'
+          ? new URL('/profile', window.location.origin).toString()
+          : '/profile';
+      const res = await signIn.social({
         provider: 'google',
-        callbackURL: '/profile',
+        callbackURL: fullCallbackUrl,
+        newUserCallbackURL: fullCallbackUrl,
       });
+      if (res?.error) {
+        setIsLoggingIn(false);
+        showNotification(res.error.message || 'Gagal menghubungkan ke layanan Google.');
+        return;
+      }
+      if (res?.data?.url) {
+        window.location.href = res.data.url;
+      }
     } catch {
       setIsLoggingIn(false);
       showNotification('Gagal menghubungkan ke layanan Google. Silakan coba lagi.');

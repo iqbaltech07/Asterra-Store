@@ -151,9 +151,14 @@ class OrderNormalizer:
         o["raw_id"] = o.get("id", "")
 
         # Payment details
-        pay_mode = o.get("paymentMode") or o.get("payment_mode") or "manual"
+        pay_mode = o.get("paymentMode") or o.get("payment_mode")
         pay_method = o.get("paymentMethod") or o.get("payment_method") or "manual_bca"
+        if not pay_mode:
+            pay_mode = "manual" if (str(pay_method).startswith("manual_") or str(pay_method) in ["manual_qris", "qris_manual", "manual_bca", "manual_dana"]) else "gateway"
         pay_status = o.get("paymentStatus") or o.get("payment_status") or "pending"
+        order_st = str(o.get("status") or o.get("order_status") or "").lower()
+        if order_st in ["processing", "completed", "paid", "settlement"]:
+            pay_status = "success"
 
         o["paymentMode"] = pay_mode
         o["payment_mode"] = pay_mode
@@ -172,6 +177,8 @@ class OrderNormalizer:
                 "created_at": created,
                 "paid_at": o.get("paidAt"),
             }
+        else:
+            o["payment"]["payment_status"] = pay_status
 
         # Normalize items summary & items
         items = o.get("items") or []

@@ -271,7 +271,7 @@ export function AdminAnalyticsSuite({ activeTab, onNotify }: AdminAnalyticsSuite
       ['Pendapatan Bersih (Net Revenue)', financialReport?.netRevenue || 0, 'Gross - Diskon'],
       ['Harga Pokok Penjualan (HPP)', financialReport?.cogs || 0, 'Modal Supplier VIP Reseller'],
       ['Laba Kotor (Gross Profit)', financialReport?.grossProfit || 0, 'Net Revenue - HPP'],
-      ['Biaya Payment Gateway', financialReport?.pgFees || 0, 'Fee Tripay / Merchant'],
+      ['Biaya Payment Gateway', financialReport?.pgFees || 0, 'Fee Midtrans QRIS Resmi / Merchant'],
       ['Komisi Afiliasi & Sales', financialReport?.commissions || 0, 'Hak Komisi Mitra'],
       ['Total Beban Operasional', financialReport?.totalOpex || 0, 'Gateway + Komisi'],
       ['Laba Bersih Operasional', financialReport?.netOperatingProfit || 0, 'Gross Profit - Beban Operasional'],
@@ -1096,7 +1096,7 @@ export function AdminAnalyticsSuite({ activeTab, onNotify }: AdminAnalyticsSuite
             </div>
             <div className="pl-4 space-y-1.5">
               <div className="flex justify-between py-1 border-b border-border/50">
-                <span className="text-foreground-muted">Biaya Transaksi Payment Gateway Tripay (0.7% + QRIS)</span>
+                <span className="text-foreground-muted">Biaya Transaksi Payment Gateway Midtrans QRIS Resmi (0.7%)</span>
                 <span className="font-mono text-status-error">
                   -Rp {(financialReport?.pgFees ?? 0).toLocaleString('id-ID')}
                 </span>

@@ -104,8 +104,8 @@ export function AdminAffiliateTab({ onNotify }: AdminAffiliateTabProps) {
             email: p.email,
             whatsapp: p.whatsapp || '-',
             code: p.code,
-            tier: p.tier || 'Standard (15%)',
-            rate: p.rate || 15,
+            tier: p.tier || 'Affiliate Mitra (30%)',
+            rate: p.rate || 30,
             totalClicks: p.totalClicks || 0,
             totalOrders: p.totalOrders ?? (p._count?.orders || 0),
             status: p.status || 'active',
@@ -170,7 +170,7 @@ export function AdminAffiliateTab({ onNotify }: AdminAffiliateTabProps) {
   const [newPassword, setNewPassword] = useState('');
   const [newWhatsapp, setNewWhatsapp] = useState('');
   const [newCode, setNewCode] = useState('');
-  const [newRate, setNewRate] = useState(15);
+  const [newRate, setNewRate] = useState(30);
   const [newBank, setNewBank] = useState('BCA');
   const [newAccount, setNewAccount] = useState('');
 

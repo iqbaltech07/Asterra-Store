@@ -14,7 +14,7 @@ from app.services.campaign_service import CampaignService
 from app.services.realtime_broadcaster import RealtimeBroadcaster
 from app.core.cache import cache
 
-VALID_SECTIONS = ["promo", "terlaris", "terbaru"]
+VALID_SECTIONS = ["promo", "terlaris", "terbaru", "showcase"]
 
 DEFAULT_CONFIG: Dict[str, Dict[str, Any]] = {
     "promo": {
@@ -35,6 +35,13 @@ DEFAULT_CONFIG: Dict[str, Dict[str, Any]] = {
         "sectionKey": "terbaru",
         "mode": "auto",
         "manualProductIds": [],
+        "updatedBy": "system",
+        "updatedAt": datetime.utcnow().isoformat(),
+    },
+    "showcase": {
+        "sectionKey": "showcase",
+        "mode": "manual",
+        "manualProductIds": ["card-iqiyi", "card-canva", "card-chatgpt", "card-netflix", "card-youtube"],
         "updatedBy": "system",
         "updatedAt": datetime.utcnow().isoformat(),
     },
@@ -216,7 +223,7 @@ class HomepageSectionService:
         return sales
 
     @classmethod
-    def compute_section_products(cls, section_key: str, limit: int = 8) -> Dict[str, Any]:
+    def compute_section_products(cls, section_key: str, limit: Optional[int] = None) -> Dict[str, Any]:
         """
         Computes the definitive list of up to 8 ProductCards (Product Groups) for Promo, Terlaris, or Terbaru.
         Strictly observes:
@@ -239,7 +246,21 @@ class HomepageSectionService:
         sales_counts = cls.get_valid_sales_counts()
         active_campaigns = CampaignService.get_active_campaigns()
 
-        def parse_dt(val: Any) -> datetime:
+        # Rule 5: If Promo section requested but no active campaign is running, return empty immediately
+        if section_key == "promo" and not active_campaigns:
+            return {
+                "sectionKey": section_key,
+                "mode": mode,
+                "manualProductIds": manual_ids,
+                "totalAvailable": 0,
+                "count": 0,
+                "data": [],
+                "limit": limit if limit is not None else 0,
+                "updatedAt": config.get("updatedAt"),
+                "updatedBy": config.get("updatedBy"),
+            }
+
+        def parse_dt(val: Any) -> Optional[datetime]:
             if isinstance(val, datetime):
                 return val
             if val:
@@ -250,7 +271,7 @@ class HomepageSectionService:
                     return datetime.strptime(s[:19], "%Y-%m-%d %H:%M:%S")
                 except Exception:
                     pass
-            return datetime(2020, 1, 1)
+            return None
 
         def is_card_in_campaign(card_obj: ProductCard, active_catalogs: List[Product]) -> bool:
             if not active_campaigns:
@@ -303,17 +324,30 @@ class HomepageSectionService:
 
                     # Calculate effective created_at:
                     # Rule: 'jika ada product group baru atau variant baru di product group tersebut maka kalkulasikan masuk ke dalam tab terbaru.'
-                    created_timestamps = [parse_dt(card.created_at)]
+                    created_timestamps = []
+                    c_c = parse_dt(card.created_at)
+                    if c_c:
+                        created_timestamps.append(c_c)
+                    c_u = parse_dt(getattr(card, "updated_at", None))
+                    if c_u:
+                        created_timestamps.append(c_u)
                     for p in active_catalogs:
-                        created_timestamps.append(parse_dt(p.created_at))
-                    effective_created_at = max(created_timestamps)
+                        p_c = parse_dt(getattr(p, "created_at", None))
+                        if p_c:
+                            created_timestamps.append(p_c)
+                        p_u = parse_dt(getattr(p, "updated_at", None))
+                        if p_u:
+                            created_timestamps.append(p_u)
+                    has_valid_dt = len(created_timestamps) > 0
+                    effective_created_at = max(created_timestamps) if has_valid_dt else datetime(1970, 1, 1)
 
-                    # Sold count
-                    base_sold = card.base_sold_count or 20
+                    # Sold count: unified canonical calculation via card.to_dict
                     order_sold = sales_counts.get(str(card.id).lower(), 0) + sales_counts.get(str(card.slug).lower(), 0)
                     for v in active_catalogs:
                         order_sold += sales_counts.get(str(v.id).lower(), 0)
-                    total_sold = max(20, min(40, base_sold + order_sold))
+                    card_summary = card.to_dict(include_catalogs=False, sold_count=order_sold)
+                    total_sold = card_summary["soldCount"]
+                    base_sold = card_summary["baseSoldCount"]
 
                     in_promo = is_card_in_campaign(card, active_catalogs)
 
@@ -374,10 +408,13 @@ class HomepageSectionService:
                         "priceFormatted": f"Rp {min_price:,.0f}".replace(",", "."),
                         "stockStatus": stock_status,
                         "isOutOfStock": stock_status == "out_of_stock",
+                        "baseSoldCount": base_sold,
+                        "orderSoldCount": order_sold,
                         "soldCount": total_sold,
                         "isPromo": in_promo or section_key == "promo",
-                        "effectiveCreatedAt": effective_created_at.isoformat(),
+                        "effectiveCreatedAt": effective_created_at.isoformat() if has_valid_dt else None,
                         "_effective_dt": effective_created_at,
+                        "_has_valid_dt": has_valid_dt,
                         "variantCount": len(active_catalogs),
                         "items": [p.to_dict() for p in active_catalogs],
                     }
@@ -391,34 +428,48 @@ class HomepageSectionService:
         auto_ranked: List[Dict[str, Any]] = []
         if section_key == "promo":
             # Auto Promo: Prioritize cards in active campaigns, then sold_count DESC, then effective_dt DESC
+            promo_candidates = [c for c in candidate_cards if c.get("isPromo")]
             auto_ranked = sorted(
-                candidate_cards,
+                promo_candidates,
                 key=lambda x: (
-                    1 if x["isPromo"] else 0,
-                    x["soldCount"],
+                    x.get("soldCount", 0),
+                    x.get("orderSoldCount", 0),
                     x["_effective_dt"].timestamp(),
                     x["id"],
                 ),
                 reverse=True,
             )
         elif section_key == "terlaris":
-            # Auto Terlaris: Sort by sold_count DESC, tie-breaker effective_dt DESC
+            # Auto Terlaris: Sort strictly by sold_count DESC, tie-breaker orderSoldCount DESC, rating DESC, effective_dt DESC
             auto_ranked = sorted(
                 candidate_cards,
                 key=lambda x: (
-                    x["soldCount"],
+                    x.get("soldCount", 0),
+                    x.get("orderSoldCount", 0),
+                    float(x.get("rating") or 5.0),
                     x["_effective_dt"].timestamp(),
-                    x["id"],
                 ),
                 reverse=True,
             )
         elif section_key == "terbaru":
-            # Auto Terbaru: Sort by effective_dt DESC (newest card or variant), tie-breaker id DESC
+            # Auto Terbaru: Sort by has_valid_dt (1 vs 0), effective_dt DESC (newest card or variant), tie-breaker soldCount DESC
             auto_ranked = sorted(
                 candidate_cards,
                 key=lambda x: (
+                    1 if x.get("_has_valid_dt") else 0,
                     x["_effective_dt"].timestamp(),
-                    x["id"],
+                    x.get("soldCount", 0),
+                ),
+                reverse=True,
+            )
+        elif section_key == "showcase":
+            # Auto Showcase: Prioritize top performers by sold_count DESC
+            auto_ranked = sorted(
+                candidate_cards,
+                key=lambda x: (
+                    x.get("soldCount", 0),
+                    x.get("orderSoldCount", 0),
+                    x["_effective_dt"].timestamp(),
                 ),
                 reverse=True,
             )
@@ -450,22 +501,57 @@ class HomepageSectionService:
                 if matched and matched["id"] not in selected_card_ids:
                     selected_card_ids.add(matched["id"])
                     final_cards.append(matched)
-                    if len(final_cards) >= limit:
+                    if limit and limit > 0 and len(final_cards) >= limit:
                         break
 
-        # Fill remaining slots up to limit (8) from auto_ranked
-        if len(final_cards) < limit:
+        # Fill remaining slots from auto_ranked
+        if not limit or limit <= 0 or len(final_cards) < limit:
             for c in auto_ranked:
                 if c["id"] not in selected_card_ids:
                     selected_card_ids.add(c["id"])
                     final_cards.append(c)
-                    if len(final_cards) >= limit:
+                    if limit and limit > 0 and len(final_cards) >= limit:
                         break
+
+        # Enforce strict sorting guarantee for each category
+        if section_key == "terlaris":
+            # Rule 3: Strict descending sort by sold_count (highest first), tie-breaker orderSoldCount DESC, rating DESC, effective_dt DESC
+            final_cards.sort(
+                key=lambda x: (
+                    x.get("soldCount", 0),
+                    x.get("orderSoldCount", 0),
+                    float(x.get("rating") or 5.0),
+                    x["_effective_dt"].timestamp(),
+                ),
+                reverse=True,
+            )
+        elif section_key == "terbaru":
+            # Rule 4: Strict descending sort by effective timestamp (newest first). Invalid timestamps placed at bottom.
+            final_cards.sort(
+                key=lambda x: (
+                    1 if x.get("_has_valid_dt") else 0,
+                    x["_effective_dt"].timestamp(),
+                    x.get("soldCount", 0),
+                ),
+                reverse=True,
+            )
+        elif section_key == "promo":
+            final_cards.sort(
+                key=lambda x: (
+                    x.get("soldCount", 0),
+                    x.get("orderSoldCount", 0),
+                    x["_effective_dt"].timestamp(),
+                ),
+                reverse=True,
+            )
 
         # Clean up internal helper keys before returning
         output_data = []
-        for c in final_cards:
-            item_clean = {k: v for k, v in c.items() if k != "_effective_dt"}
+        for idx, c in enumerate(final_cards):
+            item_clean = {k: v for k, v in c.items() if not k.startswith("_")}
+            if section_key == "showcase":
+                item_clean["rank"] = idx + 1
+                item_clean["badgeLabel"] = f"TOP {idx + 1}"
             output_data.append(item_clean)
 
         return {
@@ -475,19 +561,20 @@ class HomepageSectionService:
             "totalAvailable": len(auto_ranked),
             "count": len(output_data),
             "data": output_data,
-            "limit": limit,
+            "limit": limit if limit is not None else len(output_data),
             "updatedAt": config.get("updatedAt"),
             "updatedBy": config.get("updatedBy"),
         }
 
     @classmethod
-    def get_all_homepage_sections(cls, limit: int = 8) -> Dict[str, Any]:
+    def get_all_homepage_sections(cls, limit: Optional[int] = None) -> Dict[str, Any]:
         return {
             "success": True,
             "sections": {
                 "promo": cls.compute_section_products("promo", limit=limit),
                 "terlaris": cls.compute_section_products("terlaris", limit=limit),
                 "terbaru": cls.compute_section_products("terbaru", limit=limit),
+                "showcase": cls.compute_section_products("showcase", limit=5),
             },
             "timestamp": datetime.utcnow().isoformat(),
         }

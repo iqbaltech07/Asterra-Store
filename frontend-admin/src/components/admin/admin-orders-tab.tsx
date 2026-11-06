@@ -26,6 +26,13 @@ import { OrderFiltersBar } from './orders/order-filters-bar';
 import { OrderTableRow } from './orders/order-table-row';
 import { OrderDetailModal } from './orders/order-detail-modal';
 
+function getCurrentMonthKey(): string {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  return `${year}-${month}`;
+}
+
 export function AdminOrdersTab() {
   const queryClient = useQueryClient();
 
@@ -40,6 +47,7 @@ export function AdminOrdersTab() {
 
   // Filters, Pagination & Modal State
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [monthFilter, setMonthFilter] = useState<string>(() => getCurrentMonthKey());
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState<number>(1);
   const [limit, setLimit] = useState<number>(20);
@@ -59,6 +67,11 @@ export function AdminOrdersTab() {
     setPage(1);
   };
 
+  const handleMonthFilterChange = (month: string) => {
+    setMonthFilter(month);
+    setPage(1);
+  };
+
   const handleSearchQueryChange = (query: string) => {
     setSearchQuery(query);
     setPage(1);
@@ -71,11 +84,12 @@ export function AdminOrdersTab() {
     isRefetching,
     refetch,
   } = useQuery<OrdersApiResponse>({
-    queryKey: ['admin-orders', statusFilter, searchQuery, page, limit],
+    queryKey: ['admin-orders', statusFilter, searchQuery, monthFilter, page, limit],
     queryFn: () =>
       OrdersApi.getAll({
         status: statusFilter,
         search: searchQuery,
+        month: monthFilter,
         page,
         limit,
       }),
@@ -85,6 +99,13 @@ export function AdminOrdersTab() {
     refetchInterval: false,
     refetchIntervalInBackground: false,
   });
+
+  const availableMonths = useMemo(() => {
+    const cur = getCurrentMonthKey();
+    const list = ordersData?.available_months || [];
+    const set = new Set<string>([cur, ...list]);
+    return Array.from(set).sort().reverse();
+  }, [ordersData?.available_months]);
 
   const rawOrders = ordersData?.data || [];
   // Strict Filter: Ensure fake/dummy/simulated orders never appear in admin console
@@ -206,6 +227,9 @@ export function AdminOrdersTab() {
         setStatusFilter={handleStatusFilterChange}
         searchQuery={searchQuery}
         setSearchQuery={handleSearchQueryChange}
+        monthFilter={monthFilter}
+        setMonthFilter={handleMonthFilterChange}
+        availableMonths={availableMonths}
         metrics={metrics}
         isMuted={isMuted}
         audioUnlocked={audioUnlocked}

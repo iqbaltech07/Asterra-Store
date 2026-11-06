@@ -53,6 +53,15 @@ export function getAppBaseUrl(
     process.env.NEXT_PUBLIC_APP_URL?.trim() ||
     process.env.APP_URL?.trim();
   const isVercel = Boolean(process.env.VERCEL || process.env.VERCEL_URL);
+  const isPreview = process.env.VERCEL_ENV === 'preview';
+
+  // In Vercel Preview environment, prevent accidental fallback to production domain
+  if (isPreview) {
+    if (envUrl && envUrl.includes('staging')) {
+      return envUrl.replace(/\/+$/, '');
+    }
+    return 'https://staging.asterrastore.biz.id';
+  }
 
   // If deployed on Vercel, prioritize custom domains or Vercel system URLs over accidental localhost in .env
   if (envUrl) {
@@ -62,6 +71,9 @@ export function getAppBaseUrl(
   }
 
   // 4. Vercel automatically injected system environment variables or known project production domain
+  if (process.env.VERCEL_ENV === 'preview' && process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`.replace(/\/+$/, '');
+  }
   if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
     return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`.replace(/\/+$/, '');
   }
@@ -197,6 +209,7 @@ export function getSafeInternalRedirectUrl(
 
     const allowedOrigins = [
       appOrigin,
+      'https://staging.asterrastore.biz.id',
       'https://asterrastore.biz.id',
       'https://www.asterrastore.biz.id',
       'https://asterrastore.vercel.app',

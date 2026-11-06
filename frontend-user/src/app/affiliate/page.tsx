@@ -23,11 +23,11 @@ export const revalidate = 0;
 export const metadata: Metadata = {
   title: 'Program Mitra Affiliate | Asterra Store',
   description:
-    'Rekomendasikan 200+ produk digital terpopuler dan dapatkan komisi langsung 15% – 20% dari profit transaksi serta bonus sponsor 2%. Tanpa modal stok dan tanpa repot pengiriman.',
+    'Rekomendasikan produk digital terpopuler dan dapatkan komisi langsung 30% dari profit transaksi. Tanpa modal stok dan tanpa repot pengiriman.',
   openGraph: {
     title: 'Program Mitra Affiliate - Asterra Store',
     description:
-      'Dapatkan komisi langsung 15% – 20% plus bonus sponsor 2% dari profit transaksi penjualan produk digital bergaransi. Daftar gratis dan kelola referral di Portal Sales.',
+      'Dapatkan komisi langsung 30% dari profit transaksi penjualan produk digital bergaransi. Daftar gratis dan kelola referral di Portal Sales.',
     images: ['/images/banners/hero-banner-seller.webp'],
   },
 };
@@ -46,12 +46,12 @@ export default function AffiliatePage() {
             href={registerUrl}
             target="_blank"
             rel="noopener noreferrer"
-            title="Daftar Program Mitra Affiliate Asterra Store - Dapatkan Komisi 15% – 20% plus 2% Bonus Sponsor"
+            title="Daftar Program Mitra Affiliate Asterra Store - Dapatkan Komisi 30% dari Profit Transaksi"
             className="group block relative w-full overflow-hidden rounded-xl sm:rounded-2xl md:rounded-3xl border border-[rgba(18,26,42,0.08)] shadow-xs hover:shadow-md transition-shadow aspect-[1024/254]"
           >
             <Image
               src="/images/banners/hero-banner-seller.webp"
-              alt="Program Affiliate Asterra Store - Dapatkan Komisi 15% – 20% plus 2% Bonus Sponsor dari Setiap Transaksi Produk Digital"
+              alt="Program Affiliate Asterra Store - Dapatkan Komisi 30% dari Setiap Transaksi Produk Digital"
               width={2048}
               height={508}
               priority
@@ -73,10 +73,10 @@ export default function AffiliatePage() {
               <span>Program Kemitraan Affiliate</span>
             </div>
             <h2 data-gsap="seller-title" className="text-base sm:text-xl font-bold text-[#121A2A] leading-snug">
-              Rekomendasikan Produk Digital, Dapatkan Komisi 15% – 20% + 2%
+              Rekomendasikan Produk Digital, Dapatkan Komisi 30% dari Profit Transaksi
             </h2>
             <p data-gsap="seller-desc" className="text-xs sm:text-sm text-[#121A2A]/70 leading-relaxed max-w-2xl">
-              Tanpa modal stok dan tanpa repot pengiriman. Komisi pemula 15% dan otomatis naik menjadi 20% dari profit transaksi setelah 50 transaksi sukses, plus bonus sponsor 2%.
+              Tanpa modal stok dan tanpa repot pengiriman. Komisi flat 30% dari profit transaksi sejak penjualan pertama dengan target produktivitas Rp 25.000 / hari.
             </p>
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 w-full sm:w-auto shrink-0">
@@ -133,14 +133,14 @@ export default function AffiliatePage() {
             <div className="p-4 rounded-2xl bg-amber-50/60 border border-amber-200/80 space-y-2.5">
               <div className="flex items-center gap-2 text-amber-900 font-bold text-xs sm:text-sm">
                 <FontAwesomeIcon icon={faCoins} className="w-4 h-4 text-amber-700" />
-                <span>Skema Komisi Dua Jalur (Waterfall)</span>
+                <span>Skema Bagi Hasil Profit 70:30</span>
               </div>
               <ul className="text-xs text-amber-900/80 space-y-1.5 list-disc list-inside leading-relaxed">
                 <li>
-                  <strong className="text-amber-950">15% – 20% Komisi Langsung</strong> dari profit transaksi setiap pesanan (komisi pemula 15% dan otomatis naik ke 20% VIP setelah mencapai 50 transaksi sukses).
+                  <strong className="text-amber-950">30% Komisi Mitra</strong> dari profit transaksi bersih (Harga Jual - Modal Upstream) tanpa mark-up harga ke pembeli.
                 </li>
                 <li>
-                  <strong className="text-amber-950">2% Bonus Sponsor</strong> setiap kali mitra affiliate baru yang Anda undang berhasil melakukan penjualan.
+                  <strong className="text-amber-950">70% Porsi Asterra Store</strong> dialokasikan untuk cadangan garansi (15%) dan operasional pendiri (55%).
                 </li>
               </ul>
             </div>
@@ -152,9 +152,9 @@ export default function AffiliatePage() {
               <div className="w-9 h-9 rounded-xl bg-[#C96F55]/10 text-[#C96F55] flex items-center justify-center">
                 <FontAwesomeIcon icon={faWallet} className="w-4 h-4" />
               </div>
-              <h3 className="font-bold text-sm text-[#121A2A]">Komisi 15% – 20% Langsung</h3>
+              <h3 className="font-bold text-sm text-[#121A2A]">Komisi 30% Transparan</h3>
               <p className="text-xs text-[#121A2A]/65 leading-relaxed">
-                Komisi pemula 15% dan otomatis naik menjadi 20% VIP setelah mencapai 50 transaksi sukses, dihitung transparan dari profit transaksi setiap pesanan valid.
+                Komisi 30% dihitung murni dari profit transaksi setiap pesanan valid, tanpa markup harga tersembunyi ke pelanggan setia Anda.
               </p>
             </div>
 
@@ -162,9 +162,9 @@ export default function AffiliatePage() {
               <div className="w-9 h-9 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
                 <FontAwesomeIcon icon={faHandshake} className="w-4 h-4" />
               </div>
-              <h3 className="font-bold text-sm text-[#121A2A]">Bonus Sponsor 2%</h3>
+              <h3 className="font-bold text-sm text-[#121A2A]">Target Produktivitas Harian</h3>
               <p className="text-xs text-[#121A2A]/65 leading-relaxed">
-                Ajak rekan bergabung menjadi mitra dan nikmati override bonus 2% dari performa tim Anda.
+                Tolok ukur produktivitas Rp 25.000 / hari (≈ Rp 750.000 / bulan) cukup dicapai dengan 2-6 penjualan produk per hari.
               </p>
             </div>
 

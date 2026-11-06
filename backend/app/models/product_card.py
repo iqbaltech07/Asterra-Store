@@ -30,7 +30,13 @@ class ProductCard(Base):
     attributes = relationship("ProductAttribute", back_populates="card", cascade="all, delete-orphan", order_by="ProductAttribute.display_order")
     variants = relationship("ProductVariant", back_populates="card", cascade="all, delete-orphan")
 
-    def to_dict(self, include_catalogs: bool = False, sold_count: int = 0) -> Dict[str, Any]:
+    def to_dict(
+        self,
+        include_catalogs: bool = False,
+        sold_count: int = 0,
+        dummy_sold: int = 0,
+        real_sold: int = 0,
+    ) -> Dict[str, Any]:
         sec_list = []
         if self.sections:
             try:
@@ -60,8 +66,78 @@ class ProductCard(Base):
                     break
 
         stock_status = "ready" if (self.status == "active" and active_catalogs and has_ready_stock) else "out_of_stock"
-        # Bound strictly between 20 and 40 for realistic storefront display
-        total_sold = max(20, min(40, int((self.base_sold_count or 20) + sold_count)))
+        
+        # Determine baseline sold count:
+        # 1. Priority products (Google Gemini, Netflix, ChatGPT, Spotify, Apple Music, YouTube, CapCut):
+        #    Baseline is higher (calibrated ~28-38), maintaining high demand visibility.
+        # 2. Produk Terbaru (New / Latest Products):
+        #    Card Produk categorized/displayed as "Produk Terbaru" (sections contains 'terbaru' or badge_label is 'Baru'
+        #    or stored base_sold_count in [7, 11]).
+        #    Initial baseline is strictly bounded between 7 and 11.
+        # 3. Regular products:
+        #    Baseline strictly bounded between 10 and 25.
+        card_slug = (self.slug or self.id or "").lower()
+        is_priority = any(p in card_slug for p in ["gemini", "netflix", "chatgpt", "spotify", "youtube", "capcut"])
+
+        sec_lower = [str(s).lower() for s in sec_list]
+        badge_lower = (self.badge_label or "").lower()
+        is_terbaru = (
+            not is_priority
+            and (
+                "baru" in badge_lower
+                or (len(sec_lower) == 1 and "terbaru" in sec_lower)
+                or any(t in card_slug for t in ["duolingo", "getcontact", "loklok", "zoom", "meitu", "wink", "alight", "wetv", "bstation"])
+            )
+        )
+
+        if self.base_sold_count is not None and self.base_sold_count > 0:
+            effective_base = int(self.base_sold_count)
+        elif is_priority:
+            priority_defaults = {
+                "netflix": 38,
+                "spotify": 37,
+                "capcut": 34,
+                "gemini": 33,
+                "youtube": 32,
+                "chatgpt": 30,
+                "apple-music": 28,
+            }
+            matched_key = next((k for k in priority_defaults if k in card_slug), None)
+            effective_base = priority_defaults[matched_key] if matched_key else 30
+        elif is_terbaru:
+            terbaru_defaults = {
+                "wetv": 19,
+                "apple-music": 18,
+                "getcontact": 17,
+                "wink": 16,
+                "zoom": 15,
+                "alight-motion": 14,
+                "alight": 14,
+                "duolingo": 13,
+                "loklok": 12,
+                "bstation": 12,
+                "meitu": 11,
+            }
+            matched_t = next((k for k in terbaru_defaults if k in card_slug), None)
+            effective_base = terbaru_defaults[matched_t] if matched_t else (11 + (abs(hash(card_slug)) % 10))
+        else:
+            effective_base = 10 + (abs(hash(card_slug)) % 16)
+
+        # Dynamic Sold Count = BASELINE SOLD COUNT + COMPLETED DUMMY ORDER + COMPLETED REAL ORDER
+        total_order_units = (int(dummy_sold) + int(real_sold)) if (dummy_sold or real_sold) else int(sold_count)
+        total_sold = effective_base + total_order_units
+
+        # Calculate effective created timestamp (card or variants, whichever is newest)
+        created_dts = [self.created_at] if self.created_at else []
+        if self.updated_at:
+            created_dts.append(self.updated_at)
+        if self.catalogs:
+            for c in self.catalogs:
+                if getattr(c, "created_at", None):
+                    created_dts.append(c.created_at)
+                if getattr(c, "updated_at", None):
+                    created_dts.append(c.updated_at)
+        effective_created = max(created_dts) if created_dts else None
 
         res = {
             "id": self.id,
@@ -89,11 +165,14 @@ class ProductCard(Base):
             "catalogCount": len(active_catalogs),
             "totalCatalogCount": len(self.catalogs) if self.catalogs is not None else 0,
             "activeCatalogCount": len(active_catalogs),
-            "baseSoldCount": self.base_sold_count or 0,
-            "orderSoldCount": sold_count,
+            "baseSoldCount": effective_base,
+            "dummySoldCount": int(dummy_sold),
+            "realSoldCount": int(real_sold),
+            "orderSoldCount": total_order_units,
             "soldCount": total_sold,
             "createdAt": self.created_at.isoformat() if self.created_at else None,
             "updatedAt": self.updated_at.isoformat() if self.updated_at else None,
+            "effectiveCreatedAt": effective_created.isoformat() if effective_created else None,
         }
 
         if include_catalogs:

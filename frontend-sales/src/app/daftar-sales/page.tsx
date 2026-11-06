@@ -516,7 +516,7 @@ function DaftarSalesContent() {
               </h1>
               <p className="text-xs sm:text-sm text-foreground-muted leading-relaxed">
                 Anda kini resmi menjadi bagian dari Tim Sales & Mitra Afiliasi Asterra Store dengan skema bagi hasil{' '}
-                <strong className="text-status-success font-semibold">15% – 20% dari Profit Transaksi</strong>.
+                <strong className="text-status-success font-semibold">30% dari Profit Transaksi</strong>.
               </p>
             </div>
 
@@ -565,7 +565,7 @@ function DaftarSalesContent() {
                   <span>Cara Kerja Penghasilan Anda:</span>
                 </p>
                 <p className="text-[11px] text-foreground-muted leading-relaxed">
-                  Setiap transaksi dari pembeli yang membuka website Asterra Store menggunakan link referral Anda akan otomatis tercatat. Komisi sebesar 15% hingga 20% (sesuai performa) dari Profit Bersih Transaksi akan otomatis dialokasikan ke akun Anda (dengan masa holding garansi 3 hari).
+                  Setiap transaksi dari pembeli yang membuka website Asterra Store menggunakan link referral Anda akan otomatis tercatat. Komisi sebesar 30% dari Profit Bersih Transaksi (Harga Jual - Modal Upstream) akan otomatis dialokasikan ke akun Anda (dengan masa holding garansi 3 hari).
                 </p>
               </div>
             </div>
@@ -619,7 +619,7 @@ function DaftarSalesContent() {
                 data-gsap="daftar-desc"
                 className="text-xs sm:text-sm md:text-base text-foreground-muted leading-relaxed max-w-2xl mx-auto"
               >
-                Dapatkan bagi hasil komisi transparan <strong className="text-foreground">15% hingga 20% dari Profit Bersih</strong> setiap penjualan produk digital bergaransi kami, plus <strong className="text-primary">2% bonus rekrutmen tim</strong> tanpa repot stok dan pengiriman.
+                Dapatkan bagi hasil komisi transparan <strong className="text-foreground">30% dari Profit Bersih Transaksi</strong> setiap penjualan produk digital bergaransi kami tanpa markup harga, tanpa repot stok, dan fulfillment otomatis.
               </p>
             </div>
 
@@ -634,10 +634,10 @@ function DaftarSalesContent() {
                 </div>
                 <div className="space-y-1">
                   <h3 className="font-extrabold text-base text-foreground">
-                    Komisi Transparan 15% – 20%
+                    Komisi Transparan 30%
                   </h3>
                   <p className="text-xs sm:text-sm text-foreground-muted leading-relaxed">
-                    Bagi hasil dihitung murni dari Profit Transaksi bersih penjualan akun Canva Pro, Gemini AI, ChatGPT, Netflix, dan Spotify.
+                    Bagi hasil dihitung murni 30% dari Profit Transaksi bersih seluruh katalog produk digital Asterra Store dengan target produktivitas Rp 25.000 / hari.
                   </p>
                 </div>
               </div>
@@ -925,7 +925,7 @@ function DaftarSalesContent() {
                             <span className="font-mono text-foreground-muted">({sponsorData.code})</span>
                           </p>
                           <p className="text-xs text-foreground-muted leading-relaxed mt-0.5">
-                            Anda mendaftar di bawah bimbingan mitra ini. Hak komisi penjualan langsung Anda tetap 100% utuh (15% – 20%).
+                            Anda mendaftar di bawah bimbingan mitra ini. Hak komisi penjualan langsung Anda tetap 100% utuh (30% dari Profit Transaksi).
                           </p>
                         </div>
                       </div>
@@ -1036,7 +1036,7 @@ function DaftarSalesContent() {
                     3. Dari mana komisi dihitung dan bagaimana sistem bonus referralnya?
                   </span>
                   <p className="text-xs text-foreground-muted leading-relaxed">
-                    Komisi dihitung transparan dari Profit Bersih Transaksi (15% hingga 20% sesuai milestone performa). Jika Anda mengajak rekan sales lain dengan kode Anda, Anda berhak atas bonus rekrutmen 2% dari profit transaksi rekan Anda (maksimal 1 tingkat langsung).
+                    Komisi dihitung transparan dari Profit Bersih Transaksi (flat 30% dari selisih harga jual dan modal upstream produk digital). Asterra Store mempertahankan integritas harga wajar tanpa mark-up sepihak demi kenyamanan pembeli setia Anda.
                   </p>
                 </div>
 

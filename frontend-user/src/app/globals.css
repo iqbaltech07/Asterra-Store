@@ -198,11 +198,27 @@ body {
   animation: faqSlideDown 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+@keyframes gridExpandFade {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-grid-expand {
+  animation: gridExpandFade 0.24s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-page-enter,
   .animate-tab-glide,
   .animate-text-smooth,
-  .animate-faq-open {
+  .animate-faq-open,
+  .animate-grid-expand {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;

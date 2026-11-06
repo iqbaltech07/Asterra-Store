@@ -1,14 +1,7 @@
 import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { prisma } from '@/lib/prisma';
-import { getAppBaseUrl } from '@/lib/utils/url';
 
-const appBaseUrl = getAppBaseUrl();
-
-// Ensure BETTER_AUTH_URL and secret are always populated and synced with production domain
-if (!process.env.BETTER_AUTH_URL || (process.env.BETTER_AUTH_URL.includes('localhost') && (process.env.VERCEL || process.env.VERCEL_URL))) {
-  process.env.BETTER_AUTH_URL = appBaseUrl;
-}
 if (!process.env.BETTER_AUTH_SECRET) {
   process.env.BETTER_AUTH_SECRET =
     process.env.NEXTAUTH_SECRET ||
@@ -18,43 +11,44 @@ if (!process.env.BETTER_AUTH_SECRET) {
 
 export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET,
-  baseURL: appBaseUrl,
-  trustedOrigins: async (request) => {
-    const list: string[] = [
-      'https://asterrastore.biz.id',
-      'https://*.asterrastore.biz.id',
-      'https://asterrastore.vercel.app',
-      'https://*.vercel.app',
-      'http://localhost:3000',
-      'http://localhost:3001',
-      'http://127.0.0.1:3000',
-      'http://127.0.0.1:3001',
-      'https://localhost:3000',
-    ];
-    if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
-      list.push(`https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`);
-    }
-    if (process.env.VERCEL_URL) {
-      list.push(`https://${process.env.VERCEL_URL}`);
-    }
-    if (process.env.NEXT_PUBLIC_APP_URL) {
-      list.push(process.env.NEXT_PUBLIC_APP_URL);
-    }
-    if (process.env.BETTER_AUTH_URL) {
-      list.push(process.env.BETTER_AUTH_URL);
-    }
-    if (request) {
-      const origin = request.headers.get('origin');
-      if (origin) list.push(origin);
-      const host = request.headers.get('x-forwarded-host') || request.headers.get('host');
-      const proto = request.headers.get('x-forwarded-proto') || 'https';
-      if (host) list.push(`${proto}://${host}`);
-    }
-    return Array.from(new Set(list.filter(Boolean)));
+  baseURL: {
+    allowedHosts: [
+      'asterrastore.biz.id',
+      'www.asterrastore.biz.id',
+      'staging.asterrastore.biz.id',
+      '*.asterrastore.biz.id',
+      '*.vercel.app',
+      'localhost:*',
+      'localhost',
+      '127.0.0.1:*',
+      '127.0.0.1',
+    ],
+    protocol: 'auto',
   },
+  trustedOrigins: [
+    'https://asterrastore.biz.id',
+    'https://www.asterrastore.biz.id',
+    'https://staging.asterrastore.biz.id',
+    'https://*.asterrastore.biz.id',
+    'https://asterrastore.vercel.app',
+    'https://*.vercel.app',
+    'http://localhost:*',
+    'http://127.0.0.1:*',
+    'https://localhost:*',
+  ],
   database: prismaAdapter(prisma, {
     provider: 'postgresql',
   }),
+  account: {
+    storeStateStrategy: 'cookie',
+  },
+  onAPIError: {
+    onError: (error) => {
+      console.error('[BetterAuth:APIError]', error);
+    },
+    errorURL: '/login',
+    throw: false,
+  },
   emailAndPassword: {
     enabled: true,
   },
@@ -62,7 +56,6 @@ export const auth = betterAuth({
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID || 'placeholder_client_id',
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'placeholder_client_secret',
-      redirectURI: `${appBaseUrl}/api/auth/callback/google`,
     },
   },
   user: {
@@ -100,6 +93,7 @@ export const auth = betterAuth({
                 email: user.email,
                 name: user.name || '',
               }),
+              signal: AbortSignal.timeout(5000),
             });
             console.log(`[BetterAuth:Hook] Dispatched welcome email for new user: ${user.email}`);
           } catch (hookErr) {

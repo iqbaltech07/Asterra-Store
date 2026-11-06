@@ -55,11 +55,11 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7 # 7 days
     
-    # Tripay Payment Gateway
-    TRIPAY_API_KEY: str = os.getenv("TRIPAY_API_KEY", "")
-    TRIPAY_PRIVATE_KEY: str = os.getenv("TRIPAY_PRIVATE_KEY", "")
-    TRIPAY_MERCHANT_CODE: str = os.getenv("TRIPAY_MERCHANT_CODE", "")
-    TRIPAY_IS_PRODUCTION: bool = os.getenv("TRIPAY_IS_PRODUCTION", "false").lower() == "true"
+    # Midtrans Official Payment Gateway / Dynamic QRIS (Core API)
+    MIDTRANS_SERVER_KEY: str = os.getenv("MIDTRANS_SERVER_KEY", "")
+    MIDTRANS_CLIENT_KEY: str = os.getenv("MIDTRANS_CLIENT_KEY", "")
+    MIDTRANS_MERCHANT_ID: str = os.getenv("MIDTRANS_MERCHANT_ID", "")
+    MIDTRANS_IS_PRODUCTION: bool = os.getenv("MIDTRANS_IS_PRODUCTION", "false").lower() == "true"
     
     # Vercel Blob Storage
     BLOB_READ_WRITE_TOKEN: str = os.getenv("BLOB_READ_WRITE_TOKEN", "")
@@ -125,6 +125,10 @@ class Settings(BaseSettings):
         "https://www.sales.asterrastore.biz.id",
         "https://api.asterrastore.biz.id",
         "https://www.api.asterrastore.biz.id",
+        "https://staging.asterrastore.biz.id",
+        "https://staging.admin.asterrastore.biz.id",
+        "https://staging.sales.asterrastore.biz.id",
+        "https://staging.api.asterrastore.biz.id",
     ]
 
     @property

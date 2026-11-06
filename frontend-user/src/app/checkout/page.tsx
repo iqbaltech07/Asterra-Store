@@ -8,7 +8,7 @@ import { useCartStore } from '@/store/use-cart-store';
 import { useAuthStore } from '@/store/use-auth-store';
 import { useSession } from '@/lib/auth-client';
 import { PublicPaymentConfig } from '@/types/payment';
-import { OrdersApi, PromosApi, PaymentConfigApi } from '@/lib/api-client';
+import { OrdersApi, PromosApi } from '@/lib/api-client';
 import { usePaymentConfig } from '@/lib/hooks/use-payment-config';
 import { calculateCampaignPrice, ActiveCampaign } from '@/lib/utils/promo-pricing';
 import { clearCampaignSession, removeCampaignUrlParams } from '@/lib/utils/referral';
@@ -43,14 +43,20 @@ import {
 const GATEWAY_PAYMENT_METHODS: PaymentMethodOption[] = [
   {
     id: 'qris',
-    name: 'QRIS (Semua Pembayaran)',
-    description: 'Scan instan via BCA, Mandiri, BRI, BNI, GoPay, OVO, ShopeePay, DANA',
+    name: 'QRIS',
+    description: 'Scan via GoPay, OVO, DANA, ShopeePay, LinkAja & semua m-Banking / E-Wallet',
     category: 'qris',
   },
   {
     id: 'bca_va',
     name: 'BCA Virtual Account',
-    description: 'Transfer otomatis via BCA Mobile, myBCA, KlikBCA, atau ATM BCA',
+    description: 'Transfer otomatis via myBCA, BCA Mobile, KlikBCA, atau ATM BCA',
+    category: 'va',
+  },
+  {
+    id: 'mandiri_va',
+    name: 'Mandiri Virtual Account',
+    description: 'Transfer otomatis via Livin by Mandiri, ATM Mandiri, atau Internet Banking',
     category: 'va',
   },
   {
@@ -60,10 +66,10 @@ const GATEWAY_PAYMENT_METHODS: PaymentMethodOption[] = [
     category: 'va',
   },
   {
-    id: 'dana',
-    name: 'DANA E-Wallet',
-    description: 'Pembayaran instan terhubung langsung dengan akun DANA Anda',
-    category: 'ewallet',
+    id: 'bri_va',
+    name: 'BRI Virtual Account',
+    description: 'Transfer otomatis via BRImo, Internet Banking BRI, atau ATM BRI',
+    category: 'va',
   },
 ];
 
@@ -412,11 +418,11 @@ function CheckoutPageContent() {
         if (cached) {
           const parsed = JSON.parse(cached);
           if (parsed.mode === 'gateway') return 'qris';
-          return 'manual_bca';
+          return 'qris';
         }
       } catch {}
     }
-    return 'manual_bca';
+    return 'qris';
   });
 
 
@@ -495,7 +501,7 @@ function CheckoutPageContent() {
       } catch {}
       setSelectedMethod((prev) => {
         if (configData.data.mode === 'manual' && !prev.startsWith('manual_')) {
-          return 'manual_bca';
+          return configData.data.isQrisActive ? 'manual_qris' : 'manual_bca';
         }
         if (configData.data.mode === 'gateway' && prev.startsWith('manual_')) {
           return 'qris';
@@ -772,8 +778,6 @@ function CheckoutPageContent() {
         } catch {}
       }
 
-      clearCart();
-
       const orderTotal = Number(
         (createdOrder as unknown as { totalAmount?: number; total_amount?: number; amount?: number }).totalAmount ??
         (createdOrder as unknown as { totalAmount?: number; total_amount?: number; amount?: number }).total_amount ??
@@ -797,10 +801,8 @@ function CheckoutPageContent() {
         (createdOrder as unknown as { expiresAt?: string; expires_at?: string }).expires_at;
 
       const isOrderManual =
-        isManualMode ||
-        createdOrder.payment_mode === 'manual' ||
-        (createdOrder as unknown as { paymentMode?: string }).paymentMode === 'manual' ||
-        selectedMethod.startsWith('manual_');
+        selectedMethod.startsWith('manual_') ||
+        (isManualMode && selectedMethod !== 'qris' && selectedMethod !== 'qris_midtrans');
 
       const isPreorderOrder =
         isPreorderMode ||
@@ -818,6 +820,7 @@ function CheckoutPageContent() {
           itemsCount: items.length,
           itemsSummary: items.map((i) => `${i.name} (x${i.quantity})`).join(', '),
         });
+        clearCart();
         return;
       }
 
@@ -835,20 +838,85 @@ function CheckoutPageContent() {
           expiresAt: orderExpiresAt,
           expires_at: orderExpiresAt,
         });
-      } else {
-        showNotification('Membuat tagihan pembayaran Tripay...');
+        clearCart();
+        return;
+      }
+
+      // Automated Gateway Payment Flow (QRIS / Virtual Account)
+      // Open the modal popup IMMEDIATELY with in-popup loading animation — NO sonner notification toast!
+      setActiveManualModal({
+        orderId: createdOrder.id,
+        amount: orderTotal,
+        totalAmount: orderTotal,
+        total_amount: orderTotal,
+        rawAmount: orderRaw,
+        raw_amount: orderRaw,
+        uniqueCode: 0,
+        unique_code: 0,
+        method: selectedMethod,
+        expiresAt: orderExpiresAt,
+        expires_at: orderExpiresAt,
+        isLoading: true,
+      });
+
+      try {
         const payData = await OrdersApi.pay(createdOrder.id, selectedMethod);
 
-        const checkoutUrl = payData.payment?.checkout_url || payData.payment?.redirect_url;
-        if (checkoutUrl) {
-          showNotification('Mengarahkan ke halaman pembayaran resmi Tripay...');
-          window.location.href = checkoutUrl;
-          return;
-        }
+        const qrUrl = payData.payment?.qr_url || (payData.payment as any)?.qr_image_url;
+        const qrString = payData.payment?.qr_string;
+        const vaNumber = payData.payment?.va_number;
+        const billerCode = payData.payment?.biller_code;
+        const billKey = payData.payment?.bill_key;
+        const bank = payData.payment?.bank;
+        const instructions = payData.payment?.instructions;
 
-        showNotification('Pesanan berhasil dibuat. Mengarahkan ke status pesanan.');
-        const emailQuery = invoiceEmail ? `&email=${encodeURIComponent(invoiceEmail)}` : '';
-        router.push(`/order?id=${createdOrder.id}${emailQuery}`);
+        setActiveManualModal({
+          orderId: createdOrder.id,
+          amount: payData.payment?.amount || orderTotal,
+          totalAmount: payData.payment?.amount || orderTotal,
+          total_amount: payData.payment?.amount || orderTotal,
+          rawAmount: orderRaw,
+          raw_amount: orderRaw,
+          uniqueCode: 0,
+          unique_code: 0,
+          method: selectedMethod,
+          qrUrl: qrUrl,
+          qr_url: qrUrl,
+          qrString: qrString,
+          qr_string: qrString,
+          vaNumber: vaNumber,
+          va_number: vaNumber,
+          billerCode: billerCode,
+          biller_code: billerCode,
+          billKey: billKey,
+          bill_key: billKey,
+          bank: bank,
+          expiresAt: payData.payment?.expired_at || orderExpiresAt,
+          expires_at: payData.payment?.expired_at || orderExpiresAt,
+          instructions: instructions,
+          isLoading: false,
+        });
+        clearCart();
+        return;
+      } catch (payErr) {
+        // Fallback gracefully inside modal without redirecting away or throwing sonner toasts
+        setActiveManualModal({
+          orderId: createdOrder.id,
+          amount: orderTotal,
+          totalAmount: orderTotal,
+          total_amount: orderTotal,
+          rawAmount: orderRaw,
+          raw_amount: orderRaw,
+          uniqueCode: orderUnique,
+          unique_code: orderUnique,
+          method: selectedMethod,
+          expiresAt: orderExpiresAt,
+          expires_at: orderExpiresAt,
+          isLoading: false,
+          errorMessage: payErr instanceof Error ? payErr.message : 'Gagal memuat instruksi pembayaran.',
+        });
+        clearCart();
+        return;
       }
     },
     onError: (err: unknown) => {
@@ -905,6 +973,7 @@ function CheckoutPageContent() {
       customer_notes: isPreorderMode
         ? (customerNotes.trim() ? `[PRE-ORDER] ${customerNotes.trim()}` : '[PRE-ORDER] Pesanan terjadwal saat toko tutup')
         : customerNotes.trim(),
+      payment_mode: isManualMode ? 'manual' : 'gateway',
       payment_method: selectedMethod,
       promo_code: appliedPromo?.code || undefined,
       referral_code: referralPartner?.code || (referralCode.trim() ? referralCode.trim() : undefined),
@@ -931,12 +1000,13 @@ function CheckoutPageContent() {
     if (methodId === 'manual_bca') return paymentConfig?.bank?.name || 'Bank Central Asia (BCA)';
     if (methodId === 'manual_qris') return 'QRIS Statis Toko';
     if (methodId === 'manual_dana') return 'Transfer E-Wallet DANA';
-    if (methodId === 'qris') return 'QRIS (Semua Pembayaran)';
+    if (methodId === 'qris' || methodId === 'qris_midtrans') return 'QRIS';
     if (methodId === 'bca_va') return 'BCA Virtual Account';
+    if (methodId === 'mandiri_va') return 'Mandiri Virtual Account';
     if (methodId === 'bni_va') return 'BNI Virtual Account';
+    if (methodId === 'bri_va') return 'BRI Virtual Account';
     if (methodId === 'seabank_va') return 'SeaBank Virtual Account';
-    if (methodId === 'dana') return 'DANA E-Wallet';
-    return 'Tripay Payment Gateway';
+    return 'Metode Pembayaran';
   };
 
   return (

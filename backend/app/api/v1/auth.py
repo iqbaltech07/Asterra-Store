@@ -228,15 +228,18 @@ async def admin_auth_me(request: Request):
     user_role = payload.get("role", "admin")
 
     exists = False
+    admin_record = None
     if user_role == "sales":
         p = PartnerService.find_by_identifier(user_email)
         a = AdminUserService.find_by_identifier(user_email)
         if (p and str(p.get("status", "")).lower() in ["active", "aktif"]) or (a and a.get("isActive", True)):
             exists = True
+            admin_record = a or p
     else:
         a = AdminUserService.find_by_identifier(user_email)
         if a and a.get("isActive", True):
             exists = True
+            admin_record = a
 
     if not exists:
         return {
@@ -249,14 +252,18 @@ async def admin_auth_me(request: Request):
             },
         }
 
+    actual_role = (admin_record.get("role") if admin_record else None) or payload.get("role", "admin")
+    actual_name = (admin_record.get("name") if admin_record else None) or payload.get("name", "Admin")
+    actual_id = (admin_record.get("id") if admin_record else None) or payload.get("id", "adm-1")
+
     return {
         "success": True,
         "authenticated": True,
         "admin": {
-            "id": payload.get("id", "adm-1"),
+            "id": actual_id,
             "email": payload.get("email"),
-            "name": payload.get("name", "Admin"),
-            "role": payload.get("role", "admin"),
+            "name": actual_name,
+            "role": actual_role,
         },
     }
 

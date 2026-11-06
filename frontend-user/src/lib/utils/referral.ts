@@ -124,7 +124,7 @@ export function appendReferralParams(url: string): string {
   if (Object.keys(activeParams).length === 0) return url;
 
   try {
-    const dummyBase = 'https://asterrastore.biz.id';
+    const dummyBase = typeof window !== 'undefined' && window.location?.origin ? window.location.origin : 'http://localhost:3000';
     const parsed = new URL(url, dummyBase);
     for (const [key, value] of Object.entries(activeParams)) {
       if (key !== 'referral_session_id' && !parsed.searchParams.has(key)) {

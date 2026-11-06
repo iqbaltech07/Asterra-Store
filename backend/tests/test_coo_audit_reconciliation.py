@@ -93,27 +93,30 @@ def test_6_founder_parity_profit_sharing():
     print(f"    [PASS] Strict founder parity confirmed: CEO Rp {ceo_share:,.0f} == COO Rp {coo_share:,.0f} | Reserve Rp {reserve:,.0f}")
 
 def test_7_sales_commission_from_profit():
-    print("[-] Running Test 7: Sales Commission Computed from Transaction Profit...")
+    print("[-] Running Test 7: Sales Commission Computed from Transaction Profit (70:30 Model Bisnis v2.0)...")
     # Test formula directly via ReferralProfitService.allocate_waterfall
     tx_profit = 29370.0
     calc = ReferralProfitService.allocate_waterfall(
         order_id="TEST-ORD-001",
         transaction_profit=tx_profit,
         direct_partner_code="AST-SALES-PRO",
-        direct_partner_rate=15.0,
+        direct_partner_rate=30.0,
         sponsor_partner_code="AST-RECRUITER",
     )
-    # Sales comm: 15% base of profit 29370 = 4406.0 (from profit, NOT from omzet)
-    assert calc["direct_commission"] == 4406.0, f"Commission should be 15% of profit (4406): got {calc['direct_commission']}"
-    assert calc["sponsor_bonus"] == round(tx_profit * 0.02), f"Recruitment bonus must be strictly 2% of profit: got {calc['sponsor_bonus']}"
+    # Sales comm: 30% base of profit 29370 = 8811.0 (from profit, NOT from omzet)
+    expected_comm = round(tx_profit * 0.30)
+    assert calc["direct_commission"] == expected_comm, f"Commission should be 30% of profit ({expected_comm}): got {calc['direct_commission']}"
+    assert calc["sponsor_bonus"] == 0, f"Recruitment bonus in initial phase must be 0: got {calc['sponsor_bonus']}"
     
     retained = calc["company_retained_profit"]
-    ceo_share = round(retained * 0.40)
-    coo_share = round(retained * 0.40)
-    reserve = retained - ceo_share - coo_share
+    assert retained == tx_profit - expected_comm, "Company retained profit must be 70% of transaction profit"
+    
+    ceo_share = calc["ceo_share"]
+    coo_share = calc["coo_share"]
+    reserve = calc["business_reserve"]
     assert ceo_share == coo_share, "CEO and COO must share distributable profit equally (50:50 founder parity)"
-    assert ceo_share + coo_share + reserve == retained, "Distribution must equal retained profit"
-    print(f"    [PASS] Commission computed from profit: Rp {calc['direct_commission']:,.0f} (from profit Rp {tx_profit:,.0f})")
+    assert calc["direct_commission"] + ceo_share + coo_share + reserve == tx_profit, "Total allocation must equal transaction profit"
+    print(f"    [PASS] Commission computed from profit: Rp {calc['direct_commission']:,.0f} (30% of profit Rp {tx_profit:,.0f}), Retained Rp {retained:,.0f} (70%)")
 
 def test_8_no_simulated_orders_in_admin():
     print("[-] Running Test 8: Verify Isolation from Public /orders Simulation...")
@@ -136,10 +139,15 @@ def test_9_independent_reconciliation_production_order():
     ast_entry = next((e for e in fin_dist["entries"] if e.get("orderId") == "AST-ORD-20261015-7615"), None)
     assert ast_entry is None, "AST-ORD-20261015-7615 must NOT be included in finance calculations (produces 0 profit)"
     
-    # Verify exactly 5 orders in finance distribution
-    assert fin_dist["summary"]["totalOrders"] == 5, f"Finance summary totalOrders must be 5, got {fin_dist['summary']['totalOrders']}"
-    assert len(fin_dist["entries"]) == 5, f"Finance entries must be 5, got {len(fin_dist['entries'])}"
-    print(f"    [PASS] AST-ORD-20261015-7615 strictly excluded from finance calculation while authentic order remains intact!")
+    # Verify completed orders count excludes AST-ORD-20261015-7615
+    expected_completed = sum(
+        1 for o in orders 
+        if str(o.get("status", "")).lower() in ["completed", "selesai", "done"] 
+        and str(o.get("id")).strip().upper() != "AST-ORD-20261015-7615"
+    )
+    assert fin_dist["summary"]["totalOrders"] == expected_completed, f"Finance summary totalOrders must be {expected_completed}, got {fin_dist['summary']['totalOrders']}"
+    assert ast_entry is None, "AST-ORD-20261015-7615 must NOT be included in finance calculations"
+    print(f"    [PASS] AST-ORD-20261015-7615 strictly excluded from finance calculation while authentic order remains intact ({expected_completed} orders)!")
 
 if __name__ == "__main__":
     print("=" * 70)

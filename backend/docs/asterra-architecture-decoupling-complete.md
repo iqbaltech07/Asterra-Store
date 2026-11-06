@@ -30,7 +30,7 @@ Asterra Store/
 │   └── tsconfig.json, next.config.ts, tailwind.config.ts
 │
 ├── backend/              # [Port 4000 & 8000] API & Data Engine
-│   ├── app/              # FastAPI Python Engine (main.py, waterfall profit, tripay, security)
+│   ├── app/              # FastAPI Python Engine (main.py, waterfall profit, dana-qris, security)
 │   ├── src/app/api/      # Next.js Node API BFF routes
 │   ├── prisma/           # Prisma ORM Schema & Migrations
 │   ├── package.json      # name: "asterra-backend"

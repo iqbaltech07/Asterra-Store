@@ -582,7 +582,13 @@ export function ProductDetailClient({ id, initialData, initialStoreStatus }: Pro
                   className="grid grid-cols-3 gap-2 sm:gap-3 animate-text-smooth"
                 >
                   <div data-gsap="product-meta" className="bg-white border border-[rgba(18,26,42,0.08)] rounded-xl p-2.5 sm:p-3.5 space-y-0.5 sm:space-y-1 shadow-2xs">
-                    <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-md sm:rounded-lg bg-[rgba(201,111,85,0.08)] flex items-center justify-center text-[#C96F55] mb-1 sm:mb-2">
+                    <div
+                      className={`w-6 h-6 sm:w-7 sm:h-7 rounded-md sm:rounded-lg flex items-center justify-center mb-1 sm:mb-2 ${
+                        variantDetails.hasWarranty
+                          ? 'bg-[rgba(201,111,85,0.08)] text-[#C96F55]'
+                          : 'bg-[#F1F5F9] text-[#64748B]'
+                      }`}
+                    >
                       <FontAwesomeIcon icon={faShieldHalved} className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </div>
                     <span className="text-[11px] sm:text-xs font-bold text-[#121A2A] block truncate">
@@ -734,7 +740,9 @@ export function ProductDetailClient({ id, initialData, initialStoreStatus }: Pro
                       </div>
                     )}
                     <p className="text-[11px] sm:text-xs text-[#121A2A]/60 mt-0.5 sm:mt-1">
-                      Harga nett termasuk panduan aktivasi resmi & garansi pergantian.
+                      {variantDetails.hasWarranty
+                        ? 'Harga nett termasuk panduan aktivasi resmi & garansi pergantian.'
+                        : 'Harga nett termasuk panduan aktivasi resmi (tanpa garansi pergantian).'}
                     </p>
                   </div>
 
@@ -928,8 +936,12 @@ export function ProductDetailClient({ id, initialData, initialStoreStatus }: Pro
                   {/* Trust Badges matching Image 1 */}
                   <div data-gsap="product-trust" className="pt-2.5 sm:pt-3 border-t border-[rgba(18,26,42,0.08)] space-y-1.5 sm:space-y-2 text-[11px] sm:text-xs text-[#121A2A]/70">
                     <div data-gsap="product-trust-item" className="flex items-center gap-2">
-                      <FontAwesomeIcon icon={faCheck} className="w-3.5 h-3.5 text-[#16A34A] shrink-0" />
-                      <span>Aktivasi otomatis & garansi uang kembali jika terkendala</span>
+                      <FontAwesomeIcon icon={faCheck} className={`w-3.5 h-3.5 shrink-0 ${variantDetails.hasWarranty ? 'text-[#16A34A]' : 'text-[#64748B]'}`} />
+                      <span>
+                        {variantDetails.hasWarranty
+                          ? 'Aktivasi otomatis & garansi uang kembali jika terkendala'
+                          : 'Aktivasi otomatis & panduan akun resmi'}
+                      </span>
                     </div>
                     <div data-gsap="product-trust-item" className="flex items-center gap-2">
                       <FontAwesomeIcon icon={faCheck} className="w-3.5 h-3.5 text-[#16A34A] shrink-0" />

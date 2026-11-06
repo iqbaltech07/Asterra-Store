@@ -5,7 +5,8 @@
   "description": "Asterra Store - Customer Storefront",
   "scripts": {
     "dev": "next dev -p 3000 --experimental-https",
-    "build": "next build",
+    "postinstall": "prisma generate",
+    "build": "prisma generate && next build",
     "start": "next start -p 3000",
     "lint": "next lint",
     "format": "prettier --write .",

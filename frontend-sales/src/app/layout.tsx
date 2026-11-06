@@ -30,7 +30,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="id" className={plusJakartaSans.variable}>
-      <body className="bg-background text-foreground antialiased min-h-screen">
+      <body className="bg-[#FAFAF8] text-[#121A2A] antialiased min-h-screen">
         <QueryProvider>
           <GsapProvider>
             <main className="w-full min-h-screen">

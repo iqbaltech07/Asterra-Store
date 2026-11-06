@@ -56,6 +56,188 @@ def mask_name(full_name: str) -> str:
     return " ".join(masked_words)
 
 class DummyOrderService:
+    PRIORITY_WEIGHTS = {
+        "google-gemini": 0.14,
+        "netflix": 0.11,
+        "chatgpt": 0.10,
+        "spotify": 0.10,
+        "apple-music": 0.08,
+        "youtube": 0.07,
+        "capcut": 0.05,
+    }
+
+    _recent_brand_history: List[str] = []
+
+    @classmethod
+    def get_product_brand_key(cls, prod: Product) -> str:
+        """Determines standardized brand key for weighted selection and anti-repeat guard."""
+        if prod.card and prod.card.slug:
+            slug = prod.card.slug.lower()
+            for k in cls.PRIORITY_WEIGHTS:
+                if k in slug or (k == "google-gemini" and ("gemini" in slug or "google" in slug)) or (k == "apple-music" and ("apple" in slug or "icloud" in slug)):
+                    return k
+            return slug
+        if prod.card_id:
+            cid = prod.card_id.lower().replace("card-", "")
+            for k in cls.PRIORITY_WEIGHTS:
+                if k in cid or (k == "google-gemini" and ("gemini" in cid or "google" in cid)) or (k == "apple-music" and ("apple" in cid or "icloud" in cid)):
+                    return k
+            return cid
+
+        text = f"{prod.brand or ''} {prod.name or ''}".lower()
+        if "gemini" in text or "google" in text:
+            return "google-gemini"
+        if "netflix" in text:
+            return "netflix"
+        if "chatgpt" in text or "chat gpt" in text or "openai" in text:
+            return "chatgpt"
+        if "spotify" in text:
+            return "spotify"
+        if "apple music" in text or "apple-music" in text or "icloud" in text:
+            return "apple-music"
+        if "youtube" in text or "ytprem" in text:
+            return "youtube"
+        if "capcut" in text:
+            return "capcut"
+
+        for b in ["canva", "vidio", "wetv", "viu", "bstation", "iqiyi", "wink", "alight-motion", "zoom", "meitu", "getcontact", "loklok", "mobile-legends", "pubg-mobile", "disney-hotstar", "vision-plus"]:
+            if b.replace("-", " ") in text or b in text:
+                return b
+
+        return (prod.brand or prod.id or "other").lower().strip()
+
+    @classmethod
+    def get_order_brand_key(cls, order: Order) -> str:
+        """Extracts brand key from an existing order and its items."""
+        for item in (order.items or []):
+            if item.card_id:
+                cid = item.card_id.lower().replace("card-", "")
+                for k in cls.PRIORITY_WEIGHTS:
+                    if k in cid or (k == "google-gemini" and ("gemini" in cid or "google" in cid)) or (k == "apple-music" and ("apple" in cid or "icloud" in cid)):
+                        return k
+                return cid
+            text = (item.product_name or "").lower()
+            if "gemini" in text or "google" in text:
+                return "google-gemini"
+            if "netflix" in text:
+                return "netflix"
+            if "chatgpt" in text or "chat gpt" in text:
+                return "chatgpt"
+            if "spotify" in text:
+                return "spotify"
+            if "apple music" in text or "apple-music" in text:
+                return "apple-music"
+            if "youtube" in text:
+                return "youtube"
+            if "capcut" in text:
+                return "capcut"
+            for b in ["canva", "vidio", "wetv", "viu", "bstation", "iqiyi", "wink", "alight-motion", "zoom", "meitu", "getcontact", "loklok", "mobile-legends", "pubg-mobile", "disney-hotstar", "vision-plus"]:
+                if b.replace("-", " ") in text or b in text:
+                    return b
+        return "other"
+
+    @classmethod
+    def select_weighted_candidate(
+        cls,
+        eligible_products: List[Product],
+        db=None,
+        recent_brand_history: Optional[List[str]] = None,
+    ) -> Product:
+        """
+        Selects candidate product using weighted distribution and Anti-Repeat Guard:
+        - Priority products: Gemini (14%), Netflix (11%), ChatGPT (10%), Spotify (10%), Apple Music (8%), YouTube (7%), CapCut (5%). Total ~65%.
+        - Regular products: remaining ~35% divided among available regular brands.
+        - Anti-Repeat Guard: applies dynamic penalties for last 5 dummy orders:
+          * 1 order ago (last): x0.00 (strictly prevents back-to-back repeats if >1 brand exists)
+          * 2 orders ago: x0.25
+          * 3 orders ago: x0.60
+          * 4 orders ago: x0.85
+          * 5 orders ago: x0.95
+        """
+        if not eligible_products:
+            raise ValueError("No eligible products available")
+        if len(eligible_products) == 1:
+            return eligible_products[0]
+
+        brand_to_products: Dict[str, List[Product]] = {}
+        for p in eligible_products:
+            b_key = cls.get_product_brand_key(p)
+            brand_to_products.setdefault(b_key, []).append(p)
+
+        available_brands = list(brand_to_products.keys())
+        if len(available_brands) == 1:
+            return random.choice(brand_to_products[available_brands[0]])
+
+        pri_brands = [b for b in cls.PRIORITY_WEIGHTS if b in brand_to_products]
+        reg_brands = [b for b in available_brands if b not in cls.PRIORITY_WEIGHTS]
+
+        total_pri_target = sum(cls.PRIORITY_WEIGHTS[b] for b in pri_brands)
+        reg_pool = max(0.05, 1.0 - total_pri_target)
+        reg_weight_each = (reg_pool / len(reg_brands)) if reg_brands else 0.0
+
+        base_weights = {}
+        for b in available_brands:
+            if b in cls.PRIORITY_WEIGHTS:
+                base_weights[b] = cls.PRIORITY_WEIGHTS[b]
+            else:
+                base_weights[b] = reg_weight_each
+
+        penalties = {0: 0.00, 1: 0.25, 2: 0.60, 3: 0.85, 4: 0.95}
+        brand_multipliers = {b: 1.0 for b in available_brands}
+
+        # Collect recent brand sequence from DB and/or in-memory cache
+        recent_brands = []
+        if recent_brand_history is not None:
+            recent_brands = list(recent_brand_history)
+        else:
+            if db is not None:
+                try:
+                    recent_dummy_orders = (
+                        db.query(Order)
+                        .options(joinedload(Order.items))
+                        .filter(Order.is_dummy == True)
+                        .order_by(Order.created_at.desc())
+                        .limit(5)
+                        .all()
+                    )
+                    for prev_order in recent_dummy_orders:
+                        recent_brands.append(cls.get_order_brand_key(prev_order))
+                except Exception as e:
+                    print(f"[DummyOrderService] Anti-repeat query note: {e}")
+
+            if cls._recent_brand_history:
+                # Merge in-memory history (most recent) with DB history
+                merged = []
+                for b in cls._recent_brand_history:
+                    merged.append(b)
+                for b in recent_brands:
+                    merged.append(b)
+                recent_brands = merged[:5]
+
+        for idx, prev_brand in enumerate(recent_brands[:5]):
+            if prev_brand in brand_multipliers:
+                penalty = penalties.get(idx, 1.0)
+                brand_multipliers[prev_brand] = min(brand_multipliers[prev_brand], penalty)
+
+        brand_list = []
+        weight_list = []
+        for b in available_brands:
+            adj_w = base_weights[b] * brand_multipliers.get(b, 1.0)
+            brand_list.append(b)
+            weight_list.append(adj_w)
+
+        if sum(weight_list) <= 0:
+            weight_list = [1.0] * len(brand_list)
+
+        chosen_brand = random.choices(brand_list, weights=weight_list, k=1)[0]
+
+        # Record in in-memory history
+        cls._recent_brand_history.insert(0, chosen_brand)
+        if len(cls._recent_brand_history) > 10:
+            cls._recent_brand_history.pop()
+
+        return random.choice(brand_to_products[chosen_brand])
+
     @classmethod
     def get_eligible_catalogs(cls, db=None) -> List[Product]:
         """
@@ -223,4 +405,108 @@ class DummyOrderService:
         STRICT: Fake orders are strictly visual on the user frontend (/orders).
         They must NEVER be persisted to the PostgreSQL database or admin console.
         """
-        return None
+        db = SessionLocal()
+        try:
+            # Stage 1: Candidate Selection
+            eligible_products = cls.get_eligible_catalogs(db)
+            if not eligible_products:
+                print("[DummyOrderService] No eligible active products available. Skipping dummy order cycle.")
+                return None
+
+            selected_product = cls.select_weighted_candidate(eligible_products, db)
+
+            # Stage 2: Re-validation right before saving
+            prod_check = db.query(Product).filter_by(id=selected_product.id).first()
+            if not prod_check or prod_check.status != "active" or prod_check.price <= 0:
+                print(f"[DummyOrderService] Product {selected_product.id} status changed prior to save. Aborting.")
+                return None
+            if prod_check.card_id:
+                card_check = db.query(ProductCard).filter_by(id=prod_check.card_id).first()
+                if not card_check or card_check.status != "active":
+                    print(f"[DummyOrderService] Card parent {prod_check.card_id} inactive. Aborting.")
+                    return None
+
+            # Generate Indonesian masked customer name
+            first = random.choice(INDONESIAN_FIRST_NAMES)
+            last = random.choice(INDONESIAN_LAST_NAMES)
+            raw_customer_name = f"{first} {last}"
+            masked_customer_name = mask_name(raw_customer_name)
+            customer_email = f"buyer_{random.randint(100, 999)}@customer.id"
+
+            # Generate unique order ID format AST-ORD-YYYYMMDD-NNNN
+            now_wib = datetime.now(WIB)
+            date_key = now_wib.strftime("%Y%m%d")
+            order_num = random.randint(1000, 9999)
+            order_id = f"AST-ORD-{date_key}-{order_num}"
+
+            # Ensure ID uniqueness
+            while db.query(Order).filter_by(id=order_id).first():
+                order_num = random.randint(1000, 9999)
+                order_id = f"AST-ORD-{date_key}-{order_num}"
+
+            # Create dummy Order with is_dummy = True
+            now_utc = datetime.now(timezone.utc)
+            order = Order(
+                id=order_id,
+                customer_email=customer_email,
+                customer_name=masked_customer_name,
+                customer_whatsapp=f"08{random.randint(1000000000, 9999999999)}",
+                total_amount=int(prod_check.price),
+                raw_amount=int(prod_check.price),
+                status="completed",
+                payment_method="QRIS",
+                payment_mode="direct",
+                payment_status="settlement",
+                is_preorder=False,
+                is_dummy=True,  # Phase 6 & 7: strictly isolated from real transactions
+                fulfillment_mode="automatic",
+                paid_at=now_utc,
+                fulfilled_at=now_utc,
+                created_at=now_utc,
+                updated_at=now_utc,
+            )
+            db.add(order)
+
+            # Create OrderItem
+            item = OrderItem(
+                id=f"item-{order_id}-1",
+                order_id=order_id,
+                product_id=prod_check.id,
+                product_name=prod_check.name,
+                card_id=prod_check.card_id,
+                price=int(prod_check.price),
+                quantity=1,
+                duration="1 Bulan",
+            )
+            db.add(item)
+
+            # NOTE: DO NOT REDUCE prod_check.stock (Phase 7.4 strictly enforced)
+            db.commit()
+            db.refresh(order)
+
+            order_dict = order.to_dict()
+            print(f"[DummyOrderService] Created dummy order {order_id} for product '{prod_check.name}' (Rp {prod_check.price:,}).")
+
+            # Emit real-time notification to clients
+            try:
+                RealtimeBroadcaster.broadcast(
+                    "order:created",
+                    {
+                        "orderId": order_id,
+                        "productName": prod_check.name,
+                        "customerDisplay": masked_customer_name,
+                        "status": "completed",
+                        "createdAt": now_utc.isoformat() + "Z",
+                    },
+                    target_role="user",
+                )
+            except Exception as e:
+                print(f"[DummyOrderService] Realtime broadcast note: {e}")
+
+            return order_dict
+        except Exception as e:
+            db.rollback()
+            print(f"[DummyOrderService] Error generating dummy order: {e}")
+            return None
+        finally:
+            db.close()

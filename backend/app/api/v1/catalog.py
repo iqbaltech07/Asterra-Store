@@ -509,6 +509,73 @@ async def upload_admin_media(
         "message": msg,
     }
 
+@router.get("/admin/storage-banners", tags=["Admin Media"])
+@router.get("/storage-banners", tags=["Admin Media"])
+def get_storage_banners():
+    """
+    Returns unique image banners already available in storage across catalog products and promo banners.
+    Enables zero-redundancy banner reuse when creating or updating products.
+    """
+    from app.services.catalog_service import CatalogService
+    from app.services.banner_service import BannerService
+
+    seen_urls = set()
+    banners = []
+
+    # 1. Product banners from catalog
+    products = CatalogService.get_products()
+    for p in products:
+        img_url = p.get("imageUrl") or p.get("image_url")
+        if img_url and img_url not in seen_urls and not str(img_url).endswith("default-product-banner.png"):
+            seen_urls.add(img_url)
+            p_name = p.get("name") or "Produk Digital"
+            raw_cat = p.get("category")
+            cat_name = raw_cat.get("name") if isinstance(raw_cat, dict) else str(raw_cat or "Katalog Produk")
+            file_name = img_url.split("/")[-1].split("?")[0]
+            banners.append({
+                "url": img_url,
+                "title": p_name,
+                "category": cat_name,
+                "fileName": file_name,
+                "source": "product",
+            })
+
+    # 2. Promo banners from BannerService
+    try:
+        promo_banners = BannerService.get_banners()
+        for b in promo_banners:
+            img_url = b.get("imageUrl") or b.get("image_url")
+            if img_url and img_url not in seen_urls and not str(img_url).endswith("default-product-banner.png"):
+                seen_urls.add(img_url)
+                file_name = img_url.split("/")[-1].split("?")[0]
+                banners.append({
+                    "url": img_url,
+                    "title": b.get("title") or "Banner Promo",
+                    "category": "Promo Banner",
+                    "fileName": file_name,
+                    "source": "promo",
+                })
+    except Exception as e:
+        print(f"[get_storage_banners] Promo banners note: {e}")
+
+    # 3. Static banners
+    static_banners = [
+        {"url": "/images/banners/capcut-banner.png", "title": "CapCut Pro Banner", "category": "Aset Resmi", "fileName": "capcut-banner.png", "source": "static"},
+        {"url": "/images/banners/hero-banner-reseller.webp", "title": "Banner VIP Reseller", "category": "Aset Resmi", "fileName": "hero-banner-reseller.webp", "source": "static"},
+        {"url": "/images/banners/hero-banner-welcome.webp", "title": "Banner Welcome Asterra", "category": "Aset Resmi", "fileName": "hero-banner-welcome.webp", "source": "static"},
+        {"url": "/images/banners/hero-banner-affiliate.webp", "title": "Banner Affiliate & Mitra", "category": "Aset Resmi", "fileName": "hero-banner-affiliate.webp", "source": "static"},
+    ]
+    for sb in static_banners:
+        if sb["url"] not in seen_urls:
+            seen_urls.add(sb["url"])
+            banners.append(sb)
+
+    return {
+        "success": True,
+        "total": len(banners),
+        "data": banners,
+    }
+
 # ------------------------------------------
 # 1.4 Promo Banner Endpoints (Storefront & Admin)
 # ------------------------------------------
@@ -706,8 +773,8 @@ async def delete_promo_banner(banner_id: str):
 from app.services.homepage_section_service import HomepageSectionService
 
 @router.get("/homepage/sections", tags=["Homepage Sections"])
-def get_homepage_sections(request: Request, response: Response, limit: int = 8):
-    cache_key = f"hp_sections_l_{limit}"
+def get_homepage_sections(request: Request, response: Response, limit: Optional[int] = None):
+    cache_key = f"hp_sections_l_{limit if limit is not None else 'all'}"
     etag = cache.generate_etag("homepage_sections", cache_key)
     if cache.is_not_modified(request, etag):
         return cache.not_modified_response(etag, max_age=15)
@@ -721,12 +788,13 @@ def get_homepage_sections(request: Request, response: Response, limit: int = 8):
     return data
 
 @router.get("/homepage/sections/{section_key}", tags=["Homepage Sections"])
-def get_homepage_section_by_key(section_key: str, request: Request, response: Response, limit: int = 8):
-    if section_key not in ["promo", "terlaris", "terbaru"]:
-        raise HTTPException(status_code=400, detail="Section key tidak valid. Gunakan 'promo', 'terlaris', atau 'terbaru'.")
+def get_homepage_section_by_key(section_key: str, request: Request, response: Response, limit: Optional[int] = None):
+    if section_key not in ["promo", "terlaris", "terbaru", "showcase"]:
+        raise HTTPException(status_code=400, detail="Section key tidak valid. Gunakan 'promo', 'terlaris', 'terbaru', atau 'showcase'.")
+    effective_limit = 5 if section_key == "showcase" and limit is None else limit
     return {
         "success": True,
-        "data": HomepageSectionService.compute_section_products(section_key, limit=limit),
+        "data": HomepageSectionService.compute_section_products(section_key, limit=effective_limit),
     }
 
 @router.get("/admin/homepage/sections/config", tags=["Admin Homepage Ordering"])
@@ -944,6 +1012,44 @@ async def update_admin_card(card_id: str, request: Request):
         raise HTTPException(status_code=400, detail=str(ve))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Gagal memperbarui Card Produk: {str(e)}")
+
+@router.put("/admin/cards/{card_id}/baseline", tags=["Admin Product Cards"])
+@router.patch("/admin/cards/{card_id}/baseline", tags=["Admin Product Cards"])
+async def update_admin_card_baseline(card_id: str, request: Request):
+    payload = await request.json()
+    try:
+        raw_val = payload.get("baseSoldCount") if "baseSoldCount" in payload else (payload.get("base_sold_count") if "base_sold_count" in payload else payload.get("baseline", 0))
+        card = CardService.update_card(card_id, {"baseSoldCount": int(raw_val)})
+        cache.invalidate("catalog", "homepage_sections")
+        RealtimeBroadcaster.broadcast("cards:updated", {"action": "baseline_updated", "id": card_id, "baseSoldCount": card.get("baseSoldCount")}, target_role="all")
+        return {
+            "success": True,
+            "message": f"Baseline jumlah terjual untuk '{card['name']}' berhasil diperbarui.",
+            "data": card,
+        }
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Gagal memperbarui baseline: {str(e)}")
+
+@router.patch("/admin/cards/batch-baseline", tags=["Admin Product Cards"])
+@router.put("/admin/cards/batch-baseline", tags=["Admin Product Cards"])
+async def batch_update_admin_card_baselines(request: Request):
+    payload = await request.json()
+    updates = payload.get("updates") if isinstance(payload, dict) and "updates" in payload else (payload if isinstance(payload, list) else [])
+    try:
+        updated = CardService.batch_update_baselines(updates)
+        cache.invalidate("catalog", "homepage_sections")
+        RealtimeBroadcaster.broadcast("cards:updated", {"action": "batch_baseline_updated", "count": len(updated)}, target_role="all")
+        return {
+            "success": True,
+            "message": f"{len(updated)} baseline Product Card berhasil diperbarui.",
+            "data": updated,
+        }
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Gagal memperbarui batch baseline: {str(e)}")
 
 @router.delete("/admin/cards/{card_id}", tags=["Admin Product Cards"])
 def delete_admin_card(card_id: str):

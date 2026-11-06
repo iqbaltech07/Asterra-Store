@@ -13,14 +13,43 @@ import {
   faVolumeXmark,
   faBell,
   faArrowsRotate,
+  faCalendarDays,
 } from '@fortawesome/free-solid-svg-icons';
 import { OrderMetrics } from './order-metrics-cards';
+
+function getCurrentMonthKey(): string {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  return `${year}-${month}`;
+}
+
+function formatMonthName(mKey: string): string {
+  if (!mKey || mKey === 'all') return 'Semua Periode';
+  const parts = mKey.split('-');
+  if (parts.length === 2) {
+    const year = parts[0];
+    const monthIndex = parseInt(parts[1], 10) - 1;
+    const monthNames = [
+      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    ];
+    if (monthIndex >= 0 && monthIndex < 12) {
+      const isCurrent = mKey === getCurrentMonthKey();
+      return `${monthNames[monthIndex]} ${year}${isCurrent ? ' (Bulan Ini)' : ''}`;
+    }
+  }
+  return mKey;
+}
 
 interface OrderFiltersBarProps {
   statusFilter: string;
   setStatusFilter: (status: string) => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
+  monthFilter?: string;
+  setMonthFilter?: (month: string) => void;
+  availableMonths?: string[];
   metrics?: OrderMetrics;
   sseConnected: boolean;
   isMuted: boolean;
@@ -36,6 +65,9 @@ export function OrderFiltersBar({
   setStatusFilter,
   searchQuery,
   setSearchQuery,
+  monthFilter,
+  setMonthFilter,
+  availableMonths,
   metrics,
   sseConnected: _sseConnected,
   isMuted,
@@ -170,6 +202,26 @@ export function OrderFiltersBar({
           />
           <span className="hidden sm:inline">Refresh</span>
         </Button>
+
+        {/* Month Filter Selector */}
+        {setMonthFilter && (
+          <div className="flex items-center gap-1.5 px-3 h-9 rounded-xl border border-border bg-surface-raised shrink-0">
+            <FontAwesomeIcon icon={faCalendarDays} className="w-3 h-3 text-primary shrink-0" />
+            <select
+              value={monthFilter || 'all'}
+              aria-label="Pilih Periode Bulan Pesanan"
+              onChange={(e) => setMonthFilter(e.target.value)}
+              className="bg-transparent font-semibold text-xs text-foreground focus:outline-none cursor-pointer pr-1"
+            >
+              {(availableMonths || []).map((m) => (
+                <option key={m} value={m}>
+                  {formatMonthName(m)}
+                </option>
+              ))}
+              <option value="all">Semua Periode</option>
+            </select>
+          </div>
+        )}
 
         {/* Search Input Box */}
         <div className="relative flex-1 sm:w-48">

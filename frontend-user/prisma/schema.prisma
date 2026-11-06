@@ -2,7 +2,8 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x", "debian-openssl-3.0.x"]
 }
 
 datasource db {
@@ -152,7 +153,7 @@ model OrderLog {
   id              String   @id @default(cuid())
   orderId         String   @map("order_id")
   order           Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  actor           String   @default("system") // "admin" | "tripay_webhook" | "customer" | "system"
+  actor           String   @default("system") // "admin" | "dana_webhook" | "customer" | "system"
   action          String   // "order_created" | "status_updated" | "payment_received" | "cancelled" | "note_added"
   previousStatus  String?  @map("previous_status")
   newStatus       String?  @map("new_status")
