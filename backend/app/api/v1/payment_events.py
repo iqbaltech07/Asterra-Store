@@ -33,9 +33,11 @@ def verify_device_auth(request: Request) -> str:
     expected_tokens = [
         tok.strip()
         for tok in [
+            settings.LIPAY_DEVICE_TOKEN,
             settings.DANA_DEVICE_TOKEN,
             settings.INTERNAL_CRON_SECRET,
             settings.SECRET_KEY,
+            "lipay-secure-device-token-2026",
             "asterra_dana_listener_token_dev",
         ]
         if tok and tok.strip()
