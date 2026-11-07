@@ -19,39 +19,35 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "csWhatsappNumbers": ["081234567890"],
     "enableUniqueCode": True,
     "orderExpiryHours": 24,
-    "isBankActive": True,
+    "isBankActive": False,
     "isQrisActive": True,
-    "isDanaActive": True,
-    "is_bank_active": True,
+    "isDanaActive": False,
+    "is_bank_active": False,
     "is_qris_active": True,
-    "is_dana_active": True,
+    "is_dana_active": False,
     "bank": {
         "name": "Bank Central Asia (BCA)",
         "account_number": "8965123456",
         "account_name": "Asterra Store Official",
+        "is_active": False,
     },
     "qris": {
         "image_url": "https://panduan.bersama.co.id/QRIS/images/Qris.png",
         "merchant_name": "ASTERRA STORE QRIS",
         "raw_string": "00020101021126570011ID.DANA.WWW011893600915303581731802090358173180303UMI51440014ID.CO.QRIS.WWW0215ID10266111175770303UMI5204481453033605802ID5919Asterra Store, Cell6012Kab. Bandung61054091463047816",
+        "is_active": True,
     },
     "dana": {
         "number": "081234567890",
         "account_name": "Asterra Store",
+        "is_active": False,
     },
     "manualAccounts": [
         {
-            "id": "acc-bca",
-            "bankName": "Bank Central Asia (BCA)",
-            "accountNumber": "8965123456",
+            "id": "acc-qris",
+            "bankName": "QRIS (Semua Bank & E-Wallet)",
+            "accountNumber": "ASTERRA STORE QRIS",
             "accountHolder": "Asterra Store Official",
-            "isActive": True,
-        },
-        {
-            "id": "acc-dana",
-            "bankName": "E-Wallet DANA",
-            "accountNumber": "081234567890",
-            "accountHolder": "Asterra Store",
             "isActive": True,
         }
     ],
@@ -107,21 +103,10 @@ class PaymentConfigService:
             enable_unique = merged.get("enable_unique_code", True)
         enable_unique = bool(enable_unique)
 
-        # Support active toggles for payment channels (BCA, QRIS, DANA)
-        is_bank_active = merged.get("isBankActive")
-        if is_bank_active is None:
-            is_bank_active = merged.get("is_bank_active", True)
-        is_bank_active = bool(is_bank_active)
-
-        is_qris_active = merged.get("isQrisActive")
-        if is_qris_active is None:
-            is_qris_active = merged.get("is_qris_active", True)
-        is_qris_active = bool(is_qris_active)
-
-        is_dana_active = merged.get("isDanaActive")
-        if is_dana_active is None:
-            is_dana_active = merged.get("is_dana_active", True)
-        is_dana_active = bool(is_dana_active)
+        # Payment channel toggles: Only QRIS is active
+        is_bank_active = False
+        is_dana_active = False
+        is_qris_active = True
 
         expiry_hrs = merged.get("orderExpiryHours")
         if expiry_hrs is None:

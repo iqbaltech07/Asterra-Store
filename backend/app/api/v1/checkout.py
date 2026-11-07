@@ -632,12 +632,12 @@ async def pay_order(order_id: str, request: Request):
             "payment": payment_info,
         }
 
-    # 2. Manual Bank / E-Wallet Transfer
+    # 2. Manual QRIS Transfer
     payment_info = {
         "id": f"PAY-{order_id}",
         "order_id": order_id,
         "amount": amount,
-        "payment_method": method,
+        "payment_method": "manual_qris",
         "transaction_id": f"TRX-{order_id}",
         "payment_status": "pending",
         "payment_mode": "MANUAL",
@@ -647,11 +647,12 @@ async def pay_order(order_id: str, request: Request):
         "qris_merchant_name": qris_merchant,
         "instructions": [
             {
-                "title": "Instruksi Transfer Manual",
+                "title": "Instruksi Pembayaran QRIS Toko",
                 "steps": [
-                    f"Transfer ke rekening {bank_name} {bank_acc} a.n {bank_holder}",
+                    f"Buka aplikasi mobile banking atau e-wallet (BCA, Mandiri, BRImo, DANA, GoPay, OVO, ShopeePay, dll).",
+                    f"Scan barcode QRIS Toko ({qris_merchant}) di atas.",
                     f"Pastikan transfer dengan nominal tepat Rp {amount:,.0f}".replace(",", "."),
-                    "Kirimkan bukti transfer pembayaran ke WhatsApp Admin untuk konfirmasi pesanan.",
+                    "Kirimkan bukti pembayaran ke WhatsApp Admin untuk konfirmasi pesanan.",
                 ],
             }
         ],

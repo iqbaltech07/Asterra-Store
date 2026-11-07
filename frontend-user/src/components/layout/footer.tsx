@@ -8,6 +8,7 @@ import {
   faLock,
   faHeadphones,
   faArrowUpRightFromSquare,
+  faQrcode,
 } from '@fortawesome/free-solid-svg-icons';
 import { AsterraLogo } from '@/components/ui/asterra-logo';
 import { setupFooterReveal } from '@/lib/animations/gsap-utils';
@@ -137,10 +138,14 @@ export function Footer({ onNotify }: FooterProps) {
               Metode Pembayaran
             </h4>
             <p className="text-[11px] text-[#F7F5EF]/70">
-              QRIS instan, e-Wallet resmi, dan Virtual Account:
+              QRIS instan resmi (Scan via semua m-Banking & e-Wallet):
             </p>
             <div className="flex flex-wrap gap-1.5 pt-0.5">
-              {['QRIS', 'GoPay', 'OVO', 'Dana', 'ShopeePay', 'BCA VA', 'Mandiri VA', 'BRI VA'].map(
+              <span className="text-[10px] sm:text-[11px] font-bold bg-[#C96F55]/20 border border-[#C96F55]/40 px-2.5 py-0.5 rounded text-[#C96F55] inline-flex items-center gap-1 shadow-xs">
+                <FontAwesomeIcon icon={faQrcode} className="w-3 h-3" />
+                <span>QRIS</span>
+              </span>
+              {['DANA', 'GoPay', 'OVO', 'ShopeePay', 'BCA Mobile', 'Livin Mandiri', 'BRImo'].map(
                 (badge) => (
                   <span
                     key={badge}

@@ -77,10 +77,35 @@ def test_odd_numbers_founder_parity_and_zero_leakage():
         assert alloc_dir["ceo_share"] == alloc_dir["coo_share"], f"Odd amount {amt} direct founder parity violated"
         assert alloc_dir["total_allocated"] == amt, f"Odd amount {amt} direct leakage: {alloc_dir['total_allocated']} != {amt}"
 
+def test_affiliate_campaign_bonus_commission():
+    """Verify that campaign bonus adds to partner base commission (e.g. 30% base + 3% bonus = 33%)."""
+    tx_profit = 38060
+    base_rate = 30.0
+    bonus_rate = 3.0
+
+    alloc = ReferralProfitService.calculate_profit_allocation(
+        transaction_profit=tx_profit,
+        has_sales_partner=True,
+        partner_base_rate=base_rate,
+        campaign_bonus_rate=bonus_rate,
+    )
+
+    expected_base = round(tx_profit * 0.30)        # 11418
+    expected_bonus = round(tx_profit * 0.03)       # 1142
+    expected_total_comm = expected_base + expected_bonus  # 12560
+
+    assert alloc["base_commission"] == expected_base, f"Base comm expected {expected_base}, got {alloc['base_commission']}"
+    assert alloc["bonus_commission"] == expected_bonus, f"Bonus comm expected {expected_bonus}, got {alloc['bonus_commission']}"
+    assert alloc["sales_commission"] == expected_total_comm, f"Total comm expected {expected_total_comm}, got {alloc['sales_commission']}"
+    assert alloc["sales_commission_rate"] == 33.0, f"Rate expected 33.0, got {alloc['sales_commission_rate']}"
+    assert alloc["ceo_share"] == alloc["coo_share"], f"Founder parity violated: {alloc['ceo_share']} != {alloc['coo_share']}"
+    assert alloc["total_allocated"] == tx_profit, f"Zero leakage violated: {alloc['total_allocated']} != {tx_profit}"
+
 if __name__ == "__main__":
     test_sku_commission_matrix_from_business_model()
     test_direct_sales_allocation()
     test_affiliate_daily_target_calculation()
     test_odd_numbers_founder_parity_and_zero_leakage()
+    test_affiliate_campaign_bonus_commission()
     print("ALL BUSINESS MODEL v2.0 TESTS PASSED SUCCESSFULLY!")
 

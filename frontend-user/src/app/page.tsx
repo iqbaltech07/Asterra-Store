@@ -912,7 +912,7 @@ export default function HomePage() {
     },
     {
       q: 'Metode pembayaran apa saja yang tersedia?',
-      a: 'Kami mendukung QRIS (bisa discan dengan seluruh aplikasi m-Banking dan e-Wallet seperti GoPay, OVO, Dana, ShopeePay), serta Virtual Account perbankan terkemuka.',
+      a: 'Kami mendukung pembayaran QRIS resmi yang dapat dipindai langsung menggunakan seluruh aplikasi m-Banking (BCA, Mandiri, BRI, BNI, dll) dan e-Wallet (GoPay, OVO, DANA, ShopeePay, LinkAja).',
     },
   ];
 
@@ -1281,8 +1281,7 @@ export default function HomePage() {
               </div>
               <h3 className="text-xs sm:text-base font-bold text-[#121A2A] leading-tight">Pembayaran Praktis</h3>
               <p className="text-[10px] sm:text-xs text-[#121A2A]/65 leading-snug sm:leading-relaxed">
-                Dukungan gateway pembayaran terpadu melalui QRIS real-time, dompet digital e-Wallet,
-                serta Virtual Account bank resmi.
+                Dukungan pembayaran terpadu melalui barcode QRIS real-time yang dapat dipindai oleh semua aplikasi m-Banking dan dompet digital e-Wallet.
               </p>
             </div>
 
@@ -1382,7 +1381,7 @@ export default function HomePage() {
                   Lakukan Pembayaran
                 </h3>
                 <p className="text-[10px] sm:text-xs text-[#121A2A]/65 leading-snug sm:leading-relaxed">
-                  Scan kode QRIS instan atau bayar via Virtual Account tanpa perlu unggah bukti manual.
+                  Scan kode barcode QRIS instan dari aplikasi m-Banking atau e-Wallet favorit Anda tanpa perlu unggah bukti manual.
                 </p>
               </div>
             </div>

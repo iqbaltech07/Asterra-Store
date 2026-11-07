@@ -594,7 +594,8 @@ def get_sales_campaigns(request: Request):
         slug = c.get("slug") or c.get("id")
         camp_name = c.get("name")
         discount_display = f"{c.get('discountValue')}%" if c.get("discountType") == "percentage" else f"Rp {int(c.get('discountValue', 0)):,}"
-        booster_rate = float(c.get("affiliateBonusPercent") or c.get("affiliateCommissionOverride") or partner_rate)
+        bonus_val = float(c.get("affiliateBonusPercent") or c.get("affiliateCommissionOverride") or 0.0)
+        booster_rate = partner_rate + bonus_val
         
         affiliate_link = f"{base_url}/?ref={partner_code}&campaign={slug}"
         
@@ -611,7 +612,7 @@ def get_sales_campaigns(request: Request):
         c_copy["partnerCode"] = partner_code
         c_copy["partnerCommissionRate"] = partner_rate
         c_copy["boosterCommissionRate"] = booster_rate
-        c_copy["isBoosterActive"] = booster_rate > partner_rate
+        c_copy["isBoosterActive"] = bonus_val > 0
         c_copy["whatsappShareText"] = wa_copy
         enriched_campaigns.append(c_copy)
 

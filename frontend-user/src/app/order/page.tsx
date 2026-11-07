@@ -510,7 +510,7 @@ function PrivateOrderContent() {
       rawOrder.payment?.payment_method ||
       rawOrder.paymentMethod ||
       rawOrder.payment_method ||
-      'manual_bca';
+      'qris';
 
     const isManual =
       rawOrder.payment_mode === 'manual' ||
