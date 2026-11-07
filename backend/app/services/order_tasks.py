@@ -53,14 +53,13 @@ class OrderPostTasks:
         if partner:
             try:
                 from app.services.partner_service import PartnerService
-                comm_rate = float(partner.get("rate", 10.0))
+                comm_rate = float(partner.get("rate", 30.0))
                 camp_name = None
                 target_camp_id = canonical_campaign_id
+                bonus = 0.0
 
                 if matched_campaign:
-                    override = float(matched_campaign.get("affiliateBonusPercent") or matched_campaign.get("affiliateCommissionOverride") or 0)
-                    if override > 0:
-                        comm_rate = override
+                    bonus = float(matched_campaign.get("affiliateBonusPercent") or matched_campaign.get("affiliateCommissionOverride") or 0)
                     camp_name = matched_campaign.get("name")
                 elif target_camp_id:
                     try:
@@ -69,15 +68,16 @@ class OrderPostTasks:
                             c_id = str(c.get("id") or "").strip()
                             c_slug = str(c.get("slug") or "").strip().lower()
                             if c_id == str(target_camp_id) or c_slug == str(target_camp_id).lower():
-                                override = float(c.get("affiliateBonusPercent") or c.get("affiliateCommissionOverride") or 0)
-                                if override > 0:
-                                    comm_rate = override
+                                bonus = float(c.get("affiliateBonusPercent") or c.get("affiliateCommissionOverride") or 0)
                                 camp_name = c.get("name")
                                 break
                     except Exception:
                         pass
                 elif campaign_discount > 0:
-                    comm_rate = 15.0
+                    bonus = 0.0
+
+                if bonus > 0:
+                    comm_rate = comm_rate + bonus
 
                 cogs = sum(
                     int(catalog_products.get(str(it.get("product_id") or it.get("productId") or ""), {}).get("providerPrice") or 0) * int(it.get("quantity", 1))

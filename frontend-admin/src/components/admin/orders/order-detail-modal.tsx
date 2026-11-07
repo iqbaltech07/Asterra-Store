@@ -195,8 +195,10 @@ export function OrderDetailModal({
         order.payment?.payment_method === 'bca' ||
         order.payment?.payment_method === 'dana' ||
         (order.payment_mode !== 'gateway' &&
+          order.payment_mode !== 'LIPAY' &&
+          !order.payment?.transaction_id?.startsWith('LIPAY-') &&
           !order.payment?.transaction_id?.startsWith('MID-') &&
-          !order.payment?.transaction_id?.startsWith('mock-midtrans') &&
+          !order.payment?.transaction_id?.startsWith('mock-') &&
           !order.payment?.transaction_id?.startsWith('trx-dana') &&
           !order.payment?.transaction_id?.startsWith('trx-tripay')))
   );

@@ -13,6 +13,7 @@ class PaymentSetting(Base):
     bank_account_name = Column(String, nullable=True)
     qris_image_url = Column(Text, nullable=True)
     qris_merchant_name = Column(String, nullable=True)
+    qris_raw_string = Column(Text, nullable=True)
     dana_number = Column(String, nullable=True)
     dana_account_name = Column(String, nullable=True)
     confirmation_whatsapp = Column(String, nullable=True)
@@ -41,6 +42,8 @@ class PaymentSetting(Base):
             "is_dana_active": True if self.is_dana_active is None else self.is_dana_active,
             "qrisImageUrl": self.qris_image_url,
             "qrisMerchantName": self.qris_merchant_name,
+            "qrisRawString": self.qris_raw_string,
+            "qris_raw_string": self.qris_raw_string,
             "danaNumber": self.dana_number,
             "danaAccountName": self.dana_account_name,
             "confirmationWhatsapp": self.confirmation_whatsapp,

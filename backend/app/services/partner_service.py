@@ -524,7 +524,7 @@ class PartnerService:
                 campaign_rate = (
                     float(comm_rec.commission_rate)
                     if (comm_rec and comm_rec.commission_rate and comm_rec.commission_rate > 0)
-                    else (camp_meta.get("rate") or float(o.get("campaignRate") or o.get("commissionRate") or 15.0))
+                    else (float(partner.get("rate") or 30.0) + float(camp_meta.get("rate") or 0.0))
                 )
                 commission_rate = campaign_rate
                 campaign_name = camp_meta.get("name") or o.get("campaignName") or (f"Promo Campaign ({camp_key})" if camp_key else "Promo Campaign Spesial")

@@ -607,13 +607,13 @@ class AnalyticsService:
                 o for o in completed_orders
                 if str(o.get("createdAt") or o.get("created_at") or "").startswith(m_target)
             ]
-        midtrans_settled = sum(
+        lipay_settled = sum(
             float(o.get("totalAmount") or o.get("rawAmount") or 0.0)
             for o in completed_orders
-            if str(o.get("paymentMode", "")).lower() in ["gateway", "midtrans"]
-            or "midtrans" in str(o.get("paymentMethod", "")).lower()
+            if str(o.get("paymentMode", "")).lower() in ["lipay", "gateway", "dana"]
+            or "lipay" in str(o.get("paymentMethod", "")).lower()
             or str(o.get("paymentMethod", "")).lower() == "qris"
-            or "dana" in str(o.get("paymentMode", "")).lower()
+            or "dana" in str(o.get("paymentMethod", "")).lower()
         )
         from app.services.vip_service import VipService
         vip_info = VipService.get_profile()
@@ -653,11 +653,11 @@ class AnalyticsService:
             },
             {
                 "id": "exp-2",
-                "category": "Payment Gateway Fee (Midtrans QRIS 0.7%)",
-                "desc": "Fee gateway Midtrans QRIS 0.7% transaksi lunas",
+                "category": "Biaya Settlement LiPay (0% Direct)",
+                "desc": "Direct settlement QRIS DANA Bisnis via LiPay (hemat fee gateway)",
                 "amount": pg_fees_total,
                 "date": datetime.utcnow().strftime("%d %b %Y"),
-                "ref": "MIDTRANS-QRIS-07",
+                "ref": "LIPAY-DIRECT-00",
             },
             {
                 "id": "exp-3",
@@ -736,9 +736,10 @@ class AnalyticsService:
 
         return {
             "wallets": {
-                "midtransBalance": midtrans_settled,
-                "danaBalance": midtrans_settled,
-                "tripayBalance": midtrans_settled,
+                "lipayBalance": lipay_settled,
+                "midtransBalance": lipay_settled,
+                "danaBalance": lipay_settled,
+                "tripayBalance": lipay_settled,
                 "vipBalance": vip_deposit,
                 "reserveBalance": reserve_balance,
             },

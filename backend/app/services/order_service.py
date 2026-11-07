@@ -559,6 +559,43 @@ class OrderService:
             if already_claimed:
                 referral_discount = 0
 
+        # 5. Floor Price Protection Guard
+        # Guarantees that total combined discounts (campaign + promo + referral) never cause
+        # the final customer price to drop below actual supplier COGS (HPP) + QRIS fee + safety buffer.
+        total_cogs = 0
+        for it in items:
+            p_id_str = str(it.get("product_id") or it.get("productId") or "")
+            cp = catalog_products.get(p_id_str) or {}
+            prov_p = cp.get("providerPrice") or cp.get("provider_price")
+            it_qty = max(1, int(it.get("quantity", 1)))
+            unit_val = int(it.get("unit_price") or it.get("price") or 0)
+            if prov_p and int(prov_p) > 0:
+                total_cogs += int(prov_p) * it_qty
+            else:
+                total_cogs += round(unit_val * it_qty * 0.65)
+
+        payment_fee_est = round(total_cogs * 0.007)
+        safety_buffer = max(1000, round(total_cogs * 0.03))  # Minimum Rp 1.000 or 3% buffer
+        floor_price = total_cogs + payment_fee_est + safety_buffer
+
+        max_allowable_discount = max(0, raw_total - floor_price)
+        total_discount_requested = promo_discount + referral_discount + campaign_discount
+
+        if total_discount_requested > max_allowable_discount:
+            excess = total_discount_requested - max_allowable_discount
+            # Cap campaign discount first to respect floor price
+            if campaign_discount >= excess:
+                campaign_discount -= excess
+            else:
+                excess -= campaign_discount
+                campaign_discount = 0
+                if promo_discount >= excess:
+                    promo_discount -= excess
+                else:
+                    excess -= promo_discount
+                    promo_discount = 0
+                    referral_discount = max(0, referral_discount - excess)
+
         # Calculate final payable amount (unique code is included only if enable_unique is True)
         subtotal_after_discounts = max(0, raw_total - promo_discount - referral_discount - campaign_discount)
         total_amount = subtotal_after_discounts + (unique_code if enable_unique else 0)
@@ -612,7 +649,7 @@ class OrderService:
         if is_preorder and "[PRE-ORDER]" not in incoming_notes:
             incoming_notes = f"[PRE-ORDER] {incoming_notes}".strip()
 
-        incoming_pay_method = str(payload.get("payment_method") or payload.get("paymentMethod") or "manual_bca").strip()
+        incoming_pay_method = str(payload.get("payment_method") or payload.get("paymentMethod") or "qris").strip()
         incoming_pay_mode = payload.get("payment_mode") or payload.get("paymentMode")
         if not incoming_pay_mode:
             incoming_pay_mode = (
@@ -845,7 +882,7 @@ class OrderService:
                     "product_name": product_display,
                     "items_count": len(items) if items else 1,
                     "status": "pending",
-                    "payment_method": payload.get("payment_method") or payload.get("paymentMethod") or "manual_bca",
+                    "payment_method": payload.get("payment_method") or payload.get("paymentMethod") or "qris",
                     "created_at": now.isoformat() + "Z",
                 },
                 target_role="admin",
@@ -893,7 +930,12 @@ class OrderService:
                         curr_notes = order_obj.customer_notes or ""
                         # Only append if not an automated admin status change log
                         if not notes.lower().startswith("status pesanan diubah"):
-                            order_obj.customer_notes = f"{curr_notes} | Admin: {notes}".strip(" | ")
+                            clean_note = notes.strip()
+                            if clean_note.startswith("Sistem:") or clean_note.startswith("Admin:") or clean_note.startswith("System:"):
+                                formatted_note = clean_note
+                            else:
+                                formatted_note = f"Admin: {clean_note}"
+                            order_obj.customer_notes = f"{curr_notes} | {formatted_note}".strip(" | ")
 
                     db.commit()
                     db.refresh(order_obj)

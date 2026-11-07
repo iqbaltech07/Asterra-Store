@@ -52,13 +52,13 @@ export function SalesLandingPage() {
 
             <div className="flex items-center gap-3">
               <Link
-                href="/auth/login"
+                href="/sales/login"
                 className="px-3.5 py-1.5 text-sm font-semibold text-[#121A2A] hover:text-[#EA580C] transition-colors"
               >
                 Login
               </Link>
               <Link
-                href="/auth/login?tab=register"
+                href="/daftar-sales"
                 className="px-4 py-2 rounded-xl bg-[#EA580C] hover:bg-[#C2410C] text-white text-xs sm:text-sm font-bold shadow-md shadow-orange-500/20 hover:shadow-orange-500/30 transition-all flex items-center gap-1.5"
               >
                 <span>Get Started</span>

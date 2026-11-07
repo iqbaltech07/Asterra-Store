@@ -32,14 +32,14 @@ class CardService:
                 # 1. Sales aggregated by Card Produk (completed orders only)
                 card_query = text("""
                     SELECT 
-                        COALESCE(oi.card_id, p.card_id) AS card_id,
+                        COALESCE(NULLIF(oi.card_id, ''), NULLIF(p.card_id, '')) AS card_id,
                         COALESCE(SUM(oi.quantity), 0) AS total_units
                     FROM order_items oi
                     JOIN orders o ON oi.order_id = o.id
                     LEFT JOIN products p ON oi.product_id = p.id
                     WHERE LOWER(o.status) IN ('completed', 'paid', 'settlement', 'done', 'selesai')
-                      AND COALESCE(oi.card_id, p.card_id) IS NOT NULL
-                    GROUP BY COALESCE(oi.card_id, p.card_id);
+                      AND COALESCE(NULLIF(oi.card_id, ''), NULLIF(p.card_id, '')) IS NOT NULL
+                    GROUP BY COALESCE(NULLIF(oi.card_id, ''), NULLIF(p.card_id, ''));
                 """)
                 rows = db.execute(card_query).fetchall()
                 for r in rows:
@@ -79,7 +79,7 @@ class CardService:
             try:
                 query = text("""
                     SELECT 
-                        COALESCE(oi.card_id, p.card_id) AS card_id,
+                        COALESCE(NULLIF(oi.card_id, ''), NULLIF(p.card_id, '')) AS card_id,
                         COALESCE(SUM(CASE WHEN o.is_dummy = true THEN oi.quantity ELSE 0 END), 0) AS dummy_units,
                         COALESCE(SUM(CASE WHEN o.is_dummy IS NOT true THEN oi.quantity ELSE 0 END), 0) AS real_units,
                         COALESCE(SUM(oi.quantity), 0) AS total_units
@@ -87,8 +87,8 @@ class CardService:
                     JOIN orders o ON oi.order_id = o.id
                     LEFT JOIN products p ON oi.product_id = p.id
                     WHERE LOWER(o.status) IN ('completed', 'paid', 'settlement', 'done', 'selesai')
-                      AND COALESCE(oi.card_id, p.card_id) IS NOT NULL
-                    GROUP BY COALESCE(oi.card_id, p.card_id);
+                      AND COALESCE(NULLIF(oi.card_id, ''), NULLIF(p.card_id, '')) IS NOT NULL
+                    GROUP BY COALESCE(NULLIF(oi.card_id, ''), NULLIF(p.card_id, ''));
                 """)
                 rows = db.execute(query).fetchall()
                 for r in rows:

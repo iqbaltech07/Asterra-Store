@@ -597,7 +597,7 @@ export function AdminHomepageOrdering({ onNotify }: { onNotify?: (msg: string) =
           categoryId: c.categoryId,
           categoryTag: tag,
           rating: String(c.rating || '5.0'),
-          soldCount: c.soldCount || 20,
+          soldCount: c.soldCount ?? 0,
           minPrice,
           originalPrice,
           isPromo,

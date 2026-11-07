@@ -260,14 +260,9 @@ def health_check():
         "status": "ok",
         "service": settings.PROJECT_NAME,
         "version": settings.VERSION,
-        "mode": "production" if settings.MIDTRANS_IS_PRODUCTION else "development",
+        "environment": settings.ENVIRONMENT,
         "timestamp": datetime.utcnow().isoformat(),
     }
-
-@app.post("/webhooks/midtrans", tags=["Webhooks"], include_in_schema=False)
-async def root_midtrans_webhook(request: Request):
-    from app.api.v1.checkout import midtrans_webhook
-    return await midtrans_webhook(request)
 
 @app.post("/webhooks/vip-reseller", tags=["Webhooks"], include_in_schema=False)
 async def root_vip_reseller_webhook(request: Request):
@@ -348,7 +343,9 @@ async def admin_auth_middleware(request: Request, call_next):
     return response
 
 # ------------------------------------------
-# Mount Unified API Router to /api/v1 and /v1
+# Mount Unified API Router to /api/v1 and /v1, and /api for direct internal endpoints
 # ------------------------------------------
+from app.api.v1.payment_events import router as payment_events_router
+app.include_router(payment_events_router, prefix="/api")
 app.include_router(api_router, prefix="/api/v1")
 app.include_router(api_router, prefix="/v1")

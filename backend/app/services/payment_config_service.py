@@ -9,6 +9,8 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "bankAccountName": "Asterra Store Official",
     "qrisImageUrl": "https://panduan.bersama.co.id/QRIS/images/Qris.png",
     "qrisMerchantName": "ASTERRA STORE QRIS",
+    "qrisRawString": "00020101021126570011ID.DANA.WWW011893600915303581731802090358173180303UMI51440014ID.CO.QRIS.WWW0215ID10266111175770303UMI5204481453033605802ID5919Asterra Store, Cell6012Kab. Bandung61054091463047816",
+    "qris_raw_string": "00020101021126570011ID.DANA.WWW011893600915303581731802090358173180303UMI51440014ID.CO.QRIS.WWW0215ID10266111175770303UMI5204481453033605802ID5919Asterra Store, Cell6012Kab. Bandung61054091463047816",
     "danaNumber": "081234567890",
     "danaAccountName": "Asterra Store",
     "confirmationWhatsapp": "6281234567890",
@@ -17,38 +19,35 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "csWhatsappNumbers": ["081234567890"],
     "enableUniqueCode": True,
     "orderExpiryHours": 24,
-    "isBankActive": True,
+    "isBankActive": False,
     "isQrisActive": True,
-    "isDanaActive": True,
-    "is_bank_active": True,
+    "isDanaActive": False,
+    "is_bank_active": False,
     "is_qris_active": True,
-    "is_dana_active": True,
+    "is_dana_active": False,
     "bank": {
         "name": "Bank Central Asia (BCA)",
         "account_number": "8965123456",
         "account_name": "Asterra Store Official",
+        "is_active": False,
     },
     "qris": {
         "image_url": "https://panduan.bersama.co.id/QRIS/images/Qris.png",
         "merchant_name": "ASTERRA STORE QRIS",
+        "raw_string": "00020101021126570011ID.DANA.WWW011893600915303581731802090358173180303UMI51440014ID.CO.QRIS.WWW0215ID10266111175770303UMI5204481453033605802ID5919Asterra Store, Cell6012Kab. Bandung61054091463047816",
+        "is_active": True,
     },
     "dana": {
         "number": "081234567890",
         "account_name": "Asterra Store",
+        "is_active": False,
     },
     "manualAccounts": [
         {
-            "id": "acc-bca",
-            "bankName": "Bank Central Asia (BCA)",
-            "accountNumber": "8965123456",
+            "id": "acc-qris",
+            "bankName": "QRIS (Semua Bank & E-Wallet)",
+            "accountNumber": "ASTERRA STORE QRIS",
             "accountHolder": "Asterra Store Official",
-            "isActive": True,
-        },
-        {
-            "id": "acc-dana",
-            "bankName": "E-Wallet DANA",
-            "accountNumber": "081234567890",
-            "accountHolder": "Asterra Store",
             "isActive": True,
         }
     ],
@@ -85,6 +84,12 @@ class PaymentConfigService:
 
         qris_url = merged.get("qrisImageUrl") or merged.get("qris_image_url") or DEFAULT_CONFIG["qris"]["image_url"]
         qris_merchant = merged.get("qrisMerchantName") or merged.get("qris_merchant_name") or DEFAULT_CONFIG["qris"]["merchant_name"]
+        qris_raw = (
+            merged.get("qrisRawString")
+            or merged.get("qris_raw_string")
+            or (merged.get("qris", {}).get("raw_string") if isinstance(merged.get("qris"), dict) else None)
+            or DEFAULT_CONFIG["qrisRawString"]
+        )
 
         dana_num = merged.get("danaNumber") or merged.get("dana_number") or "081234567890"
         dana_acc = merged.get("danaAccountName") or merged.get("dana_account_name") or "Asterra Store"
@@ -98,21 +103,10 @@ class PaymentConfigService:
             enable_unique = merged.get("enable_unique_code", True)
         enable_unique = bool(enable_unique)
 
-        # Support active toggles for payment channels (BCA, QRIS, DANA)
-        is_bank_active = merged.get("isBankActive")
-        if is_bank_active is None:
-            is_bank_active = merged.get("is_bank_active", True)
-        is_bank_active = bool(is_bank_active)
-
-        is_qris_active = merged.get("isQrisActive")
-        if is_qris_active is None:
-            is_qris_active = merged.get("is_qris_active", True)
-        is_qris_active = bool(is_qris_active)
-
-        is_dana_active = merged.get("isDanaActive")
-        if is_dana_active is None:
-            is_dana_active = merged.get("is_dana_active", True)
-        is_dana_active = bool(is_dana_active)
+        # Payment channel toggles: Only QRIS is active
+        is_bank_active = False
+        is_dana_active = False
+        is_qris_active = True
 
         expiry_hrs = merged.get("orderExpiryHours")
         if expiry_hrs is None:
@@ -139,6 +133,7 @@ class PaymentConfigService:
             "bankAccountName": bank_holder,
             "qrisImageUrl": qris_url,
             "qrisMerchantName": qris_merchant,
+            "qrisRawString": qris_raw,
             "danaNumber": dana_num,
             "danaAccountName": dana_acc,
             "confirmationWhatsapp": conf_wa,
@@ -153,6 +148,7 @@ class PaymentConfigService:
             "bank_account_name": bank_holder,
             "qris_image_url": qris_url,
             "qris_merchant_name": qris_merchant,
+            "qris_raw_string": qris_raw,
             "dana_number": dana_num,
             "dana_account_name": dana_acc,
             "confirmation_whatsapp": conf_wa,
@@ -170,6 +166,7 @@ class PaymentConfigService:
             "qris": {
                 "image_url": qris_url,
                 "merchant_name": qris_merchant,
+                "raw_string": qris_raw,
                 "is_active": is_qris_active,
             },
             "dana": {
@@ -211,6 +208,8 @@ class PaymentConfigService:
                     setting.qris_image_url = payload.get("qrisImageUrl") or payload.get("qris_image_url")
                 if "qrisMerchantName" in payload or "qris_merchant_name" in payload:
                     setting.qris_merchant_name = payload.get("qrisMerchantName") or payload.get("qris_merchant_name")
+                if "qrisRawString" in payload or "qris_raw_string" in payload:
+                    setting.qris_raw_string = payload.get("qrisRawString") or payload.get("qris_raw_string")
                 if "danaNumber" in payload or "dana_number" in payload:
                     setting.dana_number = payload.get("danaNumber") or payload.get("dana_number")
                 if "danaAccountName" in payload or "dana_account_name" in payload:

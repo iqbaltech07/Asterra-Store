@@ -3,9 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faCreditCard,
   faQrcode,
-  faMobileScreen,
   faShieldHalved,
   faCheck,
   faCopy,
@@ -27,6 +25,7 @@ import { Badge } from '@/components/ui/badge';
 import { PaymentConfig } from '@/types/payment';
 import { getAppBaseUrl } from '@/lib/utils/url';
 import { ImageUploadDropzone } from '@/components/admin/image-upload-dropzone';
+import { AdminLiPayEventsWidget } from '@/components/admin/admin-lipay-events-widget';
 
 interface AdminPaymentSettingsTabProps {
   onNotify: (msg: string) => void;
@@ -41,14 +40,15 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
 
   // Form states
   const [mode, setMode] = useState<'gateway' | 'manual'>('gateway');
-  const [isBankActive, setIsBankActive] = useState(true);
+  const [isBankActive, setIsBankActive] = useState(false);
   const [isQrisActive, setIsQrisActive] = useState(true);
-  const [isDanaActive, setIsDanaActive] = useState(true);
+  const [isDanaActive, setIsDanaActive] = useState(false);
   const [bankName, setBankName] = useState('Bank Central Asia (BCA)');
   const [bankAccountNumber, setBankAccountNumber] = useState('8965123456');
   const [bankAccountName, setBankAccountName] = useState('Asterra Store Official');
   const [qrisImageUrl, setQrisImageUrl] = useState('/images/qris-toko.png');
   const [qrisMerchantName, setQrisMerchantName] = useState('ASTERRA STORE QRIS');
+  const [qrisRawString, setQrisRawString] = useState('');
   const [danaNumber, setDanaNumber] = useState('081234567890');
   const [danaAccountName, setDanaAccountName] = useState('Asterra Store');
   const [confirmationWhatsapp, setConfirmationWhatsapp] = useState('6281234567890');
@@ -79,14 +79,15 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
         setConfig(d);
         if (isInitial) {
           setMode(d.mode);
-          setIsBankActive((d.isBankActive ?? d.is_bank_active) !== false);
-          setIsQrisActive((d.isQrisActive ?? d.is_qris_active) !== false);
-          setIsDanaActive((d.isDanaActive ?? d.is_dana_active) !== false);
+          setIsBankActive(false);
+          setIsQrisActive(true);
+          setIsDanaActive(false);
           setBankName(d.bankName || 'Bank Central Asia (BCA)');
           setBankAccountNumber(d.bankAccountNumber || '8965123456');
           setBankAccountName(d.bankAccountName || 'Asterra Store Official');
           setQrisImageUrl(d.qrisImageUrl || '');
           setQrisMerchantName(d.qrisMerchantName || 'ASTERRA STORE QRIS');
+          setQrisRawString(d.qrisRawString || (d as any).qris_raw_string || '');
           setDanaNumber(d.danaNumber || '081234567890');
           setDanaAccountName(d.danaAccountName || 'Asterra Store');
           setConfirmationWhatsapp(d.confirmationWhatsapp || '6281234567890');
@@ -140,17 +141,19 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
     try {
       const payload = {
         mode: targetMode,
-        isBankActive,
-        isQrisActive,
-        isDanaActive,
-        is_bank_active: isBankActive,
-        is_qris_active: isQrisActive,
-        is_dana_active: isDanaActive,
+        isBankActive: false,
+        isQrisActive: true,
+        isDanaActive: false,
+        is_bank_active: false,
+        is_qris_active: true,
+        is_dana_active: false,
         bankName,
         bankAccountNumber,
         bankAccountName,
         qrisImageUrl,
         qrisMerchantName,
+        qrisRawString,
+        qris_raw_string: qrisRawString,
         danaNumber,
         danaAccountName,
         confirmationWhatsapp,
@@ -217,20 +220,20 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
                     : 'bg-status-warning/20 text-status-warning border-status-warning/30 hover:bg-status-warning/20 font-mono text-[11px]'
                 }
               >
-                {mode === 'gateway' ? '🟢 GATEWAY OTOMATIS (MIDTRANS QRIS)' : '🟡 MANUAL TRANSFER TOKO'}
+                {mode === 'gateway' ? '🟢 OTOMATIS (LIPAY QRIS DANA)' : '🟡 MANUAL TRANSFER TOKO'}
               </Badge>
             </div>
 
             <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
               {mode === 'gateway'
-                ? 'Payment Gateway Midtrans Dynamic QRIS Berjalan Normal'
+                ? 'Sistem LiPay Payment Listener Berjalan Normal'
                 : 'Mode Transfer Manual Toko Sedang Digunakan'}
             </h2>
 
             <p className="text-xs sm:text-sm text-foreground-muted max-w-2xl leading-relaxed">
               {mode === 'gateway'
-                ? 'Semua transaksi pelanggan diproses otomatis via Midtrans Core API Dynamic QRIS (QRIS Nasional Dinamis realtime - support GoPay, BCA, Mandiri, BRI, BNI, OVO, Dana, ShopeePay, LinkAja). Notifikasi webhook SHA-512 memicu pemrosesan lisensi instan tanpa upload bukti transfer.'
-                : 'Pelanggan saat ini diarahkan transfer manual ke rekening Bank BCA, QRIS Manual, atau akun DANA Anda dengan instruksi konfirmasi via WhatsApp. Verifikasi mutasi dilakukan manual oleh admin.'}
+                ? 'Semua transaksi pelanggan dideteksi secara otomatis dari notifikasi DANA Bisnis melalui Android App LiPay. Settlement 100% langsung ke toko tanpa potongan biaya payment gateway.'
+                : 'Pelanggan saat ini diarahkan melakukan pembayaran via barcode QRIS Manual Toko dengan instruksi konfirmasi via WhatsApp. Verifikasi mutasi dilakukan manual oleh admin.'}
             </p>
           </div>
 
@@ -253,7 +256,7 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
                 className="bg-status-success text-black hover:bg-status-success/90 font-semibold text-xs gap-2 px-5 py-5 shadow-lg shadow-status-success/10"
               >
                 <FontAwesomeIcon icon={faCheck} className="w-4 h-4 text-black" />
-                <span>Beralih ke Gateway Otomatis (Midtrans QRIS)</span>
+                <span>Beralih ke Verifikasi Otomatis (LiPay)</span>
               </Button>
             )}
 
@@ -277,89 +280,6 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Column: Form Details (8 Cols) */}
         <div className="lg:col-span-7 space-y-6">
-          {/* Card: Rekening Bank Manual */}
-          <div className={`bg-surface border rounded-xl p-5 space-y-4 transition-all duration-150 ${isBankActive ? 'border-border' : 'border-border/60 opacity-85'}`}>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-border gap-2">
-              <div className="flex items-center gap-2.5">
-                <div className={`w-8 h-8 rounded-lg border flex items-center justify-center ${isBankActive ? 'bg-primary/10 border-primary/20 text-primary' : 'bg-surface-raised border-border text-foreground-muted'}`}>
-                  <FontAwesomeIcon icon={faCreditCard} className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-semibold text-foreground">Rekening Bank Manual (BCA)</h3>
-                  <p className="text-[11px] text-foreground-muted">Tujuan transfer bank utama untuk pelanggan</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2.5 self-end sm:self-center">
-                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${isBankActive ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-rose-500/10 text-rose-500 border-rose-500/20'}`}>
-                  {isBankActive ? 'Channel Aktif' : 'Non-aktif'}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setIsBankActive(!isBankActive)}
-                  className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                    isBankActive ? 'bg-primary' : 'bg-surface-raised border-border'
-                  }`}
-                  role="switch"
-                  aria-checked={isBankActive}
-                  title={isBankActive ? "Nonaktifkan Channel BCA" : "Aktifkan Channel BCA"}
-                >
-                  <span
-                    className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
-                      isBankActive ? 'translate-x-4' : 'translate-x-0'
-                    }`}
-                  />
-                </button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="text-[11px] font-medium text-foreground-muted block mb-1">
-                  Nama Bank
-                </label>
-                <Input
-                  value={bankName}
-                  onChange={(e) => setBankName(e.target.value)}
-                  placeholder="Contoh: Bank Central Asia (BCA)"
-                  className="text-xs bg-surface-raised border-border"
-                />
-              </div>
-
-              <div>
-                <label className="text-[11px] font-medium text-foreground-muted block mb-1">
-                  Nomor Rekening
-                </label>
-                <div className="relative">
-                  <Input
-                    value={bankAccountNumber}
-                    onChange={(e) => setBankAccountNumber(e.target.value)}
-                    placeholder="Contoh: 8965123456"
-                    className="text-xs bg-surface-raised border-border font-mono pr-16"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleCopy(bankAccountNumber, 'bank')}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-primary hover:underline px-1 py-0.5 flex items-center gap-1"
-                  >
-                    {copiedKey === 'bank' ? <FontAwesomeIcon icon={faCheck} className="w-3 h-3" /> : <FontAwesomeIcon icon={faCopy} className="w-3 h-3" />}
-                    <span>{copiedKey === 'bank' ? 'Tersalin' : 'Salin'}</span>
-                  </button>
-                </div>
-              </div>
-
-              <div className="sm:col-span-2">
-                <label className="text-[11px] font-medium text-foreground-muted block mb-1">
-                  Nama Pemilik Rekening (Atas Nama)
-                </label>
-                <Input
-                  value={bankAccountName}
-                  onChange={(e) => setBankAccountName(e.target.value)}
-                  placeholder="Contoh: Asterra Store Official"
-                  className="text-xs bg-surface-raised border-border"
-                />
-              </div>
-            </div>
-          </div>
 
           {/* Card: QRIS Manual Toko */}
           <div className={`bg-surface border rounded-xl p-5 space-y-4 transition-all duration-150 ${isQrisActive ? 'border-border' : 'border-border/60 opacity-85'}`}>
@@ -408,6 +328,7 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
               {config && (
                 qrisImageUrl !== (config.qrisImageUrl || '') ||
                 qrisMerchantName !== (config.qrisMerchantName || '') ||
+                qrisRawString !== (config.qrisRawString || (config as any).qris_raw_string || '') ||
                 isQrisActive !== ((config.isQrisActive ?? config.is_qris_active) !== false)
               ) && (
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 rounded-xl bg-primary/10 border border-primary/25 text-xs animate-in fade-in-50">
@@ -428,7 +349,6 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
               )}
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-
               <div>
                 <label className="text-[11px] font-medium text-foreground-muted block mb-1">
                   Nama Merchant Terdaftar di QRIS
@@ -443,77 +363,20 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
                   Membantu pembeli memastikan nama penerima benar saat scan barcode.
                 </span>
               </div>
-            </div>
-          </div>
-
-          {/* Card: E-Wallet DANA */}
-          <div className={`bg-surface border rounded-xl p-5 space-y-4 transition-all duration-150 ${isDanaActive ? 'border-border' : 'border-border/60 opacity-85'}`}>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-border gap-2">
-              <div className="flex items-center gap-2.5">
-                <div className={`w-8 h-8 rounded-lg border flex items-center justify-center ${isDanaActive ? 'bg-primary/10 border-primary/20 text-primary' : 'bg-surface-raised border-border text-foreground-muted'}`}>
-                  <FontAwesomeIcon icon={faMobileScreen} className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-semibold text-foreground">Akun E-Wallet DANA Manual</h3>
-                  <p className="text-[11px] text-foreground-muted">Alternatif transfer sesama pengguna aplikasi DANA</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2.5 self-end sm:self-center">
-                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${isDanaActive ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-rose-500/10 text-rose-500 border-rose-500/20'}`}>
-                  {isDanaActive ? 'Channel Aktif' : 'Non-aktif'}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setIsDanaActive(!isDanaActive)}
-                  className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                    isDanaActive ? 'bg-primary' : 'bg-surface-raised border-border'
-                  }`}
-                  role="switch"
-                  aria-checked={isDanaActive}
-                  title={isDanaActive ? "Nonaktifkan Channel DANA" : "Aktifkan Channel DANA"}
-                >
-                  <span
-                    className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
-                      isDanaActive ? 'translate-x-4' : 'translate-x-0'
-                    }`}
-                  />
-                </button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="text-[11px] font-medium text-foreground-muted block mb-1">
-                  Nomor HP DANA
-                </label>
-                <div className="relative">
-                  <Input
-                    value={danaNumber}
-                    onChange={(e) => setDanaNumber(e.target.value)}
-                    placeholder="Contoh: 081234567890"
-                    className="text-xs bg-surface-raised border-border font-mono pr-16"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleCopy(danaNumber, 'dana')}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-primary hover:underline px-1 py-0.5 flex items-center gap-1"
-                  >
-                    {copiedKey === 'dana' ? <FontAwesomeIcon icon={faCheck} className="w-3 h-3" /> : <FontAwesomeIcon icon={faCopy} className="w-3 h-3" />}
-                    <span>{copiedKey === 'dana' ? 'Tersalin' : 'Salin'}</span>
-                  </button>
-                </div>
-              </div>
 
               <div>
                 <label className="text-[11px] font-medium text-foreground-muted block mb-1">
-                  Nama Akun DANA
+                  String Payload EMVCo QRIS (Untuk QRIS Dinamis)
                 </label>
                 <Input
-                  value={danaAccountName}
-                  onChange={(e) => setDanaAccountName(e.target.value)}
-                  placeholder="Contoh: Asterra Store"
-                  className="text-xs bg-surface-raised border-border"
+                  value={qrisRawString}
+                  onChange={(e) => setQrisRawString(e.target.value)}
+                  placeholder="0002010102112657..."
+                  className="text-xs bg-surface-raised border-border font-mono text-[11px]"
                 />
+                <span className="text-[10px] text-foreground-muted mt-1 block">
+                  Standar EMVCo QRIS toko. Sistem otomatis mengubahnya menjadi QRIS Dinamis dengan nominal terkunci per pesanan.
+                </span>
               </div>
             </div>
           </div>
@@ -779,51 +642,16 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
                     </div>
                   </div>
 
-                  {/* Bank Details Preview */}
-                  <div className={`p-3 bg-surface border rounded-lg space-y-2 transition-all ${isBankActive ? 'border-border' : 'border-border/60 opacity-50'}`}>
-                    <div className="flex items-center justify-between text-[11px] font-semibold text-foreground">
-                      <span>Transfer Bank BCA:</span>
-                      <span className={`text-[9px] px-1.5 py-0.2 rounded font-medium ${isBankActive ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>
-                        {isBankActive ? 'Aktif' : 'Non-aktif'}
+                  {/* QRIS Toko Live Preview */}
+                  <div className="p-3 bg-surface border border-border rounded-lg text-center space-y-1">
+                    <FontAwesomeIcon icon={faQrcode} className="w-5 h-5 mx-auto text-primary" />
+                    <div className="flex items-center justify-center gap-1 font-semibold text-foreground text-[11px]">
+                      <span>QRIS Toko (Semua Bank & E-Wallet)</span>
+                      <span className="text-[8px] px-1.5 py-0.5 rounded font-medium bg-emerald-500/10 text-emerald-500">
+                        Aktif
                       </span>
                     </div>
-                    {isBankActive ? (
-                      <>
-                        <div className="flex items-center justify-between font-mono bg-surface-raised px-2.5 py-1.5 rounded border border-border text-foreground">
-                          <span>{bankAccountNumber}</span>
-                          <span className="text-[10px] text-primary">Salin</span>
-                        </div>
-                        <div className="text-[10px] text-foreground-muted">
-                          a.n {bankAccountName} ({bankName})
-                        </div>
-                      </>
-                    ) : (
-                      <p className="text-[10px] text-foreground-muted italic">Metode ini dinonaktifkan dari pilihan checkout pelanggan.</p>
-                    )}
-                  </div>
-
-                  {/* QRIS / DANA Quick Preview */}
-                  <div className="grid grid-cols-2 gap-2 text-center text-[10px]">
-                    <div className={`p-2 bg-surface border rounded-lg transition-all ${isQrisActive ? 'border-border' : 'border-border/60 opacity-50'}`}>
-                      <FontAwesomeIcon icon={faQrcode} className={`w-4 h-4 mx-auto mb-1 ${isQrisActive ? 'text-primary' : 'text-foreground-muted'}`} />
-                      <div className="flex items-center justify-center gap-1">
-                        <span className="font-semibold block text-foreground">QRIS Toko</span>
-                        <span className={`text-[8px] px-1 rounded ${isQrisActive ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>
-                          {isQrisActive ? 'Aktif' : 'Off'}
-                        </span>
-                      </div>
-                      <span className="text-foreground-muted truncate block">{qrisMerchantName}</span>
-                    </div>
-                    <div className={`p-2 bg-surface border rounded-lg transition-all ${isDanaActive ? 'border-border' : 'border-border/60 opacity-50'}`}>
-                      <FontAwesomeIcon icon={faMobileScreen} className={`w-4 h-4 mx-auto mb-1 ${isDanaActive ? 'text-primary' : 'text-foreground-muted'}`} />
-                      <div className="flex items-center justify-center gap-1">
-                        <span className="font-semibold block text-foreground">DANA</span>
-                        <span className={`text-[8px] px-1 rounded ${isDanaActive ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>
-                          {isDanaActive ? 'Aktif' : 'Off'}
-                        </span>
-                      </div>
-                      <span className="text-foreground-muted font-mono block">{danaNumber}</span>
-                    </div>
+                    <span className="text-foreground-muted text-[10px] block">{qrisMerchantName}</span>
                   </div>
 
                   {/* WhatsApp CTA Button Simulation */}
@@ -848,40 +676,40 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
             </div>
           </div>
 
-          {/* Card: Dynamic Midtrans QRIS Webhook & Callback Info */}
+          {/* Card: LiPay Android Payment Listener Integration */}
           <div className="bg-surface border border-border rounded-xl p-5 space-y-3.5">
             <div className="flex items-center justify-between pb-2.5 border-b border-border">
               <div className="flex items-center gap-2">
                 <FontAwesomeIcon icon={faShieldHalved} className="w-4 h-4 text-status-success" />
                 <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
-                  Integrasi & Webhook Midtrans QRIS Core API
+                  Integrasi LiPay Android Payment Listener
                 </h4>
               </div>
               <Badge variant="outline" className="text-[10px] text-status-success border-status-success/30 font-mono">
-                Core API Dynamic QRIS
+                LiPay Native Client
               </Badge>
             </div>
 
             <p className="text-[11px] text-foreground-muted leading-relaxed">
-              Sistem telah dikonfigurasi secara otomatis memproses webhook notifikasi Midtrans resmi pada domain aktif Anda ({currentBaseUrl || 'https://asterrastore.biz.id'}). Verifikasi tanda tangan digital enkripsi SHA-512 diterapkan otomatis.
+              Sistem backend menerima push event notifikasi dari aplikasi Android LiPay yang berjalan di perangkat toko. Notifikasi pembayaran DANA Bisnis diverifikasi otomatis secara aman via autentikasi token.
             </p>
 
             <div className="space-y-3 text-xs">
               <div>
                 <span className="text-[10px] text-foreground-muted block font-medium mb-1">
-                  URL Webhook Notification Midtrans (POST):
+                  URL Ingestion Endpoint LiPay (POST):
                 </span>
                 <div className="relative">
                   <Input
                     readOnly
-                    value={`${currentBaseUrl || 'https://asterrastore.biz.id'}/api/v1/webhooks/midtrans`}
+                    value={`${currentBaseUrl || 'https://asterrastore.biz.id'}/api/internal/payment-events/dana`}
                     className="text-[11px] bg-surface-raised border-border font-mono pr-16 select-all"
                   />
                   <button
                     type="button"
                     onClick={() =>
                       handleCopy(
-                        `${currentBaseUrl || 'https://asterrastore.biz.id'}/api/v1/webhooks/midtrans`,
+                        `${currentBaseUrl || 'https://asterrastore.biz.id'}/api/internal/payment-events/dana`,
                         'webhook'
                       )
                     }
@@ -895,28 +723,33 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
 
               <div>
                 <span className="text-[10px] text-foreground-muted block font-medium mb-1">
-                  URL Return Pengalihan Pelanggan (GET):
+                  Header Autentikasi Perangkat:
                 </span>
                 <div className="relative">
                   <Input
                     readOnly
-                    value={`${currentBaseUrl || 'https://asterrastore.biz.id'}/orders`}
+                    value="X-Device-Token: (Dikonfigurasi di App LiPay)"
                     className="text-[11px] bg-surface-raised border-border font-mono pr-16 select-all"
                   />
                   <button
                     type="button"
                     onClick={() =>
-                      handleCopy(`${currentBaseUrl || 'https://asterrastore.biz.id'}/orders`, 'return')
+                      handleCopy('X-Device-Token', 'token_hdr')
                     }
                     className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-primary hover:underline px-1 py-0.5 flex items-center gap-1"
                   >
-                    {copiedKey === 'return' ? <FontAwesomeIcon icon={faCheck} className="w-3 h-3" /> : <FontAwesomeIcon icon={faCopy} className="w-3 h-3" />}
-                    <span>{copiedKey === 'return' ? 'Tersalin' : 'Salin'}</span>
+                    {copiedKey === 'token_hdr' ? <FontAwesomeIcon icon={faCheck} className="w-3 h-3" /> : <FontAwesomeIcon icon={faCopy} className="w-3 h-3" />}
+                    <span>{copiedKey === 'token_hdr' ? 'Tersalin' : 'Salin'}</span>
                   </button>
                 </div>
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Full-width Row: LiPay DANA Bisnis Live Listener & Verification Feed */}
+        <div className="lg:col-span-12">
+          <AdminLiPayEventsWidget onNotify={onNotify} baseUrl={currentBaseUrl} />
         </div>
       </div>
     </div>

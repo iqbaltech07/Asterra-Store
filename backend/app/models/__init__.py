@@ -15,6 +15,7 @@ from app.models.payout_request import PayoutRequest
 from app.models.store_operating_hours import StoreOperatingHours
 from app.models.order_processing_setting import OrderProcessingSetting, ResellerApiSetting
 from app.models.category import Category
+from app.models.payment_event import PaymentEvent
 
 __all__ = [
     "Product",
@@ -27,6 +28,7 @@ __all__ = [
     "AdminUser",
     "SalesPartner",
     "PaymentSetting",
+    "PaymentEvent",
     "StoreOperatingHours",
     "OrderProcessingSetting",
     "ResellerApiSetting",

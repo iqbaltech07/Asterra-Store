@@ -473,7 +473,7 @@ function PrivateOrderContent() {
     if (methodId === 'manual_bca') return paymentConfig?.bank?.name || 'Bank Central Asia (BCA)';
     if (methodId === 'manual_qris' || methodId === 'qris_manual') return 'QRIS Statis Toko';
     if (methodId === 'manual_dana') return 'Transfer E-Wallet DANA';
-    if (methodId === 'qris' || methodId === 'qris_midtrans') return 'QRIS';
+    if (methodId === 'qris' || methodId === 'lipay' || methodId === 'qris_midtrans') return 'QRIS';
     if (methodId === 'bca_va') return 'BCA Virtual Account';
     if (methodId === 'mandiri_va') return 'Mandiri Virtual Account';
     if (methodId === 'bni_va') return 'BNI Virtual Account';
@@ -510,7 +510,7 @@ function PrivateOrderContent() {
       rawOrder.payment?.payment_method ||
       rawOrder.paymentMethod ||
       rawOrder.payment_method ||
-      'manual_bca';
+      'qris';
 
     const isManual =
       rawOrder.payment_mode === 'manual' ||

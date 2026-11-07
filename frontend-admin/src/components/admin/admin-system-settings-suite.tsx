@@ -54,7 +54,7 @@ const INITIAL_RULES: NotificationRule[] = [
   {
     id: 'rule-payment-success',
     event: 'Pembayaran Berhasil (Payment Confirmed)',
-    description: 'Konfirmasi pembayaran dari Midtrans QRIS diterima dan pesanan masuk antrean pengiriman lisensi.',
+    description: 'Konfirmasi pembayaran dari LiPay QRIS DANA Bisnis diterima dan pesanan masuk antrean pengiriman lisensi.',
     channel: 'WhatsApp',
     recipient: 'Keduanya',
     enabled: true,

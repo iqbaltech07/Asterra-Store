@@ -70,8 +70,6 @@ class CampaignService:
                 Base.metadata.create_all(bind=engine, tables=[PromoCampaign.__table__])
                 try:
                     with engine.connect() as conn:
-                        conn.execute(text("ALTER TABLE orders ADD COLUMN IF NOT EXISTS campaign_id VARCHAR;"))
-                        conn.execute(text("ALTER TABLE orders ADD COLUMN IF NOT EXISTS campaign_discount INTEGER DEFAULT 0;"))
                         conn.execute(text("ALTER TABLE promo_campaigns ADD COLUMN IF NOT EXISTS priority INTEGER DEFAULT 0;"))
                         conn.commit()
                 except Exception:

@@ -364,7 +364,7 @@ export function AdminSidebar({
               id: 'payment-settings',
               label: 'Metode Pembayaran',
               icon: CreditCard,
-              description: 'Midtrans QRIS, transfer bank, & fee',
+              description: 'LiPay QRIS DANA, transfer bank, & fee',
             },
             {
               id: 'logs',
@@ -591,7 +591,7 @@ export function AdminSidebar({
             id: 'payment-settings',
             label: 'Metode Pembayaran',
             icon: CreditCard,
-            description: 'Midtrans QRIS, transfer bank, & fee',
+            description: 'LiPay QRIS DANA, transfer bank, & fee',
           },
           {
             id: 'logs',

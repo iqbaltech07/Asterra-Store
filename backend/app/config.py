@@ -55,11 +55,8 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7 # 7 days
     
-    # Midtrans Official Payment Gateway / Dynamic QRIS (Core API)
-    MIDTRANS_SERVER_KEY: str = os.getenv("MIDTRANS_SERVER_KEY", "")
-    MIDTRANS_CLIENT_KEY: str = os.getenv("MIDTRANS_CLIENT_KEY", "")
-    MIDTRANS_MERCHANT_ID: str = os.getenv("MIDTRANS_MERCHANT_ID", "")
-    MIDTRANS_IS_PRODUCTION: bool = os.getenv("MIDTRANS_IS_PRODUCTION", "false").lower() == "true"
+    # LiPay DANA Bisnis Payment Listener Integration
+    LIPAY_DEVICE_TOKEN: str = os.getenv("LIPAY_DEVICE_TOKEN", os.getenv("DANA_DEVICE_TOKEN", "asterra_dana_listener_token_dev"))
     
     # Vercel Blob Storage
     BLOB_READ_WRITE_TOKEN: str = os.getenv("BLOB_READ_WRITE_TOKEN", "")
@@ -74,6 +71,7 @@ class Settings(BaseSettings):
     QSTASH_CURRENT_SIGNING_KEY: str = os.getenv("QSTASH_CURRENT_SIGNING_KEY", "")
     QSTASH_NEXT_SIGNING_KEY: str = os.getenv("QSTASH_NEXT_SIGNING_KEY", "")
     INTERNAL_CRON_SECRET: str = os.getenv("INTERNAL_CRON_SECRET", "")
+    DANA_DEVICE_TOKEN: str = os.getenv("DANA_DEVICE_TOKEN", os.getenv("INTERNAL_CRON_SECRET", "asterra_dana_listener_token_dev"))
     
     # VIP Reseller Supplier Integration
     VIP_RESELLER_BASE_URL: str = os.getenv("VIP_RESELLER_BASE_URL", "https://vip-reseller.co.id/api")

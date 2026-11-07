@@ -582,7 +582,7 @@ export function AdminCardsTab({ onNotify, onNavigateToCatalog }: AdminCardsTabPr
       totalBase += b;
       totalDummy += d;
       totalReal += r;
-      totalSold += (b + d + r);
+      totalSold += (d + r);
     });
 
     return { totalBase, totalDummy, totalReal, totalSold };
@@ -847,7 +847,7 @@ export function AdminCardsTab({ onNotify, onNavigateToCatalog }: AdminCardsTabPr
                         <td className="py-3 px-4 font-mono text-[#0F172A]">
                           <span className="font-bold">{card.soldCount}</span>
                           <span className="text-[#64748B] text-[10px] ml-1">
-                            (Base: {card.baseSoldCount || 0})
+                            (Fake: {card.dummySoldCount ?? 0}, Real: {card.realSoldCount ?? 0})
                           </span>
                         </td>
 
@@ -921,7 +921,7 @@ export function AdminCardsTab({ onNotify, onNavigateToCatalog }: AdminCardsTabPr
                 <div className="font-bold flex items-center gap-2">
                   <span>Formula Total Terjual:</span>
                   <code className="bg-white px-2 py-0.5 rounded border border-amber-300 font-mono text-amber-800">
-                    Total Terjual = Baseline + Completed Dummy Orders + Completed Real Orders
+                    Total Terjual = Fake Orders (Dummy) + Real Orders
                   </code>
                 </div>
                 <p className="text-[#64748B] leading-relaxed">
@@ -1052,7 +1052,7 @@ export function AdminCardsTab({ onNotify, onNavigateToCatalog }: AdminCardsTabPr
                     const baselineVal = isEdited ? baselineEdits[card.id] : (card.baseSoldCount ?? 0);
                     const dummyVal = card.dummySoldCount ?? 0;
                     const realVal = card.realSoldCount ?? 0;
-                    const liveTotal = baselineVal + dummyVal + realVal;
+                    const liveTotal = dummyVal + realVal;
                     const isSaving = savingCardId === card.id;
 
                     const secList = card.sections || [];

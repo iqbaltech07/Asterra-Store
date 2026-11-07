@@ -77,7 +77,6 @@ export const AdminNotificationProvider: React.FC<AdminNotificationProviderProps>
     const unsub = notificationSound.onUnlockChange((unlocked) => {
       setAudioUnlocked(unlocked);
     });
-    notificationSound.reconcileOfflineEvents();
     return unsub;
   }, []);
 
@@ -162,11 +161,34 @@ export const AdminNotificationProvider: React.FC<AdminNotificationProviderProps>
             if (!orderId) return;
 
             const eventKey = `order:${orderId}:created`;
-            if (processedEventsRef.current.has(eventKey)) return;
+            if (processedEventsRef.current.has(eventKey) || notificationSound.isEventProcessed(eventKey)) return;
             saveProcessedEvent(eventKey);
+            notificationSound.markEventProcessed(eventKey);
 
-            // Play existing audio notification
-            notificationSound.play('order', { orderId, eventId: eventKey });
+            // Cek kriteria notifikasi suara pesanan masuk:
+            // 1. Bukan pesanan simulasi/dummy
+            // 2. Berstatus 'menunggu pembayaran' (order status pending/unpaid, payment status bukan paid/success)
+            // 3. Pesanan baru masuk (< 2 menit yang lalu), bukan notifikasi lama saat admin kembali ke halaman
+            const isDummy = Boolean(payload.is_dummy || payload.isDummy);
+            const orderStatus = String(payload.order_status || payload.status || 'pending').toLowerCase().trim();
+            const paymentStatus = String(payload.payment_status || payload.paymentStatus || '').toLowerCase().trim();
+
+            const isWaitingPayment =
+              !isDummy &&
+              (orderStatus === 'pending' || orderStatus === 'unpaid' || orderStatus === 'menunggu pembayaran' || orderStatus === 'menunggu_pembayaran') &&
+              (paymentStatus === '' || paymentStatus === 'pending' || paymentStatus === 'unpaid' || paymentStatus === 'menunggu pembayaran' || paymentStatus === 'menunggu_pembayaran');
+
+            const createdAtMs = payload.created_at || payload.createdAt ? new Date(payload.created_at || payload.createdAt).getTime() : Date.now();
+            const isStale = !isNaN(createdAtMs) && (Date.now() - createdAtMs) > 120000;
+
+            if (isWaitingPayment && !isStale) {
+              notificationSound.play('order', {
+                orderId,
+                eventId: eventKey,
+                status: orderStatus,
+                timestamp: createdAtMs,
+              });
+            }
 
             // Invalidate React Query caches
             queryClient.invalidateQueries({ queryKey: ['admin-orders'] });

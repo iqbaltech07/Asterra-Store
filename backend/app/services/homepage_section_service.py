@@ -184,11 +184,11 @@ class HomepageSectionService:
             db = SessionLocal() if SessionLocal else None
             if db:
                 try:
-                    # Query order items belonging to completed/success/paid orders
+                    # Query order items belonging to completed/success/paid/processing orders
                     results = (
                         db.query(OrderItem.product_id, OrderItem.product_name, OrderItem.quantity)
                         .join(Order, OrderItem.order_id == Order.id)
-                        .filter(Order.status.in_(["completed", "success", "paid"]))
+                        .filter(Order.status.in_(["completed", "success", "paid", "settlement", "done", "selesai"]))
                         .all()
                     )
                     for pid, pname, qty in results:
@@ -207,7 +207,7 @@ class HomepageSectionService:
         try:
             from app.services.order_service import OrderService
             orders = OrderService.load_orders()
-            valid_orders = [o for o in orders if str(o.get("status", "")).lower() in ["completed", "success", "paid"]]
+            valid_orders = [o for o in orders if str(o.get("status", "")).lower() in ["completed", "success", "paid", "settlement", "done", "selesai"]]
             for o in valid_orders:
                 for it in o.get("items", []):
                     q = int(it.get("quantity") or 1)
@@ -312,6 +312,9 @@ class HomepageSectionService:
                     .filter(ProductCard.status == "active")
                     .all()
                 )
+                from app.services.card_service import CardService
+                sold_breakdown = CardService.get_sales_breakdown()
+
                 for card in active_cards:
                     active_catalogs = [p for p in (card.catalogs or []) if getattr(p, "status", None) == "active"]
                     if not active_catalogs:
@@ -341,11 +344,14 @@ class HomepageSectionService:
                     has_valid_dt = len(created_timestamps) > 0
                     effective_created_at = max(created_timestamps) if has_valid_dt else datetime(1970, 1, 1)
 
-                    # Sold count: unified canonical calculation via card.to_dict
-                    order_sold = sales_counts.get(str(card.id).lower(), 0) + sales_counts.get(str(card.slug).lower(), 0)
-                    for v in active_catalogs:
-                        order_sold += sales_counts.get(str(v.id).lower(), 0)
-                    card_summary = card.to_dict(include_catalogs=False, sold_count=order_sold)
+                    # Sold count: unified canonical calculation via CardService sales breakdown + card.to_dict
+                    sb = sold_breakdown.get(card.id, {"dummy": 0, "real": 0, "total": 0})
+                    card_summary = card.to_dict(
+                        include_catalogs=False,
+                        sold_count=sb["total"],
+                        dummy_sold=sb["dummy"],
+                        real_sold=sb["real"],
+                    )
                     total_sold = card_summary["soldCount"]
                     base_sold = card_summary["baseSoldCount"]
 
@@ -409,7 +415,9 @@ class HomepageSectionService:
                         "stockStatus": stock_status,
                         "isOutOfStock": stock_status == "out_of_stock",
                         "baseSoldCount": base_sold,
-                        "orderSoldCount": order_sold,
+                        "dummySoldCount": sb["dummy"],
+                        "realSoldCount": sb["real"],
+                        "orderSoldCount": sb["total"],
                         "soldCount": total_sold,
                         "isPromo": in_promo or section_key == "promo",
                         "effectiveCreatedAt": effective_created_at.isoformat() if has_valid_dt else None,

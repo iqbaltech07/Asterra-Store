@@ -180,7 +180,7 @@ export function mapDbOrderToOrder(d: RawDbOrder): Order {
     logs: logsList.map((l) => ({
       id: l.id || `log-${Math.random()}`,
       order_id: l.orderId || d.id,
-      actor: (l.actor as 'customer' | 'admin' | 'midtrans_webhook' | 'dana_webhook' | 'tripay_webhook' | 'system') || 'system',
+      actor: (l.actor as 'customer' | 'admin' | 'lipay_listener' | 'midtrans_webhook' | 'dana_webhook' | 'tripay_webhook' | 'system') || 'system',
       action: l.action || 'status_updated',
       previous_status: l.previousStatus || undefined,
       new_status: l.newStatus || undefined,

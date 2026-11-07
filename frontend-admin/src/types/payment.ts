@@ -12,6 +12,8 @@ export interface PaymentConfig {
   bankAccountName: string;
   qrisImageUrl: string;
   qrisMerchantName: string;
+  qrisRawString?: string;
+  qris_raw_string?: string;
   danaNumber: string;
   danaAccountName: string;
   confirmationWhatsapp: string;

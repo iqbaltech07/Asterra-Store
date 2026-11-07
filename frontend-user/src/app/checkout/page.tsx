@@ -47,30 +47,6 @@ const GATEWAY_PAYMENT_METHODS: PaymentMethodOption[] = [
     description: 'Scan via GoPay, OVO, DANA, ShopeePay, LinkAja & semua m-Banking / E-Wallet',
     category: 'qris',
   },
-  {
-    id: 'bca_va',
-    name: 'BCA Virtual Account',
-    description: 'Transfer otomatis via myBCA, BCA Mobile, KlikBCA, atau ATM BCA',
-    category: 'va',
-  },
-  {
-    id: 'mandiri_va',
-    name: 'Mandiri Virtual Account',
-    description: 'Transfer otomatis via Livin by Mandiri, ATM Mandiri, atau Internet Banking',
-    category: 'va',
-  },
-  {
-    id: 'bni_va',
-    name: 'BNI Virtual Account',
-    description: 'Transfer otomatis via BNI Mobile Banking, Internet Banking, atau ATM BNI',
-    category: 'va',
-  },
-  {
-    id: 'bri_va',
-    name: 'BRI Virtual Account',
-    description: 'Transfer otomatis via BRImo, Internet Banking BRI, atau ATM BRI',
-    category: 'va',
-  },
 ];
 
 function CheckoutPageContent() {
@@ -376,21 +352,30 @@ function CheckoutPageContent() {
   // Default fallback ensuring zero-delay rendering for users
   const DEFAULT_PUBLIC_CONFIG: PublicPaymentConfig = {
     mode: 'manual',
+    isBankActive: false,
+    isQrisActive: true,
+    isDanaActive: false,
+    is_bank_active: false,
+    is_qris_active: true,
+    is_dana_active: false,
     bank: {
       name: 'Bank Central Asia (BCA)',
       account_number: '8965123456',
       account_name: 'Asterra Store Official',
+      is_active: false,
     },
     qris: {
       image_url: '/images/qris-toko.png',
       merchant_name: 'ASTERRA STORE QRIS',
+      is_active: true,
     },
     dana: {
       number: '081234567890',
       account_name: 'Asterra Store',
+      is_active: false,
     },
     confirmation_whatsapp: '6281234567890',
-    instructions: 'Transfer sesuai nominal tepat hingga 3 digit kode unik terakhir untuk verifikasi instan mutasi.',
+    instructions: 'Scan QRIS dan selesaikan pembayaran sesuai nominal tepat untuk verifikasi instan.',
     enable_unique_code: true,
     order_expiry_hours: 24,
     cs_email: 'cs@asterra.store',
@@ -500,13 +485,10 @@ function CheckoutPageContent() {
         localStorage.setItem('asterra_payment_config', JSON.stringify(configData.data));
       } catch {}
       setSelectedMethod((prev) => {
-        if (configData.data.mode === 'manual' && !prev.startsWith('manual_')) {
-          return configData.data.isQrisActive ? 'manual_qris' : 'manual_bca';
+        if (configData.data.mode === 'manual') {
+          return 'manual_qris';
         }
-        if (configData.data.mode === 'gateway' && prev.startsWith('manual_')) {
-          return 'qris';
-        }
-        return prev;
+        return 'qris';
       });
     }
   }, [configData]);
@@ -523,51 +505,14 @@ function CheckoutPageContent() {
   // Dynamic payment methods based on server mode with active/inactive channel filtering
   const currentPaymentMethods: PaymentMethodOption[] = useMemo(() => {
     if (!isManualMode) return GATEWAY_PAYMENT_METHODS;
-    const isBankOn = (paymentConfig?.isBankActive ?? paymentConfig?.is_bank_active ?? paymentConfig?.bank?.is_active) !== false;
-    const isQrisOn = (paymentConfig?.isQrisActive ?? paymentConfig?.is_qris_active ?? paymentConfig?.qris?.is_active) !== false;
-    const isDanaOn = (paymentConfig?.isDanaActive ?? paymentConfig?.is_dana_active ?? paymentConfig?.dana?.is_active) !== false;
-
-    const list: PaymentMethodOption[] = [];
-    if (isBankOn) {
-      list.push({
-        id: 'manual_bca',
-        name: paymentConfig?.bank?.name || 'Bank Central Asia (BCA)',
-        description: `No. Rek: ${paymentConfig?.bank?.account_number || '8965123456'} a.n ${
-          paymentConfig?.bank?.account_name || 'Asterra Store Official'
-        }`,
-        category: 'bank_manual',
-      });
-    }
-    if (isQrisOn) {
-      list.push({
+    return [
+      {
         id: 'manual_qris',
         name: 'QRIS Statis Toko',
         description: `Scan QRIS Semua Bank & E-Wallet (${paymentConfig?.qris?.merchant_name || 'ASTERRA STORE'})`,
         category: 'qris',
-      });
-    }
-    if (isDanaOn) {
-      list.push({
-        id: 'manual_dana',
-        name: 'Transfer E-Wallet DANA',
-        description: `No. HP: ${paymentConfig?.dana?.number || '081234567890'} a.n ${
-          paymentConfig?.dana?.account_name || 'Asterra Store'
-        }`,
-        category: 'ewallet',
-      });
-    }
-    // Fallback if all disabled
-    if (list.length === 0) {
-      list.push({
-        id: 'manual_bca',
-        name: paymentConfig?.bank?.name || 'Bank Central Asia (BCA)',
-        description: `No. Rek: ${paymentConfig?.bank?.account_number || '8965123456'} a.n ${
-          paymentConfig?.bank?.account_name || 'Asterra Store Official'
-        }`,
-        category: 'bank_manual',
-      });
-    }
-    return list;
+      },
+    ];
   }, [isManualMode, paymentConfig]);
 
   // Ensure selectedMethod is valid among active channels
@@ -802,7 +747,7 @@ function CheckoutPageContent() {
 
       const isOrderManual =
         selectedMethod.startsWith('manual_') ||
-        (isManualMode && selectedMethod !== 'qris' && selectedMethod !== 'qris_midtrans');
+        (isManualMode && selectedMethod !== 'qris' && selectedMethod !== 'lipay' && selectedMethod !== 'qris_midtrans');
 
       const isPreorderOrder =
         isPreorderMode ||
@@ -1000,7 +945,7 @@ function CheckoutPageContent() {
     if (methodId === 'manual_bca') return paymentConfig?.bank?.name || 'Bank Central Asia (BCA)';
     if (methodId === 'manual_qris') return 'QRIS Statis Toko';
     if (methodId === 'manual_dana') return 'Transfer E-Wallet DANA';
-    if (methodId === 'qris' || methodId === 'qris_midtrans') return 'QRIS';
+    if (methodId === 'qris' || methodId === 'lipay' || methodId === 'qris_midtrans') return 'QRIS';
     if (methodId === 'bca_va') return 'BCA Virtual Account';
     if (methodId === 'mandiri_va') return 'Mandiri Virtual Account';
     if (methodId === 'bni_va') return 'BNI Virtual Account';

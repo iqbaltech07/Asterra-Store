@@ -18,6 +18,8 @@ import {
   ChevronRight,
   Info,
   X,
+  AlertTriangle,
+  ShieldCheck,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -921,6 +923,41 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
                         />
                       </div>
                     </div>
+
+                    {/* Floor Price & High Discount Warning Banner */}
+                    {((campDiscountType === 'percentage' && Number(campDiscountValue) >= 20) ||
+                      (campDiscountType === 'fixed' && Number(campDiscountValue) >= 25000) ||
+                      Number(campAffiliateBonus) >= 15) && (
+                      <div className={`p-3 rounded-xl border text-xs flex gap-2.5 items-start transition-all ${
+                        (campDiscountType === 'percentage' && Number(campDiscountValue) >= 40)
+                          ? 'bg-rose-50 border-rose-200 text-rose-900'
+                          : 'bg-amber-50 border-amber-200 text-amber-900'
+                      }`}>
+                        <AlertTriangle className={`w-4 h-4 shrink-0 mt-0.5 ${
+                          (campDiscountType === 'percentage' && Number(campDiscountValue) >= 40) ? 'text-rose-600' : 'text-amber-600'
+                        }`} />
+                        <div className="space-y-1">
+                          <div className="font-bold flex items-center gap-1.5 flex-wrap">
+                            <span>Peringatan Margin Diskon & Komisi</span>
+                            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/80 border border-current font-semibold inline-flex items-center gap-1">
+                              <ShieldCheck className="w-3 h-3 text-emerald-600" /> Floor Price Guard Aktif
+                            </span>
+                          </div>
+                          <p className="text-[11px] leading-relaxed text-current/90">
+                            {campDiscountType === 'percentage' && Number(campDiscountValue) >= 20 && (
+                              <span>Diskon <strong>{campDiscountValue}%</strong> tergolong cukup besar. </span>
+                            )}
+                            {campDiscountType === 'fixed' && Number(campDiscountValue) >= 25000 && (
+                              <span>Potongan <strong>Rp {Number(campDiscountValue).toLocaleString('id-ID')}</strong> tergolong cukup besar. </span>
+                            )}
+                            {Number(campAffiliateBonus) >= 15 && (
+                              <span>Bonus affiliate <strong>+{campAffiliateBonus}%</strong> akan membuat total komisi mitra menjadi <strong>{30 + Number(campAffiliateBonus)}%</strong>. </span>
+                            )}
+                            Sistem <strong>Floor Price Protection</strong> Asterra Store akan otomatis mengunci harga bayar di checkout agar tidak pernah jatuh di bawah HPP modal supplier.
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 

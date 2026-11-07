@@ -44,21 +44,24 @@ class ReferralProfitService:
         has_sales_partner: bool = True,
         has_recruiter: bool = False,
         campaign_rate_override: Optional[float] = None,
+        partner_base_rate: Optional[float] = None,
+        campaign_bonus_rate: Optional[float] = None,
     ) -> Dict[str, Any]:
         """
         Canonical Asterra Profit Waterfall & Split Engine (Model Bisnis v2.0):
         | Penerima | Transaksi Direct (Tanpa Affiliate) | Transaksi Melalui Affiliate (70:30) |
         |---|---:|---:|
-        | Affiliate Sales | 0% | 30% |
-        | Asterra Store | 100% | 70% |
+        | Affiliate Sales | 0% | 30% (+ Campaign Bonus) |
+        | Asterra Store | 100% | 70% (- Campaign Bonus) |
         | - Cadangan Usaha & Garansi (Reserve) | 15% | 15% |
-        | - CEO Share | 42,5% | 27,5% |
-        | - COO Share | 42,5% | 27,5% |
+        | - CEO Share | 42,5% | (Retained - Reserve) / 2 |
+        | - COO Share | 42,5% | (Retained - Reserve) / 2 |
         | Total Alokasi | 100% | 100% |
 
         Ketentuan:
-        - Komisi Affiliate: 30% dari Transaction Profit (Selling Price - Supplier Cost).
-        - Porsi Asterra Store: 70% dari Transaction Profit untuk transaksi affiliate.
+        - Base Komisi Affiliate: 30% dari Transaction Profit (Selling Price - Supplier Cost - Direct Costs).
+        - Campaign Bonus Komisi: Tambahan % komisi (misal +3%, +5%) dari campaign promo aktif.
+        - Total Komisi Affiliate: Base Commission + Bonus Commission (misal 30% + 3% = 33%).
         - Strict 50:50 Founder Parity antara CEO dan COO.
         - Zero Leakage: Total seluruh alokasi strictly 100% dari transaction_profit.
         """
@@ -67,6 +70,10 @@ class ReferralProfitService:
             return {
                 "sales_commission": 0,
                 "sales_commission_rate": 0.0,
+                "base_commission": 0,
+                "base_commission_rate": 0.0,
+                "bonus_commission": 0,
+                "bonus_commission_rate": 0.0,
                 "recruitment_bonus": 0,
                 "recruitment_bonus_rate": 0.0,
                 "ceo_share": 0,
@@ -90,6 +97,10 @@ class ReferralProfitService:
             return {
                 "sales_commission": 0,
                 "sales_commission_rate": 0.0,
+                "base_commission": 0,
+                "base_commission_rate": 0.0,
+                "bonus_commission": 0,
+                "bonus_commission_rate": 0.0,
                 "recruitment_bonus": 0,
                 "recruitment_bonus_rate": 0.0,
                 "ceo_share": ceo,
@@ -104,12 +115,35 @@ class ReferralProfitService:
                 "total_allocated": ceo + coo + reserve,
             }
 
-        # Affiliate Sales (70:30 Model Bisnis v2.0)
-        sales_rate = (campaign_rate_override / 100.0) if (campaign_rate_override and campaign_rate_override > 0) else (cls.DIRECT_RATE_DEFAULT / 100.0)
-        sales_comm = int(round(tx_profit * sales_rate))
+        # Affiliate Sales (Base Commission + Campaign Bonus)
+        base_rate = float(partner_base_rate) if partner_base_rate is not None else cls.DIRECT_RATE_DEFAULT
+        bonus_rate = float(campaign_bonus_rate or 0.0)
+
+        # Handle legacy campaign_rate_override parameter
+        if bonus_rate == 0.0 and campaign_rate_override is not None and campaign_rate_override > 0:
+            if campaign_rate_override < base_rate:
+                bonus_rate = float(campaign_rate_override)
+            else:
+                base_rate = float(campaign_rate_override)
+                bonus_rate = 0.0
+
+        total_rate = base_rate + bonus_rate
+
+        # Floor/Ceiling Protection: Total affiliate commission is capped at 50% of transaction profit
+        # ensuring Asterra Store always retains at least 50% for reserve (15%) and founder distributable (35%).
+        MAX_AFFILIATE_COMMISSION_RATE = 50.0
+        if total_rate > MAX_AFFILIATE_COMMISSION_RATE:
+            total_rate = MAX_AFFILIATE_COMMISSION_RATE
+            bonus_rate = max(0.0, MAX_AFFILIATE_COMMISSION_RATE - base_rate)
+
+        sales_rate = total_rate / 100.0
+
+        base_comm = int(round(tx_profit * (base_rate / 100.0)))
+        bonus_comm = int(round(tx_profit * (bonus_rate / 100.0)))
+        sales_comm = base_comm + bonus_comm
         sponsor_bonus = 0  # Initial phase: 0% sponsor bonus per section 4.9
 
-        # Asterra Retained Profit (70% standard)
+        # Asterra Retained Profit
         retained_profit = max(0, tx_profit - sales_comm - sponsor_bonus)
         reserve = int(round(tx_profit * 0.15))
         founder_distributable = max(0, retained_profit - reserve)
@@ -120,15 +154,19 @@ class ReferralProfitService:
 
         return {
             "sales_commission": sales_comm,
-            "sales_commission_rate": round(sales_rate * 100.0, 1),
+            "sales_commission_rate": round(total_rate, 1),
+            "base_commission": base_comm,
+            "base_commission_rate": round(base_rate, 1),
+            "bonus_commission": bonus_comm,
+            "bonus_commission_rate": round(bonus_rate, 1),
             "recruitment_bonus": 0,
             "recruitment_bonus_rate": 0.0,
             "ceo_share": ceo_share,
-            "ceo_share_rate": 27.5,
+            "ceo_share_rate": round(ceo_share / tx_profit * 100.0, 1) if tx_profit else 27.5,
             "coo_share": coo_share,
-            "coo_share_rate": 27.5,
+            "coo_share_rate": round(coo_share / tx_profit * 100.0, 1) if tx_profit else 27.5,
             "business_reserve": reserve,
-            "business_reserve_rate": 15.0,
+            "business_reserve_rate": round(reserve / tx_profit * 100.0, 1) if tx_profit else 15.0,
             "profit_distribution": retained_profit,
             "is_vip": False,
             "total": sales_comm + ceo_share + coo_share + reserve,
@@ -160,14 +198,16 @@ class ReferralProfitService:
             except Exception:
                 pass
 
-        is_vip = bool(direct_partner_rate is not None and direct_partner_rate >= cls.DIRECT_RATE_VIP)
+        base_rate = float(direct_partner_rate) if direct_partner_rate is not None else cls.DIRECT_RATE_DEFAULT
+        is_vip = bool(base_rate >= cls.DIRECT_RATE_VIP)
         alloc = cls.calculate_profit_allocation(
             transaction_profit=transaction_profit,
             successful_orders_count=50 if is_vip else 0,
             is_vip=is_vip,
             has_sales_partner=bool(direct_partner_code),
             has_recruiter=bool(sponsor_partner_code),
-            campaign_rate_override=booster_rate,
+            partner_base_rate=base_rate,
+            campaign_bonus_rate=booster_rate,
         )
 
         holding_until = datetime.utcnow() + timedelta(days=cls.HOLDING_DAYS)
@@ -237,9 +277,10 @@ class ReferralProfitService:
                     if recruiter:
                         recruiter_id = recruiter.id
 
-                # 3. Determine Sales Commission Rate & VIP Status (Sales Pemula: 15%, Sales VIP >= 50 unique successful orders: 20%)
+                # 3. Determine Sales Commission Rate & VIP Status (Affiliate 30%, plus Campaign Bonus)
                 successful_orders_count = 0
                 is_vip_partner = False
+                partner_base_rate = cls.DIRECT_RATE_DEFAULT
                 if partner:
                     try:
                         successful_orders_count = db.query(Order.id).filter(
@@ -250,9 +291,10 @@ class ReferralProfitService:
                         successful_orders_count = int(getattr(partner, "total_orders", 0) or 0)
 
                     partner_tier = str(getattr(partner, "tier", "") or "").lower()
-                    is_vip_partner = (successful_orders_count >= 50 or "vip" in partner_tier or getattr(partner, "rate", 0) == 20)
+                    is_vip_partner = (successful_orders_count >= 50 or "vip" in partner_tier or getattr(partner, "rate", 0) >= 30)
+                    partner_base_rate = float(getattr(partner, "rate", 0) or cls.DIRECT_RATE_DEFAULT)
 
-                campaign_booster_rate = None
+                campaign_bonus_rate = 0.0
                 camp_id_val = order.campaign_id or ""
                 if camp_id_val:
                     try:
@@ -263,12 +305,12 @@ class ReferralProfitService:
                             if c_id == camp_id_val or c_slug == camp_id_val.lower():
                                 override = float(c.get("affiliateBonusPercent") or c.get("affiliateCommissionOverride") or 0)
                                 if override > 0:
-                                    campaign_booster_rate = override
+                                    campaign_bonus_rate = override
                                 break
                     except Exception:
                         pass
                 elif (order.campaign_discount or 0) > 0:
-                    campaign_booster_rate = cls.DIRECT_RATE_VIP
+                    campaign_bonus_rate = 0.0
 
                 # 4. Compute Cost of Goods (COG) from actual product provider_price
                 items = order.items or []
@@ -326,7 +368,8 @@ class ReferralProfitService:
                     is_vip=is_vip_partner,
                     has_sales_partner=bool(partner),
                     has_recruiter=bool(recruiter_id),
-                    campaign_rate_override=campaign_booster_rate,
+                    partner_base_rate=partner_base_rate,
+                    campaign_bonus_rate=campaign_bonus_rate,
                 )
 
                 sales_comm_amount = alloc["sales_commission"]

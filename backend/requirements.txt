@@ -11,3 +11,4 @@ bcrypt>=4.0.0
 python-jose[cryptography]>=3.3.0
 upstash-redis>=1.0.0
 qstash>=3.0.0
+segno>=1.6.0
