@@ -235,7 +235,7 @@ export function SalesCatalogTab({
                     <div className="flex items-center gap-3">
                       <ProductAvatar
                         name={p.name}
-                        imageUrl={p.imageUrl}
+                        imageUrl={(p as any).logoUrl}
                         size="md"
                         className="w-10 h-10 shrink-0"
                       />

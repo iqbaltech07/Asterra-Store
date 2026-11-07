@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="disneyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#040714"/>
+      <stop offset="100%" stop-color="#113CCF"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="url(#disneyGrad)"/>
+  <!-- Disney D Arc + Plus -->
+  <path d="M32 34 C32 34 56 32 66 44 C76 56 68 76 52 78 C38 80 32 72 32 72 L32 34 Z" stroke="#FFFFFF" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <path d="M86 52 L86 68 M78 60 L94 60" stroke="#00D6FF" stroke-width="5" stroke-linecap="round"/>
+</svg>

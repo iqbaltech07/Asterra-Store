@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <rect width="128" height="128" rx="28" fill="#0B5CFF"/>
+  <!-- Zoom Video Camera -->
+  <g transform="translate(26, 36)">
+    <rect x="0" y="4" width="50" height="36" rx="8" fill="#FFFFFF"/>
+    <path d="M54 16 L74 6 C75.5 5.2 77 6.3 77 8 L77 36 C77 37.7 75.5 38.8 74 38 L54 28 Z" fill="#FFFFFF"/>
+  </g>
+</svg>

@@ -5,68 +5,120 @@ import { Package, Gamepad2, Tv } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 /**
- * Brandfetch & Official Icon Registry
- * Reliable icons served via internal proxy / cached media storage
+ * Brand & Official Icon Registry
+ * Reliable icons served via local static storage or cached internal proxies
  */
 export const BRAND_ICONS_MAP: Record<string, string> = {
-  canva: '/api/v1/media/brand-icons/canva',
-  netflix: '/api/v1/media/brand-icons/netflix',
-  spotify: '/api/v1/media/brand-icons/spotify',
-  chatgpt: '/api/v1/media/brand-icons/chatgpt',
-  openai: '/api/v1/media/brand-icons/chatgpt',
-  gemini: '/api/v1/media/brand-icons/gemini',
-  google: '/api/v1/media/brand-icons/gemini',
-  alight: '/api/v1/media/brand-icons/alight',
-  motion: '/api/v1/media/brand-icons/alight',
-  capcut: '/api/v1/media/brand-icons/capcut',
-  vidio: '/api/v1/media/brand-icons/vidio',
-  viu: '/api/v1/media/brand-icons/viu',
-  wetv: '/api/v1/media/brand-icons/wetv',
+  // AI Tools
+  chatgpt: '/images/apps/chatgpt.png',
+  openai: '/images/apps/chatgpt.png',
+  gemini: '/images/apps/gemini.png',
+  'google ai': '/images/apps/gemini.png',
+  'google pro': '/images/apps/gemini.png',
+  google: '/images/apps/gemini.png',
+  claude: '/api/v1/media/brand-icons/claude',
+  midjourney: '/api/v1/media/brand-icons/midjourney',
+
+  // Design & Productivity
+  canva: '/images/apps/canva.png',
+  capcut: '/images/apps/capcut.png',
+  alight: '/images/apps/alightmotion.png',
+  motion: '/images/apps/alightmotion.png',
+  adobe: '/api/v1/media/brand-icons/adobe',
+  grammarly: '/api/v1/media/brand-icons/grammarly',
+
+  // Streaming & Video
+  netflix: '/images/apps/netflix.png',
+  spotify: '/images/apps/spotify.svg',
+  youtube: '/images/apps/youtube.svg',
+  vidio: '/images/apps/vidio.png',
+  viu: '/images/apps/viu.png',
+  wetv: '/images/apps/wetv.png',
   bstation: '/api/v1/media/brand-icons/bstation',
   bilibili: '/api/v1/media/brand-icons/bstation',
   blibli: '/api/v1/media/brand-icons/bstation',
   iqiyi: '/api/v1/media/brand-icons/iqiyi',
-  youtube: '/api/v1/media/brand-icons/youtube',
-  disney: '/api/v1/media/brand-icons/disney',
-  claude: '/api/v1/media/brand-icons/claude',
-  midjourney: '/api/v1/media/brand-icons/midjourney',
-  adobe: '/api/v1/media/brand-icons/adobe',
-  grammarly: '/api/v1/media/brand-icons/grammarly',
-  mobilelegends: '/api/v1/media/brand-icons/mobile-legends',
-  'mobile legends': '/api/v1/media/brand-icons/mobile-legends',
-  pubg: '/api/v1/media/brand-icons/pubg-mobile',
-  vision: '/api/v1/media/brand-icons/vision-plus',
-  'k-vision': '/api/v1/media/brand-icons/k-vision',
-  kvision: '/api/v1/media/brand-icons/k-vision',
-  nex: '/api/v1/media/brand-icons/nex-parabola',
-  wink: '/api/v1/media/brand-icons/wink',
-  meitu: '/api/v1/media/brand-icons/meitu',
+  disney: '/images/apps/disney.svg',
+  loklok: '/images/apps/loklok.svg',
+
+  // Communication, Utilities & Learning
+  duolingo: '/images/apps/duolingo.svg',
+  getcontact: '/images/apps/getcontact.svg',
+  zoom: '/images/apps/zoom.svg',
+  apple: '/images/apps/apple-music.svg',
+  'apple music': '/images/apps/apple-music.svg',
+
+  // Games
+  mobilelegends: '/images/apps/mobile-legends.webp',
+  'mobile legends': '/images/apps/mobile-legends.webp',
+  mlbb: '/images/apps/mobile-legends.webp',
+  pubg: '/images/apps/pubg-mobile.webp',
+
+  // TV & Satellite
+  'k-vision': '/images/apps/k-vision.webp',
+  kvision: '/images/apps/k-vision.webp',
+  nex: '/images/apps/nex-parabola.webp',
+  vision: '/images/apps/vision-plus.webp',
+  'orange tv': '/images/apps/orange-tv.webp',
+
+  // Photo & Beauty
+  wink: '/images/apps/wink.webp',
+  meitu: '/images/apps/meitu.webp',
 };
+
+/**
+ * Strictly detect whether a given URL is a promotional product banner,
+ * wide poster, or broken path rather than an authoritative brand logo.
+ */
+export function isBannerOrInvalidLogo(url: string = ''): boolean {
+  if (!url) return true;
+  const trimmed = url.trim().toLowerCase();
+  return (
+    trimmed === '' ||
+    trimmed.startsWith('/images/brand/') ||
+    trimmed.startsWith('/images/banners/') ||
+    trimmed.includes('/products/') ||
+    trimmed.includes('/media/products/') ||
+    trimmed.includes('/banners/') ||
+    trimmed.includes('banner') ||
+    trimmed.includes('poster') ||
+    trimmed.includes('default-product')
+  );
+}
 
 export function resolveBrandLogo(name: string = '', fallbackUrl: string = ''): string {
   const trimmed = (fallbackUrl || '').trim();
+  const isInvalid = isBannerOrInvalidLogo(trimmed);
 
-  // If a valid custom logo URL is provided (and not a broken legacy path /images/brand/), ALWAYS prioritize it
-  if (trimmed && !trimmed.startsWith('/images/brand/')) {
-    return trimmed;
+  // 1. If an authoritative logo URL is explicitly provided (and NOT a product banner), prioritize it
+  if (!isInvalid) {
+    if (
+      trimmed.startsWith('https://cdn.brandfetch.io/') ||
+      trimmed.startsWith('/api/v1/media/brand-icons/') ||
+      trimmed.startsWith('/images/apps/') ||
+      trimmed.startsWith('data:image/') ||
+      trimmed.includes('/logos/') ||
+      trimmed.includes('logo')
+    ) {
+      return trimmed;
+    }
   }
 
+  // 2. Resolve via keyword matching from BRAND_ICONS_MAP
   const lower = (name || '').toLowerCase();
-
   for (const [key, url] of Object.entries(BRAND_ICONS_MAP)) {
     if (lower.includes(key)) {
       return url;
     }
   }
 
-  return trimmed && !trimmed.startsWith('/images/brand/') ? trimmed : '';
+  // 3. If fallbackUrl was not identified as a banner and is safe, return it
+  return !isInvalid ? trimmed : '';
 }
 
 /**
  * Returns true if the logo asset is a standalone glyph on a transparent / white background
  * that needs inner padding so the glyph doesn't touch the circular border.
- * Logos with official solid/gradient backgrounds (Canva, CapCut, iQIYI, Netflix, Spotify, Disney, etc.)
- * return false so they can fill the circular avatar edge-to-edge without exposing square asset corners.
  */
 export function isPaddedBrand(name: string): boolean {
   const n = (name || '').toLowerCase();
@@ -75,7 +127,6 @@ export function isPaddedBrand(name: string): boolean {
     n.includes('openai') ||
     n.includes('gemini') ||
     n.includes('google') ||
-    n.includes('youtube') ||
     n.includes('vidio') ||
     n.includes('viu') ||
     n.includes('wetv') ||
@@ -105,6 +156,7 @@ export interface ProductAvatarProps {
 /**
  * Reusable Product Avatar Component
  * Standardizes position, circular masking, background themes, padding, and fallbacks.
+ * Guaranteed never to render product promotional banners inside the avatar.
  */
 export function ProductAvatar({
   name,
@@ -168,7 +220,9 @@ export function ProductAvatar({
     );
   }
 
-  const resolvedUrl = resolveBrandLogo(name, imageUrl || '');
+  // Strictly filter out any banner url passed via imageUrl prop
+  const safePropUrl = isBannerOrInvalidLogo(imageUrl) ? '' : imageUrl;
+  const resolvedUrl = resolveBrandLogo(name, safePropUrl || '');
   const activeUrl = !hasError ? resolvedUrl : (resolvedUrl !== defaultBrandIcon ? defaultBrandIcon : '');
 
   const isDark = n.includes('netflix');
@@ -203,9 +257,15 @@ export function ProductAvatar({
     );
   }
 
+  // Clean initials fallback if no brand icon matched
   const initials = (name || '')
     .trim()
+    .replace(/[\[\(].*?[\]\)]/g, '')
+    .replace(/[^a-zA-Z0-9\s]/g, '')
+    .trim()
     .split(/\s+/)
+    .filter(Boolean)
+    .filter((w) => !/^\d+$/.test(w))
     .slice(0, 2)
     .map((w) => w[0]?.toUpperCase() || '')
     .join('');
@@ -213,7 +273,7 @@ export function ProductAvatar({
   return (
     <div
       className={cn(
-        'relative aspect-square shrink-0 rounded-full overflow-hidden flex items-center justify-center border border-slate-200/80 bg-slate-100 text-slate-500 font-bold shadow-2xs select-none',
+        'relative aspect-square shrink-0 rounded-full overflow-hidden flex items-center justify-center border border-slate-200/80 bg-slate-100 text-slate-600 font-bold shadow-2xs select-none',
         sizeClass,
         sanitizedClassName,
         'rounded-full'

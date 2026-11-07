@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <rect width="128" height="128" rx="28" fill="#58CC02"/>
+  <!-- Duolingo Owl Face -->
+  <g transform="translate(14, 18)">
+    <!-- Head / Body Contour -->
+    <path d="M50 0 C22.4 0 0 22.4 0 50 C0 77.6 22.4 92 50 92 C77.6 92 100 77.6 100 50 C100 22.4 77.6 0 50 0 Z" fill="#58CC02"/>
+    <!-- Left Eye -->
+    <circle cx="32" cy="44" r="18" fill="#FFFFFF"/>
+    <circle cx="34" cy="44" r="9" fill="#4B4B4B"/>
+    <circle cx="37" cy="41" r="3.5" fill="#FFFFFF"/>
+    <!-- Right Eye -->
+    <circle cx="68" cy="44" r="18" fill="#FFFFFF"/>
+    <circle cx="66" cy="44" r="9" fill="#4B4B4B"/>
+    <circle cx="69" cy="41" r="3.5" fill="#FFFFFF"/>
+    <!-- Orange Beak -->
+    <path d="M42 48 L58 48 C58 48 56 65 50 67 C44 65 42 48 42 48 Z" fill="#FF9600"/>
+  </g>
+</svg>

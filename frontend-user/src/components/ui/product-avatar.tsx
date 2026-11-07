@@ -7,9 +7,10 @@ import {
   BRAND_ICONS_MAP,
   resolveBrandLogo,
   isPaddedBrand,
+  isBannerOrInvalidLogo,
 } from '@/lib/constants/brand-icons';
 
-export { BRAND_ICONS_MAP, resolveBrandLogo, isPaddedBrand };
+export { BRAND_ICONS_MAP, resolveBrandLogo, isPaddedBrand, isBannerOrInvalidLogo };
 
 export type ProductAvatarSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'responsive';
 
@@ -32,6 +33,7 @@ export interface ProductAvatarProps {
 /**
  * Reusable Product Avatar Component
  * Standardizes position, circular masking, background themes, padding, and fallbacks.
+ * Guaranteed never to render product promotional banners inside the avatar.
  */
 export function ProductAvatar({
   name,
@@ -95,7 +97,9 @@ export function ProductAvatar({
     );
   }
 
-  const resolvedUrl = resolveBrandLogo(name, imageUrl || '');
+  // Strictly filter out any banner url passed via imageUrl prop
+  const safePropUrl = isBannerOrInvalidLogo(imageUrl) ? '' : imageUrl;
+  const resolvedUrl = resolveBrandLogo(name, safePropUrl || '');
   const activeUrl = !hasError ? resolvedUrl : (resolvedUrl !== defaultBrandIcon ? defaultBrandIcon : '');
 
   const isDark = n.includes('netflix');
@@ -130,9 +134,15 @@ export function ProductAvatar({
     );
   }
 
+  // Clean initials fallback if no brand icon matched
   const initials = (name || '')
     .trim()
+    .replace(/[\[\(].*?[\]\)]/g, '')
+    .replace(/[^a-zA-Z0-9\s]/g, '')
+    .trim()
     .split(/\s+/)
+    .filter(Boolean)
+    .filter((w) => !/^\d+$/.test(w))
     .slice(0, 2)
     .map((w) => w[0]?.toUpperCase() || '')
     .join('');
@@ -140,7 +150,7 @@ export function ProductAvatar({
   return (
     <div
       className={cn(
-        'relative aspect-square shrink-0 rounded-full overflow-hidden flex items-center justify-center border border-slate-200/80 bg-slate-100 text-slate-500 font-bold shadow-2xs select-none',
+        'relative aspect-square shrink-0 rounded-full overflow-hidden flex items-center justify-center border border-slate-200/80 bg-slate-100 text-slate-600 font-bold shadow-2xs select-none',
         sizeClass,
         sanitizedClassName,
         'rounded-full'
