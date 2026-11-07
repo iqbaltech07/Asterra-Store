@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -13,10 +13,14 @@ import {
   ArrowRight,
   Send,
   ExternalLink,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
 } from 'lucide-react';
 import { AdminTab } from '@/components/admin/admin-sidebar';
 import { getStoreBaseUrl } from '@/lib/utils/url';
-import { ProductBrandIcon } from '@/components/ui/product-brand-icon';
+import { ProductAvatar } from '@/components/ui/product-avatar';
 import { CopyButton } from '@/components/ui/copy-button';
 import { ShareButton } from '@/components/ui/share-button';
 import { SlidingPillTabs } from '@/components/ui/sliding-pill-tabs';
@@ -30,6 +34,21 @@ interface SalesCatalogTabProps {
   onTabChange: (tab: AdminTab) => void;
 }
 
+const ITEMS_PER_PAGE = 12;
+
+function getPageNumbers(current: number, total: number): (number | string)[] {
+  if (total <= 7) {
+    return Array.from({ length: total }, (_, i) => i + 1);
+  }
+  if (current <= 3) {
+    return [1, 2, 3, 4, '...', total];
+  }
+  if (current >= total - 2) {
+    return [1, '...', total - 3, total - 2, total - 1, total];
+  }
+  return [1, '...', current - 1, current, current + 1, '...', total];
+}
+
 export function SalesCatalogTab({
   partnerCode,
   partnerRate,
@@ -39,6 +58,8 @@ export function SalesCatalogTab({
 }: SalesCatalogTabProps) {
   const [productSearch, setProductSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const catalogGridRef = useRef<HTMLDivElement>(null);
 
   const categories = useMemo(() => {
     const set = new Set<string>();
@@ -62,6 +83,26 @@ export function SalesCatalogTab({
     });
   }, [products, productSearch, selectedCategory]);
 
+  // Reset to first page when filtering or searching
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [productSearch, selectedCategory]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / ITEMS_PER_PAGE));
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, filteredProducts.length);
+
+  const paginatedProducts = useMemo(() => {
+    return filteredProducts.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredProducts, startIndex]);
+
+  const handlePageChange = (newPage: number) => {
+    const validPage = Math.max(1, Math.min(newPage, totalPages));
+    setCurrentPage(validPage);
+    if (catalogGridRef.current) {
+      catalogGridRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
 
   const categoryTabs = useMemo(() => {
     return [
@@ -71,7 +112,7 @@ export function SalesCatalogTab({
   }, [categories, products.length]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" ref={catalogGridRef}>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-extrabold text-foreground tracking-tight">Katalog Produk & Komisi</h2>
@@ -105,7 +146,7 @@ export function SalesCatalogTab({
             variant="outline"
             size="sm"
             onClick={() => onTabChange('sales-links')}
-            className="text-xs h-8 bg-white border-blue-200 text-[#2563EB] hover:bg-blue-50 gap-1 font-semibold rounded-xl active:scale-95"
+            className="text-xs h-8 bg-white border-blue-200 text-[#2563EB] hover:bg-blue-50 gap-1 font-semibold rounded-xl active:scale-95 cursor-pointer"
           >
             <span>Materi Promosi</span>
             <ArrowRight className="w-3 h-3" />
@@ -156,118 +197,217 @@ export function SalesCatalogTab({
           </p>
         </div>
       ) : (
-        <div
-          key={`${selectedCategory}-${productSearch}`}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5"
-        >
-          {filteredProducts.map((p, idx) => {
-            const productUrl = `${getStoreBaseUrl()}/products/${p.id}?ref=${partnerCode}`;
-            const catName = p.categoryName || p.category?.name || 'Digital';
+        <>
+          <div
+            key={`${selectedCategory}-${productSearch}-${currentPage}`}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5"
+          >
+            {paginatedProducts.map((p, idx) => {
+              const productUrl = `${getStoreBaseUrl()}/products/${p.id}?ref=${partnerCode}`;
+              const catName = p.categoryName || p.category?.name || 'Digital';
 
-            // Safe commission calculation without exposing store profit margins (Model Bisnis v2.0 - 30% dari Profit)
-            const commissionRp = p.baseCommission
-              ? Math.round(p.baseCommission * (partnerRate / 30))
-              : (p.profitMargin && p.profitMargin > 0
-                  ? Math.round((p.profitMargin * partnerRate) / 100)
-                  : Math.max(1000, Math.round(p.price * 0.15)));
+              // Safe commission calculation without exposing store profit margins (Model Bisnis v2.0 - 30% dari Profit)
+              const commissionRp = p.baseCommission
+                ? Math.round(p.baseCommission * (partnerRate / 30))
+                : (p.profitMargin && p.profitMargin > 0
+                    ? Math.round((p.profitMargin * partnerRate) / 100)
+                    : Math.max(1000, Math.round(p.price * 0.15)));
 
-            return (
-              <div
-                key={p.id}
-                className="bg-surface border border-border rounded-2xl p-5 shadow-xs flex flex-col justify-between space-y-4 card-hover-elevation animate-fade-up group"
-                style={{ animationDelay: `${Math.min(idx, 7) * 40}ms` }}
-              >
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-[10px] font-bold text-[#2563EB] tracking-wider uppercase bg-blue-50 border border-blue-200/80 px-2.5 py-0.5 rounded-full">
-                      {catName}
-                    </span>
-                    <Badge
-                      variant="success"
-                      className="text-[10px] font-bold px-2.5 py-0.5"
+              return (
+                <div
+                  key={p.id}
+                  className="bg-surface border border-border rounded-2xl p-5 shadow-xs flex flex-col justify-between space-y-4 card-hover-elevation animate-fade-up group"
+                  style={{ animationDelay: `${Math.min(idx, 7) * 40}ms` }}
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[10px] font-bold text-[#2563EB] tracking-wider uppercase bg-blue-50 border border-blue-200/80 px-2.5 py-0.5 rounded-full">
+                        {catName}
+                      </span>
+                      <Badge
+                        variant="success"
+                        className="text-[10px] font-bold px-2.5 py-0.5"
+                      >
+                        Komisi: Rp {commissionRp.toLocaleString('id-ID')}
+                      </Badge>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <ProductAvatar
+                        name={p.name}
+                        imageUrl={p.imageUrl}
+                        size="md"
+                        className="w-10 h-10 shrink-0"
+                      />
+                      <h4 className="font-bold text-sm text-foreground group-hover:text-[#2563EB] transition-colors line-clamp-2">
+                        {p.name}
+                      </h4>
+                    </div>
+
+                    <div className="bg-[#F8F9FB] border border-border/80 rounded-xl p-3 space-y-2 text-xs">
+                      <div className="flex items-center justify-between">
+                        <span className="text-foreground-muted text-[11px]">Harga Pelanggan:</span>
+                        <span className="font-bold text-foreground font-mono">
+                          {p.priceFormatted || `Rp ${p.price.toLocaleString('id-ID')}`}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-foreground-muted text-[11px]">Komisi per Unit:</span>
+                        <span className="font-bold text-[#16A36A] font-mono">
+                          Rp {commissionRp.toLocaleString('id-ID')}
+                        </span>
+                      </div>
+                      <div className="pt-2 border-t border-border flex items-center justify-between">
+                        <span className="font-semibold text-[#16A36A] text-[11px] flex items-center gap-1">
+                          <TrendingUp className="w-3.5 h-3.5" />
+                          <span>Potensi Jual 10 Unit:</span>
+                        </span>
+                        <span className="font-bold text-[#16A36A] font-mono">
+                          Rp {(commissionRp * 10).toLocaleString('id-ID')}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-t border-border flex items-center gap-2">
+                    <CopyButton
+                      text={productUrl}
+                      label="Salin Link"
+                      copiedLabel="Tersalin!"
+                      size="sm"
+                      className="flex-1"
+                    />
+
+                    <ShareButton
+                      url={productUrl}
+                      title={p.name}
+                      text={`Dapatkan ${p.name} resmi bergaransi hanya ${p.priceFormatted || `Rp ${p.price.toLocaleString('id-ID')}`} di Asterra Store:`}
+                      variant="outline"
+                      size="sm"
+                      iconOnly
+                    />
+
+                    <a
+                      href={`https://wa.me/?text=Dapatkan%20${encodeURIComponent(
+                        p.name
+                      )}%20resmi%20bergaransi%20hanya%20${encodeURIComponent(
+                        p.priceFormatted || `Rp ${p.price.toLocaleString('id-ID')}`
+                      )}%20di%20Asterra%20Store:%20${encodeURIComponent(productUrl)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="h-9 px-3 rounded-xl border border-border bg-white hover:bg-emerald-50 hover:border-emerald-300 text-foreground-muted hover:text-[#16A36A] active:scale-95 flex items-center justify-center transition-all shrink-0 shadow-xs cursor-pointer"
+                      title="Bagikan ke WhatsApp"
                     >
-                      Komisi: Rp {commissionRp.toLocaleString('id-ID')}
-                    </Badge>
-                  </div>
+                      <Send className="w-3.5 h-3.5" />
+                    </a>
 
-                  <div className="flex items-center gap-3">
-                    <ProductBrandIcon name={p.name} className="w-10 h-10 rounded-xl" />
-                    <h4 className="font-bold text-sm text-foreground group-hover:text-[#2563EB] transition-colors line-clamp-2">
-                      {p.name}
-                    </h4>
-                  </div>
-
-                  <div className="bg-[#F8F9FB] border border-border/80 rounded-xl p-3 space-y-2 text-xs">
-                    <div className="flex items-center justify-between">
-                      <span className="text-foreground-muted text-[11px]">Harga Pelanggan:</span>
-                      <span className="font-bold text-foreground font-mono">
-                        {p.priceFormatted || `Rp ${p.price.toLocaleString('id-ID')}`}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-foreground-muted text-[11px]">Komisi per Unit:</span>
-                      <span className="font-bold text-[#16A36A] font-mono">
-                        Rp {commissionRp.toLocaleString('id-ID')}
-                      </span>
-                    </div>
-                    <div className="pt-2 border-t border-border flex items-center justify-between">
-                      <span className="font-semibold text-[#16A36A] text-[11px] flex items-center gap-1">
-                        <TrendingUp className="w-3.5 h-3.5" />
-                        <span>Potensi Jual 10 Unit:</span>
-                      </span>
-                      <span className="font-bold text-[#16A36A] font-mono">
-                        Rp {(commissionRp * 10).toLocaleString('id-ID')}
-                      </span>
-                    </div>
+                    <a
+                      href={productUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="h-9 px-3 rounded-xl border border-border bg-white hover:bg-surface-secondary text-foreground-muted hover:text-foreground active:scale-95 flex items-center justify-center transition-all shrink-0 shadow-xs cursor-pointer"
+                      title="Buka Halaman Produk"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
                   </div>
                 </div>
+              );
+            })}
+          </div>
 
-                <div className="pt-2 border-t border-border flex items-center gap-2">
-                  <CopyButton
-                    text={productUrl}
-                    label="Salin Link"
-                    copiedLabel="Tersalin!"
-                    size="sm"
-                    className="flex-1"
-                  />
-
-                  <ShareButton
-                    url={productUrl}
-                    title={p.name}
-                    text={`Dapatkan ${p.name} resmi bergaransi hanya ${p.priceFormatted || `Rp ${p.price.toLocaleString('id-ID')}`} di Asterra Store:`}
-                    variant="outline"
-                    size="sm"
-                    iconOnly
-                  />
-
-                  <a
-                    href={`https://wa.me/?text=Dapatkan%20${encodeURIComponent(
-                      p.name
-                    )}%20resmi%20bergaransi%20hanya%20${encodeURIComponent(
-                      p.priceFormatted || `Rp ${p.price.toLocaleString('id-ID')}`
-                    )}%20di%20Asterra%20Store:%20${encodeURIComponent(productUrl)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="h-9 px-3 rounded-xl border border-border bg-white hover:bg-emerald-50 hover:border-emerald-300 text-foreground-muted hover:text-[#16A36A] active:scale-95 flex items-center justify-center transition-all shrink-0 shadow-xs cursor-pointer"
-                    title="Bagikan ke WhatsApp"
-                  >
-                    <Send className="w-3.5 h-3.5" />
-                  </a>
-
-                  <a
-                    href={productUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="h-9 px-3 rounded-xl border border-border bg-white hover:bg-surface-secondary text-foreground-muted hover:text-foreground active:scale-95 flex items-center justify-center transition-all shrink-0 shadow-xs"
-                    title="Buka Halaman Produk"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
-                </div>
+          {/* Pagination Controls */}
+          {filteredProducts.length > ITEMS_PER_PAGE && (
+            <div className="pt-4 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
+              <div className="text-foreground-muted text-center sm:text-left">
+                Menampilkan <span className="font-bold text-foreground font-mono">{startIndex + 1}</span> -{' '}
+                <span className="font-bold text-foreground font-mono">{endIndex}</span> dari{' '}
+                <span className="font-bold text-foreground font-mono">{filteredProducts.length}</span> produk
               </div>
-            );
-          })}
-        </div>
+
+              <div className="flex items-center gap-1.5 flex-wrap justify-center">
+                {/* First Page */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  type="button"
+                  onClick={() => handlePageChange(1)}
+                  disabled={currentPage <= 1}
+                  className="h-8 w-8 p-0 border-border text-foreground-muted hover:text-foreground disabled:opacity-30 cursor-pointer rounded-lg"
+                  title="Halaman Pertama"
+                >
+                  <ChevronsLeft className="w-3.5 h-3.5" />
+                </Button>
+
+                {/* Prev Page */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  type="button"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage <= 1}
+                  className="h-8 px-2.5 gap-1 border-border text-foreground-muted hover:text-foreground disabled:opacity-30 cursor-pointer rounded-lg"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Sebelumnya</span>
+                </Button>
+
+                {/* Page Number Buttons */}
+                {getPageNumbers(currentPage, totalPages).map((p, pIdx) => {
+                  if (p === '...') {
+                    return (
+                      <span key={`ellipsis-${pIdx}`} className="w-8 text-center text-foreground-muted select-none">
+                        ...
+                      </span>
+                    );
+                  }
+                  const pageNum = Number(p);
+                  const isActive = pageNum === currentPage;
+                  return (
+                    <button
+                      key={pageNum}
+                      type="button"
+                      onClick={() => handlePageChange(pageNum)}
+                      className={`h-8 min-w-[32px] px-2 rounded-lg font-mono text-xs font-semibold transition-all cursor-pointer ${
+                        isActive
+                          ? 'bg-primary text-white shadow-xs font-bold'
+                          : 'border border-border text-foreground-muted hover:text-foreground hover:bg-surface-raised'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+
+                {/* Next Page */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  type="button"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage >= totalPages}
+                  className="h-8 px-2.5 gap-1 border-border text-foreground-muted hover:text-foreground disabled:opacity-30 cursor-pointer rounded-lg"
+                >
+                  <span className="hidden sm:inline">Berikutnya</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </Button>
+
+                {/* Last Page */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  type="button"
+                  onClick={() => handlePageChange(totalPages)}
+                  disabled={currentPage >= totalPages}
+                  className="h-8 w-8 p-0 border-border text-foreground-muted hover:text-foreground disabled:opacity-30 cursor-pointer rounded-lg"
+                  title="Halaman Terakhir"
+                >
+                  <ChevronsRight className="w-3.5 h-3.5" />
+                </Button>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
