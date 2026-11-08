@@ -86,9 +86,18 @@ class FinanceService:
             from app.models.gamification import SalesGamificationBonusLedger
             if SessionLocal:
                 with SessionLocal() as db_sess:
-                    bonuses = db_sess.query(SalesGamificationBonusLedger).filter(
+                    q = db_sess.query(SalesGamificationBonusLedger).filter(
                         SalesGamificationBonusLedger.status.in_(["APPROVED", "PAID"])
-                    ).all()
+                    )
+                    all_bonuses = q.all()
+                    if selected_month != "all":
+                        bonuses = [
+                            b for b in all_bonuses
+                            if (b.paid_at and b.paid_at.strftime("%Y-%m") == selected_month)
+                            or (b.created_at and b.created_at.strftime("%Y-%m") == selected_month)
+                        ]
+                    else:
+                        bonuses = all_bonuses
                     total_gamification_bonus = sum(float(b.bonus_amount or 0) for b in bonuses)
         except Exception as e:
             print(f"[FinanceService] Note querying gamification bonus ledger: {e}")

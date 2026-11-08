@@ -207,21 +207,13 @@ export function AdminLiPayEventsWidget({ onNotify, baseUrl }: AdminLiPayEventsWi
             </div>
           </div>
           <div>
-            <span className="text-[10px] text-foreground-muted block mb-0.5">Device Auth Token Default:</span>
+            <span className="text-[10px] text-foreground-muted block mb-0.5">Device Auth Token (X-Device-Token):</span>
             <div className="relative">
               <Input
                 readOnly
-                value="asterra_dana_listener_token_dev"
-                className="text-[11px] bg-surface border-border font-mono pr-14 select-all h-8"
+                value="[Dikonfigurasi via LIPAY_DEVICE_TOKEN di env server]"
+                className="text-[11px] bg-surface border-border font-mono italic text-foreground-muted h-8"
               />
-              <button
-                type="button"
-                onClick={() => handleCopy('asterra_dana_listener_token_dev', 'token')}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-primary hover:underline flex items-center gap-1"
-              >
-                {copiedKey === 'token' ? <FontAwesomeIcon icon={faCheck} className="w-2.5 h-2.5" /> : <FontAwesomeIcon icon={faCopy} className="w-2.5 h-2.5" />}
-                <span>{copiedKey === 'token' ? 'Tersalin' : 'Salin'}</span>
-              </button>
             </div>
           </div>
         </div>

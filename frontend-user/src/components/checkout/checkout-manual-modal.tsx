@@ -27,6 +27,7 @@ import {
   faCircleExclamation,
 } from '@fortawesome/free-solid-svg-icons';
 import { faWhatsapp } from '@fortawesome/free-brands-svg-icons';
+import { getOrderAccessToken } from '@/lib/api-client';
 
 export interface ManualPaymentModalData {
   orderId: string;
@@ -165,8 +166,11 @@ export function CheckoutManualModal({
         setTimeLeft({ hours: 0, minutes: 0, seconds: 0, isExpired: true });
         if (!hasTriggeredCancel) {
           hasTriggeredCancel = true;
-          // Notify backend that order expired and cancel it
-          fetch(`/api/v1/orders/${data.orderId}/cancel`, { method: 'POST' }).catch(() => {});
+          const tok = getOrderAccessToken(data.orderId);
+          fetch(`/api/v1/orders/${data.orderId}/cancel`, {
+            method: 'POST',
+            headers: tok ? { 'X-Order-Token': tok } : {},
+          }).catch(() => {});
         }
         return;
       }
@@ -193,7 +197,11 @@ export function CheckoutManualModal({
 
     const checkOrderStatus = async () => {
       try {
-        const res = await fetch(`/api/v1/orders/${data.orderId}`, { cache: 'no-store' });
+        const tok = getOrderAccessToken(data.orderId);
+        const res = await fetch(`/api/v1/orders/${data.orderId}`, {
+          cache: 'no-store',
+          headers: tok ? { 'X-Order-Token': tok } : {},
+        });
         if (!res.ok) return;
         const json = await res.json();
         if (!isSubscribed || !json?.data) return;

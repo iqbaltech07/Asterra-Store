@@ -647,137 +647,136 @@ class VipService:
                     "order": order.to_dict(),
                 }
 
-            # Fulfill the primary VIP service item
-            item, prod = vip_items[0]
-
-            # Detect the specific target field requirement for this VIP product
-            target_req = cls.get_product_target_requirement(
-                product_name=prod.name or getattr(item, "product_name", ""),
-                brand=prod.brand or "",
-                category=prod.category_name or "",
-                provider_code=prod.provider_code or "",
-            )
-            req_type = target_req.get("type", "email")
-
-            # Resolve target_id and target_zone based on requirement type
-            item_target_id = getattr(item, "target_id", None) or ""
-            item_target_zone = getattr(item, "target_zone", None) or ""
-            item_target_phone = getattr(item, "target_phone", None) or ""
-            item_target_email = getattr(item, "target_email", None) or ""
-
-            target_id = ""
-            target_zone = str(item_target_zone or "").strip()
-
-            if req_type == "phone":
-                # For CapCut, Pulsa, E-wallet: prioritize phone number as data_no
-                target_id = (item_target_phone or item_target_id or order.customer_whatsapp or "").strip()
-            elif req_type == "game":
-                # For Games (Mobile Legends, etc.): User ID as data_no
-                target_id = (item_target_id or item_target_phone or item_target_email or "").strip()
-            elif req_type == "customer_id":
-                # For PLN, TV Kabel: customer ID as data_no
-                target_id = (item_target_id or item_target_phone or "").strip()
-            else:
-                # For YouTube, Spotify, Canva: email as data_no
-                target_id = (item_target_email or item_target_id or order.customer_email or "").strip()
-
-            # Robust fallback if still empty
-            if not target_id:
-                target_id = (
-                    item_target_id or item_target_email or item_target_phone or
-                    order.customer_email or order.customer_whatsapp or ""
-                ).strip()
-
-            # Optional zone resolution from customer notes if specified as "zone:..."
-            if not target_zone and order.customer_notes and "zone:" in order.customer_notes.lower():
-                import re
-                zm = re.search(r"zone[:\s]+([0-9a-zA-Z_-]+)", order.customer_notes, re.IGNORECASE)
-                if zm:
-                    target_zone = zm.group(1).strip()
-
-            res = cls.place_order(
-                service_code=prod.provider_code,
-                target_id=target_id,
-                zone_id=target_zone,
-            )
-
             from app.services.audit_log_service import AuditLogService
             from app.core.cache import cache
 
-            if res.get("success"):
-                trxid = res.get("trxid")
-                vip_status = str(res.get("status") or "waiting").lower()
-                vip_note = str(res.get("note") or "")
+            # Fulfill all VIP items and all quantities in the order
+            all_results = []
+            successful_units = 0
+            total_units = 0
+            all_trxids = []
+            notes_list = []
 
-                order.provider = "vip-reseller"
-                order.provider_trxid = trxid
-                order.provider_status = vip_status
-                order.provider_note = vip_note
-                order.updated_at = datetime.utcnow()
+            for item, prod in vip_items:
+                item_qty = max(1, int(getattr(item, "quantity", 1) or 1))
+                total_units += item_qty
 
-                if vip_status == "success":
-                    order.status = "completed"
-                    order.paid_at = order.paid_at or datetime.utcnow()
-                    order.payment_status = "settlement"
-                elif vip_status in ["waiting", "processing"]:
-                    order.status = "processing"
-
-                db.commit()
-                db.refresh(order)
-
-                AuditLogService.record_log(
-                    order_id=order.id,
-                    actor="vip_reseller",
-                    action="vip_order_placed",
-                    previous_status="pending",
-                    new_status=order.status,
-                    notes=f"Order diproses ke VIP Reseller. TRX: {trxid}, Status VIP: {vip_status}. {vip_note}".strip(),
-                    customer_name=order.customer_name,
-                    customer_email=order.customer_email,
+                # Detect the specific target field requirement for this VIP product
+                target_req = cls.get_product_target_requirement(
+                    product_name=prod.name or getattr(item, "product_name", ""),
+                    brand=prod.brand or "",
+                    category=prod.category_name or "",
+                    provider_code=prod.provider_code or "",
                 )
+                req_type = target_req.get("type", "email")
 
-                cache.invalidate("orders")
-                from app.services.order_service import OrderService
-                OrderService.load_orders(force_reload=True)
+                # Resolve target_id and target_zone based on requirement type
+                item_target_id = getattr(item, "target_id", None) or ""
+                item_target_zone = getattr(item, "target_zone", None) or ""
+                item_target_phone = getattr(item, "target_phone", None) or ""
+                item_target_email = getattr(item, "target_email", None) or ""
 
-                return {
-                    "success": True,
-                    "is_vip": True,
-                    "trxid": trxid,
-                    "vip_status": vip_status,
-                    "message": "Pesanan berhasil diproses otomatis oleh VIP Reseller.",
-                    "order": order.to_dict(),
-                }
+                target_id = ""
+                target_zone = str(item_target_zone or "").strip()
+
+                if req_type == "phone":
+                    target_id = (item_target_phone or item_target_id or order.customer_whatsapp or "").strip()
+                elif req_type == "game":
+                    target_id = (item_target_id or item_target_phone or item_target_email or "").strip()
+                elif req_type == "customer_id":
+                    target_id = (item_target_id or item_target_phone or "").strip()
+                else:
+                    target_id = (item_target_email or item_target_id or order.customer_email or "").strip()
+
+                if not target_id:
+                    target_id = (
+                        item_target_id or item_target_email or item_target_phone or
+                        order.customer_email or order.customer_whatsapp or ""
+                    ).strip()
+
+                if not target_zone and order.customer_notes and "zone:" in order.customer_notes.lower():
+                    import re
+                    zm = re.search(r"zone[:\s]+([0-9a-zA-Z_-]+)", order.customer_notes, re.IGNORECASE)
+                    if zm:
+                        target_zone = zm.group(1).strip()
+
+                # Process each unit of this VIP item
+                for unit_idx in range(item_qty):
+                    res = cls.place_order(
+                        service_code=prod.provider_code,
+                        target_id=target_id,
+                        zone_id=target_zone,
+                    )
+                    all_results.append({
+                        "product_name": prod.name,
+                        "unit": unit_idx + 1,
+                        "result": res,
+                    })
+
+                    if res.get("success"):
+                        successful_units += 1
+                        t_id = str(res.get("trxid") or "")
+                        if t_id:
+                            all_trxids.append(t_id)
+                        if res.get("note"):
+                            notes_list.append(f"[{prod.name} #{unit_idx+1}] {res.get('note')}")
+                    else:
+                        notes_list.append(f"[{prod.name} #{unit_idx+1} Error] {res.get('message', 'Gagal kirim')}")
+
+            # Summarize results across all VIP items and quantities
+            order.provider = "vip-reseller"
+            order.provider_trxid = ", ".join(all_trxids) if all_trxids else None
+            order.provider_note = " | ".join(notes_list)[:1000] if notes_list else None
+            order.updated_at = datetime.utcnow()
+
+            all_success = successful_units == total_units and total_units > 0
+            partial_success = successful_units > 0 and successful_units < total_units
+
+            if all_success:
+                order.provider_status = "success"
+                order.status = "completed"
+                order.paid_at = order.paid_at or datetime.utcnow()
+                order.payment_status = "settlement"
+            elif partial_success:
+                order.provider_status = "partial_error"
+                order.status = "processing"
             else:
-                err_msg = res.get("message", "Gagal melakukan pemesanan ke VIP Reseller.")
-                order.provider = "vip-reseller"
-                order.provider_status = "error"
-                order.provider_note = f"Gagal otomatisasi VIP: {err_msg}"
-                order.updated_at = datetime.utcnow()
-                db.commit()
-                db.refresh(order)
+                order.provider_status = "error" if total_units > 0 else "waiting"
+                # Keep status as processing for manual admin review
+                order.status = "processing"
 
-                AuditLogService.record_log(
-                    order_id=order.id,
-                    actor="vip_reseller",
-                    action="vip_order_failed",
-                    previous_status=order.status,
-                    new_status=order.status,
-                    notes=f"VIP Reseller order error: {err_msg}",
-                    customer_name=order.customer_name,
-                    customer_email=order.customer_email,
-                )
+            db.commit()
+            db.refresh(order)
 
-                cache.invalidate("orders")
-                from app.services.order_service import OrderService
-                OrderService.load_orders(force_reload=True)
+            action_name = "vip_order_placed" if all_success else ("vip_order_partial" if partial_success else "vip_order_failed")
+            AuditLogService.record_log(
+                order_id=order.id,
+                actor="vip_reseller",
+                action=action_name,
+                previous_status="pending",
+                new_status=order.status,
+                notes=f"VIP Reseller batch: {successful_units}/{total_units} unit berhasil diproses. TRX: {order.provider_trxid}. {order.provider_note or ''}".strip(),
+                customer_name=order.customer_name,
+                customer_email=order.customer_email,
+            )
 
-                return {
-                    "success": False,
-                    "is_vip": True,
-                    "message": err_msg,
-                    "order": order.to_dict(),
-                }
+            cache.invalidate("orders")
+            from app.services.order_service import OrderService
+            OrderService.load_orders(force_reload=True)
+
+            return {
+                "success": all_success,
+                "is_vip": True,
+                "successful_units": successful_units,
+                "total_units": total_units,
+                "trxids": all_trxids,
+                "message": (
+                    f"Seluruh {total_units} item VIP berhasil diproses otomatis."
+                    if all_success
+                    else f"Pemrosesan VIP: {successful_units} dari {total_units} unit berhasil diproses."
+                ),
+                "order": order.to_dict(),
+            }
 
         finally:
             db.close()

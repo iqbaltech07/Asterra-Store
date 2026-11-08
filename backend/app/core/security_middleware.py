@@ -73,9 +73,23 @@ class InMemoryRateLimiter:
 rate_limiter = InMemoryRateLimiter()
 
 def get_client_ip(request: Request) -> str:
+    # 1. Cloudflare header if present
+    cf_ip = request.headers.get("cf-connecting-ip")
+    if cf_ip and cf_ip.strip():
+        return cf_ip.strip()
+
+    # 2. X-Real-IP set by authoritative edge proxy
+    real_ip = request.headers.get("x-real-ip")
+    if real_ip and real_ip.strip():
+        return real_ip.strip()
+
+    # 3. X-Forwarded-For: Client IP is the first entry
     forwarded = request.headers.get("x-forwarded-for")
     if forwarded:
-        return forwarded.split(",")[0].strip()
+        parts = [p.strip() for p in forwarded.split(",") if p.strip()]
+        if parts:
+            return parts[0]
+
     return request.client.host if request.client else "127.0.0.1"
 
 async def security_and_rate_limit_middleware(request: Request, call_next):

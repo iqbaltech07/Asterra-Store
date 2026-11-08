@@ -206,7 +206,7 @@ class PartnerService:
             pending_game_bonus = float(p_bonuses["pending"])
             paid_game_bonus = float(p_bonuses["paid"])
 
-            available_unpaid = max(0.0, (final_comm + final_net + approved_game_bonus) - paid_commission - pending_payouts)
+            available_unpaid = max(0.0, (final_comm + final_net + approved_game_bonus + paid_game_bonus) - paid_commission - pending_payouts)
             total_pending = pending_comm + pending_net + pending_game_bonus
 
             successful_orders_count = cls.count_unique_successful_orders(partner_orders)
@@ -333,8 +333,6 @@ class PartnerService:
                     (p for p in partners if str(p.get("id", "")).lower() == clean_id or str(p.get("code", "")).lower() == clean_id or str(p.get("email", "")).lower() == clean_id),
                     None
                 )
-            if not partner and not identifier and partners:
-                partner = partners[0]
 
         if not partner:
             return {
@@ -431,7 +429,7 @@ class PartnerService:
         except Exception:
             pass
 
-        available_unpaid = max(0.0, (final_comm + final_net + approved_game_bonus) - paid_comm - pending_payouts)
+        available_unpaid = max(0.0, (final_comm + final_net + approved_game_bonus + paid_game_bonus) - paid_comm - pending_payouts)
         total_pending = pending_comm + pending_net + pending_game_bonus
 
         successful_orders_count = cls.count_unique_successful_orders(partner_orders)
@@ -1083,68 +1081,67 @@ class PartnerService:
         if not bank_account_name or bank_account_name == "-":
             return {"success": False, "message": "Nama pemilik rekening wajib diisi."}
 
-        # 4. Check available balance (unpaidCommission minus pending payouts)
-        profile = cls.get_profile(partner.get("id") or partner.get("code"))
-        available_unpaid = float(profile.get("unpaidCommission", 0))
+        # 4. Atomic check & lock available balance in database
+        db = SessionLocal() if SessionLocal else None
+        if not db:
+            return {"success": False, "message": "Koneksi database tidak tersedia."}
 
-        if amount > available_unpaid:
-            formatted_avail = f"{int(available_unpaid):,}".replace(",", ".")
-            return {
-                "success": False,
-                "message": f"Saldo komisi siap ditarik tidak mencukupi (Tersedia: Rp {formatted_avail}). Saldo masa garansi 3 hari belum dapat dicairkan.",
-            }
+        req_id = f"payreq-{int(datetime.utcnow().timestamp())}-{secrets.token_hex(2)}"
+        req_dict = {}
 
-        # 5. Anti-duplicate / debounce check
-        partner_payouts = partner.get("payoutRequests", [])
-        if partner_payouts:
-            recent_pending = next(
-                (p for p in partner_payouts if p.get("status") == "pending" and int(p.get("amount", 0)) == amount and p.get("bankAccount") == bank_account),
-                None
-            )
-            if recent_pending:
+        try:
+            # Row-level lock on partner to prevent concurrent double-spend
+            db_partner = db.query(SalesPartner).filter(SalesPartner.id == partner.get("id")).with_for_update().first()
+            if not db_partner:
+                return {"success": False, "message": "Data mitra sales tidak ditemukan di database."}
+
+            profile = cls.get_profile(partner.get("id") or partner.get("code"))
+            available_unpaid = float(profile.get("unpaidCommission", 0))
+
+            if amount > available_unpaid:
+                formatted_avail = f"{int(available_unpaid):,}".replace(",", ".")
+                return {
+                    "success": False,
+                    "message": f"Saldo komisi siap ditarik tidak mencukupi (Tersedia: Rp {formatted_avail}). Saldo masa garansi 3 hari belum dapat dicairkan.",
+                }
+
+            # Anti-duplicate pending check
+            db_pending = db.query(PayoutRequest).filter(
+                PayoutRequest.partner_id == partner.get("id"),
+                PayoutRequest.status == "pending",
+                PayoutRequest.amount == amount,
+                PayoutRequest.bank_account == bank_account,
+            ).first()
+            if db_pending:
                 return {
                     "success": False,
                     "message": "Pengajuan penarikan serupa sedang menunggu verifikasi admin. Mohon tunggu hingga proses selesai.",
                 }
 
-        # 6. Save PayoutRequest to Database
-        req_id = f"payreq-{int(datetime.utcnow().timestamp())}-{secrets.token_hex(2)}"
-        req_dict = {
-            "id": req_id,
-            "partnerId": partner.get("id"),
-            "amount": amount,
-            "bankName": bank_name,
-            "bankAccount": bank_account,
-            "bankAccountName": bank_account_name,
-            "status": "pending",
-            "notes": notes if notes else "Pencairan komisi kemitraan sales",
-            "requestedAt": datetime.utcnow().isoformat() + "Z",
-            "createdAt": datetime.utcnow().isoformat() + "Z",
-            "processedAt": None,
-        }
-
-        try:
-            db = SessionLocal()
-            try:
-                db_payout = PayoutRequest(
-                    id=req_id,
-                    partner_id=partner.get("id"),
-                    amount=amount,
-                    bank_name=bank_name,
-                    bank_account=bank_account,
-                    bank_account_name=bank_account_name,
-                    status="pending",
-                    notes=notes if notes else "Pencairan komisi kemitraan sales",
-                    created_at=datetime.utcnow(),
-                    updated_at=datetime.utcnow(),
-                )
-                db.add(db_payout)
-                db.commit()
-                req_dict = db_payout.to_dict()
-            finally:
-                db.close()
+            db_payout = PayoutRequest(
+                id=req_id,
+                partner_id=partner.get("id"),
+                amount=amount,
+                bank_name=bank_name,
+                bank_account=bank_account,
+                bank_account_name=bank_account_name,
+                status="pending",
+                notes=notes if notes else "Pencairan komisi kemitraan sales",
+                created_at=datetime.utcnow(),
+                updated_at=datetime.utcnow(),
+            )
+            db.add(db_payout)
+            db.commit()
+            req_dict = db_payout.to_dict()
         except Exception as db_err:
-            print(f"[PartnerService] Warning: Failed to insert PayoutRequest into DB, using fallback: {db_err}")
+            db.rollback()
+            print(f"[PartnerService] Error: Failed to insert PayoutRequest into DB: {db_err}")
+            return {
+                "success": False,
+                "message": f"Gagal mengajukan penarikan komisi ke server: {str(db_err)}",
+            }
+        finally:
+            db.close()
 
         # Update in-memory & fallback JSON
         if "payoutRequests" not in partner:

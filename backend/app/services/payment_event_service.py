@@ -94,6 +94,7 @@ class PaymentEventService:
                 .filter(
                     Order.status.in_(["pending", "menunggu_pembayaran"]),
                     (Order.is_dummy == False) | (Order.is_dummy == None),
+                    Order.created_at.between(window_start, window_end),
                 )
                 .all()
             )

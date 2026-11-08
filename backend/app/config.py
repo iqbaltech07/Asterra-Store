@@ -47,7 +47,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str = (
         os.getenv("JWT_SECRET")
         or os.getenv("SECRET_KEY")
-        or "asterra_jwt_secret_dev_fallback_key_2026"
+        or ("" if os.getenv("ENVIRONMENT") == "production" else "asterra_jwt_secret_dev_fallback_key_2026")
     )
     BETTER_AUTH_SECRET: str = os.getenv("BETTER_AUTH_SECRET", "")
     ADMIN_EMAIL: str = os.getenv("ADMIN_EMAIL", "admin@asterra.store")
@@ -56,7 +56,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7 # 7 days
     
     # LiPay DANA Bisnis Payment Listener Integration
-    LIPAY_DEVICE_TOKEN: str = os.getenv("LIPAY_DEVICE_TOKEN", os.getenv("DANA_DEVICE_TOKEN", "asterra_dana_listener_token_dev"))
+    LIPAY_DEVICE_TOKEN: str = os.getenv("LIPAY_DEVICE_TOKEN", os.getenv("DANA_DEVICE_TOKEN", ""))
     
     # Vercel Blob Storage
     BLOB_READ_WRITE_TOKEN: str = os.getenv("BLOB_READ_WRITE_TOKEN", "")
@@ -71,7 +71,7 @@ class Settings(BaseSettings):
     QSTASH_CURRENT_SIGNING_KEY: str = os.getenv("QSTASH_CURRENT_SIGNING_KEY", "")
     QSTASH_NEXT_SIGNING_KEY: str = os.getenv("QSTASH_NEXT_SIGNING_KEY", "")
     INTERNAL_CRON_SECRET: str = os.getenv("INTERNAL_CRON_SECRET", "")
-    DANA_DEVICE_TOKEN: str = os.getenv("DANA_DEVICE_TOKEN", os.getenv("INTERNAL_CRON_SECRET", "asterra_dana_listener_token_dev"))
+    DANA_DEVICE_TOKEN: str = os.getenv("DANA_DEVICE_TOKEN", os.getenv("LIPAY_DEVICE_TOKEN", ""))
     
     # VIP Reseller Supplier Integration
     VIP_RESELLER_BASE_URL: str = os.getenv("VIP_RESELLER_BASE_URL", "https://vip-reseller.co.id/api")
@@ -90,8 +90,8 @@ class Settings(BaseSettings):
     )
 
     # Brandfetch API
-    BRANDFETCH_CLIENT_ID: str = os.getenv("BRANDFETCH_CLIENT_ID", "1idOZh3WAwyNTiUHkB7")
-    BRANDFETCH_API_KEY: str = os.getenv("BRANDFETCH_API_KEY", "wZja_h7z1EIx8KrAtYbS_QzVnELZI48RA02MMLQEudYxBbjCS5l6t-s4DLhkXvt9LLzDCnm9-iu9dwwAMK6lwg")
+    BRANDFETCH_CLIENT_ID: str = os.getenv("BRANDFETCH_CLIENT_ID", "")
+    BRANDFETCH_API_KEY: str = os.getenv("BRANDFETCH_API_KEY", "")
 
     # Application URLs for Secure Password Recovery & Notification Links
     ADMIN_URL: str = os.getenv(

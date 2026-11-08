@@ -3,10 +3,11 @@ import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { prisma } from '@/lib/prisma';
 
 if (!process.env.BETTER_AUTH_SECRET) {
-  process.env.BETTER_AUTH_SECRET =
-    process.env.NEXTAUTH_SECRET ||
-    process.env.JWT_SECRET ||
-    'cabkjs.fbekjfgvesivcfsasterra2026dajcg.awid.wa!aoicgqowiqgdaigbciagdiwacamt2ru';
+  const fallback = process.env.NEXTAUTH_SECRET || process.env.JWT_SECRET;
+  if (!fallback && process.env.NODE_ENV === 'production') {
+    throw new Error('CRITICAL: BETTER_AUTH_SECRET or NEXTAUTH_SECRET is required in production.');
+  }
+  process.env.BETTER_AUTH_SECRET = fallback || 'dev-only-better-auth-secret-key-32-chars-long!';
 }
 
 export const auth = betterAuth({
@@ -17,7 +18,7 @@ export const auth = betterAuth({
       'www.asterrastore.biz.id',
       'staging.asterrastore.biz.id',
       '*.asterrastore.biz.id',
-      '*.vercel.app',
+      'asterrastore.vercel.app',
       'localhost:*',
       'localhost',
       '127.0.0.1:*',
@@ -31,7 +32,6 @@ export const auth = betterAuth({
     'https://staging.asterrastore.biz.id',
     'https://*.asterrastore.biz.id',
     'https://asterrastore.vercel.app',
-    'https://*.vercel.app',
     'http://localhost:*',
     'http://127.0.0.1:*',
     'https://localhost:*',
@@ -106,5 +106,9 @@ export const auth = betterAuth({
   advanced: {
     useSecureCookies: process.env.NODE_ENV === 'production',
     trustedProxyHeaders: true,
+    crossSubDomainCookies: {
+      enabled: true,
+      domain: process.env.NODE_ENV === 'production' ? '.asterrastore.biz.id' : undefined,
+    },
   },
 });

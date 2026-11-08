@@ -385,12 +385,18 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
   const loadBannersFromApi = useCallback(async () => {
     setIsLoadingBanners(true);
     try {
-      const res = await fetch(`/api/v1/banners?activeOnly=false&_t=${Date.now()}`, {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('asterra_admin_token') : null;
+      const headers: Record<string, string> = {
+        'Cache-Control': 'no-cache',
+        Pragma: 'no-cache',
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      const res = await fetch(`/api/v1/admin/banners?activeOnly=false&_t=${Date.now()}`, {
         cache: 'no-store',
-        headers: {
-          'Cache-Control': 'no-cache',
-          Pragma: 'no-cache',
-        },
+        credentials: 'include',
+        headers,
       });
       if (res.ok) {
         const json = await res.json();
@@ -477,8 +483,14 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
         }
       }
 
-      const res = await fetch('/api/v1/banners', {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('asterra_admin_token') : null;
+      const headers: Record<string, string> = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const res = await fetch('/api/v1/admin/banners', {
         method: 'POST',
+        credentials: 'include',
+        headers,
         body: formData,
       });
 
@@ -519,9 +531,14 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
     );
 
     try {
-      const res = await fetch(`/api/v1/banners/${id}/toggle-status`, {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('asterra_admin_token') : null;
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const res = await fetch(`/api/v1/admin/banners/${id}/toggle-status`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        headers,
         body: JSON.stringify({ isActive: nextActive, status: nextActive ? 'active' : 'inactive' }),
       });
       const json = await res.json();
@@ -545,8 +562,14 @@ export function AdminMarketingSuite({ activeTab, onNotify }: AdminMarketingSuite
     }
 
     try {
-      const res = await fetch(`/api/v1/banners/${id}`, {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('asterra_admin_token') : null;
+      const headers: Record<string, string> = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const res = await fetch(`/api/v1/admin/banners/${id}`, {
         method: 'DELETE',
+        credentials: 'include',
+        headers,
       });
       const json = await res.json();
       if (json.success) {

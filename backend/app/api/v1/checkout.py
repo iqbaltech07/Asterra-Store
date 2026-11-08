@@ -410,12 +410,9 @@ def get_orders(
     page: int = 1,
     limit: int = 20,
 ):
-    admin_token = request.cookies.get("asterra_admin_session")
-    is_admin = False
-    if admin_token:
-        from app.core.auth import verify_admin_session_token
-        p = verify_admin_session_token(admin_token)
-        is_admin = p and p.get("role") in ["admin", "superadmin"]
+    from app.core.auth import get_authenticated_session_identity, verify_order_access_token
+    session_user = get_authenticated_session_identity(request)
+    is_admin = bool(session_user and session_user.get("is_admin"))
 
     is_public = bool(public) or request.query_params.get("public") == "true"
 
@@ -452,7 +449,14 @@ def get_orders(
         page=page,
         limit=limit,
     )
-    is_owner_or_admin = is_admin or (not is_public and bool(email or search or phone))
+
+    # Only grant owner projection if caller is admin or authenticated session matches requested email
+    is_session_owner = bool(
+        session_user
+        and email
+        and session_user.get("email") == email.lower().strip()
+    )
+    is_owner_or_admin = is_admin or is_session_owner
     orders = [mask_order_for_public(o, is_owner_or_admin, is_admin=is_admin) for o in result["orders"]]
     return {
         "success": True,
@@ -484,30 +488,51 @@ def get_order_by_id(order_id: str, request: Request):
         except Exception as e:
             print(f"[Order] Live VIP status sync note: {e}")
 
-    admin_token = request.cookies.get("asterra_admin_session")
-    is_admin = False
-    if admin_token:
-        from app.core.auth import verify_admin_session_token
-        p = verify_admin_session_token(admin_token)
-        is_admin = p and p.get("role") in ["admin", "superadmin"]
+    from app.core.auth import get_authenticated_session_identity, verify_order_access_token
+    session_user = get_authenticated_session_identity(request)
+    is_admin = bool(session_user and session_user.get("is_admin"))
+
+    customer_email = str(order.get("customerEmail") or order.get("customer_email") or "").lower().strip()
+    order_token = request.headers.get("x-order-token") or request.query_params.get("token")
+    has_valid_token = verify_order_access_token(clean_id, customer_email, order_token) if order_token else False
+    is_session_owner = bool(session_user and session_user.get("email") == customer_email)
+
+    is_authorized = is_admin or is_session_owner or has_valid_token
 
     return {
         "success": True,
-        "data": mask_order_for_public(order, True, is_admin=is_admin),
+        "data": mask_order_for_public(order, is_authorized, is_admin=is_admin),
+        "is_owner": is_authorized,
     }
 
 @router.post("/orders/{order_id}/sync-vip", tags=["Orders"])
-def sync_order_vip_status(order_id: str):
+def sync_order_vip_status(order_id: str, request: Request):
     """
     On-demand live status synchronization with VIP Reseller for a specific order.
     """
     clean_id = order_id.strip().upper()
+    order = OrderService.get_order_by_id(clean_id)
+    if not order:
+        raise HTTPException(status_code=404, detail="Pesanan tidak ditemukan.")
+
+    from app.core.auth import get_authenticated_session_identity, verify_order_access_token
+    session_user = get_authenticated_session_identity(request)
+    is_admin = bool(session_user and session_user.get("is_admin"))
+    customer_email = str(order.get("customerEmail") or order.get("customer_email") or "").lower().strip()
+    order_token = request.headers.get("x-order-token") or request.query_params.get("token")
+    has_valid_token = verify_order_access_token(clean_id, customer_email, order_token) if order_token else False
+    is_session_owner = bool(session_user and session_user.get("email") == customer_email)
+
+    if not (is_admin or is_session_owner or has_valid_token):
+        raise HTTPException(status_code=403, detail="Akses ditolak: Anda tidak memiliki otorisasi untuk pesanan ini.")
+
     from app.services.vip_service import VipService
     res = VipService.sync_order_live_status(clean_id)
     return res
 
 @router.post("/orders/{order_id}/pay", tags=["Orders"])
 async def pay_order(order_id: str, request: Request):
+    clean_id = order_id.strip().upper()
     body = {}
     if isinstance(request, Request):
         try:
@@ -517,9 +542,24 @@ async def pay_order(order_id: str, request: Request):
     elif isinstance(request, dict):
         body = request
 
-    order = OrderService.get_order_by_id(order_id)
+    order = OrderService.get_order_by_id(clean_id)
     if not order:
         raise HTTPException(status_code=404, detail="Pesanan tidak ditemukan")
+
+    from app.core.auth import get_authenticated_session_identity, verify_order_access_token
+    session_user = get_authenticated_session_identity(request) if isinstance(request, Request) else None
+    is_admin = bool(session_user and session_user.get("is_admin"))
+
+    customer_email = str(order.get("customerEmail") or order.get("customer_email") or "").lower().strip()
+    order_token = (request.headers.get("x-order-token") or request.query_params.get("token")) if isinstance(request, Request) else None
+    if not order_token and isinstance(body, dict):
+        order_token = body.get("orderAccessToken") or body.get("token")
+
+    has_valid_token = verify_order_access_token(clean_id, customer_email, order_token) if order_token else False
+    is_session_owner = bool(session_user and session_user.get("email") == customer_email)
+
+    if not (is_admin or is_session_owner or has_valid_token):
+        raise HTTPException(status_code=403, detail="Akses ditolak: Anda tidak memiliki otorisasi untuk pesanan ini.")
 
     amount = order.get("totalAmount") or order.get("total_amount") or 50000
     method = body.get("payment_method") or order.get("paymentMethod") or order.get("payment_method") or "qris"
@@ -665,10 +705,25 @@ async def pay_order(order_id: str, request: Request):
     }
 
 @router.post("/orders/{order_id}/cancel", tags=["Orders"])
-def cancel_order(order_id: str):
-    updated = OrderService.update_status(order_id, "cancelled", notes="Dibatalkan oleh pembeli")
-    if not updated:
+def cancel_order(order_id: str, request: Request):
+    clean_id = order_id.strip().upper()
+    order = OrderService.get_order_by_id(clean_id)
+    if not order:
         return {"success": True, "message": "Pesanan tidak ditemukan atau telah dibatalkan"}
+
+    from app.core.auth import get_authenticated_session_identity, verify_order_access_token
+    session_user = get_authenticated_session_identity(request)
+    is_admin = bool(session_user and session_user.get("is_admin"))
+
+    customer_email = str(order.get("customerEmail") or order.get("customer_email") or "").lower().strip()
+    order_token = request.headers.get("x-order-token") or request.query_params.get("token")
+    has_valid_token = verify_order_access_token(clean_id, customer_email, order_token) if order_token else False
+    is_session_owner = bool(session_user and session_user.get("email") == customer_email)
+
+    if not (is_admin or is_session_owner or has_valid_token):
+        raise HTTPException(status_code=403, detail="Akses ditolak: Anda tidak memiliki otorisasi untuk membatalkan pesanan ini.")
+
+    updated = OrderService.update_status(clean_id, "cancelled", notes="Dibatalkan oleh pembeli")
     return {
         "success": True,
         "message": "Pesanan berhasil dibatalkan",
