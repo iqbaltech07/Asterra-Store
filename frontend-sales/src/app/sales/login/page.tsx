@@ -27,15 +27,14 @@ import {
   faCircleCheck,
 } from '@fortawesome/free-solid-svg-icons';
 import { AsterraLogo } from '@/components/ui/asterra-logo';
-import { getAdminBaseUrl, getStoreBaseUrl } from '@/lib/utils/url';
+import { getAdminBaseUrl, getStoreBaseUrl, getSafeInternalRedirectUrl } from '@/lib/utils/url';
 import { Suspense } from 'react';
 
 function SalesLoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const rawCallback = searchParams.get('callbackUrl');
-  const callbackUrl =
-    rawCallback && !rawCallback.includes('/login') ? rawCallback : '/sales';
+  const callbackUrl = getSafeInternalRedirectUrl(rawCallback, '/sales');
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

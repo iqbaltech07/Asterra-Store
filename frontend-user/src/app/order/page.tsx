@@ -29,7 +29,7 @@ import {
   CheckoutManualModal,
   ManualPaymentModalData,
 } from '@/components/checkout/checkout-manual-modal';
-import { OrdersApi } from '@/lib/api-client';
+import { OrdersApi, getOrderAccessToken } from '@/lib/api-client';
 import { usePaymentConfig } from '@/lib/hooks/use-payment-config';
 import { ProductBrandIcon } from '@/components/ui/product-brand-icon';
 
@@ -189,7 +189,10 @@ function PrivateOrderContent() {
       // 1. If effectiveOrderId is specified, fetch that exact order directly for 100% precision
       if (effectiveOrderId) {
         try {
-          const res = await fetch(`/api/v1/orders/${encodeURIComponent(effectiveOrderId)}`);
+          const tok = getOrderAccessToken(effectiveOrderId);
+          const headers: Record<string, string> = {};
+          if (tok) headers['X-Order-Token'] = tok;
+          const res = await fetch(`/api/v1/orders/${encodeURIComponent(effectiveOrderId)}`, { headers });
           if (res.ok) {
             const json = await res.json();
             if (json.success && json.data) {
@@ -484,7 +487,11 @@ function PrivateOrderContent() {
   const handlePayOrder = async (order: Order) => {
     if (isOrderExpired(order)) {
       showNotification('Batas waktu pembayaran 24 jam telah habis. Pesanan dibatalkan.');
-      fetch(`/api/v1/orders/${order.id}/cancel`, { method: 'POST' }).finally(() => refetch());
+      const tok = getOrderAccessToken(order.id);
+      fetch(`/api/v1/orders/${order.id}/cancel`, {
+        method: 'POST',
+        headers: tok ? { 'X-Order-Token': tok } : {},
+      }).finally(() => refetch());
       return;
     }
 
@@ -982,7 +989,11 @@ function PrivateOrderContent() {
                         <OrderCountdownBadge
                           expiresAt={orderExpiresAt}
                           onExpired={() => {
-                            fetch(`/api/v1/orders/${order.id}/cancel`, { method: 'POST' }).finally(() => refetch());
+                            const tok = getOrderAccessToken(order.id);
+                            fetch(`/api/v1/orders/${order.id}/cancel`, {
+                              method: 'POST',
+                              headers: tok ? { 'X-Order-Token': tok } : {},
+                            }).finally(() => refetch());
                           }}
                         />
                       )}
@@ -1242,7 +1253,11 @@ function PrivateOrderContent() {
                             type="button"
                             onClick={async () => {
                               try {
-                                await fetch(`/api/v1/orders/${order.id}/sync-vip`, { method: 'POST' });
+                                const tok = getOrderAccessToken(order.id);
+                                await fetch(`/api/v1/orders/${order.id}/sync-vip`, {
+                                  method: 'POST',
+                                  headers: tok ? { 'X-Order-Token': tok } : {},
+                                });
                                 refetch();
                                 showNotification('Status pesanan berhasil diperbarui.');
                               } catch (_) {}

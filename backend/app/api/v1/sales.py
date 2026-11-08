@@ -1,7 +1,7 @@
 import os
 import re
 from typing import Optional, List, Dict, Any
-from fastapi import APIRouter, Request, Response, HTTPException, Query
+from fastapi import APIRouter, Request, Response, HTTPException, Query, Depends
 from fastapi.responses import JSONResponse
 
 from app.services.partner_service import PartnerService
@@ -9,7 +9,8 @@ from app.services.order_service import OrderService
 from app.services.referral_service import ReferralService
 from app.services.campaign_service import CampaignService
 from app.services.realtime_broadcaster import RealtimeBroadcaster
-from app.core.auth import verify_admin_session_token
+from app.core.auth import verify_admin_session_token, get_current_admin, get_current_sales_or_admin
+from app.core.qstash_client import verify_internal_or_qstash_request
 from app.core.cache import cache
 from datetime import datetime
 
@@ -19,7 +20,7 @@ router = APIRouter()
 # 1. Admin Affiliates Management
 # ------------------------------------------
 @router.get("/admin/affiliates", tags=["Admin Affiliates"])
-def get_admin_affiliates():
+def get_admin_affiliates(admin: Dict[str, Any] = Depends(get_current_admin)):
     partners = PartnerService.get_all_partners()
     return {
         "success": True,
@@ -28,9 +29,12 @@ def get_admin_affiliates():
     }
 
 @router.post("/admin/affiliates", tags=["Admin Affiliates"])
-async def create_admin_affiliate(request: Request):
+async def create_admin_affiliate(
+    request: Request,
+    admin: Dict[str, Any] = Depends(get_current_admin),
+):
     payload = await request.json()
-    res = PartnerService.register_partner(payload)
+    res = PartnerService.register_partner(payload, require_otp=False)
     if not res.get("success"):
         return JSONResponse(status_code=400, content=res)
     RealtimeBroadcaster.broadcast(
@@ -45,7 +49,10 @@ async def create_admin_affiliate(request: Request):
     }
 
 @router.get("/admin/affiliates/payout-requests", tags=["Admin Affiliates"])
-def get_admin_payout_requests(status: Optional[str] = Query(None)):
+def get_admin_payout_requests(
+    status: Optional[str] = Query(None),
+    admin: Dict[str, Any] = Depends(get_current_admin),
+):
     payouts = PartnerService.get_all_payout_requests(status=status)
     return {
         "success": True,
@@ -54,17 +61,21 @@ def get_admin_payout_requests(status: Optional[str] = Query(None)):
     }
 
 @router.post("/admin/affiliates/payout", tags=["Admin Affiliates"])
-async def process_admin_affiliate_payout(request: Request):
+async def process_admin_affiliate_payout(
+    request: Request,
+    admin: Dict[str, Any] = Depends(get_current_admin),
+):
     payload = await request.json()
     payout_request_id = payload.get("payoutRequestId") or payload.get("id")
     action = payload.get("action", "approve")
     notes = payload.get("notes")
+    admin_name = admin.get("name") or admin.get("email") or "Admin Asterra"
 
     if payout_request_id:
         res = PartnerService.process_payout_action(
             payout_id=payout_request_id,
             action=action,
-            admin_name="Admin Asterra",
+            admin_name=admin_name,
             notes=notes,
         )
         if not res.get("success"):
@@ -166,36 +177,27 @@ def get_sales_network(request: Request):
 
 @router.post("/sales/payout", tags=["Sales"])
 @router.post("/partners/payout", tags=["Sales"])
-async def request_sales_payout(request: Request):
-    token = request.cookies.get("asterra_admin_session")
-    if not token:
-        auth_hdr = request.headers.get("authorization", "")
-        if auth_hdr.lower().startswith("bearer "):
-            token = auth_hdr[7:].strip()
-
+async def request_sales_payout(
+    request: Request,
+    current_user: Dict[str, Any] = Depends(get_current_sales_or_admin),
+):
+    role = current_user.get("role", "sales")
     authenticated_partner = None
-    if token:
-        token_payload = verify_admin_session_token(token)
-        if token_payload:
-            email_or_code = token_payload.get("email")
-            role = token_payload.get("role", "sales")
-            if role == "sales" or role == "partner":
-                authenticated_partner = PartnerService.get_profile(email_or_code)
-            elif role in ["admin", "superadmin", "owner", "finance"]:
-                # Admin can submit payout for a partner if partnerId provided
-                pass
+
+    if role in ["sales", "partner"]:
+        email_or_code = current_user.get("email")
+        authenticated_partner = PartnerService.get_profile(email_or_code)
+        if not authenticated_partner:
+            raise HTTPException(
+                status_code=403,
+                detail="Forbidden: Profil mitra sales tidak ditemukan untuk akun ini.",
+            )
 
     payload = await request.json()
 
-    # If role is sales, ensure identity comes from verified session
-    if not authenticated_partner and not token:
-        # Check if running in development mode fallback
-        dev_partner_id = payload.get("partnerId")
-        if not dev_partner_id:
-            return JSONResponse(
-                status_code=401,
-                content={"success": False, "message": "Autentikasi sales tidak valid. Silakan login kembali ke Portal Sales."},
-            )
+    # If role is sales, strictly enforce partner ID from authenticated session
+    if role in ["sales", "partner"]:
+        payload["partnerId"] = authenticated_partner.get("id")
 
     res = PartnerService.submit_payout(payload, authenticated_partner=authenticated_partner)
     if not res.get("success"):
@@ -436,7 +438,7 @@ async def track_affiliate_click(request: Request):
     return result
 
 @router.post("/affiliate/expire-sessions", tags=["Affiliate"])
-def expire_affiliate_sessions():
+def expire_affiliate_sessions(admin: Dict[str, Any] = Depends(get_current_admin)):
     count = ReferralService.auto_expire_sessions()
     return {"success": True, "message": f"{count} sesi referral kedaluwarsa berhasil diperbarui", "expired_count": count}
 
@@ -484,7 +486,11 @@ def evaluate_product_campaign_price(
     }
 
 @router.get("/admin/campaigns", tags=["Admin Campaigns"])
-def get_admin_campaigns(response: Response, status: Optional[str] = Query(None)):
+def get_admin_campaigns(
+    response: Response,
+    status: Optional[str] = Query(None),
+    admin: Dict[str, Any] = Depends(get_current_admin),
+):
     campaigns = CampaignService.get_all_campaigns(filter_status=status)
     response.headers["Cache-Control"] = "no-cache, must-revalidate"
     return {
@@ -494,7 +500,10 @@ def get_admin_campaigns(response: Response, status: Optional[str] = Query(None))
     }
 
 @router.post("/admin/campaigns", tags=["Admin Campaigns"])
-async def create_admin_campaign(request: Request):
+async def create_admin_campaign(
+    request: Request,
+    admin: Dict[str, Any] = Depends(get_current_admin),
+):
     payload = await request.json()
     try:
         created = CampaignService.create_campaign(payload)
@@ -516,7 +525,11 @@ async def create_admin_campaign(request: Request):
 
 @router.put("/admin/campaigns/{campaign_id}", tags=["Admin Campaigns"])
 @router.patch("/admin/campaigns/{campaign_id}", tags=["Admin Campaigns"])
-async def update_admin_campaign(campaign_id: str, request: Request):
+async def update_admin_campaign(
+    campaign_id: str,
+    request: Request,
+    admin: Dict[str, Any] = Depends(get_current_admin),
+):
     payload = await request.json()
     updated = CampaignService.update_campaign(campaign_id, payload)
     if not updated:
@@ -535,7 +548,10 @@ async def update_admin_campaign(campaign_id: str, request: Request):
 
 @router.patch("/admin/campaigns/{campaign_id}/toggle", tags=["Admin Campaigns"])
 @router.post("/admin/campaigns/{campaign_id}/toggle", tags=["Admin Campaigns"])
-def toggle_admin_campaign(campaign_id: str):
+def toggle_admin_campaign(
+    campaign_id: str,
+    admin: Dict[str, Any] = Depends(get_current_admin),
+):
     updated = CampaignService.toggle_active(campaign_id)
     if not updated:
         raise HTTPException(status_code=404, detail="Campaign tidak ditemukan.")
@@ -553,7 +569,10 @@ def toggle_admin_campaign(campaign_id: str):
     }
 
 @router.delete("/admin/campaigns/{campaign_id}", tags=["Admin Campaigns"])
-def delete_admin_campaign(campaign_id: str):
+def delete_admin_campaign(
+    campaign_id: str,
+    admin: Dict[str, Any] = Depends(get_current_admin),
+):
     success = CampaignService.delete_campaign(campaign_id)
     if not success:
         raise HTTPException(status_code=404, detail="Campaign tidak ditemukan.")
@@ -859,26 +878,29 @@ def get_sales_gamification_suggestions(
 
 
 @router.get("/admin/gamification/overview", tags=["Admin Gamification"])
-def get_admin_gamification_overview(request: Request):
+def get_admin_gamification_overview(
+    request: Request,
+    admin: Dict[str, Any] = Depends(get_current_admin),
+):
     from app.services.gamification_service import GamificationService
     return GamificationService.get_admin_gamification_overview()
 
 
 @router.get("/admin/gamification/sales/{sales_id}", tags=["Admin Gamification"])
-def get_admin_gamification_sales_audit(sales_id: str):
+def get_admin_gamification_sales_audit(
+    sales_id: str,
+    admin: Dict[str, Any] = Depends(get_current_admin),
+):
     from app.services.gamification_service import GamificationService
     return GamificationService.get_sales_audit_detail(sales_id)
 
 
 @router.put("/admin/gamification/config", tags=["Admin Gamification"])
-async def update_admin_gamification_config(request: Request):
-    token = request.cookies.get("asterra_admin_session")
-    admin_name = "admin"
-    if token:
-        payload = verify_admin_session_token(token)
-        if payload:
-            admin_name = payload.get("username") or payload.get("email") or "admin"
-
+async def update_admin_gamification_config(
+    request: Request,
+    admin: Dict[str, Any] = Depends(get_current_admin),
+):
+    admin_name = admin.get("username") or admin.get("email") or "admin"
     payload_data = await request.json()
     from app.services.gamification_service import GamificationService
     res = GamificationService.update_config(payload_data, admin_username=admin_name)
@@ -892,14 +914,12 @@ async def update_admin_gamification_config(request: Request):
 
 
 @router.post("/admin/gamification/bonus/{ledger_id}/action", tags=["Admin Gamification"])
-async def process_admin_gamification_bonus_action(ledger_id: str, request: Request):
-    token = request.cookies.get("asterra_admin_session")
-    admin_name = "admin"
-    if token:
-        payload = verify_admin_session_token(token)
-        if payload:
-            admin_name = payload.get("username") or payload.get("email") or "admin"
-
+async def process_admin_gamification_bonus_action(
+    ledger_id: str,
+    request: Request,
+    admin: Dict[str, Any] = Depends(get_current_admin),
+):
+    admin_name = admin.get("username") or admin.get("email") or "admin"
     body = await request.json()
     action = body.get("action", "approve")
 
@@ -918,7 +938,22 @@ async def process_admin_gamification_bonus_action(ledger_id: str, request: Reque
 
 @router.api_route("/internal/cron/gamification-cutoff", methods=["GET", "POST"], tags=["Internal / QStash"])
 @router.post("/admin/gamification/trigger-cutoff", tags=["Admin Gamification"])
-def trigger_gamification_cutoff():
+async def trigger_gamification_cutoff(request: Request):
+    raw_body = await request.body()
+    is_internal = verify_internal_or_qstash_request(request, raw_body)
+    if not is_internal:
+        token = request.cookies.get("asterra_admin_session")
+        if not token:
+            auth_hdr = request.headers.get("authorization", "")
+            if auth_hdr.lower().startswith("bearer "):
+                token = auth_hdr[7:].strip()
+        payload = verify_admin_session_token(token) if token else None
+        if not payload or payload.get("role") not in ["admin", "superadmin"]:
+            raise HTTPException(
+                status_code=401,
+                detail="Unauthorized: Operasi cutoff memerlukan otorisasi internal cron atau administrator.",
+            )
+
     from app.services.gamification_service import GamificationService
     res = GamificationService.run_daily_and_weekly_cutoff()
     return res

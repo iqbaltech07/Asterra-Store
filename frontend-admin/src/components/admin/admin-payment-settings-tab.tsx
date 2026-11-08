@@ -79,9 +79,9 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
         setConfig(d);
         if (isInitial) {
           setMode(d.mode);
-          setIsBankActive(false);
-          setIsQrisActive(true);
-          setIsDanaActive(false);
+          setIsBankActive((d.isBankActive ?? (d as any).is_bank_active) ?? false);
+          setIsQrisActive((d.isQrisActive ?? (d as any).is_qris_active) ?? true);
+          setIsDanaActive((d.isDanaActive ?? (d as any).is_dana_active) ?? false);
           setBankName(d.bankName || 'Bank Central Asia (BCA)');
           setBankAccountNumber(d.bankAccountNumber || '8965123456');
           setBankAccountName(d.bankAccountName || 'Asterra Store Official');
@@ -141,12 +141,12 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
     try {
       const payload = {
         mode: targetMode,
-        isBankActive: false,
-        isQrisActive: true,
-        isDanaActive: false,
-        is_bank_active: false,
-        is_qris_active: true,
-        is_dana_active: false,
+        isBankActive,
+        isQrisActive,
+        isDanaActive,
+        is_bank_active: isBankActive,
+        is_qris_active: isQrisActive,
+        is_dana_active: isDanaActive,
         bankName,
         bankAccountNumber,
         bankAccountName,

@@ -224,10 +224,15 @@ app = FastAPI(
 )
 
 # CORS Setup for all frontend domains and localhost ports
+origin_regex = (
+    r"^https?://(localhost|127\.0\.0\.1|([a-zA-Z0-9-]+\.)?asterrastore\.biz\.id|asterrastore(-[a-zA-Z0-9-]+)?\.vercel\.app)(:\d+)?$"
+    if settings.ENVIRONMENT != "production"
+    else r"^https://([a-zA-Z0-9-]+\.)?asterrastore\.biz\.id$"
+)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
-    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1|([a-zA-Z0-9-]+\.)?asterrastore\.biz\.id|asterra[a-zA-Z0-9-]*\.vercel\.app)(:\d+)?$",
+    allow_origin_regex=origin_regex,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

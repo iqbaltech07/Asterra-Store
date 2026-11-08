@@ -1,5 +1,5 @@
 from typing import Optional, List, Dict, Any
-from fastapi import APIRouter, Request, HTTPException, Query
+from fastapi import APIRouter, Request, HTTPException, Query, Depends
 from fastapi.responses import JSONResponse
 
 from app.services.finance_service import FinanceService
@@ -7,6 +7,7 @@ from app.services.analytics_service import AnalyticsService
 from app.services.admin_user_service import AdminUserService
 from app.services.audit_log_service import AuditLogService
 from app.services.realtime_broadcaster import RealtimeBroadcaster
+from app.core.auth import get_current_admin, get_current_superadmin
 
 router = APIRouter()
 
@@ -14,7 +15,10 @@ router = APIRouter()
 # 1. Finance & Analytics Endpoints
 # ------------------------------------------
 @router.get("/admin/profit-distribution", tags=["Admin Finance"])
-def get_profit_distribution(month: Optional[str] = Query(None)):
+def get_profit_distribution(
+    month: Optional[str] = Query(None),
+    admin: Dict[str, Any] = Depends(get_current_admin),
+):
     res = FinanceService.get_profit_distribution(month=month)
     return {
         "success": True,
@@ -22,38 +26,50 @@ def get_profit_distribution(month: Optional[str] = Query(None)):
     }
 
 @router.get("/admin/analytics/overview", tags=["Admin Analytics"])
-def get_analytics_overview():
+def get_analytics_overview(
+    admin: Dict[str, Any] = Depends(get_current_admin),
+):
     return {
         "success": True,
         "data": AnalyticsService.get_dashboard_overview(),
     }
 
 @router.get("/admin/analytics/suite", tags=["Admin Analytics"])
-def get_analytics_suite(period: Optional[str] = Query("30d")):
+def get_analytics_suite(
+    period: Optional[str] = Query("30d"),
+    admin: Dict[str, Any] = Depends(get_current_admin),
+):
     return {
         "success": True,
         "data": AnalyticsService.get_analytics_suite_data(period=period or "30d"),
     }
 
 @router.get("/admin/finance/summary", tags=["Admin Finance"])
-def get_finance_summary(month: Optional[str] = Query(None)):
+def get_finance_summary(
+    month: Optional[str] = Query(None),
+    admin: Dict[str, Any] = Depends(get_current_admin),
+):
     return {
         "success": True,
         "data": AnalyticsService.get_finance_summary(month=month),
     }
 
 @router.get("/admin/customers", tags=["Admin Customers"])
-def get_admin_customers():
+def get_admin_customers(
+    admin: Dict[str, Any] = Depends(get_current_admin),
+):
     return {
         "success": True,
         "data": AnalyticsService.get_customers(),
     }
 
 # ------------------------------------------
-# 2. Administrator Users Management
+# 2. Administrator Users Management (Superadmin Only)
 # ------------------------------------------
 @router.get("/admin/users", tags=["Admin Users"])
-def get_admin_users():
+def get_admin_users(
+    superadmin: Dict[str, Any] = Depends(get_current_superadmin),
+):
     admins = AdminUserService.get_clean_admins()
     return {
         "success": True,
@@ -62,7 +78,10 @@ def get_admin_users():
     }
 
 @router.post("/admin/users", tags=["Admin Users"])
-async def create_admin_user(request: Request):
+async def create_admin_user(
+    request: Request,
+    superadmin: Dict[str, Any] = Depends(get_current_superadmin),
+):
     payload = await request.json()
     res = AdminUserService.create_admin(payload)
     if not res.get("success"):
@@ -75,7 +94,11 @@ async def create_admin_user(request: Request):
     return res
 
 @router.patch("/admin/users/{admin_id}", tags=["Admin Users"])
-async def update_admin_user(admin_id: str, request: Request):
+async def update_admin_user(
+    admin_id: str,
+    request: Request,
+    superadmin: Dict[str, Any] = Depends(get_current_superadmin),
+):
     payload = await request.json()
     updated = AdminUserService.update_admin(admin_id, payload)
     if not updated:
@@ -92,7 +115,10 @@ async def update_admin_user(admin_id: str, request: Request):
     }
 
 @router.delete("/admin/users/{admin_id}", tags=["Admin Users"])
-def delete_admin_user(admin_id: str):
+def delete_admin_user(
+    admin_id: str,
+    superadmin: Dict[str, Any] = Depends(get_current_superadmin),
+):
     deleted = AdminUserService.delete_admin(admin_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Administrator tidak ditemukan.")
@@ -116,6 +142,7 @@ def get_admin_logs(
     since: Optional[str] = None,
     page: int = 1,
     limit: int = 50,
+    admin: Dict[str, Any] = Depends(get_current_admin),
 ):
     result = AuditLogService.get_logs(actor=actor, order_id=order_id, since=since, page=page, limit=limit)
     return {
@@ -132,8 +159,6 @@ def get_admin_logs(
 # ------------------------------------------
 # 4. Order Processing & Reseller API Configuration
 # ------------------------------------------
-from app.services.order_processing_service import OrderProcessingService
-from app.core.auth import get_current_admin
 
 @router.get("/admin/config/order-processing", tags=["Admin System Configuration"])
 def get_order_processing_config(request: Request):

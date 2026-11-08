@@ -20,7 +20,7 @@ import { SalesLinksTab } from './tabs/sales-links-tab';
 import { SalesOrdersTab } from './tabs/sales-orders-tab';
 import { SalesNetworkTab } from './tabs/sales-network-tab';
 import { SalesWalletTab } from './tabs/sales-wallet-tab';
-import { SalesAcademyTab } from './tabs/sales-academy-tab';
+import { SalesGuidebookTab } from './tabs/sales-guidebook-tab';
 
 export type {
   NetworkMember,
@@ -50,7 +50,7 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
 
   const partner = profileRes?.data;
   const partnerCode = partner?.code || 'AST-SALES';
-  const partnerRate = partner?.rate || 10;
+  const partnerRate = partner?.rate || 15;
 
   // 2. Fetch Products for Catalog Tab
   const { data: productsRes, isLoading: isProductsLoading } = useQuery<{
@@ -217,8 +217,14 @@ export function SalesConsoleSuite({ activeTab, onTabChange, adminUser }: SalesCo
         />
       )}
 
-      {/* 7. SALES ACADEMY & GUIDELINES TAB */}
-      {activeTab === 'sales-academy' && <SalesAcademyTab />}
+      {/* 7. SALES GUIDEBOOK / PANDUAN SALES TAB */}
+      {activeTab === 'sales-academy' && (
+        <SalesGuidebookTab
+          partnerCode={partnerCode}
+          partnerRate={partnerRate}
+          onTabChange={onTabChange}
+        />
+      )}
     </div>
   );
 }

@@ -103,10 +103,21 @@ class PaymentConfigService:
             enable_unique = merged.get("enable_unique_code", True)
         enable_unique = bool(enable_unique)
 
-        # Payment channel toggles: Only QRIS is active
-        is_bank_active = False
-        is_dana_active = False
-        is_qris_active = True
+        # Payment channel toggles
+        is_bank_active = merged.get("isBankActive")
+        if is_bank_active is None:
+            is_bank_active = merged.get("is_bank_active", False)
+        is_bank_active = bool(is_bank_active)
+
+        is_dana_active = merged.get("isDanaActive")
+        if is_dana_active is None:
+            is_dana_active = merged.get("is_dana_active", False)
+        is_dana_active = bool(is_dana_active)
+
+        is_qris_active = merged.get("isQrisActive")
+        if is_qris_active is None:
+            is_qris_active = merged.get("is_qris_active", True)
+        is_qris_active = bool(is_qris_active)
 
         expiry_hrs = merged.get("orderExpiryHours")
         if expiry_hrs is None:

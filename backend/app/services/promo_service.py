@@ -227,16 +227,18 @@ class PromoService:
         current_used = int(matched.get("usedCount") or 0)
         matched["usedCount"] = current_used + 1
 
-        # Sync to Supabase PostgreSQL
+        # Sync to Supabase PostgreSQL (atomic increment)
         try:
-            db = SessionLocal()
-            try:
-                db_promo = db.query(PromoCode).filter(PromoCode.code == clean_code).first()
-                if db_promo:
-                    db_promo.used_count = (db_promo.used_count or 0) + 1
+            db = SessionLocal() if SessionLocal else None
+            if db:
+                try:
+                    db.query(PromoCode).filter(PromoCode.code == clean_code).update(
+                        {PromoCode.used_count: PromoCode.used_count + 1},
+                        synchronize_session=False,
+                    )
                     db.commit()
-            finally:
-                db.close()
+                finally:
+                    db.close()
         except Exception as e:
             print(f"[PromoService] Supabase record_usage note: {e}")
 
@@ -357,6 +359,10 @@ class PromoService:
                     try:
                         db_p = db.query(PromoCode).filter((PromoCode.id == promo_id) | (PromoCode.code == promo_id.upper())).first()
                         if db_p:
+                            if "code" in payload and payload["code"]:
+                                db_p.code = str(payload["code"]).strip().upper()
+                            if "description" in payload:
+                                db_p.description = payload["description"]
                             if "targetScope" in payload:
                                 db_p.target_scope = payload["targetScope"]
                             if "targetProductId" in payload:
@@ -373,6 +379,31 @@ class PromoService:
                                 db_p.min_order_amount = int(payload["minOrderAmount"])
                             if "maxDiscount" in payload:
                                 db_p.max_discount = int(payload["maxDiscount"]) if payload["maxDiscount"] else None
+                            if "usageLimit" in payload or "usage_limit" in payload:
+                                u_val = payload.get("usageLimit") if "usageLimit" in payload else payload.get("usage_limit")
+                                db_p.usage_limit = int(u_val) if u_val is not None and u_val != "" else None
+                            if "perUserLimit" in payload or "per_user_limit" in payload:
+                                pu_val = payload.get("perUserLimit") if "perUserLimit" in payload else payload.get("per_user_limit")
+                                db_p.per_user_limit = int(pu_val) if pu_val is not None and pu_val != "" else 1
+                            if "startDate" in payload or "start_date" in payload:
+                                s_val = payload.get("startDate") if "startDate" in payload else payload.get("start_date")
+                                if s_val:
+                                    try:
+                                        db_p.start_date = datetime.fromisoformat(str(s_val).replace("Z", "+00:00"))
+                                    except Exception:
+                                        pass
+                                else:
+                                    db_p.start_date = None
+                            if "expiresAt" in payload or "expires_at" in payload:
+                                e_val = payload.get("expiresAt") if "expiresAt" in payload else payload.get("expires_at")
+                                if e_val:
+                                    try:
+                                        db_p.expires_at = datetime.fromisoformat(str(e_val).replace("Z", "+00:00"))
+                                    except Exception:
+                                        pass
+                                else:
+                                    db_p.expires_at = None
+                            db_p.updated_at = datetime.utcnow()
                             db.commit()
                     finally:
                         db.close()

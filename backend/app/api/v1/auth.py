@@ -100,31 +100,16 @@ async def admin_auth_login(request: Request):
     if stored_hash:
         is_valid = verify_password(password, stored_hash)
 
-    # Resilient sync for configured root admin:
+    # Secure sync for configured root admin ONLY (never for arbitrary admins or sales partners):
     if not is_valid and settings.ADMIN_PASSWORD and password == settings.ADMIN_PASSWORD:
-        if admin_match and (clean == "admin" or str(admin_match.get("email", "")).lower() == settings.ADMIN_EMAIL.lower() or admin_match.get("role") in ["admin", "superadmin"]):
+        if admin_match and admin_match.get("role") == "superadmin" and (
+            clean == "admin" or str(admin_match.get("email", "")).lower() == settings.ADMIN_EMAIL.lower()
+        ):
             is_valid = True
             try:
                 AdminUserService.update_admin(admin_match.get("id"), {"password": password})
             except Exception as e:
                 print(f"[Auth] Note: auto-sync root admin hash: {e}")
-
-    # Resilient sync for registered sales partners:
-    if not is_valid and password == "AsterraSales#2026":
-        is_sales = False
-        if admin_match and admin_match.get("role") == "sales":
-            is_sales = True
-        elif partner_match:
-            is_sales = True
-
-        if is_sales:
-            is_valid = True
-            try:
-                uid = (admin_match.get("id") if admin_match else None) or (partner_match.get("id") if partner_match else None)
-                if uid:
-                    AdminUserService.update_admin(uid, {"password": password})
-            except Exception as e:
-                print(f"[Auth] Note: auto-sync sales partner hash: {e}")
 
     if not is_valid:
         return JSONResponse(
@@ -362,81 +347,56 @@ async def forgot_password_resend_otp(request: Request):
 # ------------------------------------------
 @router.post("/auth/login", tags=["Auth"])
 async def auth_login(request: Request):
-    body = await request.json()
-    email = body.get("email", "user@asterra.store")
-    user_id = f"usr-{secrets.token_hex(4)}"
-    user_name = email.split("@")[0].capitalize()
-
-    token = f"ast_jwt_{secrets.token_urlsafe(32)}"
-    user_profile = {
-        "id": user_id,
-        "name": user_name,
-        "email": email,
-        "role": "customer",
-    }
-
-    response = JSONResponse(content={
-        "success": True,
-        "message": "Login berhasil.",
-        "token": token,
-        "user": user_profile,
-    })
-    response.set_cookie(
-        key="asterra_token",
-        value=token,
-        max_age=30 * 86400,
-        path="/",
-        httponly=False,
-        samesite="lax",
-        secure=False,
+    return JSONResponse(
+        status_code=400,
+        content={
+            "success": False,
+            "error": {
+                "code": "DEPRECATED_ENDPOINT",
+                "message": "Autentikasi pelanggan dialihkan ke Better Auth resmi di Next.js (/api/auth).",
+            },
+        },
     )
-    return response
 
 @router.post("/auth/register", tags=["Auth"])
 async def auth_register(request: Request):
-    body = await request.json()
-    email = body.get("email", "user@asterra.store")
-    name = body.get("name", "Pelanggan Baru")
-    user_id = f"usr-{secrets.token_hex(4)}"
-    token = f"ast_jwt_{secrets.token_urlsafe(32)}"
-
-    user_profile = {
-        "id": user_id,
-        "name": name,
-        "email": email,
-        "role": "customer",
-    }
-
-    response = JSONResponse(content={
-        "success": True,
-        "message": "Registrasi berhasil.",
-        "token": token,
-        "user": user_profile,
-    })
-    response.set_cookie(
-        key="asterra_token",
-        value=token,
-        max_age=30 * 86400,
-        path="/",
-        httponly=False,
-        samesite="lax",
-        secure=False,
+    return JSONResponse(
+        status_code=400,
+        content={
+            "success": False,
+            "error": {
+                "code": "DEPRECATED_ENDPOINT",
+                "message": "Pendaftaran pelanggan dialihkan ke Better Auth resmi di Next.js (/api/auth).",
+            },
+        },
     )
-    return response
 
 # ------------------------------------------
 # 3. Customer Profile & Security Masking
 # ------------------------------------------
 @router.get("/users/profile", tags=["Users"])
 def get_user_profile(email: Optional[str] = None, request: Request = None):
+    from app.core.auth import get_authenticated_session_identity
+    session_user = get_authenticated_session_identity(request) if request else None
+    is_admin = bool(session_user and session_user.get("is_admin"))
+
     user_email = email
     if not user_email and request:
         user_email = request.query_params.get("email") or request.headers.get("x-user-email")
 
-    clean_email = user_email.lower().strip() if user_email else ""
+    if is_admin:
+        clean_email = user_email.lower().strip() if user_email else session_user.get("email", "")
+        is_owner = True
+    elif session_user:
+        clean_email = session_user.get("email", "").lower().strip()
+        is_owner = True
+    else:
+        clean_email = user_email.lower().strip() if user_email else ""
+        is_owner = False
+
     orders = OrderService.load_orders()
     raw_user_orders = []
-    if clean_email:
+    if clean_email and is_owner:
         raw_user_orders = [
             o for o in orders
             if clean_email in str(o.get("customerEmail") or o.get("customer_email") or "").lower()
@@ -517,26 +477,6 @@ def get_user_profile(email: Optional[str] = None, request: Request = None):
     name = db_name or first_order.get("customerName") or first_order.get("customer_name") or "Pelanggan Asterra"
     phone = db_phone or first_order.get("customerWhatsapp") or first_order.get("customer_whatsapp") or ""
 
-    admin_token = request.cookies.get("asterra_admin_session") if request else None
-    is_admin = False
-    if admin_token:
-        p = verify_admin_session_token(admin_token)
-        is_admin = p and p.get("role") in ["admin", "superadmin"]
-
-    has_customer_session = False
-    if request:
-        has_customer_session = any(
-            bool(request.cookies.get(c))
-            for c in [
-                "better-auth.session_token",
-                "__Secure-better-auth.session_token",
-                "asterra_token",
-                "asterra_session",
-            ]
-        ) or bool(request.headers.get("authorization"))
-
-    is_owner = is_admin or has_customer_session or bool(clean_email)
-
     masked_phone = phone
     if phone and len(phone) > 6 and not is_owner:
         masked_phone = f"{phone[:3]}****{phone[-4:]}"
@@ -564,17 +504,25 @@ def get_user_profile(email: Optional[str] = None, request: Request = None):
 
 @router.patch("/users/profile", tags=["Users"])
 async def update_user_profile(request: Request):
+    from app.core.auth import get_authenticated_session_identity
+    session_user = get_authenticated_session_identity(request)
+    if not session_user:
+        return JSONResponse(
+            status_code=401,
+            content={"success": False, "error": {"message": "Autentikasi sesi diperlukan untuk mengubah profil."}}
+        )
+
     try:
         body = await request.json()
     except Exception:
         body = {}
 
-    clean_email = str(
-        body.get("email")
-        or request.headers.get("x-user-email")
-        or request.query_params.get("email")
-        or ""
-    ).strip()
+    is_admin = bool(session_user.get("is_admin"))
+    if is_admin:
+        clean_email = str(body.get("email") or request.query_params.get("email") or session_user.get("email", "")).strip()
+    else:
+        clean_email = session_user.get("email", "").strip()
+
     name = str(body.get("name") or "").strip()
     phone = str(body.get("phone") or "").strip()
 
