@@ -123,9 +123,18 @@ export function SalesGamificationPanel({
   // Fetch gamification overview
   const fetchOverview = useCallback(async () => {
     try {
+      const token = typeof window !== 'undefined'
+        ? (localStorage.getItem('asterra_admin_token') || localStorage.getItem('asterra_sales_token'))
+        : null;
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
       const queryParam = salesId ? `?salesId=${encodeURIComponent(salesId)}` : (partnerCode ? `?code=${encodeURIComponent(partnerCode)}` : '');
       const res = await fetch(`/api/v1/sales/gamification/overview${queryParam}`, {
         cache: 'no-store',
+        headers,
+        credentials: 'include',
       });
       if (!res.ok) return;
       const data = await res.json();
@@ -534,8 +543,18 @@ export function SalesProductSuggestionCard({
       if (excludeIds.length > 0) qp.set('exclude', excludeIds.join(','));
       qp.set('limit', '3');
 
+      const token = typeof window !== 'undefined'
+        ? (localStorage.getItem('asterra_admin_token') || localStorage.getItem('asterra_sales_token'))
+        : null;
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const res = await fetch(`/api/v1/sales/gamification/suggestions?${qp.toString()}`, {
         cache: 'no-store',
+        headers,
+        credentials: 'include',
       });
       if (!res.ok) return;
       const data = await res.json();

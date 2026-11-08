@@ -101,6 +101,9 @@ async function requestJson<T>(
   retries: number = 2
 ): Promise<T> {
   let attempt = 0;
+  const method = (options?.method || 'GET').toUpperCase();
+  const canRetry = method === 'GET' || method === 'HEAD';
+
   while (true) {
     try {
       const res = await fetch(url, {
@@ -111,13 +114,14 @@ async function requestJson<T>(
         ...options,
       });
 
-      if (!res.ok && (res.status === 404 || res.status >= 502) && attempt < retries) {
+      // Transient gateway errors on safe idempotent requests
+      if (!res.ok && canRetry && (res.status === 502 || res.status === 503 || res.status === 504) && attempt < retries) {
         attempt++;
         await new Promise((r) => setTimeout(r, 600 * attempt));
         continue;
       }
 
-      const data = await res.json();
+      const data = await res.json().catch(() => null);
       if (!res.ok || (data && data.success === false)) {
         const errorMsg =
           data?.error ||
@@ -125,12 +129,15 @@ async function requestJson<T>(
           data?.data?.error ||
           data?.data?.message ||
           `Request failed with status ${res.status}`;
-        throw new Error(errorMsg);
+        const err = new Error(errorMsg);
+        (err as any).status = res.status;
+        throw err;
       }
 
       return data as T;
-    } catch (err) {
-      if (attempt < retries) {
+    } catch (err: any) {
+      const isClientError = err?.status && err.status >= 400 && err.status < 500;
+      if (canRetry && !isClientError && attempt < retries) {
         attempt++;
         await new Promise((r) => setTimeout(r, 600 * attempt));
         continue;

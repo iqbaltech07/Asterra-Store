@@ -6,12 +6,13 @@ from datetime import datetime
 from typing import Optional, List, Dict, Any
 
 import httpx
-from fastapi import APIRouter, Request, Response, HTTPException, Query, UploadFile, File, Form
+from fastapi import APIRouter, Request, Response, HTTPException, Query, UploadFile, File, Form, Depends
 
 from app.config import settings
 from app.services.catalog_service import CatalogService
 from app.services.banner_service import BannerService
 from app.services.category_service import CategoryService
+from app.core.auth import get_current_admin, verify_admin_session_token
 
 router = APIRouter()
 
@@ -20,7 +21,6 @@ ALLOWED_MIME_TYPES = [
     "image/png",
     "image/webp",
     "image/gif",
-    "image/svg+xml",
     "image/avif",
 ]
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
@@ -602,6 +602,7 @@ async def upload_promo_banner(
     expires_at: Optional[str] = Form(None),
     scheduledUntil: Optional[str] = Form(None),
     id: Optional[str] = Form(None),
+    admin: Dict[str, Any] = Depends(get_current_admin),
 ):
     final_link = destinationUrl or link_url if (destinationUrl or link_url) is not None else linkUrl
     final_target = target_page if target_page is not None else (targetPage or "home")
@@ -665,7 +666,11 @@ async def upload_promo_banner(
 
 @router.patch("/banners/{banner_id}/toggle-status", tags=["Promo Banners"])
 @router.patch("/admin/banners/{banner_id}/toggle-status", tags=["Promo Banners"])
-async def toggle_promo_banner_status(banner_id: str, request: Request):
+async def toggle_promo_banner_status(
+    banner_id: str,
+    request: Request,
+    admin: Dict[str, Any] = Depends(get_current_admin),
+):
     new_status = None
     try:
         body = await request.json()
@@ -697,6 +702,18 @@ def get_promo_banners(
 ):
     # Admin requests (activeOnly=False or /admin/ path) should never be served from stale browser cache
     is_admin = (not active_only) or "/admin/" in request.url.path or request.url.path.endswith("/admin")
+    if is_admin:
+        token = request.cookies.get("asterra_admin_session")
+        if not token:
+            auth_hdr = request.headers.get("authorization", "")
+            if auth_hdr.lower().startswith("bearer "):
+                token = auth_hdr[7:].strip()
+        payload = verify_admin_session_token(token) if token else None
+        if not payload or payload.get("role") not in ["admin", "superadmin"]:
+            # Unauthenticated or non-admin users cannot inspect draft/hidden banners
+            active_only = True
+            is_admin = False
+
     if is_admin:
         banners = BannerService.get_banners(
             active_only=False,
@@ -757,7 +774,10 @@ def get_promo_banner_detail(banner_id: str, request: Request, response: Response
 
 @router.delete("/banners/{banner_id}", tags=["Promo Banners"])
 @router.delete("/admin/banners/{banner_id}", tags=["Promo Banners"])
-async def delete_promo_banner(banner_id: str):
+async def delete_promo_banner(
+    banner_id: str,
+    admin: Dict[str, Any] = Depends(get_current_admin),
+):
     success = await BannerService.delete_banner(banner_id)
     if not success:
         raise HTTPException(status_code=404, detail="Banner tidak ditemukan atau sudah dihapus.")

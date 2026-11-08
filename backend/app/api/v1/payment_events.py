@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Request, HTTPException, Depends
 from typing import Optional, Dict, Any
+import hmac
 from pydantic import BaseModel, Field
 from app.config import settings
 from app.services.payment_event_service import PaymentEventService
@@ -30,25 +31,27 @@ def verify_device_auth(request: Request) -> str:
         if auth_hdr.lower().startswith("bearer "):
             token = auth_hdr[7:].strip()
 
-    expected_tokens = [
+    valid_tokens = [
         tok.strip()
         for tok in [
             settings.LIPAY_DEVICE_TOKEN,
             settings.DANA_DEVICE_TOKEN,
-            settings.INTERNAL_CRON_SECRET,
-            settings.SECRET_KEY,
-            "lipay-secure-device-token-2026",
-            "asterra_dana_listener_token_dev",
         ]
         if tok and tok.strip()
     ]
 
-    if not token or token.strip() not in expected_tokens:
+    if not valid_tokens and settings.ENVIRONMENT != "production":
+        valid_tokens = ["asterra_dana_listener_token_dev"]
+
+    provided = (token or "").strip()
+    is_authorized = any(hmac.compare_digest(provided, expected) for expected in valid_tokens) if provided and valid_tokens else False
+
+    if not is_authorized:
         raise HTTPException(
             status_code=401,
             detail="Unauthorized: Device token tidak valid atau tidak disediakan.",
         )
-    return token.strip()
+    return provided
 
 # -------------------------------------------------------------
 # Android Device Ingestion Endpoint

@@ -99,3 +99,62 @@ export function getAdminBaseUrl(): string {
     ? 'https://admin.asterrastore.biz.id'
     : 'http://localhost:3001';
 }
+
+/**
+ * Sanitizes and safely resolves an internal redirect URL.
+ * Prevents Open Redirect vulnerabilities (e.g. //evil.com, https://evil.com, javascript:).
+ */
+export function getSafeInternalRedirectUrl(
+  targetUrl: string | null | undefined,
+  fallback: string = '/sales'
+): string {
+  if (!targetUrl || typeof targetUrl !== 'string') {
+    return fallback;
+  }
+
+  const trimmed = targetUrl.trim();
+  if (!trimmed) {
+    return fallback;
+  }
+
+  // Reject javascript:, data:, vbscript: protocols
+  if (/^(javascript|data|vbscript):/i.test(trimmed)) {
+    return fallback;
+  }
+
+  // Check percent-decoded string to catch obfuscated bypasses
+  let decoded = trimmed;
+  try {
+    decoded = decodeURIComponent(trimmed);
+  } catch {}
+
+  if (/^(javascript|data|vbscript):/i.test(decoded)) {
+    return fallback;
+  }
+
+  // Reject protocol-relative URLs
+  if (
+    trimmed.startsWith('//') ||
+    trimmed.startsWith('/\\') ||
+    trimmed.startsWith('\\') ||
+    decoded.startsWith('//') ||
+    decoded.startsWith('/\\') ||
+    decoded.startsWith('\\')
+  ) {
+    return fallback;
+  }
+
+  // If it is a valid relative path starting with /
+  if (trimmed.startsWith('/')) {
+    if (
+      trimmed === '/sales/login' ||
+      trimmed.startsWith('/sales/login?') ||
+      trimmed.startsWith('/sales/login/')
+    ) {
+      return fallback;
+    }
+    return trimmed;
+  }
+
+  return fallback;
+}

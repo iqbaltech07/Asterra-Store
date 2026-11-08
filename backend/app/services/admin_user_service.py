@@ -63,9 +63,9 @@ class AdminUserService:
         Synchronizes with settings.ADMIN_EMAIL and settings.ADMIN_PASSWORD seamlessly.
         """
         from app.config import settings
-        from app.core.security import verify_password, get_password_hash
+        from app.core.security import get_password_hash
         admin_email = (settings.ADMIN_EMAIL or "admin@asterra.store").strip().lower()
-        admin_pass = settings.ADMIN_PASSWORD or "AsterraAdmin#2026"
+        admin_pass = (settings.ADMIN_PASSWORD or "").strip()
 
         try:
             db = SessionLocal() if SessionLocal else None
@@ -77,6 +77,10 @@ class AdminUserService:
                 ).first()
 
                 if not root_admin:
+                    if not admin_pass:
+                        import secrets
+                        admin_pass = secrets.token_urlsafe(16)
+                        print(f"[AdminUserService] WARNING: ADMIN_PASSWORD not set. Generated temporary root admin password.")
                     new_hash = get_password_hash(admin_pass)
                     root_admin = AdminUser(
                         id="admin-root",
@@ -91,9 +95,7 @@ class AdminUserService:
                     db.commit()
                 else:
                     needs_update = False
-                    if not verify_password(admin_pass, root_admin.password_hash):
-                        root_admin.password_hash = get_password_hash(admin_pass)
-                        needs_update = True
+                    # Note: We do NOT overwrite an existing admin's password hash on reboot.
                     if not root_admin.is_active:
                         root_admin.is_active = True
                         needs_update = True

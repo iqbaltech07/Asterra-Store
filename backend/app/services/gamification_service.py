@@ -372,9 +372,10 @@ class GamificationService:
 
             if completed_days >= 7:
                 # 7/7 Streak achieved!
+                week_has_ended = today_wib >= weekly.week_end
+                status_ledger = "APPROVED" if (config.auto_approve_weekly_bonus and week_has_ended) else "PENDING"
                 if not ledger:
                     ledger_id = f"bonusledg-{weekly.id}"
-                    status_ledger = "APPROVED" if config.auto_approve_weekly_bonus else "PENDING"
                     ledger = SalesGamificationBonusLedger(
                         id=ledger_id,
                         sales_id=sales_id,
@@ -394,7 +395,7 @@ class GamificationService:
                 else:
                     # If already exists and was REVERSED, but now recovered:
                     if ledger.status == "REVERSED":
-                        ledger.status = "APPROVED" if config.auto_approve_weekly_bonus else "PENDING"
+                        ledger.status = status_ledger
                         ledger.reversal_reason = None
                         ledger.approved_at = now_utc if ledger.status == "APPROVED" else None
                         weekly.status = "BONUS_APPROVED" if ledger.status == "APPROVED" else "COMPLETED"
@@ -911,7 +912,6 @@ class GamificationService:
                     "name": p.name,
                     "brand": p.brand or "Digital Service",
                     "price": p.price,
-                    "providerPrice": cog,
                     "estimatedCommission": est_commission,
                     "ordersNeeded": orders_needed,
                     "imageUrl": p.imageUrl,
@@ -927,7 +927,6 @@ class GamificationService:
                         "name": "Google Gemini Pro Anggota 1 Bulan",
                         "brand": "Google",
                         "price": 95700,
-                        "providerPrice": 63800,
                         "estimatedCommission": 9570,
                         "ordersNeeded": math.ceil(simulation_target / 9570),
                         "imageUrl": "/images/gemini.png",
@@ -939,7 +938,6 @@ class GamificationService:
                         "name": "CapCut Pro Private 7 Hari",
                         "brand": "CapCut",
                         "price": 41700,
-                        "providerPrice": 27800,
                         "estimatedCommission": 4170,
                         "ordersNeeded": math.ceil(simulation_target / 4170),
                         "imageUrl": "/images/capcut.png",
@@ -951,7 +949,6 @@ class GamificationService:
                         "name": "YouTube Premium Family 1 Bulan",
                         "brand": "YouTube",
                         "price": 18800,
-                        "providerPrice": 12500,
                         "estimatedCommission": 1880,
                         "ordersNeeded": math.ceil(simulation_target / 1880),
                         "imageUrl": "/images/youtube.png",
@@ -1076,7 +1073,9 @@ class GamificationService:
                     "todayStatus": status,
                     "completedDaysThisWeek": w.completed_days if w else 0,
                     "totalCommissionThisWeek": w.total_commission if w else 0,
-                    "estimatedBonusThisWeek": int(round((w.total_commission if w else 0) * 0.10)),
+                    "estimatedBonusThisWeek": int(
+                        round((w.total_commission if w else 0) * (float(config.weekly_bonus_percentage or 10.0) / 100.0))
+                    ),
                     "weeklyStatus": w.status if w else "IN_PROGRESS",
                     "streakCalendar": mini_calendar,
                 })
@@ -1230,6 +1229,13 @@ class GamificationService:
             elif act == "pay":
                 ledger.status = "PAID"
                 ledger.paid_at = now_utc
+                if ledger.weekly_gamification_id:
+                    weekly = db.query(SalesWeeklyGamification).filter(
+                        SalesWeeklyGamification.id == ledger.weekly_gamification_id
+                    ).first()
+                    if weekly:
+                        weekly.status = "BONUS_PAID"
+                        weekly.updated_at = now_utc
             elif act == "reverse":
                 ledger.status = "REVERSED"
                 ledger.reversal_reason = f"Dibatalkan secara manual oleh {admin_name}."

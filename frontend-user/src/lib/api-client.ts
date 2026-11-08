@@ -172,6 +172,30 @@ export interface OrdersApiResponse {
   };
 }
 
+export function storeOrderAccessToken(orderId: string, token: string) {
+  if (typeof window === 'undefined' || !orderId || !token) return;
+  try {
+    const raw = localStorage.getItem('asterra_order_tokens') || '{}';
+    const tokens = JSON.parse(raw);
+    tokens[orderId.toUpperCase()] = token;
+    localStorage.setItem('asterra_order_tokens', JSON.stringify(tokens));
+  } catch {}
+}
+
+export function getOrderAccessToken(orderId: string): string | null {
+  if (typeof window === 'undefined' || !orderId) return null;
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tokenFromUrl = urlParams.get('token');
+    if (tokenFromUrl) return tokenFromUrl;
+    const raw = localStorage.getItem('asterra_order_tokens') || '{}';
+    const tokens = JSON.parse(raw);
+    return tokens[orderId.toUpperCase()] || null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Centralized Orders API
  */
@@ -191,14 +215,26 @@ export const OrdersApi = {
   },
 
   async getPublicOrderById(orderId: string) {
-    return requestJson<{ success: boolean; data: Order }>(`/api/v1/orders/${orderId}`);
+    const tok = getOrderAccessToken(orderId);
+    const headers: Record<string, string> = {};
+    if (tok) headers['X-Order-Token'] = tok;
+    return requestJson<{ success: boolean; data: Order }>(`/api/v1/orders/${orderId}`, { headers });
   },
 
   async create(payload: CreateOrderPayload) {
-    return requestJson<{ success: boolean; order: Order; message?: string }>('/api/v1/orders', {
+    const res = await requestJson<{
+      success: boolean;
+      order: Order & { orderAccessToken?: string; order_access_token?: string };
+      message?: string;
+    }>('/api/v1/orders', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
+    if (res.success && res.order?.id) {
+      const tok = res.order.orderAccessToken || res.order.order_access_token;
+      if (tok) storeOrderAccessToken(res.order.id, tok);
+    }
+    return res;
   },
 
   async updateStatus(
@@ -221,6 +257,9 @@ export const OrdersApi = {
   },
 
   async pay(orderId: string, paymentMethod?: string) {
+    const tok = getOrderAccessToken(orderId);
+    const headers: Record<string, string> = {};
+    if (tok) headers['X-Order-Token'] = tok;
     return requestJson<{
       success: boolean;
       message?: string;
@@ -244,7 +283,8 @@ export const OrdersApi = {
       };
     }>(`/api/v1/orders/${orderId}/pay`, {
       method: 'POST',
-      body: JSON.stringify({ payment_method: paymentMethod || 'qris' }),
+      headers,
+      body: JSON.stringify({ payment_method: paymentMethod || 'qris', orderAccessToken: tok }),
     });
   },
 };

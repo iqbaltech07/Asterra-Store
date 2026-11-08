@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Request
+from fastapi.responses import JSONResponse
 from app.api.v1.catalog import router as catalog_router
 from app.api.v1.checkout import router as checkout_router
 from app.api.v1.sales import router as sales_router
@@ -25,13 +26,16 @@ api_router.include_router(realtime_router)
 api_router.include_router(brandfetch_router)
 api_router.include_router(payment_events_router)
 
-# 2. Universal Fallback Handler for Graceful Proxy Support
+# 2. Universal Fallback Handler for Graceful Proxy Support (Returns 404 for undefined routes)
 @api_router.api_route("/{full_path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE"], tags=["Fallback"])
 async def fallback_handler(request: Request, full_path: str):
-    return {
-        "success": True,
-        "data": [],
-        "message": f"Endpoint /{full_path} handled gracefully by Asterra Core Engine",
-    }
+    return JSONResponse(
+        status_code=404,
+        content={
+            "success": False,
+            "error": "NOT_FOUND",
+            "message": f"Endpoint /api/v1/{full_path} not found on Asterra Core Engine",
+        },
+    )
 
 __all__ = ["api_router"]

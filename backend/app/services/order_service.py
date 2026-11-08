@@ -1,6 +1,7 @@
 import json
 import pathlib
 import random
+import secrets
 import re
 from datetime import datetime, timedelta, timezone
 from typing import List, Dict, Any, Optional
@@ -49,7 +50,6 @@ class OrderService:
                         .filter(~Order.customer_email.like("%@customer.id"))
                         .filter(~Order.customer_email.like("buyer_%"))
                         .filter(~Order.customer_email.like("%_buyer@%"))
-                        .filter(~Order.customer_email.like("%test%@%"))
                         .filter(~Order.customer_email.like("%@asterra.store"))
                         .order_by(Order.created_at.desc())
                         .all()
@@ -107,8 +107,6 @@ class OrderService:
             and not str(o.get("customer_email", "")).lower().startswith("buyer_")
             and not "_buyer@" in str(o.get("customerEmail", "")).lower()
             and not "_buyer@" in str(o.get("customer_email", "")).lower()
-            and not "test" in str(o.get("customerEmail", "")).lower()
-            and not "test" in str(o.get("customer_email", "")).lower()
             and not str(o.get("customerEmail", "")).lower().endswith("@asterra.store")
             and not str(o.get("customer_email", "")).lower().endswith("@asterra.store")
         ]
@@ -331,7 +329,7 @@ class OrderService:
     def create_order(cls, payload: Dict[str, Any], background_tasks: Any = None) -> Dict[str, Any]:
         now = datetime.utcnow()
         today_str = now.strftime("%Y%m%d")
-        rand_code = random.randint(1000, 9999)
+        rand_code = secrets.token_hex(4).upper()
         order_id = f"AST-ORD-{today_str}-{rand_code}"
 
         items = payload.get("items", [])
@@ -511,8 +509,8 @@ class OrderService:
             or payload.get("sessionId")
             or ""
         ).strip() or None
-        referral_discount = int(payload.get("referral_discount") or payload.get("referralDiscount") or 0)
-        if referral_discount > 0:
+        referral_discount = 0
+        if ref_code:
             import re
             clean_email = customer_email.lower().strip()
             clean_phone = re.sub(r"\D", "", customer_phone)
@@ -556,8 +554,8 @@ class OrderService:
                     for o in cls._orders
                 )
 
-            if already_claimed:
-                referral_discount = 0
+            if not already_claimed:
+                referral_discount = 1000
 
         # 5. Floor Price Protection Guard
         # Guarantees that total combined discounts (campaign + promo + referral) never cause
@@ -889,6 +887,11 @@ class OrderService:
             )
         except Exception as b_err:
             print(f"[OrderService] Realtime broadcast error on create_order: {b_err}")
+
+        from app.core.auth import generate_order_access_token
+        access_token = generate_order_access_token(order_id, customer_email)
+        normalized["orderAccessToken"] = access_token
+        normalized["order_access_token"] = access_token
 
         return normalized
 

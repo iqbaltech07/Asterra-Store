@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { getSafeInternalRedirectUrl, getStoredReturnUrl, clearStoredReturnUrl } from '@/lib/utils/url';
 import { appendReferralParams } from '@/lib/utils/referral';
+import { authClient } from '@/lib/auth-client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -77,28 +78,23 @@ function RegisterFormContent() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/v1/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password }),
+      const res = await authClient.signUp.email({
+        email,
+        password,
+        name,
+        callbackURL: appendReferralParams(safeCallback),
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error?.message || 'Registrasi gagal.');
+      if (res.error) {
+        throw new Error(res.error.message || 'Registrasi gagal.');
       }
 
-      // Save token & user in localStorage & cookies
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('asterra_token', data.token);
-        localStorage.setItem('asterra_user', JSON.stringify(data.user));
-        document.cookie = `asterra_token=${data.token}; path=/; max-age=2592000; SameSite=Lax`;
-        document.cookie = `asterra_session=${data.token}; path=/; max-age=2592000; SameSite=Lax`;
+      if (res.data?.user) {
+        login({
+          ...res.data.user,
+          role: 'customer',
+        });
       }
-
-      // Update Zustand state
-      login(data.user);
 
       clearStoredReturnUrl();
       setSuccessMessage('Pendaftaran berhasil! Mengalihkan ke halaman tujuan...');

@@ -27,7 +27,7 @@ import {
   faTerminal,
 } from '@fortawesome/free-solid-svg-icons';
 import { AsterraLogo } from '@/components/ui/asterra-logo';
-import { getSalesBaseUrl } from '@/lib/utils/url';
+import { getSalesBaseUrl, getStoreBaseUrl, getSafeInternalRedirectUrl } from '@/lib/utils/url';
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -134,9 +134,7 @@ export default function AdminLoginPage() {
       if (typeof window !== 'undefined') {
         const sp = new URLSearchParams(window.location.search);
         const cb = sp.get('callbackUrl');
-        if (cb && cb.startsWith('/') && !cb.startsWith('/sales')) {
-          targetUrl = cb;
-        }
+        targetUrl = getSafeInternalRedirectUrl(cb, '/admin');
       }
 
       setSuccessMessage('Otorisasi admin berhasil. Mengalihkan ke panel kontrol...');
@@ -311,15 +309,15 @@ export default function AdminLoginPage() {
             <div className="space-y-1 text-center">
               <p className="text-xs text-foreground-muted">
                 Mitra Penjualan (Sales)?{' '}
-                <Link href="/sales/login" className="text-primary font-bold hover:underline">
+                <a href={`${getSalesBaseUrl()}/sales/login`} className="text-primary font-bold hover:underline">
                   Masuk ke Portal Sales
-                </Link>
+                </a>
               </p>
               <p className="text-xs text-foreground-muted">
                 Bukan pengelola toko?{' '}
-                <Link href="/login" className="text-primary font-medium hover:underline">
+                <a href={`${getStoreBaseUrl()}/login`} className="text-primary font-medium hover:underline">
                   Masuk sebagai pelanggan
-                </Link>
+                </a>
               </p>
             </div>
           </CardFooter>
