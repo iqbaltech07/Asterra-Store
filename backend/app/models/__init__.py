@@ -12,6 +12,13 @@ from app.models.referral_session import ReferralSession
 from app.models.commission import Commission
 from app.models.profit_ledger import ProfitLedger
 from app.models.payout_request import PayoutRequest
+from app.models.gamification import (
+    SalesGamificationConfig,
+    SalesDailyGamification,
+    SalesWeeklyGamification,
+    SalesGamificationBonusLedger,
+    SalesGamificationOrderEvent,
+)
 from app.models.store_operating_hours import StoreOperatingHours
 from app.models.order_processing_setting import OrderProcessingSetting, ResellerApiSetting
 from app.models.category import Category
@@ -39,4 +46,9 @@ __all__ = [
     "Commission",
     "ProfitLedger",
     "PayoutRequest",
+    "SalesGamificationConfig",
+    "SalesDailyGamification",
+    "SalesWeeklyGamification",
+    "SalesGamificationBonusLedger",
+    "SalesGamificationOrderEvent",
 ]

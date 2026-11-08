@@ -546,6 +546,13 @@ class ReferralProfitService:
 
                 db.commit()
 
+                # Trigger Sales Gamification sync idempotently
+                try:
+                    from app.services.gamification_service import GamificationService
+                    GamificationService.sync_order_gamification(clean_id, new_status=status_to_eval)
+                except Exception as game_err:
+                    print(f"[ReferralProfitService] Gamification sync warning for {clean_id}: {game_err}")
+
                 return {
                     "order_id": clean_id,
                     "commission_id": comm_record.id if comm_record else None,

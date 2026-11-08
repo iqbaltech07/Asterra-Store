@@ -798,3 +798,129 @@ async def simulate_calculation(request: Request):
         }
     }
 
+
+# ------------------------------------------
+# 6. Sales Gamification Endpoints (Sales & Admin)
+# ------------------------------------------
+@router.get("/sales/gamification/overview", tags=["Sales Gamification"])
+def get_sales_gamification_overview(request: Request):
+    token = request.cookies.get("asterra_admin_session")
+    if not token:
+        auth_hdr = request.headers.get("authorization", "")
+        if auth_hdr.lower().startswith("bearer "):
+            token = auth_hdr[7:].strip()
+
+    email_or_code = None
+    if token:
+        payload = verify_admin_session_token(token)
+        if payload:
+            email_or_code = payload.get("email")
+
+    qp = request.query_params.get("salesId") or request.query_params.get("code")
+    if qp and not email_or_code:
+        email_or_code = qp
+
+    from app.services.gamification_service import GamificationService
+    res = GamificationService.get_sales_overview(email_or_code)
+    return res
+
+
+@router.get("/sales/gamification/suggestions", tags=["Sales Gamification"])
+def get_sales_gamification_suggestions(
+    request: Request,
+    exclude: Optional[str] = Query(None),
+    limit: int = Query(3, ge=1, le=10),
+):
+    token = request.cookies.get("asterra_admin_session")
+    if not token:
+        auth_hdr = request.headers.get("authorization", "")
+        if auth_hdr.lower().startswith("bearer "):
+            token = auth_hdr[7:].strip()
+
+    email_or_code = None
+    if token:
+        payload = verify_admin_session_token(token)
+        if payload:
+            email_or_code = payload.get("email")
+
+    qp = request.query_params.get("salesId") or request.query_params.get("code")
+    if qp and not email_or_code:
+        email_or_code = qp
+
+    exclude_list = [x.strip() for x in exclude.split(",") if x.strip()] if exclude else None
+
+    from app.services.gamification_service import GamificationService
+    res = GamificationService.get_product_suggestions(
+        sales_identifier=email_or_code,
+        exclude_ids=exclude_list,
+        limit=limit,
+    )
+    return res
+
+
+@router.get("/admin/gamification/overview", tags=["Admin Gamification"])
+def get_admin_gamification_overview(request: Request):
+    from app.services.gamification_service import GamificationService
+    return GamificationService.get_admin_gamification_overview()
+
+
+@router.get("/admin/gamification/sales/{sales_id}", tags=["Admin Gamification"])
+def get_admin_gamification_sales_audit(sales_id: str):
+    from app.services.gamification_service import GamificationService
+    return GamificationService.get_sales_audit_detail(sales_id)
+
+
+@router.put("/admin/gamification/config", tags=["Admin Gamification"])
+async def update_admin_gamification_config(request: Request):
+    token = request.cookies.get("asterra_admin_session")
+    admin_name = "admin"
+    if token:
+        payload = verify_admin_session_token(token)
+        if payload:
+            admin_name = payload.get("username") or payload.get("email") or "admin"
+
+    payload_data = await request.json()
+    from app.services.gamification_service import GamificationService
+    res = GamificationService.update_config(payload_data, admin_username=admin_name)
+
+    RealtimeBroadcaster.broadcast(
+        "gamification:config_updated",
+        {"updatedBy": admin_name, "timestamp": datetime.utcnow().isoformat()},
+        target_role="admin",
+    )
+    return res
+
+
+@router.post("/admin/gamification/bonus/{ledger_id}/action", tags=["Admin Gamification"])
+async def process_admin_gamification_bonus_action(ledger_id: str, request: Request):
+    token = request.cookies.get("asterra_admin_session")
+    admin_name = "admin"
+    if token:
+        payload = verify_admin_session_token(token)
+        if payload:
+            admin_name = payload.get("username") or payload.get("email") or "admin"
+
+    body = await request.json()
+    action = body.get("action", "approve")
+
+    from app.services.gamification_service import GamificationService
+    res = GamificationService.process_bonus_action(ledger_id, action, admin_name=admin_name)
+    if not res.get("success"):
+        return JSONResponse(status_code=400, content=res)
+
+    RealtimeBroadcaster.broadcast(
+        "gamification:bonus_updated",
+        {"id": ledger_id, "action": action, "timestamp": datetime.utcnow().isoformat()},
+        target_role="admin",
+    )
+    return res
+
+
+@router.api_route("/internal/cron/gamification-cutoff", methods=["GET", "POST"], tags=["Internal / QStash"])
+@router.post("/admin/gamification/trigger-cutoff", tags=["Admin Gamification"])
+def trigger_gamification_cutoff():
+    from app.services.gamification_service import GamificationService
+    res = GamificationService.run_daily_and_weekly_cutoff()
+    return res
+
+

@@ -23,6 +23,7 @@ import { AnimatedProgressBar } from '@/components/ui/animated-progress-bar';
 import { SparklinePath } from '@/components/ui/sparkline-path';
 import { CopyButton } from '@/components/ui/copy-button';
 import { maskCustomerName, maskEmail } from '@/lib/utils/masking';
+import { SalesGamificationPanel, SalesProductSuggestionCard } from '../sales-gamification-panel';
 import type { SalesProfileData, NetworkDataResponse, SalesOrder, ProductItem } from '../types';
 
 export interface CampaignTeaserItem {
@@ -450,6 +451,13 @@ export function SalesOverviewTab({
         </div>
       </div>
 
+      {/* SALES GAMIFICATION PANEL: Daily Mission (Rp25k Target) & Weekly 7-Day Streak Calendar */}
+      <SalesGamificationPanel
+        salesId={partner?.id}
+        partnerCode={partnerCode}
+        onNavigateToCatalog={() => onTabChange && onTabChange('sales-catalog')}
+      />
+
       {/* 3. TWO-COLUMN SPLIT (Exact layout match: Left 8 cols, Right 4 cols) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         {/* LEFT COLUMN: 8 Columns */}
@@ -571,85 +579,12 @@ export function SalesOverviewTab({
 
         {/* RIGHT COLUMN: 4 Columns (Produk Rekomendasi & Bonus Tim) */}
         <div className="lg:col-span-4 space-y-5">
-          {/* Card 1: Produk Rekomendasi Promosi (Komisi Tertinggi) */}
-          <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-2xs space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-lg bg-orange-50 text-orange-500 flex items-center justify-center">
-                  <Flame className="w-4 h-4 fill-orange-500" />
-                </div>
-                <h3 className="font-bold text-sm text-slate-900">Produk Komisi Tertinggi</h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => onTabChange && onTabChange('sales-catalog')}
-                className="text-xs text-[#2563EB] hover:underline font-semibold flex items-center gap-1 cursor-pointer"
-              >
-                <span>Semua Produk</span>
-                <span>→</span>
-              </button>
-            </div>
-
-            {/* List of 3 Recommended High-Commission Products */}
-            <div className="space-y-3 pt-1">
-              {/* Product 1: Google Gemini Pro */}
-              <div className="flex items-center justify-between gap-2.5">
-                <div className="flex items-center gap-3 min-w-0">
-                  <span className="text-xs font-semibold text-slate-400 w-3 text-center shrink-0">1</span>
-                  <ProductBrandIcon name="Google Gemini Pro" />
-                  <div className="min-w-0">
-                    <h4 className="text-xs font-bold text-slate-800 line-clamp-1">
-                      Google Gemini Pro Anggota 1...
-                    </h4>
-                    <p className="text-[10px] text-emerald-600 font-semibold mt-0.5">
-                      Estimasi Komisi: Rp 9.570/order
-                    </p>
-                  </div>
-                </div>
-                <div className="font-bold text-xs text-slate-900 shrink-0 font-mono">
-                  Rp 95.700
-                </div>
-              </div>
-
-              {/* Product 2: CapCut Pro */}
-              <div className="flex items-center justify-between gap-2.5">
-                <div className="flex items-center gap-3 min-w-0">
-                  <span className="text-xs font-semibold text-slate-400 w-3 text-center shrink-0">2</span>
-                  <ProductBrandIcon name="CapCut Pro" />
-                  <div className="min-w-0">
-                    <h4 className="text-xs font-bold text-slate-800 line-clamp-1">
-                      CapCut Pro Private 7 Hari
-                    </h4>
-                    <p className="text-[10px] text-emerald-600 font-semibold mt-0.5">
-                      Estimasi Komisi: Rp 4.170/order
-                    </p>
-                  </div>
-                </div>
-                <div className="font-bold text-xs text-slate-900 shrink-0 font-mono">
-                  Rp 41.700
-                </div>
-              </div>
-
-              {/* Product 3: YouTube Premium */}
-              <div className="flex items-center justify-between gap-2.5">
-                <div className="flex items-center gap-3 min-w-0">
-                  <span className="text-xs font-semibold text-slate-400 w-3 text-center shrink-0">3</span>
-                  <ProductBrandIcon name="YouTube Premium" />
-                  <div className="min-w-0">
-                    <h4 className="text-xs font-bold text-slate-800 line-clamp-1">
-                      YouTube Premium Family 1 Bulan
-                    </h4>
-                    <p className="text-[10px] text-emerald-600 font-semibold mt-0.5">
-                      Estimasi Komisi: Rp 1.880/order
-                    </p>
-                  </div>
-                </div>
-                <div className="font-bold text-xs text-slate-900 shrink-0 font-mono">
-                  Rp 18.800
-                </div>
-              </div>
-            </div>
-          </div>
+          {/* Card 1: Dynamic Product Suggestion Engine for Daily Mission Target */}
+          <SalesProductSuggestionCard
+            salesId={partner?.id}
+            partnerCode={partnerCode}
+            onNavigateToCatalog={() => onTabChange && onTabChange('sales-catalog')}
+          />
 
           {/* Card 2: Bonus Tim & Rekrutmen Mitra (1-Level Referral) */}
           <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-2xs space-y-3.5">

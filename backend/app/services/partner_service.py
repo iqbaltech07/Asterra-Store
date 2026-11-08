@@ -131,6 +131,29 @@ class PartnerService:
     def get_all_partners(cls) -> List[Dict[str, Any]]:
         partners = cls.load_partners()
 
+        # Pre-fetch gamification bonuses for all partners
+        game_bonuses_by_partner = {}
+        try:
+            db = SessionLocal() if SessionLocal else None
+            if db:
+                try:
+                    from app.models.gamification import SalesGamificationBonusLedger
+                    all_bonuses = db.query(SalesGamificationBonusLedger).all()
+                    for b in all_bonuses:
+                        if b.sales_id not in game_bonuses_by_partner:
+                            game_bonuses_by_partner[b.sales_id] = {"approved": 0, "pending": 0, "paid": 0}
+                        st = (b.status or "").upper()
+                        if st == "APPROVED":
+                            game_bonuses_by_partner[b.sales_id]["approved"] += int(b.bonus_amount or 0)
+                        elif st == "PENDING":
+                            game_bonuses_by_partner[b.sales_id]["pending"] += int(b.bonus_amount or 0)
+                        elif st == "PAID":
+                            game_bonuses_by_partner[b.sales_id]["paid"] += int(b.bonus_amount or 0)
+                finally:
+                    db.close()
+        except Exception as e:
+            print(f"[PartnerService] Warning querying gamification bonuses: {e}")
+
         # Build order counts and metrics per partner
         enriched = []
         for p in partners:
@@ -178,8 +201,13 @@ class PartnerService:
             pending_net = float(network_data.get("pendingNetworkBonus", 0))
             net_comm = float(network_data.get("totalNetworkBonus", 0))
 
-            available_unpaid = max(0.0, (final_comm + final_net) - paid_commission - pending_payouts)
-            total_pending = pending_comm + pending_net
+            p_bonuses = game_bonuses_by_partner.get(p_id, {"approved": 0, "pending": 0, "paid": 0})
+            approved_game_bonus = float(p_bonuses["approved"])
+            pending_game_bonus = float(p_bonuses["pending"])
+            paid_game_bonus = float(p_bonuses["paid"])
+
+            available_unpaid = max(0.0, (final_comm + final_net + approved_game_bonus) - paid_commission - pending_payouts)
+            total_pending = pending_comm + pending_net + pending_game_bonus
 
             successful_orders_count = cls.count_unique_successful_orders(partner_orders)
             total_orders_count = len(partner_orders)
@@ -198,6 +226,10 @@ class PartnerService:
                 "paidCommission": paid_commission,
                 "pendingPayouts": pending_payouts,
                 "networkCommission": net_comm,
+                "approvedGamificationBonus": approved_game_bonus,
+                "pendingGamificationBonus": pending_game_bonus,
+                "paidGamificationBonus": paid_game_bonus,
+                "gamificationBonus": approved_game_bonus + paid_game_bonus,
                 "tierProgress": {
                     "currentOrders": successful_orders_count,
                     "targetOrders": 50,
@@ -374,8 +406,33 @@ class PartnerService:
         final_net = float(network_data.get("finalNetworkBonus", 0))
         pending_net = float(network_data.get("pendingNetworkBonus", 0))
 
-        available_unpaid = max(0.0, (final_comm + final_net) - paid_comm - pending_payouts)
-        total_pending = pending_comm + pending_net
+        # Gamification weekly streak bonus
+        approved_game_bonus = 0.0
+        pending_game_bonus = 0.0
+        paid_game_bonus = 0.0
+        try:
+            db = SessionLocal() if SessionLocal else None
+            if db and p_id:
+                try:
+                    from app.models.gamification import SalesGamificationBonusLedger
+                    p_bonuses = db.query(SalesGamificationBonusLedger).filter(
+                        SalesGamificationBonusLedger.sales_id == p_id
+                    ).all()
+                    for b in p_bonuses:
+                        st = (b.status or "").upper()
+                        if st == "APPROVED":
+                            approved_game_bonus += float(b.bonus_amount or 0)
+                        elif st == "PENDING":
+                            pending_game_bonus += float(b.bonus_amount or 0)
+                        elif st == "PAID":
+                            paid_game_bonus += float(b.bonus_amount or 0)
+                finally:
+                    db.close()
+        except Exception:
+            pass
+
+        available_unpaid = max(0.0, (final_comm + final_net + approved_game_bonus) - paid_comm - pending_payouts)
+        total_pending = pending_comm + pending_net + pending_game_bonus
 
         successful_orders_count = cls.count_unique_successful_orders(partner_orders)
         total_orders_count = len(partner_orders)
@@ -401,6 +458,14 @@ class PartnerService:
             "unpaidCommission": available_unpaid,
             "pendingCommission": total_pending,
             "paidCommission": paid_comm,
+            "pendingPayouts": pending_payouts,
+            "networkCommission": network_comm,
+            "finalNetworkCommission": final_net,
+            "pendingNetworkCommission": pending_net,
+            "approvedGamificationBonus": approved_game_bonus,
+            "pendingGamificationBonus": pending_game_bonus,
+            "paidGamificationBonus": paid_game_bonus,
+            "gamificationBonus": approved_game_bonus + paid_game_bonus,
             "pendingPayouts": pending_payouts,
             "networkCommission": network_comm,
             "finalNetworkCommission": final_net,
