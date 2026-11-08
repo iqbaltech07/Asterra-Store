@@ -663,6 +663,21 @@ class OrderService:
         try:
             db = SessionLocal()
             try:
+                # Check if any item in cart is under review or ambiguous
+                for it in items:
+                    p_id = str(it.get("product_id") or it.get("productId") or "")
+                    cp = catalog_products.get(p_id)
+                    if cp:
+                        c_cfg = cp.get("inputConfig") or cp.get("input_config") or {}
+                        if isinstance(c_cfg, str):
+                            try:
+                                c_cfg = json.loads(c_cfg)
+                            except Exception:
+                                c_cfg = {}
+                        if c_cfg.get("needs_review") or cp.get("needsReview"):
+                            p_name = cp.get("name") or it.get("product_name") or "Produk"
+                            raise ValueError(f"Produk '{p_name}' saat ini sedang dalam peninjauan konfigurasi dan belum dapat dipesan. Silakan hubungi admin.")
+
                 order_record = Order(
                     id=order_id,
                     customer_email=customer_email,
@@ -696,6 +711,7 @@ class OrderService:
                 )
                 db.add(order_record)
 
+                is_multi_item = len(items) > 1
                 for item in items:
                     item_id = f"item-{random.randint(10000, 99999)}"
                     raw_target_id = str(
@@ -703,42 +719,30 @@ class OrderService:
                         or item.get("targetId")
                         or item.get("target_no")
                         or item.get("targetNo")
-                        or payload.get("target_id")
-                        or payload.get("targetId")
-                        or payload.get("target_no")
-                        or payload.get("targetNo")
-                        or ""
+                        or ("" if is_multi_item else (payload.get("target_id") or payload.get("targetId") or payload.get("target_no") or payload.get("targetNo") or ""))
                     ).strip()
                     raw_target_zone = str(
                         item.get("target_zone")
                         or item.get("targetZone")
-                        or payload.get("target_zone")
-                        or payload.get("targetZone")
-                        or ""
+                        or ("" if is_multi_item else (payload.get("target_zone") or payload.get("targetZone") or ""))
                     ).strip()
 
                     raw_fulfillment_method = str(
                         item.get("fulfillment_method")
                         or item.get("fulfillmentMethod")
-                        or payload.get("fulfillment_method")
-                        or payload.get("fulfillmentMethod")
-                        or ""
+                        or ("" if is_multi_item else (payload.get("fulfillment_method") or payload.get("fulfillmentMethod") or ""))
                     ).strip().lower()
 
                     raw_target_type = str(
                         item.get("target_type")
                         or item.get("targetType")
-                        or payload.get("target_type")
-                        or payload.get("targetType")
-                        or ""
+                        or ("" if is_multi_item else (payload.get("target_type") or payload.get("targetType") or ""))
                     ).strip().lower()
 
                     raw_target_value = str(
                         item.get("target_value")
                         or item.get("targetValue")
-                        or payload.get("target_value")
-                        or payload.get("targetValue")
-                        or ""
+                        or ("" if is_multi_item else (payload.get("target_value") or payload.get("targetValue") or ""))
                     ).strip()
 
                     # STRICT SEPARATION: DO NOT fall back to customer_email or customer_phone!
@@ -746,8 +750,7 @@ class OrderService:
                     raw_target_email = str(
                         item.get("target_email")
                         or item.get("targetEmail")
-                        or payload.get("target_email")
-                        or payload.get("targetEmail")
+                        or ("" if is_multi_item else (payload.get("target_email") or payload.get("targetEmail") or ""))
                         or (raw_target_value if "@" in raw_target_value else "")
                         or (raw_target_id if "@" in raw_target_id else "")
                         or ""
@@ -756,8 +759,7 @@ class OrderService:
                     raw_target_phone = str(
                         item.get("target_phone")
                         or item.get("targetPhone")
-                        or payload.get("target_phone")
-                        or payload.get("targetPhone")
+                        or ("" if is_multi_item else (payload.get("target_phone") or payload.get("targetPhone") or ""))
                         or (raw_target_value if (raw_target_value and "@" not in raw_target_value and not any(c in raw_target_value for c in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")) else "")
                         or (raw_target_id if (raw_target_id and "@" not in raw_target_id and not any(c in raw_target_id for c in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")) else "")
                         or ""
@@ -811,14 +813,15 @@ class OrderService:
 
         if not saved_to_db or normalized is None:
             norm_items = []
+            is_multi_fb = len(items) > 1
             for item in items:
-                fb_target_id = str(item.get("target_id") or item.get("targetId") or payload.get("target_id") or payload.get("targetId") or "").strip() or None
-                fb_target_zone = str(item.get("target_zone") or item.get("targetZone") or payload.get("target_zone") or payload.get("targetZone") or "").strip() or None
-                fb_f_method = str(item.get("fulfillment_method") or item.get("fulfillmentMethod") or payload.get("fulfillment_method") or payload.get("fulfillmentMethod") or "").strip().lower() or None
-                fb_t_type = str(item.get("target_type") or item.get("targetType") or payload.get("target_type") or payload.get("targetType") or "").strip().lower() or None
-                fb_t_val = str(item.get("target_value") or item.get("targetValue") or payload.get("target_value") or payload.get("targetValue") or "").strip() or None
-                fb_target_email = str(item.get("target_email") or item.get("targetEmail") or payload.get("target_email") or payload.get("targetEmail") or (fb_t_val if fb_t_val and "@" in fb_t_val else "") or "").strip() or None
-                fb_target_phone = str(item.get("target_phone") or item.get("targetPhone") or payload.get("target_phone") or payload.get("targetPhone") or (fb_t_val if fb_t_val and "@" not in fb_t_val else "") or "").strip() or None
+                fb_target_id = str(item.get("target_id") or item.get("targetId") or ("" if is_multi_fb else (payload.get("target_id") or payload.get("targetId") or "")) or "").strip() or None
+                fb_target_zone = str(item.get("target_zone") or item.get("targetZone") or ("" if is_multi_fb else (payload.get("target_zone") or payload.get("targetZone") or "")) or "").strip() or None
+                fb_f_method = str(item.get("fulfillment_method") or item.get("fulfillmentMethod") or ("" if is_multi_fb else (payload.get("fulfillment_method") or payload.get("fulfillmentMethod") or "")) or "").strip().lower() or None
+                fb_t_type = str(item.get("target_type") or item.get("targetType") or ("" if is_multi_fb else (payload.get("target_type") or payload.get("targetType") or "")) or "").strip().lower() or None
+                fb_t_val = str(item.get("target_value") or item.get("targetValue") or ("" if is_multi_fb else (payload.get("target_value") or payload.get("targetValue") or "")) or "").strip() or None
+                fb_target_email = str(item.get("target_email") or item.get("targetEmail") or ("" if is_multi_fb else (payload.get("target_email") or payload.get("targetEmail") or "")) or (fb_t_val if fb_t_val and "@" in fb_t_val else "") or "").strip() or None
+                fb_target_phone = str(item.get("target_phone") or item.get("targetPhone") or ("" if is_multi_fb else (payload.get("target_phone") or payload.get("targetPhone") or "")) or (fb_t_val if fb_t_val and "@" not in fb_t_val else "") or "").strip() or None
 
                 norm_items.append({
                     "id": f"item-{random.randint(10000, 99999)}",

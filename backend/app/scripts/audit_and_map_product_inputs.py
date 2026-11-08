@@ -128,12 +128,12 @@ def classify_product_input(prod_name: str, brand: str = "", category: str = "", 
             "required": True,
         }, False
 
-    # 7. Ambiguous fallback: Defaults to email invite but flags for admin review
-    return "email", {
-        "type": "email",
-        "label": f"Email Akun Tujuan Aktivasi *",
-        "placeholder": "contoh: akun_anda@gmail.com",
-        "helper": "Masukkan email akun tujuan aktivasi layanan digital ini.",
+    # 7. Ambiguous fallback: Flags for admin review and blocks unverified checkout
+    return "custom", {
+        "type": "custom",
+        "label": f"Produk Dalam Peninjauan Admin *",
+        "placeholder": "Menunggu verifikasi konfigurasi input oleh admin",
+        "helper": "Konfigurasi jenis fulfillment produk ini sedang dalam peninjauan admin dan belum dapat dipesan.",
         "required": True,
         "needs_review": True,
     }, True

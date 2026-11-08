@@ -76,10 +76,6 @@ class CatalogService:
         p["categoryName"] = cat_name
 
         # Dynamic customer input normalization
-        raw_input_type = p.get("inputType") or p.get("input_type") or "email"
-        p["inputType"] = raw_input_type
-        p["input_type"] = raw_input_type
-
         raw_cfg = p.get("inputConfig") if "inputConfig" in p else p.get("input_config")
         parsed_cfg = None
         if raw_cfg:
@@ -91,6 +87,17 @@ class CatalogService:
             elif isinstance(raw_cfg, dict):
                 parsed_cfg = raw_cfg
 
+        raw_input_type = p.get("inputType") or p.get("input_type")
+        if not raw_input_type:
+            if parsed_cfg and parsed_cfg.get("type"):
+                raw_input_type = parsed_cfg.get("type")
+            elif parsed_cfg and parsed_cfg.get("needs_review"):
+                raw_input_type = "needs_review"
+            else:
+                raw_input_type = "email"
+
+        p["inputType"] = raw_input_type
+        p["input_type"] = raw_input_type
         p["inputConfig"] = parsed_cfg
         p["input_config"] = parsed_cfg
 

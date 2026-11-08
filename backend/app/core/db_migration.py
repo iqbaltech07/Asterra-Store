@@ -273,6 +273,14 @@ def run_migrations():
         "CREATE INDEX IF NOT EXISTS idx_sales_gamification_events_daily_id ON sales_gamification_order_events(daily_gamification_id);",
         "CREATE INDEX IF NOT EXISTS idx_sales_gamification_events_wib_date ON sales_gamification_order_events(wib_date);",
         "CREATE INDEX IF NOT EXISTS idx_sales_gamification_events_is_counted ON sales_gamification_order_events(is_counted);",
+
+        # 17. Dynamic Product Order Input & Checkout Fulfillment columns
+        "ALTER TABLE products ADD COLUMN IF NOT EXISTS input_type VARCHAR(50) DEFAULT 'email';",
+        "ALTER TABLE products ADD COLUMN IF NOT EXISTS input_config TEXT;",
+        "ALTER TABLE order_items ADD COLUMN IF NOT EXISTS fulfillment_method VARCHAR(50);",
+        "ALTER TABLE order_items ADD COLUMN IF NOT EXISTS target_type VARCHAR(50);",
+        "ALTER TABLE order_items ADD COLUMN IF NOT EXISTS target_value TEXT;",
+        "ALTER TABLE order_items ADD COLUMN IF NOT EXISTS input_config_snapshot TEXT;",
     ]
 
     try:

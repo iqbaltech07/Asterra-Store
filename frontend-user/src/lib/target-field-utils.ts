@@ -176,11 +176,6 @@ export function validateTargetValue(type: TargetFieldType, value: string, choice
     error: issueMsg,
   };
 }
-    isValid: false,
-    isEmpty: false,
-    error: issueMsg,
-  };
-}
 
 export function validateTargetZone(value: string): TargetValidationResult {
   const trimmed = (value || '').trim();
@@ -435,17 +430,38 @@ export function getProductTargetRequirement(item?: {
     };
   }
 
-  // 8. Default: Email-based activation (YouTube Family, Canva, Google One, Gemini, Duolingo, etc.)
+  // 8. Explicit email-based activation (YouTube Family, Canva, Google One, Gemini, Duolingo, etc.)
+  const emailInviteKeywords = [
+    'youtube', 'family', 'invite', 'undangan', 'canva', 'google one',
+    'gemini', 'duolingo', 'notion', 'office 365', 'microsoft 365', 'apple music'
+  ];
+  if (explicitType === 'email' || emailInviteKeywords.some((k) => combined.includes(k))) {
+    return {
+      type: 'email',
+      label: `Email Akun ${brandName} Tujuan Aktivasi *`,
+      placeholder: 'contoh: akun_anda@gmail.com',
+      helper: `Undangan atau aktivasi premium ${brandName} akan dikaitkan ke email akun ini (terpisah dari email login akun website).`,
+      validLabel: 'Format email akun valid',
+      requiresZone: false,
+      zoneLabel: '',
+      zonePlaceholder: '',
+      zoneHelper: '',
+      required: true,
+    };
+  }
+
+  // 9. Ambiguous fallback: NOT automatically assumed as email. Flagged for admin review and blocked from checkout.
   return {
-    type: 'email',
-    label: `Email Akun ${brandName} Tujuan Aktivasi *`,
-    placeholder: 'contoh: akun_anda@gmail.com',
-    helper: `Undangan atau aktivasi premium ${brandName} akan dikaitkan ke email akun ini (terpisah dari email login akun website).`,
-    validLabel: 'Format email akun valid',
+    type: 'custom',
+    label: `Produk Dalam Peninjauan Admin *`,
+    placeholder: 'Menunggu konfigurasi input oleh admin',
+    helper: 'Konfigurasi jenis fulfillment produk ini sedang dalam peninjauan admin dan belum dapat dipesan saat ini.',
+    validLabel: '',
     requiresZone: false,
     zoneLabel: '',
     zonePlaceholder: '',
     zoneHelper: '',
     required: true,
+    needsReview: true,
   };
 }

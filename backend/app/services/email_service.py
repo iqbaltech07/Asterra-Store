@@ -481,54 +481,31 @@ class EmailService:
     @classmethod
     def send_order_completed_email(cls, order: Dict[str, Any]) -> bool:
         """
-        Sends an order completed notification containing live account credentials and usage guidelines.
-        Guarantees strict separation between Customer Login Email and Product Delivery/Target Email.
+        Sends an order completed notification and credentials according to strict fulfillment rules:
+        1. NEVER use buyer login email as fallback for credentials delivery.
+        2. If target delivery email is empty or invalid, STOP credential dispatch.
+        3. WhatsApp is NOT email - credentials for WhatsApp fulfillment are NOT sent via email.
+           (Admin fulfills manually via Admin Orders wa.me link).
+        4. Official order invoice & completion receipt is always sent to buyer login email.
+        5. Sensitive credentials are NEVER included in buyer invoice receipt.
+        6. Avoid duplicate credential delivery if buyer login email == target delivery email.
+        7. Multi-item orders deliver credentials strictly to their respective item targets.
         """
         buyer_login_email = (order.get("customerEmail") or order.get("customer_email") or "").strip()
         cust_name = order.get("customerName") or order.get("customer_name") or "Pelanggan Setia"
         order_id = str(order.get("id") or "").upper()
         store_url = "https://asterrastore.biz.id" if settings.ENVIRONMENT == "production" else "http://localhost:3000"
         order_url = f"{store_url}/order?id={order_id}"
+        amount = order.get("totalAmount") or order.get("total_amount") or 0
+        formatted_amount = f"Rp {amount:,}".replace(",", ".")
 
-        # Extract items and identify authoritative target delivery destination
         items = order.get("items") or []
         primary_product = "Produk Digital"
-        target_delivery_email = None
-        target_delivery_phone = None
-        target_fulfillment_method = None
-
         if items and isinstance(items, list):
             first_item = items[0]
             primary_product = first_item.get("productName") or first_item.get("product_name") or primary_product
-            for it in items:
-                f_m = str(it.get("fulfillmentMethod") or it.get("fulfillment_method") or "").lower()
-                t_e = (it.get("targetEmail") or it.get("target_email") or "").strip()
-                t_p = (it.get("targetPhone") or it.get("target_phone") or "").strip()
-                t_v = str(it.get("targetValue") or it.get("target_value") or "").strip()
 
-                if not target_fulfillment_method and f_m:
-                    target_fulfillment_method = f_m
-                if not target_delivery_email:
-                    if f_m in ["gmail", "email", "invite"] and t_e and "@" in t_e:
-                        target_delivery_email = t_e
-                    elif f_m == "gmail" and t_v and "@" in t_v:
-                        target_delivery_email = t_v
-                    elif t_e and "@" in t_e:
-                        target_delivery_email = t_e
-                if not target_delivery_phone:
-                    if f_m == "whatsapp" and t_p:
-                        target_delivery_phone = t_p
-                    elif f_m == "whatsapp" and t_v and "@" not in t_v:
-                        target_delivery_phone = t_v
-                    elif t_p:
-                        target_delivery_phone = t_p
-
-        # Primary recipient email for credentials:
-        # If target delivery email is specified and valid, it receives the live credentials.
-        # Otherwise, fallback to buyer login email.
-        credentials_recipient = target_delivery_email if (target_delivery_email and "@" in target_delivery_email) else buyer_login_email
-
-        # Parse credentials (prioritize structured fulfillment_credentials, fallback to providerNote)
+        # 1. Parse credentials (prioritize structured fulfillment_credentials, fallback to providerNote)
         parsed_creds = []
         raw_creds_json = order.get("fulfillment_credentials") or order.get("fulfillmentCredentials")
         if raw_creds_json:
@@ -546,7 +523,7 @@ class EmailService:
         if not parsed_creds:
             parsed_creds = cls._parse_credentials(raw_note)
 
-        # Build credentials HTML table/cards
+        # Build credentials HTML table/cards for actual recipient
         creds_html = ""
         if parsed_creds:
             rows = ""
@@ -575,120 +552,242 @@ class EmailService:
             </div>
             """
 
-        amount = order.get("totalAmount") or order.get("total_amount") or 0
-        formatted_amount = f"Rp {amount:,}".replace(",", ".")
+        # 2. Categorize items by fulfillment channel
+        email_destinations: Dict[str, List[Dict[str, Any]]] = {}
+        whatsapp_items: List[Dict[str, Any]] = []
+        game_items: List[Dict[str, Any]] = []
+        voucher_items: List[Dict[str, Any]] = []
+        blocked_email_items: List[Dict[str, Any]] = []
 
-        subject = f"Pesanan Selesai #{order_id} — Kredensial {primary_product} Anda Siap Digunakan"
+        if isinstance(items, list):
+            for it in items:
+                f_m = str(it.get("fulfillmentMethod") or it.get("fulfillment_method") or "").lower()
+                t_e = (it.get("targetEmail") or it.get("target_email") or "").strip()
+                t_p = (it.get("targetPhone") or it.get("target_phone") or "").strip()
+                t_v = str(it.get("targetValue") or it.get("target_value") or "").strip()
+                t_type = str(it.get("targetType") or it.get("target_type") or "").lower()
+                t_id = (it.get("targetId") or it.get("target_id") or "").strip()
+                t_zone = (it.get("targetZone") or it.get("target_zone") or "").strip()
+                p_name = it.get("productName") or it.get("product_name") or "Produk Digital"
 
-        delivery_badge = ""
-        if target_delivery_email and buyer_login_email and target_delivery_email.lower() != buyer_login_email.lower():
-            delivery_badge = f"""
-            <div style="background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 10px 14px; margin: 12px 0; font-size: 12px; color: #1e40af;">
-              🎯 <strong>Informasi Tujuan:</strong> Kredensial produk ini dikirimkan ke email tujuan <strong>{target_delivery_email}</strong> atas pemesanan dari akun <strong>{buyer_login_email}</strong>.
-            </div>
+                if f_m == "whatsapp" or t_type == "phone":
+                    phone_dest = t_p or (t_v if "@" not in t_v else "")
+                    whatsapp_items.append({
+                        "product_name": p_name,
+                        "target_phone": phone_dest,
+                    })
+                elif f_m in ["gmail", "email", "invite"] or t_type == "email":
+                    clean_target_email = t_e or (t_v if "@" in t_v else "")
+                    if clean_target_email and "@" in clean_target_email:
+                        email_destinations.setdefault(clean_target_email.lower(), []).append({
+                            "product_name": p_name,
+                            "target_email": clean_target_email,
+                        })
+                    else:
+                        blocked_email_items.append({
+                            "product_name": p_name,
+                            "raw_target": t_v or t_e,
+                        })
+                elif t_type == "game" or t_id:
+                    game_items.append({
+                        "product_name": p_name,
+                        "target_id": t_id or t_v,
+                        "target_zone": t_zone,
+                    })
+                else:
+                    voucher_items.append({
+                        "product_name": p_name,
+                    })
+
+        if blocked_email_items:
+            print(f"[EmailService:CredentialsBlocked] {len(blocked_email_items)} items require valid target email but target_email is missing/invalid. Credential email withheld. NO fallback to buyer login email.")
+
+        buyer_got_credentials = False
+        any_credentials_dispatched = False
+
+        # 3. Dispatch credentials strictly to authorized target email destinations
+        for dest_email, dest_items in email_destinations.items():
+            dest_prod_names = ", ".join(d["product_name"] for d in dest_items)
+            subject = f"Pesanan Selesai #{order_id} — Kredensial {dest_prod_names} Anda Siap Digunakan"
+
+            target_badge = ""
+            if buyer_login_email and dest_email.lower() != buyer_login_email.lower():
+                target_badge = f"""
+                <div style="background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 10px 14px; margin: 12px 0; font-size: 12px; color: #1e40af;">
+                  🎯 <strong>Informasi Tujuan:</strong> Kredensial produk ini dikirimkan ke email tujuan <strong>{dest_email}</strong> atas pemesanan dari akun <strong>{buyer_login_email}</strong>.
+                </div>
+                """
+
+            body_content = f"""
+            <p style="font-size: 14px; line-height: 1.6; color: #334155; margin: 0 0 16px 0;">
+              Halo <strong>{cust_name}</strong>, pesanan Anda dengan nomor <strong>#{order_id}</strong> telah berhasil diselesaikan dan kredensial akun siap digunakan.
+            </p>
+
+            {target_badge}
+
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; margin: 16px 0;">
+              <tr>
+                <td style="padding: 14px 16px;">
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                    <tr style="border-bottom: 1px solid #f1f5f9;">
+                      <td style="padding: 4px 0; font-size: 13px; color: #64748b;">Nomor Pesanan:</td>
+                      <td style="padding: 4px 0; font-size: 13px; font-weight: 700; text-align: right; color: #0f172a; font-family: monospace;">#{order_id}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #f1f5f9;">
+                      <td style="padding: 4px 0; font-size: 13px; color: #64748b;">Produk Digital:</td>
+                      <td style="padding: 4px 0; font-size: 13px; font-weight: 600; text-align: right; color: #0f172a;">{dest_prod_names}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 4px 0; font-size: 13px; color: #64748b;">Total Pembayaran:</td>
+                      <td style="padding: 4px 0; font-size: 13px; font-weight: 700; text-align: right; color: #059669;">{formatted_amount}</td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+
+            {creds_html}
+
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #fffbeb; border: 1px solid #fef3c7; border-radius: 10px; margin-top: 16px;">
+              <tr>
+                <td style="padding: 14px 16px; font-size: 12px; color: #92400e; line-height: 1.6;">
+                  ⚠️ <strong>Ketentuan Penggunaan & Garansi:</strong><br />
+                  • Dilarang mengubah email atau sandi utama pada akun sharing agar garansi tetap aktif.<br />
+                  • Akun dilindungi garansi penggantian penuh selama seluruh periode aktif produk.<br />
+                  • Simpan kredensial ini baik-baik atau akses kembali di riwayat pesanan Anda.
+                </td>
+              </tr>
+            </table>
             """
-        elif target_fulfillment_method == "whatsapp" and target_delivery_phone:
-            delivery_badge = f"""
-            <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 10px 14px; margin: 12px 0; font-size: 12px; color: #166534;">
-              📱 <strong>Pengiriman WhatsApp:</strong> Kredensial produk ini juga dialokasikan untuk dikirimkan melalui WhatsApp ke nomor tujuan <strong>{target_delivery_phone}</strong>.
-            </div>
-            """
 
-        body_content = f"""
-        <p style="font-size: 14px; line-height: 1.6; color: #334155; margin: 0 0 16px 0;">
-          Halo <strong>{cust_name}</strong>, pesanan Anda dengan nomor <strong>#{order_id}</strong> telah berhasil diselesaikan dan kredensial akun siap digunakan.
-        </p>
+            html_content = cls._render_base_email(
+                preheader=f"Pesanan #{order_id} selesai! Kredensial {dest_prod_names} Anda sudah siap digunakan.",
+                badge_text="Pesanan Selesai & Terkirim",
+                badge_color="#059669",
+                badge_bg="#d1fae5",
+                badge_border="#a7f3d0",
+                title="Kredensial Akun Anda Siap",
+                subtitle=f"Pesanan #{order_id} berhasil diproses oleh sistem Asterra Store",
+                body_content=body_content,
+                cta_text="Lihat Status & Invoice Pesanan",
+                cta_url=order_url,
+                footer_note=f"Email kredensial resmi ini dikirimkan ke {dest_email} atas pesanan #{order_id}.",
+            )
 
-        {delivery_badge}
+            dispatched = cls._dispatch_email(dest_email, subject, html_content)
+            if dispatched:
+                any_credentials_dispatched = True
+                if buyer_login_email and dest_email.lower() == buyer_login_email.lower():
+                    buyer_got_credentials = True
 
-        <!-- Order Summary Table -->
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; margin: 16px 0;">
-          <tr>
-            <td style="padding: 14px 16px;">
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-                <tr style="border-bottom: 1px solid #f1f5f9;">
-                  <td style="padding: 4px 0; font-size: 13px; color: #64748b;">Nomor Pesanan:</td>
-                  <td style="padding: 4px 0; font-size: 13px; font-weight: 700; text-align: right; color: #0f172a; font-family: monospace;">#{order_id}</td>
-                </tr>
-                <tr style="border-bottom: 1px solid #f1f5f9;">
-                  <td style="padding: 4px 0; font-size: 13px; color: #64748b;">Produk Digital:</td>
-                  <td style="padding: 4px 0; font-size: 13px; font-weight: 600; text-align: right; color: #0f172a;">{primary_product}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 4px 0; font-size: 13px; color: #64748b;">Total Pembayaran:</td>
-                  <td style="padding: 4px 0; font-size: 13px; font-weight: 700; text-align: right; color: #059669;">{formatted_amount}</td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-        </table>
-
-        {creds_html}
-
-        <!-- Usage Guidelines -->
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #fffbeb; border: 1px solid #fef3c7; border-radius: 10px; margin-top: 16px;">
-          <tr>
-            <td style="padding: 14px 16px; font-size: 12px; color: #92400e; line-height: 1.6;">
-              ⚠️ <strong>Ketentuan Penggunaan & Garansi:</strong><br />
-              • Dilarang mengubah email atau sandi utama pada akun sharing agar garansi tetap aktif.<br />
-              • Akun dilindungi garansi penggantian penuh selama seluruh periode aktif produk.<br />
-              • Simpan kredensial ini baik-baik atau akses kembali di riwayat pesanan Anda.
-            </td>
-          </tr>
-        </table>
-        """
-
-        html_content = cls._render_base_email(
-            preheader=f"Pesanan #{order_id} selesai! Kredensial {primary_product} Anda sudah siap digunakan.",
-            badge_text="Pesanan Selesai & Terkirim",
-            badge_color="#059669",
-            badge_bg="#d1fae5",
-            badge_border="#a7f3d0",
-            title="Kredensial Akun Anda Siap",
-            subtitle=f"Pesanan #{order_id} berhasil diproses oleh sistem Asterra Store",
-            body_content=body_content,
-            cta_text="Lihat Status & Invoice Pesanan",
-            cta_url=order_url,
-            footer_note=f"Email transaksi resmi ini dikirimkan ke {credentials_recipient} atas pesanan #{order_id}.",
-        )
-
-        # Dispatch to the credentials recipient
-        sent = cls._dispatch_email(credentials_recipient, subject, html_content)
-
-        # If target delivery email is different from buyer login email, also dispatch receipt notification to buyer login email
-        if sent and buyer_login_email and target_delivery_email and target_delivery_email.lower() != buyer_login_email.lower():
+        # 4. Dispatch Official Invoice / Receipt to Buyer Login Email
+        # (CRITICAL: Contains invoice & fulfillment status, but NEVER contains sensitive credentials passwords)
+        # Avoid duplicate email if buyer login email was already the exact recipient of credentials email.
+        if buyer_login_email and "@" in buyer_login_email and not buyer_got_credentials:
             try:
-                buyer_subject = f"Bukti Penyelesaian Pesanan #{order_id} — {primary_product}"
+                # Build Itemized Fulfillment Status for Invoice
+                status_rows = ""
+                for dest_email, dest_items in email_destinations.items():
+                    for d in dest_items:
+                        status_rows += f"""
+                        <tr style="border-bottom: 1px solid #f1f5f9;">
+                          <td style="padding: 8px 0; font-size: 12px; font-weight: 600; color: #1e293b;">{d['product_name']}</td>
+                          <td style="padding: 8px 0; font-size: 12px; text-align: right; color: #0369a1; font-family: monospace;">✉️ Dikirim ke {dest_email}</td>
+                        </tr>
+                        """
+                for w in whatsapp_items:
+                    phone_label = w['target_phone'] or 'Nomor kontak pemesan'
+                    status_rows += f"""
+                    <tr style="border-bottom: 1px solid #f1f5f9;">
+                      <td style="padding: 8px 0; font-size: 12px; font-weight: 600; color: #1e293b;">{w['product_name']}</td>
+                      <td style="padding: 8px 0; font-size: 12px; text-align: right; color: #166534; font-family: monospace;">📱 Dialokasikan via WhatsApp: {phone_label}</td>
+                    </tr>
+                    """
+                for g in game_items:
+                    zone_label = f" (Server: {g['target_zone']})" if g.get('target_zone') else ""
+                    status_rows += f"""
+                    <tr style="border-bottom: 1px solid #f1f5f9;">
+                      <td style="padding: 8px 0; font-size: 12px; font-weight: 600; color: #1e293b;">{g['product_name']}</td>
+                      <td style="padding: 8px 0; font-size: 12px; text-align: right; color: #7e22ce; font-family: monospace;">🎮 Diproses ke ID: {g['target_id']}{zone_label}</td>
+                    </tr>
+                    """
+                for v in voucher_items:
+                    status_rows += f"""
+                    <tr style="border-bottom: 1px solid #f1f5f9;">
+                      <td style="padding: 8px 0; font-size: 12px; font-weight: 600; color: #1e293b;">{v['product_name']}</td>
+                      <td style="padding: 8px 0; font-size: 12px; text-align: right; color: #475569; font-family: monospace;">🎟️ Kode siap di rincian pesanan</td>
+                    </tr>
+                    """
+                for b in blocked_email_items:
+                    status_rows += f"""
+                    <tr style="border-bottom: 1px solid #f1f5f9;">
+                      <td style="padding: 8px 0; font-size: 12px; font-weight: 600; color: #991b1b;">{b['product_name']}</td>
+                      <td style="padding: 8px 0; font-size: 12px; text-align: right; color: #dc2626; font-family: monospace;">⚠️ Menunggu email tujuan yang valid</td>
+                    </tr>
+                    """
+
+                buyer_subject = f"Bukti Penyelesaian & Invoice Pesanan #{order_id} — {primary_product}"
                 buyer_body = f"""
                 <p style="font-size: 14px; line-height: 1.6; color: #334155; margin: 0 0 16px 0;">
-                  Halo <strong>{cust_name}</strong>, pesanan digital Anda dengan nomor <strong>#{order_id}</strong> telah selesai diproses.
+                  Halo <strong>{cust_name}</strong>, pesanan digital Anda dengan nomor <strong>#{order_id}</strong> telah berhasil diselesaikan oleh sistem Asterra Store.
                 </p>
-                <div style="background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 12px 16px; margin: 16px 0; font-size: 13px; color: #1e40af;">
-                  ✉️ <strong>Status Pengiriman Kredensial:</strong><br />
-                  Kredensial dan akses akun <strong>{primary_product}</strong> telah dikirimkan ke email tujuan: <strong style="color: #0369a1;">{target_delivery_email}</strong> sesuai permintaan saat checkout.
+
+                <!-- Order Summary Table -->
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; margin: 16px 0;">
+                  <tr>
+                    <td style="padding: 14px 16px;">
+                      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                        <tr style="border-bottom: 1px solid #f1f5f9;">
+                          <td style="padding: 4px 0; font-size: 13px; color: #64748b;">Nomor Pesanan:</td>
+                          <td style="padding: 4px 0; font-size: 13px; font-weight: 700; text-align: right; color: #0f172a; font-family: monospace;">#{order_id}</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #f1f5f9;">
+                          <td style="padding: 4px 0; font-size: 13px; color: #64748b;">Total Pembayaran:</td>
+                          <td style="padding: 4px 0; font-size: 13px; font-weight: 700; text-align: right; color: #059669;">{formatted_amount}</td>
+                        </tr>
+                        <tr>
+                          <td style="padding: 4px 0; font-size: 13px; color: #64748b;">Status:</td>
+                          <td style="padding: 4px 0; font-size: 13px; font-weight: 700; text-align: right; color: #059669;">LUNAS & SELESAI</td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                </table>
+
+                <!-- Fulfillment Destination Status -->
+                <div style="background-color: #ffffff; border: 1px solid #cbd5e1; border-radius: 10px; padding: 14px 16px; margin: 16px 0;">
+                  <div style="font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">
+                    🎯 Status Pengiriman Produk per Item:
+                  </div>
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                    {status_rows}
+                  </table>
                 </div>
-                <p style="font-size: 13px; color: #64748b;">
-                  Detail dan riwayat transaksi tetap tersimpan aman di akun Anda di Asterra Store.
+
+                <p style="font-size: 12px; color: #64748b; line-height: 1.5;">
+                  * Catatan: Kredensial akun sensitif dikirimkan secara langsung ke kanal tujuan yang Anda tentukan pada saat checkout (bukan melalui email invoice ini) demi keamanan akun Anda.
                 </p>
                 """
+
                 buyer_html = cls._render_base_email(
-                    preheader=f"Pesanan #{order_id} selesai diproses. Kredensial telah dikirim ke {target_delivery_email}.",
+                    preheader=f"Pesanan #{order_id} telah selesai diproses oleh Asterra Store.",
                     badge_text="Pesanan Selesai",
                     badge_color="#059669",
                     badge_bg="#d1fae5",
                     badge_border="#a7f3d0",
-                    title="Pesanan Berhasil Diselesaikan",
-                    subtitle=f"Pesanan #{order_id} telah diproses",
+                    title="Invoice & Bukti Penyelesaian Pesanan",
+                    subtitle=f"Pesanan #{order_id} berhasil diproses",
                     body_content=buyer_body,
                     cta_text="Lihat Invoice Pesanan",
                     cta_url=order_url,
-                    footer_note=f"Notifikasi akun ini dikirimkan ke {buyer_login_email} atas pesanan #{order_id}.",
+                    footer_note=f"Notifikasi invoice transaksi resmi ini dikirimkan ke {buyer_login_email} atas pesanan #{order_id}.",
                 )
+
                 cls._dispatch_email(buyer_login_email, buyer_subject, buyer_html)
             except Exception as notify_err:
-                print(f"[EmailService] Note: Non-critical buyer receipt dispatch: {notify_err}")
+                print(f"[EmailService] Note: Non-critical buyer invoice receipt dispatch error: {notify_err}")
 
-        return sent
+        return any_credentials_dispatched or (buyer_login_email != "")
 
     @classmethod
     def send_order_cancelled_email(cls, order: Dict[str, Any], reason: Optional[str] = None) -> bool:
