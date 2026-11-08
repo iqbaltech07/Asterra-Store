@@ -110,6 +110,27 @@ export function CheckoutCustomerForm({
     if (onTargetEmailChange) {
       onTargetEmailChange(val);
     }
+    if (items && items.length > 0 && onItemTargetChange) {
+      onItemTargetChange(`${items[0].id}_0`, 'targetValue', val);
+    }
+  };
+
+  const handleSingleZoneChange = (val: string) => {
+    if (onTargetZoneChange) {
+      onTargetZoneChange(val);
+    }
+    if (items && items.length > 0 && onItemTargetChange) {
+      onItemTargetChange(`${items[0].id}_0`, 'targetZone', val);
+    }
+  };
+
+  const handleSingleChoiceMethodChange = (method: 'whatsapp' | 'gmail') => {
+    if (onChoiceMethodChange) {
+      onChoiceMethodChange(method);
+    }
+    if (items && items.length > 0 && onItemTargetChange) {
+      onItemTargetChange(`${items[0].id}_0`, 'choiceMethod', method);
+    }
   };
 
   // Real-time Zod Validation for Single Target Activation Field
@@ -360,7 +381,7 @@ export function CheckoutCustomerForm({
                     <div className="grid grid-cols-2 gap-2.5">
                       <button
                         type="button"
-                        onClick={() => onChoiceMethodChange?.('whatsapp')}
+                        onClick={() => handleSingleChoiceMethodChange('whatsapp')}
                         className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
                           choiceMethod === 'whatsapp'
                             ? 'border-emerald-500 bg-emerald-50 text-emerald-900 shadow-xs ring-2 ring-emerald-500/20'
@@ -373,7 +394,7 @@ export function CheckoutCustomerForm({
 
                       <button
                         type="button"
-                        onClick={() => onChoiceMethodChange?.('gmail')}
+                        onClick={() => handleSingleChoiceMethodChange('gmail')}
                         className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
                           choiceMethod === 'gmail'
                             ? 'border-blue-500 bg-blue-50 text-blue-900 shadow-xs ring-2 ring-blue-500/20'
@@ -467,7 +488,7 @@ export function CheckoutCustomerForm({
                         spellCheck={false}
                         placeholder={targetRequirement.zonePlaceholder || 'contoh: 2685'}
                         value={targetZone}
-                        onChange={(e) => onTargetZoneChange(e.target.value)}
+                        onChange={(e) => handleSingleZoneChange(e.target.value)}
                         className={`text-xs sm:text-sm rounded-lg pr-10 transition-all duration-200 ${getInputStateClass(
                           singleZoneValidation.isValid,
                           singleZoneValidation.isEmpty
