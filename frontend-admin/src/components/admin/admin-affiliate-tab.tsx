@@ -17,6 +17,7 @@ import {
   AlertCircle,
   XCircle,
   X,
+  Flame,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,6 +25,7 @@ import { Badge } from '@/components/ui/badge';
 import { getStoreBaseUrl } from '@/lib/utils/url';
 import { fetchWithRetry } from '@/lib/api-client';
 import { formatWhatsAppUrl } from '@/lib/utils/format';
+import { AdminGamificationSubtab } from './admin-gamification-subtab';
 
 export interface PayoutRequestItem {
   id: string;
@@ -84,6 +86,7 @@ export function AdminAffiliateTab({ onNotify }: AdminAffiliateTabProps) {
   const [selectedPayoutForAction, setSelectedPayoutForAction] = useState<PayoutRequestItem | null>(null);
   const [payoutActionType, setPayoutActionType] = useState<'approve' | 'reject'>('approve');
   const [rejectionNotes, setRejectionNotes] = useState('');
+  const [affiliateTabSection, setAffiliateTabSection] = useState<'partners' | 'gamification'>('partners');
 
   const isAffiliateModalOpen = isAddModalOpen || Boolean(selectedPartnerForPayout) || Boolean(selectedPayoutForAction);
   const isAffiliateModalOpenRef = useRef(isAffiliateModalOpen);
@@ -317,8 +320,42 @@ export function AdminAffiliateTab({ onNotify }: AdminAffiliateTabProps) {
 
   return (
     <div className="space-y-6">
-      {/* 1. Antrean Pencairan Dana Komisi Sales (Payout Queue) */}
-      <div className="bg-surface border border-border rounded-2xl p-5 shadow-xs space-y-4">
+      {/* Top Segmented Navigation: Mitra Afiliasi & Pencairan vs Gamification & Streak */}
+      <div className="flex items-center justify-between border-b border-border pb-3">
+        <div className="flex items-center gap-1.5 bg-surface-raised p-1 rounded-xl border border-border">
+          <button
+            type="button"
+            onClick={() => setAffiliateTabSection('partners')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-2 cursor-pointer ${
+              affiliateTabSection === 'partners'
+                ? 'bg-surface text-foreground shadow-xs border border-border'
+                : 'text-foreground-muted hover:text-foreground'
+            }`}
+          >
+            <Users className="w-3.5 h-3.5" />
+            <span>Mitra Afiliasi & Pencairan ({affiliates.length})</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setAffiliateTabSection('gamification')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-2 cursor-pointer ${
+              affiliateTabSection === 'gamification'
+                ? 'bg-surface text-foreground shadow-xs border border-border'
+                : 'text-foreground-muted hover:text-foreground'
+            }`}
+          >
+            <Flame className="w-3.5 h-3.5 text-orange-500 fill-orange-500" />
+            <span>Gamification & Streak Monitoring</span>
+          </button>
+        </div>
+      </div>
+
+      {affiliateTabSection === 'gamification' ? (
+        <AdminGamificationSubtab onNotify={onNotify} />
+      ) : (
+        <>
+          {/* 1. Antrean Pencairan Dana Komisi Sales (Payout Queue) */}
+          <div className="bg-surface border border-border rounded-2xl p-5 shadow-xs space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-4">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-600 border border-amber-500/20 flex items-center justify-center shrink-0">
@@ -971,6 +1008,8 @@ export function AdminAffiliateTab({ onNotify }: AdminAffiliateTabProps) {
           </div>
         </div>
         </AdminModalPortal>
+      )}
+        </>
       )}
     </div>
   );

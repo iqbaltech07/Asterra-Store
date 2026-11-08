@@ -123,6 +123,14 @@ async def lifespan(app: FastAPI):
                 schedule_id=f"{schedule_prefix}asterra-keep-alive-ping",
                 payload={"source": "qstash-cron", "action": "keep-alive"},
             )
+
+            # 4. Sales Gamification Daily/Weekly Cutoff (00:01 WIB = 17:01 UTC daily)
+            register_cron_job(
+                destination_url=f"{base_api_url}/api/v1/internal/cron/gamification-cutoff",
+                cron_expression="1 17 * * *",
+                schedule_id=f"{schedule_prefix}asterra-gamification-cutoff",
+                payload={"source": "qstash-cron", "action": "gamification_cutoff"},
+            )
     except Exception as e:
         print(f"[Lifespan] QStash cron sync note: {e}")
 

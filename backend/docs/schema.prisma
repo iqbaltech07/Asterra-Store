@@ -434,3 +434,112 @@ model PromoUsage {
   @@index([promoCodeId, userEmail])
   @@map("promo_usages")
 }
+
+model SalesGamificationConfig {
+  id                       String   @id @default("default")
+  isEnabled                Boolean  @default(true) @map("is_enabled")
+  dailyTargetAmount        Int      @default(25000) @map("daily_target_amount")
+  weeklyStreakDays         Int      @default(7) @map("weekly_streak_days")
+  weeklyBonusPercentage    Decimal  @default(10.00) @db.Decimal(5, 2) @map("weekly_bonus_percentage")
+  timezone                 String   @default("Asia/Jakarta")
+  weekStartDay             String   @default("MONDAY") @map("week_start_day")
+  productSuggestionEnabled Boolean  @default(true) @map("product_suggestion_enabled")
+  autoApproveWeeklyBonus   Boolean  @default(true) @map("auto_approve_weekly_bonus")
+  updatedBy                String?  @map("updated_by")
+  updatedAt                DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("sales_gamification_configs")
+}
+
+model SalesDailyGamification {
+  id                          String    @id
+  salesId                     String    @map("sales_id")
+  date                        DateTime  @db.Date
+  targetAmount                Int       @default(25000) @map("target_amount")
+  accumulatedCommission       Int       @default(0) @map("accumulated_commission")
+  estimatedPendingCommission  Int       @default(0) @map("estimated_pending_commission")
+  eligibleOrdersCount         Int       @default(0) @map("eligible_orders_count")
+  status                      String    @default("NOT_STARTED")
+  completedAt                 DateTime? @map("completed_at")
+  createdAt                   DateTime  @default(now()) @map("created_at")
+  updatedAt                   DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  orderEvents                 SalesGamificationOrderEvent[]
+
+  @@unique([salesId, date])
+  @@index([salesId])
+  @@index([date])
+  @@index([status])
+  @@map("sales_daily_gamification")
+}
+
+model SalesWeeklyGamification {
+  id               String                        @id
+  salesId          String                        @map("sales_id")
+  weekStart        DateTime                      @db.Date @map("week_start")
+  weekEnd          DateTime                      @db.Date @map("week_end")
+  completedDays    Int                           @default(0) @map("completed_days")
+  totalCommission  Int                           @default(0) @map("total_commission")
+  bonusPercentage  Decimal                       @default(10.00) @db.Decimal(5, 2) @map("bonus_percentage")
+  bonusAmount      Int                           @default(0) @map("bonus_amount")
+  status           String                        @default("IN_PROGRESS")
+  bonusPaidAt      DateTime?                     @map("bonus_paid_at")
+  createdAt        DateTime                      @default(now()) @map("created_at")
+  updatedAt        DateTime                      @default(now()) @updatedAt @map("updated_at")
+
+  bonusLedgers     SalesGamificationBonusLedger[]
+
+  @@unique([salesId, weekStart])
+  @@index([salesId])
+  @@index([weekStart])
+  @@index([status])
+  @@map("sales_weekly_gamification")
+}
+
+model SalesGamificationBonusLedger {
+  id                   String                  @id
+  salesId              String                  @map("sales_id")
+  weeklyGamificationId String                  @map("weekly_gamification_id")
+  bonusType            String                  @default("WEEKLY_STREAK") @map("bonus_type")
+  baseCommission       Int                     @default(0) @map("base_commission")
+  bonusPercentage      Decimal                 @default(10.00) @db.Decimal(5, 2) @map("bonus_percentage")
+  bonusAmount          Int                     @default(0) @map("bonus_amount")
+  status               String                  @default("PENDING")
+  reversalReason       String?                 @map("reversal_reason") @db.Text
+  approvedBy           String?                 @map("approved_by")
+  createdAt            DateTime                @default(now()) @map("created_at")
+  approvedAt           DateTime?               @map("approved_at")
+  paidAt               DateTime?               @map("paid_at")
+
+  weeklyGamification   SalesWeeklyGamification @relation(fields: [weeklyGamificationId], references: [id], onDelete: Cascade)
+
+  @@unique([weeklyGamificationId, bonusType])
+  @@index([salesId])
+  @@index([status])
+  @@map("sales_gamification_bonus_ledger")
+}
+
+model SalesGamificationOrderEvent {
+  id                     String                  @id
+  orderId                String                  @unique @map("order_id")
+  commissionId           String?                 @map("commission_id")
+  salesId                String                  @map("sales_id")
+  dailyGamificationId    String?                 @map("daily_gamification_id")
+  wibDate                DateTime                @db.Date @map("wib_date")
+  directCommissionAmount Int                     @default(0) @map("direct_commission_amount")
+  isCounted              Boolean                 @default(false) @map("is_counted")
+  orderStatus            String                  @default("pending") @map("order_status")
+  validatedAt            DateTime?               @map("validated_at")
+  reversedAt             DateTime?               @map("reversed_at")
+  createdAt              DateTime                @default(now()) @map("created_at")
+  updatedAt              DateTime                @default(now()) @updatedAt @map("updated_at")
+
+  dailyGamification      SalesDailyGamification? @relation(fields: [dailyGamificationId], references: [id], onDelete: SetNull)
+
+  @@index([salesId])
+  @@index([dailyGamificationId])
+  @@index([wibDate])
+  @@index([isCounted])
+  @@map("sales_gamification_order_events")
+}
+

@@ -162,6 +162,117 @@ def run_migrations():
         "CREATE INDEX IF NOT EXISTS idx_dana_payment_events_device_id ON dana_payment_events(device_id);",
         "CREATE INDEX IF NOT EXISTS idx_dana_payment_events_matched_order ON dana_payment_events(matched_order_id);",
         "CREATE INDEX IF NOT EXISTS idx_dana_payment_events_tx_time ON dana_payment_events(transaction_time);",
+
+        # 12. Sales Gamification Configs table
+        """
+        CREATE TABLE IF NOT EXISTS sales_gamification_configs (
+            id VARCHAR(50) PRIMARY KEY,
+            is_enabled BOOLEAN DEFAULT TRUE NOT NULL,
+            daily_target_amount INTEGER DEFAULT 25000 NOT NULL,
+            weekly_streak_days INTEGER DEFAULT 7 NOT NULL,
+            weekly_bonus_percentage NUMERIC(5, 2) DEFAULT 10.00 NOT NULL,
+            timezone VARCHAR(50) DEFAULT 'Asia/Jakarta' NOT NULL,
+            week_start_day VARCHAR(20) DEFAULT 'MONDAY' NOT NULL,
+            product_suggestion_enabled BOOLEAN DEFAULT TRUE NOT NULL,
+            auto_approve_weekly_bonus BOOLEAN DEFAULT TRUE NOT NULL,
+            updated_by VARCHAR(100),
+            updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc') NOT NULL
+        );
+        """,
+        """
+        INSERT INTO sales_gamification_configs (id, is_enabled, daily_target_amount, weekly_streak_days, weekly_bonus_percentage, timezone, week_start_day, product_suggestion_enabled, auto_approve_weekly_bonus)
+        VALUES ('default', TRUE, 25000, 7, 10.00, 'Asia/Jakarta', 'MONDAY', TRUE, TRUE)
+        ON CONFLICT (id) DO NOTHING;
+        """,
+
+        # 13. Sales Daily Gamification table
+        """
+        CREATE TABLE IF NOT EXISTS sales_daily_gamification (
+            id VARCHAR(100) PRIMARY KEY,
+            sales_id VARCHAR(100) NOT NULL REFERENCES sales_partners(id) ON DELETE CASCADE,
+            date DATE NOT NULL,
+            target_amount INTEGER DEFAULT 25000 NOT NULL,
+            accumulated_commission INTEGER DEFAULT 0 NOT NULL,
+            estimated_pending_commission INTEGER DEFAULT 0 NOT NULL,
+            eligible_orders_count INTEGER DEFAULT 0 NOT NULL,
+            status VARCHAR(30) DEFAULT 'NOT_STARTED' NOT NULL,
+            completed_at TIMESTAMP WITHOUT TIME ZONE,
+            created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc') NOT NULL,
+            updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc') NOT NULL,
+            CONSTRAINT uq_sales_daily_gamification_sales_date UNIQUE(sales_id, date)
+        );
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_sales_daily_gamification_sales_id ON sales_daily_gamification(sales_id);",
+        "CREATE INDEX IF NOT EXISTS idx_sales_daily_gamification_date ON sales_daily_gamification(date);",
+        "CREATE INDEX IF NOT EXISTS idx_sales_daily_gamification_status ON sales_daily_gamification(status);",
+
+        # 14. Sales Weekly Gamification table
+        """
+        CREATE TABLE IF NOT EXISTS sales_weekly_gamification (
+            id VARCHAR(100) PRIMARY KEY,
+            sales_id VARCHAR(100) NOT NULL REFERENCES sales_partners(id) ON DELETE CASCADE,
+            week_start DATE NOT NULL,
+            week_end DATE NOT NULL,
+            completed_days INTEGER DEFAULT 0 NOT NULL,
+            total_commission INTEGER DEFAULT 0 NOT NULL,
+            bonus_percentage NUMERIC(5, 2) DEFAULT 10.00 NOT NULL,
+            bonus_amount INTEGER DEFAULT 0 NOT NULL,
+            status VARCHAR(30) DEFAULT 'IN_PROGRESS' NOT NULL,
+            bonus_paid_at TIMESTAMP WITHOUT TIME ZONE,
+            created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc') NOT NULL,
+            updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc') NOT NULL,
+            CONSTRAINT uq_sales_weekly_gamification_sales_week UNIQUE(sales_id, week_start)
+        );
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_sales_weekly_gamification_sales_id ON sales_weekly_gamification(sales_id);",
+        "CREATE INDEX IF NOT EXISTS idx_sales_weekly_gamification_week_start ON sales_weekly_gamification(week_start);",
+        "CREATE INDEX IF NOT EXISTS idx_sales_weekly_gamification_status ON sales_weekly_gamification(status);",
+
+        # 15. Sales Gamification Bonus Ledger table
+        """
+        CREATE TABLE IF NOT EXISTS sales_gamification_bonus_ledger (
+            id VARCHAR(100) PRIMARY KEY,
+            sales_id VARCHAR(100) NOT NULL REFERENCES sales_partners(id) ON DELETE CASCADE,
+            weekly_gamification_id VARCHAR(100) NOT NULL REFERENCES sales_weekly_gamification(id) ON DELETE CASCADE,
+            bonus_type VARCHAR(50) DEFAULT 'WEEKLY_STREAK' NOT NULL,
+            base_commission INTEGER DEFAULT 0 NOT NULL,
+            bonus_percentage NUMERIC(5, 2) DEFAULT 10.00 NOT NULL,
+            bonus_amount INTEGER DEFAULT 0 NOT NULL,
+            status VARCHAR(30) DEFAULT 'PENDING' NOT NULL,
+            reversal_reason TEXT,
+            approved_by VARCHAR(100),
+            created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc') NOT NULL,
+            approved_at TIMESTAMP WITHOUT TIME ZONE,
+            paid_at TIMESTAMP WITHOUT TIME ZONE,
+            CONSTRAINT uq_sales_gamification_bonus_weekly_type UNIQUE(weekly_gamification_id, bonus_type)
+        );
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_sales_gamification_bonus_sales_id ON sales_gamification_bonus_ledger(sales_id);",
+        "CREATE INDEX IF NOT EXISTS idx_sales_gamification_bonus_status ON sales_gamification_bonus_ledger(status);",
+
+        # 16. Sales Gamification Order Events table
+        """
+        CREATE TABLE IF NOT EXISTS sales_gamification_order_events (
+            id VARCHAR(100) PRIMARY KEY,
+            order_id VARCHAR(100) UNIQUE NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+            commission_id VARCHAR(100),
+            sales_id VARCHAR(100) NOT NULL REFERENCES sales_partners(id) ON DELETE CASCADE,
+            daily_gamification_id VARCHAR(100) REFERENCES sales_daily_gamification(id) ON DELETE SET NULL,
+            wib_date DATE NOT NULL,
+            direct_commission_amount INTEGER DEFAULT 0 NOT NULL,
+            is_counted BOOLEAN DEFAULT FALSE NOT NULL,
+            order_status VARCHAR(50) DEFAULT 'pending' NOT NULL,
+            validated_at TIMESTAMP WITHOUT TIME ZONE,
+            reversed_at TIMESTAMP WITHOUT TIME ZONE,
+            created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc') NOT NULL,
+            updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc') NOT NULL
+        );
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_sales_gamification_events_order_id ON sales_gamification_order_events(order_id);",
+        "CREATE INDEX IF NOT EXISTS idx_sales_gamification_events_sales_id ON sales_gamification_order_events(sales_id);",
+        "CREATE INDEX IF NOT EXISTS idx_sales_gamification_events_daily_id ON sales_gamification_order_events(daily_gamification_id);",
+        "CREATE INDEX IF NOT EXISTS idx_sales_gamification_events_wib_date ON sales_gamification_order_events(wib_date);",
+        "CREATE INDEX IF NOT EXISTS idx_sales_gamification_events_is_counted ON sales_gamification_order_events(is_counted);",
     ]
 
     try:

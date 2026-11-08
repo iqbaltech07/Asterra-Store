@@ -80,6 +80,18 @@ class FinanceService:
         total_business_reserve = 0.0
         pending_commission_total = 0.0
         available_commission_total = 0.0
+        total_gamification_bonus = 0.0
+
+        try:
+            from app.models.gamification import SalesGamificationBonusLedger
+            if SessionLocal:
+                with SessionLocal() as db_sess:
+                    bonuses = db_sess.query(SalesGamificationBonusLedger).filter(
+                        SalesGamificationBonusLedger.status.in_(["APPROVED", "PAID"])
+                    ).all()
+                    total_gamification_bonus = sum(float(b.bonus_amount or 0) for b in bonuses)
+        except Exception as e:
+            print(f"[FinanceService] Note querying gamification bonus ledger: {e}")
 
         entries = []
 
@@ -287,6 +299,8 @@ class FinanceService:
             "totalBusinessReserve": total_business_reserve,
             "pendingCommissionTotal": pending_commission_total,
             "availableCommissionTotal": available_commission_total,
+            "totalGamificationBonus": total_gamification_bonus,
+            "gamificationCostRatio": round((total_gamification_bonus / total_transaction_profit) * 100, 2) if total_transaction_profit > 0 else 0.0,
         }
 
         return {

@@ -30,6 +30,7 @@ import { AnimatedNumber } from '@/components/ui/animated-number';
 import { AnimatedProgressBar } from '@/components/ui/animated-progress-bar';
 import { AdminTab } from '@/components/admin/admin-sidebar';
 import { getStoreBaseUrl } from '@/lib/utils/url';
+import { SalesGamificationPanel } from '../sales-gamification-panel';
 import type { SalesProfileData, NetworkDataResponse } from '../types';
 
 export interface CampaignTeaserItem {
@@ -410,6 +411,13 @@ export function SalesOverviewTab({
           </div>
         </div>
       )}
+
+      {/* SALES GAMIFICATION PANEL: Daily Mission (Rp25k Target) & Weekly 7-Day Streak Calendar */}
+      <SalesGamificationPanel
+        salesId={partner?.id}
+        partnerCode={partnerCode}
+        onNavigateToCatalog={() => onTabChange && onTabChange('sales-catalog')}
+      />
 
       {/* Downline Bonus Quick Banner */}
       <div className="bg-surface border border-border rounded-2xl p-5 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xs">
