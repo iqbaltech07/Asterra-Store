@@ -10,6 +10,10 @@ import {
   faClock,
 } from '@fortawesome/free-solid-svg-icons';
 import { AppBrandBadge } from '@/components/home/app-brand-badge';
+import {
+  resolveProductVisualTheme,
+  ProductCardBackgroundPattern,
+} from '@/components/products/product-card-patterns';
 import { ProductItem } from '@/lib/products-data';
 import {
   calculateCampaignPrice,
@@ -241,65 +245,47 @@ export function FeaturedGridCard({
 
 interface ShowcaseRankTheme {
   title: string;
-  cardBg: string;
-  cardBorder: string;
   badgeBg: string;
   badgeText: string;
   badgeBorder: string;
   crownEmoji: string;
-  watermarkType: 'crown' | 'canva' | 'chatgpt' | 'netflix' | 'youtube';
 }
 
 const SHOWCASE_RANK_THEMES: Record<number, ShowcaseRankTheme> = {
   1: {
     title: 'TOP 1',
-    cardBg: 'from-[#FFFDF5] via-[#FFFDF5] to-[#FEF3C7]/45',
-    cardBorder: 'border-[#FDE68A]/90 hover:border-[#F59E0B]',
     badgeBg: 'bg-[#FEF3C7]',
     badgeText: 'text-[#92400E]',
     badgeBorder: 'border-[#FDE68A]',
     crownEmoji: '👑',
-    watermarkType: 'crown',
   },
   2: {
     title: 'TOP 2',
-    cardBg: 'from-[#F8FAFC] via-[#F8FAFC] to-[#E0F2FE]/45',
-    cardBorder: 'border-[#BAE6FD]/90 hover:border-[#0284C7]',
     badgeBg: 'bg-[#E0F2FE]',
     badgeText: 'text-[#0369A1]',
     badgeBorder: 'border-[#BAE6FD]',
     crownEmoji: '👑',
-    watermarkType: 'canva',
   },
   3: {
     title: 'TOP 3',
-    cardBg: 'from-[#FAF5FF] via-[#FAF5FF] to-[#EDE9FE]/45',
-    cardBorder: 'border-[#DDD6FE]/90 hover:border-[#7C3AED]',
     badgeBg: 'bg-[#EDE9FE]',
     badgeText: 'text-[#6D28D9]',
     badgeBorder: 'border-[#DDD6FE]',
     crownEmoji: '👑',
-    watermarkType: 'chatgpt',
   },
   4: {
     title: 'TOP 4',
-    cardBg: 'from-[#FFF5F5] via-[#FFF5F5] to-[#FCE7F3]/45',
-    cardBorder: 'border-[#FBCFE8]/90 hover:border-[#E11D48]',
     badgeBg: 'bg-[#FCE7F3]',
     badgeText: 'text-[#BE185D]',
     badgeBorder: 'border-[#FBCFE8]',
     crownEmoji: '👑',
-    watermarkType: 'netflix',
   },
   5: {
     title: 'TOP 5',
-    cardBg: 'from-[#F8FAFC] via-[#F8FAFC] to-[#E2E8F0]/45',
-    cardBorder: 'border-[#CBD5E1]/90 hover:border-[#475569]',
     badgeBg: 'bg-[#E2E8F0]',
     badgeText: 'text-[#334155]',
     badgeBorder: 'border-[#CBD5E1]',
     crownEmoji: '👑',
-    watermarkType: 'youtube',
   },
 };
 
@@ -322,53 +308,28 @@ export function ShowcaseLoopingCard({
   const isPromo = promoCalc.hasPromo;
   const isOutOfStock = isAppOutOfStock(app);
 
-  // Normalize rank 1..5
+  // Normalize rank 1..5 for Rank Badge
   const effectiveRank = app.rank || rank || 1;
   const rankIndex = ((effectiveRank - 1) % 5) + 1;
-  const theme = SHOWCASE_RANK_THEMES[rankIndex] || SHOWCASE_RANK_THEMES[1];
+  const rankTheme = SHOWCASE_RANK_THEMES[rankIndex] || SHOWCASE_RANK_THEMES[1];
 
-  // Watermark detection by app slug if needed
-  const slugLower = (app.slug || app.name || '').toLowerCase();
-  let watermarkKind = theme.watermarkType;
-  if (slugLower.includes('canva')) watermarkKind = 'canva';
-  else if (slugLower.includes('chatgpt')) watermarkKind = 'chatgpt';
-  else if (slugLower.includes('netflix')) watermarkKind = 'netflix';
-  else if (slugLower.includes('youtube')) watermarkKind = 'youtube';
-  else if (rankIndex === 1) watermarkKind = 'crown';
+  // Resolve individual product visual identity (soft pastel background, border, bespoke SVG pattern)
+  const visualTheme = resolveProductVisualTheme(app.slug, app.name);
 
   return (
     <div
       tabIndex={isDuplicate ? -1 : undefined}
       aria-hidden={isDuplicate ? true : undefined}
-      className={`group relative bg-gradient-to-b ${theme.cardBg} border ${theme.cardBorder} hover:shadow-card-hover hover:-translate-y-1 rounded-3xl p-4 sm:p-5 transition-all duration-300 flex flex-col justify-between shrink-0 flex-none w-[260px] sm:w-[280px] lg:w-[290px] h-[195px] sm:h-[205px] mr-3 sm:mr-4 select-none overflow-hidden shadow-2xs`}
+      className={`group relative bg-gradient-to-br ${visualTheme.cardBg} border ${visualTheme.cardBorder} ${visualTheme.cardShadow || 'shadow-2xs'} hover:shadow-card-hover hover:-translate-y-1 rounded-3xl p-4 sm:p-5 transition-all duration-300 flex flex-col justify-between shrink-0 flex-none w-[260px] sm:w-[280px] lg:w-[290px] h-[195px] sm:h-[205px] mr-3 sm:mr-4 select-none overflow-hidden`}
     >
-      {/* Background Watermark in top-right */}
-      <div className="absolute top-2.5 right-3.5 pointer-events-none select-none z-0">
-        {watermarkKind === 'crown' && (
-          <span className="text-4xl sm:text-5xl opacity-40 filter drop-shadow-xs">👑</span>
-        )}
-        {watermarkKind === 'canva' && (
-          <span className="font-serif italic text-3xl sm:text-4xl font-extrabold text-sky-500/20">Canva</span>
-        )}
-        {watermarkKind === 'chatgpt' && (
-          <span className="text-3xl sm:text-4xl text-purple-600/20 font-mono">✦ OpenAI</span>
-        )}
-        {watermarkKind === 'netflix' && (
-          <span className="font-black text-4xl sm:text-5xl text-rose-600/20 font-sans tracking-tighter">N</span>
-        )}
-        {watermarkKind === 'youtube' && (
-          <span className="text-3xl sm:text-4xl text-slate-600/20">▶</span>
-        )}
-      </div>
-
-      {/* Subtle curved background wave glow at bottom */}
-      <div className="absolute -bottom-8 -right-8 w-36 h-36 rounded-full bg-white/45 blur-xl pointer-events-none z-0" />
+      {/* Individual Product Background Pattern (Bespoke vector motif at 5-12% opacity, no top-right watermark) */}
+      <ProductCardBackgroundPattern slug={app.slug} name={app.name} />
 
       {/* Row 1: Rank Badge */}
       <div className="relative z-10 flex items-center justify-between">
-        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black shadow-2xs border ${theme.badgeBg} ${theme.badgeText} ${theme.badgeBorder}`}>
-          <span>{theme.crownEmoji}</span>
-          <span>{theme.title}</span>
+        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black shadow-2xs border ${rankTheme.badgeBg} ${rankTheme.badgeText} ${rankTheme.badgeBorder}`}>
+          <span>{rankTheme.crownEmoji}</span>
+          <span>{rankTheme.title}</span>
         </span>
       </div>
 
