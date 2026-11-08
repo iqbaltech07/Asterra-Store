@@ -156,6 +156,16 @@ async def update_admin_product(product_id: str, request: Request):
         "data": updated,
     }
 
+@router.post("/admin/catalog/audit-inputs", tags=["Admin Products"])
+def audit_catalog_inputs(request: Request, force: bool = False):
+    from app.scripts.audit_and_map_product_inputs import run_catalog_input_audit
+    summary = run_catalog_input_audit(force=force)
+    return {
+        "success": True,
+        "message": f"Audit konfigurasi input katalog selesai. {summary.get('updated_count', 0)} produk berhasil dipetakan.",
+        "data": summary,
+    }
+
 @router.delete("/admin/products/{product_id}", tags=["Admin Products"])
 def delete_admin_product(product_id: str):
     deleted = CatalogService.delete_product(product_id)

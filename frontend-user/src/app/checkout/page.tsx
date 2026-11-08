@@ -99,6 +99,7 @@ function CheckoutPageContent() {
   const [targetValue, setTargetValue] = useState('');
   const [targetZone, setTargetZone] = useState('');
   const [targetEmail, setTargetEmail] = useState('');
+  const [choiceMethod, setChoiceMethod] = useState<'whatsapp' | 'gmail'>('whatsapp');
   const [phoneNumber, setPhoneNumber] = useState<string>(() => {
     if (typeof window !== 'undefined') {
       try {
@@ -130,6 +131,12 @@ function CheckoutPageContent() {
     }
     return getProductTargetRequirement(items[0]);
   }, [items]);
+
+  useEffect(() => {
+    if (targetRequirement.type === 'choice' && targetRequirement.defaultOption) {
+      setChoiceMethod(targetRequirement.defaultOption === 'gmail' ? 'gmail' : 'whatsapp');
+    }
+  }, [targetRequirement]);
 
   // Sales Partner Referral & Discount Tracking
   const [referralCode, setReferralCode] = useState<string>('');
@@ -645,12 +652,14 @@ function CheckoutPageContent() {
     }
 
     // 1. Zod Validation: Data Tujuan Aktivasi (Card 1)
-    const targetValidation = validateTargetValue(targetRequirement.type, targetValue);
-    if (!targetValidation.isValid) {
-      showNotification(
-        targetValidation.error || `Mohon lengkapi data tujuan (${targetRequirement.label.replace(' *', '')}).`
-      );
-      return false;
+    if (targetRequirement.type !== 'none') {
+      const targetValidation = validateTargetValue(targetRequirement.type, targetValue, choiceMethod);
+      if (!targetValidation.isValid) {
+        showNotification(
+          targetValidation.error || `Mohon lengkapi data tujuan (${targetRequirement.label.replace(' *', '')}).`
+        );
+        return false;
+      }
     }
 
     // 2. Zod Validation: Server / Zone ID (jika game membutuhkan Zone ID)
@@ -884,32 +893,65 @@ function CheckoutPageContent() {
       return;
     }
 
-    const effectiveTarget = targetValue.trim();
-    const effectiveTargetEmail = targetRequirement.type === 'email' ? effectiveTarget : (targetEmail.trim() || undefined);
-    const effectiveTargetPhone = targetRequirement.type === 'phone' ? effectiveTarget : undefined;
+    let finalFulfillmentMethod = 'direct';
+    let finalTargetType = targetRequirement.type;
+    let finalTargetEmail: string | undefined = undefined;
+    let finalTargetPhone: string | undefined = undefined;
+    let finalTargetValue = targetValue.trim();
+
+    if (targetRequirement.type === 'choice') {
+      finalFulfillmentMethod = choiceMethod; // 'whatsapp' | 'gmail'
+      if (choiceMethod === 'gmail') {
+        finalTargetEmail = finalTargetValue;
+      } else {
+        finalTargetPhone = finalTargetValue;
+      }
+    } else if (targetRequirement.type === 'email') {
+      finalFulfillmentMethod = 'invite';
+      finalTargetEmail = finalTargetValue;
+    } else if (targetRequirement.type === 'phone') {
+      finalFulfillmentMethod = 'direct';
+      finalTargetPhone = finalTargetValue;
+    } else if (targetRequirement.type === 'none') {
+      finalFulfillmentMethod = 'voucher';
+      finalTargetValue = 'N/A';
+    } else if (targetRequirement.type === 'game') {
+      finalFulfillmentMethod = 'game';
+    }
+
     const buyerEmail = customerEmail.trim() || session?.user?.email || legacyUser?.email || 'buyer@asterra.store';
     const buyerPhone = phoneNumber.trim();
 
     const orderPayload = {
-      target_id: effectiveTarget,
+      target_id: finalTargetValue || undefined,
       target_zone: targetZone.trim() || undefined,
-      target_no: effectiveTarget,
-      target_email: effectiveTargetEmail,
-      target_phone: effectiveTargetPhone,
+      target_no: finalTargetValue || undefined,
+      target_email: finalTargetEmail,
+      target_phone: finalTargetPhone,
+      fulfillment_method: finalFulfillmentMethod,
+      target_type: finalTargetType,
+      target_value: finalTargetValue,
       items: items.map((item) => ({
         product_id: item.id,
         product_name: item.name,
         unit_price: item.priceNumeric,
         quantity: item.quantity,
-        target_id: effectiveTarget,
+        target_id: finalTargetValue || undefined,
         target_zone: targetZone.trim() || undefined,
-        target_email: effectiveTargetEmail,
-        target_phone: effectiveTargetPhone,
+        target_email: finalTargetEmail,
+        target_phone: finalTargetPhone,
+        fulfillment_method: finalFulfillmentMethod,
+        target_type: finalTargetType,
+        target_value: finalTargetValue,
         purchased_details: {
-          target_id: effectiveTarget,
+          target_id: finalTargetValue || undefined,
           target_zone: targetZone.trim() || undefined,
-          target_email: effectiveTargetEmail,
-          phone: effectiveTargetPhone || buyerPhone,
+          target_email: finalTargetEmail,
+          target_phone: finalTargetPhone,
+          fulfillment_method: finalFulfillmentMethod,
+          target_type: finalTargetType,
+          target_value: finalTargetValue,
+          phone: finalTargetPhone || buyerPhone,
         },
       })),
       is_preorder: isPreorderMode,
@@ -1117,6 +1159,8 @@ function CheckoutPageContent() {
                     onTargetZoneChange={setTargetZone}
                     targetEmail={targetEmail}
                     onTargetEmailChange={setTargetEmail}
+                    choiceMethod={choiceMethod}
+                    onChoiceMethodChange={setChoiceMethod}
                     phoneNumber={phoneNumber}
                     onPhoneNumberChange={setPhoneNumber}
                     customerNotes={customerNotes}

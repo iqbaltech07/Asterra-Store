@@ -39,7 +39,7 @@ class OrderProcessingService:
                     ],
                 )
 
-                # 2. Add columns safely to orders table
+                # 2. Add columns safely to orders, order_items, and products tables
                 with engine.begin() as conn:
                     alter_queries = [
                         "ALTER TABLE orders ADD COLUMN IF NOT EXISTS fulfillment_mode VARCHAR(20) DEFAULT 'manual';",
@@ -49,6 +49,14 @@ class OrderProcessingService:
                         "ALTER TABLE orders ADD COLUMN IF NOT EXISTS email_delivery_status VARCHAR(20) DEFAULT 'pending';",
                         "ALTER TABLE orders ADD COLUMN IF NOT EXISTS email_delivery_error TEXT;",
                         "ALTER TABLE orders ADD COLUMN IF NOT EXISTS email_last_sent_at TIMESTAMP;",
+                        # Products dynamic customer input columns
+                        "ALTER TABLE products ADD COLUMN IF NOT EXISTS input_type VARCHAR(50) DEFAULT 'email';",
+                        "ALTER TABLE products ADD COLUMN IF NOT EXISTS input_config TEXT;",
+                        # OrderItems dynamic fulfillment & target columns
+                        "ALTER TABLE order_items ADD COLUMN IF NOT EXISTS fulfillment_method VARCHAR(50);",
+                        "ALTER TABLE order_items ADD COLUMN IF NOT EXISTS target_type VARCHAR(50);",
+                        "ALTER TABLE order_items ADD COLUMN IF NOT EXISTS target_value TEXT;",
+                        "ALTER TABLE order_items ADD COLUMN IF NOT EXISTS input_config_snapshot TEXT;",
                     ]
                     for q in alter_queries:
                         conn.execute(text(q))
@@ -87,6 +95,13 @@ class OrderProcessingService:
                     )
                     db.add(default_vip)
                     db.commit()
+
+                # 5. Automated Catalog Input Audit Seeding (Idempotent: Only seeds unmapped products)
+                try:
+                    from app.scripts.audit_and_map_product_inputs import run_catalog_input_audit
+                    run_catalog_input_audit(force=False)
+                except Exception as audit_err:
+                    print(f"[OrderProcessingService] Auto catalog input audit note: {audit_err}")
             finally:
                 db.close()
         except Exception as e:

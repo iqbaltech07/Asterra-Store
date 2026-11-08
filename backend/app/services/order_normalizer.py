@@ -197,6 +197,56 @@ class OrderNormalizer:
                     q = int(nit.get("quantity") or 1)
                     nit["quantity"] = q
                     nit["subtotal"] = float(nit.get("subtotal") or (u_price * q))
+
+                    # Normalize target & fulfillment data (strictly preserve without fallback to login email)
+                    t_email = nit.get("target_email") or nit.get("targetEmail") or None
+                    t_phone = nit.get("target_phone") or nit.get("targetPhone") or None
+                    t_id = nit.get("target_id") or nit.get("targetId") or None
+                    t_zone = nit.get("target_zone") or nit.get("targetZone") or None
+                    f_method = nit.get("fulfillment_method") or nit.get("fulfillmentMethod") or None
+                    t_type = nit.get("target_type") or nit.get("targetType") or None
+                    t_val = nit.get("target_value") or nit.get("targetValue") or t_id or t_email or t_phone or None
+                    cfg_snap = nit.get("input_config_snapshot") or nit.get("inputConfigSnapshot") or None
+
+                    nit["target_email"] = t_email
+                    nit["targetEmail"] = t_email
+                    nit["target_phone"] = t_phone
+                    nit["targetPhone"] = t_phone
+                    nit["target_id"] = t_id
+                    nit["targetId"] = t_id
+                    nit["target_zone"] = t_zone
+                    nit["targetZone"] = t_zone
+                    nit["fulfillment_method"] = f_method
+                    nit["fulfillmentMethod"] = f_method
+                    nit["target_type"] = t_type
+                    nit["targetType"] = t_type
+                    nit["target_value"] = t_val
+                    nit["targetValue"] = t_val
+                    nit["input_config_snapshot"] = cfg_snap
+                    nit["inputConfigSnapshot"] = cfg_snap
+
+                    # Construct or preserve purchased_details for legacy & Admin UI compatibility
+                    p_details = nit.get("purchased_details") or nit.get("purchasedDetails")
+                    p_details_merged = dict(p_details) if isinstance(p_details, dict) else {}
+                    p_details_merged["target_email"] = t_email or p_details_merged.get("target_email")
+                    p_details_merged["targetEmail"] = t_email or p_details_merged.get("targetEmail")
+                    p_details_merged["target_phone"] = t_phone or p_details_merged.get("target_phone")
+                    p_details_merged["targetPhone"] = t_phone or p_details_merged.get("targetPhone")
+                    p_details_merged["target_id"] = t_id or p_details_merged.get("target_id")
+                    p_details_merged["targetId"] = t_id or p_details_merged.get("targetId")
+                    p_details_merged["target_zone"] = t_zone or p_details_merged.get("target_zone")
+                    p_details_merged["targetZone"] = t_zone or p_details_merged.get("targetZone")
+                    p_details_merged["fulfillment_method"] = f_method or p_details_merged.get("fulfillment_method")
+                    p_details_merged["fulfillmentMethod"] = f_method or p_details_merged.get("fulfillmentMethod")
+                    p_details_merged["target_type"] = t_type or p_details_merged.get("target_type")
+                    p_details_merged["targetType"] = t_type or p_details_merged.get("targetType")
+                    p_details_merged["target_value"] = t_val or p_details_merged.get("target_value")
+                    p_details_merged["targetValue"] = t_val or p_details_merged.get("targetValue")
+                    p_details_merged["duration"] = nit.get("duration") or p_details_merged.get("duration")
+
+                    nit["purchased_details"] = p_details_merged
+                    nit["purchasedDetails"] = p_details_merged
+
                     normalized_items.append(nit)
 
         o["items"] = normalized_items

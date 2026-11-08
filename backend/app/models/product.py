@@ -1,4 +1,5 @@
 from datetime import datetime
+import json
 from sqlalchemy import Column, String, Integer, Boolean, DateTime, Text, Numeric, ForeignKey
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import relationship
@@ -36,6 +37,10 @@ class Product(Base):
     process_desc = Column(String, nullable=True, default="1 - 15 menit selesai")
     privacy_title = Column(String, nullable=True, default="Akun Private")
     privacy_desc = Column(String, nullable=True, default="Ruang kerja aman & personal")
+
+    # Dynamic Customer Order Input Configuration
+    input_type = Column(String(50), nullable=True, default="email")  # 'email' | 'phone' | 'choice' | 'game' | 'none' | 'custom'
+    input_config = Column(Text, nullable=True)  # JSON-encoded input configuration dict
 
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -91,6 +96,18 @@ class Product(Base):
             "processDesc": self.process_desc,
             "privacyTitle": self.privacy_title,
             "privacyDesc": self.privacy_desc,
+            "inputType": self.input_type or "email",
+            "input_type": self.input_type or "email",
+            "inputConfig": self._parse_input_config(),
+            "input_config": self._parse_input_config(),
             "createdAt": self.created_at.isoformat() if self.created_at else None,
             "updatedAt": self.updated_at.isoformat() if self.updated_at else None,
         }
+
+    def _parse_input_config(self):
+        if not self.input_config:
+            return None
+        try:
+            return json.loads(self.input_config) if isinstance(self.input_config, str) else self.input_config
+        except Exception:
+            return None

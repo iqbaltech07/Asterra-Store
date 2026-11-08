@@ -482,19 +482,51 @@ class EmailService:
     def send_order_completed_email(cls, order: Dict[str, Any]) -> bool:
         """
         Sends an order completed notification containing live account credentials and usage guidelines.
+        Guarantees strict separation between Customer Login Email and Product Delivery/Target Email.
         """
-        to_email = order.get("customerEmail") or order.get("customer_email") or ""
+        buyer_login_email = (order.get("customerEmail") or order.get("customer_email") or "").strip()
         cust_name = order.get("customerName") or order.get("customer_name") or "Pelanggan Setia"
         order_id = str(order.get("id") or "").upper()
         store_url = "https://asterrastore.biz.id" if settings.ENVIRONMENT == "production" else "http://localhost:3000"
         order_url = f"{store_url}/order?id={order_id}"
 
-        # Extract items
+        # Extract items and identify authoritative target delivery destination
         items = order.get("items") or []
         primary_product = "Produk Digital"
+        target_delivery_email = None
+        target_delivery_phone = None
+        target_fulfillment_method = None
+
         if items and isinstance(items, list):
             first_item = items[0]
             primary_product = first_item.get("productName") or first_item.get("product_name") or primary_product
+            for it in items:
+                f_m = str(it.get("fulfillmentMethod") or it.get("fulfillment_method") or "").lower()
+                t_e = (it.get("targetEmail") or it.get("target_email") or "").strip()
+                t_p = (it.get("targetPhone") or it.get("target_phone") or "").strip()
+                t_v = str(it.get("targetValue") or it.get("target_value") or "").strip()
+
+                if not target_fulfillment_method and f_m:
+                    target_fulfillment_method = f_m
+                if not target_delivery_email:
+                    if f_m in ["gmail", "email", "invite"] and t_e and "@" in t_e:
+                        target_delivery_email = t_e
+                    elif f_m == "gmail" and t_v and "@" in t_v:
+                        target_delivery_email = t_v
+                    elif t_e and "@" in t_e:
+                        target_delivery_email = t_e
+                if not target_delivery_phone:
+                    if f_m == "whatsapp" and t_p:
+                        target_delivery_phone = t_p
+                    elif f_m == "whatsapp" and t_v and "@" not in t_v:
+                        target_delivery_phone = t_v
+                    elif t_p:
+                        target_delivery_phone = t_p
+
+        # Primary recipient email for credentials:
+        # If target delivery email is specified and valid, it receives the live credentials.
+        # Otherwise, fallback to buyer login email.
+        credentials_recipient = target_delivery_email if (target_delivery_email and "@" in target_delivery_email) else buyer_login_email
 
         # Parse credentials (prioritize structured fulfillment_credentials, fallback to providerNote)
         parsed_creds = []
@@ -548,10 +580,26 @@ class EmailService:
 
         subject = f"Pesanan Selesai #{order_id} — Kredensial {primary_product} Anda Siap Digunakan"
 
+        delivery_badge = ""
+        if target_delivery_email and buyer_login_email and target_delivery_email.lower() != buyer_login_email.lower():
+            delivery_badge = f"""
+            <div style="background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 10px 14px; margin: 12px 0; font-size: 12px; color: #1e40af;">
+              🎯 <strong>Informasi Tujuan:</strong> Kredensial produk ini dikirimkan ke email tujuan <strong>{target_delivery_email}</strong> atas pemesanan dari akun <strong>{buyer_login_email}</strong>.
+            </div>
+            """
+        elif target_fulfillment_method == "whatsapp" and target_delivery_phone:
+            delivery_badge = f"""
+            <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 10px 14px; margin: 12px 0; font-size: 12px; color: #166534;">
+              📱 <strong>Pengiriman WhatsApp:</strong> Kredensial produk ini juga dialokasikan untuk dikirimkan melalui WhatsApp ke nomor tujuan <strong>{target_delivery_phone}</strong>.
+            </div>
+            """
+
         body_content = f"""
         <p style="font-size: 14px; line-height: 1.6; color: #334155; margin: 0 0 16px 0;">
           Halo <strong>{cust_name}</strong>, pesanan Anda dengan nomor <strong>#{order_id}</strong> telah berhasil diselesaikan dan kredensial akun siap digunakan.
         </p>
+
+        {delivery_badge}
 
         <!-- Order Summary Table -->
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; margin: 16px 0;">
@@ -601,10 +649,46 @@ class EmailService:
             body_content=body_content,
             cta_text="Lihat Status & Invoice Pesanan",
             cta_url=order_url,
-            footer_note=f"Email transaksi resmi ini dikirimkan ke {to_email} atas pesanan #{order_id}.",
+            footer_note=f"Email transaksi resmi ini dikirimkan ke {credentials_recipient} atas pesanan #{order_id}.",
         )
 
-        return cls._dispatch_email(to_email, subject, html_content)
+        # Dispatch to the credentials recipient
+        sent = cls._dispatch_email(credentials_recipient, subject, html_content)
+
+        # If target delivery email is different from buyer login email, also dispatch receipt notification to buyer login email
+        if sent and buyer_login_email and target_delivery_email and target_delivery_email.lower() != buyer_login_email.lower():
+            try:
+                buyer_subject = f"Bukti Penyelesaian Pesanan #{order_id} — {primary_product}"
+                buyer_body = f"""
+                <p style="font-size: 14px; line-height: 1.6; color: #334155; margin: 0 0 16px 0;">
+                  Halo <strong>{cust_name}</strong>, pesanan digital Anda dengan nomor <strong>#{order_id}</strong> telah selesai diproses.
+                </p>
+                <div style="background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 12px 16px; margin: 16px 0; font-size: 13px; color: #1e40af;">
+                  ✉️ <strong>Status Pengiriman Kredensial:</strong><br />
+                  Kredensial dan akses akun <strong>{primary_product}</strong> telah dikirimkan ke email tujuan: <strong style="color: #0369a1;">{target_delivery_email}</strong> sesuai permintaan saat checkout.
+                </div>
+                <p style="font-size: 13px; color: #64748b;">
+                  Detail dan riwayat transaksi tetap tersimpan aman di akun Anda di Asterra Store.
+                </p>
+                """
+                buyer_html = cls._render_base_email(
+                    preheader=f"Pesanan #{order_id} selesai diproses. Kredensial telah dikirim ke {target_delivery_email}.",
+                    badge_text="Pesanan Selesai",
+                    badge_color="#059669",
+                    badge_bg="#d1fae5",
+                    badge_border="#a7f3d0",
+                    title="Pesanan Berhasil Diselesaikan",
+                    subtitle=f"Pesanan #{order_id} telah diproses",
+                    body_content=buyer_body,
+                    cta_text="Lihat Invoice Pesanan",
+                    cta_url=order_url,
+                    footer_note=f"Notifikasi akun ini dikirimkan ke {buyer_login_email} atas pesanan #{order_id}.",
+                )
+                cls._dispatch_email(buyer_login_email, buyer_subject, buyer_html)
+            except Exception as notify_err:
+                print(f"[EmailService] Note: Non-critical buyer receipt dispatch: {notify_err}")
+
+        return sent
 
     @classmethod
     def send_order_cancelled_email(cls, order: Dict[str, Any], reason: Optional[str] = None) -> bool:

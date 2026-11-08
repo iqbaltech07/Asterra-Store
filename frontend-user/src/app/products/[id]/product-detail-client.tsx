@@ -411,6 +411,10 @@ export function ProductDetailClient({ id, initialData, initialStoreStatus }: Pro
         priceNumeric: currentPrice,
         stock: activeVariant?.stock ?? product.stock,
         isOutOfStock: false,
+        brand: product.brand,
+        cardId: (product as any).cardId || (product as any).card_id,
+        inputType: (product as any).inputType || (product as any).input_type,
+        inputConfig: (product as any).inputConfig || (product as any).input_config,
       });
     }
     const checkoutPath = asPreorder ? '/checkout?mode=preorder' : '/checkout';

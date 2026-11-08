@@ -74,6 +74,26 @@ class CatalogService:
         p["category"] = {"id": cat_id, "name": cat_name}
         p["categoryId"] = cat_id
         p["categoryName"] = cat_name
+
+        # Dynamic customer input normalization
+        raw_input_type = p.get("inputType") or p.get("input_type") or "email"
+        p["inputType"] = raw_input_type
+        p["input_type"] = raw_input_type
+
+        raw_cfg = p.get("inputConfig") if "inputConfig" in p else p.get("input_config")
+        parsed_cfg = None
+        if raw_cfg:
+            if isinstance(raw_cfg, str):
+                try:
+                    parsed_cfg = json.loads(raw_cfg)
+                except Exception:
+                    parsed_cfg = None
+            elif isinstance(raw_cfg, dict):
+                parsed_cfg = raw_cfg
+
+        p["inputConfig"] = parsed_cfg
+        p["input_config"] = parsed_cfg
+
         return p
 
     @classmethod
@@ -345,6 +365,12 @@ class CatalogService:
             try:
                 cat_id, cat_name = cls._ensure_category_exists(db, raw_cat_id, raw_cat_name)
                 card_id_val = payload.get("cardId") if "cardId" in payload else payload.get("card_id")
+
+                # Dynamic input config extraction
+                in_type = str(payload.get("inputType") or payload.get("input_type") or "email").strip().lower()
+                in_cfg_raw = payload.get("inputConfig") if "inputConfig" in payload else payload.get("input_config")
+                in_cfg_str = json.dumps(in_cfg_raw) if isinstance(in_cfg_raw, (dict, list)) else (str(in_cfg_raw) if in_cfg_raw else None)
+
                 new_prod = Product(
                     card_id=card_id_val if card_id_val else None,
                     id=product_id,
@@ -373,6 +399,8 @@ class CatalogService:
                     process_desc=payload.get("processDesc", "1 - 15 menit selesai"),
                     privacy_title=payload.get("privacyTitle", "Akun Private"),
                     privacy_desc=payload.get("privacyDesc", "Ruang kerja aman & personal"),
+                    input_type=in_type,
+                    input_config=in_cfg_str,
                     created_at=datetime.utcnow(),
                     updated_at=datetime.utcnow(),
                 )
@@ -455,6 +483,20 @@ class CatalogService:
                     if "cardId" in payload or "card_id" in payload:
                         raw_card_id = payload.get("cardId") if "cardId" in payload else payload.get("card_id")
                         prod.card_id = str(raw_card_id).strip() if raw_card_id and str(raw_card_id).strip() not in ["", "none", "null"] else None
+
+                    # Dynamic customer input configuration updates
+                    if "inputType" in payload or "input_type" in payload:
+                        new_in_type = payload.get("inputType") or payload.get("input_type")
+                        if new_in_type:
+                            prod.input_type = str(new_in_type).strip().lower()
+                    if "inputConfig" in payload or "input_config" in payload:
+                        new_in_cfg = payload.get("inputConfig") if "inputConfig" in payload else payload.get("input_config")
+                        if new_in_cfg is None:
+                            prod.input_config = None
+                        elif isinstance(new_in_cfg, (dict, list)):
+                            prod.input_config = json.dumps(new_in_cfg)
+                        else:
+                            prod.input_config = str(new_in_cfg)
 
                     # Recalculate margins
                     if prod.provider_price and float(prod.provider_price) > 0:
