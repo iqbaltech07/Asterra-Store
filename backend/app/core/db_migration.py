@@ -289,6 +289,18 @@ def run_migrations():
         "ALTER TABLE order_items ADD COLUMN IF NOT EXISTS target_type VARCHAR(50);",
         "ALTER TABLE order_items ADD COLUMN IF NOT EXISTS target_value TEXT;",
         "ALTER TABLE order_items ADD COLUMN IF NOT EXISTS input_config_snapshot TEXT;",
+
+        # 18. Enforce Supabase Row-Level Security (RLS) on all public tables
+        """
+        DO $$
+        DECLARE
+            r RECORD;
+        BEGIN
+            FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND rowsecurity = false) LOOP
+                EXECUTE 'ALTER TABLE "' || r.tablename || '" ENABLE ROW LEVEL SECURITY;';
+            END LOOP;
+        END $$;
+        """,
     ]
 
     try:
