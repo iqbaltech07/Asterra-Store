@@ -628,7 +628,9 @@ function AdminPageContent() {
   } = useQuery<AdminProductsResponse>({
     queryKey: ['admin-products'],
     queryFn: async () => {
-      const res = await fetch('/api/v1/admin/products');
+      const res = await fetch('/api/v1/admin/products', {
+        headers: getAdminAuthHeaders(),
+      });
       if (res.status === 401) {
         router.replace('/admin/login');
         throw new Error('Unauthorized');
@@ -672,7 +674,9 @@ function AdminPageContent() {
       if (vipStatus && vipStatus !== 'all') params.set('status', vipStatus);
       params.set('limit', '2500');
 
-      const res = await fetch(`/api/v1/admin/vip-services?${params.toString()}`);
+      const res = await fetch(`/api/v1/admin/vip-services?${params.toString()}`, {
+        headers: getAdminAuthHeaders(),
+      });
       if (res.status === 401) {
         router.replace('/admin/login');
         throw new Error('Unauthorized');

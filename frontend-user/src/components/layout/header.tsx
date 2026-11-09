@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
@@ -23,7 +23,19 @@ const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? React.useLayou
 
 export function Header({ onNotify: _onNotify }: HeaderProps) {
   const { data: session } = useSession();
-  const { user: legacyUser } = useAuthStore();
+  const { user: legacyUser, login: syncAuthStore } = useAuthStore();
+
+  useEffect(() => {
+    if (session?.user && (!legacyUser || legacyUser.email !== session.user.email)) {
+      syncAuthStore({
+        id: session.user.id,
+        name: session.user.name || '',
+        email: session.user.email || '',
+        role: ((session.user as any)?.role as 'customer' | 'admin') || 'customer',
+        image: session.user.image,
+      });
+    }
+  }, [session?.user, legacyUser, syncAuthStore]);
 
   const pathname = usePathname();
   const headerRef = useRef<HTMLElement>(null);

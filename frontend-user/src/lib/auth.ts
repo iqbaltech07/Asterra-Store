@@ -39,6 +39,14 @@ export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: 'postgresql',
   }),
+  session: {
+    expiresIn: 60 * 60 * 24 * 7, // 7 days
+    updateAge: 60 * 60 * 24, // 1 day
+    cookieCache: {
+      enabled: true,
+      maxAge: 5 * 60, // 5 minutes cache to avoid DB pooler starvation on frequent checks
+    },
+  },
   account: {
     storeStateStrategy: 'cookie',
   },
@@ -56,6 +64,8 @@ export const auth = betterAuth({
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID || 'placeholder_client_id',
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'placeholder_client_secret',
+      accessType: 'offline',
+      prompt: 'select_account consent',
     },
   },
   user: {
@@ -106,9 +116,7 @@ export const auth = betterAuth({
   advanced: {
     useSecureCookies: process.env.NODE_ENV === 'production',
     trustedProxyHeaders: true,
-    crossSubDomainCookies: {
-      enabled: true,
-      domain: process.env.NODE_ENV === 'production' ? '.asterrastore.biz.id' : undefined,
-    },
+    // Strictly host-only cookies: crossSubDomainCookies is disabled to prevent
+    // staging vs production vs admin session collisions and accidental cookie destruction.
   },
 });

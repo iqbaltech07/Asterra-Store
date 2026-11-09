@@ -18,6 +18,12 @@ const nextConfig: NextConfig = {
     const salesUrl = process.env.NEXT_PUBLIC_SALES_URL || 'https://sales.asterrastore.biz.id';
     return [
       {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'www.asterrastore.biz.id' }],
+        destination: 'https://asterrastore.biz.id/:path*',
+        permanent: true,
+      },
+      {
         source: '/daftar-sales',
         destination: `${salesUrl}/daftar-sales`,
         permanent: false,
