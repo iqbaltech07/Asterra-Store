@@ -663,6 +663,21 @@ class OrderService:
         try:
             db = SessionLocal()
             try:
+                # Check if any item in cart is under review or ambiguous
+                for it in items:
+                    p_id = str(it.get("product_id") or it.get("productId") or "")
+                    cp = catalog_products.get(p_id)
+                    if cp:
+                        c_cfg = cp.get("inputConfig") or cp.get("input_config") or {}
+                        if isinstance(c_cfg, str):
+                            try:
+                                c_cfg = json.loads(c_cfg)
+                            except Exception:
+                                c_cfg = {}
+                        if c_cfg.get("needs_review") or cp.get("needsReview"):
+                            p_name = cp.get("name") or it.get("product_name") or "Produk"
+                            raise ValueError(f"Produk '{p_name}' saat ini sedang dalam peninjauan konfigurasi dan belum dapat dipesan. Silakan hubungi admin.")
+
                 order_record = Order(
                     id=order_id,
                     customer_email=customer_email,
@@ -670,7 +685,7 @@ class OrderService:
                     customer_name=customer_name,
                     customer_notes=incoming_notes,
                     is_preorder=is_preorder,
-                    is_dummy=False,
+                    is_dummy=bool(payload.get("is_dummy") or payload.get("isDummy") or False),
                     fulfillment_mode=order_fulfillment_mode,
                     provider=initial_provider,
                     email_delivery_status="pending",
@@ -696,6 +711,7 @@ class OrderService:
                 )
                 db.add(order_record)
 
+                is_multi_item = len(items) > 1
                 for item in items:
                     item_id = f"item-{random.randint(10000, 99999)}"
                     raw_target_id = str(
@@ -703,34 +719,69 @@ class OrderService:
                         or item.get("targetId")
                         or item.get("target_no")
                         or item.get("targetNo")
-                        or payload.get("target_id")
-                        or payload.get("targetId")
-                        or payload.get("target_no")
-                        or payload.get("targetNo")
-                        or ""
+                        or ("" if is_multi_item else (payload.get("target_id") or payload.get("targetId") or payload.get("target_no") or payload.get("targetNo") or ""))
                     ).strip()
                     raw_target_zone = str(
                         item.get("target_zone")
                         or item.get("targetZone")
-                        or payload.get("target_zone")
-                        or payload.get("targetZone")
-                        or ""
+                        or ("" if is_multi_item else (payload.get("target_zone") or payload.get("targetZone") or ""))
                     ).strip()
+
+                    raw_fulfillment_method = str(
+                        item.get("fulfillment_method")
+                        or item.get("fulfillmentMethod")
+                        or ("" if is_multi_item else (payload.get("fulfillment_method") or payload.get("fulfillmentMethod") or ""))
+                    ).strip().lower()
+
+                    raw_target_type = str(
+                        item.get("target_type")
+                        or item.get("targetType")
+                        or ("" if is_multi_item else (payload.get("target_type") or payload.get("targetType") or ""))
+                    ).strip().lower()
+
+                    raw_target_value = str(
+                        item.get("target_value")
+                        or item.get("targetValue")
+                        or ("" if is_multi_item else (payload.get("target_value") or payload.get("targetValue") or ""))
+                    ).strip()
+
+                    # STRICT SEPARATION: DO NOT fall back to customer_email or customer_phone!
+                    # Target info must remain strictly what the customer entered for product activation/delivery.
                     raw_target_email = str(
                         item.get("target_email")
                         or item.get("targetEmail")
+                        or ("" if is_multi_item else (payload.get("target_email") or payload.get("targetEmail") or ""))
+                        or (raw_target_value if "@" in raw_target_value else "")
                         or (raw_target_id if "@" in raw_target_id else "")
-                        or customer_email
-                    ).strip()
+                        or ""
+                    ).strip() or None
+
                     raw_target_phone = str(
                         item.get("target_phone")
                         or item.get("targetPhone")
-                        or (raw_target_id if ("@" not in raw_target_id and raw_target_id) else "")
-                        or customer_phone
-                    ).strip()
+                        or ("" if is_multi_item else (payload.get("target_phone") or payload.get("targetPhone") or ""))
+                        or (raw_target_value if (raw_target_value and "@" not in raw_target_value and not any(c in raw_target_value for c in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")) else "")
+                        or (raw_target_id if (raw_target_id and "@" not in raw_target_id and not any(c in raw_target_id for c in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")) else "")
+                        or ""
+                    ).strip() or None
+
+                    if raw_fulfillment_method == "gmail" and not raw_target_email and raw_target_value and "@" in raw_target_value:
+                        raw_target_email = raw_target_value
+                    if raw_fulfillment_method == "whatsapp" and not raw_target_phone and raw_target_value:
+                        raw_target_phone = raw_target_value
+
+                    effective_target_val = raw_target_value or raw_target_email or raw_target_phone or raw_target_id or None
 
                     cat_prod_item = catalog_products.get(str(item.get("product_id") or item.get("productId") or ""))
                     item_card_id = (cat_prod_item.get("cardId") or cat_prod_item.get("card_id")) if cat_prod_item else (item.get("card_id") or item.get("cardId"))
+
+                    input_cfg_snapshot = None
+                    if cat_prod_item:
+                        cfg_data = cat_prod_item.get("inputConfig") or cat_prod_item.get("input_config")
+                        if cfg_data:
+                            input_cfg_snapshot = json.dumps(cfg_data) if not isinstance(cfg_data, str) else cfg_data
+                        if not raw_target_type:
+                            raw_target_type = cat_prod_item.get("inputType") or cat_prod_item.get("input_type") or "email"
 
                     order_item_rec = OrderItem(
                         id=item_id,
@@ -744,6 +795,10 @@ class OrderService:
                         target_phone=raw_target_phone,
                         target_id=raw_target_id or None,
                         target_zone=raw_target_zone or None,
+                        fulfillment_method=raw_fulfillment_method or None,
+                        target_type=raw_target_type or None,
+                        target_value=effective_target_val,
+                        input_config_snapshot=input_cfg_snapshot,
                     )
                     db.add(order_item_rec)
 
@@ -758,7 +813,16 @@ class OrderService:
 
         if not saved_to_db or normalized is None:
             norm_items = []
+            is_multi_fb = len(items) > 1
             for item in items:
+                fb_target_id = str(item.get("target_id") or item.get("targetId") or ("" if is_multi_fb else (payload.get("target_id") or payload.get("targetId") or "")) or "").strip() or None
+                fb_target_zone = str(item.get("target_zone") or item.get("targetZone") or ("" if is_multi_fb else (payload.get("target_zone") or payload.get("targetZone") or "")) or "").strip() or None
+                fb_f_method = str(item.get("fulfillment_method") or item.get("fulfillmentMethod") or ("" if is_multi_fb else (payload.get("fulfillment_method") or payload.get("fulfillmentMethod") or "")) or "").strip().lower() or None
+                fb_t_type = str(item.get("target_type") or item.get("targetType") or ("" if is_multi_fb else (payload.get("target_type") or payload.get("targetType") or "")) or "").strip().lower() or None
+                fb_t_val = str(item.get("target_value") or item.get("targetValue") or ("" if is_multi_fb else (payload.get("target_value") or payload.get("targetValue") or "")) or "").strip() or None
+                fb_target_email = str(item.get("target_email") or item.get("targetEmail") or ("" if is_multi_fb else (payload.get("target_email") or payload.get("targetEmail") or "")) or (fb_t_val if fb_t_val and "@" in fb_t_val else "") or "").strip() or None
+                fb_target_phone = str(item.get("target_phone") or item.get("targetPhone") or ("" if is_multi_fb else (payload.get("target_phone") or payload.get("targetPhone") or "")) or (fb_t_val if fb_t_val and "@" not in fb_t_val else "") or "").strip() or None
+
                 norm_items.append({
                     "id": f"item-{random.randint(10000, 99999)}",
                     "order_id": order_id,
@@ -767,10 +831,13 @@ class OrderService:
                     "card_id": item.get("card_id") or item.get("cardId"),
                     "price": int(item.get("unit_price") or item.get("price") or 0),
                     "quantity": int(item.get("quantity", 1)),
-                    "target_email": str(item.get("target_email") or customer_email),
-                    "target_phone": str(item.get("target_phone") or customer_phone),
-                    "target_id": item.get("target_id") or None,
-                    "target_zone": item.get("target_zone") or None,
+                    "target_email": fb_target_email,
+                    "target_phone": fb_target_phone,
+                    "target_id": fb_target_id,
+                    "target_zone": fb_target_zone,
+                    "fulfillment_method": fb_f_method,
+                    "target_type": fb_t_type,
+                    "target_value": fb_t_val or fb_target_email or fb_target_phone or fb_target_id,
                 })
             fallback_dict = {
                 "id": order_id,
@@ -912,7 +979,7 @@ class OrderService:
                 if order_obj:
                     # Strict validation: In manual mode, completing order requires customer credentials
                     is_manual = (order_obj.fulfillment_mode or "manual") == "manual"
-                    if new_status in ["completed", "selesai"] and is_manual:
+                    if new_status in ["completed", "selesai"] and is_manual and not order_obj.is_dummy:
                         if not order_obj.fulfillment_credentials and not order_obj.provider_note:
                             raise ValueError(
                                 "Mode manual mewajibkan pengisian kredensial akun pelanggan sebelum pesanan diselesaikan. Silakan gunakan tombol Selesaikan Pesanan."
@@ -1028,6 +1095,18 @@ class OrderService:
             except Exception as email_err:
                 print(f"[OrderService] Customer email notification dispatch note: {email_err}")
 
+        # 6. Invalidate caches so homepage, catalog, and orders reflect latest sold counts
+        try:
+            from app.core.cache import cache
+            cache.invalidate("orders")
+            if (
+                new_status in ["completed", "paid", "settlement", "done", "selesai"]
+                or prev_st in ["completed", "paid", "settlement", "done", "selesai"]
+            ):
+                cache.invalidate("homepage_sections", "catalog")
+        except Exception as c_err:
+            print(f"[OrderService] Cache invalidation note: {c_err}")
+
         # Broadcast real-time status update to connected SSE subscribers
         try:
             from app.services.realtime_broadcaster import RealtimeBroadcaster
@@ -1080,6 +1159,38 @@ class OrderService:
                 },
                 target_role="all",
             )
+            # Notify storefront clients to sync product cards & homepage sections
+            if (
+                new_status in ["completed", "paid", "settlement", "done", "selesai"]
+                or prev_st in ["completed", "paid", "settlement", "done", "selesai"]
+            ):
+                RealtimeBroadcaster.broadcast(
+                    event="cards:updated",
+                    data={
+                        "order_id": clean_id,
+                        "status": new_status,
+                        "previous_status": prev_st,
+                    },
+                    target_role="all",
+                )
+                RealtimeBroadcaster.broadcast(
+                    event="homepage:sections_updated",
+                    data={
+                        "order_id": clean_id,
+                        "status": new_status,
+                        "previous_status": prev_st,
+                    },
+                    target_role="all",
+                )
+                RealtimeBroadcaster.broadcast(
+                    event="catalog:updated",
+                    data={
+                        "order_id": clean_id,
+                        "status": new_status,
+                        "previous_status": prev_st,
+                    },
+                    target_role="all",
+                )
         except Exception as b_err:
             print(f"[OrderService] Realtime broadcast error on update_status: {b_err}")
 

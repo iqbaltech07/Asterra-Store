@@ -134,6 +134,7 @@ export function AdminCardsTab({ onNotify, onNavigateToCatalog }: AdminCardsTabPr
   const [formFeatured, setFormFeatured] = useState(true);
   const [formSections, setFormSections] = useState<string[]>(['promo', 'terlaris', 'terbaru']);
   const [formBadge, setFormBadge] = useState('🔥 Promo');
+  const [formBaseSold, setFormBaseSold] = useState<number>(0);
 
   // Attribute Management State
   const [newAttrName, setNewAttrName] = useState('');
@@ -471,6 +472,7 @@ export function AdminCardsTab({ onNotify, onNavigateToCatalog }: AdminCardsTabPr
   });
 
   const resetForm = () => {
+    setEditingCard(null);
     setFormName('');
     setFormSlug('');
     setFormLogo('');
@@ -484,6 +486,7 @@ export function AdminCardsTab({ onNotify, onNavigateToCatalog }: AdminCardsTabPr
     setFormFeatured(true);
     setFormSections(['promo', 'terlaris', 'terbaru']);
     setFormBadge('🔥 Promo');
+    setFormBaseSold(15);
   };
 
   const handleOpenEdit = (c: CardItem) => {
@@ -499,12 +502,20 @@ export function AdminCardsTab({ onNotify, onNavigateToCatalog }: AdminCardsTabPr
     setFormFeatured(c.isFeatured || false);
     setFormSections(c.sections || ['promo', 'terlaris', 'terbaru']);
     setFormBadge(c.badgeLabel || '');
+    setFormBaseSold(c.baseSoldCount ?? 0);
+    setIsAddModalOpen(true);
   };
 
   const handleSaveCard = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formName.trim()) {
       onNotify?.('Product Name / Brand name tidak boleh kosong.');
+      return;
+    }
+
+    const numBaseSold = Math.floor(Number(formBaseSold));
+    if (isNaN(numBaseSold) || numBaseSold < 0) {
+      onNotify?.('Jumlah Terjual (Manual) harus berupa angka bulat non-negatif (>= 0).');
       return;
     }
 
@@ -521,6 +532,7 @@ export function AdminCardsTab({ onNotify, onNavigateToCatalog }: AdminCardsTabPr
       isFeatured: formFeatured,
       sections: formSections && formSections.length > 0 ? formSections : ['promo', 'terlaris', 'terbaru'],
       badgeLabel: formBadge.trim() ? formBadge.trim() : null,
+      baseSoldCount: numBaseSold,
     };
 
     if (editingCard) {
@@ -1052,7 +1064,7 @@ export function AdminCardsTab({ onNotify, onNavigateToCatalog }: AdminCardsTabPr
                     const baselineVal = isEdited ? baselineEdits[card.id] : (card.baseSoldCount ?? 0);
                     const dummyVal = card.dummySoldCount ?? 0;
                     const realVal = card.realSoldCount ?? 0;
-                    const liveTotal = dummyVal + realVal;
+                    const liveTotal = baselineVal + dummyVal + realVal;
                     const isSaving = savingCardId === card.id;
 
                     const secList = card.sections || [];
@@ -1359,6 +1371,60 @@ export function AdminCardsTab({ onNotify, onNavigateToCatalog }: AdminCardsTabPr
                       </button>
                     ))}
                   </div>
+                </div>
+
+                {/* Pengaturan Jumlah Terjual (Manual) & Real-time Live Preview */}
+                <div className="space-y-2 pt-2 border-t border-[#F1F5F9]">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold text-[#0F172A]">
+                      Jumlah Terjual (Manual) <span className="text-rose-500">*</span>
+                    </label>
+                    <span className="text-[10px] text-[#64748B] font-medium">Bilangan bulat ≥ 0</span>
+                  </div>
+                  <Input
+                    type="number"
+                    min={0}
+                    step={1}
+                    value={formBaseSold}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value, 10);
+                      setFormBaseSold(isNaN(val) ? 0 : Math.max(0, val));
+                    }}
+                    placeholder="Contoh: 31"
+                    className={`text-xs h-9 bg-white text-[#0F172A] font-semibold ${
+                      formBaseSold < 0 ? 'border-rose-500 ring-1 ring-rose-500' : 'border-[#CBD5E1]'
+                    }`}
+                    required
+                  />
+                  <p className="text-[11px] text-[#64748B] leading-relaxed">
+                    Nilai ini merupakan angka dasar (baseline) sebelum ditambahkan transaksi sukses dari sistem.
+                  </p>
+
+                  {/* Real-time Live Calculation Preview */}
+                  {(() => {
+                    const manualVal = Math.max(0, Math.floor(Number(formBaseSold) || 0));
+                    const dummyVal = editingCard?.dummySoldCount ?? 0;
+                    const realVal = editingCard?.realSoldCount ?? 0;
+                    const totalPreview = manualVal + dummyVal + realVal;
+
+                    return (
+                      <div className="rounded-xl bg-emerald-50/70 border border-emerald-200/80 p-3 mt-1.5 text-xs flex items-center justify-between shadow-2xs">
+                        <div className="space-y-0.5">
+                          <span className="text-[11px] font-bold text-emerald-900 block">
+                            Preview Total Terjual
+                          </span>
+                          <span className="text-[10px] text-emerald-700">
+                            {manualVal} (Manual) + {dummyVal} (Dummy) + {realVal} (Real)
+                          </span>
+                        </div>
+                        <div className="text-right">
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-extrabold bg-emerald-600 text-white shadow-2xs">
+                            {totalPreview} terjual
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 <div className="space-y-1.5">

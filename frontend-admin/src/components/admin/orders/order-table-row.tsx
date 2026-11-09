@@ -58,20 +58,20 @@ export function OrderTableRow({ order, index, onOpenDetail, onCopyEmail }: Order
             <div className="text-[11px] text-foreground-muted flex items-center gap-1.5 mt-0.5 group/email">
               <FontAwesomeIcon icon={faEnvelope} className="w-3 h-3 shrink-0 text-foreground-muted" />
               <a
-                href={`mailto:${order.customer_email || firstItem?.purchased_details?.target_email || 'customer@asterra.store'}`}
+                href={`mailto:${order.customer_email || 'customer@asterra.store'}`}
                 className="hover:text-primary hover:underline truncate max-w-[170px]"
-                title="Kirim email ke pelanggan"
+                title="Email Akun Login Pemesan"
               >
-                {order.customer_email || firstItem?.purchased_details?.target_email || 'customer@asterra.store'}
+                {order.customer_email || 'customer@asterra.store'}
               </a>
               <button
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
-                  onCopyEmail(order.customer_email || firstItem?.purchased_details?.target_email || '');
+                  onCopyEmail(order.customer_email || '');
                 }}
                 className="opacity-0 group-hover/email:opacity-100 hover:text-foreground transition-opacity"
-                title="Salin Email"
+                title="Salin Email Login"
               >
                 <FontAwesomeIcon icon={faCopy} className="w-2.5 h-2.5" />
               </button>
@@ -97,6 +97,40 @@ export function OrderTableRow({ order, index, onOpenDetail, onCopyEmail }: Order
                 )}
               </div>
             )}
+
+            {/* Target Fulfillment Destination Badge */}
+            {(() => {
+              const tEmail = firstItem?.target_email || firstItem?.targetEmail || firstItem?.purchased_details?.target_email || firstItem?.purchased_details?.targetEmail;
+              const tPhone = firstItem?.target_phone || firstItem?.targetPhone || firstItem?.purchased_details?.target_phone || firstItem?.purchased_details?.targetPhone;
+              const tId = firstItem?.target_id || firstItem?.targetId || firstItem?.purchased_details?.target_id || firstItem?.purchased_details?.targetId;
+              const fMethod = (firstItem?.fulfillment_method || firstItem?.fulfillmentMethod || firstItem?.purchased_details?.fulfillment_method || '').toLowerCase();
+
+              if (fMethod === 'whatsapp' || (tPhone && !tEmail)) {
+                return (
+                  <div className="mt-1.5 inline-flex items-center gap-1 text-[10px] text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200/80 font-mono" title="Tujuan Pengiriman via WhatsApp">
+                    <span className="font-bold">🎯 WA:</span>
+                    <span className="truncate max-w-[130px]">{tPhone}</span>
+                  </div>
+                );
+              }
+              if (tEmail && tEmail.toLowerCase() !== (order.customer_email || '').toLowerCase()) {
+                return (
+                  <div className="mt-1.5 inline-flex items-center gap-1 text-[10px] text-blue-800 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200/80 font-mono" title="Tujuan Aktivasi / Pengiriman Email">
+                    <span className="font-bold">🎯 Tujuan:</span>
+                    <span className="truncate max-w-[130px]">{tEmail}</span>
+                  </div>
+                );
+              }
+              if (tId) {
+                return (
+                  <div className="mt-1.5 inline-flex items-center gap-1 text-[10px] text-purple-800 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200/80 font-mono" title="Target ID Game / Pelanggan">
+                    <span className="font-bold">🎯 ID:</span>
+                    <span className="truncate max-w-[130px]">{tId}</span>
+                  </div>
+                );
+              }
+              return null;
+            })()}
           </div>
         </div>
       </td>

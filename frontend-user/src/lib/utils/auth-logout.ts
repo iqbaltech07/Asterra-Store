@@ -32,14 +32,25 @@ export async function performCustomerLogout(options?: CustomerLogoutOptions): Pr
       localStorage.removeItem('asterra_customer_email');
       localStorage.removeItem('asterra_last_order_id');
       localStorage.removeItem('asterra_checkout_customer');
+      localStorage.removeItem('asterra_auth_profile');
       sessionStorage.removeItem('asterra_customer_session');
 
-      // Instantly expire auth cookies on client
+      // Instantly expire auth cookies on client (both host and legacy wildcard domain)
       const expiredSuffix = '=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax;';
-      document.cookie = `better-auth.session_token${expiredSuffix}`;
-      document.cookie = `__Secure-better-auth.session_token${expiredSuffix}`;
-      document.cookie = `better-auth.session_data${expiredSuffix}`;
-      document.cookie = `asterra_customer_session${expiredSuffix}`;
+      const expiredDomainSuffix = '=; path=/; domain=.asterrastore.biz.id; expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax;';
+      
+      const cookieNames = [
+        'better-auth.session_token',
+        '__Secure-better-auth.session_token',
+        'better-auth.session_data',
+        '__Secure-better-auth.session_data',
+        'asterra_customer_session',
+      ];
+
+      cookieNames.forEach((name) => {
+        document.cookie = `${name}${expiredSuffix}`;
+        document.cookie = `${name}${expiredDomainSuffix}`;
+      });
     } catch {}
   }
 

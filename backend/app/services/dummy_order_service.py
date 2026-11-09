@@ -314,7 +314,12 @@ class DummyOrderService:
         - Thread & process-safe via PostgreSQL advisory lock (key: 8822001)
         - NEVER generates on every page hit if interval has not elapsed
         - Zero duplicate orders, full diagnostic logging
+        - Strictly disabled in production (only active on development/staging)
         """
+        from app.config import settings
+        if getattr(settings, "ENVIRONMENT", "").lower() in ("production", "prod"):
+            return None
+
         should_close = False
         if db is None:
             if not SessionLocal:
@@ -402,9 +407,13 @@ class DummyOrderService:
     @classmethod
     def generate_and_save_dummy_order(cls) -> Optional[Dict[str, Any]]:
         """
-        STRICT: Fake orders are strictly visual on the user frontend (/orders).
-        They must NEVER be persisted to the PostgreSQL database or admin console.
+        STRICT: Dummy orders are only allowed for testing in staging/development.
+        Must NEVER be generated in production environments.
         """
+        from app.config import settings
+        if getattr(settings, "ENVIRONMENT", "").lower() in ("production", "prod"):
+            return None
+
         db = SessionLocal()
         try:
             # Stage 1: Candidate Selection
@@ -468,12 +477,21 @@ class DummyOrderService:
             db.add(order)
 
             # Create OrderItem
+            target_card_id = prod_check.card_id
+            if not target_card_id:
+                c_match = db.query(ProductCard).filter(
+                    (ProductCard.status == "active") &
+                    ((ProductCard.name.ilike(f"%{prod_check.name}%")) | (ProductCard.slug.ilike(f"%{prod_check.name}%")))
+                ).first()
+                if c_match:
+                    target_card_id = c_match.id
+
             item = OrderItem(
                 id=f"item-{order_id}-1",
                 order_id=order_id,
                 product_id=prod_check.id,
                 product_name=prod_check.name,
-                card_id=prod_check.card_id,
+                card_id=target_card_id,
                 price=int(prod_check.price),
                 quantity=1,
                 duration="1 Bulan",
@@ -483,6 +501,10 @@ class DummyOrderService:
             # NOTE: DO NOT REDUCE prod_check.stock (Phase 7.4 strictly enforced)
             db.commit()
             db.refresh(order)
+
+            # Invalidate caches so homepage, catalog, and orders reflect the new sold count instantly
+            from app.core.cache import cache
+            cache.invalidate("homepage_sections", "catalog", "orders")
 
             order_dict = order.to_dict()
             print(f"[DummyOrderService] Created dummy order {order_id} for product '{prod_check.name}' (Rp {prod_check.price:,}).")
@@ -494,11 +516,39 @@ class DummyOrderService:
                     {
                         "orderId": order_id,
                         "productName": prod_check.name,
+                        "cardId": target_card_id,
                         "customerDisplay": masked_customer_name,
                         "status": "completed",
                         "createdAt": now_utc.isoformat() + "Z",
                     },
                     target_role="user",
+                )
+                RealtimeBroadcaster.broadcast(
+                    "cards:updated",
+                    {
+                        "reason": "dummy_order_completed",
+                        "orderId": order_id,
+                        "cardId": target_card_id,
+                    },
+                    target_role="all",
+                )
+                RealtimeBroadcaster.broadcast(
+                    "homepage:sections_updated",
+                    {
+                        "reason": "dummy_order_completed",
+                        "orderId": order_id,
+                        "cardId": target_card_id,
+                    },
+                    target_role="all",
+                )
+                RealtimeBroadcaster.broadcast(
+                    "catalog:updated",
+                    {
+                        "reason": "dummy_order_completed",
+                        "orderId": order_id,
+                        "cardId": target_card_id,
+                    },
+                    target_role="all",
                 )
             except Exception as e:
                 print(f"[DummyOrderService] Realtime broadcast note: {e}")
@@ -508,5 +558,173 @@ class DummyOrderService:
             db.rollback()
             print(f"[DummyOrderService] Error generating dummy order: {e}")
             return None
+        finally:
+            db.close()
+
+    @classmethod
+    def create_test_dummy_order(
+        cls,
+        product_id: Optional[str] = None,
+        card_id: Optional[str] = None,
+        quantity: int = 1,
+        status: str = "completed",
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Creates a test dummy order for staging verification.
+        Supports specifying product_id or card_id, quantity, and status ('processing', 'pending', 'completed').
+        Strictly forbidden in production.
+        """
+        from app.config import settings
+        if getattr(settings, "ENVIRONMENT", "").lower() == "production":
+            raise ValueError("Dummy orders are strictly forbidden in production.")
+
+        db = SessionLocal()
+        try:
+            prod = None
+            if product_id:
+                prod = db.query(Product).filter_by(id=product_id).first()
+            elif card_id:
+                clean_cid = card_id.strip()
+                card = db.query(ProductCard).filter(
+                    (ProductCard.id == clean_cid) | (ProductCard.slug == clean_cid)
+                ).first()
+                if card:
+                    prod = db.query(Product).filter_by(card_id=card.id, status="active").first()
+                    if not prod:
+                        prod = db.query(Product).filter_by(card_id=card.id).first()
+
+            if not prod:
+                prod = db.query(Product).filter_by(status="active").first()
+
+            if not prod:
+                raise ValueError("Tidak ada katalog produk aktif untuk membuat dummy order.")
+
+            resolved_card_id = prod.card_id
+            if not resolved_card_id:
+                c_match = db.query(ProductCard).filter(
+                    (ProductCard.status == "active") &
+                    ((ProductCard.name.ilike(f"%{prod.name}%")) | (ProductCard.slug.ilike(f"%{prod.name}%")))
+                ).first()
+                if c_match:
+                    resolved_card_id = c_match.id
+
+            qty = max(1, int(quantity or 1))
+            unit_price = int(prod.price) if prod.price and prod.price > 0 else 10000
+            total_price = unit_price * qty
+
+            first = random.choice(INDONESIAN_FIRST_NAMES)
+            last = random.choice(INDONESIAN_LAST_NAMES)
+            raw_name = f"{first} {last}"
+            masked_name = mask_name(raw_name)
+            customer_email = f"test_dummy_{random.randint(100, 999)}@customer.id"
+
+            now_wib = datetime.now(WIB)
+            date_key = now_wib.strftime("%Y%m%d")
+            order_num = random.randint(1000, 9999)
+            order_id = f"AST-ORD-{date_key}-{order_num}"
+            while db.query(Order).filter_by(id=order_id).first():
+                order_num = random.randint(1000, 9999)
+                order_id = f"AST-ORD-{date_key}-{order_num}"
+
+            now_utc = datetime.now(timezone.utc)
+            clean_status = (status or "completed").strip().lower()
+            is_paid = clean_status in ["completed", "paid", "settlement", "done", "selesai"]
+
+            order = Order(
+                id=order_id,
+                customer_email=customer_email,
+                customer_name=masked_name,
+                customer_whatsapp=f"08{random.randint(1000000000, 9999999999)}",
+                total_amount=total_price,
+                raw_amount=total_price,
+                status=clean_status,
+                payment_method="QRIS",
+                payment_mode="direct",
+                payment_status="settlement" if is_paid else "pending",
+                is_preorder=False,
+                is_dummy=True,
+                fulfillment_mode="automatic",
+                paid_at=now_utc if is_paid else None,
+                fulfilled_at=now_utc if clean_status in ["completed", "done", "selesai"] else None,
+                created_at=now_utc,
+                updated_at=now_utc,
+            )
+            db.add(order)
+
+            item = OrderItem(
+                id=f"item-{order_id}-1",
+                order_id=order_id,
+                product_id=prod.id,
+                product_name=prod.name,
+                card_id=resolved_card_id,
+                price=unit_price,
+                quantity=qty,
+                duration="1 Bulan",
+            )
+            db.add(item)
+            db.commit()
+            db.refresh(order)
+
+            from app.core.cache import cache
+            if is_paid:
+                cache.invalidate("homepage_sections", "catalog", "orders")
+                try:
+                    RealtimeBroadcaster.broadcast(
+                        "order:created",
+                        {
+                            "orderId": order_id,
+                            "productName": prod.name,
+                            "cardId": resolved_card_id,
+                            "customerDisplay": masked_name,
+                            "status": clean_status,
+                            "createdAt": now_utc.isoformat() + "Z",
+                        },
+                        target_role="user",
+                    )
+                    RealtimeBroadcaster.broadcast(
+                        "cards:updated",
+                        {"reason": "dummy_order_completed", "orderId": order_id, "cardId": resolved_card_id},
+                        target_role="all",
+                    )
+                    RealtimeBroadcaster.broadcast(
+                        "homepage:sections_updated",
+                        {"reason": "dummy_order_completed", "orderId": order_id, "cardId": resolved_card_id},
+                        target_role="all",
+                    )
+                    RealtimeBroadcaster.broadcast(
+                        "catalog:updated",
+                        {"reason": "dummy_order_completed", "orderId": order_id, "cardId": resolved_card_id},
+                        target_role="all",
+                    )
+                except Exception as e:
+                    print(f"[DummyOrderService] Broadcast error: {e}")
+            else:
+                cache.invalidate("orders")
+                try:
+                    RealtimeBroadcaster.broadcast(
+                        "order:created",
+                        {
+                            "orderId": order_id,
+                            "productName": prod.name,
+                            "cardId": resolved_card_id,
+                            "customerDisplay": masked_name,
+                            "status": clean_status,
+                            "createdAt": now_utc.isoformat() + "Z",
+                        },
+                        target_role="user",
+                    )
+                except Exception as e:
+                    print(f"[DummyOrderService] Broadcast error: {e}")
+
+            try:
+                from app.services.order_service import OrderService
+                OrderService.load_orders(force_reload=True)
+            except Exception:
+                pass
+
+            return order.to_dict()
+        except Exception as e:
+            db.rollback()
+            raise e
         finally:
             db.close()

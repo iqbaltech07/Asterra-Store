@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="cap-glow" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#0B0D11" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="cap-card-bg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#16181F"/>
+      <stop offset="100%" stop-color="#0B0D11"/>
+    </linearGradient>
+    <filter id="cap-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#FFFFFF" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#cap-card-bg)"/>
+  <rect width="512" height="512" rx="112" fill="url(#cap-glow)"/>
+  <rect width="510" height="510" x="1" y="1" rx="111" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="2"/>
+  <g transform="translate(136, 146)" filter="url(#cap-shadow)">
+    <path d="M20 30 L110 100 L20 170 L70 170 L140 115 L210 170 L260 170 L170 100 L260 30 L210 30 L140 85 L70 30 Z" fill="#FFFFFF"/>
+  </g>
+</svg>

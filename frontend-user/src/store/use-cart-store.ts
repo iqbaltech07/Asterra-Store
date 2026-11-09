@@ -12,6 +12,13 @@ export interface CartItem {
   quantity: number;
   stock?: number;
   isOutOfStock?: boolean;
+  brand?: string;
+  cardId?: string;
+  inputType?: 'email' | 'phone' | 'choice' | 'game' | 'none' | 'custom' | string;
+  inputConfig?: any;
+  fulfillmentMethod?: 'whatsapp' | 'gmail' | 'invite' | 'voucher' | string;
+  targetValue?: string;
+  targetZone?: string;
 }
 
 interface CartState {

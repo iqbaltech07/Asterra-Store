@@ -1,4 +1,5 @@
 from datetime import datetime
+import json
 from sqlalchemy import Column, String, Integer, DateTime, Text, ForeignKey, Boolean, Numeric
 from sqlalchemy.orm import relationship
 from app.core.database import Base
@@ -28,9 +29,40 @@ class OrderItem(Base):
     target_zone = Column(String, nullable=True)
     card_id = Column(String, nullable=True, index=True)
 
+    # Dynamic fulfillment & target fields
+    fulfillment_method = Column(String(50), nullable=True)  # 'whatsapp' | 'gmail' | 'invite' | 'voucher' | 'direct' | 'game'
+    target_type = Column(String(50), nullable=True)  # 'email' | 'phone' | 'choice' | 'game' | 'none' | 'custom'
+    target_value = Column(Text, nullable=True)  # authoritative raw target value
+    input_config_snapshot = Column(Text, nullable=True)  # JSON snapshot of product input config at purchase
+
     order = relationship("Order", back_populates="items")
 
     def to_dict(self):
+        parsed_snapshot = None
+        if self.input_config_snapshot:
+            try:
+                parsed_snapshot = json.loads(self.input_config_snapshot) if isinstance(self.input_config_snapshot, str) else self.input_config_snapshot
+            except Exception:
+                parsed_snapshot = None
+
+        purchased_details = {
+            "target_email": self.target_email,
+            "targetEmail": self.target_email,
+            "target_phone": self.target_phone,
+            "targetPhone": self.target_phone,
+            "target_id": self.target_id,
+            "targetId": self.target_id,
+            "target_zone": self.target_zone,
+            "targetZone": self.target_zone,
+            "duration": self.duration,
+            "fulfillment_method": self.fulfillment_method,
+            "fulfillmentMethod": self.fulfillment_method,
+            "target_type": self.target_type,
+            "targetType": self.target_type,
+            "target_value": self.target_value,
+            "targetValue": self.target_value,
+        }
+
         return {
             "id": self.id,
             "orderId": self.order_id,
@@ -39,14 +71,28 @@ class OrderItem(Base):
             "cardId": self.card_id,
             "card_id": self.card_id,
             "price": _num(self.price),
+            "unit_price": _num(self.price),
+            "unitPrice": _num(self.price),
             "quantity": self.quantity,
             "duration": self.duration,
             "targetEmail": self.target_email,
+            "target_email": self.target_email,
             "targetPhone": self.target_phone,
+            "target_phone": self.target_phone,
             "targetId": self.target_id,
             "target_id": self.target_id,
             "targetZone": self.target_zone,
             "target_zone": self.target_zone,
+            "fulfillmentMethod": self.fulfillment_method,
+            "fulfillment_method": self.fulfillment_method,
+            "targetType": self.target_type,
+            "target_type": self.target_type,
+            "targetValue": self.target_value,
+            "target_value": self.target_value,
+            "inputConfigSnapshot": parsed_snapshot,
+            "input_config_snapshot": parsed_snapshot,
+            "purchased_details": purchased_details,
+            "purchasedDetails": purchased_details,
         }
 
 class Order(Base):

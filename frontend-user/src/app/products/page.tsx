@@ -258,7 +258,10 @@ function ProductsContent() {
       if (sortBy === 'price_asc') return a.minPrice - b.minPrice;
       if (sortBy === 'price_desc') return b.minPrice - a.minPrice;
       if (sortBy === 'name_asc') return a.name.localeCompare(b.name);
-      return (b.soldCount || 0) - (a.soldCount || 0);
+      const sA = a.soldCount || 0;
+      const sB = b.soldCount || 0;
+      if (sB !== sA) return sB - sA;
+      return a.name.localeCompare(b.name);
     });
 
     return mapped;

@@ -156,6 +156,16 @@ async def update_admin_product(product_id: str, request: Request):
         "data": updated,
     }
 
+@router.post("/admin/catalog/audit-inputs", tags=["Admin Products"])
+def audit_catalog_inputs(request: Request, force: bool = False):
+    from app.scripts.audit_and_map_product_inputs import run_catalog_input_audit
+    summary = run_catalog_input_audit(force=force)
+    return {
+        "success": True,
+        "message": f"Audit konfigurasi input katalog selesai. {summary.get('updated_count', 0)} produk berhasil dipetakan.",
+        "data": summary,
+    }
+
 @router.delete("/admin/products/{product_id}", tags=["Admin Products"])
 def delete_admin_product(product_id: str):
     deleted = CatalogService.delete_product(product_id)
@@ -999,12 +1009,13 @@ def get_admin_cards(
     }
 
 @router.post("/admin/cards", tags=["Admin Product Cards"])
-async def create_admin_card(request: Request):
+async def create_admin_card(request: Request, admin: Dict[str, Any] = Depends(get_current_admin)):
     payload = await request.json()
     try:
         card = CardService.create_card(payload)
         cache.invalidate("catalog", "homepage_sections")
-        RealtimeBroadcaster.broadcast("cards:updated", {"action": "created", "id": card["id"]}, target_role="all")
+        RealtimeBroadcaster.broadcast("cards:updated", {"action": "created", "id": card["id"], "baseSoldCount": card.get("baseSoldCount")}, target_role="all")
+        RealtimeBroadcaster.broadcast("homepage:sections_updated", {"action": "sync", "reason": "card_created"}, target_role="all")
         return {
             "success": True,
             "message": f"Card Produk '{card['name']}' berhasil dibuat.",
@@ -1017,12 +1028,13 @@ async def create_admin_card(request: Request):
 
 @router.patch("/admin/cards/{card_id}", tags=["Admin Product Cards"])
 @router.put("/admin/cards/{card_id}", tags=["Admin Product Cards"])
-async def update_admin_card(card_id: str, request: Request):
+async def update_admin_card(card_id: str, request: Request, admin: Dict[str, Any] = Depends(get_current_admin)):
     payload = await request.json()
     try:
         card = CardService.update_card(card_id, payload)
         cache.invalidate("catalog", "homepage_sections")
-        RealtimeBroadcaster.broadcast("cards:updated", {"action": "updated", "id": card_id}, target_role="all")
+        RealtimeBroadcaster.broadcast("cards:updated", {"action": "updated", "id": card_id, "baseSoldCount": card.get("baseSoldCount")}, target_role="all")
+        RealtimeBroadcaster.broadcast("homepage:sections_updated", {"action": "sync", "reason": "card_updated"}, target_role="all")
         return {
             "success": True,
             "message": f"Card Produk '{card['name']}' berhasil diperbarui.",
@@ -1035,13 +1047,17 @@ async def update_admin_card(card_id: str, request: Request):
 
 @router.put("/admin/cards/{card_id}/baseline", tags=["Admin Product Cards"])
 @router.patch("/admin/cards/{card_id}/baseline", tags=["Admin Product Cards"])
-async def update_admin_card_baseline(card_id: str, request: Request):
+async def update_admin_card_baseline(card_id: str, request: Request, admin: Dict[str, Any] = Depends(get_current_admin)):
     payload = await request.json()
     try:
         raw_val = payload.get("baseSoldCount") if "baseSoldCount" in payload else (payload.get("base_sold_count") if "base_sold_count" in payload else payload.get("baseline", 0))
-        card = CardService.update_card(card_id, {"baseSoldCount": int(raw_val)})
+        val_int = int(raw_val)
+        if val_int < 0:
+            raise ValueError("Jumlah Terjual (Manual) tidak boleh bernilai negatif.")
+        card = CardService.update_card(card_id, {"baseSoldCount": val_int})
         cache.invalidate("catalog", "homepage_sections")
         RealtimeBroadcaster.broadcast("cards:updated", {"action": "baseline_updated", "id": card_id, "baseSoldCount": card.get("baseSoldCount")}, target_role="all")
+        RealtimeBroadcaster.broadcast("homepage:sections_updated", {"action": "sync", "reason": "baseline_updated", "id": card_id}, target_role="all")
         return {
             "success": True,
             "message": f"Baseline jumlah terjual untuk '{card['name']}' berhasil diperbarui.",
@@ -1054,13 +1070,14 @@ async def update_admin_card_baseline(card_id: str, request: Request):
 
 @router.patch("/admin/cards/batch-baseline", tags=["Admin Product Cards"])
 @router.put("/admin/cards/batch-baseline", tags=["Admin Product Cards"])
-async def batch_update_admin_card_baselines(request: Request):
+async def batch_update_admin_card_baselines(request: Request, admin: Dict[str, Any] = Depends(get_current_admin)):
     payload = await request.json()
     updates = payload.get("updates") if isinstance(payload, dict) and "updates" in payload else (payload if isinstance(payload, list) else [])
     try:
         updated = CardService.batch_update_baselines(updates)
         cache.invalidate("catalog", "homepage_sections")
         RealtimeBroadcaster.broadcast("cards:updated", {"action": "batch_baseline_updated", "count": len(updated)}, target_role="all")
+        RealtimeBroadcaster.broadcast("homepage:sections_updated", {"action": "sync", "reason": "batch_baseline_updated"}, target_role="all")
         return {
             "success": True,
             "message": f"{len(updated)} baseline Product Card berhasil diperbarui.",
@@ -1072,7 +1089,7 @@ async def batch_update_admin_card_baselines(request: Request):
         raise HTTPException(status_code=500, detail=f"Gagal memperbarui batch baseline: {str(e)}")
 
 @router.delete("/admin/cards/{card_id}", tags=["Admin Product Cards"])
-def delete_admin_card(card_id: str):
+def delete_admin_card(card_id: str, admin: Dict[str, Any] = Depends(get_current_admin)):
     try:
         res = CardService.delete_card(card_id)
         cache.invalidate("catalog", "homepage_sections")
@@ -1084,10 +1101,11 @@ def delete_admin_card(card_id: str):
         raise HTTPException(status_code=500, detail=f"Gagal menghapus Card Produk: {str(e)}")
 
 @router.post("/admin/cards/{card_id}/toggle-status", tags=["Admin Product Cards"])
-def toggle_admin_card_status(card_id: str):
+def toggle_admin_card_status(card_id: str, admin: Dict[str, Any] = Depends(get_current_admin)):
     try:
         res = CardService.toggle_status(card_id)
         cache.invalidate("catalog", "homepage_sections")
+        RealtimeBroadcaster.broadcast("cards:updated", {"action": "toggled", "id": card_id}, target_role="all")
         RealtimeBroadcaster.broadcast("cards:updated", {"action": "toggled", "id": card_id}, target_role="all")
         return {
             "success": True,

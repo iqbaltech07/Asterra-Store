@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="canva-glow" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#00C4CC" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#0B0D11" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="canva-card-bg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#16181F"/>
+      <stop offset="100%" stop-color="#0B0D11"/>
+    </linearGradient>
+    <linearGradient id="canva-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00C4CC"/>
+      <stop offset="100%" stop-color="#7D2AE8"/>
+    </linearGradient>
+    <filter id="canva-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#7D2AE8" flood-opacity="0.4"/>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#canva-card-bg)"/>
+  <rect width="512" height="512" rx="112" fill="url(#canva-glow)"/>
+  <rect width="510" height="510" x="1" y="1" rx="111" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="2"/>
+  <g transform="translate(106, 106)" filter="url(#canva-shadow)">
+    <circle cx="150" cy="150" r="140" fill="url(#canva-grad)"/>
+    <text x="150" y="195" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="78" font-weight="900" fill="#FFFFFF" text-anchor="middle" letter-spacing="-1">Canva</text>
+  </g>
+</svg>

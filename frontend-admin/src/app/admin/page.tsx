@@ -446,6 +446,12 @@ function AdminPageContent() {
   const [formPrivacyTitle, setFormPrivacyTitle] = useState('Akun Private');
   const [formPrivacyDesc, setFormPrivacyDesc] = useState('Ruang kerja aman & personal');
 
+  // Dynamic customer order input configuration
+  const [formInputType, setFormInputType] = useState<string>('email');
+  const [formInputLabel, setFormInputLabel] = useState<string>('');
+  const [formInputPlaceholder, setFormInputPlaceholder] = useState<string>('');
+  const [formInputHelper, setFormInputHelper] = useState<string>('');
+
   // Delete product states
   const [deletingProductId, setDeletingProductId] = useState<string | null>(null);
   const [deletingProductName, setDeletingProductName] = useState<string>('');
@@ -622,7 +628,9 @@ function AdminPageContent() {
   } = useQuery<AdminProductsResponse>({
     queryKey: ['admin-products'],
     queryFn: async () => {
-      const res = await fetch('/api/v1/admin/products');
+      const res = await fetch('/api/v1/admin/products', {
+        headers: getAdminAuthHeaders(),
+      });
       if (res.status === 401) {
         router.replace('/admin/login');
         throw new Error('Unauthorized');
@@ -666,7 +674,9 @@ function AdminPageContent() {
       if (vipStatus && vipStatus !== 'all') params.set('status', vipStatus);
       params.set('limit', '2500');
 
-      const res = await fetch(`/api/v1/admin/vip-services?${params.toString()}`);
+      const res = await fetch(`/api/v1/admin/vip-services?${params.toString()}`, {
+        headers: getAdminAuthHeaders(),
+      });
       if (res.status === 401) {
         router.replace('/admin/login');
         throw new Error('Unauthorized');
@@ -824,6 +834,40 @@ function AdminPageContent() {
         cardId: formCardId ? formCardId : null,
       };
 
+      // Construct dynamic customer input configuration
+      const builtInputConfig: Record<string, any> = {
+        type: formInputType,
+        required: formInputType !== 'none',
+      };
+      if (formInputLabel.trim()) builtInputConfig.label = formInputLabel.trim();
+      if (formInputPlaceholder.trim()) builtInputConfig.placeholder = formInputPlaceholder.trim();
+      if (formInputHelper.trim()) builtInputConfig.helper = formInputHelper.trim();
+
+      if (formInputType === 'choice') {
+        builtInputConfig.options = ['whatsapp', 'gmail'];
+        builtInputConfig.default_option = 'whatsapp';
+        builtInputConfig.fields = {
+          whatsapp: {
+            label: 'Nomor WhatsApp Penerima Akun *',
+            placeholder: 'contoh: 081234567890',
+            helper: 'Kredensial login akun akan dikirimkan melalui WhatsApp ini.',
+          },
+          gmail: {
+            label: 'Email Gmail Penerima Akun *',
+            placeholder: 'contoh: akun_penerima@gmail.com',
+            helper: 'Kredensial login akun akan dikirimkan melalui email Gmail ini.',
+          },
+        };
+      } else if (formInputType === 'game') {
+        builtInputConfig.requires_zone = true;
+        builtInputConfig.zone_label = 'Server / Zone ID *';
+        builtInputConfig.zone_placeholder = 'contoh: 2685';
+        builtInputConfig.zone_helper = 'Server atau Zone ID akun game.';
+      }
+
+      payload.inputType = formInputType;
+      payload.inputConfig = builtInputConfig;
+
       if (!editingProduct && formId.trim()) {
         payload.id = formId.trim();
       }
@@ -973,6 +1017,20 @@ function AdminPageContent() {
     setFormProcessDesc(p.processDesc || '1 - 15 menit selesai');
     setFormPrivacyTitle(p.privacyTitle || 'Akun Private');
     setFormPrivacyDesc(p.privacyDesc || 'Ruang kerja aman & personal');
+
+    // Load customer order input configuration
+    const inType = (p as any).inputType || (p as any).input_type || 'email';
+    setFormInputType(inType);
+    const inCfg = (p as any).inputConfig || (p as any).input_config;
+    if (inCfg && typeof inCfg === 'object') {
+      setFormInputLabel(inCfg.label || '');
+      setFormInputPlaceholder(inCfg.placeholder || '');
+      setFormInputHelper(inCfg.helper || '');
+    } else {
+      setFormInputLabel('');
+      setFormInputPlaceholder('');
+      setFormInputHelper('');
+    }
   };
 
   // Open Create Modal
@@ -1005,6 +1063,10 @@ function AdminPageContent() {
     setFormProcessDesc('1 - 15 menit selesai');
     setFormPrivacyTitle('Akun Private');
     setFormPrivacyDesc('Ruang kerja aman & personal');
+    setFormInputType('email');
+    setFormInputLabel('');
+    setFormInputPlaceholder('');
+    setFormInputHelper('');
     setIsCreateModalOpen(true);
   };
 
@@ -1035,6 +1097,18 @@ function AdminPageContent() {
     setFormProcessDesc(p.processDesc || '1 - 15 menit selesai');
     setFormPrivacyTitle(p.privacyTitle || 'Akun Private');
     setFormPrivacyDesc(p.privacyDesc || 'Ruang kerja aman & personal');
+    const inType = (p as any).inputType || (p as any).input_type || 'email';
+    setFormInputType(inType);
+    const inCfg = (p as any).inputConfig || (p as any).input_config;
+    if (inCfg && typeof inCfg === 'object') {
+      setFormInputLabel(inCfg.label || '');
+      setFormInputPlaceholder(inCfg.placeholder || '');
+      setFormInputHelper(inCfg.helper || '');
+    } else {
+      setFormInputLabel('');
+      setFormInputPlaceholder('');
+      setFormInputHelper('');
+    }
     setIsCreateModalOpen(true);
     showNotification(`Menduplikasi produk "${p.name}". Silakan sesuaikan dan simpan.`);
   };
@@ -2933,7 +3007,107 @@ function AdminPageContent() {
                 </button>
               </div>
 
-              {/* 8. Garansi & Tipe Akun & Masa Aktif Section */}
+              {/* 8. Konfigurasi Input Pemesanan Pelanggan (Dynamic Product Input) */}
+              <div className="p-3.5 rounded-xl border border-border bg-white shadow-2xs space-y-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-xs text-foreground">
+                      Konfigurasi Input Pemesanan Pelanggan (Checkout)
+                    </span>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                      Dynamic Input
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-foreground-muted mt-0.5">
+                    Tentukan field input yang wajib diisi pembeli saat memesan produk ini di halaman checkout.
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-foreground block">
+                    Tipe Input Produk
+                  </label>
+                  <select
+                    value={formInputType}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setFormInputType(val);
+                      if (val === 'choice') {
+                        setFormInputLabel('Pilihan Metode Pengiriman Akun');
+                        setFormInputPlaceholder('Pilih WhatsApp atau Gmail');
+                        setFormInputHelper('Akun disediakan oleh AsterraStore dan akan dikirimkan ke kontak WhatsApp atau Gmail pilihan Anda.');
+                      } else if (val === 'email') {
+                        setFormInputLabel('Email Akun Tujuan Aktivasi *');
+                        setFormInputPlaceholder('contoh: akun_anda@gmail.com');
+                        setFormInputHelper('Undangan atau aktivasi premium akan dikaitkan ke email akun ini.');
+                      } else if (val === 'phone') {
+                        setFormInputLabel('Nomor WhatsApp / HP Tujuan Aktivasi *');
+                        setFormInputPlaceholder('contoh: 081234567890');
+                        setFormInputHelper('Aktivasi paket atau pengisian akan diproses ke nomor ini.');
+                      } else if (val === 'game') {
+                        setFormInputLabel('User ID Game *');
+                        setFormInputPlaceholder('contoh: 136216325');
+                        setFormInputHelper('Masukan User ID akun game tujuan top-up.');
+                      } else if (val === 'none') {
+                        setFormInputLabel('Tidak Memerlukan Input Tujuan');
+                        setFormInputPlaceholder('');
+                        setFormInputHelper('Kode voucher / lisensi akan otomatis diterbitkan di rincian pesanan Anda.');
+                      }
+                    }}
+                    className="w-full bg-surface-raised border border-border text-xs rounded-xl h-10 px-3 text-foreground font-medium focus:ring-1 focus:ring-primary focus:outline-none"
+                  >
+                    <option value="email">Email Akun (Undangan / Invite Akun Pelanggan, e.g. YouTube Family, Canva)</option>
+                    <option value="choice">Pilihan WhatsApp atau Gmail (Akun dari Toko, e.g. ChatGPT, Netflix, Spotify)</option>
+                    <option value="phone">Nomor HP / WhatsApp (Aktivasi Nomor, e.g. CapCut, Pulsa, E-Wallet)</option>
+                    <option value="game">Game Top-Up (User ID + Server / Zone ID, e.g. MLBB, Free Fire)</option>
+                    <option value="none">Tanpa Input Tujuan (Voucher / Lisensi Siap Pakai)</option>
+                    <option value="custom">Kustom (Custom Label & Helper)</option>
+                  </select>
+                </div>
+
+                {formInputType !== 'none' && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                    <div>
+                      <label className="text-[11px] font-semibold text-foreground block mb-1">
+                        Custom Label Input (Opsional)
+                      </label>
+                      <Input
+                        type="text"
+                        value={formInputLabel}
+                        onChange={(e) => setFormInputLabel(e.target.value)}
+                        placeholder="Default otomatis jika dikosongkan"
+                        className="bg-surface-raised border-border text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-semibold text-foreground block mb-1">
+                        Custom Placeholder (Opsional)
+                      </label>
+                      <Input
+                        type="text"
+                        value={formInputPlaceholder}
+                        onChange={(e) => setFormInputPlaceholder(e.target.value)}
+                        placeholder="Default otomatis jika dikosongkan"
+                        className="bg-surface-raised border-border text-xs"
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="text-[11px] font-semibold text-foreground block mb-1">
+                        Custom Helper / Petunjuk Input (Opsional)
+                      </label>
+                      <Input
+                        type="text"
+                        value={formInputHelper}
+                        onChange={(e) => setFormInputHelper(e.target.value)}
+                        placeholder="Petunjuk tambahan untuk pembeli saat mengisi form checkout"
+                        className="bg-surface-raised border-border text-xs"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* 9. Garansi & Tipe Akun & Masa Aktif Section */}
               <div className="p-3.5 bg-surface-raised/50 border border-border rounded-xl space-y-3">
                 <div>
                   <h4 className="font-semibold text-xs text-foreground flex items-center gap-1.5">

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="yt-glow" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#FF0000" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#0B0D11" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="yt-card-bg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#16181F"/>
+      <stop offset="100%" stop-color="#0B0D11"/>
+    </linearGradient>
+    <filter id="yt-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#FF0000" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#yt-card-bg)"/>
+  <rect width="512" height="512" rx="112" fill="url(#yt-glow)"/>
+  <rect width="510" height="510" x="1" y="1" rx="111" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="2"/>
+  <g transform="translate(106, 146)" filter="url(#yt-shadow)">
+    <path d="M293.7 32.8c-3.4-12.9-13.5-23-26.4-26.4C244 0 150 0 150 0S56 0 32.7 6.4C19.8 9.8 9.7 19.9 6.3 32.8 0 56.1 0 110 0 110s0 53.9 6.3 77.2c3.4 12.9 13.5 23 26.4 26.4C56 220 150 220 150 220s94 0 117.3-6.4c12.9-3.4 23-13.5 26.4-26.4 6.3-23.3 6.3-77.2 6.3-77.2s0-53.9-6.3-77.2z" fill="#FF0000"/>
+    <polygon points="120,65 198,110 120,155" fill="#FFFFFF"/>
+  </g>
+</svg>

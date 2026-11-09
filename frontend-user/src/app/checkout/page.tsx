@@ -99,6 +99,7 @@ function CheckoutPageContent() {
   const [targetValue, setTargetValue] = useState('');
   const [targetZone, setTargetZone] = useState('');
   const [targetEmail, setTargetEmail] = useState('');
+  const [choiceMethod, setChoiceMethod] = useState<'whatsapp' | 'gmail'>('whatsapp');
   const [phoneNumber, setPhoneNumber] = useState<string>(() => {
     if (typeof window !== 'undefined') {
       try {
@@ -112,6 +113,143 @@ function CheckoutPageContent() {
     return '';
   });
   const [customerNotes, setCustomerNotes] = useState('');
+
+  // Per-item dynamic target state for multi-item cart
+  const [itemTargets, setItemTargets] = useState<
+    Record<string, { targetValue: string; targetZone: string; choiceMethod: 'whatsapp' | 'gmail' }>
+  >({});
+
+  // Sync itemTargets whenever cart items change
+  useEffect(() => {
+    if (!items.length) return;
+    setItemTargets((prev) => {
+      const next = { ...prev };
+      items.forEach((item, idx) => {
+        const key = `${item.id}_${idx}`;
+        if (!next[key]) {
+          const req = getProductTargetRequirement(item);
+          const defaultMethod =
+            req.type === 'choice' && req.defaultOption === 'gmail' ? 'gmail' : 'whatsapp';
+          next[key] = {
+            targetValue: item.targetValue || (idx === 0 ? targetValue : ''),
+            targetZone: item.targetZone || (idx === 0 ? targetZone : ''),
+            choiceMethod: (item.fulfillmentMethod as any) || defaultMethod,
+          };
+        }
+      });
+      return next;
+    });
+  }, [items]);
+
+  const handleItemTargetChange = (
+    key: string,
+    field: 'targetValue' | 'targetZone' | 'choiceMethod',
+    val: string
+  ) => {
+    setItemTargets((prev) => {
+      const current = prev[key] || {
+        targetValue: '',
+        targetZone: '',
+        choiceMethod: 'whatsapp',
+      };
+      const updated = { ...current, [field]: val };
+      return { ...prev, [key]: updated };
+    });
+
+    if (items.length > 0 && key === `${items[0].id}_0`) {
+      if (field === 'targetValue') {
+        setTargetValue(val);
+        setTargetEmail(val);
+      }
+      if (field === 'targetZone') setTargetZone(val);
+      if (field === 'choiceMethod') setChoiceMethod(val as any);
+    }
+  };
+
+  // Two-way synchronization for single-item mode
+  const handleSingleTargetValueChange = (val: string) => {
+    setTargetValue(val);
+    setTargetEmail(val);
+    if (items.length > 0) {
+      const key = `${items[0].id}_0`;
+      setItemTargets((prev) => ({
+        ...prev,
+        [key]: {
+          ...(prev[key] || {
+            targetValue: '',
+            targetZone: targetZone,
+            choiceMethod: choiceMethod,
+          }),
+          targetValue: val,
+        },
+      }));
+    }
+  };
+
+  const handleSingleTargetZoneChange = (val: string) => {
+    setTargetZone(val);
+    if (items.length > 0) {
+      const key = `${items[0].id}_0`;
+      setItemTargets((prev) => ({
+        ...prev,
+        [key]: {
+          ...(prev[key] || {
+            targetValue: targetValue,
+            targetZone: '',
+            choiceMethod: choiceMethod,
+          }),
+          targetZone: val,
+        },
+      }));
+    }
+  };
+
+  const handleSingleChoiceMethodChange = (val: 'whatsapp' | 'gmail') => {
+    setChoiceMethod(val);
+    if (items.length > 0) {
+      const key = `${items[0].id}_0`;
+      setItemTargets((prev) => ({
+        ...prev,
+        [key]: {
+          ...(prev[key] || {
+            targetValue: targetValue,
+            targetZone: targetZone,
+            choiceMethod: val,
+          }),
+          choiceMethod: val,
+        },
+      }));
+    }
+  };
+
+  // Authoritative helper to resolve item target data without resurrecting stale data on clear
+  const resolveItemTarget = (item: any, idx: number) => {
+    const key = `${item.id}_${idx}`;
+    const isSingle = items.length <= 1;
+
+    let effectiveVal = '';
+    let effectiveZone = '';
+    let effectiveMethod: 'whatsapp' | 'gmail' = 'whatsapp';
+
+    if (isSingle) {
+      // In single-item mode, the authoritative source is targetValue (what the user types/sees in the input)
+      effectiveVal = targetValue.trim();
+      effectiveZone = targetZone.trim();
+      effectiveMethod = choiceMethod;
+    } else {
+      // In multi-item mode, each item's authoritative source is strictly itemTargets[key]
+      const targetState = itemTargets[key];
+      effectiveVal = (targetState?.targetValue || '').trim();
+      effectiveZone = (targetState?.targetZone || '').trim();
+      effectiveMethod = (targetState?.choiceMethod as any) || 'whatsapp';
+    }
+
+    return {
+      targetValue: effectiveVal,
+      targetZone: effectiveZone,
+      choiceMethod: effectiveMethod,
+    };
+  };
 
   // Auto-sync customer name and email from session
   useEffect(() => {
@@ -130,6 +268,12 @@ function CheckoutPageContent() {
     }
     return getProductTargetRequirement(items[0]);
   }, [items]);
+
+  useEffect(() => {
+    if (targetRequirement.type === 'choice' && targetRequirement.defaultOption) {
+      setChoiceMethod(targetRequirement.defaultOption === 'gmail' ? 'gmail' : 'whatsapp');
+    }
+  }, [targetRequirement]);
 
   // Sales Partner Referral & Discount Tracking
   const [referralCode, setReferralCode] = useState<string>('');
@@ -644,21 +788,47 @@ function CheckoutPageContent() {
       return false;
     }
 
-    // 1. Zod Validation: Data Tujuan Aktivasi (Card 1)
-    const targetValidation = validateTargetValue(targetRequirement.type, targetValue);
-    if (!targetValidation.isValid) {
-      showNotification(
-        targetValidation.error || `Mohon lengkapi data tujuan (${targetRequirement.label.replace(' *', '')}).`
-      );
-      return false;
-    }
+    // 1. Zod Validation: Data Tujuan Aktivasi untuk setiap item dalam keranjang
+    for (let idx = 0; idx < items.length; idx++) {
+      const it = items[idx];
+      const req = getProductTargetRequirement(it);
+      const itTarget = resolveItemTarget(it, idx);
 
-    // 2. Zod Validation: Server / Zone ID (jika game membutuhkan Zone ID)
-    if (targetRequirement.requiresZone) {
-      const zoneValidation = validateTargetZone(targetZone);
-      if (!zoneValidation.isValid) {
-        showNotification(zoneValidation.error || 'Mohon lengkapi Server / Zone ID game Anda.');
+      if (req.needsReview) {
+        showNotification(
+          `Produk "${it.name}" sedang dalam peninjauan konfigurasi oleh admin dan belum dapat dipesan saat ini. Silakan hapus produk tersebut dari keranjang.`
+        );
         return false;
+      }
+
+      if (req.type !== 'none') {
+        const targetValidation = validateTargetValue(req.type, itTarget.targetValue, itTarget.choiceMethod);
+        if (!targetValidation.isValid) {
+          const fieldLabel =
+            req.type === 'choice'
+              ? itTarget.choiceMethod === 'gmail'
+                ? 'Email Gmail penerima'
+                : 'Nomor WhatsApp penerima'
+              : req.label.replace(' *', '');
+          showNotification(
+            items.length > 1
+              ? `Item ${idx + 1} (${it.name}): ${targetValidation.error || `Mohon lengkapi ${fieldLabel}.`}`
+              : targetValidation.error || `Mohon lengkapi data tujuan (${fieldLabel}).`
+          );
+          return false;
+        }
+      }
+
+      if (req.requiresZone) {
+        const zoneValidation = validateTargetZone(itTarget.targetZone);
+        if (!zoneValidation.isValid) {
+          showNotification(
+            items.length > 1
+              ? `Item ${idx + 1} (${it.name}): ${zoneValidation.error || 'Mohon lengkapi Server / Zone ID game Anda.'}`
+              : zoneValidation.error || 'Mohon lengkapi Server / Zone ID game Anda.'
+          );
+          return false;
+        }
       }
     }
 
@@ -884,34 +1054,107 @@ function CheckoutPageContent() {
       return;
     }
 
-    const effectiveTarget = targetValue.trim();
-    const effectiveTargetEmail = targetRequirement.type === 'email' ? effectiveTarget : (targetEmail.trim() || undefined);
-    const effectiveTargetPhone = targetRequirement.type === 'phone' ? effectiveTarget : undefined;
     const buyerEmail = customerEmail.trim() || session?.user?.email || legacyUser?.email || 'buyer@asterra.store';
     const buyerPhone = phoneNumber.trim();
 
-    const orderPayload = {
-      target_id: effectiveTarget,
-      target_zone: targetZone.trim() || undefined,
-      target_no: effectiveTarget,
-      target_email: effectiveTargetEmail,
-      target_phone: effectiveTargetPhone,
-      items: items.map((item) => ({
+    // Map each cart item with its authoritative target inputs & fulfillment configuration
+    const orderItemsPayload = items.map((item, idx) => {
+      const req = getProductTargetRequirement(item);
+      const itTarget = resolveItemTarget(item, idx);
+
+      let itFulfillmentMethod = 'direct';
+      let itTargetEmail: string | undefined = undefined;
+      let itTargetPhone: string | undefined = undefined;
+      let itTargetValue = itTarget.targetValue.trim();
+
+      if (req.type === 'choice') {
+        itFulfillmentMethod = itTarget.choiceMethod; // 'whatsapp' | 'gmail'
+        if (itTarget.choiceMethod === 'gmail') {
+          itTargetEmail = itTargetValue;
+        } else {
+          itTargetPhone = itTargetValue;
+        }
+      } else if (req.type === 'email') {
+        itFulfillmentMethod = 'invite';
+        itTargetEmail = itTargetValue;
+      } else if (req.type === 'phone') {
+        itFulfillmentMethod = 'direct';
+        itTargetPhone = itTargetValue;
+      } else if (req.type === 'none') {
+        itFulfillmentMethod = 'voucher';
+        itTargetValue = 'N/A';
+      } else if (req.type === 'game') {
+        itFulfillmentMethod = 'game';
+      }
+
+      const itTargetId = req.type === 'game' ? itTargetValue : (itTargetEmail || itTargetPhone || itTargetValue || undefined);
+      const itTargetZone = req.requiresZone ? itTarget.targetZone.trim() : undefined;
+
+      return {
         product_id: item.id,
+        productId: item.id,
         product_name: item.name,
+        productName: item.name,
         unit_price: item.priceNumeric,
+        unitPrice: item.priceNumeric,
         quantity: item.quantity,
-        target_id: effectiveTarget,
-        target_zone: targetZone.trim() || undefined,
-        target_email: effectiveTargetEmail,
-        target_phone: effectiveTargetPhone,
+        card_id: item.cardId,
+        cardId: item.cardId,
+        target_id: itTargetId,
+        targetId: itTargetId,
+        target_zone: itTargetZone,
+        targetZone: itTargetZone,
+        target_email: itTargetEmail,
+        targetEmail: itTargetEmail,
+        target_phone: itTargetPhone,
+        targetPhone: itTargetPhone,
+        fulfillment_method: itFulfillmentMethod,
+        fulfillmentMethod: itFulfillmentMethod,
+        target_type: req.type,
+        targetType: req.type,
+        target_value: itTargetValue,
+        targetValue: itTargetValue,
         purchased_details: {
-          target_id: effectiveTarget,
-          target_zone: targetZone.trim() || undefined,
-          target_email: effectiveTargetEmail,
-          phone: effectiveTargetPhone || buyerPhone,
+          target_id: itTargetId,
+          targetId: itTargetId,
+          target_zone: itTargetZone,
+          targetZone: itTargetZone,
+          target_email: itTargetEmail,
+          targetEmail: itTargetEmail,
+          target_phone: itTargetPhone,
+          targetPhone: itTargetPhone,
+          fulfillment_method: itFulfillmentMethod,
+          fulfillmentMethod: itFulfillmentMethod,
+          target_type: req.type,
+          targetType: req.type,
+          target_value: itTargetValue,
+          targetValue: itTargetValue,
+          phone: itTargetPhone || buyerPhone,
         },
-      })),
+      };
+    });
+
+    const isSingle = orderItemsPayload.length === 1;
+    const firstItPayload = orderItemsPayload[0] || {};
+
+    const orderPayload = {
+      target_id: isSingle ? firstItPayload.target_id : undefined,
+      targetId: isSingle ? firstItPayload.target_id : undefined,
+      target_zone: isSingle ? firstItPayload.target_zone : undefined,
+      targetZone: isSingle ? firstItPayload.target_zone : undefined,
+      target_no: isSingle ? firstItPayload.target_value : undefined,
+      targetNo: isSingle ? firstItPayload.target_value : undefined,
+      target_email: isSingle ? firstItPayload.target_email : undefined,
+      targetEmail: isSingle ? firstItPayload.target_email : undefined,
+      target_phone: isSingle ? firstItPayload.target_phone : undefined,
+      targetPhone: isSingle ? firstItPayload.target_phone : undefined,
+      fulfillment_method: isSingle ? firstItPayload.fulfillment_method : 'multi',
+      fulfillmentMethod: isSingle ? firstItPayload.fulfillment_method : 'multi',
+      target_type: isSingle ? firstItPayload.target_type : 'multi',
+      targetType: isSingle ? firstItPayload.target_type : 'multi',
+      target_value: isSingle ? firstItPayload.target_value : undefined,
+      targetValue: isSingle ? firstItPayload.target_value : undefined,
+      items: orderItemsPayload,
       is_preorder: isPreorderMode,
       isPreorder: isPreorderMode,
       order_type: isPreorderMode ? 'preorder' : 'standard',
@@ -1112,16 +1355,21 @@ function CheckoutPageContent() {
                     customerEmail={customerEmail}
                     onCustomerEmailChange={setCustomerEmail}
                     targetValue={targetValue}
-                    onTargetValueChange={setTargetValue}
+                    onTargetValueChange={handleSingleTargetValueChange}
                     targetZone={targetZone}
-                    onTargetZoneChange={setTargetZone}
+                    onTargetZoneChange={handleSingleTargetZoneChange}
                     targetEmail={targetEmail}
                     onTargetEmailChange={setTargetEmail}
+                    choiceMethod={choiceMethod}
+                    onChoiceMethodChange={handleSingleChoiceMethodChange}
                     phoneNumber={phoneNumber}
                     onPhoneNumberChange={setPhoneNumber}
                     customerNotes={customerNotes}
                     onCustomerNotesChange={setCustomerNotes}
                     targetRequirement={targetRequirement}
+                    items={items}
+                    itemTargets={itemTargets}
+                    onItemTargetChange={handleItemTargetChange}
                   />
 
                   {/* Payment Method Card */}

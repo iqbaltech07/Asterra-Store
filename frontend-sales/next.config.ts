@@ -23,6 +23,11 @@ const nextConfig: NextConfig = {
 
     return [
       {
+        source: '/dashboard',
+        destination: '/sales',
+        permanent: false,
+      },
+      {
         source: '/products/:path*',
         destination: `${storeUrl}/products/:path*`,
         permanent: false,

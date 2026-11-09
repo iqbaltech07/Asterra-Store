@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export type TargetFieldType = 'phone' | 'game' | 'email' | 'customer_id';
+export type TargetFieldType = 'phone' | 'game' | 'email' | 'customer_id' | 'choice' | 'none' | 'custom';
 
 export interface TargetRequirement {
   type: TargetFieldType;
@@ -8,10 +8,19 @@ export interface TargetRequirement {
   placeholder: string;
   helper: string;
   validLabel?: string;
-  requiresZone: boolean;
-  zoneLabel: string;
-  zonePlaceholder: string;
-  zoneHelper: string;
+  requiresZone?: boolean;
+  zoneLabel?: string;
+  zonePlaceholder?: string;
+  zoneHelper?: string;
+  options?: string[]; // e.g. ['whatsapp', 'gmail']
+  defaultOption?: string; // 'whatsapp' | 'gmail'
+  fields?: {
+    whatsapp?: { label: string; placeholder: string; helper: string };
+    gmail?: { label: string; placeholder: string; helper: string };
+    [key: string]: any;
+  };
+  required?: boolean;
+  needsReview?: boolean;
 }
 
 export interface TargetValidationResult {
@@ -96,39 +105,57 @@ export const customerPhoneSchema = z
 // VALIDATION HELPERS
 // -------------------------------------------------------------
 
-export function validateTargetValue(type: TargetFieldType, value: string): TargetValidationResult {
+export function validateTargetValue(type: TargetFieldType, value: string, choiceMethod?: string): TargetValidationResult {
+  if (type === 'none') {
+    return {
+      isValid: true,
+      isEmpty: false,
+      successMessage: 'Tidak memerlukan input tambahan',
+    };
+  }
+
   const trimmed = (value || '').trim();
   if (!trimmed) {
     return {
       isValid: false,
       isEmpty: true,
-      error: 'Data tujuan aktivasi wajib diisi.',
+      error: 'Data tujuan pemesanan wajib diisi.',
     };
   }
 
   let schema;
   let successMessage = 'Format valid';
 
-  switch (type) {
-    case 'phone':
-      schema = targetPhoneSchema;
-      successMessage = 'Nomor WhatsApp / HP valid';
-      break;
-    case 'email':
+  if (type === 'choice') {
+    if (choiceMethod === 'gmail') {
       schema = targetEmailSchema;
-      successMessage = 'Format email tujuan valid';
-      break;
-    case 'customer_id':
-      schema = targetCustomerIdSchema;
-      successMessage = 'Format nomor pelanggan valid';
-      break;
-    case 'game':
-      schema = targetGameIdSchema;
-      successMessage = 'Format User ID game valid';
-      break;
-    default:
-      schema = z.string().trim().min(2, 'Data minimal 2 karakter');
-      successMessage = 'Format data valid';
+      successMessage = 'Format Gmail penerima valid';
+    } else {
+      schema = targetPhoneSchema;
+      successMessage = 'Nomor WhatsApp penerima valid';
+    }
+  } else {
+    switch (type) {
+      case 'phone':
+        schema = targetPhoneSchema;
+        successMessage = 'Nomor WhatsApp / HP valid';
+        break;
+      case 'email':
+        schema = targetEmailSchema;
+        successMessage = 'Format email tujuan valid';
+        break;
+      case 'customer_id':
+        schema = targetCustomerIdSchema;
+        successMessage = 'Format nomor pelanggan valid';
+        break;
+      case 'game':
+        schema = targetGameIdSchema;
+        successMessage = 'Format User ID game valid';
+        break;
+      default:
+        schema = z.string().trim().min(2, 'Data minimal 2 karakter');
+        successMessage = 'Format data valid';
+    }
   }
 
   const result = schema.safeParse(trimmed);
@@ -237,35 +264,119 @@ export function getProductTargetRequirement(item?: {
   category?: string;
   brand?: string;
   providerCode?: string;
+  inputType?: string;
+  input_type?: string;
+  inputConfig?: any;
+  input_config?: any;
 }): TargetRequirement {
-  const combined = `${item?.name || ''} ${item?.brand || ''} ${item?.category || ''} ${item?.providerCode || ''}`.toLowerCase();
+  // 1. Authoritative check: If product already has explicit input configuration from backend DB
+  const rawCfg = item?.inputConfig || item?.input_config;
+  let parsedCfg: any = null;
+  if (rawCfg) {
+    try {
+      parsedCfg = typeof rawCfg === 'string' ? JSON.parse(rawCfg) : rawCfg;
+    } catch {
+      parsedCfg = null;
+    }
+  }
 
-  // 1. Phone number targets (CapCut, Pulsa, Telkomsel, Tri, XL, E-Wallets, Telegram, etc.)
+  const explicitType = (item?.inputType || item?.input_type || parsedCfg?.type || '').toLowerCase();
+
+  if (parsedCfg && typeof parsedCfg === 'object') {
+    const cfgType = (parsedCfg.type || explicitType || 'email').toLowerCase() as TargetFieldType;
+    return {
+      type: cfgType,
+      label: parsedCfg.label || (cfgType === 'phone' ? 'Nomor WhatsApp / HP Tujuan Aktivasi *' : cfgType === 'choice' ? 'Metode Pengiriman Akun *' : 'Email Akun Tujuan Aktivasi *'),
+      placeholder: parsedCfg.placeholder || (cfgType === 'phone' ? 'contoh: 081234567890' : 'contoh: akun_anda@gmail.com'),
+      helper: parsedCfg.helper || 'Pastikan data tujuan akun sudah benar.',
+      validLabel: parsedCfg.validLabel,
+      requiresZone: Boolean(parsedCfg.requires_zone || parsedCfg.requiresZone),
+      zoneLabel: parsedCfg.zone_label || parsedCfg.zoneLabel || 'Server / Zone ID *',
+      zonePlaceholder: parsedCfg.zone_placeholder || parsedCfg.zonePlaceholder || 'contoh: 2685',
+      zoneHelper: parsedCfg.zone_helper || parsedCfg.zoneHelper || 'Server atau Zone ID akun game Anda.',
+      options: parsedCfg.options || (cfgType === 'choice' ? ['whatsapp', 'gmail'] : undefined),
+      defaultOption: parsedCfg.default_option || parsedCfg.defaultOption || 'whatsapp',
+      fields: parsedCfg.fields,
+      required: parsedCfg.required !== false,
+      needsReview: Boolean(parsedCfg.needs_review || parsedCfg.needsReview),
+    };
+  }
+
+  const combined = `${item?.name || ''} ${item?.brand || ''} ${item?.category || ''} ${item?.providerCode || ''}`.toLowerCase();
+  const brandName = item?.brand && item.brand.toLowerCase() !== 'digital' ? item.brand.trim() : (item?.name?.split(' ')[0] || 'Akun');
+
+  // 2. Choice-based delivery (Store-provided accounts: ChatGPT, Netflix, Spotify, Disney, Prime, WeTV, Vidio, etc.)
+  const choiceKeywords = [
+    'chatgpt', 'openai', 'gpt-4', 'gpt', 'netflix', 'disney', 'prime video',
+    'vidio', 'wetv', 'iqiyi', 'hbogo', 'hbo', 'spotify', 'crunchyroll',
+    'midjourney', 'claude'
+  ];
+  if (explicitType === 'choice' || (!explicitType && choiceKeywords.some((k) => combined.includes(k)))) {
+    return {
+      type: 'choice',
+      label: `Metode Pengiriman Akun ${brandName} *`,
+      placeholder: 'Pilih WhatsApp atau Gmail untuk menerima kredensial akun',
+      helper: `Akun ${brandName} disediakan oleh AsterraStore dan akan dikirimkan ke kontak WhatsApp atau Gmail pilihan Anda.`,
+      options: ['whatsapp', 'gmail'],
+      defaultOption: 'whatsapp',
+      fields: {
+        whatsapp: {
+          label: 'Nomor WhatsApp Penerima Akun *',
+          placeholder: 'contoh: 081234567890',
+          helper: 'Kredensial login akun akan dikirimkan melalui WhatsApp ini.',
+        },
+        gmail: {
+          label: 'Email Gmail Penerima Akun *',
+          placeholder: 'contoh: akun_penerima@gmail.com',
+          helper: 'Kredensial login akun akan dikirimkan melalui email Gmail ini (terpisah dari email login website).',
+        },
+      },
+      required: true,
+    };
+  }
+
+  // 3. Voucher / Digital Code (No input required)
+  const voucherKeywords = [
+    'voucher', 'gift card', 'giftcard', 'redeem code', 'steam wallet', 'playstation', 'google play'
+  ];
+  if (explicitType === 'none' || (!explicitType && voucherKeywords.some((k) => combined.includes(k)))) {
+    return {
+      type: 'none',
+      label: 'Tidak Memerlukan Input Tujuan',
+      placeholder: '',
+      helper: 'Kode voucher / lisensi akan langsung diterbitkan pada rincian pesanan Anda setelah pembayaran terverifikasi.',
+      requiresZone: false,
+      required: false,
+    };
+  }
+
+  // 4. Phone number targets (CapCut, Pulsa, Telkomsel, Tri, XL, E-Wallets, etc.)
   const phoneKeywords = [
     'capcut', 'pulsa', 'telkomsel', 'tsel', 'indosat', 'isat', 'tri', 'three',
     'xl', 'axis', 'smartfren', 'dana', 'gopay', 'ovo', 'shopeepay', 'linkaja',
-    'kuota', 'paket data', 'whatsapp', 'telegram'
+    'kuota', 'paket data'
   ];
-  if (phoneKeywords.some((k) => combined.includes(k))) {
+  if (explicitType === 'phone' || (!explicitType && phoneKeywords.some((k) => combined.includes(k)))) {
     return {
       type: 'phone',
-      label: 'Nomor WhatsApp / HP Tujuan Aktivasi *',
+      label: `Nomor WhatsApp / HP Tujuan Aktivasi ${brandName} *`,
       placeholder: 'Masukan Nomor (contoh: 081234567890)',
-      helper: 'Masukan nomor Anda. Akun akan dikirim melalui Riwayat Pesanan dan jangan lupa untuk membaca ketentuan.',
+      helper: `Aktivasi paket atau pengisian akan diproses ke nomor ${brandName} ini.`,
       validLabel: 'Nomor WhatsApp / HP valid',
       requiresZone: false,
       zoneLabel: '',
       zonePlaceholder: '',
       zoneHelper: '',
+      required: true,
     };
   }
 
-  // 2. Customer ID / Meter targets (PLN, PDAM, TV Kabel)
+  // 5. Customer ID / Meter targets (PLN, PDAM, TV Kabel)
   const customerIdKeywords = [
     'pln', 'token pln', 'pdam', 'bpjs', 'k-vision', 'kvision',
     'nex parabola', 'orange tv', 'smc id'
   ];
-  if (customerIdKeywords.some((k) => combined.includes(k))) {
+  if (explicitType === 'customer_id' || (!explicitType && customerIdKeywords.some((k) => combined.includes(k)))) {
     return {
       type: 'customer_id',
       label: 'Nomor Pelanggan / No. Meter / SMC ID *',
@@ -276,10 +387,11 @@ export function getProductTargetRequirement(item?: {
       zoneLabel: '',
       zonePlaceholder: '',
       zoneHelper: '',
+      required: true,
     };
   }
 
-  // 3. Games with Server / Zone ID
+  // 6. Games with Server / Zone ID
   const zoneGameKeywords = [
     'mobile legends', 'mlbb', 'lifeafter', 'ragnarok', 'genshin', 'honkai', 'zenless'
   ];
@@ -294,10 +406,11 @@ export function getProductTargetRequirement(item?: {
       zoneLabel: 'Server / Zone ID *',
       zonePlaceholder: 'contoh: 2685',
       zoneHelper: 'Server atau Zone ID akun game Anda.',
+      required: true,
     };
   }
 
-  // 4. Games without Server / Zone ID
+  // 7. Games without Server / Zone ID
   const noZoneGameKeywords = [
     'free fire', 'ff', 'valorant', 'pubg', 'point blank', 'codm',
     'call of duty', 'honor of kings', 'hok', 'arena of valor', 'aov'
@@ -313,19 +426,42 @@ export function getProductTargetRequirement(item?: {
       zoneLabel: '',
       zonePlaceholder: '',
       zoneHelper: '',
+      required: true,
     };
   }
 
-  // 5. Default: Email-based activation (YouTube, Spotify, Canva, Netflix, etc.)
+  // 8. Explicit email-based activation (YouTube Family, Canva, Google One, Gemini, Duolingo, etc.)
+  const emailInviteKeywords = [
+    'youtube', 'family', 'invite', 'undangan', 'canva', 'google one',
+    'gemini', 'duolingo', 'notion', 'office 365', 'microsoft 365', 'apple music'
+  ];
+  if (explicitType === 'email' || emailInviteKeywords.some((k) => combined.includes(k))) {
+    return {
+      type: 'email',
+      label: `Email Akun ${brandName} Tujuan Aktivasi *`,
+      placeholder: 'contoh: akun_anda@gmail.com',
+      helper: `Undangan atau aktivasi premium ${brandName} akan dikaitkan ke email akun ini (terpisah dari email login akun website).`,
+      validLabel: 'Format email akun valid',
+      requiresZone: false,
+      zoneLabel: '',
+      zonePlaceholder: '',
+      zoneHelper: '',
+      required: true,
+    };
+  }
+
+  // 9. Ambiguous fallback: NOT automatically assumed as email. Flagged for admin review and blocked from checkout.
   return {
-    type: 'email',
-    label: 'Email Akun Tujuan Aktivasi *',
-    placeholder: 'contoh: akun_anda@gmail.com',
-    helper: 'Undangan atau akses lisensi premium akan dikaitkan ke email ini.',
-    validLabel: 'Format email akun valid',
+    type: 'custom',
+    label: `Produk Dalam Peninjauan Admin *`,
+    placeholder: 'Menunggu konfigurasi input oleh admin',
+    helper: 'Konfigurasi jenis fulfillment produk ini sedang dalam peninjauan admin dan belum dapat dipesan saat ini.',
+    validLabel: '',
     requiresZone: false,
     zoneLabel: '',
     zonePlaceholder: '',
     zoneHelper: '',
+    required: true,
+    needsReview: true,
   };
 }

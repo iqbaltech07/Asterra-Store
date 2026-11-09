@@ -5,6 +5,8 @@ description: Automated PRD, Architecture Blueprint, Kanban Synchronization, and 
 
 # 🚀 Moryn Agent Skill
 
+[[INDEX|file:///C:/Marchelino%20Kurniawan/linox/INDEX.md]] | [[02 Standards/engineering_directives|file:///C:/Marchelino%20Kurniawan/linox/02%20Standards/engineering_directives.md]]
+
 Moryn is an AI PRD Generator & System Architecture Tracking Platform. This skill guides AI Agents to read product blueprints, execute Kanban tasks step-by-step, and automatically sync task status with the Moryn backend without manual user intervention.
 
 ## 📌 Single Source of Truth (SSOT) Priority Rules

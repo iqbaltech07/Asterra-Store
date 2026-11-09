@@ -935,3 +935,80 @@ async def cron_dummy_order(request: Request):
         "source": "qstash-cron",
         "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
     }
+
+
+@router.post("/internal/dummy-orders", tags=["Internal / Diagnostics"])
+@router.post("/admin/dummy-orders", tags=["Admin Orders"])
+async def create_dummy_order_endpoint(request: Request):
+    """
+    Dedicated testing/diagnostic endpoint to create controllable dummy orders for staging verification.
+    Strictly forbidden in production.
+    """
+    if getattr(settings, "ENVIRONMENT", "").lower() == "production":
+        raise HTTPException(status_code=403, detail="Dummy orders are strictly forbidden in production.")
+
+    from app.services.dummy_order_service import DummyOrderService
+    payload = {}
+    try:
+        payload = await request.json()
+    except Exception:
+        pass
+
+    product_id = payload.get("product_id") or payload.get("productId")
+    card_id = payload.get("card_id") or payload.get("cardId")
+    quantity = int(payload.get("quantity") or 1)
+    status = str(payload.get("status") or "completed").strip().lower()
+
+    try:
+        order = DummyOrderService.create_test_dummy_order(
+            product_id=product_id,
+            card_id=card_id,
+            quantity=quantity,
+            status=status,
+        )
+        return {
+            "success": True,
+            "message": f"Dummy order {order.get('id')} berhasil dibuat dengan status '{status}'.",
+            "order": order,
+        }
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.api_route("/internal/dummy-orders/{order_id}/status", methods=["PATCH", "POST"], tags=["Internal / Diagnostics"])
+async def update_dummy_order_status_endpoint(order_id: str, request: Request):
+    """
+    Updates status of a dummy order (e.g. from 'processing' to 'completed') for staging verification.
+    Strictly forbidden in production. Strictly allowed only for is_dummy == True.
+    """
+    if getattr(settings, "ENVIRONMENT", "").lower() == "production":
+        raise HTTPException(status_code=403, detail="Dummy orders are strictly forbidden in production.")
+
+    clean_id = order_id.strip().upper()
+    payload = await request.json()
+    new_status = str(payload.get("status") or "completed").strip().lower()
+
+    from app.core.database import SessionLocal
+    from app.models.order import Order
+    db = SessionLocal()
+    try:
+        order_record = db.query(Order).filter_by(id=clean_id).first()
+        if not order_record:
+            raise HTTPException(status_code=404, detail="Pesanan tidak ditemukan.")
+        if not order_record.is_dummy:
+            raise HTTPException(status_code=403, detail="Endpoint ini hanya dapat memodifikasi dummy order.")
+    finally:
+        db.close()
+
+    try:
+        from app.services.order_service import OrderService
+        updated = OrderService.update_status(clean_id, new_status, notes="Updated via dummy test status endpoint")
+        return {
+            "success": True,
+            "message": f"Status dummy order {clean_id} berhasil diubah menjadi '{new_status}'.",
+            "order": updated,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
