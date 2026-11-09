@@ -51,7 +51,6 @@ const INITIAL_CALC_PRODUCTS = [
     price: 57000,
     cost: 13400, // Profit = 43.600 -> 30% Komisi = Rp 13.080
     commissionPerUnit: 13080,
-    resellerSuggestedPrice: 75000,
     qty: 10,
     stockPercent: 92,
     warranty: 'Garansi 1 Bulan',
@@ -64,7 +63,6 @@ const INITIAL_CALC_PRODUCTS = [
     price: 45000,
     cost: 22500, // Profit = 22.500 -> 30% Komisi = Rp 6.750
     commissionPerUnit: 6750,
-    resellerSuggestedPrice: 60000,
     qty: 15,
     stockPercent: 88,
     warranty: 'Garansi Full 30 Hari',
@@ -77,7 +75,6 @@ const INITIAL_CALC_PRODUCTS = [
     price: 35000,
     cost: 23000, // Profit = 12.000 -> 30% Komisi = Rp 3.600
     commissionPerUnit: 3600,
-    resellerSuggestedPrice: 45000,
     qty: 10,
     stockPercent: 95,
     warranty: 'Garansi Full 30 Hari',
@@ -94,7 +91,6 @@ const ALL_CATALOG_PRODUCTS = [
     price: 25000,
     cost: 11000,
     commissionPerUnit: 4200,
-    resellerSuggestedPrice: 39000,
     qty: 5,
     stockPercent: 96,
     warranty: 'Garansi 12 Bulan',
@@ -107,7 +103,6 @@ const ALL_CATALOG_PRODUCTS = [
     price: 28000,
     cost: 15000,
     commissionPerUnit: 3900,
-    resellerSuggestedPrice: 38000,
     qty: 5,
     stockPercent: 84,
     warranty: 'Garansi Full 30 Hari',
@@ -120,7 +115,6 @@ const ALL_CATALOG_PRODUCTS = [
     price: 32000,
     cost: 15000,
     commissionPerUnit: 5100,
-    resellerSuggestedPrice: 45000,
     qty: 5,
     stockPercent: 90,
     warranty: 'Garansi Full 30 Hari',
@@ -133,7 +127,6 @@ const ALL_CATALOG_PRODUCTS = [
     price: 22000,
     cost: 10000,
     commissionPerUnit: 3600,
-    resellerSuggestedPrice: 32000,
     qty: 8,
     stockPercent: 94,
     warranty: 'Garansi Full 30 Hari',
@@ -146,7 +139,6 @@ const ALL_CATALOG_PRODUCTS = [
     price: 65000,
     cost: 35000,
     commissionPerUnit: 9000,
-    resellerSuggestedPrice: 89000,
     qty: 4,
     stockPercent: 80,
     warranty: 'Garansi 1 Tahun',
@@ -408,22 +400,11 @@ export function SalesLandingPage() {
   // ==========================================================================
   // FINANCIAL CALCULATOR STATE
   // ==========================================================================
-  const [calcMode, setCalcMode] = useState<'sales' | 'reseller'>('sales');
+  // KALKULATOR FINANSIAL & POTENSI CUAN ASTERRASTORE (SELLER & AFFILIATE)
+  // ==========================================================================
   const [activeScenario, setActiveScenario] = useState('1-mitra');
   const [simulatedItems, setSimulatedItems] = useState(INITIAL_CALC_PRODUCTS);
   const [selectedAddProductId, setSelectedAddProductId] = useState('canva-pro-1y');
-
-  // Reseller custom markup price state
-  const [resellerCustomPrices, setResellerCustomPrices] = useState<Record<string, number>>({
-    'google-ai-18m': 75000,
-    'chatgpt-plus-1m': 60000,
-    'netflix-4k-1m': 45000,
-    'canva-pro-1y': 39000,
-    'spotify-prem-1m': 38000,
-    'capcut-pro-1m': 45000,
-    'youtube-prem-1m': 32000,
-    'ms-365-1y': 89000
-  });
 
   const handleSelectScenario = (scenario: typeof COMMISSION_SCENARIOS[0]) => {
     setActiveScenario(scenario.id);
@@ -437,7 +418,6 @@ export function SalesLandingPage() {
 
   const handleResetCalculator = () => {
     setActiveScenario('1-mitra');
-    setCalcMode('sales');
     setSimulatedItems(INITIAL_CALC_PRODUCTS.map((i) => ({ ...i })));
     showToast('Kalkulator direset ke baseline awal (35 unit/bulan • Rp 268.050).');
   };
@@ -474,23 +454,13 @@ export function SalesLandingPage() {
   const calcSummary = useMemo(() => {
     let totalUnits = 0;
     let totalPersonalCommission = 0;
-    let totalResellerMarkupProfit = 0;
     let totalRevenue = 0;
-    let totalModal = 0;
+    const totalModal = 0; // Seller/Affiliate di AsterraStore 100% tanpa modal kulakan
 
     simulatedItems.forEach((item) => {
       totalUnits += item.qty;
       totalPersonalCommission += item.commissionPerUnit * item.qty;
-      const customPrice = resellerCustomPrices[item.id] || item.resellerSuggestedPrice;
-      const resellerMargin = Math.max(0, customPrice - item.price) + item.commissionPerUnit;
-      totalResellerMarkupProfit += resellerMargin * item.qty;
-
-      if (calcMode === 'sales') {
-        totalRevenue += item.price * item.qty;
-      } else {
-        totalRevenue += customPrice * item.qty;
-        totalModal += item.price * item.qty;
-      }
+      totalRevenue += item.price * item.qty;
     });
 
     const currentScenarioObj =
@@ -499,14 +469,12 @@ export function SalesLandingPage() {
     return {
       totalUnits,
       totalPersonalCommission,
-      totalResellerMarkupProfit,
       totalRevenue,
       totalModal,
-      displayMonthlyTotal:
-        calcMode === 'sales' ? totalPersonalCommission : totalResellerMarkupProfit,
+      displayMonthlyTotal: totalPersonalCommission,
       scenarioObj: currentScenarioObj
     };
-  }, [simulatedItems, activeScenario, calcMode, resellerCustomPrices]);
+  }, [simulatedItems, activeScenario]);
 
   // Modals & Interactive States
   const [promoModalProduct, setPromoModalProduct] = useState<typeof ALL_CATALOG_PRODUCTS[0] | null>(null);
@@ -589,31 +557,11 @@ export function SalesLandingPage() {
           </p>
         </div>
 
-        {/* Mode Switcher Tabs + Reset Button */}
+        {/* System Pill + Reset Button */}
         <div className="flex flex-wrap items-center gap-2">
-          <div className="inline-flex p-1 rounded-xl bg-white border border-orange-200/80 shadow-xs">
-            <button
-              type="button"
-              onClick={() => setCalcMode('sales')}
-              className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold transition-all ${
-                calcMode === 'sales'
-                  ? 'bg-[#EA580C] text-white shadow-xs'
-                  : 'text-slate-600 hover:text-[#EA580C]'
-              }`}
-            >
-              <span>Komisi Sales (30%)</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setCalcMode('reseller')}
-              className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold transition-all ${
-                calcMode === 'reseller'
-                  ? 'bg-[#2563EB] text-white shadow-xs'
-                  : 'text-slate-600 hover:text-[#2563EB]'
-              }`}
-            >
-              <span>Markup Reseller</span>
-            </button>
+          <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-orange-200/90 text-[#EA580C] text-xs font-bold shadow-2xs">
+            <span className="w-2 h-2 rounded-full bg-[#EA580C] animate-pulse" />
+            <span>Komisi Seller & Affiliate (30%)</span>
           </div>
 
           <button
@@ -682,19 +630,15 @@ export function SalesLandingPage() {
           <div className="bg-white rounded-2xl border border-stone-200/90 shadow-2xs overflow-hidden">
             {/* Desktop Table Header */}
             <div className="hidden sm:grid grid-cols-12 gap-2 px-4 py-3 bg-stone-50/90 border-b border-stone-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-              <div className="col-span-4">Produk</div>
+              <div className="col-span-5">Produk</div>
               <div className="col-span-2 text-right">Modal</div>
-              <div className="col-span-3 text-right">Harga Jual</div>
+              <div className="col-span-2 text-right">Harga Jual</div>
               <div className="col-span-3 text-right">Jumlah Terjual</div>
             </div>
 
             {/* Input Rows */}
             <div className="divide-y divide-stone-100">
               {simulatedItems.map((item) => {
-                const customResellerPrice =
-                  resellerCustomPrices[item.id] || item.resellerSuggestedPrice;
-                const modalCost = calcMode === 'sales' ? 0 : item.price;
-
                 return (
                   <div
                     key={item.id}
@@ -702,7 +646,7 @@ export function SalesLandingPage() {
                   >
                     <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
                       {/* Produk */}
-                      <div className="sm:col-span-4 flex items-center justify-between sm:justify-start gap-2">
+                      <div className="sm:col-span-5 flex items-center justify-between sm:justify-start gap-2">
                         <div className="min-w-0">
                           <div className="text-xs font-bold text-slate-900 truncate">
                             {item.name.split('[')[0]}
@@ -724,38 +668,17 @@ export function SalesLandingPage() {
                       {/* Modal */}
                       <div className="sm:col-span-2 flex sm:block items-center justify-between text-right">
                         <span className="sm:hidden text-xs text-slate-500 font-medium">Modal:</span>
-                        <div className="text-xs font-bold font-mono">
-                          {modalCost === 0 ? (
-                            <span className="text-emerald-700">Rp 0</span>
-                          ) : (
-                            <span className="text-slate-800">{formatIDR(modalCost)}</span>
-                          )}
+                        <div className="text-xs font-bold font-mono text-emerald-700">
+                          Rp 0
                         </div>
                       </div>
 
                       {/* Harga Jual */}
-                      <div className="sm:col-span-3 flex sm:block items-center justify-between text-right">
+                      <div className="sm:col-span-2 flex sm:block items-center justify-between text-right">
                         <span className="sm:hidden text-xs text-slate-500 font-medium">Harga Jual:</span>
-                        {calcMode === 'reseller' ? (
-                          <div className="inline-flex items-center gap-1 justify-end">
-                            <span className="text-[11px] text-slate-400 font-mono">Rp</span>
-                            <input
-                              type="number"
-                              value={customResellerPrice}
-                              onChange={(e) =>
-                                setResellerCustomPrices((prev) => ({
-                                  ...prev,
-                                  [item.id]: Number(e.target.value) || item.price
-                                }))
-                              }
-                              className="w-24 px-2 py-1 rounded-lg border border-stone-200 text-xs font-bold text-right font-mono text-slate-900 focus:outline-none focus:border-[#EA580C]"
-                            />
-                          </div>
-                        ) : (
-                          <div className="text-xs font-bold text-slate-900 font-mono">
-                            {formatIDR(item.price)}
-                          </div>
-                        )}
+                        <div className="text-xs font-bold text-slate-900 font-mono">
+                          {formatIDR(item.price)}
+                        </div>
                       </div>
 
                       {/* Jumlah Terjual */}
@@ -819,14 +742,14 @@ export function SalesLandingPage() {
                   Estimasi Keuntungan
                 </span>
                 <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-[#059669] text-[11px] font-black border border-emerald-200">
-                  {calcMode === 'sales' ? 'Komisi 30%' : 'Margin + Komisi'}
+                  Komisi Bersih 30%
                 </span>
               </div>
               <div className="text-3xl sm:text-4xl lg:text-[42px] font-black text-[#047857] font-mono tracking-tight leading-none mt-2">
                 {formatIDR(calcSummary.displayMonthlyTotal)}
               </div>
               <div className="text-xs text-slate-500 mt-2.5 font-medium flex items-center justify-between">
-                <span>Potensi laba bersih per bulan</span>
+                <span>Potensi komisi seller & affiliate per bulan</span>
                 <span className="text-[#059669] font-bold">Langsung cair</span>
               </div>
             </div>
@@ -837,14 +760,10 @@ export function SalesLandingPage() {
               <div className="p-4 rounded-2xl bg-white border border-stone-200 text-left shadow-2xs">
                 <span className="text-xs font-semibold text-slate-500">Total Modal</span>
                 <div className="text-base sm:text-lg font-extrabold text-slate-900 font-mono mt-1">
-                  {calcSummary.totalModal === 0 ? (
-                    <span className="text-emerald-700">Rp 0</span>
-                  ) : (
-                    formatIDR(calcSummary.totalModal)
-                  )}
+                  <span className="text-emerald-700">Rp 0</span>
                 </div>
                 <span className="text-[11px] text-slate-400 mt-1 block">
-                  {calcMode === 'sales' ? 'Tanpa modal kulakan' : 'Modal beli produk'}
+                  100% Tanpa modal kulakan
                 </span>
               </div>
 
