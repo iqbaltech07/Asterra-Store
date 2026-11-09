@@ -761,6 +761,14 @@ class VipService:
             )
 
             cache.invalidate("orders")
+            if order.status in ["completed", "paid", "settlement"]:
+                cache.invalidate("homepage_sections", "catalog")
+                try:
+                    RealtimeBroadcaster.broadcast("cards:updated", {"reason": "vip_order_completed", "order_id": order.id}, target_role="all")
+                    RealtimeBroadcaster.broadcast("homepage:sections_updated", {"reason": "vip_order_completed", "order_id": order.id}, target_role="all")
+                    RealtimeBroadcaster.broadcast("catalog:updated", {"reason": "vip_order_completed", "order_id": order.id}, target_role="all")
+                except Exception:
+                    pass
             from app.services.order_service import OrderService
             OrderService.load_orders(force_reload=True)
 
@@ -948,6 +956,14 @@ class VipService:
             )
 
             cache.invalidate("orders")
+            if order.status in ["completed", "paid", "settlement"]:
+                cache.invalidate("homepage_sections", "catalog")
+                try:
+                    RealtimeBroadcaster.broadcast("cards:updated", {"reason": "vip_order_completed", "order_id": order.id}, target_role="all")
+                    RealtimeBroadcaster.broadcast("homepage:sections_updated", {"reason": "vip_order_completed", "order_id": order.id}, target_role="all")
+                    RealtimeBroadcaster.broadcast("catalog:updated", {"reason": "vip_order_completed", "order_id": order.id}, target_role="all")
+                except Exception:
+                    pass
             from app.services.order_service import OrderService
             OrderService.load_orders(force_reload=True)
 

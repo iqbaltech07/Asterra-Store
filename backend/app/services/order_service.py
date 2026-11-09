@@ -685,7 +685,7 @@ class OrderService:
                     customer_name=customer_name,
                     customer_notes=incoming_notes,
                     is_preorder=is_preorder,
-                    is_dummy=False,
+                    is_dummy=bool(payload.get("is_dummy") or payload.get("isDummy") or False),
                     fulfillment_mode=order_fulfillment_mode,
                     provider=initial_provider,
                     email_delivery_status="pending",
@@ -979,7 +979,7 @@ class OrderService:
                 if order_obj:
                     # Strict validation: In manual mode, completing order requires customer credentials
                     is_manual = (order_obj.fulfillment_mode or "manual") == "manual"
-                    if new_status in ["completed", "selesai"] and is_manual:
+                    if new_status in ["completed", "selesai"] and is_manual and not order_obj.is_dummy:
                         if not order_obj.fulfillment_credentials and not order_obj.provider_note:
                             raise ValueError(
                                 "Mode manual mewajibkan pengisian kredensial akun pelanggan sebelum pesanan diselesaikan. Silakan gunakan tombol Selesaikan Pesanan."
@@ -1095,6 +1095,18 @@ class OrderService:
             except Exception as email_err:
                 print(f"[OrderService] Customer email notification dispatch note: {email_err}")
 
+        # 6. Invalidate caches so homepage, catalog, and orders reflect latest sold counts
+        try:
+            from app.core.cache import cache
+            cache.invalidate("orders")
+            if (
+                new_status in ["completed", "paid", "settlement", "done", "selesai"]
+                or prev_st in ["completed", "paid", "settlement", "done", "selesai"]
+            ):
+                cache.invalidate("homepage_sections", "catalog")
+        except Exception as c_err:
+            print(f"[OrderService] Cache invalidation note: {c_err}")
+
         # Broadcast real-time status update to connected SSE subscribers
         try:
             from app.services.realtime_broadcaster import RealtimeBroadcaster
@@ -1147,6 +1159,38 @@ class OrderService:
                 },
                 target_role="all",
             )
+            # Notify storefront clients to sync product cards & homepage sections
+            if (
+                new_status in ["completed", "paid", "settlement", "done", "selesai"]
+                or prev_st in ["completed", "paid", "settlement", "done", "selesai"]
+            ):
+                RealtimeBroadcaster.broadcast(
+                    event="cards:updated",
+                    data={
+                        "order_id": clean_id,
+                        "status": new_status,
+                        "previous_status": prev_st,
+                    },
+                    target_role="all",
+                )
+                RealtimeBroadcaster.broadcast(
+                    event="homepage:sections_updated",
+                    data={
+                        "order_id": clean_id,
+                        "status": new_status,
+                        "previous_status": prev_st,
+                    },
+                    target_role="all",
+                )
+                RealtimeBroadcaster.broadcast(
+                    event="catalog:updated",
+                    data={
+                        "order_id": clean_id,
+                        "status": new_status,
+                        "previous_status": prev_st,
+                    },
+                    target_role="all",
+                )
         except Exception as b_err:
             print(f"[OrderService] Realtime broadcast error on update_status: {b_err}")
 

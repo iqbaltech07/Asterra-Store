@@ -486,9 +486,9 @@ class OrderProcessingService:
             db.refresh(order)
             final_order_dict = order.to_dict()
 
-            # Invalidate order cache
+            # Invalidate caches so homepage and catalog reflect fresh sold counts
             from app.core.cache import cache
-            cache.invalidate("orders")
+            cache.invalidate("orders", "homepage_sections", "catalog")
             from app.services.order_service import OrderService
             OrderService.load_orders(force_reload=True)
 
@@ -504,6 +504,44 @@ class OrderProcessingService:
                     "updated_at": now.isoformat() + "Z",
                 },
                 target_role="admin",
+            )
+            RealtimeBroadcaster.broadcast(
+                event="order:completed",
+                data={
+                    "order_id": clean_id,
+                    "id": clean_id,
+                    "status": "completed",
+                    "previous_status": prev_status,
+                    "updated_at": now.isoformat() + "Z",
+                },
+                target_role="all",
+            )
+            RealtimeBroadcaster.broadcast(
+                event="cards:updated",
+                data={
+                    "reason": "manual_order_completed",
+                    "order_id": clean_id,
+                    "status": "completed",
+                },
+                target_role="all",
+            )
+            RealtimeBroadcaster.broadcast(
+                event="homepage:sections_updated",
+                data={
+                    "reason": "manual_order_completed",
+                    "order_id": clean_id,
+                    "status": "completed",
+                },
+                target_role="all",
+            )
+            RealtimeBroadcaster.broadcast(
+                event="catalog:updated",
+                data={
+                    "reason": "manual_order_completed",
+                    "order_id": clean_id,
+                    "status": "completed",
+                },
+                target_role="all",
             )
 
             return {

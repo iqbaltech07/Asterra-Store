@@ -48,26 +48,30 @@ export function useHomepageSections() {
     queryFn: fetchHomepageSections,
     staleTime: 15 * 1000, // 15 seconds fresh window
     gcTime: 30 * 60 * 1000,
+    refetchInterval: 15 * 1000, // Resilient background polling
     placeholderData: (previousData) => previousData,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
   });
 
-  // Listen to Server-Sent Events (SSE) for instant auto-sync when admin modifies order
+  // Listen to Server-Sent Events (SSE) for instant auto-sync when orders or cards update
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
     let eventSource: EventSource | null = null;
     try {
       eventSource = new EventSource('/api/v1/realtime/events?client_role=user');
-      eventSource.addEventListener('homepage:sections_updated', () => {
+      const handleSync = () => {
         queryClient.invalidateQueries({ queryKey: ['homepage-sections'] });
         queryClient.invalidateQueries({ queryKey: ['products'] });
-      });
-      eventSource.addEventListener('catalog:updated', () => {
-        queryClient.invalidateQueries({ queryKey: ['homepage-sections'] });
-        queryClient.invalidateQueries({ queryKey: ['products'] });
-      });
+        queryClient.invalidateQueries({ queryKey: ['product-cards'] });
+      };
+
+      eventSource.addEventListener('homepage:sections_updated', handleSync);
+      eventSource.addEventListener('cards:updated', handleSync);
+      eventSource.addEventListener('catalog:updated', handleSync);
+      eventSource.addEventListener('order:completed', handleSync);
+      eventSource.addEventListener('order:status_changed', handleSync);
       eventSource.addEventListener('campaign:updated', () => {
         queryClient.invalidateQueries({ queryKey: ['homepage-sections'] });
         queryClient.invalidateQueries({ queryKey: ['active-campaigns'] });

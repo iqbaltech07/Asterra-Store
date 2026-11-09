@@ -44,7 +44,15 @@ class CardService:
                 rows = db.execute(card_query).fetchall()
                 for r in rows:
                     if r[0]:
-                        card_sales[str(r[0])] = int(r[1])
+                        raw_cid = str(r[0]).strip()
+                        units = int(r[1])
+                        aliases = {raw_cid}
+                        if raw_cid.startswith("card-"):
+                            aliases.add(raw_cid[5:])
+                        else:
+                            aliases.add(f"card-{raw_cid}")
+                        for a in aliases:
+                            card_sales[a] = card_sales.get(a, 0) + units
 
                 # 2. Sales aggregated by Catalog ID (completed orders only)
                 cat_query = text("""
@@ -79,26 +87,44 @@ class CardService:
             try:
                 query = text("""
                     SELECT 
-                        COALESCE(NULLIF(oi.card_id, ''), NULLIF(p.card_id, '')) AS card_id,
+                        COALESCE(
+                            NULLIF(oi.card_id, ''),
+                            NULLIF(p.card_id, ''),
+                            pc_by_name.id
+                        ) AS card_id,
                         COALESCE(SUM(CASE WHEN o.is_dummy = true THEN oi.quantity ELSE 0 END), 0) AS dummy_units,
                         COALESCE(SUM(CASE WHEN o.is_dummy IS NOT true THEN oi.quantity ELSE 0 END), 0) AS real_units,
                         COALESCE(SUM(oi.quantity), 0) AS total_units
                     FROM order_items oi
                     JOIN orders o ON oi.order_id = o.id
                     LEFT JOIN products p ON oi.product_id = p.id
+                    LEFT JOIN product_cards pc_by_name ON (
+                        LOWER(pc_by_name.name) = LOWER(oi.product_name)
+                        OR LOWER(pc_by_name.slug) = LOWER(REPLACE(oi.product_name, ' ', '-'))
+                    )
                     WHERE LOWER(o.status) IN ('completed', 'paid', 'settlement', 'done', 'selesai')
-                      AND COALESCE(NULLIF(oi.card_id, ''), NULLIF(p.card_id, '')) IS NOT NULL
-                    GROUP BY COALESCE(NULLIF(oi.card_id, ''), NULLIF(p.card_id, ''));
+                      AND COALESCE(NULLIF(oi.card_id, ''), NULLIF(p.card_id, ''), pc_by_name.id) IS NOT NULL
+                    GROUP BY COALESCE(NULLIF(oi.card_id, ''), NULLIF(p.card_id, ''), pc_by_name.id);
                 """)
                 rows = db.execute(query).fetchall()
                 for r in rows:
                     if r[0]:
-                        cid = str(r[0])
-                        sales[cid] = {
-                            "dummy": int(r[1]),
-                            "real": int(r[2]),
-                            "total": int(r[3]),
-                        }
+                        raw_cid = str(r[0]).strip()
+                        dummy = int(r[1])
+                        real = int(r[2])
+                        total = int(r[3])
+                        aliases = {raw_cid}
+                        if raw_cid.startswith("card-"):
+                            aliases.add(raw_cid[5:])
+                        else:
+                            aliases.add(f"card-{raw_cid}")
+                        for a in aliases:
+                            if a not in sales:
+                                sales[a] = {"dummy": dummy, "real": real, "total": total}
+                            else:
+                                sales[a]["dummy"] += dummy
+                                sales[a]["real"] += real
+                                sales[a]["total"] += total
             finally:
                 db.close()
         except Exception as e:
@@ -129,7 +155,7 @@ class CardService:
             res = []
             for c in updated_cards:
                 db.refresh(c)
-                sb = sales.get(c.id, {"dummy": 0, "real": 0, "total": 0})
+                sb = sales.get(c.id) or sales.get(c.slug) or {"dummy": 0, "real": 0, "total": 0}
                 res.append(c.to_dict(include_catalogs=True, sold_count=sb["total"], dummy_sold=sb["dummy"], real_sold=sb["real"]))
             cache.invalidate("catalog", "homepage_sections")
             return res
@@ -165,7 +191,7 @@ class CardService:
 
             results = []
             for c in cards:
-                sb = sold_breakdown.get(c.id, {"dummy": 0, "real": 0, "total": 0})
+                sb = sold_breakdown.get(c.id) or sold_breakdown.get(c.slug) or {"dummy": 0, "real": 0, "total": 0}
                 cd = c.to_dict(
                     include_catalogs=include_catalogs,
                     sold_count=sb["total"],
@@ -218,7 +244,7 @@ class CardService:
             )
             if not card:
                 return None
-            sb = sold_breakdown.get(card.id, {"dummy": 0, "real": 0, "total": 0})
+            sb = sold_breakdown.get(card.id) or sold_breakdown.get(card.slug) or {"dummy": 0, "real": 0, "total": 0}
             return card.to_dict(
                 include_catalogs=include_catalogs,
                 sold_count=sb["total"],

@@ -1,6 +1,7 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 
 export interface ProductCardItem {
   id: string;
@@ -41,11 +42,41 @@ export async function fetchProductCards(): Promise<ProductCardsResponse> {
 }
 
 export function useProductCards() {
+  const queryClient = useQueryClient();
+
+  // Listen to Server-Sent Events (SSE) for instant sold count and card updates
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    let eventSource: EventSource | null = null;
+    try {
+      eventSource = new EventSource('/api/v1/realtime/events?client_role=user');
+      const handleSync = () => {
+        queryClient.invalidateQueries({ queryKey: ['product-cards'] });
+      };
+
+      eventSource.addEventListener('cards:updated', handleSync);
+      eventSource.addEventListener('homepage:sections_updated', handleSync);
+      eventSource.addEventListener('catalog:updated', handleSync);
+      eventSource.addEventListener('order:completed', handleSync);
+      eventSource.addEventListener('order:status_changed', handleSync);
+    } catch (err) {
+      // Graceful fallback to periodic polling if SSE is blocked by proxy
+    }
+
+    return () => {
+      if (eventSource) {
+        eventSource.close();
+      }
+    };
+  }, [queryClient]);
+
   return useQuery<ProductCardsResponse>({
     queryKey: ['product-cards'],
     queryFn: fetchProductCards,
-    staleTime: 30 * 1000,
+    staleTime: 15 * 1000,
     gcTime: 30 * 60 * 1000,
+    refetchInterval: 15 * 1000, // Resilient background polling
     placeholderData: (previousData) => previousData,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
