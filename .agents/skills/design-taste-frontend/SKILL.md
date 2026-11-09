@@ -15,6 +15,8 @@ description: >-
 
 # tasteskill v2
 
+[[INDEX|file:///C:/Marchelino%20Kurniawan/linox/INDEX.md]] | [[02 Standards/anti_slop_rules|file:///C:/Marchelino%20Kurniawan/linox/02%20Standards/anti_slop_rules.md]]
+
 A page built by a model usually looks like the average of every page the model has seen: a centred
 headline over three lines, a little label above it, a row of icon cards, a soft gradient, a few thin
 rules and a monospace caption. Nothing in it is wrong and nothing in it was decided.

@@ -22,7 +22,7 @@ export interface ProductVisualTheme {
 // ---------------------------------------------------------------------------
 
 /**
- * Netflix: Cinematic film strip ribbon, film perforations, widescreen cinema crop frame
+ * Netflix: Iconic Ribbon "N", curving film strip ribbon with sprocket perforations, cinematic widescreen frame
  */
 export const NetflixPattern: React.FC<{ accentColor: string }> = ({ accentColor }) => (
   <svg
@@ -32,64 +32,80 @@ export const NetflixPattern: React.FC<{ accentColor: string }> = ({ accentColor 
     className="absolute inset-0 w-full h-full pointer-events-none select-none"
     style={{ color: accentColor }}
   >
-    {/* Cinematic Widescreen Frame (16:9) in upper right */}
+    {/* Cinematic Widescreen Frame in upper right */}
     <rect
-      x="175"
-      y="20"
-      width="92"
-      height="52"
-      rx="4"
+      x="172"
+      y="18"
+      width="98"
+      height="56"
+      rx="6"
       stroke="currentColor"
-      strokeWidth="1.4"
-      strokeDasharray="4 3"
-      opacity="0.65"
+      strokeWidth="1.6"
+      strokeDasharray="5 3"
+      opacity="0.6"
     />
-    {/* Frame view tick marks */}
-    <path d="M 170 30 L 175 30 M 170 60 L 175 60" stroke="currentColor" strokeWidth="1.2" />
-    <path d="M 272 30 L 267 30 M 272 60 L 267 60" stroke="currentColor" strokeWidth="1.2" />
+    <path d="M 166 28 L 172 28 M 166 64 L 172 64" stroke="currentColor" strokeWidth="1.4" opacity="0.7" />
+    <path d="M 276 28 L 270 28 M 276 64 L 270 64" stroke="currentColor" strokeWidth="1.4" opacity="0.7" />
 
-    {/* Curving Film Strip Ribbon swooping across right and bottom */}
+    {/* Iconic Netflix Ribbon 'N' in upper-right */}
+    <g opacity="0.95">
+      {/* Left Vertical Pillar */}
+      <rect x="208" y="24" width="10" height="44" rx="1.5" fill="currentColor" fillOpacity="0.22" stroke="currentColor" strokeWidth="1.2" />
+      {/* Right Vertical Pillar */}
+      <rect x="246" y="24" width="10" height="44" rx="1.5" fill="currentColor" fillOpacity="0.22" stroke="currentColor" strokeWidth="1.2" />
+      {/* Diagonal Slanted Ribbon with Shadow/Depth */}
+      <polygon
+        points="208,24 218,24 256,68 246,68"
+        fill="currentColor"
+        fillOpacity="0.5"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        strokeLinejoin="round"
+      />
+    </g>
+
+    {/* Curving Film Strip Ribbon swooping across right */}
     <path
-      d="M 160 -10 C 205 35 255 75 305 115"
+      d="M 150 -10 C 195 30 245 70 295 110"
       stroke="currentColor"
-      strokeWidth="1.6"
-      opacity="0.9"
+      strokeWidth="1.8"
+      opacity="0.85"
     />
     <path
-      d="M 135 15 C 180 60 230 100 280 140"
+      d="M 125 15 C 170 55 220 95 270 135"
       stroke="currentColor"
-      strokeWidth="1.6"
-      opacity="0.9"
+      strokeWidth="1.8"
+      opacity="0.85"
     />
 
     {/* Film Frame Divider Bars */}
-    <line x1="172" y1="3" x2="147" y2="27" stroke="currentColor" strokeWidth="1.2" opacity="0.6" />
-    <line x1="198" y1="28" x2="173" y2="52" stroke="currentColor" strokeWidth="1.2" opacity="0.6" />
-    <line x1="224" y1="53" x2="199" y2="77" stroke="currentColor" strokeWidth="1.2" opacity="0.6" />
-    <line x1="250" y1="78" x2="225" y2="102" stroke="currentColor" strokeWidth="1.2" opacity="0.6" />
-    <line x1="276" y1="103" x2="251" y2="127" stroke="currentColor" strokeWidth="1.2" opacity="0.6" />
+    <line x1="162" y1="3" x2="137" y2="27" stroke="currentColor" strokeWidth="1.4" opacity="0.7" />
+    <line x1="188" y1="28" x2="163" y2="52" stroke="currentColor" strokeWidth="1.4" opacity="0.7" />
+    <line x1="214" y1="53" x2="189" y2="77" stroke="currentColor" strokeWidth="1.4" opacity="0.7" />
+    <line x1="240" y1="78" x2="215" y2="102" stroke="currentColor" strokeWidth="1.4" opacity="0.7" />
+    <line x1="266" y1="103" x2="241" y2="127" stroke="currentColor" strokeWidth="1.4" opacity="0.7" />
 
     {/* Film Sprocket Perforation Holes */}
-    <rect x="168" y="7" width="4" height="2.8" rx="0.6" fill="currentColor" opacity="0.75" />
-    <rect x="194" y="32" width="4" height="2.8" rx="0.6" fill="currentColor" opacity="0.75" />
-    <rect x="220" y="57" width="4" height="2.8" rx="0.6" fill="currentColor" opacity="0.75" />
-    <rect x="246" y="82" width="4" height="2.8" rx="0.6" fill="currentColor" opacity="0.75" />
-    <rect x="272" y="107" width="4" height="2.8" rx="0.6" fill="currentColor" opacity="0.75" />
+    <rect x="158" y="7" width="4.5" height="3" rx="0.8" fill="currentColor" opacity="0.85" />
+    <rect x="184" y="32" width="4.5" height="3" rx="0.8" fill="currentColor" opacity="0.85" />
+    <rect x="210" y="57" width="4.5" height="3" rx="0.8" fill="currentColor" opacity="0.85" />
+    <rect x="236" y="82" width="4.5" height="3" rx="0.8" fill="currentColor" opacity="0.85" />
+    <rect x="262" y="107" width="4.5" height="3" rx="0.8" fill="currentColor" opacity="0.85" />
 
-    <rect x="145" y="24" width="4" height="2.8" rx="0.6" fill="currentColor" opacity="0.75" />
-    <rect x="171" y="49" width="4" height="2.8" rx="0.6" fill="currentColor" opacity="0.75" />
-    <rect x="197" y="74" width="4" height="2.8" rx="0.6" fill="currentColor" opacity="0.75" />
-    <rect x="223" y="99" width="4" height="2.8" rx="0.6" fill="currentColor" opacity="0.75" />
-    <rect x="249" y="124" width="4" height="2.8" rx="0.6" fill="currentColor" opacity="0.75" />
+    <rect x="135" y="24" width="4.5" height="3" rx="0.8" fill="currentColor" opacity="0.85" />
+    <rect x="161" y="49" width="4.5" height="3" rx="0.8" fill="currentColor" opacity="0.85" />
+    <rect x="187" y="74" width="4.5" height="3" rx="0.8" fill="currentColor" opacity="0.85" />
+    <rect x="213" y="99" width="4.5" height="3" rx="0.8" fill="currentColor" opacity="0.85" />
+    <rect x="239" y="124" width="4.5" height="3" rx="0.8" fill="currentColor" opacity="0.85" />
 
-    {/* Subtle Projector Beam Ray Lines */}
-    <line x1="290" y1="0" x2="150" y2="160" stroke="currentColor" strokeWidth="0.8" strokeDasharray="3 3" opacity="0.4" />
-    <circle cx="280" cy="18" r="14" stroke="currentColor" strokeWidth="0.8" strokeDasharray="2 2" opacity="0.35" />
+    {/* Projector Light Beam Ray Lines */}
+    <line x1="285" y1="0" x2="160" y2="160" stroke="currentColor" strokeWidth="1" strokeDasharray="4 3" opacity="0.45" />
+    <circle cx="275" cy="18" r="14" stroke="currentColor" strokeWidth="1" strokeDasharray="3 3" opacity="0.4" />
   </svg>
 );
 
 /**
- * YouTube: Scattered play triangles at varying scales, timeline scrubber, viewfinder corners
+ * YouTube: Prominent video frame, iconic play button triangle, timeline scrubber & viewfinder corners
  */
 export const YouTubePattern: React.FC<{ accentColor: string }> = ({ accentColor }) => (
   <svg
@@ -99,53 +115,56 @@ export const YouTubePattern: React.FC<{ accentColor: string }> = ({ accentColor 
     className="absolute inset-0 w-full h-full pointer-events-none select-none"
     style={{ color: accentColor }}
   >
-    {/* Medium Play Triangle (tilted slightly, upper-right) */}
-    <polygon
-      points="218,26 254,46 218,66"
+    {/* Rounded Video Player Screen Frame in upper-right */}
+    <rect
+      x="184"
+      y="18"
+      width="90"
+      height="60"
+      rx="10"
       stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinejoin="round"
+      strokeWidth="1.8"
       fill="currentColor"
-      fillOpacity="0.12"
+      fillOpacity="0.08"
       opacity="0.85"
     />
 
-    {/* Smaller Play Triangle (center-right) */}
+    {/* Prominent Play Triangle centered inside the video frame */}
     <polygon
-      points="246,95 272,110 246,125"
+      points="220,36 244,48 220,60"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinejoin="round"
+      fill="currentColor"
+      fillOpacity="0.4"
+      opacity="0.95"
+    />
+
+    {/* Viewfinder Camera Brackets */}
+    <path d="M 176 12 L 186 12 L 186 22" stroke="currentColor" strokeWidth="1.4" opacity="0.75" />
+    <path d="M 282 12 L 272 12 L 272 22" stroke="currentColor" strokeWidth="1.4" opacity="0.75" />
+    <path d="M 282 84 L 272 84 L 272 74" stroke="currentColor" strokeWidth="1.4" opacity="0.75" />
+    <path d="M 176 84 L 186 84 L 186 74" stroke="currentColor" strokeWidth="1.4" opacity="0.75" />
+
+    {/* Floating Secondary Play Triangle (center-right) */}
+    <polygon
+      points="248,96 272,109 248,122"
       stroke="currentColor"
       strokeWidth="1.4"
       strokeLinejoin="round"
       fill="currentColor"
-      fillOpacity="0.08"
+      fillOpacity="0.15"
       opacity="0.75"
     />
 
-    {/* Micro Play Triangle (lower-mid) */}
-    <polygon
-      points="178,138 194,147 178,156"
-      stroke="currentColor"
-      strokeWidth="1.2"
-      strokeLinejoin="round"
-      fill="currentColor"
-      fillOpacity="0.08"
-      opacity="0.6"
-    />
+    {/* Video Progress Scrubber Track & Timeline */}
+    <line x1="162" y1="164" x2="276" y2="164" stroke="currentColor" strokeWidth="2.2" opacity="0.45" strokeLinecap="round" />
+    <line x1="162" y1="164" x2="228" y2="164" stroke="currentColor" strokeWidth="2.8" opacity="0.95" strokeLinecap="round" />
+    <circle cx="228" cy="164" r="4.5" fill="currentColor" opacity="0.95" />
 
-    {/* Viewfinder Camera Brackets */}
-    <path d="M 205 18 L 213 18 L 213 26" stroke="currentColor" strokeWidth="1.2" opacity="0.6" />
-    <path d="M 275 18 L 267 18 L 267 26" stroke="currentColor" strokeWidth="1.2" opacity="0.6" />
-    <path d="M 275 74 L 267 74 L 267 66" stroke="currentColor" strokeWidth="1.2" opacity="0.6" />
-    <path d="M 205 74 L 213 74 L 213 66" stroke="currentColor" strokeWidth="1.2" opacity="0.6" />
-
-    {/* Video Progress Scrubber Track */}
-    <line x1="160" y1="168" x2="265" y2="168" stroke="currentColor" strokeWidth="1.8" opacity="0.4" strokeLinecap="round" />
-    <line x1="160" y1="168" x2="220" y2="168" stroke="currentColor" strokeWidth="2.2" opacity="0.9" strokeLinecap="round" />
-    <circle cx="220" cy="168" r="3.5" fill="currentColor" opacity="0.9" />
-
-    {/* Micro Timeline Buffering Tick Dots */}
-    <circle cx="235" cy="168" r="1.5" fill="currentColor" opacity="0.5" />
-    <circle cx="248" cy="168" r="1.5" fill="currentColor" opacity="0.5" />
+    {/* Micro Timeline Buffering Dots */}
+    <circle cx="244" cy="164" r="1.8" fill="currentColor" opacity="0.6" />
+    <circle cx="258" cy="164" r="1.8" fill="currentColor" opacity="0.6" />
   </svg>
 );
 
@@ -161,47 +180,47 @@ export const AppleMusicPattern: React.FC<{ accentColor: string }> = ({ accentCol
     style={{ color: accentColor }}
   >
     {/* Beamed Eighth Notes (upper-right) */}
-    <g opacity="0.9">
-      <ellipse cx="226" cy="52" rx="5.5" ry="4" transform="rotate(-25 226 52)" fill="currentColor" />
-      <ellipse cx="256" cy="45" rx="5.5" ry="4" transform="rotate(-25 256 45)" fill="currentColor" />
-      <line x1="230" y1="50" x2="230" y2="22" stroke="currentColor" strokeWidth="1.8" />
-      <line x1="260" y1="43" x2="260" y2="15" stroke="currentColor" strokeWidth="1.8" />
-      <line x1="229" y1="22" x2="261" y2="15" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" />
+    <g opacity="0.95">
+      <ellipse cx="224" cy="54" rx="6" ry="4.5" transform="rotate(-25 224 54)" fill="currentColor" />
+      <ellipse cx="258" cy="46" rx="6" ry="4.5" transform="rotate(-25 258 46)" fill="currentColor" />
+      <line x1="228" y1="52" x2="228" y2="20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <line x1="262" y1="44" x2="262" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <line x1="227" y1="20" x2="263" y2="12" stroke="currentColor" strokeWidth="3.8" strokeLinecap="round" />
     </g>
 
     {/* Single Quaver / Floating Eighth Note (center-right) */}
-    <g opacity="0.75">
-      <ellipse cx="198" cy="98" rx="4.8" ry="3.5" transform="rotate(-25 198 98)" fill="currentColor" />
-      <line x1="202" y1="96" x2="202" y2="72" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M 202 72 C 211 76 215 84 213 90" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+    <g opacity="0.8">
+      <ellipse cx="196" cy="100" rx="5" ry="3.8" transform="rotate(-25 196 100)" fill="currentColor" />
+      <line x1="200" y1="98" x2="200" y2="70" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M 200 70 C 211 74 216 82 214 90" stroke="currentColor" strokeWidth="1.8" fill="none" strokeLinecap="round" />
     </g>
 
     {/* Delicate Semiquaver / Accent Note (far right) */}
-    <g opacity="0.6">
-      <ellipse cx="268" cy="115" rx="4" ry="2.8" transform="rotate(-25 268 115)" fill="currentColor" />
-      <line x1="271" y1="113" x2="271" y2="92" stroke="currentColor" strokeWidth="1.2" />
-      <path d="M 271 92 C 278 95 281 100 279 104" stroke="currentColor" strokeWidth="1.2" fill="none" />
-      <path d="M 271 98 C 278 101 281 106 279 110" stroke="currentColor" strokeWidth="1.2" fill="none" />
+    <g opacity="0.7">
+      <ellipse cx="266" cy="116" rx="4.2" ry="3" transform="rotate(-25 266 116)" fill="currentColor" />
+      <line x1="269" y1="114" x2="269" y2="90" stroke="currentColor" strokeWidth="1.4" />
+      <path d="M 269 90 C 277 93 280 98 278 103" stroke="currentColor" strokeWidth="1.4" fill="none" />
+      <path d="M 269 96 C 277 99 280 104 278 109" stroke="currentColor" strokeWidth="1.4" fill="none" />
     </g>
 
     {/* Layered Sinusoidal Waveforms across bottom */}
     <path
-      d="M 110 180 Q 150 152 190 180 T 270 180 T 310 175"
+      d="M 110 178 Q 150 148 190 178 T 270 178 T 310 172"
       stroke="currentColor"
-      strokeWidth="1.6"
+      strokeWidth="2"
       fill="none"
-      opacity="0.6"
+      opacity="0.75"
     />
     <path
-      d="M 130 190 Q 170 168 210 190 T 290 186"
+      d="M 130 188 Q 170 162 210 188 T 290 184"
       stroke="currentColor"
-      strokeWidth="1.2"
+      strokeWidth="1.4"
       fill="none"
-      opacity="0.45"
+      opacity="0.55"
     />
 
     {/* Acoustic Concentric Sound Ripples */}
-    <path d="M 245 135 A 40 40 0 0 1 285 175" stroke="currentColor" strokeWidth="1" strokeDasharray="3 3" opacity="0.4" />
+    <path d="M 242 135 A 42 42 0 0 1 284 177" stroke="currentColor" strokeWidth="1.4" strokeDasharray="3 3" opacity="0.5" />
   </svg>
 );
 
@@ -218,48 +237,59 @@ export const GoogleGeminiPattern: React.FC<{ accentColor: string }> = ({ accentC
   >
     {/* Large Gemini 4-Point Sparkle Star (upper-right) */}
     <path
-      d="M 235 15 C 235 27 245 37 257 37 C 245 37 235 47 235 59 C 235 47 225 37 213 37 C 225 37 235 27 235 15 Z"
+      d="M 235 12 C 235 26 247 38 261 38 C 247 38 235 50 235 64 C 235 50 223 38 209 38 C 223 38 235 26 235 12 Z"
       fill="currentColor"
-      opacity="0.85"
+      fillOpacity="0.4"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      opacity="0.95"
     />
 
     {/* Medium 4-Point Sparkle Star (center-right) */}
     <path
-      d="M 264 78 C 264 86 270 92 278 92 C 270 92 264 98 264 106 C 264 98 258 92 250 92 C 258 92 264 86 264 78 Z"
+      d="M 264 76 C 264 85 271 92 280 92 C 271 92 264 99 264 108 C 264 99 257 92 248 92 C 257 92 264 85 264 76 Z"
       fill="currentColor"
-      opacity="0.7"
+      fillOpacity="0.35"
+      stroke="currentColor"
+      strokeWidth="1.2"
+      opacity="0.85"
     />
 
     {/* Delicate Small Sparkle (mid-left in pattern zone) */}
     <path
-      d="M 182 45 C 182 50 186 54 191 54 C 186 54 182 58 182 63 C 182 58 178 54 173 54 C 178 54 182 50 182 45 Z"
+      d="M 182 44 C 182 50 187 54 193 54 C 187 54 182 58 182 64 C 182 58 177 54 171 54 C 177 54 182 50 182 44 Z"
       fill="currentColor"
-      opacity="0.65"
+      fillOpacity="0.3"
+      stroke="currentColor"
+      strokeWidth="1"
+      opacity="0.75"
     />
 
     {/* Micro Sparkle Accent (lower-right) */}
     <path
-      d="M 228 135 C 228 138 231 141 234 141 C 231 141 228 144 228 147 C 228 144 225 141 222 141 C 225 141 228 138 228 135 Z"
+      d="M 228 135 C 228 139 231 142 235 142 C 231 142 228 145 228 149 C 228 145 225 142 221 142 C 225 142 228 139 228 135 Z"
       fill="currentColor"
-      opacity="0.5"
+      fillOpacity="0.3"
+      opacity="0.65"
     />
 
     {/* Sweeping Orbital Planetary Arc */}
     <path
-      d="M 155 12 C 215 25 275 75 288 145"
+      d="M 150 10 C 215 24 275 75 288 145"
       stroke="currentColor"
-      strokeWidth="1.2"
+      strokeWidth="1.4"
       strokeDasharray="4 3"
-      opacity="0.55"
+      opacity="0.7"
     />
 
     {/* Subtle Diamond Facet Lines */}
     <polygon
-      points="218,92 232,82 246,92 232,102"
+      points="218,92 234,80 250,92 234,104"
       stroke="currentColor"
-      strokeWidth="1"
-      fill="none"
-      opacity="0.4"
+      strokeWidth="1.2"
+      fill="currentColor"
+      fillOpacity="0.1"
+      opacity="0.6"
     />
   </svg>
 );
@@ -277,58 +307,58 @@ export const ChatGPTPattern: React.FC<{ accentColor: string }> = ({ accentColor 
   >
     {/* Hexagon 1 (top-right) */}
     <polygon
-      points="230,22 248,22 257,38 248,54 230,54 221,38"
+      points="228,18 248,18 258,35 248,52 228,52 218,35"
       stroke="currentColor"
-      strokeWidth="1.3"
+      strokeWidth="1.5"
       fill="currentColor"
-      fillOpacity="0.08"
-      opacity="0.85"
+      fillOpacity="0.12"
+      opacity="0.9"
     />
 
     {/* Hexagon 2 (interlocking offset right) */}
     <polygon
-      points="254,42 272,42 281,58 272,74 254,74 245,58"
+      points="254,39 274,39 284,56 274,73 254,73 244,56"
       stroke="currentColor"
-      strokeWidth="1.3"
+      strokeWidth="1.5"
       fill="currentColor"
-      fillOpacity="0.06"
-      opacity="0.8"
+      fillOpacity="0.1"
+      opacity="0.85"
     />
 
     {/* Hexagon 3 (interlocking lower-mid) */}
     <polygon
-      points="206,60 224,60 233,76 224,92 206,92 197,76"
+      points="202,59 222,59 232,76 222,93 202,93 192,76"
       stroke="currentColor"
-      strokeWidth="1.3"
+      strokeWidth="1.5"
       fill="currentColor"
-      fillOpacity="0.06"
-      opacity="0.75"
+      fillOpacity="0.1"
+      opacity="0.8"
     />
 
     {/* Connecting Synaptic Circuit Lines */}
-    <line x1="248" y1="54" x2="254" y2="42" stroke="currentColor" strokeWidth="1.2" opacity="0.8" />
-    <line x1="230" y1="54" x2="224" y2="60" stroke="currentColor" strokeWidth="1.2" opacity="0.8" />
-    <line x1="206" y1="92" x2="195" y2="115" stroke="currentColor" strokeWidth="1" strokeDasharray="3 2" opacity="0.5" />
-    <line x1="272" y1="74" x2="265" y2="105" stroke="currentColor" strokeWidth="1" strokeDasharray="3 2" opacity="0.5" />
+    <line x1="248" y1="52" x2="254" y2="39" stroke="currentColor" strokeWidth="1.5" opacity="0.85" />
+    <line x1="228" y1="52" x2="222" y2="59" stroke="currentColor" strokeWidth="1.5" opacity="0.85" />
+    <line x1="202" y1="93" x2="190" y2="120" stroke="currentColor" strokeWidth="1.2" strokeDasharray="4 2" opacity="0.65" />
+    <line x1="274" y1="73" x2="265" y2="110" stroke="currentColor" strokeWidth="1.2" strokeDasharray="4 2" opacity="0.65" />
 
     {/* Neural Connection Nodes */}
-    <circle cx="230" cy="22" r="2.2" fill="currentColor" opacity="0.9" />
-    <circle cx="248" cy="22" r="2.2" fill="currentColor" opacity="0.9" />
-    <circle cx="257" cy="38" r="2.2" fill="currentColor" opacity="0.9" />
-    <circle cx="248" cy="54" r="2.2" fill="currentColor" opacity="0.9" />
-    <circle cx="221" cy="38" r="2.2" fill="currentColor" opacity="0.9" />
-    <circle cx="230" cy="54" r="2.2" fill="currentColor" opacity="0.9" />
-    <circle cx="272" cy="42" r="2" fill="currentColor" opacity="0.8" />
-    <circle cx="281" cy="58" r="2" fill="currentColor" opacity="0.8" />
-    <circle cx="206" cy="60" r="2" fill="currentColor" opacity="0.8" />
+    <circle cx="228" cy="18" r="2.8" fill="currentColor" opacity="0.95" />
+    <circle cx="248" cy="18" r="2.8" fill="currentColor" opacity="0.95" />
+    <circle cx="258" cy="35" r="2.8" fill="currentColor" opacity="0.95" />
+    <circle cx="248" cy="52" r="2.8" fill="currentColor" opacity="0.95" />
+    <circle cx="218" cy="35" r="2.8" fill="currentColor" opacity="0.95" />
+    <circle cx="228" cy="52" r="2.8" fill="currentColor" opacity="0.95" />
+    <circle cx="274" cy="39" r="2.5" fill="currentColor" opacity="0.85" />
+    <circle cx="284" cy="56" r="2.5" fill="currentColor" opacity="0.85" />
+    <circle cx="202" cy="59" r="2.5" fill="currentColor" opacity="0.85" />
 
     {/* Modern Data Matrix Points */}
-    <circle cx="235" cy="148" r="1.5" fill="currentColor" opacity="0.45" />
-    <circle cx="247" cy="148" r="1.5" fill="currentColor" opacity="0.45" />
-    <circle cx="259" cy="148" r="1.5" fill="currentColor" opacity="0.45" />
-    <circle cx="235" cy="160" r="1.5" fill="currentColor" opacity="0.45" />
-    <circle cx="247" cy="160" r="1.5" fill="currentColor" opacity="0.45" />
-    <circle cx="259" cy="160" r="1.5" fill="currentColor" opacity="0.45" />
+    <circle cx="234" cy="148" r="1.8" fill="currentColor" opacity="0.6" />
+    <circle cx="248" cy="148" r="1.8" fill="currentColor" opacity="0.6" />
+    <circle cx="262" cy="148" r="1.8" fill="currentColor" opacity="0.6" />
+    <circle cx="234" cy="162" r="1.8" fill="currentColor" opacity="0.6" />
+    <circle cx="248" cy="162" r="1.8" fill="currentColor" opacity="0.6" />
+    <circle cx="262" cy="162" r="1.8" fill="currentColor" opacity="0.6" />
   </svg>
 );
 
@@ -343,45 +373,45 @@ export const SpotifyPattern: React.FC<{ accentColor: string }> = ({ accentColor 
     className="absolute inset-0 w-full h-full pointer-events-none select-none"
     style={{ color: accentColor }}
   >
-    {/* Concentric Audio Wave Radiating Arcs */}
+    {/* Concentric Audio Wave Radiating Arcs (Thick, iconic Spotify soundwave curves) */}
     <path
-      d="M 275 16 A 110 110 0 0 0 195 90"
+      d="M 284 20 A 105 105 0 0 0 196 92"
       stroke="currentColor"
-      strokeWidth="2.4"
+      strokeWidth="3.4"
       strokeLinecap="round"
-      opacity="0.8"
+      opacity="0.95"
     />
     <path
-      d="M 285 34 A 85 85 0 0 0 220 95"
+      d="M 288 38 A 80 80 0 0 0 220 96"
       stroke="currentColor"
-      strokeWidth="2.4"
+      strokeWidth="3.4"
       strokeLinecap="round"
-      opacity="0.8"
+      opacity="0.95"
     />
     <path
-      d="M 292 52 A 60 60 0 0 0 248 98"
+      d="M 292 56 A 55 55 0 0 0 244 100"
       stroke="currentColor"
-      strokeWidth="2.4"
+      strokeWidth="3.4"
       strokeLinecap="round"
-      opacity="0.8"
+      opacity="0.95"
     />
 
     {/* Graphic Equalizer Audio Bars in lower right */}
-    <g opacity="0.75">
-      <rect x="188" y="146" width="3.5" height="20" rx="1.7" fill="currentColor" />
-      <rect x="196" y="132" width="3.5" height="34" rx="1.7" fill="currentColor" />
-      <rect x="204" y="148" width="3.5" height="18" rx="1.7" fill="currentColor" />
-      <rect x="212" y="125" width="3.5" height="41" rx="1.7" fill="currentColor" />
-      <rect x="220" y="136" width="3.5" height="30" rx="1.7" fill="currentColor" />
-      <rect x="228" y="142" width="3.5" height="24" rx="1.7" fill="currentColor" />
-      <rect x="236" y="129" width="3.5" height="37" rx="1.7" fill="currentColor" />
-      <rect x="244" y="147" width="3.5" height="19" rx="1.7" fill="currentColor" />
-      <rect x="252" y="153" width="3.5" height="13" rx="1.7" fill="currentColor" />
-      <rect x="260" y="139" width="3.5" height="27" rx="1.7" fill="currentColor" />
+    <g opacity="0.85">
+      <rect x="186" y="146" width="4" height="20" rx="2" fill="currentColor" />
+      <rect x="194" y="130" width="4" height="36" rx="2" fill="currentColor" />
+      <rect x="202" y="148" width="4" height="18" rx="2" fill="currentColor" />
+      <rect x="210" y="124" width="4" height="42" rx="2" fill="currentColor" />
+      <rect x="218" y="136" width="4" height="30" rx="2" fill="currentColor" />
+      <rect x="226" y="142" width="4" height="24" rx="2" fill="currentColor" />
+      <rect x="234" y="128" width="4" height="38" rx="2" fill="currentColor" />
+      <rect x="242" y="146" width="4" height="20" rx="2" fill="currentColor" />
+      <rect x="250" y="152" width="4" height="14" rx="2" fill="currentColor" />
+      <rect x="258" y="138" width="4" height="28" rx="2" fill="currentColor" />
     </g>
 
     {/* Subtle Sound Pulse Rings */}
-    <circle cx="280" cy="115" r="30" stroke="currentColor" strokeWidth="0.8" strokeDasharray="3 3" opacity="0.35" />
+    <circle cx="280" cy="115" r="30" stroke="currentColor" strokeWidth="1" strokeDasharray="3 3" opacity="0.45" />
   </svg>
 );
 
@@ -396,40 +426,40 @@ export const CanvaPattern: React.FC<{ accentColor: string }> = ({ accentColor })
     className="absolute inset-0 w-full h-full pointer-events-none select-none"
     style={{ color: accentColor }}
   >
-    {/* Fluid Paper-Cut Curved Contour Silhouette */}
+    {/* Fluid Artboard Contour Silhouette */}
     <path
       d="M 175 -10 C 225 15 285 45 268 110 C 252 165 210 180 282 208 L 290 208 L 290 -10 Z"
       fill="currentColor"
-      fillOpacity="0.08"
+      fillOpacity="0.1"
     />
     <path
       d="M 175 -10 C 225 15 285 45 268 110 C 252 165 210 180 282 208"
       stroke="currentColor"
-      strokeWidth="1.4"
-      opacity="0.85"
+      strokeWidth="1.6"
+      opacity="0.9"
     />
 
     {/* Secondary Inner Contour */}
     <path
       d="M 210 -10 C 250 20 285 70 280 120"
       stroke="currentColor"
-      strokeWidth="1"
+      strokeWidth="1.2"
       strokeDasharray="4 3"
-      opacity="0.5"
+      opacity="0.6"
     />
 
     {/* Vector Pen Bezier Handle */}
-    <g opacity="0.8">
-      <line x1="202" y1="42" x2="252" y2="68" stroke="currentColor" strokeWidth="1" />
-      <rect x="224" y="52" width="6" height="6" rx="1" fill="currentColor" />
-      <circle cx="202" cy="42" r="2.8" stroke="currentColor" strokeWidth="1.2" fill="none" />
-      <circle cx="252" cy="68" r="2.8" stroke="currentColor" strokeWidth="1.2" fill="none" />
+    <g opacity="0.9">
+      <line x1="200" y1="40" x2="254" y2="68" stroke="currentColor" strokeWidth="1.2" strokeDasharray="3 2" />
+      <rect x="224" y="51" width="7" height="7" rx="1.5" fill="currentColor" />
+      <circle cx="200" cy="40" r="3.2" stroke="currentColor" strokeWidth="1.5" fill="white" />
+      <circle cx="254" cy="68" r="3.2" stroke="currentColor" strokeWidth="1.5" fill="white" />
     </g>
 
-    {/* Geometric Design Swatches (Palette Dots) */}
-    <circle cx="225" cy="145" r="5" stroke="currentColor" strokeWidth="1.2" opacity="0.6" />
-    <circle cx="242" cy="145" r="5" fill="currentColor" opacity="0.25" />
-    <circle cx="259" cy="145" r="5" stroke="currentColor" strokeWidth="1.2" opacity="0.6" />
+    {/* Graphic Design Frame Corners & Swatches */}
+    <rect x="190" y="125" width="44" height="32" rx="3" stroke="currentColor" strokeWidth="1.2" strokeDasharray="3 2" opacity="0.5" />
+    <circle cx="248" cy="142" r="5.5" stroke="currentColor" strokeWidth="1.4" opacity="0.75" />
+    <circle cx="264" cy="142" r="5.5" fill="currentColor" opacity="0.35" />
   </svg>
 );
 
@@ -445,28 +475,28 @@ export const CapCutPattern: React.FC<{ accentColor: string }> = ({ accentColor }
     style={{ color: accentColor }}
   >
     {/* Multi-Track Timeline Lanes */}
-    <g opacity="0.75">
-      <rect x="165" y="24" width="112" height="11" rx="2.5" stroke="currentColor" strokeWidth="1" fill="currentColor" fillOpacity="0.08" />
-      <rect x="185" y="39" width="92" height="11" rx="2.5" stroke="currentColor" strokeWidth="1" fill="currentColor" fillOpacity="0.06" />
-      <rect x="152" y="54" width="125" height="11" rx="2.5" stroke="currentColor" strokeWidth="1" fill="currentColor" fillOpacity="0.08" />
+    <g opacity="0.85">
+      <rect x="165" y="24" width="112" height="12" rx="3" stroke="currentColor" strokeWidth="1.2" fill="currentColor" fillOpacity="0.12" />
+      <rect x="185" y="40" width="92" height="12" rx="3" stroke="currentColor" strokeWidth="1.2" fill="currentColor" fillOpacity="0.08" />
+      <rect x="152" y="56" width="125" height="12" rx="3" stroke="currentColor" strokeWidth="1.2" fill="currentColor" fillOpacity="0.12" />
     </g>
 
     {/* Playhead Indicator with Triangle Marker */}
-    <polygon points="224,15 229,22 219,22" fill="currentColor" opacity="0.9" />
-    <line x1="224" y1="22" x2="224" y2="76" stroke="currentColor" strokeWidth="1.5" strokeDasharray="3 2" opacity="0.9" />
+    <polygon points="224,14 230,22 218,22" fill="currentColor" opacity="0.95" />
+    <line x1="224" y1="22" x2="224" y2="80" stroke="currentColor" strokeWidth="1.8" strokeDasharray="4 2" opacity="0.95" />
 
     {/* Animation Keyframe Diamonds */}
-    <polygon points="204,29 208,33 204,37 200,33" fill="currentColor" opacity="0.85" />
-    <polygon points="246,44 250,48 246,52 242,48" fill="currentColor" opacity="0.85" />
-    <polygon points="180,59 184,63 180,67 176,63" fill="currentColor" opacity="0.85" />
+    <polygon points="204,30 208,34 204,38 200,34" fill="currentColor" opacity="0.95" />
+    <polygon points="246,46 250,50 246,54 242,50" fill="currentColor" opacity="0.95" />
+    <polygon points="180,62 184,66 180,70 176,66" fill="currentColor" opacity="0.95" />
 
     {/* Transition Cut / Razor Marks */}
-    <line x1="250" y1="24" x2="250" y2="35" stroke="currentColor" strokeWidth="1.2" opacity="0.7" />
-    <line x1="210" y1="54" x2="210" y2="65" stroke="currentColor" strokeWidth="1.2" opacity="0.7" />
+    <line x1="250" y1="24" x2="250" y2="36" stroke="currentColor" strokeWidth="1.5" opacity="0.8" />
+    <line x1="210" y1="56" x2="210" y2="68" stroke="currentColor" strokeWidth="1.5" opacity="0.8" />
 
     {/* Video Clip Frame Bounding Wireframe (lower-right) */}
-    <rect x="200" y="130" width="70" height="38" rx="3" stroke="currentColor" strokeWidth="1.2" strokeDasharray="3 3" opacity="0.45" />
-    <circle cx="235" cy="149" r="6" stroke="currentColor" strokeWidth="1" opacity="0.45" />
+    <rect x="195" y="128" width="76" height="42" rx="4" stroke="currentColor" strokeWidth="1.4" strokeDasharray="4 3" opacity="0.55" />
+    <circle cx="233" cy="149" r="7" stroke="currentColor" strokeWidth="1.2" opacity="0.55" />
   </svg>
 );
 
@@ -994,6 +1024,197 @@ export const GrammarlyPattern: React.FC<{ accentColor: string }> = ({ accentColo
 );
 
 /**
+ * Duolingo: Iconic owl eyes & face silhouette, feather plumage curves, daily learning streak flame
+ */
+export const DuolingoPattern: React.FC<{ accentColor: string }> = ({ accentColor }) => (
+  <svg
+    viewBox="0 0 290 205"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className="absolute inset-0 w-full h-full pointer-events-none select-none"
+    style={{ color: accentColor }}
+  >
+    {/* Duo Owl Eyes Silhouette */}
+    <g opacity="0.95">
+      {/* Outer Eye Rings */}
+      <circle cx="218" cy="45" r="16" stroke="currentColor" strokeWidth="2.2" fill="currentColor" fillOpacity="0.12" />
+      <circle cx="254" cy="45" r="16" stroke="currentColor" strokeWidth="2.2" fill="currentColor" fillOpacity="0.12" />
+      {/* Friendly Curious Pupils */}
+      <circle cx="221" cy="43" r="7.5" fill="currentColor" fillOpacity="0.45" />
+      <circle cx="251" cy="43" r="7.5" fill="currentColor" fillOpacity="0.45" />
+      {/* Eye Shine Sparkles */}
+      <circle cx="223" cy="40" r="2.2" fill="white" />
+      <circle cx="253" cy="40" r="2.2" fill="white" />
+      {/* Cute Orange/Green Triangular Beak */}
+      <polygon points="233,52 239,52 236,61" fill="currentColor" fillOpacity="0.75" />
+    </g>
+
+    {/* Feather Wing Plumage Curves */}
+    <path
+      d="M 185 88 C 215 78 250 82 278 112"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      opacity="0.85"
+    />
+    <path
+      d="M 205 98 C 230 92 258 100 274 128"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      opacity="0.65"
+    />
+    <path
+      d="M 222 108 C 242 105 264 114 272 138"
+      stroke="currentColor"
+      strokeWidth="1.2"
+      strokeLinecap="round"
+      opacity="0.5"
+    />
+
+    {/* Duolingo Daily Streak Flame (lower right) */}
+    <path
+      d="M 252 145 C 252 135 258 130 258 122 C 265 128 270 136 270 145 C 270 155 262 162 252 162 C 242 162 238 155 238 147 C 238 138 245 132 248 126 C 248 135 252 140 252 145 Z"
+      fill="currentColor"
+      fillOpacity="0.3"
+      stroke="currentColor"
+      strokeWidth="1.2"
+      opacity="0.85"
+    />
+
+    {/* Achievement Star Sparkles */}
+    <polygon points="200,32 202,36 206,36 203,39 204,43 200,41 196,43 197,39 194,36 198,36" fill="currentColor" opacity="0.65" />
+    <circle cx="272" cy="30" r="2" fill="currentColor" opacity="0.6" />
+  </svg>
+);
+
+/**
+ * Meitu: Beauty photo retouching, camera lens aperture iris, portrait glow sparkles
+ */
+export const MeituPattern: React.FC<{ accentColor: string }> = ({ accentColor }) => (
+  <svg
+    viewBox="0 0 290 205"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className="absolute inset-0 w-full h-full pointer-events-none select-none"
+    style={{ color: accentColor }}
+  >
+    {/* Camera Lens Aperture Ring */}
+    <g opacity="0.85">
+      <circle cx="238" cy="50" r="26" stroke="currentColor" strokeWidth="1.6" fill="currentColor" fillOpacity="0.08" />
+      <circle cx="238" cy="50" r="12" stroke="currentColor" strokeWidth="1.2" />
+      {/* Aperture Iris Blades */}
+      <line x1="224" y1="36" x2="244" y2="42" stroke="currentColor" strokeWidth="1" />
+      <line x1="252" y1="40" x2="242" y2="60" stroke="currentColor" strokeWidth="1" />
+      <line x1="244" y1="62" x2="224" y2="56" stroke="currentColor" strokeWidth="1" />
+    </g>
+
+    {/* Beauty Glow Sparkles */}
+    <path
+      d="M 195 28 C 195 34 199 38 205 38 C 199 38 195 42 195 48 C 195 42 191 38 185 38 C 191 38 195 34 195 28 Z"
+      fill="currentColor"
+      opacity="0.85"
+    />
+    <path
+      d="M 268 94 C 268 98 271 101 275 101 C 271 101 268 104 268 108 C 268 104 265 101 261 101 C 265 101 268 98 268 94 Z"
+      fill="currentColor"
+      opacity="0.75"
+    />
+
+    {/* Portrait Focus Crop Frame */}
+    <path d="M 180 80 L 172 80 L 172 88" stroke="currentColor" strokeWidth="1.2" opacity="0.6" />
+    <path d="M 276 80 L 284 80 L 284 88" stroke="currentColor" strokeWidth="1.2" opacity="0.6" />
+    <path d="M 180 148 L 172 148 L 172 140" stroke="currentColor" strokeWidth="1.2" opacity="0.6" />
+    <path d="M 276 148 L 284 148 L 284 140" stroke="currentColor" strokeWidth="1.2" opacity="0.6" />
+  </svg>
+);
+
+/**
+ * Wink: 4K HD video enhancement sparkles, video playback frame, AI retouching curves
+ */
+export const WinkPattern: React.FC<{ accentColor: string }> = ({ accentColor }) => (
+  <svg
+    viewBox="0 0 290 205"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className="absolute inset-0 w-full h-full pointer-events-none select-none"
+    style={{ color: accentColor }}
+  >
+    {/* Video Retouch Frame */}
+    <rect
+      x="185"
+      y="22"
+      width="88"
+      height="54"
+      rx="8"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      fill="currentColor"
+      fillOpacity="0.08"
+      opacity="0.85"
+    />
+
+    {/* 4K AI Quality Sparkles across screen */}
+    <path
+      d="M 228 35 C 228 41 232 45 238 45 C 232 45 228 49 228 55 C 228 49 224 45 218 45 C 224 45 228 41 228 35 Z"
+      fill="currentColor"
+      opacity="0.9"
+    />
+    <circle cx="254" cy="38" r="2.5" fill="currentColor" opacity="0.7" />
+
+    {/* Video Enhancement Dynamic Swoosh */}
+    <path
+      d="M 160 145 C 210 120 250 135 285 175"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      opacity="0.75"
+    />
+    <circle cx="240" cy="140" r="18" stroke="currentColor" strokeWidth="1" strokeDasharray="3 3" opacity="0.45" />
+  </svg>
+);
+
+/**
+ * Getcontact: Caller ID security shield, verified checkmark, telephone ring signal waves
+ */
+export const GetcontactPattern: React.FC<{ accentColor: string }> = ({ accentColor }) => (
+  <svg
+    viewBox="0 0 290 205"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className="absolute inset-0 w-full h-full pointer-events-none select-none"
+    style={{ color: accentColor }}
+  >
+    {/* Caller ID Trust Shield */}
+    <g opacity="0.9">
+      <path
+        d="M 238 20 L 268 32 L 268 62 C 268 82 238 98 238 98 C 238 98 208 82 208 62 L 208 32 Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        fill="currentColor"
+        fillOpacity="0.12"
+      />
+      {/* Verified Trust Checkmark inside shield */}
+      <path
+        d="M 226 55 L 235 64 L 250 46"
+        stroke="currentColor"
+        strokeWidth="2.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </g>
+
+    {/* Concentric Incoming Call Ring Waves */}
+    <path d="M 194 36 A 48 48 0 0 0 194 84" stroke="currentColor" strokeWidth="1.6" strokeDasharray="4 3" opacity="0.75" />
+    <path d="M 182 26 A 65 65 0 0 0 182 94" stroke="currentColor" strokeWidth="1.3" strokeDasharray="4 3" opacity="0.55" />
+
+    {/* Verified Trust Line Grid */}
+    <line x1="170" y1="160" x2="275" y2="160" stroke="currentColor" strokeWidth="1.2" strokeDasharray="4 3" opacity="0.45" />
+    <circle cx="245" cy="140" r="16" stroke="currentColor" strokeWidth="1" opacity="0.4" />
+  </svg>
+);
+
+/**
  * Procedural Universal Fallback 1: Modern geometric isometric grid & floating facets
  */
 export const FallbackPatternGrid: React.FC<{ accentColor: string }> = ({ accentColor }) => (
@@ -1489,6 +1710,59 @@ export const PRODUCT_VISUAL_THEMES: Record<string, ProductVisualTheme> = {
     accentColor: '#7C3AED',
     pattern: AlightMotionPattern,
   },
+
+  // 26. Duolingo: Owl silhouette, plumage curves, streak flame
+  duolingo: {
+    id: 'duolingo',
+    name: 'Duolingo',
+    cardBg: 'from-[#F0FDF4] via-[#F7FCF9] to-[#DCFCE7]/55',
+    cardBorder: 'border-emerald-200/70 hover:border-emerald-400',
+    cardShadow: 'shadow-[0_2px_12px_rgba(22,163,74,0.04)]',
+    accentColor: '#16A34A',
+    pattern: DuolingoPattern,
+  },
+
+  // 27. Meitu: Beauty photo filter, camera lens aperture iris, portrait glow
+  meitu: {
+    id: 'meitu',
+    name: 'Meitu',
+    cardBg: 'from-[#FFF5F7] via-[#FFF9FA] to-[#FCE7F3]/50',
+    cardBorder: 'border-pink-200/70 hover:border-pink-400',
+    cardShadow: 'shadow-[0_2px_12px_rgba(244,63,94,0.04)]',
+    accentColor: '#F43F5E',
+    pattern: MeituPattern,
+  },
+
+  // 28. Wink: 4K HD video enhancement sparkles, video playback frame
+  wink: {
+    id: 'wink',
+    name: 'Wink',
+    cardBg: 'from-[#F8F7FF] via-[#FAF9FF] to-[#EDE9FE]/50',
+    cardBorder: 'border-purple-200/70 hover:border-purple-400',
+    cardShadow: 'shadow-[0_2px_12px_rgba(139,92,246,0.04)]',
+    accentColor: '#8B5CF6',
+    pattern: WinkPattern,
+  },
+
+  // 29. Getcontact: Caller ID security shield, verified check, phone ring waves
+  getcontact: {
+    id: 'getcontact',
+    name: 'Getcontact',
+    cardBg: 'from-[#F0F6FF] via-[#F6FAFF] to-[#DBEAFE]/50',
+    cardBorder: 'border-blue-200/70 hover:border-blue-400',
+    cardShadow: 'shadow-[0_2px_12px_rgba(37,99,235,0.04)]',
+    accentColor: '#2563EB',
+    pattern: GetcontactPattern,
+  },
+  'get-contact': {
+    id: 'getcontact',
+    name: 'Getcontact',
+    cardBg: 'from-[#F0F6FF] via-[#F6FAFF] to-[#DBEAFE]/50',
+    cardBorder: 'border-blue-200/70 hover:border-blue-400',
+    cardShadow: 'shadow-[0_2px_12px_rgba(37,99,235,0.04)]',
+    accentColor: '#2563EB',
+    pattern: GetcontactPattern,
+  },
 };
 
 // ---------------------------------------------------------------------------
@@ -1568,7 +1842,7 @@ export function resolveProductVisualTheme(slug: string = '', name: string = ''):
 
 /**
  * Visual Background Pattern Renderer Component
- * Renders the product's tailored pattern at 5-12% opacity with soft ambient lighting.
+ * Renders the product's tailored pattern at 20-26% opacity for clear recognition while keeping text contrast high.
  * Completely zero layout shift, pointer-events-none, safe behind interactive content.
  */
 export function ProductCardBackgroundPattern({
@@ -1588,11 +1862,8 @@ export function ProductCardBackgroundPattern({
       className={`absolute inset-0 w-full h-full pointer-events-none select-none z-0 overflow-hidden ${className}`}
       aria-hidden="true"
     >
-      {/* Subtle Ambient Radial Glow in bottom right for depth */}
-      <div className="absolute -bottom-10 -right-10 w-40 h-40 rounded-full bg-white/60 blur-xl pointer-events-none" />
-
-      {/* Low-opacity (5-12%) Brand Vector Pattern */}
-      <div className="absolute inset-0 w-full h-full opacity-[0.09] group-hover:opacity-[0.14] transition-opacity duration-300">
+      {/* Brand Vector Pattern with tuned 20-26% opacity for clear visual identity */}
+      <div className="absolute inset-0 w-full h-full opacity-[0.20] group-hover:opacity-[0.26] transition-opacity duration-300">
         <PatternComponent accentColor={theme.accentColor} />
       </div>
     </div>

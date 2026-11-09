@@ -88,25 +88,25 @@ export function FeaturedGridCardSkeleton() {
 
 export function ShowcaseLoopingCardSkeleton() {
   return (
-    <div className="bg-white border border-[rgba(18,26,42,0.08)] rounded-3xl p-4 sm:p-5 flex flex-col justify-between shrink-0 flex-none w-[260px] sm:w-[280px] lg:w-[290px] h-[195px] sm:h-[205px] mr-3 sm:mr-4 animate-pulse select-none">
+    <div className="bg-white border border-[rgba(18,26,42,0.08)] rounded-2xl sm:rounded-3xl p-3.5 sm:p-4.5 lg:p-5 flex flex-col justify-between shrink-0 flex-none w-[250px] sm:w-[275px] lg:w-[285px] h-[192px] sm:h-[198px] lg:h-[205px] mr-2.5 sm:mr-3.5 lg:mr-4 animate-pulse select-none">
       <div>
-        <div className="w-16 h-5 bg-[#121A2A]/8 rounded-full mb-3" />
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-[#121A2A]/8 shrink-0" />
-          <div className="min-w-0 flex-1 space-y-2">
-            <div className="h-4 bg-[#121A2A]/10 rounded w-3/4" />
-            <div className="h-3 bg-[#121A2A]/6 rounded w-1/2" />
+        <div className="w-14 h-4.5 sm:w-16 sm:h-5 bg-[#121A2A]/8 rounded-full mb-2 sm:mb-3" />
+        <div className="flex items-center gap-2.5 sm:gap-3">
+          <div className="w-10 h-10 sm:w-11 sm:h-11 lg:w-12 lg:h-12 rounded-xl sm:rounded-2xl bg-[#121A2A]/8 shrink-0" />
+          <div className="min-w-0 flex-1 space-y-1.5 sm:space-y-2">
+            <div className="h-3.5 sm:h-4 bg-[#121A2A]/10 rounded w-3/4" />
+            <div className="h-2.5 sm:h-3 bg-[#121A2A]/6 rounded w-1/2" />
           </div>
         </div>
-        <div className="flex items-center gap-1.5 mt-3">
-          <div className="w-12 h-4 bg-[#121A2A]/6 rounded" />
-          <div className="w-14 h-4 bg-[#121A2A]/6 rounded" />
-          <div className="w-16 h-4 bg-[#121A2A]/6 rounded" />
+        <div className="flex items-center gap-1 sm:gap-1.5 mt-2 sm:mt-3">
+          <div className="w-10 h-3.5 sm:w-12 sm:h-4 bg-[#121A2A]/6 rounded" />
+          <div className="w-12 h-3.5 sm:w-14 sm:h-4 bg-[#121A2A]/6 rounded" />
+          <div className="w-14 h-3.5 sm:w-16 sm:h-4 bg-[#121A2A]/6 rounded" />
         </div>
       </div>
-      <div className="pt-2.5 border-t border-[rgba(18,26,42,0.06)] mt-2 flex items-center justify-between">
-        <div className="h-5 bg-[#121A2A]/10 rounded w-24" />
-        <div className="h-7 bg-[#121A2A]/8 rounded-full w-16" />
+      <div className="pt-2 border-t border-[rgba(18,26,42,0.06)] mt-1.5 sm:mt-2 flex items-center justify-between">
+        <div className="h-4 sm:h-5 bg-[#121A2A]/10 rounded w-20 sm:w-24" />
+        <div className="h-6 sm:h-7 bg-[#121A2A]/8 rounded-full w-14 sm:w-16" />
       </div>
     </div>
   );
@@ -320,24 +320,24 @@ export function ShowcaseLoopingCard({
     <div
       tabIndex={isDuplicate ? -1 : undefined}
       aria-hidden={isDuplicate ? true : undefined}
-      className={`group relative bg-gradient-to-br ${visualTheme.cardBg} border ${visualTheme.cardBorder} ${visualTheme.cardShadow || 'shadow-2xs'} hover:shadow-card-hover hover:-translate-y-1 rounded-3xl p-4 sm:p-5 transition-all duration-300 flex flex-col justify-between shrink-0 flex-none w-[260px] sm:w-[280px] lg:w-[290px] h-[195px] sm:h-[205px] mr-3 sm:mr-4 select-none overflow-hidden`}
+      className={`group relative bg-gradient-to-br ${visualTheme.cardBg} border ${visualTheme.cardBorder} ${visualTheme.cardShadow || 'shadow-2xs'} hover:shadow-card-hover hover:-translate-y-1 rounded-2xl sm:rounded-3xl p-3.5 sm:p-4.5 lg:p-5 transition-all duration-300 flex flex-col justify-between shrink-0 flex-none w-[250px] sm:w-[275px] lg:w-[285px] h-[192px] sm:h-[198px] lg:h-[205px] mr-2.5 sm:mr-3.5 lg:mr-4 select-none overflow-hidden`}
     >
-      {/* Individual Product Background Pattern (Bespoke vector motif at 5-12% opacity, no top-right watermark) */}
+      {/* Individual Product Background Pattern (Bespoke vector motif with enhanced context) */}
       <ProductCardBackgroundPattern slug={app.slug} name={app.name} />
 
       {/* Row 1: Rank Badge */}
       <div className="relative z-10 flex items-center justify-between">
-        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black shadow-2xs border ${rankTheme.badgeBg} ${rankTheme.badgeText} ${rankTheme.badgeBorder}`}>
+        <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full text-[11px] sm:text-xs font-black shadow-2xs border ${rankTheme.badgeBg} ${rankTheme.badgeText} ${rankTheme.badgeBorder}`}>
           <span>{rankTheme.crownEmoji}</span>
           <span>{rankTheme.title}</span>
         </span>
       </div>
 
       {/* Row 2: Brand Logo + Name + Star Rating & Sold Count */}
-      <div className="relative z-10 flex items-center gap-3 mt-1.5">
+      <div className="relative z-10 flex items-center gap-2.5 sm:gap-3 mt-1 sm:mt-1.5">
         <Link
           href={`/products/${app.slug}`}
-          className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-white shadow-2xs border border-black/5 p-1 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform"
+          className="w-10 h-10 sm:w-11 sm:h-11 lg:w-12 lg:h-12 rounded-xl sm:rounded-2xl bg-white shadow-2xs border border-black/5 p-1 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform"
         >
           <AppBrandBadge name={app.name} imageUrl={app.logoUrl} />
         </Link>
@@ -345,16 +345,16 @@ export function ShowcaseLoopingCard({
         <div className="min-w-0 flex-1">
           <Link
             href={`/products/${app.slug}`}
-            className="font-extrabold text-sm sm:text-base text-[#121A2A] group-hover:text-[#C96F55] transition-colors truncate block leading-snug"
+            className="font-extrabold text-[13px] sm:text-sm lg:text-base text-[#121A2A] group-hover:text-[#C96F55] transition-colors truncate block leading-snug"
             title={app.name}
           >
             {app.name}
           </Link>
 
-          <div className="flex items-center gap-1 text-[11px] text-[#121A2A]/75 font-medium mt-0.5">
-            <FontAwesomeIcon icon={faStar} className="w-3 h-3 text-amber-500 shrink-0" />
+          <div className="flex items-center gap-1 text-[10.5px] sm:text-[11px] text-[#121A2A]/75 font-medium mt-0.5">
+            <FontAwesomeIcon icon={faStar} className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-amber-500 shrink-0" />
             <span className="font-bold text-[#121A2A]">{app.rating || '5.0'}</span>
-            <span className="text-[#121A2A]/50 truncate text-[11px]">
+            <span className="text-[#121A2A]/50 truncate text-[10.5px] sm:text-[11px]">
               ({typeof app.soldCount === 'number' && app.soldCount > 0 ? `${app.soldCount.toLocaleString('id-ID')} terjual` : (isOutOfStock ? 'Stok Habis' : 'Ready')})
             </span>
           </div>
@@ -362,46 +362,46 @@ export function ShowcaseLoopingCard({
       </div>
 
       {/* Row 3: Feature Badges (Ready/Habis, Garansi, DISKON 15%) */}
-      <div className="relative z-10 flex items-center gap-1.5 mt-2">
+      <div className="relative z-10 flex items-center gap-1 sm:gap-1.5 mt-1.5 sm:mt-2">
         {isOutOfStock ? (
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-red-50 text-red-600 border border-red-200/60 leading-none">
+          <span className="inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded text-[9.5px] sm:text-[10px] font-bold bg-red-50 text-red-600 border border-red-200/60 leading-none">
             Stok Habis
           </span>
         ) : (
-          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200/60 leading-none">
+          <span className="inline-flex items-center px-1.5 sm:px-2 py-0.5 rounded text-[9.5px] sm:text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200/60 leading-none">
             Ready
           </span>
         )}
-        <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/60 leading-none">
+        <span className="inline-flex items-center gap-0.5 px-1.5 sm:px-2 py-0.5 rounded text-[9.5px] sm:text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/60 leading-none">
           🛡️ Garansi
         </span>
         {isPromo && (
-          <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded text-[10px] font-black bg-rose-50 text-rose-600 border border-rose-200/60 leading-none select-none">
+          <span className="inline-flex items-center gap-0.5 px-1.5 sm:px-2 py-0.5 rounded text-[9.5px] sm:text-[10px] font-black bg-rose-50 text-rose-600 border border-rose-200/60 leading-none select-none">
             🏷️ {promoCalc.discountBadge || 'DISKON 15%'}
           </span>
         )}
         {!isPromo && (
-          <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-200/60 leading-none select-none">
+          <span className="inline-flex items-center gap-0.5 px-1.5 sm:px-2 py-0.5 rounded text-[9.5px] sm:text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-200/60 leading-none select-none">
             🏷️ DISKON 15%
           </span>
         )}
       </div>
 
       {/* Row 4: Pricing & Pill "Pilih" Button */}
-      <div className="relative z-10 pt-2 border-t border-[rgba(18,26,42,0.06)] mt-2 flex items-center justify-between">
+      <div className="relative z-10 pt-1.5 sm:pt-2 border-t border-[rgba(18,26,42,0.06)] mt-1.5 sm:mt-2 flex items-center justify-between">
         <div className="flex flex-col min-w-0">
           <div className="flex items-center gap-1 leading-none">
-            <span className="text-[10px] sm:text-[11px] text-[#121A2A]/40 line-through font-semibold leading-none block">
+            <span className="text-[9.5px] sm:text-[10.5px] text-[#121A2A]/40 line-through font-semibold leading-none block">
               {promoCalc.hasPromo ? promoCalc.originalPriceFormatted : `Rp${Math.round(minPrice * 1.15).toLocaleString('id-ID')}`}
             </span>
-            <span className="text-[8px] font-black text-[#DC2626] bg-[#DC2626]/10 px-1 py-0.2 rounded border border-[#DC2626]/20">
+            <span className="text-[7.5px] sm:text-[8px] font-black text-[#DC2626] bg-[#DC2626]/10 px-1 py-0.2 rounded border border-[#DC2626]/20">
               {promoCalc.hasPromo ? promoCalc.savingsText : `Hemat Rp${Math.round(minPrice * 0.15).toLocaleString('id-ID')}`}
             </span>
           </div>
 
           <Link
             href={`/products/${app.slug}`}
-            className="font-black text-sm sm:text-base text-[#121A2A] hover:text-[#C96F55] transition-colors mt-0.5 block truncate"
+            className="font-black text-xs sm:text-sm lg:text-base text-[#121A2A] hover:text-[#C96F55] transition-colors mt-0.5 block truncate"
           >
             {promoCalc.hasPromo ? promoCalc.discountedPriceFormatted : `Rp ${minPrice.toLocaleString('id-ID')}`}
           </Link>
@@ -418,20 +418,20 @@ export function ShowcaseLoopingCard({
               }}
               title="Lihat Cepat"
               aria-label={`Pilih ${app.name}`}
-              className="bg-white hover:bg-slate-50 border border-slate-200/90 text-slate-800 rounded-full px-3 py-1.5 text-[11px] font-bold flex items-center gap-1.5 shadow-2xs hover:shadow-xs transition-all cursor-pointer"
+              className="bg-white hover:bg-slate-50 border border-slate-200/90 text-slate-800 rounded-full px-2.5 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-[11px] font-bold flex items-center gap-1 sm:gap-1.5 shadow-2xs hover:shadow-xs transition-all cursor-pointer"
             >
-              <FontAwesomeIcon icon={faEye} className="w-3 h-3 text-slate-500" />
+              <FontAwesomeIcon icon={faEye} className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-slate-500" />
               <span>Pilih</span>
-              <FontAwesomeIcon icon={faArrowRight} className="w-2.5 h-2.5 text-slate-500" />
+              <FontAwesomeIcon icon={faArrowRight} className="w-2 h-2 sm:w-2.5 sm:h-2.5 text-slate-500" />
             </button>
           ) : (
             <Link
               href={`/products/${app.slug}`}
-              className="bg-white hover:bg-slate-50 border border-slate-200/90 text-slate-800 rounded-full px-3 py-1.5 text-[11px] font-bold flex items-center gap-1.5 shadow-2xs hover:shadow-xs transition-all"
+              className="bg-white hover:bg-slate-50 border border-slate-200/90 text-slate-800 rounded-full px-2.5 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-[11px] font-bold flex items-center gap-1 sm:gap-1.5 shadow-2xs hover:shadow-xs transition-all"
             >
-              <FontAwesomeIcon icon={faEye} className="w-3 h-3 text-slate-500" />
+              <FontAwesomeIcon icon={faEye} className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-slate-500" />
               <span>Pilih</span>
-              <FontAwesomeIcon icon={faArrowRight} className="w-2.5 h-2.5 text-slate-500" />
+              <FontAwesomeIcon icon={faArrowRight} className="w-2 h-2 sm:w-2.5 sm:h-2.5 text-slate-500" />
             </Link>
           )}
         </div>
