@@ -53,6 +53,13 @@ data/
 # Local scratch, certificates & temp media
 scratch/
 certificates/
+**/certificates/
+*.pem
+*.key
+*.crt
+*.cert
+*.p12
+*.pfx
 *.MOV
 
 # Graphify temporary caches

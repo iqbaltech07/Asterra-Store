@@ -1,10 +1,77 @@
 import argparse
+import os
 import sys
+from pathlib import Path
+from urllib.parse import urlparse
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
-PROD_DB_URL = "postgresql://postgres.kszyhgyddstbdooxsnuo:gWh4ph3ASw49BZRm@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres"
-STAGING_DB_URL = "postgresql://postgres.dtksnmjlgumpzrtvvxas:hOcuOBmRdytexlFE@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres"
+try:
+    from dotenv import dotenv_values
+except ImportError:
+    dotenv_values = None
+
+
+def mask_db_url(url: str) -> str:
+    """Masks database credentials for safe logging."""
+    try:
+        parsed = urlparse(url)
+        netloc_parts = parsed.netloc.split("@")
+        if len(netloc_parts) == 2:
+            return f"{parsed.scheme}://***:***@{netloc_parts[1]}{parsed.path}"
+        return f"{parsed.scheme}://***{parsed.path}"
+    except Exception:
+        return "[DATABASE_URL_CONFIGURED]"
+
+
+def resolve_database_urls(
+    cli_prod_url: str | None = None,
+    cli_staging_url: str | None = None,
+) -> tuple[str, str]:
+    """Resolves production and staging database URLs from CLI args, environment variables,
+    or uncommitted local .env files. Never hardcodes credentials.
+    """
+    prod_url = (
+        cli_prod_url
+        or os.getenv("PROD_DATABASE_URL")
+        or os.getenv("PROD_DB_URL")
+    )
+    staging_url = (
+        cli_staging_url
+        or os.getenv("STAGING_DATABASE_URL")
+        or os.getenv("STAGING_DB_URL")
+        or os.getenv("DATABASE_URL")
+    )
+
+    # Search local uncommitted env files if not yet resolved
+    if dotenv_values and (not prod_url or not staging_url):
+        base_dir = Path(__file__).resolve().parent.parent
+
+        if not prod_url:
+            prod_env_file = base_dir / ".env.production"
+            if prod_env_file.exists():
+                vals = dotenv_values(str(prod_env_file))
+                prod_url = vals.get("DATABASE_URL") or vals.get("PROD_DATABASE_URL")
+
+        if not staging_url:
+            for env_candidate in [base_dir / ".env.development", base_dir / ".env"]:
+                if env_candidate.exists():
+                    vals = dotenv_values(str(env_candidate))
+                    staging_url = vals.get("DATABASE_URL") or vals.get("STAGING_DATABASE_URL")
+                    if staging_url:
+                        break
+
+    if not prod_url:
+        raise ValueError(
+            "Production Database URL not provided. Please set PROD_DATABASE_URL in environment or pass --prod-url."
+        )
+    if not staging_url:
+        raise ValueError(
+            "Staging Database URL not provided. Please set STAGING_DATABASE_URL in environment or pass --staging-url."
+        )
+
+    return prod_url.strip(), staging_url.strip()
+
 
 # Tables to synchronize in dependency order
 # Format: (table_name, primary_key_column)
@@ -45,7 +112,7 @@ EXCLUDED_TABLES = [
 ]
 
 
-def sync_data(dry_run: bool = True):
+def sync_data(prod_url: str, staging_url: str, dry_run: bool = True):
     print("=" * 70)
     print(" ASTERRA STORE: PRODUCTION -> STAGING DATA SYNCHRONIZATION")
     print("=" * 70)
@@ -53,12 +120,12 @@ def sync_data(dry_run: bool = True):
     print("Policy: Exclude Orders, Sales, Financials, and User Authentication.")
     print()
 
-    print("Connecting to Production Database (Source: kszyhgyddstbdooxsnuo)...")
-    conn_prod = psycopg2.connect(PROD_DB_URL, connect_timeout=15)
+    print(f"Connecting to Production Database: {mask_db_url(prod_url)}...")
+    conn_prod = psycopg2.connect(prod_url, connect_timeout=15)
     cur_prod = conn_prod.cursor(cursor_factory=RealDictCursor)
 
-    print("Connecting to Staging Database (Destination: dtksnmjlgumpzrtvvxas)...")
-    conn_staging = psycopg2.connect(STAGING_DB_URL, connect_timeout=15)
+    print(f"Connecting to Staging Database: {mask_db_url(staging_url)}...")
+    conn_staging = psycopg2.connect(staging_url, connect_timeout=15)
     conn_staging.autocommit = False
     cur_staging = conn_staging.cursor(cursor_factory=RealDictCursor)
 
@@ -178,6 +245,28 @@ if __name__ == "__main__":
         action="store_true",
         help="Apply changes to Staging DB (defaults to dry-run)",
     )
+    parser.add_argument(
+        "--prod-url",
+        default=None,
+        help="Production PostgreSQL connection URI (or via PROD_DATABASE_URL env)",
+    )
+    parser.add_argument(
+        "--staging-url",
+        default=None,
+        help="Staging PostgreSQL connection URI (or via STAGING_DATABASE_URL env)",
+    )
     args = parser.parse_args()
 
-    sync_data(dry_run=not args.execute)
+    try:
+        resolved_prod_url, resolved_staging_url = resolve_database_urls(
+            cli_prod_url=args.prod_url,
+            cli_staging_url=args.staging_url,
+        )
+        sync_data(
+            prod_url=resolved_prod_url,
+            staging_url=resolved_staging_url,
+            dry_run=not args.execute,
+        )
+    except Exception as e:
+        print(f"[CONFIGURATION ERROR] {e}", file=sys.stderr)
+        sys.exit(1)

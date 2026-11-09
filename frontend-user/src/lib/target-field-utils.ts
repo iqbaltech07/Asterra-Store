@@ -255,6 +255,33 @@ export function validateContactPhone(value: string): TargetValidationResult {
   };
 }
 
+export function validateContactRecipient(value: string): TargetValidationResult {
+  const trimmed = (value || '').trim();
+  if (!trimmed) {
+    return {
+      isValid: false,
+      isEmpty: true,
+      error: 'Email atau Nomor WhatsApp penerima wajib diisi.',
+    };
+  }
+
+  if (trimmed.includes('@')) {
+    const res = validateContactEmail(trimmed);
+    return {
+      ...res,
+      successMessage: res.isValid ? 'Email penerima valid' : undefined,
+      error: res.isValid ? undefined : (res.error || 'Format email penerima tidak valid.'),
+    };
+  }
+
+  const res = validateContactPhone(trimmed);
+  return {
+    ...res,
+    successMessage: res.isValid ? 'Nomor WhatsApp penerima valid' : undefined,
+    error: res.isValid ? undefined : (res.error || 'Nomor WhatsApp penerima tidak valid.'),
+  };
+}
+
 // -------------------------------------------------------------
 // PRODUCT TARGET REQUIREMENT DETECTOR
 // -------------------------------------------------------------

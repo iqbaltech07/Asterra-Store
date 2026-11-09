@@ -38,6 +38,7 @@ import {
   validateTargetZone,
   validateContactEmail,
   validateContactPhone,
+  validateContactRecipient,
 } from '@/lib/target-field-utils';
 
 const GATEWAY_PAYMENT_METHODS: PaymentMethodOption[] = [
@@ -113,6 +114,31 @@ function CheckoutPageContent() {
     return '';
   });
   const [customerNotes, setCustomerNotes] = useState('');
+
+  // Checkbox & Recipient state for Different Recipient option (Default: false)
+  const [isDifferentRecipient, setIsDifferentRecipient] = useState<boolean>(false);
+  const [recipientName, setRecipientName] = useState<string>('');
+  const [recipientContact, setRecipientContact] = useState<string>('');
+
+  const handleDifferentRecipientChange = (checked: boolean) => {
+    setIsDifferentRecipient(checked);
+    if (!checked) {
+      // Clear recipient fields to prevent sending stale values
+      setRecipientName('');
+      setRecipientContact('');
+      // Reset target values on multi-item targets so they mirror buyer again
+      setItemTargets((prev) => {
+        const next = { ...prev };
+        Object.keys(next).forEach((key) => {
+          next[key] = {
+            ...next[key],
+            targetValue: '',
+          };
+        });
+        return next;
+      });
+    }
+  };
 
   // Per-item dynamic target state for multi-item cart
   const [itemTargets, setItemTargets] = useState<
@@ -225,29 +251,56 @@ function CheckoutPageContent() {
   // Authoritative helper to resolve item target data without resurrecting stale data on clear
   const resolveItemTarget = (item: any, idx: number) => {
     const key = `${item.id}_${idx}`;
+    const req = getProductTargetRequirement(item);
     const isSingle = items.length <= 1;
+    const targetState = itemTargets[key];
 
+    const effectiveMethod: 'whatsapp' | 'gmail' = isSingle
+      ? choiceMethod
+      : ((targetState?.choiceMethod as any) || choiceMethod);
+
+    const effectiveZone = isSingle
+      ? targetZone.trim()
+      : ((targetState?.targetZone || targetZone || '').trim());
+
+    if (isDifferentRecipient) {
+      // When different recipient is active, authoritative value is either per-item override or recipientContact
+      const rawVal = isSingle
+        ? (recipientContact.trim() || targetValue.trim())
+        : ((targetState?.targetValue || '').trim() || recipientContact.trim());
+
+      return {
+        targetValue: rawVal,
+        targetZone: effectiveZone,
+        choiceMethod: effectiveMethod,
+        recipientName: recipientName.trim(),
+      };
+    }
+
+    // DEFAULT (isDifferentRecipient === false):
+    // Target data automatically mirrors buyer data!
     let effectiveVal = '';
-    let effectiveZone = '';
-    let effectiveMethod: 'whatsapp' | 'gmail' = 'whatsapp';
-
-    if (isSingle) {
-      // In single-item mode, the authoritative source is targetValue (what the user types/sees in the input)
-      effectiveVal = targetValue.trim();
-      effectiveZone = targetZone.trim();
-      effectiveMethod = choiceMethod;
+    if (req.type === 'game') {
+      effectiveVal = isSingle
+        ? targetValue.trim()
+        : ((targetState?.targetValue || targetValue || '').trim());
+    } else if (req.type === 'choice') {
+      effectiveVal = effectiveMethod === 'gmail' ? customerEmail.trim() : phoneNumber.trim();
+    } else if (req.type === 'email') {
+      effectiveVal = customerEmail.trim();
+    } else if (req.type === 'phone') {
+      effectiveVal = phoneNumber.trim();
+    } else if (req.type === 'none') {
+      effectiveVal = 'N/A';
     } else {
-      // In multi-item mode, each item's authoritative source is strictly itemTargets[key]
-      const targetState = itemTargets[key];
-      effectiveVal = (targetState?.targetValue || '').trim();
-      effectiveZone = (targetState?.targetZone || '').trim();
-      effectiveMethod = (targetState?.choiceMethod as any) || 'whatsapp';
+      effectiveVal = customerEmail.trim() || phoneNumber.trim();
     }
 
     return {
       targetValue: effectiveVal,
       targetZone: effectiveZone,
       choiceMethod: effectiveMethod,
+      recipientName: customerName.trim(),
     };
   };
 
@@ -788,7 +841,48 @@ function CheckoutPageContent() {
       return false;
     }
 
-    // 1. Zod Validation: Data Tujuan Aktivasi untuk setiap item dalam keranjang
+    // 1. Zod Validation: Email Kontak Pemesan (Invoice)
+    if (!customerEmail.trim()) {
+      showNotification('Mohon lengkapi email pemesan.');
+      return false;
+    }
+    const emailValidation = validateContactEmail(customerEmail);
+    if (!emailValidation.isValid) {
+      showNotification(emailValidation.error || 'Format email pemesan tidak valid.');
+      return false;
+    }
+
+    // 2. Zod Validation: Nomor WhatsApp Kontak Pemesan
+    if (!phoneNumber.trim()) {
+      showNotification('Mohon lengkapi nomor WhatsApp kontak pemesan.');
+      return false;
+    }
+    const phoneValidation = validateContactPhone(phoneNumber);
+    if (!phoneValidation.isValid) {
+      showNotification(phoneValidation.error || 'Nomor WhatsApp kontak pemesan tidak valid.');
+      return false;
+    }
+
+    // 3. Zod Validation: Recipient Data (if Different Recipient option is active)
+    if (isDifferentRecipient) {
+      if (!recipientName.trim()) {
+        showNotification('Mohon lengkapi nama penerima produk.');
+        return false;
+      }
+      if (!recipientContact.trim()) {
+        showNotification('Mohon lengkapi email atau nomor WhatsApp penerima.');
+        return false;
+      }
+      const recipientContactVal = validateContactRecipient(recipientContact);
+      if (!recipientContactVal.isValid) {
+        showNotification(
+          recipientContactVal.error || 'Format kontak penerima tidak valid (gunakan email valid atau nomor WhatsApp).'
+        );
+        return false;
+      }
+    }
+
+    // 4. Per-Item Target & Game ID Validation
     for (let idx = 0; idx < items.length; idx++) {
       const it = items[idx];
       const req = getProductTargetRequirement(it);
@@ -801,7 +895,30 @@ function CheckoutPageContent() {
         return false;
       }
 
-      if (req.type !== 'none') {
+      if (req.type === 'game') {
+        const targetValidation = validateTargetValue('game', itTarget.targetValue);
+        if (!targetValidation.isValid) {
+          showNotification(
+            items.length > 1
+              ? `Item ${idx + 1} (${it.name}): ${targetValidation.error || 'Mohon lengkapi User ID game.'}`
+              : targetValidation.error || 'Mohon lengkapi User ID game.'
+          );
+          return false;
+        }
+
+        if (req.requiresZone) {
+          const zoneValidation = validateTargetZone(itTarget.targetZone);
+          if (!zoneValidation.isValid) {
+            showNotification(
+              items.length > 1
+                ? `Item ${idx + 1} (${it.name}): ${zoneValidation.error || 'Mohon lengkapi Server / Zone ID game Anda.'}`
+                : zoneValidation.error || 'Mohon lengkapi Server / Zone ID game Anda.'
+            );
+            return false;
+          }
+        }
+      } else if (req.type !== 'none' && isDifferentRecipient) {
+        // If different recipient is active, ensure the item target is valid
         const targetValidation = validateTargetValue(req.type, itTarget.targetValue, itTarget.choiceMethod);
         if (!targetValidation.isValid) {
           const fieldLabel =
@@ -817,38 +934,6 @@ function CheckoutPageContent() {
           );
           return false;
         }
-      }
-
-      if (req.requiresZone) {
-        const zoneValidation = validateTargetZone(itTarget.targetZone);
-        if (!zoneValidation.isValid) {
-          showNotification(
-            items.length > 1
-              ? `Item ${idx + 1} (${it.name}): ${zoneValidation.error || 'Mohon lengkapi Server / Zone ID game Anda.'}`
-              : zoneValidation.error || 'Mohon lengkapi Server / Zone ID game Anda.'
-          );
-          return false;
-        }
-      }
-    }
-
-    // 3. Zod Validation: Nomor WhatsApp Kontak Pemesan (Card 2)
-    if (!phoneNumber.trim()) {
-      showNotification('Mohon lengkapi nomor WhatsApp kontak pemesan.');
-      return false;
-    }
-    const phoneValidation = validateContactPhone(phoneNumber);
-    if (!phoneValidation.isValid) {
-      showNotification(phoneValidation.error || 'Nomor WhatsApp kontak pemesan tidak valid.');
-      return false;
-    }
-
-    // 4. Zod Validation: Email Kontak Pemesan (Invoice) jika diisi
-    if (customerEmail.trim()) {
-      const emailValidation = validateContactEmail(customerEmail);
-      if (!emailValidation.isValid) {
-        showNotification(emailValidation.error || 'Format email pemesan tidak valid.');
-        return false;
       }
     }
 
@@ -1067,24 +1152,52 @@ function CheckoutPageContent() {
       let itTargetPhone: string | undefined = undefined;
       let itTargetValue = itTarget.targetValue.trim();
 
-      if (req.type === 'choice') {
-        itFulfillmentMethod = itTarget.choiceMethod; // 'whatsapp' | 'gmail'
-        if (itTarget.choiceMethod === 'gmail') {
+      if (isDifferentRecipient) {
+        if (itTargetValue.includes('@')) {
           itTargetEmail = itTargetValue;
-        } else {
+        } else if (itTargetValue) {
           itTargetPhone = itTargetValue;
         }
-      } else if (req.type === 'email') {
-        itFulfillmentMethod = 'invite';
-        itTargetEmail = itTargetValue;
-      } else if (req.type === 'phone') {
-        itFulfillmentMethod = 'direct';
-        itTargetPhone = itTargetValue;
-      } else if (req.type === 'none') {
-        itFulfillmentMethod = 'voucher';
-        itTargetValue = 'N/A';
-      } else if (req.type === 'game') {
-        itFulfillmentMethod = 'game';
+
+        if (req.type === 'choice') {
+          itFulfillmentMethod = itTarget.choiceMethod; // 'whatsapp' | 'gmail'
+        } else if (req.type === 'email') {
+          itFulfillmentMethod = 'invite';
+        } else if (req.type === 'phone') {
+          itFulfillmentMethod = 'direct';
+        } else if (req.type === 'none') {
+          itFulfillmentMethod = 'voucher';
+          itTargetValue = 'N/A';
+        } else if (req.type === 'game') {
+          itFulfillmentMethod = 'game';
+        }
+      } else {
+        // DEFAULT: Target automatically mirrors buyer data!
+        if (req.type === 'choice') {
+          itFulfillmentMethod = itTarget.choiceMethod; // 'whatsapp' | 'gmail'
+          if (itTarget.choiceMethod === 'gmail') {
+            itTargetEmail = buyerEmail;
+            itTargetValue = buyerEmail;
+          } else {
+            itTargetPhone = buyerPhone;
+            itTargetValue = buyerPhone;
+          }
+        } else if (req.type === 'email') {
+          itFulfillmentMethod = 'invite';
+          itTargetEmail = buyerEmail;
+          itTargetValue = buyerEmail;
+        } else if (req.type === 'phone') {
+          itFulfillmentMethod = 'direct';
+          itTargetPhone = buyerPhone;
+          itTargetValue = buyerPhone;
+        } else if (req.type === 'none') {
+          itFulfillmentMethod = 'voucher';
+          itTargetValue = 'N/A';
+        } else if (req.type === 'game') {
+          itFulfillmentMethod = 'game';
+          itTargetEmail = buyerEmail;
+          itTargetPhone = buyerPhone;
+        }
       }
 
       const itTargetId = req.type === 'game' ? itTargetValue : (itTargetEmail || itTargetPhone || itTargetValue || undefined);
@@ -1130,6 +1243,8 @@ function CheckoutPageContent() {
           target_value: itTargetValue,
           targetValue: itTargetValue,
           phone: itTargetPhone || buyerPhone,
+          recipient_name: isDifferentRecipient ? recipientName.trim() : customerName.trim(),
+          is_different_recipient: isDifferentRecipient,
         },
       };
     });
@@ -1138,6 +1253,10 @@ function CheckoutPageContent() {
     const firstItPayload = orderItemsPayload[0] || {};
 
     const orderPayload = {
+      is_different_recipient: isDifferentRecipient,
+      isDifferentRecipient: isDifferentRecipient,
+      recipient_name: isDifferentRecipient ? recipientName.trim() : customerName.trim(),
+      recipientName: isDifferentRecipient ? recipientName.trim() : customerName.trim(),
       target_id: isSingle ? firstItPayload.target_id : undefined,
       targetId: isSingle ? firstItPayload.target_id : undefined,
       target_zone: isSingle ? firstItPayload.target_zone : undefined,
@@ -1354,6 +1473,14 @@ function CheckoutPageContent() {
                     onCustomerNameChange={setCustomerName}
                     customerEmail={customerEmail}
                     onCustomerEmailChange={setCustomerEmail}
+                    phoneNumber={phoneNumber}
+                    onPhoneNumberChange={setPhoneNumber}
+                    isDifferentRecipient={isDifferentRecipient}
+                    onDifferentRecipientChange={handleDifferentRecipientChange}
+                    recipientName={recipientName}
+                    onRecipientNameChange={setRecipientName}
+                    recipientContact={recipientContact}
+                    onRecipientContactChange={setRecipientContact}
                     targetValue={targetValue}
                     onTargetValueChange={handleSingleTargetValueChange}
                     targetZone={targetZone}
@@ -1362,8 +1489,6 @@ function CheckoutPageContent() {
                     onTargetEmailChange={setTargetEmail}
                     choiceMethod={choiceMethod}
                     onChoiceMethodChange={handleSingleChoiceMethodChange}
-                    phoneNumber={phoneNumber}
-                    onPhoneNumberChange={setPhoneNumber}
                     customerNotes={customerNotes}
                     onCustomerNotesChange={setCustomerNotes}
                     targetRequirement={targetRequirement}
