@@ -444,22 +444,33 @@ export interface ProductSoldConfig {
 }
 
 export const PRODUCT_SOLD_CONFIGS: Record<string, ProductSoldConfig> = {
-  netflix: { name: 'Netflix', baseCount: 38, targetMax: 40, seed: 102 },
-  spotify: { name: 'Spotify', baseCount: 37, targetMax: 40, seed: 109 },
-  gemini: { name: 'Google Gemini', baseCount: 36, targetMax: 40, seed: 108 },
-  capcut: { name: 'CapCut', baseCount: 34, targetMax: 40, seed: 105 },
-  youtube: { name: 'YouTube', baseCount: 32, targetMax: 40, seed: 101 },
-  chatgpt: { name: 'ChatGPT', baseCount: 30, targetMax: 35, seed: 107 },
-  'apple-music': { name: 'Apple Music', baseCount: 28, targetMax: 35, seed: 116 },
-  canva: { name: 'Canva', baseCount: 24, targetMax: 30, seed: 103 },
-  vidio: { name: 'Vidio', baseCount: 22, targetMax: 28, seed: 104 },
-  'mobile-legends': { name: 'Mobile Legends', baseCount: 22, targetMax: 28, seed: 110 },
-  wetv: { name: 'WeTV', baseCount: 9, targetMax: 15, seed: 112 },
-  'pubg-mobile': { name: 'PUBG Mobile', baseCount: 20, targetMax: 25, seed: 111 },
-  viu: { name: 'Viu', baseCount: 20, targetMax: 25, seed: 106 },
-  bstation: { name: 'Bstation', baseCount: 8, targetMax: 15, seed: 114 },
-  'alight-motion': { name: 'Alight Motion', baseCount: 10, targetMax: 15, seed: 115 },
-  iqiyi: { name: 'iQIYI', baseCount: 18, targetMax: 23, seed: 113 },
+  // Special Priority Baselines (Strict)
+  netflix: { name: 'Netflix', baseCount: 31, targetMax: 35, seed: 102 },
+  youtube: { name: 'YouTube', baseCount: 26, targetMax: 30, seed: 101 },
+  spotify: { name: 'Spotify', baseCount: 21, targetMax: 25, seed: 109 },
+  'apple-music': { name: 'Apple Music', baseCount: 20, targetMax: 25, seed: 116 },
+  chatgpt: { name: 'ChatGPT', baseCount: 18, targetMax: 22, seed: 107 },
+  capcut: { name: 'CapCut', baseCount: 16, targetMax: 20, seed: 105 },
+
+  // Produk Terbaru Baselines (strictly 10 - 14)
+  gemini: { name: 'Google Gemini', baseCount: 14, targetMax: 20, seed: 108 },
+  iqiyi: { name: 'iQIYI', baseCount: 13, targetMax: 18, seed: 113 },
+  viu: { name: 'Viu', baseCount: 13, targetMax: 18, seed: 106 },
+  duolingo: { name: 'Duolingo', baseCount: 12, targetMax: 16, seed: 117 },
+  getcontact: { name: 'Getcontact', baseCount: 12, targetMax: 16, seed: 118 },
+  zoom: { name: 'Zoom', baseCount: 12, targetMax: 16, seed: 119 },
+  'alight-motion': { name: 'Alight Motion', baseCount: 11, targetMax: 15, seed: 115 },
+  wetv: { name: 'WeTV', baseCount: 11, targetMax: 15, seed: 112 },
+  wink: { name: 'Wink', baseCount: 11, targetMax: 15, seed: 121 },
+  bstation: { name: 'Bstation', baseCount: 10, targetMax: 15, seed: 114 },
+  meitu: { name: 'Meitu', baseCount: 10, targetMax: 15, seed: 122 },
+  loklok: { name: 'Loklok', baseCount: 10, targetMax: 15, seed: 123 },
+
+  // Produk Lainnya (strictly 12 - 17, never below 12)
+  canva: { name: 'Canva', baseCount: 17, targetMax: 22, seed: 103 },
+  vidio: { name: 'Vidio', baseCount: 16, targetMax: 20, seed: 104 },
+  'mobile-legends': { name: 'Mobile Legends', baseCount: 15, targetMax: 20, seed: 110 },
+  'pubg-mobile': { name: 'PUBG Mobile', baseCount: 14, targetMax: 18, seed: 111 },
 };
 
 export function getProductSoldConfig(nameOrSlug: string): ProductSoldConfig {

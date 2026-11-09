@@ -419,7 +419,7 @@ class HomepageSectionService:
                         "realSoldCount": sb["real"],
                         "orderSoldCount": sb["total"],
                         "soldCount": total_sold,
-                        "isPromo": in_promo or section_key == "promo",
+                        "isPromo": bool(in_promo),
                         "effectiveCreatedAt": effective_created_at.isoformat() if has_valid_dt else None,
                         "_effective_dt": effective_created_at,
                         "_has_valid_dt": has_valid_dt,
@@ -435,7 +435,7 @@ class HomepageSectionService:
         # --- AUTO RANKING FOR EACH SECTION ---
         auto_ranked: List[Dict[str, Any]] = []
         if section_key == "promo":
-            # Auto Promo: Prioritize cards in active campaigns, then sold_count DESC, then effective_dt DESC
+            # Auto Promo: Strictly cards with active promo / discount. Non-promo cards are NEVER included.
             promo_candidates = [c for c in candidate_cards if c.get("isPromo")]
             auto_ranked = sorted(
                 promo_candidates,
@@ -448,7 +448,7 @@ class HomepageSectionService:
                 reverse=True,
             )
         elif section_key == "terlaris":
-            # Auto Terlaris: Sort strictly by sold_count DESC, tie-breaker orderSoldCount DESC, rating DESC, effective_dt DESC
+            # Auto Terlaris: Sort strictly by final sold_count DESC, tie-breaker orderSoldCount DESC, rating DESC, stable id
             auto_ranked = sorted(
                 candidate_cards,
                 key=lambda x: (
@@ -456,17 +456,19 @@ class HomepageSectionService:
                     x.get("orderSoldCount", 0),
                     float(x.get("rating") or 5.0),
                     x["_effective_dt"].timestamp(),
+                    x["id"],
                 ),
                 reverse=True,
             )
         elif section_key == "terbaru":
-            # Auto Terbaru: Sort by has_valid_dt (1 vs 0), effective_dt DESC (newest card or variant), tie-breaker soldCount DESC
+            # Auto Terbaru: Sort strictly by effective_dt DESC (newest created or published card / variant).
+            # NEVER use sold count as sorting determinant. Stable tie-breaker by id.
             auto_ranked = sorted(
                 candidate_cards,
                 key=lambda x: (
                     1 if x.get("_has_valid_dt") else 0,
                     x["_effective_dt"].timestamp(),
-                    x.get("soldCount", 0),
+                    x["id"],
                 ),
                 reverse=True,
             )

@@ -74,15 +74,9 @@ export default function HomePage() {
     return activeCampaigns.some((camp) => isCampaignActiveNow(camp));
   }, [activeCampaigns]);
 
-  // Safe Tab Fallback: if user is on Promo tab and campaign expires or is inactive, safely switch to Terlaris
+  // Safe Tab Fallback: if user is on Promo tab and no campaign is active, keep tab state responsive without forced redirect
   useEffect(() => {
-    if (!hasActiveCampaign && activeCategory === 'promo') {
-      setActiveCategory('terlaris');
-    }
-  }, [hasActiveCampaign, activeCategory]);
-
-  // Reset dropdown to collapsed whenever tab changes
-  useEffect(() => {
+    // Reset dropdown to collapsed whenever tab changes
     setIsExpanded(false);
   }, [activeCategory]);
 
@@ -120,8 +114,8 @@ export default function HomePage() {
         match: (t: string) => t.includes('gemini') || t.includes('google ai'),
         cat: 'AI Assistant & Cloud',
         tag: 'ai' as const,
-        soldCount: getDynamicSoldCount('Google Gemini', now, 33),
-        targetMax: 40,
+        soldCount: getDynamicSoldCount('Google Gemini', now, 14),
+        targetMax: 20,
         rating: '5.0',
         isPromo: true,
         isTerlaris: false,
@@ -132,8 +126,8 @@ export default function HomePage() {
         match: (t: string) => t.includes('canva'),
         cat: 'Design & Kreatif',
         tag: 'design' as const,
-        soldCount: getDynamicSoldCount('Canva', now, 22),
-        targetMax: 35,
+        soldCount: getDynamicSoldCount('Canva', now, 17),
+        targetMax: 25,
         rating: '5.0',
         isPromo: true,
         isTerlaris: true,
@@ -144,8 +138,8 @@ export default function HomePage() {
         match: (t: string) => t.includes('capcut'),
         cat: 'Video Editing & Content',
         tag: 'video' as const,
-        soldCount: getDynamicSoldCount('CapCut', now, 34),
-        targetMax: 40,
+        soldCount: getDynamicSoldCount('CapCut', now, 16),
+        targetMax: 20,
         rating: '4.9',
         isPromo: true,
         isTerlaris: true,
@@ -156,8 +150,8 @@ export default function HomePage() {
         match: (t: string) => t.includes('chatgpt') || t.includes('chat gpt') || t.includes('plus plan'),
         cat: 'AI Assistant & Writing',
         tag: 'ai' as const,
-        soldCount: getDynamicSoldCount('ChatGPT', now, 30),
-        targetMax: 32,
+        soldCount: getDynamicSoldCount('ChatGPT', now, 18),
+        targetMax: 22,
         rating: '5.0',
         isPromo: true,
         isTerlaris: true,
@@ -168,7 +162,7 @@ export default function HomePage() {
         match: (t: string) => t.includes('alightmotion') || t.includes('alight motion'),
         cat: 'Motion Graphic & VFX',
         tag: 'video' as const,
-        soldCount: getDynamicSoldCount('Alight Motion', now, 14),
+        soldCount: getDynamicSoldCount('Alight Motion', now, 11),
         targetMax: 15,
         rating: '4.8',
         isPromo: false,
@@ -180,8 +174,8 @@ export default function HomePage() {
         match: (t: string) => t.includes('youtube'),
         cat: 'Streaming & Video',
         tag: 'streaming' as const,
-        soldCount: getDynamicSoldCount('YouTube', now, 32),
-        targetMax: 40,
+        soldCount: getDynamicSoldCount('YouTube', now, 26),
+        targetMax: 30,
         rating: '5.0',
         isPromo: true,
         isTerlaris: true,
@@ -192,8 +186,8 @@ export default function HomePage() {
         match: (t: string) => t.includes('spotify'),
         cat: 'Music & Podcast',
         tag: 'streaming' as const,
-        soldCount: getDynamicSoldCount('Spotify', now, 37),
-        targetMax: 40,
+        soldCount: getDynamicSoldCount('Spotify', now, 21),
+        targetMax: 25,
         rating: '5.0',
         isPromo: false,
         isTerlaris: true,
@@ -204,8 +198,8 @@ export default function HomePage() {
         match: (t: string) => t.includes('netflix'),
         cat: 'Movie & Series HD',
         tag: 'streaming' as const,
-        soldCount: getDynamicSoldCount('Netflix', now, 38),
-        targetMax: 40,
+        soldCount: getDynamicSoldCount('Netflix', now, 31),
+        targetMax: 35,
         rating: '5.0',
         isPromo: true,
         isTerlaris: true,
@@ -216,8 +210,8 @@ export default function HomePage() {
         match: (t: string) => t.includes('vidio'),
         cat: 'Live Sports & Premier',
         tag: 'streaming' as const,
-        soldCount: getDynamicSoldCount('Vidio', now, 23),
-        targetMax: 30,
+        soldCount: getDynamicSoldCount('Vidio', now, 16),
+        targetMax: 20,
         rating: '4.9',
         isPromo: false,
         isTerlaris: true,
@@ -228,7 +222,7 @@ export default function HomePage() {
         match: (t: string) => t.includes('wetv'),
         cat: 'Asian Drama VIP',
         tag: 'streaming' as const,
-        soldCount: getDynamicSoldCount('WeTV', now, 19),
+        soldCount: getDynamicSoldCount('WeTV', now, 11),
         targetMax: 15,
         rating: '4.8',
         isPromo: false,
@@ -240,8 +234,8 @@ export default function HomePage() {
         match: (t: string) => t.includes('iqiyi'),
         cat: 'Anime & Drama HD',
         tag: 'streaming' as const,
-        soldCount: getDynamicSoldCount('iQIYI', now, 18),
-        targetMax: 28,
+        soldCount: getDynamicSoldCount('iQIYI', now, 13),
+        targetMax: 18,
         rating: '4.8',
         isPromo: true,
         isTerlaris: false,
@@ -252,7 +246,7 @@ export default function HomePage() {
         match: (t: string) => t.includes('bstation'),
         cat: 'Anime & Pop Culture',
         tag: 'streaming' as const,
-        soldCount: getDynamicSoldCount('Bstation', now, 12),
+        soldCount: getDynamicSoldCount('Bstation', now, 10),
         targetMax: 15,
         rating: '4.8',
         isPromo: false,
@@ -264,8 +258,8 @@ export default function HomePage() {
         match: (t: string) => t.includes('viu'),
         cat: 'Asian Drama & Variety',
         tag: 'streaming' as const,
-        soldCount: getDynamicSoldCount('Viu', now, 20),
-        targetMax: 33,
+        soldCount: getDynamicSoldCount('Viu', now, 13),
+        targetMax: 18,
         rating: '4.9',
         isPromo: false,
         isTerlaris: true,
@@ -276,8 +270,8 @@ export default function HomePage() {
         match: (t: string) => t.includes('wink'),
         cat: 'Apps & Streaming',
         tag: 'video' as const,
-        soldCount: getDynamicSoldCount('Wink', now, 16),
-        targetMax: 30,
+        soldCount: getDynamicSoldCount('Wink', now, 11),
+        targetMax: 15,
         rating: '4.9',
         isPromo: false,
         isTerlaris: false,
@@ -288,8 +282,8 @@ export default function HomePage() {
         match: (t: string) => t.includes('meitu'),
         cat: 'Apps & Streaming',
         tag: 'design' as const,
-        soldCount: getDynamicSoldCount('Meitu', now, 11),
-        targetMax: 28,
+        soldCount: getDynamicSoldCount('Meitu', now, 10),
+        targetMax: 15,
         rating: '4.9',
         isPromo: false,
         isTerlaris: false,
@@ -300,8 +294,8 @@ export default function HomePage() {
         match: (t: string) => t.includes('loklok'),
         cat: 'Apps & Streaming',
         tag: 'streaming' as const,
-        soldCount: getDynamicSoldCount('Loklok', now, 12),
-        targetMax: 28,
+        soldCount: getDynamicSoldCount('Loklok', now, 10),
+        targetMax: 15,
         rating: '5.0',
         isPromo: false,
         isTerlaris: false,
@@ -312,8 +306,8 @@ export default function HomePage() {
         match: (t: string) => t.includes('getcontact') || t.includes('getcontac'),
         cat: 'Apps & Streaming',
         tag: 'other' as const,
-        soldCount: getDynamicSoldCount('Getcontact', now, 17),
-        targetMax: 28,
+        soldCount: getDynamicSoldCount('Getcontact', now, 12),
+        targetMax: 16,
         rating: '5.0',
         isPromo: false,
         isTerlaris: false,
@@ -324,8 +318,8 @@ export default function HomePage() {
         match: (t: string) => t.includes('zoom'),
         cat: 'Apps & Streaming',
         tag: 'other' as const,
-        soldCount: getDynamicSoldCount('Zoom', now, 15),
-        targetMax: 30,
+        soldCount: getDynamicSoldCount('Zoom', now, 12),
+        targetMax: 16,
         rating: '5.0',
         isPromo: false,
         isTerlaris: false,
@@ -336,8 +330,8 @@ export default function HomePage() {
         match: (t: string) => t.includes('apple music') || t.includes('applemusic'),
         cat: 'Apps & Streaming',
         tag: 'streaming' as const,
-        soldCount: getDynamicSoldCount('Apple Music', now, 18),
-        targetMax: 30,
+        soldCount: getDynamicSoldCount('Apple Music', now, 20),
+        targetMax: 25,
         rating: '5.0',
         isPromo: false,
         isTerlaris: false,
@@ -577,15 +571,10 @@ export default function HomePage() {
         };
 
         if (appToPush && !seenNames.has(appToPush.name)) {
-          // If Promo and in auto mode, check campaign status; if manual mode, admin explicitly prioritized it
-          if (activeCategory === 'promo' && backendSection.mode === 'auto') {
-            const hasPromo = (activeCampaigns || []).some((camp) =>
-              isProductInCampaign(appToPush, camp) ||
-              appToPush.items.some((it) =>
-                isProductInCampaign({ id: it.id, name: it.name, category: it.category?.name }, camp)
-              )
-            );
-            if (!hasPromo) continue;
+          // If Promo tab is active, only show products that have an active promo / discount
+          if (activeCategory === 'promo') {
+            const promoCalc = calculateCampaignPrice(appToPush.minPrice, appToPush, activeCampaigns);
+            if (!promoCalc.hasPromo) continue;
           }
           seenNames.add(appToPush.name);
           orderedApps.push(appToPush);
@@ -596,14 +585,10 @@ export default function HomePage() {
       let fallbackCandidates = allMapped;
       if (activeCategory === 'promo') {
         if (activeCampaigns && activeCampaigns.length > 0) {
-          fallbackCandidates = allMapped.filter((app) =>
-            activeCampaigns.some((camp) =>
-              isProductInCampaign(app, camp) ||
-              app.items.some((it) =>
-                isProductInCampaign({ id: it.id, name: it.name, category: it.category?.name }, camp)
-              )
-            )
-          );
+          fallbackCandidates = allMapped.filter((app) => {
+            const promoCalc = calculateCampaignPrice(app.minPrice, app, activeCampaigns);
+            return promoCalc.hasPromo;
+          });
         } else {
           fallbackCandidates = [];
         }
@@ -636,13 +621,11 @@ export default function HomePage() {
             return a.name.localeCompare(b.name);
           });
         } else if (activeCategory === 'terbaru') {
+          // Terbaru: Sort strictly by effective publish/creation date. Do NOT use sold count.
           orderedApps.sort((a, b) => {
             const dtA = getEffectiveTimestamp(a);
             const dtB = getEffectiveTimestamp(b);
             if (dtB !== dtA) return dtB - dtA;
-            const sA = a.soldCount ?? 0;
-            const sB = b.soldCount ?? 0;
-            if (sB !== sA) return sB - sA;
             return a.name.localeCompare(b.name);
           });
         } else if (activeCategory === 'promo') {
@@ -659,12 +642,8 @@ export default function HomePage() {
       }
 
       const promoMatching = allMapped.filter((app) => {
-        return activeCampaigns.some((camp) =>
-          isProductInCampaign(app, camp) ||
-          app.items.some((item) =>
-            isProductInCampaign({ id: item.id, name: item.name, category: item.category?.name }, camp)
-          )
-        );
+        const promoCalc = calculateCampaignPrice(app.minPrice, app, activeCampaigns);
+        return promoCalc.hasPromo;
       });
 
       return promoMatching.sort((a, b) => (b.soldCount ?? 0) - (a.soldCount ?? 0));
@@ -694,9 +673,6 @@ export default function HomePage() {
           const dtA = getEffectiveTimestamp(a);
           const dtB = getEffectiveTimestamp(b);
           if (dtB !== dtA) return dtB - dtA;
-          const sA = a.soldCount ?? 0;
-          const sB = b.soldCount ?? 0;
-          if (sB !== sA) return sB - sA;
           return a.name.localeCompare(b.name);
         });
     }
@@ -1015,25 +991,23 @@ export default function HomePage() {
           {/* Selector Tabs: [ 🔥 Promo ] [ Terlaris ] [ Terbaru ] */}
           <div data-gsap="category-tabs" className="flex items-center justify-between gap-2 mb-3 sm:mb-4 pb-1 border-b border-[rgba(18,26,42,0.06)] overflow-x-auto scrollbar-none">
             <div className="flex items-center gap-1.5 sm:gap-2">
-              {/* Tab 1: PROMO (CONDITIONAL: ONLY SHOWN IF ACTIVE CAMPAIGN EXISTS) */}
-              {hasActiveCampaign && (
-                <button
-                  type="button"
-                  data-gsap="hero-button"
-                  onClick={() => {
-                    setActiveCategory('promo');
-                    setIsExpanded(false);
-                  }}
-                  className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs sm:text-[13px] font-bold transition-all cursor-pointer ${
-                    activeCategory === 'promo'
-                      ? 'bg-[#C96F55] text-white shadow-xs scale-102 ring-2 ring-[#C96F55]/30'
-                      : 'bg-white text-[#C96F55] border border-[#C96F55]/40 hover:bg-[#C96F55]/10'
-                  }`}
-                >
-                  <FontAwesomeIcon icon={faFire} className="w-3.5 h-3.5" />
-                  <span>Promo</span>
-                </button>
-              )}
+              {/* Tab 1: PROMO */}
+              <button
+                type="button"
+                data-gsap="hero-button"
+                onClick={() => {
+                  setActiveCategory('promo');
+                  setIsExpanded(false);
+                }}
+                className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs sm:text-[13px] font-bold transition-all cursor-pointer ${
+                  activeCategory === 'promo'
+                    ? 'bg-[#C96F55] text-white shadow-xs scale-102 ring-2 ring-[#C96F55]/30'
+                    : 'bg-white text-[#C96F55] border border-[#C96F55]/40 hover:bg-[#C96F55]/10'
+                }`}
+              >
+                <FontAwesomeIcon icon={faFire} className="w-3.5 h-3.5" />
+                <span>Promo</span>
+              </button>
 
               {/* Tab 2: Terlaris */}
               <button

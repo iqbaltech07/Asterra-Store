@@ -96,45 +96,53 @@ def run_migrations():
           AND p.card_id IS NOT NULL;
         """,
 
-        # 10. Calibrate base_sold_count on product_cards:
-        # Priority products have higher baseline (~28-38), regular products strictly between 10 and 25
+        # 10. Calibrate and reset base_sold_count on product_cards:
+        # - Priority products with special fixed baseline: Netflix (31), YouTube (26), Spotify (21), Apple Music (20), ChatGPT (18), CapCut (16)
+        # - Produk Terbaru: strictly between 10 and 14
+        # - Produk lainnya: strictly between 12 and 17 (never below 12)
         """
         UPDATE product_cards SET base_sold_count = CASE
-            -- Priority products (~28-38)
-            WHEN slug = 'netflix' THEN 38
-            WHEN slug = 'spotify' THEN 37
-            WHEN slug = 'capcut' THEN 34
-            WHEN slug = 'google-gemini' THEN 33
-            WHEN slug = 'youtube' THEN 32
-            WHEN slug = 'chatgpt' THEN 30
-            WHEN slug = 'canva' THEN 24
-            WHEN slug = 'vidio' THEN 23
-            -- Produk Terbaru (baseline 11-20, variatif & persisten)
-            WHEN slug = 'wetv' THEN 19
-            WHEN slug = 'apple-music' THEN 18
-            WHEN slug = 'getcontact' THEN 17
-            WHEN slug = 'wink' THEN 16
-            WHEN slug = 'zoom' THEN 15
-            WHEN slug = 'alight-motion' THEN 14
-            WHEN slug = 'duolingo' THEN 13
-            WHEN slug = 'loklok' THEN 12
-            WHEN slug = 'bstation' THEN 12
-            WHEN slug = 'meitu' THEN 11
-            WHEN slug = 'strava' THEN 13
-            WHEN slug = 'icloud' THEN 14
-            WHEN slug = 'vsco' THEN 14
-            WHEN slug = 'remini' THEN 15
-            WHEN slug = 'camscanner' THEN 16
-            WHEN slug = 'picsart' THEN 17
-            WHEN slug = 'iqiyi' THEN 18
-            WHEN slug = 'viu' THEN 20
-            WHEN slug = 'mobile-legends' THEN 22
-            WHEN slug = 'pubg-mobile' THEN 20
-            WHEN slug = 'disney-hotstar' THEN 21
-            WHEN slug = 'vision-plus' THEN 19
-            ELSE 16
-        END
-        WHERE base_sold_count = 0;
+            -- Produk prioritas khusus
+            WHEN slug = 'netflix' OR id = 'card-netflix' THEN 31
+            WHEN slug = 'youtube' OR id = 'card-youtube' THEN 26
+            WHEN slug = 'spotify' OR id = 'card-spotify' THEN 21
+            WHEN slug = 'apple-music' OR id = 'card-apple-music' THEN 20
+            WHEN slug = 'chatgpt' OR id = 'card-chatgpt' THEN 18
+            WHEN slug = 'capcut' OR id = 'card-capcut' THEN 16
+            -- Produk Terbaru (strictly 10-14)
+            WHEN slug = 'google-gemini' OR id = 'card-google-gemini' THEN 14
+            WHEN slug = 'iqiyi' OR id = 'card-iqiyi' THEN 13
+            WHEN slug = 'viu' OR id = 'card-viu' THEN 13
+            WHEN slug = 'duolingo' OR id = 'card-duolingo' THEN 12
+            WHEN slug = 'getcontact' OR id = 'card-getcontact' THEN 12
+            WHEN slug = 'zoom' OR id = 'card-zoom' THEN 12
+            WHEN slug = 'alight-motion' OR id = 'card-alight-motion' THEN 11
+            WHEN slug = 'wetv' OR id = 'card-wetv' THEN 11
+            WHEN slug = 'wink' OR id = 'card-wink' THEN 11
+            WHEN slug = 'bstation' OR id = 'card-bstation' THEN 10
+            WHEN slug = 'meitu' OR id = 'card-meitu' THEN 10
+            WHEN slug = 'loklok' OR id = 'card-loklok' THEN 10
+            -- Produk Lainnya (strictly 12-17, never below 12)
+            WHEN slug = 'canva' OR id = 'card-canva' THEN 17
+            WHEN slug = 'vidio' OR id = 'card-vidio' THEN 16
+            WHEN slug = 'camscanner' OR id = 'card-camscanner' THEN 16
+            WHEN slug = 'picsart' OR id = 'card-picsart' THEN 17
+            WHEN slug = 'remini' OR id = 'card-remini' THEN 15
+            WHEN slug = 'mobile-legends' OR id = 'card-mobile-legends' THEN 15
+            WHEN slug = 'disney-hotstar' OR id = 'card-disney-hotstar' THEN 15
+            WHEN slug = 'pubg-mobile' OR id = 'card-pubg-mobile' THEN 14
+            WHEN slug = 'vision-plus' OR id = 'card-vision-plus' THEN 14
+            WHEN slug = 'icloud' OR id = 'card-icloud' THEN 14
+            WHEN slug = 'vsco' OR id = 'card-vsco' THEN 14
+            WHEN slug = 'strava' OR id = 'card-strava' THEN 13
+            ELSE 12 + (ABS(HASHTEXT(COALESCE(slug, id, 'other'))) % 6)
+        END;
+        """,
+
+        # 10b. Clean old simulated test dummy orders so sold counts reset cleanly to the new baseline
+        """
+        DELETE FROM order_items WHERE order_id IN (SELECT id FROM orders WHERE is_dummy = true);
+        DELETE FROM orders WHERE is_dummy = true;
         """,
 
         # 11. DANA Payment Events table for Asterra Payment Listener

@@ -68,65 +68,58 @@ class ProductCard(Base):
         stock_status = "ready" if (self.status == "active" and active_catalogs and has_ready_stock) else "out_of_stock"
         
         # Determine baseline sold count:
-        # 1. Priority products (Google Gemini, Netflix, ChatGPT, Spotify, Apple Music, YouTube, CapCut):
-        #    Baseline is higher (calibrated ~28-38), maintaining high demand visibility.
-        # 2. Produk Terbaru (New / Latest Products):
-        #    Card Produk categorized/displayed as "Produk Terbaru" (sections contains 'terbaru' or badge_label is 'Baru'
-        #    or stored base_sold_count in [7, 11]).
-        #    Initial baseline is strictly bounded between 7 and 11.
-        # 3. Regular products:
-        #    Baseline strictly bounded between 10 and 25.
+        # A. Priority products with special fixed baseline:
+        #    Netflix: 31, YouTube: 26, Spotify: 21, Apple Music: 20, ChatGPT: 18, CapCut: 16
+        # B. Produk Terbaru: strictly 10 - 14
+        # C. Produk lainnya: strictly 12 - 17 (never below 12)
         card_slug = (self.slug or self.id or "").lower()
-        is_priority = any(p in card_slug for p in ["gemini", "netflix", "chatgpt", "spotify", "youtube", "capcut"])
+        priority_map = {
+            "netflix": 31,
+            "youtube": 26,
+            "spotify": 21,
+            "apple-music": 20,
+            "chatgpt": 18,
+            "capcut": 16,
+        }
+
+        matched_priority = None
+        for p_key, p_val in priority_map.items():
+            if p_key in card_slug or (p_key == "apple-music" and ("apple" in card_slug or "applemusic" in card_slug)):
+                matched_priority = p_val
+                break
 
         sec_lower = [str(s).lower() for s in sec_list]
         badge_lower = (self.badge_label or "").lower()
         is_terbaru = (
-            not is_priority
+            matched_priority is None
             and (
                 "baru" in badge_lower
-                or (len(sec_lower) == 1 and "terbaru" in sec_lower)
-                or any(t in card_slug for t in ["duolingo", "getcontact", "loklok", "zoom", "meitu", "wink", "alight", "wetv", "bstation"])
+                or "terbaru" in sec_lower
+                or any(t in card_slug for t in ["duolingo", "getcontact", "loklok", "zoom", "meitu", "wink", "alight", "wetv", "bstation", "iqiyi", "gemini"])
             )
         )
 
-        if self.base_sold_count is not None and self.base_sold_count > 0:
+        if matched_priority is not None:
+            # Special priority products MUST strictly maintain their assigned baseline
+            effective_base = matched_priority
+        elif self.base_sold_count is not None and self.base_sold_count > 0:
             effective_base = int(self.base_sold_count)
-        elif is_priority:
-            priority_defaults = {
-                "netflix": 38,
-                "spotify": 37,
-                "capcut": 34,
-                "gemini": 33,
-                "youtube": 32,
-                "chatgpt": 30,
-                "apple-music": 28,
-            }
-            matched_key = next((k for k in priority_defaults if k in card_slug), None)
-            effective_base = priority_defaults[matched_key] if matched_key else 30
+            # Enforce range safety
+            if is_terbaru:
+                effective_base = max(10, min(14, effective_base))
+            else:
+                effective_base = max(12, min(17, effective_base))
         elif is_terbaru:
-            terbaru_defaults = {
-                "wetv": 19,
-                "apple-music": 18,
-                "getcontact": 17,
-                "wink": 16,
-                "zoom": 15,
-                "alight-motion": 14,
-                "alight": 14,
-                "duolingo": 13,
-                "loklok": 12,
-                "bstation": 12,
-                "meitu": 11,
-            }
-            matched_t = next((k for k in terbaru_defaults if k in card_slug), None)
-            effective_base = terbaru_defaults[matched_t] if matched_t else (11 + (abs(hash(card_slug)) % 10))
+            # Produk terbaru initial random within 10–14 (deterministic per slug)
+            effective_base = 10 + (abs(hash(card_slug)) % 5)
         else:
-            effective_base = 10 + (abs(hash(card_slug)) % 16)
+            # Produk lainnya initial random within 12–17 (strictly never below 12)
+            effective_base = 12 + (abs(hash(card_slug)) % 6)
 
-        # Product sold count is accumulated strictly from:
-        # fake orders @productgroup + real orders @productgroup
+        # Dynamic sold count formula:
+        # BASELINE SOLD COUNT + COMPLETED VALID ORDERS (sum of item quantities)
         total_order_units = (int(dummy_sold or 0) + int(real_sold or 0)) if (dummy_sold or real_sold) else int(sold_count or 0)
-        total_sold = total_order_units
+        total_sold = effective_base + total_order_units
 
         # Calculate effective created timestamp (card or variants, whichever is newest)
         created_dts = [self.created_at] if self.created_at else []

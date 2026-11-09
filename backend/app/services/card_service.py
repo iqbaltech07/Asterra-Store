@@ -257,7 +257,19 @@ class CardService:
                 sections_json = json.dumps([s.strip() for s in str(raw_sections).split(",") if s.strip()])
 
             base_sold = int(payload.get("baseSoldCount") or payload.get("base_sold_count") or 0)
-            is_pri = any(p in clean_slug for p in ["gemini", "netflix", "chatgpt", "spotify", "apple-music", "youtube", "capcut"])
+            priority_map = {
+                "netflix": 31,
+                "youtube": 26,
+                "spotify": 21,
+                "apple-music": 20,
+                "chatgpt": 18,
+                "capcut": 16,
+            }
+            matched_pri = None
+            for p_key, p_val in priority_map.items():
+                if p_key in clean_slug or (p_key == "apple-music" and ("apple" in clean_slug or "applemusic" in clean_slug)):
+                    matched_pri = p_val
+                    break
 
             raw_sec_list = payload.get("sections", ["promo"])
             if isinstance(raw_sec_list, list):
@@ -265,18 +277,22 @@ class CardService:
             else:
                 sec_check = [s.strip().lower() for s in str(raw_sec_list).split(",") if s.strip()]
             badge_check = str(payload.get("badgeLabel") or payload.get("badge_label") or "").lower()
-            is_new_terbaru = (not is_pri) and ("terbaru" in sec_check or "baru" in badge_check)
+            is_new_terbaru = (matched_pri is None) and ("terbaru" in sec_check or "baru" in badge_check)
 
-            if is_pri:
-                base_sold = base_sold if base_sold >= 28 else 30
+            if matched_pri is not None:
+                base_sold = matched_pri
             elif is_new_terbaru:
-                # Rule: Card Produk Terbaru baseline awal strictly 11-20
-                if 11 <= base_sold <= 20:
+                # Rule: Card Produk Terbaru baseline awal strictly 10-14
+                if 10 <= base_sold <= 14:
                     pass
                 else:
-                    base_sold = 11 + (abs(hash(clean_slug)) % 10)
+                    base_sold = 10 + (abs(hash(clean_slug)) % 5)
             else:
-                base_sold = max(10, min(25, base_sold if base_sold > 0 else 18))
+                # Rule: Produk lainnya strictly 12-17 (never below 12)
+                if 12 <= base_sold <= 17:
+                    pass
+                else:
+                    base_sold = 12 + (abs(hash(clean_slug)) % 6)
 
             new_card = ProductCard(
                 id=card_id,

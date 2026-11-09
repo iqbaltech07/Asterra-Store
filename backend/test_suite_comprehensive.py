@@ -395,19 +395,27 @@ class TestAsterraDynamicArchitecture(unittest.TestCase):
             sold_counts.append(sc)
             slug = c.get("slug") or ""
 
-            # Check priority, terbaru (7-11), vs regular (10-25) baseline bounds
-            terbaru_slugs = ["alight-motion", "wetv", "bstation", "apple-music", "duolingo", "getcontact", "loklok", "zoom", "meitu", "wink"]
-            if slug in priority_slugs:
-                self.assertGreaterEqual(base, 28, f"Priority card '{c['name']}' base ({base}) must be >= 28")
-            elif slug in terbaru_slugs or c.get("badgeLabel") == "Baru" or 11 <= base <= 20:
-                self.assertGreaterEqual(base, 11, f"Produk Terbaru '{c['name']}' base ({base}) must be >= 11")
-                self.assertLessEqual(base, 20, f"Produk Terbaru '{c['name']}' base ({base}) must be <= 20")
+            # Check priority, terbaru (10-14), vs regular (12-17) baseline bounds
+            priority_map = {
+                "netflix": 31,
+                "youtube": 26,
+                "spotify": 21,
+                "apple-music": 20,
+                "chatgpt": 18,
+                "capcut": 16,
+            }
+            terbaru_slugs = ["google-gemini", "alight-motion", "wetv", "bstation", "duolingo", "getcontact", "loklok", "zoom", "meitu", "wink", "iqiyi", "viu"]
+            if slug in priority_map:
+                self.assertEqual(base, priority_map[slug], f"Priority card '{c['name']}' base ({base}) must be {priority_map[slug]}")
+            elif slug in terbaru_slugs or c.get("badgeLabel") == "Baru" or 10 <= base <= 14:
+                self.assertGreaterEqual(base, 10, f"Produk Terbaru '{c['name']}' base ({base}) must be >= 10")
+                self.assertLessEqual(base, 14, f"Produk Terbaru '{c['name']}' base ({base}) must be <= 14")
             else:
-                self.assertGreaterEqual(base, 10, f"Regular card '{c['name']}' base ({base}) must be >= 10")
-                self.assertLessEqual(base, 25, f"Regular card '{c['name']}' base ({base}) must be <= 25")
+                self.assertGreaterEqual(base, 12, f"Regular card '{c['name']}' base ({base}) must be >= 12")
+                self.assertLessEqual(base, 17, f"Regular card '{c['name']}' base ({base}) must be <= 17")
 
-            # Dynamic sold count formula: fake orders + real orders
-            expected = c.get("orderSoldCount", 0)
+            # Dynamic sold count formula: baseline + order units (fake orders + real orders)
+            expected = c.get("baseSoldCount", 0) + c.get("orderSoldCount", 0)
             self.assertEqual(sc, expected, f"Card '{c['name']}' soldCount mismatch: expected {expected}, got {sc}")
 
         # Verify values are varied (not all identical)
@@ -491,31 +499,32 @@ class TestAsterraDynamicArchitecture(unittest.TestCase):
         self.assertIn("*", public_proj["customer_display"])
 
 
-    def test_13_card_produk_terbaru_baseline_7_to_11_and_order_increments(self):
+    def test_13_card_produk_terbaru_baseline_10_to_14_and_order_increments(self):
         """
         Verify Card Produk Terbaru Architectural Requirements:
-        1. Products categorized/displayed as 'Produk Terbaru' have baseline strictly between 7 and 11.
+        1. Products categorized/displayed as 'Produk Terbaru' have baseline strictly between 10 and 14.
         2. Baseline is persistent in database, doesn't change on re-query or refresh.
-        3. Completed dummy order increments soldCount by 1.
-        4. Completed real order increments soldCount by 1.
-        5. Pending, processing, and cancelled orders strictly DO NOT increment soldCount.
-        6. Regular products remain strictly in [10, 25].
-        7. Priority products remain strictly >= 28.
+        3. Dynamic sold count = BASELINE SOLD COUNT + COMPLETED DUMMY ORDER + COMPLETED REAL ORDER.
+        4. Completed dummy order increments soldCount by 1.
+        5. Completed real order increments soldCount by 1.
+        6. Pending, processing, and cancelled orders strictly DO NOT increment soldCount.
+        7. Regular products remain strictly in [12, 17].
+        8. Priority products strictly match special assigned baseline.
         """
         # 1. Verify existing Produk Terbaru cards (Alight Motion, WeTV, Bstation)
         cards = CardService.get_cards()
         card_map = {c["slug"]: c for c in cards}
 
-        terbaru_slugs = ["alight-motion", "wetv", "bstation", "apple-music", "duolingo", "getcontact", "loklok", "zoom", "meitu", "wink"]
+        terbaru_slugs = ["alight-motion", "wetv", "bstation", "duolingo", "getcontact", "loklok", "zoom", "meitu", "wink", "iqiyi", "viu"]
         for slug in terbaru_slugs:
             if slug in card_map:
                 c = card_map[slug]
                 base = c.get("baseSoldCount")
                 sc = c.get("soldCount")
                 orders = c.get("orderSoldCount", 0)
-                self.assertGreaterEqual(base, 11, f"Produk Terbaru '{slug}' base ({base}) must be >= 11")
-                self.assertLessEqual(base, 20, f"Produk Terbaru '{slug}' base ({base}) must be <= 20")
-                self.assertEqual(sc, orders, f"Formula mismatch for '{slug}': {sc} != {orders}")
+                self.assertGreaterEqual(base, 10, f"Produk Terbaru '{slug}' base ({base}) must be >= 10")
+                self.assertLessEqual(base, 14, f"Produk Terbaru '{slug}' base ({base}) must be <= 14")
+                self.assertEqual(sc, base + orders, f"Formula mismatch for '{slug}': {sc} != {base + orders}")
 
         # 2. Test create_card for a new Produk Terbaru
         test_slug = f"test-new-service-{int(datetime.utcnow().timestamp())}"
@@ -527,15 +536,15 @@ class TestAsterraDynamicArchitecture(unittest.TestCase):
         })
         new_card_id = created["id"]
         try:
-            self.assertGreaterEqual(created["baseSoldCount"], 11, "New card baseSoldCount must be >= 11")
-            self.assertLessEqual(created["baseSoldCount"], 20, "New card baseSoldCount must be <= 20")
-            self.assertEqual(created["soldCount"], 0, "Initial soldCount must be 0 (no orders yet)")
+            self.assertGreaterEqual(created["baseSoldCount"], 10, "New card baseSoldCount must be >= 10")
+            self.assertLessEqual(created["baseSoldCount"], 14, "New card baseSoldCount must be <= 14")
+            self.assertEqual(created["soldCount"], created["baseSoldCount"], "Initial soldCount must match baseSoldCount")
 
             # Verify persistence across fresh query
             queried = CardService.get_card_by_id_or_slug(test_slug)
             self.assertIsNotNone(queried)
             self.assertEqual(queried["baseSoldCount"], created["baseSoldCount"], "baseSoldCount must persist across queries")
-            self.assertEqual(queried["soldCount"], 0, "soldCount must persist as 0")
+            self.assertEqual(queried["soldCount"], created["baseSoldCount"], "soldCount must persist as baseSoldCount")
 
             # 3. Test order status effects on sold count
             db = SessionLocal()
@@ -611,7 +620,7 @@ class TestAsterraDynamicArchitecture(unittest.TestCase):
                 card_after_non_completed = CardService.get_card_by_id_or_slug(test_slug)
                 self.assertEqual(
                     card_after_non_completed["soldCount"],
-                    0,
+                    created["baseSoldCount"],
                     "Pending/Processing/Cancelled orders must NOT increment soldCount!"
                 )
 
@@ -664,7 +673,7 @@ class TestAsterraDynamicArchitecture(unittest.TestCase):
                 # Re-query card: sold count must increase by exactly 2 (1 dummy + 1 real)!
                 card_after_completed = CardService.get_card_by_id_or_slug(test_slug)
                 self.assertEqual(card_after_completed["orderSoldCount"], 2)
-                self.assertEqual(card_after_completed["soldCount"], 2)
+                self.assertEqual(card_after_completed["soldCount"], created["baseSoldCount"] + 2)
 
             finally:
                 db.query(OrderItem).filter(OrderItem.card_id == new_card_id).delete(synchronize_session=False)

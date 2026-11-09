@@ -314,7 +314,12 @@ class DummyOrderService:
         - Thread & process-safe via PostgreSQL advisory lock (key: 8822001)
         - NEVER generates on every page hit if interval has not elapsed
         - Zero duplicate orders, full diagnostic logging
+        - Strictly disabled in production (only active on development/staging)
         """
+        from app.config import settings
+        if getattr(settings, "ENVIRONMENT", "").lower() in ("production", "prod"):
+            return None
+
         should_close = False
         if db is None:
             if not SessionLocal:
@@ -402,9 +407,13 @@ class DummyOrderService:
     @classmethod
     def generate_and_save_dummy_order(cls) -> Optional[Dict[str, Any]]:
         """
-        STRICT: Fake orders are strictly visual on the user frontend (/orders).
-        They must NEVER be persisted to the PostgreSQL database or admin console.
+        STRICT: Dummy orders are only allowed for testing in staging/development.
+        Must NEVER be generated in production environments.
         """
+        from app.config import settings
+        if getattr(settings, "ENVIRONMENT", "").lower() in ("production", "prod"):
+            return None
+
         db = SessionLocal()
         try:
             # Stage 1: Candidate Selection

@@ -10,7 +10,7 @@ from app.models.product_variant import ProductAttribute, ProductVariant
 INITIAL_CARDS = [
     {
         "id": "card-google-gemini",
-        "base_sold_count": 33,
+        "base_sold_count": 14,
         "name": "Google Gemini",
         "slug": "google-gemini",
         "category_id": "cat-ai-tools",
@@ -26,7 +26,7 @@ INITIAL_CARDS = [
     },
     {
         "id": "card-canva",
-        "base_sold_count": 24,
+        "base_sold_count": 17,
         "name": "Canva",
         "slug": "canva",
         "category_id": "cat-apps-streaming",
@@ -42,7 +42,7 @@ INITIAL_CARDS = [
     },
     {
         "id": "card-capcut",
-        "base_sold_count": 34,
+        "base_sold_count": 16,
         "name": "CapCut",
         "slug": "capcut",
         "category_id": "cat-apps-streaming",
@@ -58,7 +58,7 @@ INITIAL_CARDS = [
     },
     {
         "id": "card-chatgpt",
-        "base_sold_count": 30,
+        "base_sold_count": 18,
         "name": "ChatGPT",
         "slug": "chatgpt",
         "category_id": "cat-ai-tools",
@@ -74,7 +74,7 @@ INITIAL_CARDS = [
     },
     {
         "id": "card-alight-motion",
-        "base_sold_count": 10,
+        "base_sold_count": 11,
         "name": "Alight Motion",
         "slug": "alight-motion",
         "category_id": "cat-apps-streaming",
@@ -90,7 +90,7 @@ INITIAL_CARDS = [
     },
     {
         "id": "card-youtube",
-        "base_sold_count": 32,
+        "base_sold_count": 26,
         "name": "YouTube",
         "slug": "youtube",
         "category_id": "cat-apps-streaming",
@@ -106,7 +106,7 @@ INITIAL_CARDS = [
     },
     {
         "id": "card-spotify",
-        "base_sold_count": 37,
+        "base_sold_count": 21,
         "name": "Spotify",
         "slug": "spotify",
         "category_id": "cat-apps-streaming",
@@ -122,7 +122,7 @@ INITIAL_CARDS = [
     },
     {
         "id": "card-netflix",
-        "base_sold_count": 38,
+        "base_sold_count": 31,
         "name": "Netflix",
         "slug": "netflix",
         "category_id": "cat-apps-streaming",
@@ -138,7 +138,7 @@ INITIAL_CARDS = [
     },
     {
         "id": "card-vidio",
-        "base_sold_count": 22,
+        "base_sold_count": 16,
         "name": "Vidio",
         "slug": "vidio",
         "category_id": "cat-apps-streaming",
@@ -154,7 +154,7 @@ INITIAL_CARDS = [
     },
     {
         "id": "card-wetv",
-        "base_sold_count": 9,
+        "base_sold_count": 11,
         "name": "WeTV",
         "slug": "wetv",
         "category_id": "cat-apps-streaming",
@@ -170,7 +170,7 @@ INITIAL_CARDS = [
     },
     {
         "id": "card-iqiyi",
-        "base_sold_count": 18,
+        "base_sold_count": 13,
         "name": "iQIYI",
         "slug": "iqiyi",
         "category_id": "cat-apps-streaming",
@@ -186,7 +186,7 @@ INITIAL_CARDS = [
     },
     {
         "id": "card-bstation",
-        "base_sold_count": 8,
+        "base_sold_count": 10,
         "name": "Bstation",
         "slug": "bstation",
         "category_id": "cat-apps-streaming",
@@ -202,7 +202,7 @@ INITIAL_CARDS = [
     },
     {
         "id": "card-viu",
-        "base_sold_count": 20,
+        "base_sold_count": 13,
         "name": "Viu",
         "slug": "viu",
         "category_id": "cat-apps-streaming",
@@ -218,7 +218,7 @@ INITIAL_CARDS = [
     },
     {
         "id": "card-mobile-legends",
-        "base_sold_count": 22,
+        "base_sold_count": 15,
         "name": "Mobile Legends",
         "slug": "mobile-legends",
         "category_id": "cat-games",
@@ -234,7 +234,7 @@ INITIAL_CARDS = [
     },
     {
         "id": "card-pubg-mobile",
-        "base_sold_count": 20,
+        "base_sold_count": 14,
         "name": "PUBG Mobile",
         "slug": "pubg-mobile",
         "category_id": "cat-games",
