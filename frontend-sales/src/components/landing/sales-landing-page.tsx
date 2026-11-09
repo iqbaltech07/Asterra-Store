@@ -541,41 +541,43 @@ export function SalesLandingPage() {
     <div
       className={`${
         isEmbeddedInDashboard
-          ? 'bg-white rounded-2xl border border-emerald-200 p-6 lg:p-8 shadow-sm'
-          : 'bg-white rounded-3xl border border-emerald-200 p-6 sm:p-8 lg:p-10 shadow-lg'
+          ? 'bg-white rounded-2xl border border-stone-200/90 p-6 lg:p-8 shadow-sm'
+          : 'bg-white rounded-3xl border border-stone-200/90 p-6 sm:p-8 lg:p-10 shadow-[0_20px_50px_-12px_rgba(28,25,23,0.06)] relative overflow-hidden'
       }`}
     >
-      {/* Top Banner with Soft Emerald/Mint Gradient */}
+      {/* Subtle Warm Amber Glow in Top-Right */}
+      <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-orange-100/40 via-amber-50/20 to-transparent blur-3xl pointer-events-none rounded-full" />
+
+      {/* Top Banner with Warm Luxury Cream & Gold Palette */}
       <div
         style={{
-          background: 'linear-gradient(135deg, #F0FDF4 0%, #ECFDF5 45%, #FFFFFF 100%)'
+          background: 'linear-gradient(135deg, #FFF9F5 0%, #FFFDFB 45%, #FFF5EE 100%)'
         }}
-        className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 p-5 sm:p-6 rounded-2xl border border-emerald-200"
+        className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 p-6 sm:p-7 rounded-2xl border border-orange-200/80 shadow-xs relative z-10"
       >
         <div className="max-w-2xl">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-emerald-300 text-[#15803D] text-xs font-bold mb-3 shadow-sm">
-            <Calculator className="w-3.5 h-3.5 text-[#16A36A]" />
-            <span>Kalkulator Finansial AsterraStore</span>
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-orange-200/90 text-[#EA580C] text-xs font-bold mb-3 shadow-xs">
+            <Calculator className="w-3.5 h-3.5 text-[#EA580C]" />
+            <span>Kalkulator Finansial & Potensi Cuan AsterraStore</span>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-            Simulasi Penghasilan Sales
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-[#111827] tracking-tight">
+            Simulasi Cuan Reseller & Mitra Sales
           </h2>
           <p className="mt-2 text-sm sm:text-base text-slate-600 leading-relaxed">
-            Pilih produk dan estimasi penjualan bulanan Anda. Seluruh perhitungan berbasis skema
-            resmi 30% dari laba bersih transaksi AsterraStore.
+            Mulai bisnis produk digital <strong className="text-[#EA580C]">tanpa modal & tanpa stok barang</strong>. Dapatkan bagi hasil transparan <strong className="text-emerald-700 font-bold">30% dari laba bersih transaksi</strong> dengan pencairan dana instan ke rekening Anda.
           </p>
         </div>
 
         {/* Mode Switcher Tabs + Reset Button */}
         <div className="flex flex-wrap items-center gap-2.5">
-          <div className="inline-flex p-1 rounded-xl bg-white border border-emerald-200 shadow-sm">
+          <div className="inline-flex p-1 rounded-xl bg-white border border-orange-200/80 shadow-sm">
             <button
               type="button"
               onClick={() => setCalcMode('sales')}
               className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all ${
                 calcMode === 'sales'
-                  ? 'bg-[#15803D] text-white shadow-sm'
-                  : 'text-slate-600 hover:text-[#15803D]'
+                  ? 'bg-[#EA580C] text-white shadow-sm'
+                  : 'text-slate-600 hover:text-[#EA580C]'
               }`}
             >
               <Calculator className="w-3.5 h-3.5" />
@@ -598,25 +600,25 @@ export function SalesLandingPage() {
           <button
             type="button"
             onClick={handleResetCalculator}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-emerald-50 hover:border-emerald-300 text-slate-700 text-xs sm:text-sm font-semibold transition-colors shadow-sm"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-stone-200 bg-white hover:bg-orange-50 hover:border-orange-300 text-slate-700 hover:text-[#EA580C] text-xs sm:text-sm font-semibold transition-colors shadow-sm"
           >
             <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
-            <span>Reset</span>
+            <span>Reset Baseline</span>
           </button>
         </div>
       </div>
 
       {/* 6 Interactive Commission Level Scenarios */}
-      <div className="mt-7">
+      <div className="mt-7 relative z-10">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
-          <div className="flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-800">
-            <span className="w-5 h-5 rounded-md bg-emerald-100 text-[#15803D] inline-flex items-center justify-center font-extrabold text-xs">
+          <div className="flex items-center gap-2 text-xs sm:text-sm font-bold text-[#111827]">
+            <span className="w-5 h-5 rounded-md bg-orange-100 text-[#EA580C] inline-flex items-center justify-center font-extrabold text-xs">
               <Percent className="w-3.5 h-3.5" />
             </span>
-            <span>Pilihan Skenario Level Komisi:</span>
+            <span>Pilihan Skenario Skala Bisnis:</span>
           </div>
           <span className="text-xs font-medium text-slate-500">
-            Pilih skenario untuk simulasi otomatis
+            Klik skenario untuk memproyeksikan target omzet & komisi otomatis
           </span>
         </div>
 
@@ -631,22 +633,22 @@ export function SalesLandingPage() {
                 style={
                   isSelected
                     ? {
-                        background: 'linear-gradient(135deg, #15803D 0%, #0F766E 100%)',
-                        boxShadow: '0 10px 24px -6px rgba(21, 128, 61, 0.35)'
+                        background: 'linear-gradient(145deg, #EA580C 0%, #C2410C 100%)',
+                        boxShadow: '0 12px 28px -6px rgba(234, 88, 12, 0.42)'
                       }
                     : undefined
                 }
                 className={`text-left p-3.5 rounded-2xl border transition-all flex flex-col justify-between ${
                   isSelected
-                    ? 'border-[#15803D] text-white'
-                    : 'bg-white border-slate-200 hover:border-[#16A36A] text-slate-800 hover:bg-[#F0FDF4]'
+                    ? 'border-[#EA580C] text-white'
+                    : 'bg-white border-stone-200 hover:border-orange-300 text-slate-800 hover:bg-[#FFF7ED]/50 shadow-2xs'
                 }`}
               >
                 <div>
                   <div className="flex items-center justify-between gap-2 mb-2">
                     <span
                       className={`text-[10px] font-bold uppercase tracking-wider ${
-                        isSelected ? 'text-emerald-100' : 'text-slate-500'
+                        isSelected ? 'text-orange-100' : 'text-slate-500'
                       }`}
                     >
                       {sc.badge}
@@ -654,8 +656,8 @@ export function SalesLandingPage() {
                     <span
                       className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
                         isSelected
-                          ? 'bg-[#FEF3C7] text-[#B45309] border border-amber-300'
-                          : 'bg-emerald-50 text-[#15803D] border border-emerald-200'
+                          ? 'bg-[#FEF3C7] text-[#92400E] border border-amber-300'
+                          : 'bg-orange-50 text-[#EA580C] border border-orange-200'
                       }`}
                     >
                       {sc.rate}
@@ -671,7 +673,7 @@ export function SalesLandingPage() {
                 </div>
                 <p
                   className={`text-[11px] leading-relaxed ${
-                    isSelected ? 'text-emerald-50' : 'text-slate-500'
+                    isSelected ? 'text-orange-50' : 'text-slate-500'
                   }`}
                 >
                   {sc.desc}
@@ -683,34 +685,35 @@ export function SalesLandingPage() {
       </div>
 
       {/* Main 2-Column Calculator Body */}
-      <div className="mt-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <div className="mt-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start relative z-10">
         {/* Left Column: Details & Products List */}
         <div className="lg:col-span-7 space-y-6">
-          {/* Revenue Share Model Card */}
-          <div className="p-5 rounded-2xl bg-gradient-to-r from-[#F0FDF4] via-white to-blue-50/50 border border-emerald-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          {/* Revenue Share & Reseller Psychology Hook Card */}
+          <div className="p-5 rounded-2xl bg-gradient-to-br from-[#FFF9F5] via-white to-[#F0FDF4] border border-orange-200/70 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xs">
             <div className="space-y-1.5 max-w-md">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs font-bold text-slate-900">Skema Bagi Hasil:</span>
-                <span className="px-2.5 py-0.5 rounded-md bg-blue-50 border border-blue-200 text-[#2563EB] text-xs font-bold inline-flex items-center gap-1">
+                <span className="text-xs font-bold text-slate-900">Keunggulan Kemitraan:</span>
+                <span className="px-2.5 py-0.5 rounded-md bg-orange-50 border border-orange-200 text-[#EA580C] text-xs font-bold inline-flex items-center gap-1">
                   <Coins className="w-3.5 h-3.5" />
                   <span>30% Profit Bersih</span>
                 </span>
+                <span className="px-2 py-0.5 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-bold">
+                  Modal Rp 0
+                </span>
               </div>
               <p className="text-xs text-slate-600 leading-relaxed">
-                Sesuai <strong className="text-slate-800">Model Bisnis Asterra Store v2.0</strong>,
-                komisi dihitung 30% dari keuntungan transaksi (Harga Jual - Modal Produk) tanpa
-                menaikkan harga resmi ke konsumen.
+                Tanpa risiko nyetok barang dan tanpa repot kirim manual. Sistem AsterraStore memproses aktivasi otomatis <strong className="text-slate-900">1–3 menit ke email pembeli</strong>, Anda terima komisi bersih seketika.
               </p>
             </div>
 
-            <div className="sm:text-right shrink-0 pt-3 sm:pt-0 border-t sm:border-t-0 border-emerald-200">
+            <div className="sm:text-right shrink-0 pt-3 sm:pt-0 border-t sm:border-t-0 border-stone-200">
               <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                TARGET HARIAN MITRA
+                TARGET REALISTIS HARIAN
               </div>
-              <div className="text-base font-extrabold text-[#15803D] mt-0.5 font-mono">
+              <div className="text-base font-extrabold text-[#EA580C] mt-0.5 font-mono">
                 {formatIDR(calcSummary.scenarioObj.dailyTarget)} / hari
               </div>
-              <div className="text-[11px] font-semibold text-[#D97706] font-mono">
+              <div className="text-[11px] font-semibold text-slate-500 font-mono">
                 sekitar {formatIDR(calcSummary.scenarioObj.monthlyTarget)} / bulan
               </div>
             </div>
@@ -721,13 +724,13 @@ export function SalesLandingPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
               <div>
                 <div className="flex items-center gap-2">
-                  <ShoppingBag className="w-4 h-4 text-[#15803D]" />
+                  <ShoppingBag className="w-4 h-4 text-[#EA580C]" />
                   <h3 className="text-sm sm:text-base font-bold text-slate-900">
                     Daftar Produk yang Disimulasikan ({simulatedItems.length})
                   </h3>
                 </div>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Atur jumlah terjual untuk memproyeksikan akumulasi komisi.
+                  Sesuaikan jumlah penjualan untuk melihat lonjakan akumulasi cuan Anda.
                 </p>
               </div>
 
@@ -737,7 +740,7 @@ export function SalesLandingPage() {
                   value={selectedAddProductId}
                   onChange={(e) => setSelectedAddProductId(e.target.value)}
                   aria-label="Pilih produk tambahan"
-                  className="px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-medium text-slate-700 focus:outline-none focus:border-[#15803D] max-w-[210px] truncate"
+                  className="px-3 py-2 rounded-xl border border-stone-200 bg-white text-xs font-medium text-slate-700 focus:outline-none focus:border-[#EA580C] max-w-[210px] truncate shadow-2xs"
                 >
                   {ALL_CATALOG_PRODUCTS.map((prod) => (
                     <option key={prod.id} value={prod.id}>
@@ -748,7 +751,7 @@ export function SalesLandingPage() {
                 <button
                   type="button"
                   onClick={handleAddCalcProduct}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#15803D] hover:bg-[#166534] text-white text-xs font-bold transition-colors shadow-sm"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#EA580C] hover:bg-[#C2410C] text-white text-xs font-bold transition-colors shadow-sm"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Tambah</span>
@@ -769,7 +772,7 @@ export function SalesLandingPage() {
                 return (
                   <div
                     key={item.id}
-                    className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 hover:border-[#16A36A] transition-all shadow-sm"
+                    className="p-4 sm:p-5 rounded-2xl bg-white border border-stone-200 hover:border-orange-300 transition-all shadow-xs"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div>
@@ -778,7 +781,7 @@ export function SalesLandingPage() {
                             {item.category}
                           </span>
                           <span className="text-xs text-slate-500 font-medium">
-                            Harga: {formatIDR(item.price)}
+                            Harga Toko: {formatIDR(item.price)}
                           </span>
                         </div>
                         <h4 className="text-sm font-bold text-slate-900">{item.name}</h4>
@@ -796,9 +799,9 @@ export function SalesLandingPage() {
 
                     {/* Reseller Markup Row if Mode is 'reseller' */}
                     {calcMode === 'reseller' && (
-                      <div className="mt-3 pt-3 border-t border-dashed border-slate-200 flex flex-wrap items-center justify-between gap-2 bg-slate-50 p-2.5 rounded-xl">
-                        <span className="text-xs font-medium text-slate-600">
-                          Harga Jual Reseller Anda:
+                      <div className="mt-3 pt-3 border-t border-dashed border-stone-200 flex flex-wrap items-center justify-between gap-2 bg-[#FFF9F5] p-2.5 rounded-xl border border-orange-100">
+                        <span className="text-xs font-medium text-slate-700">
+                          Harga Jual Reseller Pilihan Anda:
                         </span>
                         <div className="flex items-center gap-1.5">
                           <span className="text-xs font-semibold text-slate-500">Rp</span>
@@ -811,23 +814,23 @@ export function SalesLandingPage() {
                                 [item.id]: Number(e.target.value) || item.price
                               }))
                             }
-                            className="w-28 px-2.5 py-1 rounded-lg border border-slate-300 text-xs font-bold text-slate-900 focus:outline-none focus:border-[#2563EB]"
+                            className="w-28 px-2.5 py-1 rounded-lg border border-stone-300 text-xs font-bold text-slate-900 focus:outline-none focus:border-[#EA580C]"
                           />
                         </div>
                       </div>
                     )}
 
-                    <div className="mt-4 pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="mt-4 pt-3 border-t border-stone-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                       {/* Quantity Controls */}
                       <div className="flex items-center gap-3">
                         <span className="text-xs text-slate-500 font-medium">
                           Jumlah Penjualan:
                         </span>
-                        <div className="inline-flex items-center rounded-xl border border-slate-200 bg-slate-50 p-0.5">
+                        <div className="inline-flex items-center rounded-xl border border-stone-200 bg-stone-50 p-0.5">
                           <button
                             type="button"
                             onClick={() => handleUpdateQty(item.id, item.qty - 1)}
-                            className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-600 hover:bg-white hover:text-[#15803D] transition-colors"
+                            className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-600 hover:bg-white hover:text-[#EA580C] transition-colors"
                           >
                             <Minus className="w-3.5 h-3.5" />
                           </button>
@@ -843,26 +846,26 @@ export function SalesLandingPage() {
                           <button
                             type="button"
                             onClick={() => handleUpdateQty(item.id, item.qty + 1)}
-                            className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-600 hover:bg-white hover:text-[#15803D] transition-colors"
+                            className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-600 hover:bg-white hover:text-[#EA580C] transition-colors"
                           >
                             <Plus className="w-3.5 h-3.5" />
                           </button>
                         </div>
-                        <span className="text-xs text-slate-400">unit</span>
+                        <span className="text-xs text-slate-400">unit/bln</span>
                       </div>
 
                       {/* Subtotal Commission */}
                       <div className="sm:text-right">
                         <div className="text-[11px] text-slate-500">
-                          {calcMode === 'sales' ? 'Komisi Satuan: ' : 'Margin + Komisi: '}
-                          <span className="font-bold text-[#2563EB] font-mono">
+                          {calcMode === 'sales' ? 'Komisi Bersih: ' : 'Margin + Komisi: '}
+                          <span className="font-bold text-[#EA580C] font-mono">
                             {formatIDR(
                               calcMode === 'sales' ? item.commissionPerUnit : resellerUnitProfit
                             )}
                           </span>
                           /unit
                         </div>
-                        <div className="text-xs font-extrabold text-[#15803D] mt-0.5 font-mono">
+                        <div className="text-xs font-extrabold text-[#059669] mt-0.5 font-mono">
                           Subtotal:{' '}
                           {formatIDR(calcMode === 'sales' ? subtotalCommission : resellerSubtotal)}
                         </div>
@@ -875,90 +878,114 @@ export function SalesLandingPage() {
           </div>
         </div>
 
-        {/* Right Column: Sticky Summary Box */}
+        {/* Right Column: High-Converting Sticky Psychological Summary Box */}
         <div className="lg:col-span-5 lg:sticky lg:top-24">
           <div
             style={{
-              background: 'linear-gradient(180deg, #ECFDF5 0%, #DCFCE7 48%, #FFFFFF 100%)'
+              background: 'linear-gradient(180deg, #FFFFFF 0%, #FFF9F5 45%, #FFF3EA 100%)',
+              boxShadow: '0 24px 60px -15px rgba(234, 88, 12, 0.18), 0 0 0 1px rgba(234, 88, 12, 0.2)'
             }}
-            className="rounded-3xl border-2 border-[#4ADE80] p-6 sm:p-7 shadow-xl"
+            className="rounded-3xl p-6 sm:p-7 relative overflow-hidden"
           >
-            <div className="flex items-center justify-between gap-2">
-              <div className="text-[11px] font-extrabold uppercase tracking-wider text-[#15803D]">
-                TOTAL ESTIMASI PENGHASILAN BULANAN:
-              </div>
-              <span className="px-2 py-0.5 rounded-md bg-[#FEF3C7] border border-amber-300 text-[#B45309] text-[10px] font-bold">
-                Komisi Aktif
+            {/* Header Badge */}
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <span className="px-3 py-1 rounded-full bg-[#1F242D] text-[10px] font-extrabold uppercase tracking-widest text-[#FED7AA]">
+                POTENSI PENGHASILAN BERSIH
+              </span>
+              <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-[#059669] border border-emerald-500/20 text-[10px] font-black">
+                +30% Net Profit
               </span>
             </div>
 
-            <div className="mt-2 text-3xl sm:text-4xl font-extrabold text-[#15803D] tracking-tight font-mono">
+            {/* Huge Clean Monthly Total in Emerald (Wealth/Cash Psychology) */}
+            <div className="mt-3 text-3xl sm:text-4xl lg:text-[42px] font-black text-[#047857] tracking-tight font-mono leading-none">
               {formatIDR(calcSummary.displayMonthlyTotal)}
             </div>
+            <div className="text-[11px] font-semibold text-slate-500 mt-2">
+              Estimasi keuntungan bersih masuk ke rekening / e-wallet per bulan.
+            </div>
 
-            <p className="mt-2 text-xs text-slate-600 leading-relaxed">
-              Potensi pendapatan Anda dari penjualan langsung dan bonus mitra referral aktif.
-            </p>
+            {/* Psychological Reality Check & Anchor Box */}
+            <div className="mt-5 p-3.5 rounded-2xl bg-white/90 border border-orange-200/70 shadow-2xs space-y-2.5">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-slate-500 font-medium">Modal Awal Anda:</span>
+                <span className="font-extrabold text-[#111827] font-mono">Rp 0 (GRATIS)</span>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-slate-500 font-medium">Resiko Stok Barang:</span>
+                <span className="font-extrabold text-emerald-600 font-mono">0% (Ditanggung Asterra)</span>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-slate-500 font-medium">Target Closing Harian:</span>
+                <span className="font-extrabold text-[#EA580C] font-mono">
+                  Hanya ~{Math.max(1, Math.round(calcSummary.totalUnits / 30))} item / hari
+                </span>
+              </div>
+            </div>
 
             {/* Breakdown Cards */}
-            <div className="mt-6 space-y-2.5">
-              <div className="px-4 py-3 rounded-xl bg-white border border-emerald-200 flex items-center justify-between text-xs shadow-sm">
-                <span className="text-slate-600 font-medium">Total Unit Terjual:</span>
+            <div className="mt-4 space-y-2">
+              <div className="px-3.5 py-2.5 rounded-xl bg-white/80 border border-stone-200/80 flex items-center justify-between text-xs">
+                <span className="text-slate-600 font-medium">Total Volume Terjual:</span>
                 <span className="font-extrabold text-slate-900 font-mono">
                   {calcSummary.totalUnits} unit / bulan
                 </span>
               </div>
 
-              <div className="px-4 py-3 rounded-xl bg-white border border-emerald-200 flex items-center justify-between text-xs shadow-sm">
-                <span className="text-slate-600 font-medium">Komisi Penjualan Pribadi (30%):</span>
+              <div className="px-3.5 py-2.5 rounded-xl bg-white/80 border border-stone-200/80 flex items-center justify-between text-xs">
+                <span className="text-slate-600 font-medium">Komisi Penjualan Dasar (30%):</span>
                 <span className="font-extrabold text-[#2563EB] font-mono">
                   {formatIDR(calcSummary.totalPersonalCommission)}
                 </span>
               </div>
 
-              <div className="px-4 py-3 rounded-xl bg-white border border-emerald-200 flex items-center justify-between text-xs shadow-sm">
-                <span className="text-slate-600 font-medium">
-                  {calcMode === 'reseller'
-                    ? 'Selisih Markup Harga Reseller:'
-                    : 'Bonus Referral Khusus:'}
-                </span>
-                <span className="font-extrabold text-[#15803D] font-mono">
-                  {calcMode === 'reseller'
-                    ? formatIDR(
-                        calcSummary.totalResellerMarkupProfit - calcSummary.totalPersonalCommission
-                      )
-                    : 'Rp 0'}
-                </span>
-              </div>
+              {calcMode === 'reseller' && (
+                <div className="px-3.5 py-2.5 rounded-xl bg-white/80 border border-stone-200/80 flex items-center justify-between text-xs">
+                  <span className="text-slate-600 font-medium">Tambahan Selisih Markup Reseller:</span>
+                  <span className="font-extrabold text-[#EA580C] font-mono">
+                    {formatIDR(
+                      calcSummary.totalResellerMarkupProfit - calcSummary.totalPersonalCommission
+                    )}
+                  </span>
+                </div>
+              )}
             </div>
 
-            {/* Bottom Info Card */}
-            <div className="mt-6 p-4 rounded-2xl bg-blue-50 border border-blue-200">
-              <div className="flex items-center justify-between gap-2 mb-1.5">
-                <span className="text-xs font-bold text-[#2563EB]">Skema Bagi Hasil:</span>
-                <span className="text-xs font-extrabold text-[#2563EB]">30% dari Profit</span>
+            {/* Fast Payout Guarantee Box */}
+            <div className="mt-4 p-3.5 rounded-2xl bg-[#0F172A] text-white">
+              <div className="flex items-center justify-between gap-2 mb-1">
+                <span className="text-xs font-bold text-amber-300 flex items-center gap-1.5">
+                  <Wallet className="w-3.5 h-3.5" />
+                  <span>Pencairan Dana Fleksibel:</span>
+                </span>
+                <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-500/30">
+                  Min. Rp 50.000
+                </span>
               </div>
-              <p className="text-[11px] text-slate-600 leading-relaxed">
-                Sistem Asterra Store membagi <strong className="text-slate-800">30% untuk Mitra Sales</strong>{' '}
-                dan <strong className="text-slate-800">70% untuk Asterra Store</strong> dari profit
-                bersih setiap transaksi sukses.
+              <p className="text-[11px] text-slate-300 leading-relaxed">
+                Tarik dana kapan saja ke <strong className="text-white">BCA, Mandiri, BRI, BNI, DANA, GoPay</strong> tanpa potongan tersembunyi.
               </p>
             </div>
 
-            {/* CTA Join Button */}
+            {/* High-Converting CTA Join Button */}
             {!isEmbeddedInDashboard && (
-              <div className="mt-6 flex flex-col sm:flex-row gap-2.5">
+              <div className="mt-5 space-y-2">
                 <Link
                   href="/daftar-sales"
                   style={{
-                    background: 'linear-gradient(135deg, #16A36A 0%, #15803D 100%)',
-                    boxShadow: '0 12px 24px -6px rgba(21, 128, 61, 0.42)'
+                    background: 'linear-gradient(135deg, #EA580C 0%, #C2410C 100%)',
+                    boxShadow: '0 14px 28px -6px rgba(234, 88, 12, 0.45)'
                   }}
-                  className="w-full py-3.5 px-5 rounded-xl text-white text-xs sm:text-sm font-extrabold flex items-center justify-center gap-2 transition-all hover:opacity-95"
+                  className="w-full py-4 px-5 rounded-2xl text-white text-xs sm:text-sm font-black flex items-center justify-center gap-2 transition-all hover:scale-[1.01] active:scale-[0.99] group shadow-lg"
                 >
-                  <span>Gabung Jadi Sales & Raih Komisi Ini</span>
-                  <ArrowRight className="w-4 h-4" />
+                  <span>Daftar Reseller Sekarang & Ambil Cuan</span>
+                  <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                 </Link>
+
+                <div className="text-center text-[11px] text-slate-400 flex items-center justify-center gap-1.5 pt-1">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Pendaftaran 100% Gratis • Akun Langsung Aktif</span>
+                </div>
               </div>
             )}
           </div>
@@ -1117,8 +1144,52 @@ export function SalesLandingPage() {
           )}
         </header>
 
+        {/* Keyframe animations for flowing circuit beams */}
+        <style dangerouslySetInnerHTML={{ __html: `
+          @keyframes flowBeamL1 {
+            0% { stroke-dashoffset: 70; opacity: 0; }
+            10% { opacity: 1; }
+            85% { opacity: 1; }
+            100% { stroke-dashoffset: -290; opacity: 0; }
+          }
+          @keyframes flowBeamL2 {
+            0% { stroke-dashoffset: 85; opacity: 0; }
+            10% { opacity: 1; }
+            85% { opacity: 1; }
+            100% { stroke-dashoffset: -370; opacity: 0; }
+          }
+          @keyframes flowBeamR1 {
+            0% { stroke-dashoffset: 70; opacity: 0; }
+            10% { opacity: 1; }
+            85% { opacity: 1; }
+            100% { stroke-dashoffset: -280; opacity: 0; }
+          }
+          @keyframes flowBeamR2 {
+            0% { stroke-dashoffset: 85; opacity: 0; }
+            10% { opacity: 1; }
+            85% { opacity: 1; }
+            100% { stroke-dashoffset: -375; opacity: 0; }
+          }
+          .beam-pulse-l1 {
+            stroke-dasharray: 65 300;
+            animation: flowBeamL1 2.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+          }
+          .beam-pulse-l2 {
+            stroke-dasharray: 80 380;
+            animation: flowBeamL2 3.2s cubic-bezier(0.4, 0, 0.2, 1) infinite 0.7s;
+          }
+          .beam-pulse-r1 {
+            stroke-dasharray: 65 300;
+            animation: flowBeamR1 2.8s cubic-bezier(0.4, 0, 0.2, 1) infinite 0.35s;
+          }
+          .beam-pulse-r2 {
+            stroke-dasharray: 80 380;
+            animation: flowBeamR2 3.2s cubic-bezier(0.4, 0, 0.2, 1) infinite 1.05s;
+          }
+        `}} />
+
         {/* ===================================================================
-            HERO SECTION — KONTEN.COM STYLE WITHOUT ANY BLINKING DOTS
+            HERO SECTION — KONTEN.COM STYLE WITH ACTIVE FLOWING BEAMS
         =================================================================== */}
         <section className="relative overflow-hidden bg-[#FDFBF7] border-b border-orange-950/5">
           {/* Warm Orange Glow */}
@@ -1144,39 +1215,84 @@ export function SalesLandingPage() {
                 transformOrigin: 'top center'
               }}
             >
-              {/* 45-Degree Connector Lines */}
+              {/* 45-Degree Animated Connector Circuit Lines */}
               <svg
                 className="absolute inset-0 w-[1160px] h-[520px] pointer-events-none"
                 viewBox="0 0 1160 520"
                 fill="none"
               >
+                <defs>
+                  <linearGradient id="beamGradL1" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#FB923C" stopOpacity="0.1" />
+                    <stop offset="50%" stopColor="#EA580C" stopOpacity="1" />
+                    <stop offset="100%" stopColor="#FF7A30" stopOpacity="1" />
+                  </linearGradient>
+                  <linearGradient id="beamGradL2" x1="0%" y1="100%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#FB923C" stopOpacity="0.1" />
+                    <stop offset="50%" stopColor="#EA580C" stopOpacity="1" />
+                    <stop offset="100%" stopColor="#FF7A30" stopOpacity="1" />
+                  </linearGradient>
+                  <linearGradient id="beamGradR1" x1="100%" y1="0%" x2="0%" y2="0%">
+                    <stop offset="0%" stopColor="#FB923C" stopOpacity="0.1" />
+                    <stop offset="50%" stopColor="#EA580C" stopOpacity="1" />
+                    <stop offset="100%" stopColor="#FF7A30" stopOpacity="1" />
+                  </linearGradient>
+                  <linearGradient id="beamGradR2" x1="100%" y1="100%" x2="0%" y2="0%">
+                    <stop offset="0%" stopColor="#FB923C" stopOpacity="0.1" />
+                    <stop offset="50%" stopColor="#EA580C" stopOpacity="1" />
+                    <stop offset="100%" stopColor="#FF7A30" stopOpacity="1" />
+                  </linearGradient>
+                  <filter id="beamGlow" x="-30%" y="-30%" width="160%" height="160%">
+                    <feGaussianBlur stdDeviation="3" result="glow" />
+                    <feMerge>
+                      <feMergeNode in="glow" />
+                      <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                  </filter>
+                </defs>
+
+                {/* Static Base Circuit Traces */}
+                <path d="M 285 110 L 370 110 L 435 170 L 538 170" stroke="#E7E0D6" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M 270 335 L 345 335 L 435 186 L 538 186" stroke="#E7E0D6" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M 865 110 L 790 110 L 725 170 L 622 170" stroke="#E7E0D6" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M 895 335 L 815 335 L 725 186 L 622 186" stroke="#E7E0D6" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
+
+                {/* Animated Glowing Light Beams Converging Inwards to Center Planet */}
                 <path
                   d="M 285 110 L 370 110 L 435 170 L 538 170"
-                  stroke="#E7E0D6"
-                  strokeWidth="1.25"
+                  stroke="url(#beamGradL1)"
+                  strokeWidth="2.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
+                  filter="url(#beamGlow)"
+                  className="beam-pulse-l1"
                 />
                 <path
                   d="M 270 335 L 345 335 L 435 186 L 538 186"
-                  stroke="#E7E0D6"
-                  strokeWidth="1.25"
+                  stroke="url(#beamGradL2)"
+                  strokeWidth="2.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
+                  filter="url(#beamGlow)"
+                  className="beam-pulse-l2"
                 />
                 <path
-                  d="M 622 170 L 725 170 L 790 110 L 865 110"
-                  stroke="#E7E0D6"
-                  strokeWidth="1.25"
+                  d="M 865 110 L 790 110 L 725 170 L 622 170"
+                  stroke="url(#beamGradR1)"
+                  strokeWidth="2.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
+                  filter="url(#beamGlow)"
+                  className="beam-pulse-r1"
                 />
                 <path
-                  d="M 622 186 L 725 186 L 815 335 L 895 335"
-                  stroke="#E7E0D6"
-                  strokeWidth="1.25"
+                  d="M 895 335 L 815 335 L 725 186 L 622 186"
+                  stroke="url(#beamGradR2)"
+                  strokeWidth="2.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
+                  filter="url(#beamGlow)"
+                  className="beam-pulse-r2"
                 />
               </svg>
 
@@ -1331,32 +1447,38 @@ export function SalesLandingPage() {
                 </div>
               </div>
 
-              {/* 5. CENTER 3D SQUIRCLE PLANET ICON (Clean, no dots on corner) */}
+              {/* 5. CENTER 3D SQUIRCLE WITH LOOPING ANIMATED ASTERRA PLANET (Konten.com style, no dots) */}
+              {/* Soft Ambient Radial Bloom Behind Squircle */}
+              <div
+                style={{ left: '580px', top: '175px' }}
+                className="absolute -translate-x-1/2 -translate-y-1/2 w-36 h-36 rounded-full bg-orange-500/20 blur-2xl pointer-events-none"
+              />
+
               <div
                 style={{
                   left: '580px',
                   top: '175px',
-                  background: 'linear-gradient(145deg, #F06428 0%, #D9460F 100%)',
-                  boxShadow: '0 22px 44px -10px rgba(224, 83, 31, 0.48)'
+                  background: 'linear-gradient(145deg, #FB923C 0%, #EA580C 50%, #C2410C 100%)',
+                  boxShadow:
+                    '0 22px 48px -8px rgba(234, 88, 12, 0.52), 0 0 32px 4px rgba(251, 146, 60, 0.3), inset 0 1px 2px rgba(255, 255, 255, 0.4)'
                 }}
-                className="absolute -translate-x-1/2 -translate-y-1/2 w-[78px] h-[78px] rounded-[22px] flex items-center justify-center border border-orange-300/40"
+                className="absolute -translate-x-1/2 -translate-y-1/2 w-[84px] h-[84px] rounded-[24px] flex items-center justify-center border border-orange-200/50 p-2 overflow-hidden group transition-all duration-300 hover:scale-105"
               >
-                <div className="w-11 h-11 rounded-full bg-[#18181B]/20 flex items-center justify-center">
-                  <svg className="w-7 h-7 text-[#18181B]" viewBox="0 0 24 24" fill="currentColor">
-                    <circle cx="12" cy="12" r="5" />
-                    <ellipse
-                      cx="12"
-                      cy="12"
-                      rx="10"
-                      ry="3.5"
-                      transform="rotate(-24 12 12)"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.1"
-                    />
-                    <circle cx="18.5" cy="6.5" r="1.4" />
-                  </svg>
-                </div>
+                <picture className="w-full h-full flex items-center justify-center pointer-events-none select-none">
+                  <source srcSet="/assets/asterra-planet-transparent.webp" type="image/webp" />
+                  <img
+                    src="/assets/asterra-planet-transparent.webp"
+                    alt="AsterraStore Looping Planet"
+                    width={72}
+                    height={72}
+                    decoding="async"
+                    draggable={false}
+                    className="w-full h-full object-contain pointer-events-none select-none transition-transform duration-300 group-hover:scale-110 drop-shadow-[0_4px_12px_rgba(0,0,0,0.25)]"
+                    onError={(e) => {
+                      e.currentTarget.src = '/images/brand/asterra-mark.png';
+                    }}
+                  />
+                </picture>
               </div>
 
               {/* 6. CENTER HEADLINE & CTA */}
@@ -1414,7 +1536,7 @@ export function SalesLandingPage() {
           id="calculator-section"
           className="py-16 sm:py-20"
           style={{
-            background: 'linear-gradient(180deg, #FDFBF7 0%, #ECFDF5 50%, #F4F5F7 100%)'
+            background: 'linear-gradient(180deg, #FDFBF7 0%, #FFF9F5 45%, #FAF7F2 100%)'
           }}
         >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -1427,16 +1549,16 @@ export function SalesLandingPage() {
         =================================================================== */}
         <section
           id="products-section"
-          className="py-16 sm:py-20 bg-white border-t border-slate-200"
+          className="py-16 sm:py-20 bg-white border-t border-stone-200"
         >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
               <div>
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#15803D] text-xs font-bold mb-3">
-                  <ShoppingBag className="w-3.5 h-3.5" />
+                <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-orange-50 border border-orange-200 text-[#EA580C] text-xs font-bold mb-3 shadow-2xs">
+                  <ShoppingBag className="w-3.5 h-3.5 text-[#EA580C]" />
                   <span>KATALOG PRODUK & KOMISI SALES</span>
                 </div>
-                <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-[#111827] tracking-tight">
                   Produk Digital Premium Siap Dipasarkan
                 </h2>
                 <p className="mt-2 text-sm sm:text-base text-slate-500 max-w-2xl">
@@ -1459,8 +1581,8 @@ export function SalesLandingPage() {
                     onClick={() => setCatalogCategory(cat)}
                     className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
                       catalogCategory === cat
-                        ? 'bg-[#16A36A] text-white shadow-sm'
-                        : 'bg-slate-100 text-slate-600 hover:bg-emerald-50 hover:text-[#15803D]'
+                        ? 'bg-[#EA580C] text-white shadow-sm'
+                        : 'bg-stone-100 text-slate-600 hover:bg-orange-50 hover:text-[#EA580C]'
                     }`}
                   >
                     {cat}
@@ -1474,7 +1596,7 @@ export function SalesLandingPage() {
               {filteredProducts.map((prod) => (
                 <div
                   key={prod.id}
-                  className="rounded-2xl bg-white border border-slate-200 hover:border-[#16A36A] p-5 flex flex-col justify-between transition-all hover:shadow-md"
+                  className="rounded-2xl bg-white border border-stone-200 hover:border-orange-300 p-5 flex flex-col justify-between transition-all hover:shadow-md"
                 >
                   <div>
                     <div className="flex items-center justify-between gap-2 mb-3">
@@ -1498,36 +1620,36 @@ export function SalesLandingPage() {
                       </span>
                     </div>
 
-                    <div className="mt-4 p-3 rounded-xl bg-[#F8FAFC] border border-slate-200 space-y-1.5">
+                    <div className="mt-4 p-3 rounded-xl bg-[#F8FAFC] border border-stone-200 space-y-1.5">
                       <div className="flex items-baseline justify-between">
                         <span className="text-[11px] text-slate-500">Harga Pelanggan</span>
                         <span className="text-sm font-extrabold text-slate-900 font-mono">
                           {formatIDR(prod.price)}
                         </span>
                       </div>
-                      <div className="flex items-baseline justify-between pt-1 border-t border-slate-200">
+                      <div className="flex items-baseline justify-between pt-1 border-t border-stone-200">
                         <span className="text-[11px] font-semibold text-[#15803D]">
                           Komisi Sales (30%)
                         </span>
-                        <span className="text-xs font-extrabold text-[#16A36A] font-mono">
+                        <span className="text-xs font-extrabold text-[#059669] font-mono">
                           +{formatIDR(prod.commissionPerUnit)} /unit
                         </span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="mt-4 pt-3 border-t border-slate-100 grid grid-cols-2 gap-2">
+                  <div className="mt-4 pt-3 border-t border-stone-100 grid grid-cols-2 gap-2">
                     <button
                       type="button"
                       onClick={() => setOrderModalProduct(prod)}
-                      className="py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-colors"
+                      className="py-2 px-3 rounded-xl bg-slate-900 hover:bg-[#EA580C] text-white text-xs font-bold transition-colors"
                     >
                       Beli Produk
                     </button>
                     <button
                       type="button"
                       onClick={() => setPromoModalProduct(prod)}
-                      className="py-2 px-3 rounded-xl bg-[#ECFDF5] hover:bg-[#D1FAE5] text-[#15803D] text-xs font-bold flex items-center justify-center gap-1 transition-colors"
+                      className="py-2 px-3 rounded-xl bg-orange-50 hover:bg-orange-100 border border-orange-200/80 text-[#EA580C] text-xs font-bold flex items-center justify-center gap-1 transition-colors"
                     >
                       <Share2 className="w-3.5 h-3.5" />
                       <span>Promosikan</span>
@@ -1544,15 +1666,15 @@ export function SalesLandingPage() {
         =================================================================== */}
         <section
           id="how-it-works-section"
-          className="py-16 sm:py-20 bg-[#F3F8F5] border-t border-emerald-950/10"
+          className="py-16 sm:py-20 bg-[#FCFAF6] border-t border-orange-950/5"
         >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-2xl mx-auto mb-10">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#15803D] text-xs font-bold mb-3">
-                <Layers className="w-3.5 h-3.5" />
+              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-orange-50 border border-orange-200 text-[#EA580C] text-xs font-bold mb-3 shadow-2xs">
+                <Layers className="w-3.5 h-3.5 text-[#EA580C]" />
                 <span>HOW IT WORKS</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-[#111827] tracking-tight">
                 Bagaimana Sistem AsterraStore Bekerja?
               </h2>
               <p className="mt-2.5 text-sm sm:text-base text-slate-600">
@@ -1560,13 +1682,13 @@ export function SalesLandingPage() {
                 premium dan membantu Mitra Sales memperoleh komisi bersih secara transparan.
               </p>
 
-              <div className="mt-6 inline-flex p-1.5 rounded-2xl bg-white border border-slate-200 shadow-sm">
+              <div className="mt-6 inline-flex p-1.5 rounded-2xl bg-white border border-stone-200 shadow-sm">
                 <button
                   type="button"
                   onClick={() => setHowItWorksTab('sales')}
                   className={`px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${
                     howItWorksTab === 'sales'
-                      ? 'bg-[#16A36A] text-white shadow-sm'
+                      ? 'bg-[#EA580C] text-white shadow-sm'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
@@ -1623,11 +1745,11 @@ export function SalesLandingPage() {
                   return (
                     <div
                       key={item.step}
-                      className="bg-white rounded-2xl border border-emerald-950/10 p-6 flex flex-col justify-between shadow-sm hover:border-[#16A36A] transition-colors"
+                      className="bg-white rounded-2xl border border-stone-200 p-6 flex flex-col justify-between shadow-sm hover:border-[#EA580C] transition-colors"
                     >
                       <div>
                         <div className="flex items-center justify-between mb-4">
-                          <span className="w-10 h-10 rounded-xl bg-[#ECFDF5] text-[#16A36A] font-extrabold text-sm flex items-center justify-center">
+                          <span className="w-10 h-10 rounded-xl bg-orange-50 border border-orange-100 text-[#EA580C] font-extrabold text-sm flex items-center justify-center">
                             <StepIcon className="w-5 h-5" />
                           </span>
                           <span className="px-2.5 py-1 rounded-full bg-amber-50 text-[#B45309] border border-amber-200 text-[11px] font-bold">
@@ -1706,14 +1828,14 @@ export function SalesLandingPage() {
         {/* ===================================================================
             SECTION: FAQ
         =================================================================== */}
-        <section id="faq-section" className="py-16 sm:py-20 bg-white border-t border-slate-200">
+        <section id="faq-section" className="py-16 sm:py-20 bg-white border-t border-stone-200">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#ECFDF5] border border-[#A7F3D0] text-[#15803D] text-xs font-bold mb-3">
-                <HelpCircle className="w-3.5 h-3.5 text-[#16A36A]" />
+              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-orange-50 border border-orange-200 text-[#EA580C] text-xs font-bold mb-3 shadow-2xs">
+                <HelpCircle className="w-3.5 h-3.5 text-[#EA580C]" />
                 <span>PERTANYAAN UMUM (FAQ)</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-[#111827] tracking-tight">
                 Informasi Seputar Produk & Sales Portal
               </h2>
               <p className="mt-2 text-sm sm:text-base text-slate-500">
@@ -1730,8 +1852,8 @@ export function SalesLandingPage() {
                     key={idx}
                     className={`rounded-2xl border transition-all ${
                       isOpen
-                        ? 'bg-[#F0FDF4] border-[#A7F3D0] shadow-sm'
-                        : 'bg-white border-slate-200 hover:border-slate-300'
+                        ? 'bg-[#FFF9F5] border-orange-200 shadow-2xs'
+                        : 'bg-white border-stone-200 hover:border-orange-200'
                     }`}
                   >
                     <button
@@ -1740,7 +1862,7 @@ export function SalesLandingPage() {
                       className="w-full px-6 py-4 text-left flex items-center justify-between gap-4"
                     >
                       <div className="space-y-1">
-                        <span className="inline-block text-[10px] font-bold uppercase tracking-wider text-[#16A36A]">
+                        <span className="inline-block text-[10px] font-bold uppercase tracking-wider text-[#EA580C]">
                           {faq.category}
                         </span>
                         <h3 className="text-sm sm:text-base font-bold text-slate-900">
@@ -1750,15 +1872,15 @@ export function SalesLandingPage() {
                       <div
                         className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-transform ${
                           isOpen
-                            ? 'bg-[#16A36A] text-white rotate-180'
-                            : 'bg-slate-100 text-slate-600'
+                            ? 'bg-[#EA580C] text-white rotate-180'
+                            : 'bg-stone-100 text-slate-600'
                         }`}
                       >
                         <ChevronDown className="w-4 h-4" />
                       </div>
                     </button>
                     {isOpen && (
-                      <div className="px-6 pb-5 pt-1 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-emerald-950/10">
+                      <div className="px-6 pb-5 pt-1 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-orange-100">
                         {faq.answer}
                       </div>
                     )}
@@ -1770,12 +1892,13 @@ export function SalesLandingPage() {
             {/* Bottom Call to Action Card */}
             <div
               style={{
-                background: 'linear-gradient(135deg, #0F172A 0%, #111827 55%, #064E3B 100%)'
+                background: 'linear-gradient(135deg, #0F172A 0%, #18181B 55%, #1C1917 100%)',
+                boxShadow: '0 20px 48px -10px rgba(15, 23, 42, 0.4)'
               }}
-              className="mt-12 p-6 sm:p-8 rounded-3xl text-white flex flex-col sm:flex-row items-center justify-between gap-6 border border-emerald-500/20 shadow-lg"
+              className="mt-12 p-6 sm:p-8 rounded-3xl text-white flex flex-col sm:flex-row items-center justify-between gap-6 border border-stone-800 shadow-lg"
             >
               <div>
-                <span className="inline-block px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-[11px] font-bold mb-2">
+                <span className="inline-block px-2.5 py-0.5 rounded-full bg-orange-500/20 border border-orange-400/30 text-orange-300 text-[11px] font-bold mb-2">
                   Peluang Penghasilan Mitra
                 </span>
                 <h3 className="text-lg sm:text-xl font-bold">
@@ -1795,7 +1918,8 @@ export function SalesLandingPage() {
                 <Link
                   href="/daftar-sales"
                   style={{
-                    background: 'linear-gradient(135deg, #16A36A 0%, #15803D 100%)'
+                    background: 'linear-gradient(135deg, #EA580C 0%, #C2410C 100%)',
+                    boxShadow: '0 10px 24px -4px rgba(234, 88, 12, 0.4)'
                   }}
                   className="px-5 py-2.5 rounded-xl hover:opacity-95 text-white text-xs sm:text-sm font-bold transition-all shadow-md inline-flex items-center gap-1.5"
                 >
@@ -1808,12 +1932,12 @@ export function SalesLandingPage() {
         </section>
 
         {/* Footer */}
-        <footer className="bg-white border-t border-slate-200 py-10 text-xs text-slate-500">
+        <footer className="bg-white border-t border-stone-200 py-10 text-xs text-slate-500">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2.5">
               <div
                 style={{
-                  background: 'linear-gradient(135deg, #16A36A 0%, #0D9488 55%, #2563EB 100%)'
+                  background: 'linear-gradient(135deg, #EA580C 0%, #C2410C 100%)'
                 }}
                 className="w-7 h-7 rounded-full text-white font-extrabold flex items-center justify-center text-xs"
               >
@@ -1827,27 +1951,27 @@ export function SalesLandingPage() {
               <button
                 type="button"
                 onClick={() => navigateAndScroll('calculator-section')}
-                className="hover:text-[#16A36A]"
+                className="hover:text-[#EA580C] transition-colors"
               >
                 Kalkulator Finansial
               </button>
               <button
                 type="button"
                 onClick={() => navigateAndScroll('how-it-works-section')}
-                className="hover:text-[#16A36A]"
+                className="hover:text-[#EA580C] transition-colors"
               >
                 How It Works
               </button>
               <button
                 type="button"
                 onClick={() => navigateAndScroll('faq-section')}
-                className="hover:text-[#16A36A]"
+                className="hover:text-[#EA580C] transition-colors"
               >
                 FAQ
               </button>
               <Link
                 href="/sales"
-                className="font-semibold text-[#16A36A] hover:underline"
+                className="font-semibold text-[#EA580C] hover:underline"
               >
                 Sales Portal
               </Link>
@@ -1862,22 +1986,22 @@ export function SalesLandingPage() {
   // VIEW 2: HALAMAN DAFTAR SALES (/daftar-sales)
   // ==========================================================================
   const renderRegisterSalesPage = () => (
-    <div className="min-h-screen bg-[#F3F8F5] text-slate-900 py-10 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#FCFAF6] text-slate-900 py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto">
         <button
           type="button"
           onClick={() => setCurrentRoute('landing')}
-          className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-600 hover:text-[#16A36A] mb-6"
+          className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-600 hover:text-[#EA580C] mb-6 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Kembali ke Halaman Utama</span>
         </button>
 
-        <div className="bg-white rounded-3xl border border-emerald-950/10 p-6 sm:p-10 shadow-sm">
+        <div className="bg-white rounded-3xl border border-stone-200 p-6 sm:p-10 shadow-sm">
           <div className="flex items-center gap-3 mb-4">
             <div
               style={{
-                background: 'linear-gradient(135deg, #16A36A 0%, #0D9488 55%, #2563EB 100%)'
+                background: 'linear-gradient(135deg, #EA580C 0%, #C2410C 100%)'
               }}
               className="w-10 h-10 rounded-full text-white font-extrabold flex items-center justify-center text-lg"
             >
@@ -1887,7 +2011,7 @@ export function SalesLandingPage() {
               <div className="text-sm font-extrabold text-slate-900">
                 Registrasi Mitra Sales AsterraStore
               </div>
-              <div className="text-xs text-[#16A36A] font-semibold">
+              <div className="text-xs text-[#EA580C] font-semibold">
                 Komisi Resmi 30% Profit Bersih • Tanpa Biaya Pendaftaran
               </div>
             </div>
