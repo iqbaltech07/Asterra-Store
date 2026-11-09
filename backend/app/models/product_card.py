@@ -99,16 +99,13 @@ class ProductCard(Base):
             )
         )
 
-        if matched_priority is not None:
-            # Special priority products MUST strictly maintain their assigned baseline
-            effective_base = matched_priority
-        elif self.base_sold_count is not None and self.base_sold_count > 0:
+        # If base_sold_count is explicitly set in DB (by manual admin input), it is strictly authoritative.
+        # Fallback to priority_map and initial randomized defaults only when base_sold_count is None.
+        if self.base_sold_count is not None and self.base_sold_count >= 0:
             effective_base = int(self.base_sold_count)
-            # Enforce range safety
-            if is_terbaru:
-                effective_base = max(10, min(14, effective_base))
-            else:
-                effective_base = max(12, min(17, effective_base))
+        elif matched_priority is not None:
+            # Special priority products initial assigned baseline
+            effective_base = matched_priority
         elif is_terbaru:
             # Produk terbaru initial random within 10–14 (deterministic per slug)
             effective_base = 10 + (abs(hash(card_slug)) % 5)

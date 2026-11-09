@@ -147,7 +147,10 @@ class CardService:
                 if not card:
                     continue
                 raw_val = item.get("baseSoldCount") if "baseSoldCount" in item else (item.get("base_sold_count") if "base_sold_count" in item else item.get("baseline", 0))
-                card.base_sold_count = max(0, int(raw_val))
+                val_int = int(raw_val)
+                if val_int < 0:
+                    raise ValueError("Jumlah Terjual (Manual) tidak boleh bernilai negatif.")
+                card.base_sold_count = val_int
                 card.updated_at = datetime.utcnow()
                 updated_cards.append(card)
             db.commit()
@@ -158,6 +161,8 @@ class CardService:
                 sb = sales.get(c.id) or sales.get(c.slug) or {"dummy": 0, "real": 0, "total": 0}
                 res.append(c.to_dict(include_catalogs=True, sold_count=sb["total"], dummy_sold=sb["dummy"], real_sold=sb["real"]))
             cache.invalidate("catalog", "homepage_sections")
+            RealtimeBroadcaster.broadcast("cards:updated", {"action": "batch_baseline_updated", "count": len(updated_cards)}, target_role="all")
+            RealtimeBroadcaster.broadcast("homepage:sections_updated", {"action": "sync", "reason": "batch_baseline_updated"}, target_role="all")
             return res
         finally:
             db.close()
@@ -282,41 +287,40 @@ class CardService:
             else:
                 sections_json = json.dumps([s.strip() for s in str(raw_sections).split(",") if s.strip()])
 
-            base_sold = int(payload.get("baseSoldCount") or payload.get("base_sold_count") or 0)
-            priority_map = {
-                "netflix": 31,
-                "youtube": 26,
-                "spotify": 21,
-                "apple-music": 20,
-                "chatgpt": 18,
-                "capcut": 16,
-            }
-            matched_pri = None
-            for p_key, p_val in priority_map.items():
-                if p_key in clean_slug or (p_key == "apple-music" and ("apple" in clean_slug or "applemusic" in clean_slug)):
-                    matched_pri = p_val
-                    break
-
-            raw_sec_list = payload.get("sections", ["promo"])
-            if isinstance(raw_sec_list, list):
-                sec_check = [str(s).lower() for s in raw_sec_list]
+            # Base sold count (strictly authoritative when provided by admin)
+            has_explicit_base = ("baseSoldCount" in payload and payload["baseSoldCount"] is not None) or ("base_sold_count" in payload and payload["base_sold_count"] is not None)
+            if has_explicit_base:
+                raw_base = int(payload.get("baseSoldCount") if "baseSoldCount" in payload else payload.get("base_sold_count"))
+                if raw_base < 0:
+                    raise ValueError("Jumlah Terjual (Manual) tidak boleh bernilai negatif.")
+                base_sold = raw_base
             else:
-                sec_check = [s.strip().lower() for s in str(raw_sec_list).split(",") if s.strip()]
-            badge_check = str(payload.get("badgeLabel") or payload.get("badge_label") or "").lower()
-            is_new_terbaru = (matched_pri is None) and ("terbaru" in sec_check or "baru" in badge_check)
+                priority_map = {
+                    "netflix": 31,
+                    "youtube": 26,
+                    "spotify": 21,
+                    "apple-music": 20,
+                    "chatgpt": 18,
+                    "capcut": 16,
+                }
+                matched_pri = None
+                for p_key, p_val in priority_map.items():
+                    if p_key in clean_slug or (p_key == "apple-music" and ("apple" in clean_slug or "applemusic" in clean_slug)):
+                        matched_pri = p_val
+                        break
 
-            if matched_pri is not None:
-                base_sold = matched_pri
-            elif is_new_terbaru:
-                # Rule: Card Produk Terbaru baseline awal strictly 10-14
-                if 10 <= base_sold <= 14:
-                    pass
+                raw_sec_list = payload.get("sections", ["promo"])
+                if isinstance(raw_sec_list, list):
+                    sec_check = [str(s).lower() for s in raw_sec_list]
                 else:
+                    sec_check = [s.strip().lower() for s in str(raw_sec_list).split(",") if s.strip()]
+                badge_check = str(payload.get("badgeLabel") or payload.get("badge_label") or "").lower()
+                is_new_terbaru = (matched_pri is None) and ("terbaru" in sec_check or "baru" in badge_check)
+
+                if matched_pri is not None:
+                    base_sold = matched_pri
+                elif is_new_terbaru:
                     base_sold = 10 + (abs(hash(clean_slug)) % 5)
-            else:
-                # Rule: Produk lainnya strictly 12-17 (never below 12)
-                if 12 <= base_sold <= 17:
-                    pass
                 else:
                     base_sold = 12 + (abs(hash(clean_slug)) % 6)
 
@@ -366,7 +370,24 @@ class CardService:
             db.commit()
             db.refresh(new_card)
             cache.invalidate("catalog", "homepage_sections")
-            return new_card.to_dict(include_catalogs=True)
+            RealtimeBroadcaster.broadcast(
+                "cards:updated",
+                {"action": "created", "id": new_card.id, "baseSoldCount": new_card.base_sold_count},
+                target_role="all",
+            )
+            RealtimeBroadcaster.broadcast(
+                "homepage:sections_updated",
+                {"action": "sync", "reason": "card_created"},
+                target_role="all",
+            )
+            sales = cls.get_sales_breakdown()
+            sb = sales.get(new_card.id) or sales.get(new_card.slug) or {"dummy": 0, "real": 0, "total": 0}
+            return new_card.to_dict(
+                include_catalogs=True,
+                sold_count=sb["total"],
+                dummy_sold=sb["dummy"],
+                real_sold=sb["real"],
+            )
         finally:
             db.close()
 
@@ -414,7 +435,9 @@ class CardService:
                 card.badge_label = payload.get("badgeLabel") or payload.get("badge_label")
             if "baseSoldCount" in payload or "base_sold_count" in payload:
                 raw_val = int(payload.get("baseSoldCount") if "baseSoldCount" in payload else payload.get("base_sold_count", 0))
-                card.base_sold_count = max(0, raw_val)
+                if raw_val < 0:
+                    raise ValueError("Jumlah Terjual (Manual) tidak boleh bernilai negatif.")
+                card.base_sold_count = raw_val
 
             # Update catalog linkages if provided
             if "catalogIds" in payload or "catalog_ids" in payload:
@@ -434,7 +457,24 @@ class CardService:
             db.commit()
             db.refresh(card)
             cache.invalidate("catalog", "homepage_sections")
-            return card.to_dict(include_catalogs=True)
+            RealtimeBroadcaster.broadcast(
+                "cards:updated",
+                {"action": "updated", "id": card.id, "baseSoldCount": card.base_sold_count},
+                target_role="all",
+            )
+            RealtimeBroadcaster.broadcast(
+                "homepage:sections_updated",
+                {"action": "sync", "reason": "card_updated"},
+                target_role="all",
+            )
+            sales = cls.get_sales_breakdown()
+            sb = sales.get(card.id) or sales.get(card.slug) or {"dummy": 0, "real": 0, "total": 0}
+            return card.to_dict(
+                include_catalogs=True,
+                sold_count=sb["total"],
+                dummy_sold=sb["dummy"],
+                real_sold=sb["real"],
+            )
         finally:
             db.close()
 
