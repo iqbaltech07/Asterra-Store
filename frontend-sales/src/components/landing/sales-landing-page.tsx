@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
+import TiltedCard, { TiltedCardLayer } from '@/components/ui/tilted-card';
 import {
   Search,
   ShoppingBag,
@@ -154,6 +155,17 @@ const ALL_CATALOG_PRODUCTS = [
     duration: '1 Tahun'
   }
 ];
+
+const PRODUCT_BRAND_IMAGES: Record<string, string> = {
+  'netflix-4k-1m': '/images/apps/netflix.png',
+  'google-ai-18m': '/images/apps/gemini.svg',
+  'chatgpt-plus-1m': '/images/apps/chatgpt.svg',
+  'canva-pro-1y': '/images/apps/canva.svg',
+  'spotify-prem-1m': '/images/apps/spotify.svg',
+  'capcut-pro-1m': '/images/apps/capcut.svg',
+  'youtube-prem-1m': '/images/apps/youtube.svg',
+  'ms-365-1y': '/images/apps/microsoft365.svg',
+};
 
 const COMMISSION_SCENARIOS = [
   {
@@ -1591,72 +1603,116 @@ export function SalesLandingPage() {
               </div>
             </div>
 
-            {/* Product Cards Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-              {filteredProducts.map((prod) => (
-                <div
-                  key={prod.id}
-                  className="rounded-2xl bg-white border border-stone-200 hover:border-orange-300 p-5 flex flex-col justify-between transition-all hover:shadow-md"
-                >
-                  <div>
-                    <div className="flex items-center justify-between gap-2 mb-3">
-                      <span className="px-2.5 py-1 rounded-md bg-blue-50 text-[#2563EB] text-[11px] font-bold">
-                        {prod.category}
-                      </span>
-                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#16A36A]">
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                        <span>Stok {prod.stockPercent}%</span>
-                      </span>
-                    </div>
+            {/* Product Cards Grid with 3D TiltedCard Flip */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {filteredProducts.map((prod) => {
+                const frontImage = PRODUCT_BRAND_IMAGES[prod.id] || '/images/apps/gemini.svg';
+                return (
+                  <TiltedCard
+                    key={prod.id}
+                    imageSrc={frontImage}
+                    altText={prod.name}
+                    captionText="Klik untuk lihat komisi"
+                    showTooltip={true}
+                    containerWidth="100%"
+                    imageWidth="100%"
+                    containerHeight="360px"
+                    imageHeight="360px"
+                    radius={24}
+                    rotateAmplitude={12}
+                    scaleOnHover={1.03}
+                    glare={0.4}
+                    shadow={0.45}
+                    flipOnClick={true}
+                    className="w-full"
+                    backContent={
+                      <div className="bg-white rounded-[24px] p-5 sm:p-6 flex flex-col justify-between h-full border border-stone-200/90 shadow-md text-left select-none relative">
+                        <div>
+                          {/* Category Pill & Stock Status */}
+                          <div className="flex items-center justify-between gap-2 mb-3">
+                            <span className="px-3 py-1 rounded-full bg-blue-50 text-[#2563EB] text-xs font-bold tracking-tight">
+                              {prod.category}
+                            </span>
+                            <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#16A36A]">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-[#16A36A]" />
+                              <span>Stok {prod.stockPercent}%</span>
+                            </span>
+                          </div>
 
-                    <h3 className="text-sm font-bold text-slate-900 line-clamp-2 min-h-[40px]">
-                      {prod.name}
-                    </h3>
+                          {/* Title */}
+                          <h3 className="text-base font-extrabold text-slate-900 line-clamp-2 min-h-[46px] leading-snug">
+                            {prod.name}
+                          </h3>
 
-                    <div className="mt-3 flex items-center gap-2 text-[11px] text-slate-500">
-                      <ShieldCheck className="w-3.5 h-3.5 text-[#0D9488] shrink-0" />
-                      <span>
-                        {prod.duration} • {prod.warranty}
-                      </span>
-                    </div>
+                          {/* Duration & Warranty */}
+                          <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-500 font-medium">
+                            <ShieldCheck className="w-4 h-4 text-[#0D9488] shrink-0" />
+                            <span>{prod.duration} • {prod.warranty}</span>
+                          </div>
 
-                    <div className="mt-4 p-3 rounded-xl bg-[#F8FAFC] border border-stone-200 space-y-1.5">
-                      <div className="flex items-baseline justify-between">
-                        <span className="text-[11px] text-slate-500">Harga Pelanggan</span>
-                        <span className="text-sm font-extrabold text-slate-900 font-mono">
-                          {formatIDR(prod.price)}
+                          {/* Pricing & Commission Card matching Image 2 */}
+                          <div className="mt-4 p-3.5 rounded-2xl bg-[#F8FAFC] border border-stone-200/90 space-y-2">
+                            <div className="flex items-baseline justify-between">
+                              <span className="text-xs text-slate-500 font-medium">Harga Pelanggan</span>
+                              <span className="text-base font-extrabold text-slate-900 font-mono tracking-tight">
+                                {formatIDR(prod.price)}
+                              </span>
+                            </div>
+                            <div className="flex items-baseline justify-between pt-2 border-t border-stone-200/80">
+                              <span className="text-xs font-bold text-[#15803D]">
+                                Komisi Sales (30%)
+                              </span>
+                              <span className="text-sm font-extrabold text-[#059669] font-mono">
+                                +{formatIDR(prod.commissionPerUnit)} <span className="text-xs font-semibold text-slate-500">/unit</span>
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Action Buttons matching Image 2 with stopPropagation */}
+                        <div className="mt-4 pt-3 border-t border-stone-100 grid grid-cols-2 gap-2.5">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOrderModalProduct(prod);
+                            }}
+                            className="py-2.5 px-4 rounded-full bg-[#0F172A] hover:bg-[#EA580C] text-white text-xs font-bold transition-all shadow-sm active:scale-95 cursor-pointer text-center"
+                          >
+                            Beli Produk
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setPromoModalProduct(prod);
+                            }}
+                            className="py-2.5 px-4 rounded-full bg-[#FFF7ED] hover:bg-orange-100 border border-orange-200/90 text-[#EA580C] text-xs font-bold flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer text-center"
+                          >
+                            <Share2 className="w-3.5 h-3.5 text-[#EA580C]" />
+                            <span>Promosikan</span>
+                          </button>
+                        </div>
+                      </div>
+                    }
+                  >
+                    <TiltedCardLayer depth={25}>
+                      <div className="absolute inset-x-3 bottom-3 p-3 rounded-2xl bg-slate-950/80 backdrop-blur-md border border-white/10 text-white flex items-center justify-between shadow-lg">
+                        <div className="min-w-0 pr-2">
+                          <p className="text-xs font-bold truncate text-slate-100">{prod.name.split('[')[0]}</p>
+                          <p className="text-[11px] text-emerald-400 font-semibold font-mono">
+                            +{formatIDR(prod.commissionPerUnit)} komisi
+                          </p>
+                        </div>
+                        <span className="shrink-0 px-2.5 py-1 rounded-lg bg-orange-500/25 border border-orange-400/40 text-[10px] font-bold text-orange-200 flex items-center gap-1">
+                          <span>Lihat</span>
+                          <span className="text-xs">↻</span>
                         </span>
                       </div>
-                      <div className="flex items-baseline justify-between pt-1 border-t border-stone-200">
-                        <span className="text-[11px] font-semibold text-[#15803D]">
-                          Komisi Sales (30%)
-                        </span>
-                        <span className="text-xs font-extrabold text-[#059669] font-mono">
-                          +{formatIDR(prod.commissionPerUnit)} /unit
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 pt-3 border-t border-stone-100 grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setOrderModalProduct(prod)}
-                      className="py-2 px-3 rounded-xl bg-slate-900 hover:bg-[#EA580C] text-white text-xs font-bold transition-colors"
-                    >
-                      Beli Produk
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setPromoModalProduct(prod)}
-                      className="py-2 px-3 rounded-xl bg-orange-50 hover:bg-orange-100 border border-orange-200/80 text-[#EA580C] text-xs font-bold flex items-center justify-center gap-1 transition-colors"
-                    >
-                      <Share2 className="w-3.5 h-3.5" />
-                      <span>Promosikan</span>
-                    </button>
-                  </div>
-                </div>
-              ))}
+                    </TiltedCardLayer>
+                  </TiltedCard>
+                );
+              })}
             </div>
           </div>
         </section>
