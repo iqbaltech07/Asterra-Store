@@ -2858,8 +2858,6 @@ export function SalesLandingPage() {
   // ==========================================================================
   return (
     <div className="min-h-screen flex flex-col font-sans antialiased selection:bg-blue-600 selection:text-white">
-      {renderStagingTopBar()}
-
       {currentRoute === 'landing' && renderLandingPage()}
       {currentRoute === 'register' && renderRegisterSalesPage()}
       {currentRoute === 'dashboard' && renderSalesPortalDashboard()}
