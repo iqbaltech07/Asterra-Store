@@ -33,11 +33,9 @@ import {
   Award,
   BarChart3,
   Diamond,
-  Percent,
   BadgeCheck,
   Package,
   Zap,
-  Coins,
   CreditCard
 } from 'lucide-react';
 
@@ -477,6 +475,8 @@ export function SalesLandingPage() {
     let totalUnits = 0;
     let totalPersonalCommission = 0;
     let totalResellerMarkupProfit = 0;
+    let totalRevenue = 0;
+    let totalModal = 0;
 
     simulatedItems.forEach((item) => {
       totalUnits += item.qty;
@@ -484,6 +484,13 @@ export function SalesLandingPage() {
       const customPrice = resellerCustomPrices[item.id] || item.resellerSuggestedPrice;
       const resellerMargin = Math.max(0, customPrice - item.price) + item.commissionPerUnit;
       totalResellerMarkupProfit += resellerMargin * item.qty;
+
+      if (calcMode === 'sales') {
+        totalRevenue += item.price * item.qty;
+      } else {
+        totalRevenue += customPrice * item.qty;
+        totalModal += item.price * item.qty;
+      }
     });
 
     const currentScenarioObj =
@@ -493,6 +500,8 @@ export function SalesLandingPage() {
       totalUnits,
       totalPersonalCommission,
       totalResellerMarkupProfit,
+      totalRevenue,
+      totalModal,
       displayMonthlyTotal:
         calcMode === 'sales' ? totalPersonalCommission : totalResellerMarkupProfit,
       scenarioObj: currentScenarioObj
@@ -560,81 +569,68 @@ export function SalesLandingPage() {
       {/* Subtle Warm Amber Glow in Top-Right */}
       <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-orange-100/40 via-amber-50/20 to-transparent blur-3xl pointer-events-none rounded-full" />
 
-      {/* Top Banner with Warm Luxury Cream & Gold Palette */}
+      {/* Top Banner: Minimalist Header */}
       <div
         style={{
           background: 'linear-gradient(135deg, #FFF9F5 0%, #FFFDFB 45%, #FFF5EE 100%)'
         }}
-        className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 p-6 sm:p-7 rounded-2xl border border-orange-200/80 shadow-xs relative z-10"
+        className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5 p-5 sm:p-6 rounded-2xl border border-orange-200/80 shadow-xs relative z-10"
       >
-        <div className="max-w-2xl">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-orange-200/90 text-[#EA580C] text-xs font-bold mb-3 shadow-xs">
+        <div>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-orange-200/90 text-[#EA580C] text-xs font-bold mb-2 shadow-2xs">
             <Calculator className="w-3.5 h-3.5 text-[#EA580C]" />
-            <span>Kalkulator Finansial & Potensi Cuan AsterraStore</span>
+            <span>Kalkulator Cuan</span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-[#111827] tracking-tight">
-            Simulasi Cuan Reseller & Mitra Sales
+            Kalkulator Cuan
           </h2>
-          <p className="mt-2 text-sm sm:text-base text-slate-600 leading-relaxed">
-            Mulai bisnis produk digital <strong className="text-[#EA580C]">tanpa modal & tanpa stok barang</strong>. Dapatkan bagi hasil transparan <strong className="text-emerald-700 font-bold">30% dari laba bersih transaksi</strong> dengan pencairan dana instan ke rekening Anda.
+          <p className="mt-1 text-xs sm:text-sm text-slate-500 font-medium">
+            Simulasi modal, omzet, dan estimasi keuntungan bersih.
           </p>
         </div>
 
         {/* Mode Switcher Tabs + Reset Button */}
-        <div className="flex flex-wrap items-center gap-2.5">
-          <div className="inline-flex p-1 rounded-xl bg-white border border-orange-200/80 shadow-sm">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="inline-flex p-1 rounded-xl bg-white border border-orange-200/80 shadow-xs">
             <button
               type="button"
               onClick={() => setCalcMode('sales')}
-              className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all ${
+              className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold transition-all ${
                 calcMode === 'sales'
-                  ? 'bg-[#EA580C] text-white shadow-sm'
+                  ? 'bg-[#EA580C] text-white shadow-xs'
                   : 'text-slate-600 hover:text-[#EA580C]'
               }`}
             >
-              <Calculator className="w-3.5 h-3.5" />
-              <span>Simulasi Komisi Sales</span>
+              <span>Komisi Sales (30%)</span>
             </button>
             <button
               type="button"
               onClick={() => setCalcMode('reseller')}
-              className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all ${
+              className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold transition-all ${
                 calcMode === 'reseller'
-                  ? 'bg-[#2563EB] text-white shadow-sm'
+                  ? 'bg-[#2563EB] text-white shadow-xs'
                   : 'text-slate-600 hover:text-[#2563EB]'
               }`}
             >
-              <ShoppingBag className="w-3.5 h-3.5" />
-              <span>Simulasi Harga Jual Reseller</span>
+              <span>Markup Reseller</span>
             </button>
           </div>
 
           <button
             type="button"
             onClick={handleResetCalculator}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-stone-200 bg-white hover:bg-orange-50 hover:border-orange-300 text-slate-700 hover:text-[#EA580C] text-xs sm:text-sm font-semibold transition-colors shadow-sm"
+            className="inline-flex items-center gap-1 px-3 py-2 rounded-xl border border-stone-200 bg-white hover:bg-orange-50 hover:border-orange-300 text-slate-700 text-xs font-semibold transition-colors shadow-2xs"
           >
             <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
-            <span>Reset Baseline</span>
+            <span>Reset</span>
           </button>
         </div>
       </div>
 
-      {/* 6 Interactive Commission Level Scenarios */}
-      <div className="mt-7 relative z-10">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
-          <div className="flex items-center gap-2 text-xs sm:text-sm font-bold text-[#111827]">
-            <span className="w-5 h-5 rounded-md bg-orange-100 text-[#EA580C] inline-flex items-center justify-center font-extrabold text-xs">
-              <Percent className="w-3.5 h-3.5" />
-            </span>
-            <span>Pilihan Skenario Skala Bisnis:</span>
-          </div>
-          <span className="text-xs font-medium text-slate-500">
-            Klik skenario untuk memproyeksikan target omzet & komisi otomatis
-          </span>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+      {/* Preset Scenarios + Add Product Bar */}
+      <div className="mt-6 pt-2 flex flex-col md:flex-row md:items-center justify-between gap-3 relative z-10">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-xs font-semibold text-slate-500 mr-1">Skenario Penjualan:</span>
           {COMMISSION_SCENARIOS.map((sc) => {
             const isSelected = activeScenario === sc.id;
             return (
@@ -642,209 +638,136 @@ export function SalesLandingPage() {
                 key={sc.id}
                 type="button"
                 onClick={() => handleSelectScenario(sc)}
-                style={
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
                   isSelected
-                    ? {
-                        background: 'linear-gradient(145deg, #EA580C 0%, #C2410C 100%)',
-                        boxShadow: '0 12px 28px -6px rgba(234, 88, 12, 0.42)'
-                      }
-                    : undefined
-                }
-                className={`text-left p-3.5 rounded-2xl border transition-all flex flex-col justify-between ${
-                  isSelected
-                    ? 'border-[#EA580C] text-white'
-                    : 'bg-white border-stone-200 hover:border-orange-300 text-slate-800 hover:bg-[#FFF7ED]/50 shadow-2xs'
+                    ? 'bg-[#EA580C] text-white shadow-xs'
+                    : 'bg-white border border-stone-200 text-slate-700 hover:border-orange-300 hover:bg-orange-50/50'
                 }`}
               >
-                <div>
-                  <div className="flex items-center justify-between gap-2 mb-2">
-                    <span
-                      className={`text-[10px] font-bold uppercase tracking-wider ${
-                        isSelected ? 'text-orange-100' : 'text-slate-500'
-                      }`}
-                    >
-                      {sc.badge}
-                    </span>
-                    <span
-                      className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
-                        isSelected
-                          ? 'bg-[#FEF3C7] text-[#92400E] border border-amber-300'
-                          : 'bg-orange-50 text-[#EA580C] border border-orange-200'
-                      }`}
-                    >
-                      {sc.rate}
-                    </span>
-                  </div>
-                  <div
-                    className={`text-xs font-bold mb-1.5 line-clamp-1 ${
-                      isSelected ? 'text-white' : 'text-slate-900'
-                    }`}
-                  >
-                    {sc.title}
-                  </div>
-                </div>
-                <p
-                  className={`text-[11px] leading-relaxed ${
-                    isSelected ? 'text-orange-50' : 'text-slate-500'
-                  }`}
-                >
-                  {sc.desc}
-                </p>
+                {sc.badge}
               </button>
             );
           })}
         </div>
+
+        {/* Add Product Dropdown */}
+        <div className="flex items-center gap-2">
+          <select
+            value={selectedAddProductId}
+            onChange={(e) => setSelectedAddProductId(e.target.value)}
+            aria-label="Pilih produk tambahan"
+            className="px-3 py-1.5 rounded-xl border border-stone-200 bg-white text-xs font-medium text-slate-700 focus:outline-none focus:border-[#EA580C] max-w-[200px] truncate shadow-2xs"
+          >
+            {ALL_CATALOG_PRODUCTS.map((prod) => (
+              <option key={prod.id} value={prod.id}>
+                {prod.name.split('[')[0]}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={handleAddCalcProduct}
+            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-[#EA580C] hover:bg-[#C2410C] text-white text-xs font-bold transition-colors shadow-xs"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Tambah</span>
+          </button>
+        </div>
       </div>
 
       {/* Main 2-Column Calculator Body */}
-      <div className="mt-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start relative z-10">
-        {/* Left Column: Details & Products List */}
-        <div className="lg:col-span-7 space-y-6">
-          {/* Revenue Share & Reseller Psychology Hook Card */}
-          <div className="p-5 rounded-2xl bg-gradient-to-br from-[#FFF9F5] via-white to-[#F0FDF4] border border-orange-200/70 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xs">
-            <div className="space-y-1.5 max-w-md">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs font-bold text-slate-900">Keunggulan Kemitraan:</span>
-                <span className="px-2.5 py-0.5 rounded-md bg-orange-50 border border-orange-200 text-[#EA580C] text-xs font-bold inline-flex items-center gap-1">
-                  <Coins className="w-3.5 h-3.5" />
-                  <span>30% Profit Bersih</span>
-                </span>
-                <span className="px-2 py-0.5 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-bold">
-                  Modal Rp 0
-                </span>
-              </div>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                Tanpa risiko nyetok barang dan tanpa repot kirim manual. Sistem AsterraStore memproses aktivasi otomatis <strong className="text-slate-900">1–3 menit ke email pembeli</strong>, Anda terima komisi bersih seketika.
-              </p>
+      <div className="mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start relative z-10">
+        {/* Left Column: Grouped Inputs (Harga Jual, Modal, Jumlah Terjual) */}
+        <div className="lg:col-span-7">
+          <div className="bg-white rounded-2xl border border-stone-200/90 shadow-2xs overflow-hidden">
+            {/* Desktop Table Header */}
+            <div className="hidden sm:grid grid-cols-12 gap-2 px-4 py-3 bg-stone-50/90 border-b border-stone-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+              <div className="col-span-4">Produk</div>
+              <div className="col-span-2 text-right">Modal</div>
+              <div className="col-span-3 text-right">Harga Jual</div>
+              <div className="col-span-3 text-right">Jumlah Terjual</div>
             </div>
 
-            <div className="sm:text-right shrink-0 pt-3 sm:pt-0 border-t sm:border-t-0 border-stone-200">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                TARGET REALISTIS HARIAN
-              </div>
-              <div className="text-base font-extrabold text-[#EA580C] mt-0.5 font-mono">
-                {formatIDR(calcSummary.scenarioObj.dailyTarget)} / hari
-              </div>
-              <div className="text-[11px] font-semibold text-slate-500 font-mono">
-                sekitar {formatIDR(calcSummary.scenarioObj.monthlyTarget)} / bulan
-              </div>
-            </div>
-          </div>
-
-          {/* Product Items List */}
-          <div>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-              <div>
-                <div className="flex items-center gap-2">
-                  <ShoppingBag className="w-4 h-4 text-[#EA580C]" />
-                  <h3 className="text-sm sm:text-base font-bold text-slate-900">
-                    Daftar Produk yang Disimulasikan ({simulatedItems.length})
-                  </h3>
-                </div>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Sesuaikan jumlah penjualan untuk melihat lonjakan akumulasi cuan Anda.
-                </p>
-              </div>
-
-              {/* Add Product Dropdown */}
-              <div className="flex items-center gap-2">
-                <select
-                  value={selectedAddProductId}
-                  onChange={(e) => setSelectedAddProductId(e.target.value)}
-                  aria-label="Pilih produk tambahan"
-                  className="px-3 py-2 rounded-xl border border-stone-200 bg-white text-xs font-medium text-slate-700 focus:outline-none focus:border-[#EA580C] max-w-[210px] truncate shadow-2xs"
-                >
-                  {ALL_CATALOG_PRODUCTS.map((prod) => (
-                    <option key={prod.id} value={prod.id}>
-                      {prod.name}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  onClick={handleAddCalcProduct}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#EA580C] hover:bg-[#C2410C] text-white text-xs font-bold transition-colors shadow-sm"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Tambah</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Simulated Products Cards */}
-            <div className="space-y-3.5">
+            {/* Input Rows */}
+            <div className="divide-y divide-stone-100">
               {simulatedItems.map((item) => {
-                const subtotalCommission = item.commissionPerUnit * item.qty;
                 const customResellerPrice =
                   resellerCustomPrices[item.id] || item.resellerSuggestedPrice;
-                const resellerUnitProfit =
-                  Math.max(0, customResellerPrice - item.price) + item.commissionPerUnit;
-                const resellerSubtotal = resellerUnitProfit * item.qty;
+                const modalCost = calcMode === 'sales' ? 0 : item.price;
 
                 return (
                   <div
                     key={item.id}
-                    className="p-4 sm:p-5 rounded-2xl bg-white border border-stone-200 hover:border-orange-300 transition-all shadow-xs"
+                    className="p-4 sm:px-4 sm:py-3.5 hover:bg-stone-50/50 transition-colors"
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <div className="flex flex-wrap items-center gap-2 mb-1.5">
-                          <span className="px-2 py-0.5 rounded-md bg-blue-50 text-[#2563EB] text-[11px] font-bold">
+                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+                      {/* Produk */}
+                      <div className="sm:col-span-4 flex items-center justify-between sm:justify-start gap-2">
+                        <div className="min-w-0">
+                          <div className="text-xs font-bold text-slate-900 truncate">
+                            {item.name.split('[')[0]}
+                          </div>
+                          <div className="text-[10px] text-slate-400">
                             {item.category}
-                          </span>
-                          <span className="text-xs text-slate-500 font-medium">
-                            Harga Toko: {formatIDR(item.price)}
-                          </span>
+                          </div>
                         </div>
-                        <h4 className="text-sm font-bold text-slate-900">{item.name}</h4>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveCalcItem(item.id)}
+                          title="Hapus produk"
+                          className="sm:hidden p-1 text-slate-400 hover:text-red-500"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveCalcItem(item.id)}
-                        title="Hapus produk dari simulasi"
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-
-                    {/* Reseller Markup Row if Mode is 'reseller' */}
-                    {calcMode === 'reseller' && (
-                      <div className="mt-3 pt-3 border-t border-dashed border-stone-200 flex flex-wrap items-center justify-between gap-2 bg-[#FFF9F5] p-2.5 rounded-xl border border-orange-100">
-                        <span className="text-xs font-medium text-slate-700">
-                          Harga Jual Reseller Pilihan Anda:
-                        </span>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-xs font-semibold text-slate-500">Rp</span>
-                          <input
-                            type="number"
-                            value={customResellerPrice}
-                            onChange={(e) =>
-                              setResellerCustomPrices((prev) => ({
-                                ...prev,
-                                [item.id]: Number(e.target.value) || item.price
-                              }))
-                            }
-                            className="w-28 px-2.5 py-1 rounded-lg border border-stone-300 text-xs font-bold text-slate-900 focus:outline-none focus:border-[#EA580C]"
-                          />
+                      {/* Modal */}
+                      <div className="sm:col-span-2 flex sm:block items-center justify-between text-right">
+                        <span className="sm:hidden text-xs text-slate-500 font-medium">Modal:</span>
+                        <div className="text-xs font-bold font-mono">
+                          {modalCost === 0 ? (
+                            <span className="text-emerald-700">Rp 0</span>
+                          ) : (
+                            <span className="text-slate-800">{formatIDR(modalCost)}</span>
+                          )}
                         </div>
                       </div>
-                    )}
 
-                    <div className="mt-4 pt-3 border-t border-stone-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      {/* Quantity Controls */}
-                      <div className="flex items-center gap-3">
-                        <span className="text-xs text-slate-500 font-medium">
-                          Jumlah Penjualan:
-                        </span>
-                        <div className="inline-flex items-center rounded-xl border border-stone-200 bg-stone-50 p-0.5">
+                      {/* Harga Jual */}
+                      <div className="sm:col-span-3 flex sm:block items-center justify-between text-right">
+                        <span className="sm:hidden text-xs text-slate-500 font-medium">Harga Jual:</span>
+                        {calcMode === 'reseller' ? (
+                          <div className="inline-flex items-center gap-1 justify-end">
+                            <span className="text-[11px] text-slate-400 font-mono">Rp</span>
+                            <input
+                              type="number"
+                              value={customResellerPrice}
+                              onChange={(e) =>
+                                setResellerCustomPrices((prev) => ({
+                                  ...prev,
+                                  [item.id]: Number(e.target.value) || item.price
+                                }))
+                              }
+                              className="w-24 px-2 py-1 rounded-lg border border-stone-200 text-xs font-bold text-right font-mono text-slate-900 focus:outline-none focus:border-[#EA580C]"
+                            />
+                          </div>
+                        ) : (
+                          <div className="text-xs font-bold text-slate-900 font-mono">
+                            {formatIDR(item.price)}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Jumlah Terjual */}
+                      <div className="sm:col-span-3 flex sm:flex-row items-center justify-between sm:justify-end gap-2">
+                        <span className="sm:hidden text-xs text-slate-500 font-medium">Jumlah Terjual:</span>
+                        <div className="inline-flex items-center rounded-lg border border-stone-200 bg-stone-50 p-0.5">
                           <button
                             type="button"
                             onClick={() => handleUpdateQty(item.id, item.qty - 1)}
-                            className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-600 hover:bg-white hover:text-[#EA580C] transition-colors"
+                            className="w-6 h-6 rounded flex items-center justify-center text-slate-600 hover:bg-white hover:text-[#EA580C]"
                           >
-                            <Minus className="w-3.5 h-3.5" />
+                            <Minus className="w-3 h-3" />
                           </button>
                           <input
                             type="number"
@@ -853,34 +776,24 @@ export function SalesLandingPage() {
                             value={item.qty}
                             onChange={(e) => handleUpdateQty(item.id, e.target.value)}
                             aria-label={`Jumlah unit ${item.name}`}
-                            className="w-12 text-center bg-transparent text-xs font-bold text-slate-900 focus:outline-none"
+                            className="w-10 text-center bg-transparent text-xs font-bold text-slate-900 font-mono focus:outline-none"
                           />
                           <button
                             type="button"
                             onClick={() => handleUpdateQty(item.id, item.qty + 1)}
-                            className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-600 hover:bg-white hover:text-[#EA580C] transition-colors"
+                            className="w-6 h-6 rounded flex items-center justify-center text-slate-600 hover:bg-white hover:text-[#EA580C]"
                           >
-                            <Plus className="w-3.5 h-3.5" />
+                            <Plus className="w-3 h-3" />
                           </button>
                         </div>
-                        <span className="text-xs text-slate-400">unit/bln</span>
-                      </div>
-
-                      {/* Subtotal Commission */}
-                      <div className="sm:text-right">
-                        <div className="text-[11px] text-slate-500">
-                          {calcMode === 'sales' ? 'Komisi Bersih: ' : 'Margin + Komisi: '}
-                          <span className="font-bold text-[#EA580C] font-mono">
-                            {formatIDR(
-                              calcMode === 'sales' ? item.commissionPerUnit : resellerUnitProfit
-                            )}
-                          </span>
-                          /unit
-                        </div>
-                        <div className="text-xs font-extrabold text-[#059669] mt-0.5 font-mono">
-                          Subtotal:{' '}
-                          {formatIDR(calcMode === 'sales' ? subtotalCommission : resellerSubtotal)}
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveCalcItem(item.id)}
+                          title="Hapus produk"
+                          className="hidden sm:inline-flex p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -890,114 +803,86 @@ export function SalesLandingPage() {
           </div>
         </div>
 
-        {/* Right Column: High-Converting Sticky Psychological Summary Box */}
+        {/* Right Column: Hasil Kalkulasi (Total Modal, Total Pendapatan, Estimasi Keuntungan) */}
         <div className="lg:col-span-5 lg:sticky lg:top-24">
           <div
             style={{
-              background: 'linear-gradient(180deg, #FFFFFF 0%, #FFF9F5 45%, #FFF3EA 100%)',
-              boxShadow: '0 24px 60px -15px rgba(234, 88, 12, 0.18), 0 0 0 1px rgba(234, 88, 12, 0.2)'
+              background: 'linear-gradient(180deg, #FFFFFF 0%, #FFF9F5 45%, #FFF5EE 100%)',
+              boxShadow: '0 20px 50px -12px rgba(234, 88, 12, 0.12), 0 0 0 1px rgba(234, 88, 12, 0.15)'
             }}
-            className="rounded-3xl p-6 sm:p-7 relative overflow-hidden"
+            className="rounded-3xl p-6 sm:p-7 relative overflow-hidden space-y-4"
           >
-            {/* Header Badge */}
-            <div className="flex items-center justify-between gap-2 mb-2">
-              <span className="px-3 py-1 rounded-full bg-[#1F242D] text-[10px] font-extrabold uppercase tracking-widest text-[#FED7AA]">
-                POTENSI PENGHASILAN BERSIH
-              </span>
-              <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-[#059669] border border-emerald-500/20 text-[10px] font-black">
-                +30% Net Profit
-              </span>
-            </div>
-
-            {/* Huge Clean Monthly Total in Emerald (Wealth/Cash Psychology) */}
-            <div className="mt-3 text-3xl sm:text-4xl lg:text-[42px] font-black text-[#047857] tracking-tight font-mono leading-none">
-              {formatIDR(calcSummary.displayMonthlyTotal)}
-            </div>
-            <div className="text-[11px] font-semibold text-slate-500 mt-2">
-              Estimasi keuntungan bersih masuk ke rekening / e-wallet per bulan.
-            </div>
-
-            {/* Psychological Reality Check & Anchor Box */}
-            <div className="mt-5 p-3.5 rounded-2xl bg-white/90 border border-orange-200/70 shadow-2xs space-y-2.5">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-500 font-medium">Modal Awal Anda:</span>
-                <span className="font-extrabold text-[#111827] font-mono">Rp 0 (GRATIS)</span>
-              </div>
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-500 font-medium">Resiko Stok Barang:</span>
-                <span className="font-extrabold text-emerald-600 font-mono">0% (Ditanggung Asterra)</span>
-              </div>
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-500 font-medium">Target Closing Harian:</span>
-                <span className="font-extrabold text-[#EA580C] font-mono">
-                  Hanya ~{Math.max(1, Math.round(calcSummary.totalUnits / 30))} item / hari
+            {/* HERO RESULT: ESTIMASI KEUNTUNGAN */}
+            <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-br from-[#ECFDF5] via-[#F0FDF4] to-white border border-emerald-300 shadow-xs text-left">
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <span className="text-xs font-extrabold uppercase tracking-wider text-emerald-900">
+                  Estimasi Keuntungan
+                </span>
+                <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-[#059669] text-[11px] font-black border border-emerald-200">
+                  {calcMode === 'sales' ? 'Komisi 30%' : 'Margin + Komisi'}
                 </span>
               </div>
+              <div className="text-3xl sm:text-4xl lg:text-[42px] font-black text-[#047857] font-mono tracking-tight leading-none mt-2">
+                {formatIDR(calcSummary.displayMonthlyTotal)}
+              </div>
+              <div className="text-xs text-slate-500 mt-2.5 font-medium flex items-center justify-between">
+                <span>Potensi laba bersih per bulan</span>
+                <span className="text-[#059669] font-bold">Langsung cair</span>
+              </div>
             </div>
 
-            {/* Breakdown Cards */}
-            <div className="mt-4 space-y-2">
-              <div className="px-3.5 py-2.5 rounded-xl bg-white/80 border border-stone-200/80 flex items-center justify-between text-xs">
-                <span className="text-slate-600 font-medium">Total Volume Terjual:</span>
-                <span className="font-extrabold text-slate-900 font-mono">
-                  {calcSummary.totalUnits} unit / bulan
-                </span>
-              </div>
-
-              <div className="px-3.5 py-2.5 rounded-xl bg-white/80 border border-stone-200/80 flex items-center justify-between text-xs">
-                <span className="text-slate-600 font-medium">Komisi Penjualan Dasar (30%):</span>
-                <span className="font-extrabold text-[#2563EB] font-mono">
-                  {formatIDR(calcSummary.totalPersonalCommission)}
-                </span>
-              </div>
-
-              {calcMode === 'reseller' && (
-                <div className="px-3.5 py-2.5 rounded-xl bg-white/80 border border-stone-200/80 flex items-center justify-between text-xs">
-                  <span className="text-slate-600 font-medium">Tambahan Selisih Markup Reseller:</span>
-                  <span className="font-extrabold text-[#EA580C] font-mono">
-                    {formatIDR(
-                      calcSummary.totalResellerMarkupProfit - calcSummary.totalPersonalCommission
-                    )}
-                  </span>
+            {/* SECONDARY METRICS: Total Modal & Total Pendapatan */}
+            <div className="grid grid-cols-2 gap-3">
+              {/* Total Modal */}
+              <div className="p-4 rounded-2xl bg-white border border-stone-200 text-left shadow-2xs">
+                <span className="text-xs font-semibold text-slate-500">Total Modal</span>
+                <div className="text-base sm:text-lg font-extrabold text-slate-900 font-mono mt-1">
+                  {calcSummary.totalModal === 0 ? (
+                    <span className="text-emerald-700">Rp 0</span>
+                  ) : (
+                    formatIDR(calcSummary.totalModal)
+                  )}
                 </div>
-              )}
-            </div>
-
-            {/* Fast Payout Guarantee Box */}
-            <div className="mt-4 p-3.5 rounded-2xl bg-[#0F172A] text-white">
-              <div className="flex items-center justify-between gap-2 mb-1">
-                <span className="text-xs font-bold text-amber-300 flex items-center gap-1.5">
-                  <Wallet className="w-3.5 h-3.5" />
-                  <span>Pencairan Dana Fleksibel:</span>
-                </span>
-                <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-500/30">
-                  Min. Rp 50.000
+                <span className="text-[11px] text-slate-400 mt-1 block">
+                  {calcMode === 'sales' ? 'Tanpa modal kulakan' : 'Modal beli produk'}
                 </span>
               </div>
-              <p className="text-[11px] text-slate-300 leading-relaxed">
-                Tarik dana kapan saja ke <strong className="text-white">BCA, Mandiri, BRI, BNI, DANA, GoPay</strong> tanpa potongan tersembunyi.
-              </p>
+
+              {/* Total Pendapatan */}
+              <div className="p-4 rounded-2xl bg-white border border-stone-200 text-left shadow-2xs">
+                <span className="text-xs font-semibold text-slate-500">Total Pendapatan</span>
+                <div className="text-base sm:text-lg font-extrabold text-slate-900 font-mono mt-1">
+                  {formatIDR(calcSummary.totalRevenue)}
+                </div>
+                <span className="text-[11px] text-slate-400 mt-1 block">
+                  {calcSummary.totalUnits} unit terjual
+                </span>
+              </div>
             </div>
 
-            {/* High-Converting CTA Join Button */}
+            {/* Quick Note */}
+            <div className="p-3 rounded-xl bg-slate-50/90 border border-stone-200 flex items-center justify-between text-xs text-slate-600">
+              <span className="font-medium">Pencairan Dana:</span>
+              <span className="font-bold text-slate-900">Min. Rp 50.000 • Tanpa Potongan</span>
+            </div>
+
+            {/* CTA Button */}
             {!isEmbeddedInDashboard && (
-              <div className="mt-5 space-y-2">
+              <div className="pt-2">
                 <Link
                   href="/daftar-sales"
                   style={{
                     background: 'linear-gradient(135deg, #EA580C 0%, #C2410C 100%)',
-                    boxShadow: '0 14px 28px -6px rgba(234, 88, 12, 0.45)'
+                    boxShadow: '0 10px 24px -4px rgba(234, 88, 12, 0.4)'
                   }}
-                  className="w-full py-4 px-5 rounded-2xl text-white text-xs sm:text-sm font-black flex items-center justify-center gap-2 transition-all hover:scale-[1.01] active:scale-[0.99] group shadow-lg"
+                  className="w-full py-3.5 px-5 rounded-2xl text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all hover:scale-[1.01] active:scale-[0.99] shadow-md cursor-pointer"
                 >
-                  <span>Daftar Reseller Sekarang & Ambil Cuan</span>
-                  <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                  <span>Daftar Sekarang & Ambil Cuan</span>
+                  <ArrowRight className="w-4 h-4" />
                 </Link>
-
-                <div className="text-center text-[11px] text-slate-400 flex items-center justify-center gap-1.5 pt-1">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>Pendaftaran 100% Gratis • Akun Langsung Aktif</span>
-                </div>
+                <p className="text-center text-[11px] text-slate-400 mt-2 font-medium">
+                  Pendaftaran 100% Gratis • Akun Langsung Aktif
+                </p>
               </div>
             )}
           </div>
