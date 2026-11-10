@@ -72,28 +72,31 @@ class OrderProcessingService:
                     default_setting = OrderProcessingSetting(
                         id="main",
                         order_mode="manual",
-                        active_reseller="vip-reseller",
+                        active_reseller="xaviera",
                         auto_fulfill_on_payment=True,
                         notify_admin_on_manual_order=True,
                         updated_by="system_init",
                     )
                     db.add(default_setting)
                     db.commit()
+                elif main_setting.active_reseller == "vip-reseller":
+                    main_setting.active_reseller = "xaviera"
+                    db.commit()
 
-                # 4. Seed VIP Reseller in reseller_api_settings if absent
-                vip_row = db.query(ResellerApiSetting).filter_by(id="vip-reseller").first()
-                if not vip_row:
-                    default_vip = ResellerApiSetting(
-                        id="vip-reseller",
-                        name="VIP Reseller API Gateway",
-                        base_url=(settings.VIP_RESELLER_BASE_URL or "https://vip-reseller.co.id/api").strip(),
-                        api_key=(settings.VIP_RESELLER_API_KEY or "").strip(),
-                        api_sign=(settings.VIP_RESELLER_SIGN or "").strip(),
+                # 4. Seed Xaviera Store in reseller_api_settings if absent
+                xaviera_row = db.query(ResellerApiSetting).filter_by(id="xaviera").first()
+                if not xaviera_row:
+                    default_xaviera = ResellerApiSetting(
+                        id="xaviera",
+                        name="Xaviera Store API Gateway",
+                        base_url=(getattr(settings, "XAVIERA_BASE_URL", None) or "https://xavierastore.com/api/v1").strip(),
+                        api_key=(getattr(settings, "XAVIERA_API_KEY", None) or "").strip(),
+                        api_sign="",
                         is_active=True,
                         environment="production",
                         updated_by="system_init",
                     )
-                    db.add(default_vip)
+                    db.add(default_xaviera)
                     db.commit()
 
                 # 5. Automated Catalog Input Audit Seeding (Idempotent: Only seeds unmapped products)
@@ -126,8 +129,8 @@ class OrderProcessingService:
             "id": "main",
             "orderMode": "manual",
             "order_mode": "manual",
-            "activeReseller": "vip-reseller",
-            "active_reseller": "vip-reseller",
+            "activeReseller": "xaviera",
+            "active_reseller": "xaviera",
             "autoFulfillOnPayment": True,
             "auto_fulfill_on_payment": True,
             "notifyAdminOnManualOrder": True,
@@ -147,7 +150,7 @@ class OrderProcessingService:
         if new_mode not in ["manual", "automatic"]:
             raise ValueError("Mode order harus 'manual' atau 'automatic'.")
 
-        active_reseller = str(payload.get("activeReseller") or payload.get("active_reseller") or "vip-reseller").strip()
+        active_reseller = str(payload.get("activeReseller") or payload.get("active_reseller") or "xaviera").strip()
         if new_mode == "automatic":
             if not ResellerRegistry.is_supported(active_reseller):
                 raise ValueError(
@@ -286,7 +289,7 @@ class OrderProcessingService:
         try:
             row = db.query(ResellerApiSetting).filter_by(id=clean_pid).first()
             if not row:
-                row = ResellerApiSetting(id=clean_pid, name="VIP Reseller API Gateway", base_url=base_url)
+                row = ResellerApiSetting(id=clean_pid, name="Xaviera Store API Gateway" if clean_pid == "xaviera" else f"{clean_pid.capitalize()} Gateway", base_url=base_url)
                 db.add(row)
 
             if base_url:

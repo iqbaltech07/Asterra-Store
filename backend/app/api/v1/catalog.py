@@ -242,22 +242,24 @@ async def bulk_delete_products(request: Request):
     }
 
 # ------------------------------------------
-# 1.1 VIP Reseller Explorer Endpoints
+# 1.1 Xaviera Store Upstream Explorer Endpoints
 # ------------------------------------------
-@router.get("/admin/vip-services", tags=["Admin VIP"])
-def get_admin_vip_services(
+@router.get("/admin/xaviera-services", tags=["Admin Xaviera"])
+@router.get("/admin/vip-services", tags=["Admin VIP (Legacy Alias)"], include_in_schema=False)
+def get_admin_xaviera_services(
     search: Optional[str] = None,
     type: Optional[str] = None,
     status: Optional[str] = None,
     limit: int = 2500,
 ):
-    result = CatalogService.search_vip_services(search=search, vip_type=type, vip_status=status, limit=limit)
+    result = CatalogService.search_xaviera_services(search=search, service_type=type, service_status=status, limit=limit)
     return result
 
-@router.post("/admin/vip-services", tags=["Admin VIP"])
-async def import_admin_vip_service(request: Request):
+@router.post("/admin/xaviera-services", tags=["Admin Xaviera"])
+@router.post("/admin/vip-services", tags=["Admin VIP (Legacy Alias)"], include_in_schema=False)
+async def import_admin_xaviera_service(request: Request):
     payload = await request.json()
-    imported = CatalogService.import_vip_service(payload)
+    imported = CatalogService.import_xaviera_service(payload)
     cache.invalidate("catalog", "categories", "homepage_sections")
     RealtimeBroadcaster.broadcast(
         "catalog:updated",
@@ -275,35 +277,50 @@ async def import_admin_vip_service(request: Request):
         "data": imported,
     }
 
-@router.post("/admin/sync-vip", tags=["Admin VIP"])
-def sync_vip_services():
-    from app.services.vip_service import VipService
-    result = VipService.sync_vip_services()
+@router.post("/admin/sync-xaviera", tags=["Admin Xaviera"])
+@router.post("/admin/sync-vip", tags=["Admin VIP (Legacy Alias)"], include_in_schema=False)
+def sync_xaviera_services():
+    from app.services.xaviera_service import XavieraService
+    result = XavieraService.fetch_live_services(force_refresh=True)
     if not result.get("success"):
-        raise HTTPException(status_code=400, detail=result.get("message", "Gagal sinkronisasi VIP Reseller"))
+        raise HTTPException(status_code=400, detail=result.get("message", "Gagal sinkronisasi Xaviera Store"))
     cache.invalidate("catalog")
     RealtimeBroadcaster.broadcast(
         "catalog:updated",
-        {"action": "sync_vip"},
+        {"action": "sync_xaviera"},
+        target_role="admin",
+    )
+    RealtimeBroadcaster.broadcast(
+        "xaviera:status_updated",
+        {"action": "sync_xaviera"},
         target_role="admin",
     )
     RealtimeBroadcaster.broadcast(
         "vip:status_updated",
-        {"action": "sync_vip"},
+        {"action": "sync_xaviera"},
         target_role="admin",
     )
-    return result
+    return {
+        "success": True,
+        "message": f"Katalog Xaviera Store berhasil disinkronkan ({result.get('total', 0)} layanan).",
+        "total": result.get("total", 0),
+    }
 
-@router.post("/admin/refresh-stock", tags=["Admin VIP"])
+@router.post("/admin/refresh-stock", tags=["Admin Xaviera"])
 def refresh_stock():
-    from app.services.vip_service import VipService
-    result = VipService.check_stock()
+    from app.services.xaviera_service import XavieraService
+    result = XavieraService.check_stock()
     if not result.get("success"):
         raise HTTPException(status_code=400, detail=result.get("message", "Gagal pengecekan stok live"))
     cache.invalidate("catalog")
     RealtimeBroadcaster.broadcast(
         "catalog:updated",
         {"action": "refresh_stock"},
+        target_role="admin",
+    )
+    RealtimeBroadcaster.broadcast(
+        "xaviera:status_updated",
+        {"action": "refresh_stock", "checked": result.get("checked", 0)},
         target_role="admin",
     )
     RealtimeBroadcaster.broadcast(

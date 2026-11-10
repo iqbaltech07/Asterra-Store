@@ -404,7 +404,7 @@ class OrderService:
         from app.services.order_processing_service import OrderProcessingService
         order_mode_cfg = OrderProcessingService.get_order_mode_config()
         order_fulfillment_mode = str(order_mode_cfg.get("order_mode") or "manual").lower()
-        active_reseller = str(order_mode_cfg.get("active_reseller") or "vip-reseller")
+        active_reseller = str(order_mode_cfg.get("active_reseller") or "xaviera")
         initial_provider = active_reseller if order_fulfillment_mode == "automatic" else "internal-manual"
 
         # 1. Payment config settings (unique code toggle & order expiry)
@@ -1017,17 +1017,17 @@ class OrderService:
         except Exception as e:
             print(f"[OrderService] Error updating order status in Supabase: {e}")
 
-        # 2. Trigger automated VIP Reseller fulfillment if status transitioned to processing or paid ONLY if order is in automatic mode
+        # 2. Trigger automated Xaviera Store fulfillment if status transitioned to processing or paid ONLY if order is in automatic mode
         if new_status in ["processing", "paid"] and normalized:
             order_fulfill_mode = str(normalized.get("fulfillment_mode") or normalized.get("fulfillmentMode") or "manual").lower()
             if order_fulfill_mode == "automatic":
                 try:
-                    from app.services.vip_service import VipService
-                    vip_res = VipService.fulfill_order_if_vip(clean_id)
-                    if vip_res.get("success") and vip_res.get("order"):
-                        normalized = cls._normalize_order(vip_res["order"])
+                    from app.services.xaviera_service import XavieraService
+                    xvs_res = XavieraService.fulfill_order_if_xaviera(clean_id)
+                    if xvs_res.get("success") and xvs_res.get("order"):
+                        normalized = cls._normalize_order(xvs_res["order"])
                 except Exception as e:
-                    print(f"[OrderService] VIP fulfillment trigger error: {e}")
+                    print(f"[OrderService] Xaviera fulfillment trigger error: {e}")
 
         # 3. Sync in-memory cache directly (zero full DB query)
         if cls._orders is not None and normalized:

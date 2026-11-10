@@ -783,11 +783,12 @@ class EmailService:
                     footer_note=f"Notifikasi invoice transaksi resmi ini dikirimkan ke {buyer_login_email} atas pesanan #{order_id}.",
                 )
 
-                cls._dispatch_email(buyer_login_email, buyer_subject, buyer_html)
+                buyer_invoice_dispatched = cls._dispatch_email(buyer_login_email, buyer_subject, buyer_html)
             except Exception as notify_err:
+                buyer_invoice_dispatched = False
                 print(f"[EmailService] Note: Non-critical buyer invoice receipt dispatch error: {notify_err}")
 
-        return any_credentials_dispatched or (buyer_login_email != "")
+        return any_credentials_dispatched or buyer_invoice_dispatched
 
     @classmethod
     def send_order_cancelled_email(cls, order: Dict[str, Any], reason: Optional[str] = None) -> bool:

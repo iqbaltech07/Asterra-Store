@@ -85,6 +85,10 @@ interface AdminProductsResponse {
     isVipConnected?: boolean;
     vipUsername?: string;
     vipStatusMessage?: string;
+    xavieraBalance?: number | null;
+    isXavieraConnected?: boolean;
+    xavieraUsername?: string;
+    xavieraStatusMessage?: string;
   };
 }
 
@@ -109,8 +113,8 @@ const TAB_TITLES: Record<AdminTab, { category: string; title: string }> = {
   products: { category: 'Katalog & Layanan', title: 'Manajemen Katalog & Produk' },
   'homepage-ordering': { category: 'Katalog & Layanan', title: 'Pengaturan Urutan Produk Homepage' },
   categories: { category: 'Katalog & Layanan', title: 'Kategori Layanan' },
-  'vip-explorer': { category: 'Katalog & Layanan', title: 'Jelajahi & Impor Layanan VIP Reseller' },
-  providers: { category: 'Katalog & Layanan', title: 'Koneksi Gateway & Supplier VIP' },
+  'vip-explorer': { category: 'Katalog & Layanan', title: 'Jelajahi & Impor Layanan Xaviera Store' },
+  providers: { category: 'Katalog & Layanan', title: 'Koneksi Gateway & Supplier Xaviera' },
   orders: { category: 'Transaksi', title: 'Pesanan & Transaksi Pelanggan' },
   customers: { category: 'Transaksi', title: 'Database Pelanggan (CRM)' },
   refunds: { category: 'Transaksi', title: 'Antrean Refund & Komplain' },
@@ -533,7 +537,7 @@ function AdminPageContent() {
           window.dispatchEvent(new CustomEvent('admin:data-updated'));
         });
 
-        eventSource.addEventListener('vip:status_updated', () => {
+        const handleUpstreamStatusUpdate = () => {
           if (!isSubscribed) return;
           const isBusy = isEditingProductRef.current;
           queryClient.invalidateQueries({ queryKey: ['admin-vip-services'] });
@@ -541,7 +545,10 @@ function AdminPageContent() {
             queryKey: ['admin-products'],
             refetchType: isBusy ? 'none' : 'active',
           });
-        });
+        };
+
+        eventSource.addEventListener('xaviera:status_updated', handleUpstreamStatusUpdate);
+        eventSource.addEventListener('vip:status_updated', handleUpstreamStatusUpdate);
 
         eventSource.addEventListener('promo:updated', () => {
           if (!isSubscribed) return;
@@ -674,7 +681,7 @@ function AdminPageContent() {
       if (vipStatus && vipStatus !== 'all') params.set('status', vipStatus);
       params.set('limit', '2500');
 
-      const res = await fetch(`/api/v1/admin/vip-services?${params.toString()}`, {
+      const res = await fetch(`/api/v1/admin/xaviera-services?${params.toString()}`, {
         headers: getAdminAuthHeaders(),
       });
       if (res.status === 401) {
@@ -683,7 +690,7 @@ function AdminPageContent() {
       }
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.message || 'Gagal memuat layanan VIP Reseller');
+        throw new Error(data.message || 'Gagal memuat layanan Xaviera Store');
       }
       return data;
     },
@@ -755,24 +762,24 @@ function AdminPageContent() {
     },
   });
 
-  // Sync All Services from VIP Reseller
+  // Sync All Services from Xaviera Store
   const syncVipMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch('/api/v1/admin/sync-vip', {
+      const res = await fetch('/api/v1/admin/sync-xaviera', {
         method: 'POST',
         headers: getAdminAuthHeaders(),
         credentials: 'include',
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        throw new Error(data.detail || data.error || data.message || 'Gagal sinkronisasi dari VIP Reseller');
+        throw new Error(data.detail || data.error || data.message || 'Gagal sinkronisasi dari Xaviera Store');
       }
       return data;
     },
     onSuccess: (data) => {
       showNotification(
         data.message ||
-          `Berhasil menyinkronkan ${data.totalSynced} produk dari VIP Reseller!`
+          `Berhasil menyinkronkan produk dari Xaviera Store!`
       );
       queryClient.invalidateQueries({ queryKey: ['admin-products'] });
       queryClient.invalidateQueries({ queryKey: ['admin-vip-services'] });
@@ -909,11 +916,11 @@ function AdminPageContent() {
     },
   });
 
-  // Import VIP Reseller Service
+  // Import Xaviera Store Service
   const importMutation = useMutation({
     mutationFn: async () => {
       if (!importingService) return;
-      const res = await fetch('/api/v1/admin/vip-services', {
+      const res = await fetch('/api/v1/admin/xaviera-services', {
         method: 'POST',
         headers: getAdminAuthHeaders({ 'Content-Type': 'application/json' }),
         credentials: 'include',
@@ -930,7 +937,7 @@ function AdminPageContent() {
         }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.detail || data.error || data.message || 'Gagal mengimpor layanan VIP');
+      if (!res.ok) throw new Error(data.detail || data.error || data.message || 'Gagal mengimpor layanan Xaviera');
       return data;
     },
     onSuccess: (data) => {
@@ -2273,14 +2280,14 @@ function AdminPageContent() {
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-border">
                 <div>
                   <h3 className="text-base font-semibold text-foreground">
-                    Jelajahi Layanan Gateway VIP Reseller (Upstream)
+                    Jelajahi Layanan Gateway Xaviera Store (Upstream)
                   </h3>
                   <p className="text-xs text-foreground-muted">
-                    Pilih produk dari {(allVipServices.length || vipData?.total || 9914).toLocaleString('id-ID')} layanan supplier live untuk diimpor ke katalog Asterra Store dengan harga retail kustom Anda.
+                    Pilih produk dari {(allVipServices.length || vipData?.total || 0).toLocaleString('id-ID')} layanan supplier live untuk diimpor ke katalog Asterra Store dengan harga retail kustom Anda.
                   </p>
                 </div>
                 <Badge variant="outline" className="text-xs font-mono text-primary border-primary/30 w-fit">
-                  Total Supplier: {(allVipServices.length || vipData?.total || 9914).toLocaleString('id-ID')} Layanan
+                  Total Supplier: {(allVipServices.length || vipData?.total || 0).toLocaleString('id-ID')} Layanan
                 </Badge>
               </div>
 
@@ -2289,7 +2296,7 @@ function AdminPageContent() {
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-status-success shrink-0" />
                   <span>
-                    <strong>Anti-Spam Cache Aktif:</strong> {allVipServices.length} layanan dimuat di memori. Pencarian & filter dilakukan secara instan tanpa mengirim request berulang ke API VIP Reseller.
+                    <strong>Anti-Spam Cache Aktif:</strong> {allVipServices.length} layanan dimuat di memori. Pencarian & filter dilakukan secara instan tanpa mengirim request berulang ke API Xaviera Store.
                   </span>
                 </div>
                 {vipData?.cacheAgeSeconds !== undefined && (
@@ -2876,8 +2883,8 @@ function AdminPageContent() {
                     placeholder="Harga supply / modal dasar"
                   />
                   <span className="text-[10px] text-foreground-muted block mt-1">
-                    {editingProduct?.provider === 'vip-reseller'
-                      ? 'Terisi otomatis dari VIP Reseller (dapat diubah).'
+                    {editingProduct?.provider === 'xaviera' || editingProduct?.provider === 'vip-reseller'
+                      ? 'Terisi otomatis dari Xaviera Store (dapat diubah).'
                       : 'Harga modal untuk produk mandiri.'}
                   </span>
                 </div>
@@ -3531,7 +3538,7 @@ function AdminPageContent() {
                 <div className="bg-white border border-[#E2E8F0] rounded-xl p-3.5 sm:p-4 shadow-2xs space-y-3.5">
               <div className="p-3 bg-surface-raised rounded-lg space-y-1">
                 <div className="flex justify-between">
-                  <span className="text-foreground-muted">Kode Layanan VIP:</span>
+                  <span className="text-foreground-muted">Kode Layanan Xaviera:</span>
                   <span className="font-mono font-bold text-primary">{importingService.code}</span>
                 </div>
                 <div className="flex justify-between">

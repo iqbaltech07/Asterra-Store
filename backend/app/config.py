@@ -73,8 +73,14 @@ class Settings(BaseSettings):
     INTERNAL_CRON_SECRET: str = os.getenv("INTERNAL_CRON_SECRET", "")
     DANA_DEVICE_TOKEN: str = os.getenv("DANA_DEVICE_TOKEN", os.getenv("LIPAY_DEVICE_TOKEN", ""))
     
-    # VIP Reseller Supplier Integration
-    VIP_RESELLER_BASE_URL: str = os.getenv("VIP_RESELLER_BASE_URL", "https://vip-reseller.co.id/api")
+    # Xaviera Store Supplier Integration (https://xavierastore.com/api-docs.html)
+    XAVIERA_BASE_URL: str = os.getenv("XAVIERA_BASE_URL", "https://xavierastore.com/api/v1")
+    XAVIERA_API_KEY: str = os.getenv("XAVIERA_API_KEY", "")
+    XAVIERA_AUTO_FULFILLMENT: bool = os.getenv("XAVIERA_AUTO_FULFILLMENT", "true").lower() == "true"
+    XAVIERA_SANDBOX_MODE: bool = os.getenv("XAVIERA_SANDBOX_MODE", "false").lower() == "true"
+
+    # Legacy Reseller compatibility aliases
+    VIP_RESELLER_BASE_URL: str = os.getenv("VIP_RESELLER_BASE_URL", "https://xavierastore.com/api/v1")
     VIP_RESELLER_API_ID: str = os.getenv("VIP_RESELLER_API_ID", "")
     VIP_RESELLER_API_KEY: str = os.getenv("VIP_RESELLER_API_KEY", "")
     VIP_RESELLER_SIGN: str = os.getenv("VIP_RESELLER_SIGN", "")

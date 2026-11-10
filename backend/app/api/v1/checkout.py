@@ -191,14 +191,17 @@ def mask_order_for_public(order: dict, is_owner_or_admin: bool, is_admin: bool =
 # 0. Dynamic Target Requirement Endpoint
 # ------------------------------------------
 @router.get("/target-requirement", tags=["Checkout"])
+@router.get("/checkout/target-requirement", tags=["Checkout"], include_in_schema=False)
+@router.get("/checkout/xaviera-target-requirement", tags=["Checkout"], include_in_schema=False)
+@router.get("/checkout/vip-target-requirement", tags=["Checkout (Legacy Alias)"], include_in_schema=False)
 def get_target_requirement(
     product_name: str = "",
     brand: str = "",
     category: str = "",
     provider_code: str = "",
 ):
-    from app.services.vip_service import VipService
-    return VipService.get_product_target_requirement(
+    from app.services.xaviera_service import XavieraService
+    return XavieraService.get_product_target_requirement(
         product_name=product_name,
         brand=brand,
         category=category,
@@ -478,15 +481,15 @@ def get_order_by_id(order_id: str, request: Request):
     if not order:
         raise HTTPException(status_code=404, detail="Pesanan tidak ditemukan")
 
-    # If this is a VIP Reseller order currently processing, check live status directly
-    if order.get("provider") == "vip-reseller" and order.get("provider_trxid") and order.get("status") in ["processing", "pending"]:
+    # If this is a Xaviera Store order currently processing, check live status directly
+    if order.get("provider") in ["xaviera", "vip-reseller"] and order.get("provider_trxid") and order.get("status") in ["processing", "pending"]:
         try:
-            from app.services.vip_service import VipService
-            sync_res = VipService.sync_order_live_status(clean_id)
+            from app.services.xaviera_service import XavieraService
+            sync_res = XavieraService.sync_order_live_status(clean_id)
             if sync_res.get("success") and sync_res.get("order"):
                 order = sync_res["order"]
         except Exception as e:
-            print(f"[Order] Live VIP status sync note: {e}")
+            print(f"[Order] Live Xaviera status sync note: {e}")
 
     from app.core.auth import get_authenticated_session_identity, verify_order_access_token
     session_user = get_authenticated_session_identity(request)
@@ -505,10 +508,11 @@ def get_order_by_id(order_id: str, request: Request):
         "is_owner": is_authorized,
     }
 
-@router.post("/orders/{order_id}/sync-vip", tags=["Orders"])
-def sync_order_vip_status(order_id: str, request: Request):
+@router.post("/orders/{order_id}/sync-xaviera", tags=["Orders"])
+@router.post("/orders/{order_id}/sync-vip", tags=["Orders (Legacy Alias)"], include_in_schema=False)
+def sync_order_xaviera_status(order_id: str, request: Request):
     """
-    On-demand live status synchronization with VIP Reseller for a specific order.
+    On-demand live status synchronization with Xaviera Store for a specific order.
     """
     clean_id = order_id.strip().upper()
     order = OrderService.get_order_by_id(clean_id)
@@ -526,8 +530,8 @@ def sync_order_vip_status(order_id: str, request: Request):
     if not (is_admin or is_session_owner or has_valid_token):
         raise HTTPException(status_code=403, detail="Akses ditolak: Anda tidak memiliki otorisasi untuk pesanan ini.")
 
-    from app.services.vip_service import VipService
-    res = VipService.sync_order_live_status(clean_id)
+    from app.services.xaviera_service import XavieraService
+    res = XavieraService.sync_order_live_status(clean_id)
     return res
 
 @router.post("/orders/{order_id}/pay", tags=["Orders"])
@@ -731,33 +735,37 @@ def cancel_order(order_id: str, request: Request):
     }
 
 # ------------------------------------------
-# 4. VIP Reseller Automated Webhook Callback
+# 4. Upstream Automated Webhook Callbacks
 # ------------------------------------------
-@router.post("/webhooks/vip-reseller", tags=["Webhooks"])
-async def vip_reseller_webhook(request: Request):
+@router.post("/webhooks/xaviera", tags=["Webhooks"])
+async def xaviera_webhook(request: Request):
     """
-    Automated webhook callback receiver for VIP Reseller status updates.
-    Whitelist IP: 178.248.73.218
-    Header: X-Client-Signature: md5(API ID + API KEY)
+    Automated webhook callback receiver for Xaviera Store status updates.
     """
     raw_body = await request.body()
-    signature = request.headers.get("x-client-signature") or request.headers.get("X-Client-Signature", "")
-
-    from app.services.vip_service import VipService
-    if not VipService.verify_webhook_signature(signature):
-        raise HTTPException(status_code=401, detail="Invalid VIP Reseller callback signature.")
-
     try:
-        payload = json.loads(raw_body.decode("utf-8"))
+        payload = json.loads(raw_body.decode("utf-8")) if raw_body else {}
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid JSON payload")
 
-    res = VipService.handle_webhook(payload)
-    if not res.get("result"):
-        print(f"[VipWebhook] Note: {res.get('message')}")
-        return {"result": False, "message": res.get("message")}
+    from app.services.xaviera_service import XavieraService
+    res = XavieraService.handle_webhook(payload)
+    return {"result": True, "message": "Callback status Xaviera Store berhasil diproses.", "data": res}
 
-    return {"result": True, "message": "Callback status VIP Reseller berhasil diproses.", "data": res}
+@router.post("/webhooks/vip-reseller", tags=["Webhooks (Legacy Alias)"], include_in_schema=False)
+async def vip_reseller_webhook(request: Request):
+    """
+    Backward-compatibility webhook receiver.
+    """
+    raw_body = await request.body()
+    try:
+        payload = json.loads(raw_body.decode("utf-8")) if raw_body else {}
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid JSON payload")
+
+    from app.services.xaviera_service import XavieraService
+    res = XavieraService.handle_webhook(payload)
+    return {"result": True, "message": "Callback status berhasil diproses.", "data": res}
 
 # ------------------------------------------
 # 6. Admin Orders Management
@@ -792,39 +800,41 @@ def get_admin_order_by_id(order_id: str):
     if not order:
         raise HTTPException(status_code=404, detail="Pesanan tidak ditemukan")
 
-    # If this is a VIP Reseller order currently processing, check live status directly
-    if order.get("provider") == "vip-reseller" and order.get("provider_trxid") and order.get("status") in ["processing", "pending"]:
+    # If this is a Xaviera Store order currently processing, check live status directly
+    if order.get("provider") in ["xaviera", "vip-reseller"] and order.get("provider_trxid") and order.get("status") in ["processing", "pending"]:
         try:
-            from app.services.vip_service import VipService
-            sync_res = VipService.sync_order_live_status(clean_id)
+            from app.services.xaviera_service import XavieraService
+            sync_res = XavieraService.sync_order_live_status(clean_id)
             if sync_res.get("success") and sync_res.get("order"):
                 order = sync_res["order"]
         except Exception as e:
-            print(f"[Admin Order] Live VIP status sync note: {e}")
+            print(f"[Admin Order] Live Xaviera status sync note: {e}")
 
     return {
         "success": True,
         "data": order,
     }
 
-@router.post("/admin/orders/{order_id}/sync-vip", tags=["Admin Orders"])
-def admin_sync_order_vip_status(order_id: str):
+@router.post("/admin/orders/{order_id}/sync-xaviera", tags=["Admin Orders"])
+@router.post("/admin/orders/{order_id}/sync-vip", tags=["Admin Orders (Legacy Alias)"], include_in_schema=False)
+def admin_sync_order_xaviera_status(order_id: str):
     """
-    Admin on-demand synchronization with VIP Reseller for a specific order.
+    Admin on-demand synchronization with Xaviera Store for a specific order.
     """
     clean_id = order_id.strip().upper()
-    from app.services.vip_service import VipService
-    res = VipService.sync_order_live_status(clean_id)
+    from app.services.xaviera_service import XavieraService
+    res = XavieraService.sync_order_live_status(clean_id)
     return res
 
-@router.post("/admin/orders/{order_id}/fulfill-vip", tags=["Admin Orders"])
-def admin_fulfill_order_vip(order_id: str):
+@router.post("/admin/orders/{order_id}/fulfill-xaviera", tags=["Admin Orders"])
+@router.post("/admin/orders/{order_id}/fulfill-vip", tags=["Admin Orders (Legacy Alias)"], include_in_schema=False)
+def admin_fulfill_order_xaviera(order_id: str):
     """
-    Admin manual order placement to VIP Reseller.
+    Admin manual order placement to Xaviera Store.
     """
     clean_id = order_id.strip().upper()
-    from app.services.vip_service import VipService
-    res = VipService.fulfill_order_if_vip(clean_id)
+    from app.services.xaviera_service import XavieraService
+    res = XavieraService.fulfill_order_if_xaviera(clean_id)
     return res
 
 @router.patch("/admin/orders/{order_id}/status", tags=["Admin Orders"])

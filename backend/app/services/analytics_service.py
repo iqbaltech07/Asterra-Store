@@ -615,9 +615,9 @@ class AnalyticsService:
             or str(o.get("paymentMethod", "")).lower() == "qris"
             or "dana" in str(o.get("paymentMethod", "")).lower()
         )
-        from app.services.vip_service import VipService
-        vip_info = VipService.get_profile()
-        vip_deposit = float(vip_info.get("balance") or 0.0) if vip_info.get("connected") else 0.0
+        from app.services.xaviera_service import XavieraService
+        xvs_info = XavieraService.get_profile()
+        xvs_deposit = float(xvs_info.get("balance") or 0.0) if xvs_info.get("connected") else 0.0
         reserve_balance = summary.get("totalBusinessReserve", 0.0)
 
         # 2. Revenue Breakdown & Channels
@@ -645,11 +645,11 @@ class AnalyticsService:
         expenses_list = [
             {
                 "id": "exp-1",
-                "category": "Modal Supplier VIP Reseller",
+                "category": "Modal Supplier Xaviera Store",
                 "desc": "Pembelian lisensi & API auto-fulfillment transaksi lunas",
                 "amount": cogs_total,
                 "date": datetime.utcnow().strftime("%d %b %Y"),
-                "ref": "INV-VIP-SSOT",
+                "ref": "INV-XVS-SSOT",
             },
             {
                 "id": "exp-2",
@@ -740,7 +740,8 @@ class AnalyticsService:
                 "midtransBalance": lipay_settled,
                 "danaBalance": lipay_settled,
                 "tripayBalance": lipay_settled,
-                "vipBalance": vip_deposit,
+                "xavieraBalance": xvs_deposit,
+                "vipBalance": xvs_deposit,
                 "reserveBalance": reserve_balance,
             },
             "revenue": {
