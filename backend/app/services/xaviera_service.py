@@ -32,7 +32,6 @@ class XavieraService:
         """Resolves API Key and Base URL from database settings or environment fallback."""
         base_url = (getattr(settings, "XAVIERA_BASE_URL", None) or "https://xavierastore.com/api/v1").rstrip("/")
         api_key = (getattr(settings, "XAVIERA_API_KEY", None) or "").strip()
-        sandbox = getattr(settings, "XAVIERA_SANDBOX_MODE", False)
 
         try:
             from app.models.order_processing_setting import ResellerApiSetting
@@ -46,8 +45,6 @@ class XavieraService:
                         base_url = setting.base_url.rstrip("/")
                     if setting.api_key:
                         api_key = setting.api_key.strip()
-                    if setting.environment == "sandbox":
-                        sandbox = True
             finally:
                 db.close()
         except Exception:
@@ -56,7 +53,6 @@ class XavieraService:
         return {
             "base_url": base_url,
             "api_key": api_key,
-            "sandbox": sandbox,
         }
 
     @classmethod
@@ -73,21 +69,6 @@ class XavieraService:
         creds = cls._get_api_credentials()
         api_key = creds["api_key"]
         base_url = creds["base_url"]
-        sandbox = creds["sandbox"]
-
-        if sandbox:
-            result = {
-                "connected": True,
-                "balance": 2500000,
-                "username": "Sandbox Developer",
-                "email": "dev@asterra.store",
-                "id": "usr_sandbox",
-                "message": "Koneksi ke Xaviera Store API aktif (Sandbox Simulation Mode).",
-                "environment": "sandbox",
-            }
-            cls._profile_cache = result
-            cls._profile_cache_time = now
-            return result
 
         if not api_key:
             result = {
@@ -162,9 +143,6 @@ class XavieraService:
         Fetches premium accounts catalog (GET /v1/products).
         """
         creds = cls._get_api_credentials()
-        if creds["sandbox"]:
-            return cls._get_mock_premium_products()
-
         api_key = creds["api_key"]
         base_url = creds["base_url"]
         if not api_key:
@@ -384,34 +362,12 @@ class XavieraService:
         creds = cls._get_api_credentials()
         base_url = creds["base_url"]
         api_key = creds["api_key"]
-        sandbox = creds["sandbox"]
 
         clean_code = str(service_code or "").strip()
         clean_qty = max(1, int(qty or 1))
 
         if not clean_code:
             return {"success": False, "message": "Kode produk (productId) wajib diisi."}
-
-        # Sandbox Simulation Mode
-        if sandbox:
-            import random
-            mock_time = int(time.time())
-            mock_trxid = f"ord_test_{mock_time}_{random.randint(100, 999)}"
-            mock_email = f"user_{mock_time}@premium.test"
-            mock_pass = f"Pass{random.randint(1000, 9999)}!"
-            return {
-                "success": True,
-                "trxid": mock_trxid,
-                "status": "success",
-                "note": f"Email: {mock_email} | Password: {mock_pass}",
-                "message": "Pesanan akun premium simulasi berhasil diproses dengan instan kredensial.",
-                "credentials": [{"email": mock_email, "password": mock_pass}],
-                "raw": {
-                    "id": mock_trxid,
-                    "status": "COMPLETED",
-                    "credentials": [{"email": mock_email, "password": mock_pass}],
-                },
-            }
 
         if not api_key:
             return {
@@ -449,8 +405,8 @@ class XavieraService:
                     err_msg = body.get("error", {}).get("message") or body.get("message") or f"HTTP {resp.status_code}"
                     return {"success": False, "message": f"Gagal order akun premium: {err_msg}", "raw": body}
 
-                order_data = body.get("order", {})
-                trxid = order_data.get("id")
+                order_data = body.get("order") if isinstance(body.get("order"), dict) else body
+                trxid = order_data.get("id") or order_data.get("orderId") or body.get("id") or body.get("orderId")
                 st = str(order_data.get("status", "COMPLETED")).upper()
                 creds_list = order_data.get("credentials") or []
 
@@ -484,15 +440,6 @@ class XavieraService:
             return {"success": False, "status": "error", "message": "ID transaksi (trxid) kosong."}
 
         creds = cls._get_api_credentials()
-        if creds["sandbox"]:
-            return {
-                "success": True,
-                "trxid": clean_trxid,
-                "status": "success",
-                "note": "Sandbox order status: SUCCESS",
-                "message": "Status pesanan aktif (Sandbox).",
-            }
-
         api_key = creds["api_key"]
         base_url = creds["base_url"]
         if not api_key:
@@ -829,44 +776,3 @@ class XavieraService:
     @classmethod
     def handle_webhook(cls, payload: Dict[str, Any]) -> Dict[str, Any]:
         return {"result": True, "message": "Webhook diterima.", "data": payload}
-
-    @classmethod
-    def _get_mock_premium_products(cls) -> List[Dict[str, Any]]:
-        return [
-            {
-                "id": "p_netflix1",
-                "name": "Netflix Premium UHD 4K",
-                "category": "Streaming",
-                "hasVariants": True,
-                "price": 25000,
-                "stock": 42,
-                "variants": [
-                    {"id": "v_net_1m", "name": "1 Bulan (1 Profil Private)", "price": 25000, "stock": 25},
-                    {"id": "v_net_3m", "name": "3 Bulan (1 Profil Private)", "price": 72000, "stock": 17},
-                ],
-            },
-            {
-                "id": "p_spotify1",
-                "name": "Spotify Premium Individual",
-                "category": "Music",
-                "hasVariants": False,
-                "price": 18000,
-                "stock": 50,
-            },
-            {
-                "id": "p_canvapro",
-                "name": "Canva Pro Anggota Tim",
-                "category": "Design & Productivity",
-                "hasVariants": False,
-                "price": 9500,
-                "stock": 100,
-            },
-            {
-                "id": "p_geminipro",
-                "name": "Google Gemini Advanced 2.0",
-                "category": "Artificial Intelligence",
-                "hasVariants": False,
-                "price": 45000,
-                "stock": 30,
-            },
-        ]

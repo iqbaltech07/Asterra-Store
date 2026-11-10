@@ -1,5 +1,5 @@
+from unittest.mock import patch, MagicMock
 import pytest
-from app.config import settings
 from app.services.xaviera_service import XavieraService
 from app.models.order import Order, OrderItem
 from app.models.product import Product
@@ -28,26 +28,35 @@ def test_xaviera_target_requirement():
     assert req_phone["type"] == "phone"
     assert req_phone["requires_zone"] is False
 
-def test_xaviera_sandbox_order_placement():
-    # Force sandbox mode for safe unit testing
-    orig_mode = getattr(settings, "XAVIERA_SANDBOX_MODE", False)
-    try:
-        settings.XAVIERA_SANDBOX_MODE = True
+def test_xaviera_order_placement():
+    mock_resp = MagicMock()
+    mock_resp.status_code = 200
+    mock_resp.json.return_value = {
+        "success": True,
+        "id": "ord_xvs_mock_12345",
+        "status": "COMPLETED",
+        "credentials": [
+            {"email": "netflix_user@premium.test", "password": "SuperSecretPass123!"}
+        ],
+    }
 
-        # Test Akun Premium order placement with instant credentials return
+    with patch.object(
+        XavieraService,
+        "_get_api_credentials",
+        return_value={"base_url": "https://xavierastore.com/api/v1", "api_key": "xvs_test_key"}
+    ), patch("httpx.Client.post", return_value=mock_resp):
         res_prem = XavieraService.place_order(
             service_code="xvs-prod:p_netflix1:v_net_1m",
             target_id="customer@test.com",
             qty=1
         )
         assert res_prem["success"] is True
-        assert res_prem["trxid"].startswith("ord_test_")
+        assert res_prem["trxid"] == "ord_xvs_mock_12345"
+        assert res_prem["status"] == "success"
         assert res_prem["credentials"] is not None
-        assert len(res_prem["credentials"]) > 0
-        assert "email" in res_prem["credentials"][0]
-        assert "password" in res_prem["credentials"][0]
-    finally:
-        settings.XAVIERA_SANDBOX_MODE = orig_mode
+        assert len(res_prem["credentials"]) == 1
+        assert res_prem["credentials"][0]["email"] == "netflix_user@premium.test"
+        assert res_prem["credentials"][0]["password"] == "SuperSecretPass123!"
 
 def test_native_product_is_not_fulfilled_by_xaviera():
     db = SessionLocal()

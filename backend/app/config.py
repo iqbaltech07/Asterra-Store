@@ -77,7 +77,6 @@ class Settings(BaseSettings):
     XAVIERA_BASE_URL: str = os.getenv("XAVIERA_BASE_URL", "https://xavierastore.com/api/v1")
     XAVIERA_API_KEY: str = os.getenv("XAVIERA_API_KEY", "")
     XAVIERA_AUTO_FULFILLMENT: bool = os.getenv("XAVIERA_AUTO_FULFILLMENT", "true").lower() == "true"
-    XAVIERA_SANDBOX_MODE: bool = os.getenv("XAVIERA_SANDBOX_MODE", "false").lower() == "true"
     
     # Transactional Email (Resend HTTPS REST API)
     RESEND_API_KEY: str = os.getenv("RESEND_API_KEY", "")
