@@ -560,7 +560,7 @@ export function SalesLandingPage() {
         {/* System Pill + Reset Button */}
         <div className="flex flex-wrap items-center gap-2">
           <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-orange-200/90 text-[#EA580C] text-xs font-bold shadow-2xs">
-            <span className="w-2 h-2 rounded-full bg-[#EA580C] animate-pulse" />
+            <TrendingUp className="w-3.5 h-3.5 text-[#EA580C]" />
             <span>Komisi Seller & Affiliate (30%)</span>
           </div>
 
