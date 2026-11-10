@@ -688,9 +688,15 @@ function AdminPageContent() {
         router.replace('/admin/login');
         throw new Error('Unauthorized');
       }
-      const data = await res.json();
+      const text = await res.text();
+      let data: any = {};
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        throw new Error(`Kendala server (${res.status}): ${text.slice(0, 150) || res.statusText}`);
+      }
       if (!res.ok) {
-        throw new Error(data.message || 'Gagal memuat layanan Xaviera Store');
+        throw new Error(data.detail || data.error || data.message || `Gagal memuat layanan Xaviera Store (${res.status})`);
       }
       return data;
     },
@@ -1497,16 +1503,16 @@ function AdminPageContent() {
                 style={{ animationDelay: '210ms' }}
               >
                 <div className="flex items-center justify-between text-[11px] sm:text-xs text-foreground-muted mb-1.5 sm:mb-2">
-                  <span className="font-medium truncate">Saldo VIP</span>
+                  <span className="font-medium truncate">Saldo Xaviera</span>
                   <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-blue-50 text-[#2563EB] flex items-center justify-center shrink-0">
                     <Wallet className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   </div>
                 </div>
                 <div>
                   <div className="text-lg sm:text-2xl font-extrabold text-foreground tabular-nums font-mono truncate">
-                    {metrics?.isVipConnected && metrics?.vipBalance !== null && metrics?.vipBalance !== undefined ? (
+                    {(metrics?.isXavieraConnected ?? metrics?.isVipConnected) && (metrics?.xavieraBalance ?? metrics?.vipBalance) !== null && (metrics?.xavieraBalance ?? metrics?.vipBalance) !== undefined ? (
                       <AnimatedNumber
-                        value={metrics.vipBalance}
+                        value={(metrics?.xavieraBalance ?? metrics?.vipBalance) || 0}
                         formatter={(v) => `Rp ${Math.round(v).toLocaleString('id-ID')}`}
                         showDelta
                       />
@@ -1515,10 +1521,10 @@ function AdminPageContent() {
                     )}
                   </div>
                   <div className="flex items-center gap-1.5 mt-0.5 sm:mt-1 truncate">
-                    <span className={`text-[10px] sm:text-[11px] font-medium truncate ${metrics?.isVipConnected ? 'text-[#16A36A]' : 'text-[#D97706]'}`}>
-                      {metrics?.isVipConnected
-                        ? (metrics.vipUsername ? `Akun: ${metrics.vipUsername}` : 'Terhubung')
-                        : metrics?.vipStatusMessage || 'Belum Terhubung'}
+                    <span className={`text-[10px] sm:text-[11px] font-medium truncate ${(metrics?.isXavieraConnected ?? metrics?.isVipConnected) ? 'text-[#16A36A]' : 'text-[#D97706]'}`}>
+                      {(metrics?.isXavieraConnected ?? metrics?.isVipConnected)
+                        ? ((metrics?.xavieraUsername ?? metrics?.vipUsername) ? `Akun: ${metrics?.xavieraUsername ?? metrics?.vipUsername}` : 'Terhubung')
+                        : (metrics?.xavieraStatusMessage ?? metrics?.vipStatusMessage ?? 'Belum Terhubung')}
                     </span>
                   </div>
                 </div>

@@ -27,6 +27,15 @@ class XavieraService:
     _services_cache_time: float = 0.0
     _SERVICES_CACHE_TTL_SECONDS: float = 300.0
 
+    @staticmethod
+    def _safe_int(val: Any, default: int = 0) -> int:
+        if val is None:
+            return default
+        try:
+            return int(float(str(val).strip()))
+        except (ValueError, TypeError):
+            return default
+
     @classmethod
     def _get_api_credentials(cls) -> Dict[str, Any]:
         """Resolves API Key and Base URL from database settings or environment fallback."""
@@ -112,7 +121,7 @@ class XavieraService:
                     return result
 
                 body = resp.json()
-                balance = int(body.get("saldo", 0))
+                balance = cls._safe_int(body.get("saldo"), 0)
                 result = {
                     "connected": True,
                     "balance": balance,
@@ -183,21 +192,27 @@ class XavieraService:
 
         premium_prods = cls.get_premium_products()
         for p in premium_prods:
-            p_id = p.get("id", "")
-            p_name = p.get("name", "")
-            p_cat = p.get("category", "Akun Premium")
+            p_id = str(p.get("id") or "").strip()
+            if not p_id:
+                continue
+            p_name = str(p.get("name") or "").strip()
+            p_cat = str(p.get("category") or "Akun Premium").strip()
             has_variants = bool(p.get("hasVariants"))
             variants = p.get("variants") or []
 
-            if has_variants and variants:
+            if has_variants and variants and isinstance(variants, list):
                 for v in variants:
-                    v_id = v.get("id", "")
-                    v_name = v.get("name", "")
-                    full_name = f"{p_name} - {v_name}"
-                    code = f"xvs-prod:{p_id}:{v_id}"
-                    price_val = int(v.get("price", 0))
-                    stock = int(v.get("stock", 0))
-                    status = "available" if stock > 0 else "empty"
+                    if not isinstance(v, dict):
+                        continue
+                    v_id = str(v.get("id") or "").strip()
+                    v_name = str(v.get("name") or "").strip()
+                    full_name = f"{p_name} - {v_name}" if v_name else p_name
+                    code = f"xvs-prod:{p_id}:{v_id}" if v_id else f"xvs-prod:{p_id}"
+                    price_val = cls._safe_int(v.get("price"), 0)
+                    raw_v_stock = v.get("stock")
+                    # None means unlimited/auto-bot generation stock
+                    stock = 100 if raw_v_stock is None else cls._safe_int(raw_v_stock, 0)
+                    status = "available" if (raw_v_stock is None or stock > 0) else "empty"
                     normalized_services.append({
                         "id": code,
                         "code": code,
@@ -211,14 +226,15 @@ class XavieraService:
                         "hasVariants": True,
                         "productId": p_id,
                         "variantId": v_id,
-                        "note": f"Varian: {v_name} | Stok live: {stock}",
+                        "note": f"Varian: {v_name} | Stok live: {stock if raw_v_stock is not None else 'Tersedia'}",
                         "raw": v,
                     })
             else:
                 code = f"xvs-prod:{p_id}"
-                price_val = int(p.get("price", 0))
-                stock = int(p.get("stock", 0))
-                status = "available" if stock > 0 else "empty"
+                price_val = cls._safe_int(p.get("price"), 0)
+                raw_p_stock = p.get("stock")
+                stock = 100 if raw_p_stock is None else cls._safe_int(raw_p_stock, 0)
+                status = "available" if (raw_p_stock is None or stock > 0) else "empty"
                 normalized_services.append({
                     "id": code,
                     "code": code,
@@ -232,7 +248,7 @@ class XavieraService:
                     "hasVariants": False,
                     "productId": p_id,
                     "variantId": None,
-                    "note": f"Stok live: {stock}",
+                    "note": f"Stok live: {stock if raw_p_stock is not None else 'Tersedia'}",
                     "raw": p,
                 })
 

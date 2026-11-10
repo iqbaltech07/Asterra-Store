@@ -719,9 +719,9 @@ class CatalogService:
     def import_xaviera_service(cls, payload: Dict[str, Any]) -> Dict[str, Any]:
         code = str(payload.get("code") or payload.get("providerCode") or "").strip()
         name = payload.get("name", "").strip()
-        price = float(payload.get("price", 0))
-        provider_price = float(payload.get("providerPrice", 0))
-        stock = int(payload.get("stock", 100))
+        price = float(payload.get("price") or 0)
+        provider_price = float(payload.get("providerPrice") or 0)
+        stock = int(payload.get("stock") or 100)
         category_name = payload.get("categoryName", "Digital Services")
         description = payload.get("description", "")
         status = payload.get("status", "active")
