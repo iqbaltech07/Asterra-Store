@@ -17,25 +17,16 @@ def test_xaviera_target_requirement():
     assert req_prem["type"] == "email"
     assert req_prem["requires_zone"] is False
 
-    # 2. Game with Zone requirement
-    req_game = XavieraService.get_product_target_requirement(
-        product_name="Mobile Legends 86 Diamonds",
-        brand="Mobile Legends",
-        category="Games",
-        provider_code="xvs-game:mobile-legends:ml_86_dm"
+    # 2. Akun Premium with phone / whatsapp override
+    req_phone = XavieraService.get_product_target_requirement(
+        product_name="Spotify Premium 1 Bulan",
+        brand="Spotify",
+        category="Music",
+        provider_code="xvs-prod:p_spotify1",
+        target_type_override="whatsapp"
     )
-    assert req_game["type"] == "game"
-    assert req_game["requires_zone"] is True
-
-    # 3. SMM requirement
-    req_smm = XavieraService.get_product_target_requirement(
-        product_name="Instagram Followers Max 50K",
-        brand="Instagram",
-        category="SMM",
-        provider_code="xvs-smm:101"
-    )
-    assert req_smm["type"] == "target_url"
-    assert req_smm["requires_zone"] is False
+    assert req_phone["type"] == "phone"
+    assert req_phone["requires_zone"] is False
 
 def test_xaviera_sandbox_order_placement():
     # Force sandbox mode for safe unit testing
@@ -43,34 +34,18 @@ def test_xaviera_sandbox_order_placement():
     try:
         settings.XAVIERA_SANDBOX_MODE = True
 
-        # Test Akun Premium
+        # Test Akun Premium order placement with instant credentials return
         res_prem = XavieraService.place_order(
-            service_code="xvs-prod:p_netflix1",
+            service_code="xvs-prod:p_netflix1:v_net_1m",
             target_id="customer@test.com",
             qty=1
         )
         assert res_prem["success"] is True
         assert res_prem["trxid"].startswith("ord_test_")
         assert res_prem["credentials"] is not None
-
-        # Test Game
-        res_game = XavieraService.place_order(
-            service_code="xvs-game:mobile-legends:ml_86_dm",
-            target_id="12345678",
-            zone_id="2024",
-            qty=1
-        )
-        assert res_game["success"] is True
-        assert res_game["trxid"].startswith("gm_test_")
-
-        # Test SMM
-        res_smm = XavieraService.place_order(
-            service_code="xvs-smm:101",
-            target_id="https://instagram.com/asterra.store",
-            qty=100
-        )
-        assert res_smm["success"] is True
-        assert res_smm["trxid"].startswith("smm_test_")
+        assert len(res_prem["credentials"]) > 0
+        assert "email" in res_prem["credentials"][0]
+        assert "password" in res_prem["credentials"][0]
     finally:
         settings.XAVIERA_SANDBOX_MODE = orig_mode
 
@@ -120,3 +95,4 @@ def test_native_product_is_not_fulfilled_by_xaviera():
         except Exception:
             pass
         db.close()
+

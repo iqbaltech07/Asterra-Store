@@ -9,7 +9,7 @@ class XavieraAdapter(BaseResellerAdapter):
     Official Documentation: https://xavierastore.com/api-docs.html
     """
     provider_id = "xaviera"
-    name = "Xaviera Store API Gateway"
+    name = "Xaviera Store (Akun Premium Gateway)"
 
     def test_connection(self) -> Dict[str, Any]:
         start = time.perf_counter()
@@ -58,8 +58,9 @@ class XavieraAdapter(BaseResellerAdapter):
             "supports_stock_sync": True,
             "is_production_ready": True,
             "documentation": "https://xavierastore.com/api-docs.html",
-            "notes": "Integrasi resmi Xaviera Store API Gateway (Akun Premium, Game, & SMM) aktif dan teruji.",
+            "notes": "Integrasi resmi Xaviera Store API Gateway khusus Akun Premium (Instant Delivery Credentials) aktif dan teruji.",
         }
 
 # Alias for backwards compatibility
 VipResellerAdapter = XavieraAdapter
+

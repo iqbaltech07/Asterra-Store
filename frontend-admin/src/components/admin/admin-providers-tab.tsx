@@ -266,7 +266,7 @@ export function AdminProvidersTab({ metrics, onNotify, onSyncVip }: AdminProvide
                   <div className="flex items-center justify-between text-foreground-muted">
                     <span>Base Endpoint:</span>
                     <span className="font-mono text-foreground truncate max-w-[200px]">
-                      {provider.baseUrl || provider.base_url || 'https://vip-reseller.co.id/api'}
+                      {provider.baseUrl || provider.base_url || 'https://xavierastore.com/api/v1'}
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-foreground-muted">

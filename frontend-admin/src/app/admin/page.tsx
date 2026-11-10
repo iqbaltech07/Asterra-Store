@@ -113,7 +113,7 @@ const TAB_TITLES: Record<AdminTab, { category: string; title: string }> = {
   products: { category: 'Katalog & Layanan', title: 'Manajemen Katalog & Produk' },
   'homepage-ordering': { category: 'Katalog & Layanan', title: 'Pengaturan Urutan Produk Homepage' },
   categories: { category: 'Katalog & Layanan', title: 'Kategori Layanan' },
-  'vip-explorer': { category: 'Katalog & Layanan', title: 'Jelajahi & Impor Layanan Xaviera Store' },
+  'vip-explorer': { category: 'Katalog & Layanan', title: 'Jelajahi & Impor Akun Premium Xaviera Store' },
   providers: { category: 'Katalog & Layanan', title: 'Koneksi Gateway & Supplier Xaviera' },
   orders: { category: 'Transaksi', title: 'Pesanan & Transaksi Pelanggan' },
   customers: { category: 'Transaksi', title: 'Database Pelanggan (CRM)' },
@@ -1397,11 +1397,11 @@ function AdminPageContent() {
                 onClick={() => syncVipMutation.mutate()}
                 disabled={syncVipMutation.isPending}
                 className="text-xs h-8 px-2.5 sm:px-3 gap-1.5 border-slate-200 hover:bg-slate-50 font-medium"
-                title="Ambil dan sinkronkan semua layanan dari gateway VIP Reseller"
+                title="Ambil dan sinkronkan semua akun premium dari gateway Xaviera Store"
               >
                 <DownloadCloud className={`w-3.5 h-3.5 text-[#2563EB] ${syncVipMutation.isPending ? 'animate-bounce' : ''}`} />
-                <span className="hidden sm:inline">{syncVipMutation.isPending ? 'Menyinkronkan...' : 'Sinkronkan VIP'}</span>
-                <span className="sm:hidden">Sync VIP</span>
+                <span className="hidden sm:inline">{syncVipMutation.isPending ? 'Menyinkronkan...' : 'Sinkronkan Xaviera'}</span>
+                <span className="sm:hidden">Sync Xaviera</span>
               </Button>
               <Button
                 variant="outline"
@@ -1409,7 +1409,7 @@ function AdminPageContent() {
                 onClick={() => refreshStockMutation.mutate()}
                 disabled={refreshStockMutation.isPending}
                 className="text-xs h-8 px-2.5 sm:px-3 gap-1.5 border-slate-200 hover:bg-slate-50 font-medium"
-                title="Periksa ketersediaan stok live dari VIP Reseller"
+                title="Periksa ketersediaan stok live akun premium dari Xaviera Store"
               >
                 <RefreshCw className={`w-3.5 h-3.5 text-[#2563EB] ${refreshStockMutation.isPending ? 'animate-spin' : ''}`} />
                 <span className="hidden sm:inline">{refreshStockMutation.isPending ? 'Memeriksa...' : 'Cek Stok'}</span>
@@ -1788,7 +1788,7 @@ function AdminPageContent() {
                       {products.map((p, idx) => {
                         const isLiveWarning =
                           p.status === 'active' &&
-                          p.provider === 'vip-reseller' &&
+                          (p.provider === 'xaviera' || p.provider === 'vip-reseller') &&
                           p.providerStatus === 'empty';
                         const isSelected = selectedIdSet.has(p.id);
 
@@ -1844,9 +1844,9 @@ function AdminPageContent() {
                                   </div>
                                   <div className="text-[10px] text-foreground-muted flex items-center gap-1.5 mt-0.5 min-w-0">
                                     <span className="shrink-0">ID: {p.id}</span>
-                                    {p.provider === 'vip-reseller' && p.providerCode && (
-                                      <span className="text-primary font-mono truncate" title={`VIP Code: ${p.providerCode}`}>
-                                        • VIP: {p.providerCode}
+                                    {(p.provider === 'xaviera' || p.provider === 'vip-reseller') && p.providerCode && (
+                                      <span className="text-primary font-mono truncate" title={`Xaviera Code: ${p.providerCode}`}>
+                                        • Xaviera: {p.providerCode}
                                       </span>
                                     )}
                                   </div>
@@ -1917,7 +1917,7 @@ function AdminPageContent() {
                             </td>
 
                             <td className="py-3 px-2 whitespace-nowrap">
-                              {p.provider === 'vip-reseller' ? (
+                              {(p.provider === 'xaviera' || p.provider === 'vip-reseller') ? (
                                 p.providerStatus === 'available' ? (
                                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-status-success/15 text-status-success">
                                     <CheckCircle2 className="w-3 h-3 shrink-0" />
@@ -2030,7 +2030,7 @@ function AdminPageContent() {
                 {products.map((p, idx) => {
                   const isLiveWarning =
                     p.status === 'active' &&
-                    p.provider === 'vip-reseller' &&
+                    (p.provider === 'xaviera' || p.provider === 'vip-reseller') &&
                     p.providerStatus === 'empty';
                   const isSelected = selectedIdSet.has(p.id);
 
@@ -2084,9 +2084,9 @@ function AdminPageContent() {
                               {p.category.name}
                             </span>
                             <span className="font-mono text-foreground-muted">ID: {p.id}</span>
-                            {p.provider === 'vip-reseller' && p.providerCode && (
-                              <span className="text-primary font-mono truncate" title={`VIP Code: ${p.providerCode}`}>
-                                • VIP: {p.providerCode}
+                            {(p.provider === 'xaviera' || p.provider === 'vip-reseller') && p.providerCode && (
+                              <span className="text-primary font-mono truncate" title={`Xaviera Code: ${p.providerCode}`}>
+                                • Xaviera: {p.providerCode}
                               </span>
                             )}
                           </div>
@@ -2127,7 +2127,7 @@ function AdminPageContent() {
                         </div>
                         <div>
                           <span className="text-[10px] text-foreground-muted block">Stok Supplier</span>
-                          {p.provider === 'vip-reseller' ? (
+                          {(p.provider === 'xaviera' || p.provider === 'vip-reseller') ? (
                             p.providerStatus === 'available' ? (
                               <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-status-success">
                                 <CheckCircle2 className="w-3 h-3 shrink-0" />
@@ -2280,14 +2280,14 @@ function AdminPageContent() {
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-border">
                 <div>
                   <h3 className="text-base font-semibold text-foreground">
-                    Jelajahi Layanan Gateway Xaviera Store (Upstream)
+                    Jelajahi Akun Premium Xaviera Store (Upstream)
                   </h3>
                   <p className="text-xs text-foreground-muted">
-                    Pilih produk dari {(allVipServices.length || vipData?.total || 0).toLocaleString('id-ID')} layanan supplier live untuk diimpor ke katalog Asterra Store dengan harga retail kustom Anda.
+                    Pilih produk dari {(allVipServices.length || vipData?.total || 0).toLocaleString('id-ID')} layanan Akun Premium live untuk diimpor ke katalog Asterra Store dengan harga retail kustom Anda.
                   </p>
                 </div>
                 <Badge variant="outline" className="text-xs font-mono text-primary border-primary/30 w-fit">
-                  Total Supplier: {(allVipServices.length || vipData?.total || 0).toLocaleString('id-ID')} Layanan
+                  Total Supplier: {(allVipServices.length || vipData?.total || 0).toLocaleString('id-ID')} Akun Premium
                 </Badge>
               </div>
 
@@ -2296,7 +2296,7 @@ function AdminPageContent() {
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-status-success shrink-0" />
                   <span>
-                    <strong>Anti-Spam Cache Aktif:</strong> {allVipServices.length} layanan dimuat di memori. Pencarian & filter dilakukan secara instan tanpa mengirim request berulang ke API Xaviera Store.
+                    <strong>Anti-Spam Cache Aktif:</strong> {allVipServices.length} akun premium dimuat di memori. Pencarian & filter dilakukan secara instan tanpa membebani rate-limit API Xaviera Store.
                   </span>
                 </div>
                 {vipData?.cacheAgeSeconds !== undefined && (
@@ -2312,7 +2312,7 @@ function AdminPageContent() {
                   <Search className="w-4 h-4 text-foreground-muted absolute left-3 top-1/2 -translate-y-1/2" />
                   <Input
                     type="text"
-                    placeholder="Cari layanan (Canva, Netflix, K-Vision, Mobile Legends)..."
+                    placeholder="Cari akun premium (Canva, Netflix, Spotify, YouTube, ChatGPT)..."
                     value={vipSearch}
                     onChange={(e) => setVipSearch(e.target.value)}
                     className="pl-9 text-xs bg-surface-raised border-border"
@@ -2357,16 +2357,16 @@ function AdminPageContent() {
               </div>
             </div>
 
-            {/* VIP Services Listing */}
+            {/* Xaviera Services Listing */}
             {isLoadingVip ? (
               <div className="p-12 text-center text-xs text-foreground-muted bg-surface border border-border rounded-xl">
-                Menghubungi gateway VIP Reseller dan memuat layanan...
+                Menghubungi gateway Xaviera Store dan memuat layanan Akun Premium...
               </div>
             ) : vipError ? (
               <div className="p-8 text-center space-y-4 bg-surface border border-status-warning/40 rounded-xl">
                 <AlertTriangle className="w-8 h-8 text-status-warning mx-auto" />
                 <div className="space-y-1">
-                  <p className="text-sm font-semibold text-foreground">Kendala Gateway VIP Reseller</p>
+                  <p className="text-sm font-semibold text-foreground">Kendala Gateway Xaviera Store</p>
                   <p className="text-xs text-foreground-muted max-w-lg mx-auto leading-relaxed">
                     {(vipError as Error).message}
                   </p>
@@ -2374,13 +2374,13 @@ function AdminPageContent() {
                 <div className="p-4 bg-surface-raised border border-border rounded-lg max-w-md mx-auto text-left text-xs space-y-2">
                   <p className="font-semibold text-foreground flex items-center gap-1.5">
                     <CheckCircle2 className="w-4 h-4 text-status-success" />
-                    <span>Langkah Solusi IP Whitelist:</span>
+                    <span>Langkah Solusi Kredensial Xaviera Store:</span>
                   </p>
                   <ol className="list-decimal list-inside space-y-1 text-foreground-muted text-[11px]">
-                    <li>Buka dan login ke dashboard <strong className="text-foreground">vip-reseller.co.id</strong></li>
-                    <li>Masuk ke menu <strong className="text-foreground">Profil &gt; Pengaturan API</strong></li>
-                    <li>Tambahkan IP publik Anda ke kolom <strong className="text-foreground">IP Whitelist</strong></li>
-                    <li>Klik Simpan, lalu buka kembali tab ini untuk memuat layanan</li>
+                    <li>Buka dan login ke dashboard <strong className="text-foreground">xavierastore.com</strong></li>
+                    <li>Masuk ke menu <strong className="text-foreground">Profil &gt; API Key</strong></li>
+                    <li>Pastikan Bearer Token aktif dan saldo mencukupi</li>
+                    <li>Buka tab <strong className="text-foreground">Koneksi Gateway</strong> untuk memperbarui token jika diperlukan</li>
                   </ol>
                 </div>
               </div>
@@ -3491,7 +3491,7 @@ function AdminPageContent() {
         </AdminModalPortal>
       )}
 
-      {/* MODAL 2: IMPORT FROM VIP RESELLER */}
+      {/* MODAL 2: IMPORT FROM XAVIERA STORE */}
       {importingService && (
         <AdminModalPortal>
         <div

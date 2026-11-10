@@ -142,6 +142,7 @@ interface AdminSidebarProps {
     totalArchived?: number;
     totalWarnings?: number;
     vipBalance?: number | null;
+    xavieraBalance?: number | null;
   };
   adminUser: { id?: string; email: string; name?: string; role?: string } | null;
   onLogout: () => void;
@@ -250,11 +251,11 @@ export function AdminSidebar({
             },
             {
               id: 'vip-explorer',
-              label: 'Import VIP Reseller',
+              label: 'Katalog Akun Premium',
               icon: DownloadCloud,
-              badge: '12K+',
-              badgeVariant: 'success',
-              description: 'Jelajahi ribuan produk upstream',
+              badge: 'Xaviera',
+              badgeVariant: 'primary',
+              description: 'Jelajahi akun premium live upstream',
             },
           ],
         },
@@ -428,11 +429,11 @@ export function AdminSidebar({
           },
           {
             id: 'vip-explorer',
-            label: 'Import VIP Reseller',
+            label: 'Katalog Akun Premium',
             icon: DownloadCloud,
-            badge: '12K+',
-            badgeVariant: 'success',
-            description: 'Jelajahi ribuan produk upstream',
+            badge: 'Xaviera',
+            badgeVariant: 'primary',
+            description: 'Jelajahi akun premium live upstream',
           },
           {
             id: 'providers',
@@ -721,15 +722,15 @@ export function AdminSidebar({
         </button>
       </div>
 
-      {/* Supplier / VIP Balance Bar */}
+      {/* Supplier / Xaviera Balance Bar */}
       <div className="px-3 pb-2.5">
         <div className="flex items-center justify-between px-3 py-1.5 rounded-xl bg-[#1C2028] border border-white/10 text-slate-300 text-xs">
           <div className="flex items-center gap-2 text-slate-400">
             <Wallet className="w-3.5 h-3.5 text-slate-400" />
-            <span className="text-[11px] font-medium">Saldo Supplier</span>
+            <span className="text-[11px] font-medium">Saldo Supplier (Xaviera)</span>
           </div>
           <span className="font-mono text-[11px] font-semibold text-slate-200">
-            Rp {(metrics?.vipBalance ?? 5979).toLocaleString('id-ID')}
+            Rp {(metrics?.xavieraBalance ?? metrics?.vipBalance ?? 0).toLocaleString('id-ID')}
           </span>
         </div>
       </div>
