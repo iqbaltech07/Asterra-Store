@@ -701,7 +701,7 @@ function AdminPageContent() {
       return data;
     },
     enabled: activeTab === 'vip-explorer',
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 1000,
     gcTime: 15 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
@@ -947,7 +947,25 @@ function AdminPageContent() {
       return data;
     },
     onSuccess: (data) => {
-      showNotification(data.message);
+      showNotification(data?.message || 'Layanan berhasil diimpor ke katalog Asterra Store');
+      if (data?.data && data.data.id) {
+        queryClient.setQueryData<AdminProductsResponse>(['admin-products'], (old) => {
+          if (!old) return old;
+          const exists = old.data.some((p) => p.id === data.data.id);
+          const updatedList = exists
+            ? old.data.map((p) => (p.id === data.data.id ? data.data : p))
+            : [data.data, ...old.data];
+          return {
+            ...old,
+            data: updatedList,
+            metrics: {
+              ...old.metrics,
+              total: updatedList.length,
+              totalActive: updatedList.filter((p) => p.status === 'active').length,
+            },
+          };
+        });
+      }
       setImportingService(null);
       queryClient.invalidateQueries({ queryKey: ['admin-products'] });
       queryClient.invalidateQueries({ queryKey: ['admin-vip-services'] });
@@ -1198,6 +1216,20 @@ function AdminPageContent() {
   const metrics = productsData?.metrics;
   const allProducts = useMemo(() => productsData?.data || [], [productsData?.data]);
 
+  // Fast lookup map for imported products from upstream providers (Xaviera / native)
+  const importedProductsMap = useMemo(() => {
+    const map = new Map<string, ManagedProductItem>();
+    for (const p of allProducts) {
+      if (p.providerCode) {
+        map.set(p.providerCode.toLowerCase().trim(), p);
+      }
+      if (p.id) {
+        map.set(p.id.toLowerCase().trim(), p);
+      }
+    }
+    return map;
+  }, [allProducts]);
+
   // Extract categories dynamically from Database Category table + real products
   const availableCategories = useMemo(() => {
     const cats = new Map<string, { id: string; name: string; count: number }>();
@@ -1296,7 +1328,27 @@ function AdminPageContent() {
       items = items.filter((item) => item.type === vipType);
     }
     if (vipStatus !== 'all') {
-      items = items.filter((item) => item.status === vipStatus);
+      if (vipStatus === 'imported') {
+        items = items.filter((item) => {
+          const sCode = String(item.code || item.id || '').toLowerCase().trim();
+          const sProdId = `xvs-${sCode.replace(/ /g, '-').replace(/:/g, '-')}`;
+          const matched = importedProductsMap.get(sCode)
+            || (item.productId ? importedProductsMap.get(String(item.productId).toLowerCase().trim()) : undefined)
+            || importedProductsMap.get(sProdId);
+          return Boolean(item.isImported || (matched && matched.status === 'active'));
+        });
+      } else if (vipStatus === 'unimported') {
+        items = items.filter((item) => {
+          const sCode = String(item.code || item.id || '').toLowerCase().trim();
+          const sProdId = `xvs-${sCode.replace(/ /g, '-').replace(/:/g, '-')}`;
+          const matched = importedProductsMap.get(sCode)
+            || (item.productId ? importedProductsMap.get(String(item.productId).toLowerCase().trim()) : undefined)
+            || importedProductsMap.get(sProdId);
+          return !item.isImported && (!matched || matched.status !== 'active');
+        });
+      } else {
+        items = items.filter((item) => item.status === vipStatus);
+      }
     }
     if (vipSearch.trim()) {
       const q = vipSearch.toLowerCase().trim();
@@ -1310,7 +1362,7 @@ function AdminPageContent() {
       );
     }
     return items;
-  }, [allVipServices, vipType, vipStatus, vipSearch]);
+  }, [allVipServices, vipType, vipStatus, vipSearch, importedProductsMap]);
 
   const [vipVisibleCount, setVipVisibleCount] = useState(24);
 
@@ -2355,6 +2407,8 @@ function AdminPageContent() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Semua Status</SelectItem>
+                      <SelectItem value="imported">Sudah Diimpor</SelectItem>
+                      <SelectItem value="unimported">Belum Diimpor</SelectItem>
                       <SelectItem value="available">Tersedia (Ready)</SelectItem>
                       <SelectItem value="empty">Kosong (Empty)</SelectItem>
                     </SelectContent>
@@ -2405,6 +2459,20 @@ function AdminPageContent() {
                     base = service.price;
                   }
 
+                  const sCode = String(service.code || service.id || '').toLowerCase().trim();
+                  const sProdId = `xvs-${sCode.replace(/ /g, '-').replace(/:/g, '-')}`;
+                  const matchedProd =
+                    importedProductsMap.get(sCode) ||
+                    (service.productId ? importedProductsMap.get(String(service.productId).toLowerCase().trim()) : undefined) ||
+                    importedProductsMap.get(sProdId);
+
+                  const isImported = Boolean(
+                    service.isImported || (matchedProd && matchedProd.status === 'active')
+                  );
+                  const isArchived = Boolean(
+                    service.isArchived || (matchedProd && matchedProd.status === 'archived')
+                  );
+
                   const serviceKey = service.code || service.id || `vip-service-${idx}`;
 
                   return (
@@ -2453,23 +2521,47 @@ function AdminPageContent() {
                           </span>
                         </div>
 
-                        {service.isImported ? (
+                        {isImported ? (
                           <div className="flex items-center gap-1.5">
-                            <Badge variant="secondary" className="gap-1 text-xs bg-status-success/15 text-status-success border-status-success/30">
-                              <Check className="w-3 h-3 text-status-success" />
-                              <span>Aktif di Toko</span>
+                            <Badge variant="secondary" className="gap-1 text-xs bg-status-success/15 text-status-success border-status-success/30 font-semibold py-1 px-2.5">
+                              <Check className="w-3.5 h-3.5 text-status-success shrink-0" />
+                              <span>Sudah Diimpor</span>
                             </Badge>
                             <Button
                               type="button"
                               size="sm"
-                              variant="ghost"
-                              onClick={() => handleOpenImport(service)}
-                              className="text-xs h-7 px-2 text-foreground-muted hover:text-foreground"
-                              title="Konfigurasi ulang atau perbarui harga"
+                              variant="outline"
+                              onClick={() => {
+                                if (matchedProd) {
+                                  handleOpenEdit(matchedProd);
+                                } else {
+                                  handleOpenImport(service);
+                                }
+                              }}
+                              className="text-xs h-7 px-2 text-foreground-muted hover:text-foreground border-border"
+                              title="Edit atau sesuaikan harga jual di katalog"
                             >
                               <Edit className="w-3 h-3" />
                             </Button>
                           </div>
+                        ) : isArchived ? (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              if (matchedProd) {
+                                handleOpenEdit(matchedProd);
+                              } else {
+                                handleOpenImport(service);
+                              }
+                            }}
+                            className="text-xs gap-1.5 border-border text-foreground-muted hover:text-foreground"
+                            title="Aktifkan kembali produk ini di etalase"
+                          >
+                            <DownloadCloud className="w-3.5 h-3.5" />
+                            <span>Aktifkan Kembali</span>
+                          </Button>
                         ) : (
                           <Button
                             type="button"
@@ -2478,7 +2570,7 @@ function AdminPageContent() {
                             className="text-xs gap-1.5"
                           >
                             <DownloadCloud className="w-3.5 h-3.5" />
-                            <span>{service.isArchived ? 'Impor / Aktifkan' : 'Impor Produk'}</span>
+                            <span>Impor Produk</span>
                           </Button>
                         )}
                       </div>

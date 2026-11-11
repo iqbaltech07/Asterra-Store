@@ -247,11 +247,15 @@ async def bulk_delete_products(request: Request):
 @router.get("/admin/xaviera-services", tags=["Admin Xaviera"])
 @router.get("/admin/vip-services", tags=["Admin VIP (Legacy Alias)"], include_in_schema=False)
 def get_admin_xaviera_services(
+    response: Response,
     search: Optional[str] = None,
     type: Optional[str] = None,
     status: Optional[str] = None,
     limit: int = 2500,
 ):
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
     result = CatalogService.search_xaviera_services(search=search, service_type=type, service_status=status, limit=limit)
     return result
 

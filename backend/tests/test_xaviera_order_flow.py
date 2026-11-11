@@ -61,7 +61,41 @@ def test_xaviera_order_placement():
 def test_native_product_is_not_fulfilled_by_xaviera():
     db = SessionLocal()
     test_order_id = f"TEST-NATIVE-XVS-{int(datetime.utcnow().timestamp())}"
+    created_temp_prod = False
+    temp_prod_id = f"test-native-prod-{int(datetime.utcnow().timestamp())}"
     try:
+        existing_product = db.query(Product).filter(
+            (Product.provider == 'native') | (Product.provider == None) | (Product.provider == '')
+        ).first()
+
+        if existing_product:
+            prod_id = existing_product.id
+            prod_name = existing_product.name
+        else:
+            p = Product(
+                id=temp_prod_id,
+                name="Google AI Pro Private Native Test",
+                category_id="cat-ai-tools",
+                category_name="AI Tools",
+                brand="Google",
+                price=89900,
+                price_formatted="Rp 89.900",
+                status="active",
+                stock=100,
+                provider="native",
+                provider_code=None,
+                provider_name="Asterra Internal",
+                provider_price=0,
+                provider_status="available",
+                input_type="email",
+                input_config='{"type": "email", "required": true}',
+            )
+            db.add(p)
+            db.commit()
+            created_temp_prod = True
+            prod_id = temp_prod_id
+            prod_name = p.name
+
         # Create test native product order
         order = Order(
             id=test_order_id,
@@ -77,8 +111,8 @@ def test_native_product_is_not_fulfilled_by_xaviera():
         item = OrderItem(
             id=f"item-{test_order_id}",
             order_id=test_order_id,
-            product_id="prod-muniiqze-jyh0",
-            product_name="Google AI Pro Private 18 Bulan",
+            product_id=prod_id,
+            product_name=prod_name,
             price=89900,
             quantity=1
         )
@@ -100,6 +134,8 @@ def test_native_product_is_not_fulfilled_by_xaviera():
             db.rollback()
             db.query(OrderItem).filter(OrderItem.order_id == test_order_id).delete()
             db.query(Order).filter(Order.id == test_order_id).delete()
+            if created_temp_prod:
+                db.query(Product).filter(Product.id == temp_prod_id).delete()
             db.commit()
         except Exception:
             pass

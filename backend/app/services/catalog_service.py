@@ -622,7 +622,7 @@ class CatalogService:
         limit: int = 2500,
     ) -> Dict[str, Any]:
         xaviera_services = cls.load_xaviera_services()
-        active_products = cls.load_products()
+        active_products = cls.load_products(force_reload=True)
 
         # Build imported status lookup
         imported_active_codes = set()
@@ -630,8 +630,8 @@ class CatalogService:
         imported_id_map = {}
 
         for p in active_products:
-            p_id = str(p.get("id", "")).upper()
-            code = str(p.get("providerCode", "")).upper()
+            p_id = str(p.get("id", "")).strip().upper()
+            code = str(p.get("providerCode", "")).strip().upper()
             is_act = p.get("status", "active") == "active"
 
             if code:
@@ -641,10 +641,12 @@ class CatalogService:
                     imported_archived_codes.add(code)
                 imported_id_map[code] = p.get("id")
 
-            if is_act:
-                imported_active_codes.add(p_id)
-            else:
-                imported_archived_codes.add(p_id)
+            if p_id:
+                if is_act:
+                    imported_active_codes.add(p_id)
+                else:
+                    imported_archived_codes.add(p_id)
+                imported_id_map[p_id] = p.get("id")
 
         # Collect unique types and brands
         available_types = set()
@@ -662,7 +664,23 @@ class CatalogService:
             filtered = [s for s in filtered if str(s.get("type", "")).lower() == service_type.lower()]
 
         if service_status and service_status != "all":
-            filtered = [s for s in filtered if str(s.get("status", "")).lower() == service_status.lower()]
+            status_lower = service_status.lower()
+            if status_lower == "imported":
+                filtered = [
+                    s for s in filtered
+                    if (str(s.get("code") or s.get("providerCode") or s.get("id") or "").strip().upper() in imported_active_codes)
+                    or (f"XVS-{str(s.get('code') or s.get('providerCode') or s.get('id') or '').strip().lower().replace(' ', '-').replace(':', '-')}".upper() in imported_active_codes)
+                ]
+            elif status_lower == "unimported":
+                filtered = [
+                    s for s in filtered
+                    if not (
+                        (str(s.get("code") or s.get("providerCode") or s.get("id") or "").strip().upper() in imported_active_codes)
+                        or (f"XVS-{str(s.get('code') or s.get('providerCode') or s.get('id') or '').strip().lower().replace(' ', '-').replace(':', '-')}".upper() in imported_active_codes)
+                    )
+                ]
+            else:
+                filtered = [s for s in filtered if str(s.get("status", "")).lower() == status_lower]
 
         if search and search.strip():
             query = search.lower().strip()
@@ -680,18 +698,21 @@ class CatalogService:
         # Annotate items with import status
         result_data = []
         for s in slice_items:
-            code_upper = str(s.get("code", "")).upper()
-            is_imported = code_upper in imported_active_codes
-            is_archived = code_upper in imported_archived_codes
+            raw_code = str(s.get("code") or s.get("providerCode") or s.get("id") or "").strip()
+            code_upper = raw_code.upper()
+            prod_id_variant = f"XVS-{raw_code.lower().replace(' ', '-').replace(':', '-')}".upper()
+
+            is_imported = (code_upper in imported_active_codes) or (prod_id_variant in imported_active_codes)
+            is_archived = (code_upper in imported_archived_codes) or (prod_id_variant in imported_archived_codes)
             db_status = "active" if is_imported else ("archived" if is_archived else "unimported")
 
             result_data.append({
                 **s,
-                "code": s.get("code") or s.get("providerCode") or s.get("id"),
+                "code": raw_code,
                 "isImported": is_imported,
                 "isArchived": is_archived,
                 "dbStatus": db_status,
-                "importedProductId": imported_id_map.get(code_upper),
+                "importedProductId": imported_id_map.get(code_upper) or imported_id_map.get(prod_id_variant),
             })
 
         return {
