@@ -135,8 +135,14 @@ class CatalogService:
         return True
 
     @classmethod
+    def load_xaviera_services(cls) -> List[Dict[str, Any]]:
+        from app.services.xaviera_service import XavieraService
+        res = XavieraService.fetch_live_services()
+        return res.get("data", [])
+
+    @classmethod
     def load_vip_services(cls) -> List[Dict[str, Any]]:
-        return cls.load_products()
+        return cls.load_xaviera_services()
 
     @classmethod
     def get_products(
@@ -254,8 +260,8 @@ class CatalogService:
                 or any(query in str(f).lower() for f in p.get("features", []))
             ]
 
-        from app.services.vip_service import VipService
-        vip_info = VipService.get_profile()
+        from app.services.xaviera_service import XavieraService
+        xvs_info = XavieraService.get_profile()
 
         return {
             "products": filtered,
@@ -265,10 +271,15 @@ class CatalogService:
                 "totalActive": total_active,
                 "totalArchived": total_archived,
                 "totalWarnings": total_warnings,
-                "vipBalance": vip_info.get("balance") if vip_info.get("connected") else None,
-                "isVipConnected": bool(vip_info.get("connected")),
-                "vipUsername": vip_info.get("username", ""),
-                "vipStatusMessage": vip_info.get("message", ""),
+                "xavieraBalance": xvs_info.get("balance") if xvs_info.get("connected") else None,
+                "isXavieraConnected": bool(xvs_info.get("connected")),
+                "xavieraUsername": xvs_info.get("username", ""),
+                "xavieraStatusMessage": xvs_info.get("message", ""),
+                # Backwards compatibility metrics
+                "vipBalance": xvs_info.get("balance") if xvs_info.get("connected") else None,
+                "isVipConnected": bool(xvs_info.get("connected")),
+                "vipUsername": xvs_info.get("username", ""),
+                "vipStatusMessage": xvs_info.get("message", ""),
             },
         }
 
@@ -603,15 +614,15 @@ class CatalogService:
         return deleted_count
 
     @classmethod
-    def search_vip_services(
+    def search_xaviera_services(
         cls,
         search: Optional[str] = None,
-        vip_type: Optional[str] = None,
-        vip_status: Optional[str] = None,
+        service_type: Optional[str] = None,
+        service_status: Optional[str] = None,
         limit: int = 2500,
     ) -> Dict[str, Any]:
-        vip_services = cls.load_vip_services()
-        active_products = cls.load_products()
+        xaviera_services = cls.load_xaviera_services()
+        active_products = cls.load_products(force_reload=True)
 
         # Build imported status lookup
         imported_active_codes = set()
@@ -619,8 +630,8 @@ class CatalogService:
         imported_id_map = {}
 
         for p in active_products:
-            p_id = str(p.get("id", "")).upper()
-            code = str(p.get("providerCode", "")).upper()
+            p_id = str(p.get("id", "")).strip().upper()
+            code = str(p.get("providerCode", "")).strip().upper()
             is_act = p.get("status", "active") == "active"
 
             if code:
@@ -630,28 +641,46 @@ class CatalogService:
                     imported_archived_codes.add(code)
                 imported_id_map[code] = p.get("id")
 
-            if is_act:
-                imported_active_codes.add(p_id)
-            else:
-                imported_archived_codes.add(p_id)
+            if p_id:
+                if is_act:
+                    imported_active_codes.add(p_id)
+                else:
+                    imported_archived_codes.add(p_id)
+                imported_id_map[p_id] = p.get("id")
 
         # Collect unique types and brands
         available_types = set()
         available_brands = set()
 
-        for s in vip_services:
+        for s in xaviera_services:
             if s.get("type"):
                 available_types.add(s["type"])
             if s.get("brand"):
                 available_brands.add(s["brand"])
 
-        filtered = vip_services
+        filtered = xaviera_services
 
-        if vip_type and vip_type != "all":
-            filtered = [s for s in filtered if s.get("type") == vip_type]
+        if service_type and service_type != "all":
+            filtered = [s for s in filtered if str(s.get("type", "")).lower() == service_type.lower()]
 
-        if vip_status and vip_status != "all":
-            filtered = [s for s in filtered if s.get("status") == vip_status]
+        if service_status and service_status != "all":
+            status_lower = service_status.lower()
+            if status_lower == "imported":
+                filtered = [
+                    s for s in filtered
+                    if (str(s.get("code") or s.get("providerCode") or s.get("id") or "").strip().upper() in imported_active_codes)
+                    or (f"XVS-{str(s.get('code') or s.get('providerCode') or s.get('id') or '').strip().lower().replace(' ', '-').replace(':', '-')}".upper() in imported_active_codes)
+                ]
+            elif status_lower == "unimported":
+                filtered = [
+                    s for s in filtered
+                    if not (
+                        (str(s.get("code") or s.get("providerCode") or s.get("id") or "").strip().upper() in imported_active_codes)
+                        or (f"XVS-{str(s.get('code') or s.get('providerCode') or s.get('id') or '').strip().lower().replace(' ', '-').replace(':', '-')}".upper() in imported_active_codes)
+                    )
+                ]
+            else:
+                filtered = [s for s in filtered if str(s.get("status", "")).lower() == status_lower]
 
         if search and search.strip():
             query = search.lower().strip()
@@ -661,7 +690,6 @@ class CatalogService:
                 or query in str(s.get("code", "")).lower()
                 or query in str(s.get("brand", "")).lower()
                 or query in str(s.get("category", "")).lower()
-                or query in str(s.get("game", "")).lower()
             ]
 
         total = len(filtered)
@@ -670,37 +698,51 @@ class CatalogService:
         # Annotate items with import status
         result_data = []
         for s in slice_items:
-            code_upper = str(s.get("code", "")).upper()
-            is_imported = code_upper in imported_active_codes
-            is_archived = code_upper in imported_archived_codes
+            raw_code = str(s.get("code") or s.get("providerCode") or s.get("id") or "").strip()
+            code_upper = raw_code.upper()
+            prod_id_variant = f"XVS-{raw_code.lower().replace(' ', '-').replace(':', '-')}".upper()
+
+            is_imported = (code_upper in imported_active_codes) or (prod_id_variant in imported_active_codes)
+            is_archived = (code_upper in imported_archived_codes) or (prod_id_variant in imported_archived_codes)
             db_status = "active" if is_imported else ("archived" if is_archived else "unimported")
 
             result_data.append({
                 **s,
-                "code": s.get("code") or s.get("providerCode") or s.get("id"),
+                "code": raw_code,
                 "isImported": is_imported,
                 "isArchived": is_archived,
                 "dbStatus": db_status,
-                "importedProductId": imported_id_map.get(code_upper),
+                "importedProductId": imported_id_map.get(code_upper) or imported_id_map.get(prod_id_variant),
             })
 
         return {
             "success": True,
             "total": total,
             "cached": True,
-            "cacheAgeSeconds": 120,
+            "cacheAgeSeconds": 60,
             "availableTypes": sorted(list(available_types)),
             "availableBrands": sorted(list(available_brands)),
             "data": result_data,
         }
 
     @classmethod
-    def import_vip_service(cls, payload: Dict[str, Any]) -> Dict[str, Any]:
+    def search_vip_services(
+        cls,
+        search: Optional[str] = None,
+        vip_type: Optional[str] = None,
+        vip_status: Optional[str] = None,
+        limit: int = 2500,
+    ) -> Dict[str, Any]:
+        """Backward compatibility alias for search_xaviera_services."""
+        return cls.search_xaviera_services(search=search, service_type=vip_type, service_status=vip_status, limit=limit)
+
+    @classmethod
+    def import_xaviera_service(cls, payload: Dict[str, Any]) -> Dict[str, Any]:
         code = str(payload.get("code") or payload.get("providerCode") or "").strip()
         name = payload.get("name", "").strip()
-        price = float(payload.get("price", 0))
-        provider_price = float(payload.get("providerPrice", 0))
-        stock = int(payload.get("stock", 100))
+        price = float(payload.get("price") or 0)
+        provider_price = float(payload.get("providerPrice") or 0)
+        stock = int(payload.get("stock") or 100)
         category_name = payload.get("categoryName", "Digital Services")
         description = payload.get("description", "")
         status = payload.get("status", "active")
@@ -708,12 +750,12 @@ class CatalogService:
 
         margin = price - provider_price if provider_price > 0 else 0
         pct = round((margin / provider_price) * 100, 2) if provider_price > 0 else 0
-        prod_id = f"vip-{code.lower().replace(' ', '-')}"
+        prod_id = f"xvs-{code.lower().replace(' ', '-').replace(':', '-')}"
 
         try:
             db = SessionLocal()
             try:
-                resolved_cat_id, resolved_cat_name = cls._ensure_category_exists(db, None, category_name or "VIP Reseller")
+                resolved_cat_id, resolved_cat_name = cls._ensure_category_exists(db, None, category_name or "Xaviera Store")
                 existing = db.query(Product).filter((Product.provider_code.ilike(code)) | (Product.id == prod_id)).first()
                 if existing:
                     existing.name = name or existing.name
@@ -721,6 +763,7 @@ class CatalogService:
                     existing.category_name = resolved_cat_name
                     existing.price = price or existing.price
                     existing.price_formatted = cls.format_price_idr(existing.price)
+                    existing.provider = "xaviera"
                     existing.provider_price = provider_price or existing.provider_price
                     existing.profit_margin = margin
                     existing.profit_percentage = pct
@@ -738,7 +781,7 @@ class CatalogService:
                         name=name,
                         category_id=resolved_cat_id,
                         category_name=resolved_cat_name,
-                        brand="VIP Reseller",
+                        brand="Xaviera Store",
                         price=price,
                         price_formatted=cls.format_price_idr(price),
                         provider_price=provider_price,
@@ -752,7 +795,7 @@ class CatalogService:
                         ],
                         image_url=image_url,
                         popular=False,
-                        provider="vip-reseller",
+                        provider="xaviera",
                         provider_code=code,
                         provider_name=name,
                         provider_status="available",
@@ -762,8 +805,8 @@ class CatalogService:
                         guarantee_desc="Jaminan ganti akun 100%",
                         process_title="Proses Instan",
                         process_desc="1 - 15 menit selesai",
-                        privacy_title="Akun Private",
-                        privacy_desc="Ruang kerja aman & personal",
+                        privacy_title="Akses Resmi & Aman",
+                        privacy_desc="Privasi & keamanan terjamin",
                         created_at=datetime.utcnow(),
                         updated_at=datetime.utcnow(),
                     )
@@ -774,10 +817,16 @@ class CatalogService:
             finally:
                 db.close()
         except Exception as e:
-            print(f"[CatalogService] Error importing VIP service to Supabase: {e}")
+            print(f"[CatalogService] Error importing Xaviera service to Supabase: {e}")
             raise e
 
         cls.load_products(force_reload=True)
+        return res_dict
+
+    @classmethod
+    def import_vip_service(cls, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Backward compatibility alias for import_xaviera_service."""
+        return cls.import_xaviera_service(payload=payload)
         return res_dict
 
     @classmethod

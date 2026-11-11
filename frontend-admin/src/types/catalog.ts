@@ -2,7 +2,7 @@ import { ProductItem } from '@/lib/products-data';
 
 export interface ManagedProductItem extends ProductItem {
   status: 'active' | 'archived';
-  provider: 'native' | 'vip-reseller';
+  provider: 'native' | 'xaviera' | 'vip-reseller';
   providerCode?: string;
   providerPrice?: number;
   providerStatus?: 'available' | 'empty' | 'maintenance' | 'unknown';
@@ -14,26 +14,34 @@ export interface ManagedProductItem extends ProductItem {
 
 export type ManagedProduct = ManagedProductItem;
 
-export interface VipResellerPrice {
+export interface XavieraPrice {
   basic: number;
-  premium: number;
-  special: number;
+  premium?: number;
+  special?: number;
 }
 
-export interface VipRawService {
-  brand: string;
+export interface XavieraRawService {
+  id?: string | number;
   code: string;
   name: string;
-  note?: string;
-  price: VipResellerPrice | number;
-  status: 'available' | 'empty' | string;
-  multi_trx?: boolean;
-  maintenace?: string;
+  brand?: string;
   category?: string;
-  prepost?: string;
   type?: string;
+  price: XavieraPrice | number;
+  status: 'available' | 'empty' | string;
+  stock?: number;
+  note?: string;
+  hasVariants?: boolean;
+  productId?: string;
+  variantId?: string;
+  gameBrand?: string;
   game?: string;
-  server?: string;
-  id?: string | number;
+  sku?: string;
+  serviceId?: string | number;
   description?: string;
+  multi_trx?: boolean;
+  server?: string;
 }
+
+export type VipResellerPrice = XavieraPrice;
+export type VipRawService = XavieraRawService;

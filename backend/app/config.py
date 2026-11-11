@@ -73,14 +73,10 @@ class Settings(BaseSettings):
     INTERNAL_CRON_SECRET: str = os.getenv("INTERNAL_CRON_SECRET", "")
     DANA_DEVICE_TOKEN: str = os.getenv("DANA_DEVICE_TOKEN", os.getenv("LIPAY_DEVICE_TOKEN", ""))
     
-    # VIP Reseller Supplier Integration
-    VIP_RESELLER_BASE_URL: str = os.getenv("VIP_RESELLER_BASE_URL", "https://vip-reseller.co.id/api")
-    VIP_RESELLER_API_ID: str = os.getenv("VIP_RESELLER_API_ID", "")
-    VIP_RESELLER_API_KEY: str = os.getenv("VIP_RESELLER_API_KEY", "")
-    VIP_RESELLER_SIGN: str = os.getenv("VIP_RESELLER_SIGN", "")
-    VIP_RESELLER_SYNC_SECRET: str = os.getenv("VIP_RESELLER_SYNC_SECRET", "")
-    VIP_RESELLER_AUTO_FULFILLMENT: bool = os.getenv("VIP_RESELLER_AUTO_FULFILLMENT", "true").lower() == "true"
-    VIP_RESELLER_SANDBOX_MODE: bool = os.getenv("VIP_RESELLER_SANDBOX_MODE", "false").lower() == "true"
+    # Xaviera Store Supplier Integration (https://xavierastore.com/api-docs.html)
+    XAVIERA_BASE_URL: str = os.getenv("XAVIERA_BASE_URL", "https://xavierastore.com/api/v1")
+    XAVIERA_API_KEY: str = os.getenv("XAVIERA_API_KEY", "")
+    XAVIERA_AUTO_FULFILLMENT: bool = os.getenv("XAVIERA_AUTO_FULFILLMENT", "true").lower() == "true"
     
     # Transactional Email (Resend HTTPS REST API)
     RESEND_API_KEY: str = os.getenv("RESEND_API_KEY", "")

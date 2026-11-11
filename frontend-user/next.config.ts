@@ -7,6 +7,8 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       { protocol: 'https', hostname: 'images.unsplash.com' },
       { protocol: 'https', hostname: '*.public.blob.vercel-storage.com' },
+      { protocol: 'https', hostname: 'xavierastore.com' },
+      { protocol: 'https', hostname: '*.xavierastore.com' },
       { protocol: 'https', hostname: 'vip-reseller.co.id' },
       { protocol: 'https', hostname: 'asset.brandfetch.io' },
       { protocol: 'https', hostname: 'lh3.googleusercontent.com' },

@@ -1,7 +1,17 @@
 export interface PurchasedDetails {
-  target_email: string;
+  target_email?: string;
+  targetEmail?: string;
   duration?: string;
   phone?: string;
+  target_phone?: string;
+  targetPhone?: string;
+  target_id?: string;
+  targetId?: string;
+  target_zone?: string;
+  targetZone?: string;
+  fulfillment_method?: string;
+  fulfillmentMethod?: string;
+  [key: string]: any;
 }
 
 export interface OrderItem {
@@ -11,6 +21,17 @@ export interface OrderItem {
   unit_price: number;
   quantity: number;
   purchased_details?: PurchasedDetails;
+  target_email?: string;
+  targetEmail?: string;
+  target_phone?: string;
+  targetPhone?: string;
+  target_id?: string;
+  targetId?: string;
+  target_zone?: string;
+  targetZone?: string;
+  fulfillment_method?: string;
+  fulfillmentMethod?: string;
+  [key: string]: any;
 }
 
 export interface OrderLog {

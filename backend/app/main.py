@@ -134,16 +134,16 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"[Lifespan] QStash cron sync note: {e}")
 
-    # Launch autonomous background worker for periodic VIP stock & balance auto-sync
-    async def periodic_vip_stock_sync_worker():
+    # Launch autonomous background worker for periodic Xaviera Store stock & balance auto-sync
+    async def periodic_xaviera_stock_sync_worker():
         """
-        Background autonomous worker that periodically checks live VIP supplier stock and balance.
+        Background autonomous worker that periodically checks live Xaviera Store supplier stock and balance.
         Runs every 5 minutes (300 seconds) in background thread without blocking FastAPI request handling.
         Emits real-time SSE broadcasts to connected admin consoles upon completion.
         """
         import asyncio
         from datetime import datetime
-        from app.services.vip_service import VipService
+        from app.services.xaviera_service import XavieraService
         from app.services.realtime_broadcaster import RealtimeBroadcaster
         from app.core.cache import cache
 
@@ -152,12 +152,17 @@ async def lifespan(app: FastAPI):
 
         while True:
             try:
-                result = await asyncio.to_thread(VipService.check_stock)
+                result = await asyncio.to_thread(XavieraService.check_stock)
                 if result and result.get("success"):
                     cache.invalidate("catalog")
                     RealtimeBroadcaster.broadcast(
                         "catalog:updated",
                         {"timestamp": datetime.utcnow().isoformat(), "source": "periodic_background_sync"},
+                        target_role="admin",
+                    )
+                    RealtimeBroadcaster.broadcast(
+                        "xaviera:status_updated",
+                        {"timestamp": datetime.utcnow().isoformat(), "checked": result.get("checked", 0)},
                         target_role="admin",
                     )
                     RealtimeBroadcaster.broadcast(
@@ -168,7 +173,7 @@ async def lifespan(app: FastAPI):
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                print(f"[PeriodicVipWorker] Stock check note: {e}")
+                print(f"[PeriodicXavieraWorker] Stock check note: {e}")
 
             try:
                 await asyncio.sleep(300)  # Every 5 minutes
@@ -201,16 +206,16 @@ async def lifespan(app: FastAPI):
             except asyncio.CancelledError:
                 break
 
-    vip_worker_task = asyncio.create_task(periodic_vip_stock_sync_worker())
+    xaviera_worker_task = asyncio.create_task(periodic_xaviera_stock_sync_worker())
     dummy_worker_task = asyncio.create_task(periodic_dummy_order_worker())
 
     yield
 
-    vip_worker_task.cancel()
+    xaviera_worker_task.cancel()
     dummy_worker_task.cancel()
     try:
         import asyncio
-        await asyncio.gather(vip_worker_task, dummy_worker_task, return_exceptions=True)
+        await asyncio.gather(xaviera_worker_task, dummy_worker_task, return_exceptions=True)
     except Exception:
         pass
 
@@ -276,6 +281,11 @@ def health_check():
         "environment": settings.ENVIRONMENT,
         "timestamp": datetime.utcnow().isoformat(),
     }
+
+@app.post("/webhooks/xaviera", tags=["Webhooks"], include_in_schema=False)
+async def root_xaviera_webhook(request: Request):
+    from app.api.v1.checkout import xaviera_webhook
+    return await xaviera_webhook(request)
 
 @app.post("/webhooks/vip-reseller", tags=["Webhooks"], include_in_schema=False)
 async def root_vip_reseller_webhook(request: Request):

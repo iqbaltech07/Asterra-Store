@@ -138,18 +138,18 @@ export function OrderDetailModal({
     if (!order) return;
     setIsSyncingVip(true);
     try {
-      const res = await fetch(`/api/v1/admin/orders/${order.id}/sync-vip`, { method: 'POST' });
+      const res = await fetch(`/api/v1/admin/orders/${order.id}/sync-xaviera`, { method: 'POST' });
       const data = await res.json();
       if (data.success) {
-        onShowNotification(`Status live VIP berhasil disinkronkan: ${data.vip_status || 'OK'}`);
+        onShowNotification(`Status live Xaviera berhasil disinkronkan: ${data.xaviera_status || data.vip_status || 'OK'}`);
         if (data.order?.status) {
           setNewStatus(data.order.status);
         }
       } else {
-        onShowNotification(data.message || 'Gagal menyinkronkan status VIP.');
+        onShowNotification(data.message || 'Gagal menyinkronkan status Xaviera.');
       }
     } catch (_) {
-      onShowNotification('Koneksi ke API VIP gagal.');
+      onShowNotification('Koneksi ke API Xaviera gagal.');
     } finally {
       setIsSyncingVip(false);
     }
@@ -159,18 +159,18 @@ export function OrderDetailModal({
     if (!order) return;
     setIsFulfillingVip(true);
     try {
-      const res = await fetch(`/api/v1/admin/orders/${order.id}/fulfill-vip`, { method: 'POST' });
+      const res = await fetch(`/api/v1/admin/orders/${order.id}/fulfill-xaviera`, { method: 'POST' });
       const data = await res.json();
       if (data.success) {
-        onShowNotification(`Pesanan berhasil dikirim ke VIP Reseller! TRXID: ${data.trxid || ''}`);
+        onShowNotification(`Pesanan berhasil dikirim ke Xaviera Store! TRXID: ${data.trxid || ''}`);
         if (data.order?.status) {
           setNewStatus(data.order.status);
         }
       } else {
-        onShowNotification(data.message || 'Gagal mengirim order ke VIP Reseller.');
+        onShowNotification(data.message || 'Gagal mengirim order ke Xaviera Store.');
       }
     } catch (_) {
-      onShowNotification('Koneksi ke API VIP gagal.');
+      onShowNotification('Koneksi ke API Xaviera gagal.');
     } finally {
       setIsFulfillingVip(false);
     }
@@ -950,12 +950,12 @@ export function OrderDetailModal({
             )}
           </div>
 
-          {/* Section D: VIP Reseller Live Gateway Integration Card (Conditional) */}
-          {order.provider === 'vip-reseller' && (
+          {/* Section D: Xaviera Store Live Gateway Integration Card (Conditional) */}
+          {['xaviera', 'vip-reseller'].includes(order.provider || '') && (
             <div className="bg-white border border-[#E2E8F0] rounded-xl p-3.5 sm:p-4 space-y-3 text-xs shadow-2xs">
               <div className="flex items-center justify-between pb-2 border-b border-[#E2E8F0]">
                 <div className="flex items-center gap-2">
-                  <span className="font-bold text-[#0F172A] text-xs sm:text-sm">Integrasi VIP Reseller (Live Gateway)</span>
+                  <span className="font-bold text-[#0F172A] text-xs sm:text-sm">Integrasi Xaviera Store (Live Gateway)</span>
                   <span className="px-2 py-0.5 rounded text-[10px] font-mono uppercase bg-[#EFF6FF] border border-[#BFDBFE] text-[#2563EB] font-bold">
                     {order.provider_status || 'Waiting'}
                   </span>
@@ -980,7 +980,7 @@ export function OrderDetailModal({
                       onClick={handleFulfillVip}
                       className="h-8.5 text-xs bg-[#2563EB] text-white hover:bg-[#1D4ED8] gap-1.5 font-semibold cursor-pointer px-4 rounded-lg"
                     >
-                      <span>{isFulfillingVip ? 'Memproses...' : 'Kirim ke VIP'}</span>
+                      <span>{isFulfillingVip ? 'Memproses...' : 'Kirim ke Xaviera'}</span>
                     </Button>
                   )}
                 </div>
@@ -988,7 +988,7 @@ export function OrderDetailModal({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
                 <div className="p-2 bg-[#F8FAFC] rounded border border-[#E2E8F0]">
-                  <span className="text-[#64748B] block text-[10px]">TRX ID VIP Reseller:</span>
+                  <span className="text-[#64748B] block text-[10px]">TRX ID Xaviera Store:</span>
                   <span className="font-mono font-semibold text-[#0F172A] select-all">
                     {order.provider_trxid || 'Belum dibuat (Menunggu diproses)'}
                   </span>

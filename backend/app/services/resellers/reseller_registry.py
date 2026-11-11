@@ -1,14 +1,17 @@
 from typing import Dict, Any, List, Optional
 from app.services.resellers.base_adapter import BaseResellerAdapter
-from app.services.resellers.vip_adapter import VipResellerAdapter
+from app.services.resellers.xaviera_adapter import XavieraAdapter
 
 class ResellerRegistry:
     """
     Central registry for upstream reseller/supplier adapters.
     Distinguishes strictly between production-ready adapters and unsupported providers.
     """
+    _xaviera_inst = XavieraAdapter()
     _adapters: Dict[str, BaseResellerAdapter] = {
-        "vip-reseller": VipResellerAdapter(),
+        "xaviera": _xaviera_inst,
+        "xaviera-store": _xaviera_inst,
+        "vip-reseller": _xaviera_inst, # Legacy alias mapped to Xaviera
     }
 
     # Prospective or unintegrated providers (explicitly prevented from production fulfillment)
@@ -39,7 +42,12 @@ class ResellerRegistry:
     @classmethod
     def list_all_providers(cls) -> List[Dict[str, Any]]:
         providers = []
-        for pid, adapter in cls._adapters.items():
+        # Distinct providers (skip alias keys in card listings)
+        primary_pids = ["xaviera"]
+        for pid in primary_pids:
+            adapter = cls._adapters.get(pid)
+            if not adapter:
+                continue
             caps = adapter.get_capabilities()
             profile = adapter.get_profile(force_refresh=False)
             providers.append({

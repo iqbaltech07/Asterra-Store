@@ -30,6 +30,10 @@ interface AdminProvidersTabProps {
     isVipConnected?: boolean;
     vipUsername?: string;
     vipStatusMessage?: string;
+    xavieraBalance?: number | null;
+    isXavieraConnected?: boolean;
+    xavieraUsername?: string;
+    xavieraStatusMessage?: string;
   };
   onNotify?: (msg: string) => void;
   onSyncVip?: () => void;
@@ -102,7 +106,8 @@ export function AdminProvidersTab({ metrics, onNotify, onSyncVip }: AdminProvide
 
   const openEditModal = (provider: ResellerConfigItem) => {
     setSelectedProvider(provider);
-    setFormBaseUrl(provider.baseUrl || provider.base_url || 'https://vip-reseller.co.id/api');
+    const defaultUrl = provider.id.includes('xaviera') ? 'https://xavierastore.com/api/v1' : 'https://xavierastore.com/api/v1';
+    setFormBaseUrl(provider.baseUrl || provider.base_url || defaultUrl);
     setFormApiKey(provider.maskedApiKey || provider.masked_api_key || '');
     setFormApiSign(provider.maskedApiSign || provider.masked_api_sign || '');
     setFormIsActive(provider.isActive ?? provider.is_active ?? true);
@@ -168,7 +173,7 @@ export function AdminProvidersTab({ metrics, onNotify, onSyncVip }: AdminProvide
               className="text-xs gap-1.5 h-9 font-semibold bg-primary hover:bg-primary/90 text-primary-foreground shadow-xs cursor-pointer"
             >
               <RefreshCw className="w-3.5 h-3.5" />
-              <span>Sinkronkan Katalog VIP</span>
+              <span>Sinkronkan Katalog Xaviera</span>
             </Button>
           )}
         </div>
@@ -261,7 +266,7 @@ export function AdminProvidersTab({ metrics, onNotify, onSyncVip }: AdminProvide
                   <div className="flex items-center justify-between text-foreground-muted">
                     <span>Base Endpoint:</span>
                     <span className="font-mono text-foreground truncate max-w-[200px]">
-                      {provider.baseUrl || provider.base_url || 'https://vip-reseller.co.id/api'}
+                      {provider.baseUrl || provider.base_url || 'https://xavierastore.com/api/v1'}
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-foreground-muted">
@@ -374,7 +379,7 @@ export function AdminProvidersTab({ metrics, onNotify, onSyncVip }: AdminProvide
                   type="text"
                   value={formBaseUrl}
                   onChange={(e) => setFormBaseUrl(e.target.value)}
-                  placeholder="https://vip-reseller.co.id/api"
+                  placeholder="https://xavierastore.com/api/v1"
                   className="font-mono text-xs bg-[#F8FAFC] border-[#CBD5E1] text-[#0F172A] focus:bg-white"
                 />
                 <span className="text-[10px] text-[#64748B] mt-1 block">
@@ -384,14 +389,14 @@ export function AdminProvidersTab({ metrics, onNotify, onSyncVip }: AdminProvide
 
               <div>
                 <label className="font-semibold text-[#0F172A] block mb-1">
-                  API Key / Key Parameter:
+                  API Key (Bearer Token):
                 </label>
                 <div className="relative">
                   <Input
                     type={showApiKey ? 'text' : 'password'}
                     value={formApiKey}
                     onChange={(e) => setFormApiKey(e.target.value)}
-                    placeholder="Masukkan API Key baru atau biarkan jika tidak berubah"
+                    placeholder="xvs_xxxxxxxxxxxxxxxx"
                     className="font-mono text-xs pr-9 bg-[#F8FAFC] border-[#CBD5E1] text-[#0F172A] focus:bg-white"
                   />
                   <button
@@ -403,7 +408,7 @@ export function AdminProvidersTab({ metrics, onNotify, onSyncVip }: AdminProvide
                   </button>
                 </div>
                 <span className="text-[10px] text-[#64748B] mt-1 block">
-                  Biarkan nilai bertopeng jika tidak ingin mengubah API Key yang sudah tersimpan.
+                  Format resmi Xaviera Store: Bearer Token (lihat <a href="https://xavierastore.com/api-docs.html" target="_blank" rel="noreferrer" className="text-primary underline">Dokumentasi API</a>).
                 </span>
               </div>
 

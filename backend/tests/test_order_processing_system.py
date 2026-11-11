@@ -10,6 +10,7 @@ from app.services.order_service import OrderService
 from app.services.order_processing_service import OrderProcessingService
 from app.services.resellers.reseller_registry import ResellerRegistry
 from app.services.email_service import EmailService
+from app.services.xaviera_service import XavieraService
 from app.services.vip_service import VipService
 
 ADMIN_USER = {
@@ -27,27 +28,33 @@ def ensure_db():
 def real_product_id():
     db = SessionLocal()
     try:
-        p = db.query(Product).filter(Product.stock > 0, Product.status == "active").first()
-        if not p:
-            p = Product(
-                id="vip-viu1bln-s1",
-                name="Viu Premium 1 Bulan Test",
-                category_id="cat-streaming",
-                category_name="Streaming",
-                brand="Viu",
-                price=15000,
-                price_formatted="Rp 15.000",
-                status="active",
-                stock=100,
-                provider="vip-reseller",
-                provider_code="viu1bln",
-                provider_name="VIP Reseller",
-                provider_price=10000,
-                provider_status="active",
-            )
-            db.add(p)
-            db.commit()
-            db.refresh(p)
+        candidates = db.query(Product).filter(Product.stock > 0, Product.status == "active").all()
+        for c in candidates:
+            cfg = str(c.input_config or "")
+            if "needs_review" not in cfg:
+                return c.id
+
+        p = Product(
+            id="xvs-viu1bln-test",
+            name="Viu Premium 1 Bulan Test",
+            category_id="cat-streaming",
+            category_name="Streaming",
+            brand="Viu",
+            price=15000,
+            price_formatted="Rp 15.000",
+            status="active",
+            stock=100,
+            provider="xaviera",
+            provider_code="viu1bln",
+            provider_name="Xaviera Store",
+            provider_price=10000,
+            provider_status="available",
+            input_type="email",
+            input_config='{"type": "email", "required": true}',
+        )
+        db.add(p)
+        db.commit()
+        db.refresh(p)
         return p.id
     finally:
         db.close()
@@ -55,7 +62,7 @@ def real_product_id():
 def test_manual_mode_order_creation_and_credential_requirement(real_product_id):
     # 1. Set mode to manual
     OrderProcessingService.update_order_mode_config(
-        {"order_mode": "manual", "active_reseller": "vip-reseller"},
+        {"order_mode": "manual", "active_reseller": "xaviera"},
         admin_user=ADMIN_USER,
     )
     cfg = OrderProcessingService.get_order_mode_config()
@@ -83,8 +90,8 @@ def test_manual_mode_order_creation_and_credential_requirement(real_product_id):
     assert order["status"] == "pending"
 
     # 3. Transition to 'processing' (e.g. payment verified)
-    # Must NOT call VIP fulfillment because order mode is manual!
-    with patch.object(VipService, "place_order") as mock_place_order:
+    # Must NOT call upstream fulfillment because order mode is manual!
+    with patch.object(XavieraService, "place_order") as mock_place_order:
         updated = OrderService.update_status(order_id, "processing", notes="Pembayaran diverifikasi")
         assert updated is not None
         assert updated["status"] == "processing"
@@ -126,13 +133,13 @@ def test_manual_mode_order_creation_and_credential_requirement(real_product_id):
 def test_manual_mode_email_failure_does_not_rollback_fulfillment(real_product_id):
     # Setup manual order
     OrderProcessingService.update_order_mode_config(
-        {"order_mode": "manual", "active_reseller": "vip-reseller"},
+        {"order_mode": "manual", "active_reseller": "xaviera"},
         admin_user=ADMIN_USER,
     )
     order = OrderService.create_order({
         "customerEmail": "email_fail_test@asterra.store",
         "customerName": "Fail Test",
-        "items": [{"product_id": real_product_id, "product_name": "Test Product", "unit_price": 50000, "quantity": 1}],
+        "items": [{"product_id": real_product_id, "product_name": "Test Product", "unit_price": 50000, "quantity": 1, "target_email": "email_fail_test@asterra.store"}],
     })
     order_id = order["id"]
     OrderService.update_status(order_id, "processing")
@@ -162,7 +169,7 @@ def test_manual_mode_email_failure_does_not_rollback_fulfillment(real_product_id
 def test_automatic_mode_fulfillment_flow(real_product_id):
     # 1. Set mode to automatic
     OrderProcessingService.update_order_mode_config(
-        {"order_mode": "automatic", "active_reseller": "vip-reseller"},
+        {"order_mode": "automatic", "active_reseller": "xaviera"},
         admin_user=ADMIN_USER,
     )
     cfg = OrderProcessingService.get_order_mode_config()
@@ -185,7 +192,7 @@ def test_automatic_mode_fulfillment_flow(real_product_id):
 
     # 3. Switching configuration does not retroactively change existing orders
     OrderProcessingService.update_order_mode_config(
-        {"order_mode": "manual", "active_reseller": "vip-reseller"},
+        {"order_mode": "manual", "active_reseller": "xaviera"},
         admin_user=ADMIN_USER,
     )
     fetched = OrderService.get_order_by_id(order["id"])
@@ -202,46 +209,45 @@ def test_unsupported_reseller_activation_rejected():
 def test_reseller_api_security_and_ssrf_protection():
     # 1. Secrets are masked in get_reseller_configs
     configs = OrderProcessingService.get_reseller_configs()
-    vip_cfg = next((c for c in configs if c["id"] == "vip-reseller"), None)
-    assert vip_cfg is not None
-    assert "apiKey" not in vip_cfg  # raw api key never exposed
-    assert "apiSign" not in vip_cfg  # raw sign never exposed
-    assert "maskedApiKey" in vip_cfg
-    assert "maskedApiSign" in vip_cfg
+    xvs_cfg = next((c for c in configs if c["id"] == "xaviera"), None)
+    assert xvs_cfg is not None
+    assert "apiKey" not in xvs_cfg  # raw api key never exposed
+    assert "apiSign" not in xvs_cfg  # raw sign never exposed
+    assert "maskedApiKey" in xvs_cfg
 
     # 2. SSRF Protection: localhost or internal IP rejection
     with pytest.raises(ValueError, match="SSRF"):
         OrderProcessingService.update_reseller_config(
-            "vip-reseller",
+            "xaviera",
             {"baseUrl": "http://localhost:8080/api"},
             admin_user=ADMIN_USER,
         )
 
     with pytest.raises(ValueError, match="SSRF"):
         OrderProcessingService.update_reseller_config(
-            "vip-reseller",
+            "xaviera",
             {"baseUrl": "http://169.254.169.254/latest/meta-data"},
             admin_user=ADMIN_USER,
         )
 
     with pytest.raises(ValueError, match="SSRF"):
         OrderProcessingService.update_reseller_config(
-            "vip-reseller",
+            "xaviera",
             {"baseUrl": "http://192.168.1.100/api"},
             admin_user=ADMIN_USER,
         )
 
     with pytest.raises(ValueError, match="SSRF"):
         OrderProcessingService.update_reseller_config(
-            "vip-reseller",
+            "xaviera",
             {"baseUrl": "http://127.0.0.1:8000/api"},
             admin_user=ADMIN_USER,
         )
 
     # 3. Valid public HTTPS URL is accepted
     updated = OrderProcessingService.update_reseller_config(
-        "vip-reseller",
-        {"baseUrl": "https://vip-reseller.co.id/api"},
+        "xaviera",
+        {"baseUrl": "https://xavierastore.com/api/v1"},
         admin_user=ADMIN_USER,
     )
-    assert updated["baseUrl"] == "https://vip-reseller.co.id/api"
+    assert updated["baseUrl"] == "https://xavierastore.com/api/v1"
