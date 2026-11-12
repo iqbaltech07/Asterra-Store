@@ -105,7 +105,7 @@ export const customerPhoneSchema = z
 // VALIDATION HELPERS
 // -------------------------------------------------------------
 
-export function validateTargetValue(type: TargetFieldType, value: string, choiceMethod?: string): TargetValidationResult {
+export function validateTargetValue(type: TargetFieldType, value: string, _choiceMethod?: string): TargetValidationResult {
   if (type === 'none') {
     return {
       isValid: true,
@@ -127,12 +127,12 @@ export function validateTargetValue(type: TargetFieldType, value: string, choice
   let successMessage = 'Format valid';
 
   if (type === 'choice') {
-    if (choiceMethod === 'gmail') {
+    if (trimmed.includes('@')) {
       schema = targetEmailSchema;
-      successMessage = 'Format Gmail penerima valid';
+      successMessage = 'Format email valid';
     } else {
       schema = targetPhoneSchema;
-      successMessage = 'Nomor WhatsApp penerima valid';
+      successMessage = 'Nomor WhatsApp / HP valid';
     }
   } else {
     switch (type) {
@@ -313,7 +313,7 @@ export function getProductTargetRequirement(item?: {
     const cfgType = (parsedCfg.type || explicitType || 'email').toLowerCase() as TargetFieldType;
     return {
       type: cfgType,
-      label: parsedCfg.label || (cfgType === 'phone' ? 'Nomor WhatsApp / HP Tujuan Aktivasi *' : cfgType === 'choice' ? 'Metode Pengiriman Akun *' : 'Email Akun Tujuan Aktivasi *'),
+      label: parsedCfg.label || (cfgType === 'phone' ? 'Nomor WhatsApp / HP Tujuan Aktivasi *' : cfgType === 'choice' ? 'Akun Siap Pakai' : 'Email Akun Tujuan Aktivasi *'),
       placeholder: parsedCfg.placeholder || (cfgType === 'phone' ? 'contoh: 081234567890' : 'contoh: akun_anda@gmail.com'),
       helper: parsedCfg.helper || 'Pastikan data tujuan akun sudah benar.',
       validLabel: parsedCfg.validLabel,
@@ -332,7 +332,7 @@ export function getProductTargetRequirement(item?: {
   const combined = `${item?.name || ''} ${item?.brand || ''} ${item?.category || ''} ${item?.providerCode || ''}`.toLowerCase();
   const brandName = item?.brand && item.brand.toLowerCase() !== 'digital' ? item.brand.trim() : (item?.name?.split(' ')[0] || 'Akun');
 
-  // 2. Choice-based delivery (Store-provided accounts: ChatGPT, Netflix, Spotify, Disney, Prime, WeTV, Vidio, etc.)
+  // 2. Store-provided accounts (ChatGPT, Netflix, Spotify, Disney, Prime, WeTV, Vidio, etc.)
   const choiceKeywords = [
     'chatgpt', 'openai', 'gpt-4', 'gpt', 'netflix', 'disney', 'prime video',
     'vidio', 'wetv', 'iqiyi', 'hbogo', 'hbo', 'spotify', 'crunchyroll',
@@ -341,24 +341,10 @@ export function getProductTargetRequirement(item?: {
   if (explicitType === 'choice' || (!explicitType && choiceKeywords.some((k) => combined.includes(k)))) {
     return {
       type: 'choice',
-      label: `Metode Pengiriman Akun ${brandName} *`,
-      placeholder: 'Pilih WhatsApp atau Gmail untuk menerima kredensial akun',
-      helper: `Akun ${brandName} disediakan oleh AsterraStore dan akan dikirimkan ke kontak WhatsApp atau Gmail pilihan Anda.`,
-      options: ['whatsapp', 'gmail'],
-      defaultOption: 'whatsapp',
-      fields: {
-        whatsapp: {
-          label: 'Nomor WhatsApp Penerima Akun *',
-          placeholder: 'contoh: 081234567890',
-          helper: 'Kredensial login akun akan dikirimkan melalui WhatsApp ini.',
-        },
-        gmail: {
-          label: 'Email Gmail Penerima Akun *',
-          placeholder: 'contoh: akun_penerima@gmail.com',
-          helper: 'Kredensial login akun akan dikirimkan melalui email Gmail ini (terpisah dari email login website).',
-        },
-      },
-      required: true,
+      label: `Akun Siap Pakai ${brandName}`,
+      placeholder: 'Akun siap pakai otomatis dikirim ke kontak pemesan',
+      helper: `Akun ${brandName} disediakan langsung oleh Asterra Store. Kredensial akun akan otomatis dikirimkan ke kontak email & WhatsApp Anda.`,
+      required: false,
     };
   }
 

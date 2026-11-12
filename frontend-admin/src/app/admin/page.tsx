@@ -3138,9 +3138,9 @@ function AdminPageContent() {
                       const val = e.target.value;
                       setFormInputType(val);
                       if (val === 'choice') {
-                        setFormInputLabel('Pilihan Metode Pengiriman Akun');
-                        setFormInputPlaceholder('Pilih WhatsApp atau Gmail');
-                        setFormInputHelper('Akun disediakan oleh AsterraStore dan akan dikirimkan ke kontak WhatsApp atau Gmail pilihan Anda.');
+                        setFormInputLabel('Akun Siap Pakai Toko');
+                        setFormInputPlaceholder('Otomatis dikirim ke kontak pemesan');
+                        setFormInputHelper('Akun disediakan oleh Asterra Store dan kredensial dikirimkan otomatis ke kontak pemesan.');
                       } else if (val === 'email') {
                         setFormInputLabel('Email Akun Tujuan Aktivasi *');
                         setFormInputPlaceholder('contoh: akun_anda@gmail.com');
@@ -3162,7 +3162,7 @@ function AdminPageContent() {
                     className="w-full bg-surface-raised border border-border text-xs rounded-xl h-10 px-3 text-foreground font-medium focus:ring-1 focus:ring-primary focus:outline-none"
                   >
                     <option value="email">Email Akun (Undangan / Invite Akun Pelanggan, e.g. YouTube Family, Canva)</option>
-                    <option value="choice">Pilihan WhatsApp atau Gmail (Akun dari Toko, e.g. ChatGPT, Netflix, Spotify)</option>
+                    <option value="choice">Akun Siap Pakai Toko (Otomatis ke Kontak Pemesan, e.g. Netflix, ChatGPT)</option>
                     <option value="phone">Nomor HP / WhatsApp (Aktivasi Nomor, e.g. CapCut, Pulsa, E-Wallet)</option>
                     <option value="game">Game Top-Up (User ID + Server / Zone ID, e.g. MLBB, Free Fire)</option>
                     <option value="none">Tanpa Input Tujuan (Voucher / Lisensi Siap Pakai)</option>
