@@ -276,7 +276,7 @@ export function CheckoutCustomerForm({
         </div>
       </div>
 
-      {/* SECTION 2: PARAMETER KHUSUS PRODUK (GAME / PILIHAN METODE PENGIRIMAN) */}
+      {/* SECTION 2: PARAMETER KHUSUS PRODUK (GAME REQUIREMENTS) */}
       {/* 2A. Game Requirements: Clearly separated as technical parameters */}
       {hasGameInCart && (
         <div className="p-4 rounded-xl border border-indigo-100 bg-indigo-50/30 space-y-3">
@@ -356,60 +356,6 @@ export function CheckoutCustomerForm({
               </div>
             )}
           </div>
-        </div>
-      )}
-
-      {/* 2B. Delivery Choice Toggle (WhatsApp vs Gmail) */}
-      {reqType === 'choice' && (
-        <div className="p-3.5 rounded-xl border border-[rgba(18,26,42,0.08)] bg-slate-50/60 space-y-2.5">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-[#121A2A]">
-              Pilih Jalur Pengiriman Kredensial Akun <span className="text-[#C96F55]">*</span>
-            </span>
-            <span className="text-[10px] text-[#C96F55] font-semibold">Wajib dipilih</span>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2.5">
-            <button
-              type="button"
-              onClick={() => handleSingleChoiceMethodChange('whatsapp')}
-              className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
-                choiceMethod === 'whatsapp'
-                  ? 'border-emerald-500 bg-emerald-50 text-emerald-900 shadow-xs ring-2 ring-emerald-500/20'
-                  : 'border-[rgba(18,26,42,0.12)] bg-white text-[#121A2A]/70 hover:bg-slate-50'
-              }`}
-            >
-              <span className="text-emerald-600">📱</span>
-              <span>Kirim ke WhatsApp</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleSingleChoiceMethodChange('gmail')}
-              className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
-                choiceMethod === 'gmail'
-                  ? 'border-blue-500 bg-blue-50 text-blue-900 shadow-xs ring-2 ring-blue-500/20'
-                  : 'border-[rgba(18,26,42,0.12)] bg-white text-[#121A2A]/70 hover:bg-slate-50'
-              }`}
-            >
-              <span className="text-red-500">✉️</span>
-              <span>Kirim ke Gmail</span>
-            </button>
-          </div>
-
-          <p className="text-[10px] text-[#121A2A]/60 leading-relaxed">
-            {choiceMethod === 'gmail'
-              ? `Kredensial akun akan dikirimkan ke email ${
-                  isDifferentRecipient && recipientContact.trim()
-                    ? 'penerima di bawah'
-                    : customerEmail.trim() || 'pemesan'
-                }.`
-              : `Kredensial akun akan dikirimkan ke chat WhatsApp ${
-                  isDifferentRecipient && recipientContact.trim()
-                    ? 'penerima di bawah'
-                    : phoneNumber.trim() || 'pemesan'
-                }.`}
-          </p>
         </div>
       )}
 

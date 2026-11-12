@@ -285,7 +285,7 @@ function CheckoutPageContent() {
         ? targetValue.trim()
         : ((targetState?.targetValue || targetValue || '').trim());
     } else if (req.type === 'choice') {
-      effectiveVal = effectiveMethod === 'gmail' ? customerEmail.trim() : phoneNumber.trim();
+      effectiveVal = customerEmail.trim() || phoneNumber.trim();
     } else if (req.type === 'email') {
       effectiveVal = customerEmail.trim();
     } else if (req.type === 'phone') {
@@ -1160,7 +1160,7 @@ function CheckoutPageContent() {
         }
 
         if (req.type === 'choice') {
-          itFulfillmentMethod = itTarget.choiceMethod; // 'whatsapp' | 'gmail'
+          itFulfillmentMethod = 'direct';
         } else if (req.type === 'email') {
           itFulfillmentMethod = 'invite';
         } else if (req.type === 'phone') {
@@ -1174,14 +1174,10 @@ function CheckoutPageContent() {
       } else {
         // DEFAULT: Target automatically mirrors buyer data!
         if (req.type === 'choice') {
-          itFulfillmentMethod = itTarget.choiceMethod; // 'whatsapp' | 'gmail'
-          if (itTarget.choiceMethod === 'gmail') {
-            itTargetEmail = buyerEmail;
-            itTargetValue = buyerEmail;
-          } else {
-            itTargetPhone = buyerPhone;
-            itTargetValue = buyerPhone;
-          }
+          itFulfillmentMethod = 'direct';
+          itTargetEmail = buyerEmail;
+          itTargetPhone = buyerPhone;
+          itTargetValue = buyerEmail || buyerPhone;
         } else if (req.type === 'email') {
           itFulfillmentMethod = 'invite';
           itTargetEmail = buyerEmail;
