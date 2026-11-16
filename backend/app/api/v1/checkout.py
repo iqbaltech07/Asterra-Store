@@ -2,6 +2,7 @@ import json
 import logging
 from typing import Optional, List, Dict, Any
 from fastapi import APIRouter, Request, Response, HTTPException, Query, BackgroundTasks
+from fastapi.responses import JSONResponse
 
 from app.config import settings
 from app.services.order_service import OrderService
@@ -229,8 +230,10 @@ def get_payment_config(request: Request, response: Response):
     }
 
 @router.get("/admin/payment-config", tags=["Admin Payment"])
-def get_admin_payment_config():
+def get_admin_payment_config(response: Response):
     config = PaymentConfigService.get_config()
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
     return {
         "success": True,
         "data": config,
@@ -240,7 +243,18 @@ def get_admin_payment_config():
 @router.put("/admin/payment-config", tags=["Admin Payment"])
 async def update_admin_payment_config(request: Request):
     payload = await request.json()
-    updated = PaymentConfigService.update_config(payload)
+    try:
+        updated = PaymentConfigService.update_config(payload)
+    except Exception as e:
+        logger.error(f"[PaymentConfig] Save failed: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "success": False,
+                "error": str(e),
+                "message": "Gagal menyimpan konfigurasi pembayaran.",
+            },
+        )
     cache.invalidate("payment_config")
     RealtimeBroadcaster.broadcast(
         "payment_config:updated",

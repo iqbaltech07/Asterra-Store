@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faQrcode,
@@ -32,6 +33,7 @@ interface AdminPaymentSettingsTabProps {
 }
 
 export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabProps) {
+  const queryClient = useQueryClient();
   const [config, setConfig] = useState<PaymentConfig | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -65,54 +67,64 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
     onNotifyRef.current = onNotify;
   }, [onNotify]);
 
+  const syncFormFields = useCallback((d: PaymentConfig) => {
+    setMode((d.mode || 'gateway').toLowerCase() as 'gateway' | 'manual');
+    setIsBankActive((d.isBankActive ?? (d as any).is_bank_active) ?? false);
+    setIsQrisActive((d.isQrisActive ?? (d as any).is_qris_active) ?? true);
+    setIsDanaActive((d.isDanaActive ?? (d as any).is_dana_active) ?? false);
+    setBankName(d.bankName || 'Bank Central Asia (BCA)');
+    setBankAccountNumber(d.bankAccountNumber || '8965123456');
+    setBankAccountName(d.bankAccountName || 'Asterra Store Official');
+    setQrisImageUrl(d.qrisImageUrl || '');
+    setQrisMerchantName(d.qrisMerchantName || 'ASTERRA STORE QRIS');
+    setQrisRawString(d.qrisRawString || (d as any).qris_raw_string || '');
+    setDanaNumber(d.danaNumber || '081234567890');
+    setDanaAccountName(d.danaAccountName || 'Asterra Store');
+    setConfirmationWhatsapp(d.confirmationWhatsapp || '6281234567890');
+    setCsEmail(d.csEmail || 'support@asterra.store');
+    setCsWhatsappNumbers(
+      Array.isArray(d.csWhatsappNumbers) && d.csWhatsappNumbers.length > 0
+        ? d.csWhatsappNumbers
+        : [d.confirmationWhatsapp || '6281234567890']
+    );
+    setEnableUniqueCode(typeof d.enableUniqueCode === 'boolean' ? d.enableUniqueCode : true);
+    setOrderExpiryHours(d.orderExpiryHours || 24);
+    setInstructions(d.instructions || '');
+  }, []);
+
   // Fetch current payment settings from API
-  const fetchSettings = useCallback(async (isInitial = false) => {
-    if (isInitial) {
+  const fetchSettings = useCallback(async (syncFields = false) => {
+    if (syncFields) {
       setIsLoading(true);
     }
     try {
-      const res = await fetch('/api/v1/admin/payment-config');
+      const res = await fetch(`/api/v1/admin/payment-config?_t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          Pragma: 'no-cache',
+        },
+      });
       if (!res.ok) throw new Error('Gagal mengambil pengaturan pembayaran');
       const json = await res.json();
       if (json.success && json.data) {
         const d: PaymentConfig = json.data;
         setConfig(d);
-        if (isInitial) {
-          setMode(d.mode);
-          setIsBankActive((d.isBankActive ?? (d as any).is_bank_active) ?? false);
-          setIsQrisActive((d.isQrisActive ?? (d as any).is_qris_active) ?? true);
-          setIsDanaActive((d.isDanaActive ?? (d as any).is_dana_active) ?? false);
-          setBankName(d.bankName || 'Bank Central Asia (BCA)');
-          setBankAccountNumber(d.bankAccountNumber || '8965123456');
-          setBankAccountName(d.bankAccountName || 'Asterra Store Official');
-          setQrisImageUrl(d.qrisImageUrl || '');
-          setQrisMerchantName(d.qrisMerchantName || 'ASTERRA STORE QRIS');
-          setQrisRawString(d.qrisRawString || (d as any).qris_raw_string || '');
-          setDanaNumber(d.danaNumber || '081234567890');
-          setDanaAccountName(d.danaAccountName || 'Asterra Store');
-          setConfirmationWhatsapp(d.confirmationWhatsapp || '6281234567890');
-          setCsEmail(d.csEmail || 'support@asterra.store');
-          setCsWhatsappNumbers(
-            Array.isArray(d.csWhatsappNumbers) && d.csWhatsappNumbers.length > 0
-              ? d.csWhatsappNumbers
-              : [d.confirmationWhatsapp || '6281234567890']
-          );
-          setEnableUniqueCode(typeof d.enableUniqueCode === 'boolean' ? d.enableUniqueCode : true);
-          setOrderExpiryHours(d.orderExpiryHours || 24);
-          setInstructions(d.instructions || '');
+        if (syncFields) {
+          syncFormFields(d);
         }
       }
     } catch (err) {
       console.error(err);
-      if (isInitial) {
+      if (syncFields) {
         onNotifyRef.current('Gagal memuat pengaturan pembayaran dari server.');
       }
     } finally {
-      if (isInitial) {
+      if (syncFields) {
         setIsLoading(false);
       }
     }
-  }, []);
+  }, [syncFormFields]);
 
   useEffect(() => {
     setCurrentBaseUrl(getAppBaseUrl());
@@ -172,13 +184,17 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || 'Gagal menyimpan pengaturan');
+        throw new Error(data.error || data.message || 'Gagal menyimpan pengaturan');
       }
 
       setMode(targetMode);
       if (data.data) {
-        setConfig(data.data);
+        const d: PaymentConfig = data.data;
+        setConfig(d);
+        syncFormFields(d);
       }
+      queryClient.invalidateQueries({ queryKey: ['admin-payment-config'] });
+      queryClient.invalidateQueries({ queryKey: ['public-payment-config'] });
       onNotify(data.message || `Pengaturan pembayaran berhasil diperbarui. Mode: ${targetMode.toUpperCase()}`);
     } catch (err: unknown) {
       const error = err as Error;

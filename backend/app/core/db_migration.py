@@ -290,7 +290,10 @@ def run_migrations():
         "ALTER TABLE order_items ADD COLUMN IF NOT EXISTS target_value TEXT;",
         "ALTER TABLE order_items ADD COLUMN IF NOT EXISTS input_config_snapshot TEXT;",
 
-        # 18. Enforce Supabase Row-Level Security (RLS) on all public tables
+        # 18. Payment settings dynamic QRIS raw string
+        "ALTER TABLE payment_settings ADD COLUMN IF NOT EXISTS qris_raw_string TEXT;",
+
+        # 19. Enforce Supabase Row-Level Security (RLS) on all public tables
         """
         DO $$
         DECLARE
