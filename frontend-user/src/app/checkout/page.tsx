@@ -562,7 +562,7 @@ function CheckoutPageContent() {
       is_active: false,
     },
     qris: {
-      image_url: '/images/qris-toko.png',
+      image_url: '/images/qris-toko.webp',
       merchant_name: 'ASTERRA STORE QRIS',
       is_active: true,
     },

@@ -30,7 +30,7 @@ class PaymentSetting(Base):
     def to_dict(self):
         return {
             "id": self.id,
-            "mode": self.mode,
+            "mode": (self.mode or "manual").lower(),
             "bankName": self.bank_name,
             "bankAccountNumber": self.bank_account_number,
             "bankAccountName": self.bank_account_name,

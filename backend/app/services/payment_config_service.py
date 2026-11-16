@@ -7,7 +7,7 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "bankName": "Bank Central Asia (BCA)",
     "bankAccountNumber": "8965123456",
     "bankAccountName": "Asterra Store Official",
-    "qrisImageUrl": "https://panduan.bersama.co.id/QRIS/images/Qris.png",
+    "qrisImageUrl": "/images/qris-toko.webp",
     "qrisMerchantName": "ASTERRA STORE QRIS",
     "qrisRawString": "00020101021126570011ID.DANA.WWW011893600915303581731802090358173180303UMI51440014ID.CO.QRIS.WWW0215ID10266111175770303UMI5204481453033605802ID5919Asterra Store, Cell6012Kab. Bandung61054091463047816",
     "qris_raw_string": "00020101021126570011ID.DANA.WWW011893600915303581731802090358173180303UMI51440014ID.CO.QRIS.WWW0215ID10266111175770303UMI5204481453033605802ID5919Asterra Store, Cell6012Kab. Bandung61054091463047816",
@@ -32,7 +32,7 @@ DEFAULT_CONFIG: Dict[str, Any] = {
         "is_active": False,
     },
     "qris": {
-        "image_url": "https://panduan.bersama.co.id/QRIS/images/Qris.png",
+        "image_url": "/images/qris-toko.webp",
         "merchant_name": "ASTERRA STORE QRIS",
         "raw_string": "00020101021126570011ID.DANA.WWW011893600915303581731802090358173180303UMI51440014ID.CO.QRIS.WWW0215ID10266111175770303UMI5204481453033605802ID5919Asterra Store, Cell6012Kab. Bandung61054091463047816",
         "is_active": True,
@@ -191,66 +191,68 @@ class PaymentConfigService:
 
     @classmethod
     def update_config(cls, payload: Dict[str, Any]) -> Dict[str, Any]:
+        if SessionLocal is None:
+            raise RuntimeError("Database connection not available")
+
+        from datetime import datetime
+
+        db = SessionLocal()
         try:
-            db = SessionLocal()
-            try:
-                setting = db.query(PaymentSetting).first()
-                if not setting:
-                    setting = PaymentSetting(id="pay-cfg-default")
-                    db.add(setting)
+            setting = db.query(PaymentSetting).first()
+            if not setting:
+                setting = PaymentSetting(id="pay-cfg-default")
+                db.add(setting)
 
-                if "mode" in payload: setting.mode = payload["mode"]
-                if "isBankActive" in payload or "is_bank_active" in payload:
-                    val = payload.get("isBankActive") if "isBankActive" in payload else payload.get("is_bank_active")
-                    setting.is_bank_active = bool(val)
-                if "isQrisActive" in payload or "is_qris_active" in payload:
-                    val = payload.get("isQrisActive") if "isQrisActive" in payload else payload.get("is_qris_active")
-                    setting.is_qris_active = bool(val)
-                if "isDanaActive" in payload or "is_dana_active" in payload:
-                    val = payload.get("isDanaActive") if "isDanaActive" in payload else payload.get("is_dana_active")
-                    setting.is_dana_active = bool(val)
-                if "bankName" in payload or "bank_name" in payload:
-                    setting.bank_name = payload.get("bankName") or payload.get("bank_name")
-                if "bankAccountNumber" in payload or "bank_account_number" in payload:
-                    setting.bank_account_number = payload.get("bankAccountNumber") or payload.get("bank_account_number")
-                if "bankAccountName" in payload or "bank_account_name" in payload:
-                    setting.bank_account_name = payload.get("bankAccountName") or payload.get("bank_account_name")
-                if "qrisImageUrl" in payload or "qris_image_url" in payload:
-                    setting.qris_image_url = payload.get("qrisImageUrl") or payload.get("qris_image_url")
-                if "qrisMerchantName" in payload or "qris_merchant_name" in payload:
-                    setting.qris_merchant_name = payload.get("qrisMerchantName") or payload.get("qris_merchant_name")
-                if "qrisRawString" in payload or "qris_raw_string" in payload:
-                    setting.qris_raw_string = payload.get("qrisRawString") or payload.get("qris_raw_string")
-                if "danaNumber" in payload or "dana_number" in payload:
-                    setting.dana_number = payload.get("danaNumber") or payload.get("dana_number")
-                if "danaAccountName" in payload or "dana_account_name" in payload:
-                    setting.dana_account_name = payload.get("danaAccountName") or payload.get("dana_account_name")
-                if "confirmationWhatsapp" in payload or "confirmation_whatsapp" in payload:
-                    setting.confirmation_whatsapp = payload.get("confirmationWhatsapp") or payload.get("confirmation_whatsapp")
-                if "instructions" in payload:
-                    setting.instructions = payload["instructions"]
-                if "enableUniqueCode" in payload or "enable_unique_code" in payload:
-                    val = payload.get("enableUniqueCode") if "enableUniqueCode" in payload else payload.get("enable_unique_code")
-                    setting.enable_unique_code = bool(val)
-                if "orderExpiryHours" in payload or "order_expiry_hours" in payload:
-                    val = payload.get("orderExpiryHours") if "orderExpiryHours" in payload else payload.get("order_expiry_hours")
-                    setting.order_expiry_hours = int(val)
-                if "csEmail" in payload or "cs_email" in payload:
-                    setting.cs_email = payload.get("csEmail") or payload.get("cs_email")
-                if "csWhatsappNumbers" in payload or "cs_whatsapp_numbers" in payload:
-                    setting.cs_whatsapp_numbers = payload.get("csWhatsappNumbers") or payload.get("cs_whatsapp_numbers")
+            if "mode" in payload and payload["mode"] is not None:
+                setting.mode = str(payload["mode"]).lower()
+            if "isBankActive" in payload or "is_bank_active" in payload:
+                val = payload.get("isBankActive") if "isBankActive" in payload else payload.get("is_bank_active")
+                setting.is_bank_active = bool(val)
+            if "isQrisActive" in payload or "is_qris_active" in payload:
+                val = payload.get("isQrisActive") if "isQrisActive" in payload else payload.get("is_qris_active")
+                setting.is_qris_active = bool(val)
+            if "isDanaActive" in payload or "is_dana_active" in payload:
+                val = payload.get("isDanaActive") if "isDanaActive" in payload else payload.get("is_dana_active")
+                setting.is_dana_active = bool(val)
+            if "bankName" in payload or "bank_name" in payload:
+                setting.bank_name = payload.get("bankName") or payload.get("bank_name")
+            if "bankAccountNumber" in payload or "bank_account_number" in payload:
+                setting.bank_account_number = payload.get("bankAccountNumber") or payload.get("bank_account_number")
+            if "bankAccountName" in payload or "bank_account_name" in payload:
+                setting.bank_account_name = payload.get("bankAccountName") or payload.get("bank_account_name")
+            if "qrisImageUrl" in payload or "qris_image_url" in payload:
+                setting.qris_image_url = payload.get("qrisImageUrl") or payload.get("qris_image_url")
+            if "qrisMerchantName" in payload or "qris_merchant_name" in payload:
+                setting.qris_merchant_name = payload.get("qrisMerchantName") or payload.get("qris_merchant_name")
+            if "qrisRawString" in payload or "qris_raw_string" in payload:
+                setting.qris_raw_string = payload.get("qrisRawString") or payload.get("qris_raw_string")
+            if "danaNumber" in payload or "dana_number" in payload:
+                setting.dana_number = payload.get("danaNumber") or payload.get("dana_number")
+            if "danaAccountName" in payload or "dana_account_name" in payload:
+                setting.dana_account_name = payload.get("danaAccountName") or payload.get("dana_account_name")
+            if "confirmationWhatsapp" in payload or "confirmation_whatsapp" in payload:
+                setting.confirmation_whatsapp = payload.get("confirmationWhatsapp") or payload.get("confirmation_whatsapp")
+            if "instructions" in payload:
+                setting.instructions = payload["instructions"]
+            if "enableUniqueCode" in payload or "enable_unique_code" in payload:
+                val = payload.get("enableUniqueCode") if "enableUniqueCode" in payload else payload.get("enable_unique_code")
+                setting.enable_unique_code = bool(val)
+            if "orderExpiryHours" in payload or "order_expiry_hours" in payload:
+                val = payload.get("orderExpiryHours") if "orderExpiryHours" in payload else payload.get("order_expiry_hours")
+                setting.order_expiry_hours = int(val)
+            if "csEmail" in payload or "cs_email" in payload:
+                setting.cs_email = payload.get("csEmail") or payload.get("cs_email")
+            if "csWhatsappNumbers" in payload or "cs_whatsapp_numbers" in payload:
+                setting.cs_whatsapp_numbers = payload.get("csWhatsappNumbers") or payload.get("cs_whatsapp_numbers")
 
-                db.commit()
-                db.refresh(setting)
-            finally:
-                db.close()
+            setting.updated_at = datetime.utcnow()
+
+            db.commit()
+            db.refresh(setting)
         except Exception as e:
-            print(f"[PaymentConfigService] Error updating in Supabase: {e}")
+            db.rollback()
+            raise RuntimeError(f"Gagal menyimpan konfigurasi pembayaran: {e}") from e
+        finally:
+            db.close()
 
-        # Update local cache
-        cls.get_config()
-        # Merge updated payload into config
-        for k, v in payload.items():
-            cls._config[k] = v
-
-        return cls._config
+        return cls.get_config()
