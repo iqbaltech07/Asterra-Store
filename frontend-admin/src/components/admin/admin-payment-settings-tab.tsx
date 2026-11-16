@@ -48,7 +48,7 @@ export function AdminPaymentSettingsTab({ onNotify }: AdminPaymentSettingsTabPro
   const [bankName, setBankName] = useState('Bank Central Asia (BCA)');
   const [bankAccountNumber, setBankAccountNumber] = useState('8965123456');
   const [bankAccountName, setBankAccountName] = useState('Asterra Store Official');
-  const [qrisImageUrl, setQrisImageUrl] = useState('/images/qris-toko.png');
+  const [qrisImageUrl, setQrisImageUrl] = useState('/images/qris-toko.webp');
   const [qrisMerchantName, setQrisMerchantName] = useState('ASTERRA STORE QRIS');
   const [qrisRawString, setQrisRawString] = useState('');
   const [danaNumber, setDanaNumber] = useState('081234567890');

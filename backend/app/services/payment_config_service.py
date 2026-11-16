@@ -7,7 +7,7 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "bankName": "Bank Central Asia (BCA)",
     "bankAccountNumber": "8965123456",
     "bankAccountName": "Asterra Store Official",
-    "qrisImageUrl": "https://panduan.bersama.co.id/QRIS/images/Qris.png",
+    "qrisImageUrl": "/images/qris-toko.webp",
     "qrisMerchantName": "ASTERRA STORE QRIS",
     "qrisRawString": "00020101021126570011ID.DANA.WWW011893600915303581731802090358173180303UMI51440014ID.CO.QRIS.WWW0215ID10266111175770303UMI5204481453033605802ID5919Asterra Store, Cell6012Kab. Bandung61054091463047816",
     "qris_raw_string": "00020101021126570011ID.DANA.WWW011893600915303581731802090358173180303UMI51440014ID.CO.QRIS.WWW0215ID10266111175770303UMI5204481453033605802ID5919Asterra Store, Cell6012Kab. Bandung61054091463047816",
@@ -32,7 +32,7 @@ DEFAULT_CONFIG: Dict[str, Any] = {
         "is_active": False,
     },
     "qris": {
-        "image_url": "https://panduan.bersama.co.id/QRIS/images/Qris.png",
+        "image_url": "/images/qris-toko.webp",
         "merchant_name": "ASTERRA STORE QRIS",
         "raw_string": "00020101021126570011ID.DANA.WWW011893600915303581731802090358173180303UMI51440014ID.CO.QRIS.WWW0215ID10266111175770303UMI5204481453033605802ID5919Asterra Store, Cell6012Kab. Bandung61054091463047816",
         "is_active": True,
